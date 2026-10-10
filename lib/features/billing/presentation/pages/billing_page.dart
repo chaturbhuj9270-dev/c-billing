@@ -6600,27 +6600,26 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                       // Settings Menu Button
                       PopupMenuButton<String>(
                         icon: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.2),
-                            ),
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: AppTheme.mint,
+                            shape: BoxShape.circle,
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.more_vert_rounded,
-                            color: Colors.white,
+                            color: AppTheme.onMint,
                             size: 22,
                           ),
                         ),
                         offset: const Offset(0, 50),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(18),
                         ),
-                        elevation: 8,
-                        color: Colors.white,
+                        elevation: 12,
+                        color: AppColors.isDark(context)
+                            ? AppTheme.darkCard
+                            : AppColors.card(context),
                         onSelected: (value) {
                           if (value == 'settings') {
                             onSettingsTap();
@@ -6651,10 +6650,11 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                                 const SizedBox(width: 12),
                                 Text(
                                   localizations.settings,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'Literata',
                                     fontWeight: FontWeight.w600,
                                     fontSize: 14,
+                                    color: AppColors.primaryText(context),
                                   ),
                                 ),
                               ],
@@ -6682,10 +6682,11 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                                 const SizedBox(width: 12),
                                 Text(
                                   localizations.printColumnSettings,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'Literata',
                                     fontWeight: FontWeight.w600,
                                     fontSize: 14,
+                                    color: AppColors.primaryText(context),
                                   ),
                                 ),
                               ],

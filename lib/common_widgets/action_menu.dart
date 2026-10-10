@@ -32,154 +32,119 @@ class ActionMenu extends StatelessWidget {
       LanguageService.instance.currentLanguage,
     );
 
-    // Collect visible menu entries
     final List<_MenuEntry> entries = [];
     if (onSettingsTap != null) {
-      entries.add(_MenuEntry(
-        icon: Icons.settings_rounded,
-        label: localizations.settings,
-        onTap: onSettingsTap!,
-      ));
+      entries.add(
+        _MenuEntry(
+          icon: Icons.settings_outlined,
+          color: AppTheme.mint,
+          label: localizations.settings,
+          onTap: onSettingsTap!,
+        ),
+      );
     }
     if (onReportSettingsTap != null) {
-      entries.add(_MenuEntry(
-        icon: Icons.view_column_rounded,
-        label: 'Report Settings',
-        onTap: onReportSettingsTap!,
-      ));
+      entries.add(
+        _MenuEntry(
+          icon: Icons.view_column_rounded,
+          color: AppTheme.toneBlue,
+          label: localizations.reportSettings,
+          onTap: onReportSettingsTap!,
+        ),
+      );
     }
     if (onLanguageTap != null) {
-      entries.add(_MenuEntry(
-        icon: Icons.language_rounded,
-        label: localizations.language,
-        onTap: onLanguageTap!,
-      ));
+      entries.add(
+        _MenuEntry(
+          icon: Icons.language_rounded,
+          color: AppTheme.toneAmber,
+          label: localizations.language,
+          onTap: onLanguageTap!,
+        ),
+      );
     }
     if (onBugReportTap != null) {
-      entries.add(_MenuEntry(
-        icon: Icons.bug_report_rounded,
-        label: localizations.reportIssue,
-        onTap: onBugReportTap!,
-      ));
+      entries.add(
+        _MenuEntry(
+          icon: Icons.bug_report_outlined,
+          color: AppTheme.toneRose,
+          label: localizations.reportIssue,
+          onTap: onBugReportTap!,
+        ),
+      );
     }
 
+    final useMintButton = menuColor == const Color(0xFF1B4D3E);
+    final buttonColor = useMintButton ? AppTheme.mint : menuColor;
+    final dotColor = useMintButton ? AppTheme.onMint : iconColor;
+
     return PopupMenuButton<int>(
+      padding: EdgeInsets.zero,
       icon: Container(
         width: 40,
         height: 40,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.2),
-          ),
-        ),
-        child: Icon(
-          Icons.more_vert_rounded,
-          color: iconColor,
-          size: iconSize,
-        ),
+        decoration: BoxDecoration(color: buttonColor, shape: BoxShape.circle),
+        child: Icon(Icons.more_vert_rounded, color: dotColor, size: iconSize),
       ),
       offset: const Offset(0, 48),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      elevation: 8,
-      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      elevation: 12,
+      color: AppColors.isDark(context)
+          ? AppTheme.darkCard
+          : AppColors.card(context),
       surfaceTintColor: Colors.transparent,
-      onSelected: (index) {
-        entries[index].onTap();
-      },
+      onSelected: (index) => entries[index].onTap(),
       itemBuilder: (context) {
-        final items = <PopupMenuEntry<int>>[];
-
-        // Header
-        items.add(PopupMenuItem<int>(
-          enabled: false,
-          height: 40,
-          padding: EdgeInsets.zero,
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  menuColor.withValues(alpha: 0.08),
-                  menuColor.withValues(alpha: 0.03),
-                ],
+        final items = <PopupMenuEntry<int>>[
+          PopupMenuItem<int>(
+            enabled: false,
+            height: 32,
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Text(
+              localizations.options.toUpperCase(),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.1,
+                color: AppColors.mutedText(context),
+                fontFamily: 'Literata',
               ),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.tune_rounded, color: menuColor, size: 16),
-                const SizedBox(width: 8),
-                Text(
-                  localizations.options,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: menuColor,
-                    fontFamily: 'Literata',
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ],
             ),
           ),
-        ));
+        ];
 
-        items.add(const PopupMenuDivider(height: 1));
-
-        // Menu items
-        for (int i = 0; i < entries.length; i++) {
-          items.add(PopupMenuItem<int>(
-            value: i,
-            height: 52,
-            padding: EdgeInsets.zero,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        for (var i = 0; i < entries.length; i++) {
+          final entry = entries[i];
+          items.add(
+            PopupMenuItem<int>(
+              value: i,
+              height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    width: 38,
-                    height: 38,
+                    width: 32,
+                    height: 32,
                     decoration: BoxDecoration(
-                      color: menuColor.withValues(alpha: 0.12),
+                      color: entry.color.withValues(alpha: 0.16),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: menuColor.withValues(alpha: 0.1),
-                        width: 1,
-                      ),
                     ),
-                    child: Center(
-                      child: Icon(
-                        entries[i].icon,
-                        color: menuColor,
-                        size: 20,
-                      ),
-                    ),
+                    child: Icon(entry.icon, color: entry.color, size: 18),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Text(
-                    entries[i].label,
+                    entry.label,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.accent(context),
+                      color: AppColors.primaryText(context),
                       fontFamily: 'Literata',
-                      letterSpacing: 0.2,
                     ),
                   ),
                 ],
               ),
             ),
-          ));
-
-          if (i < entries.length - 1) {
-            items.add(const PopupMenuDivider(height: 1));
-          }
+          );
         }
 
         return items;
@@ -190,11 +155,13 @@ class ActionMenu extends StatelessWidget {
 
 class _MenuEntry {
   final IconData icon;
+  final Color color;
   final String label;
   final VoidCallback onTap;
 
   const _MenuEntry({
     required this.icon,
+    required this.color,
     required this.label,
     required this.onTap,
   });

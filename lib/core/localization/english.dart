@@ -818,7 +818,7 @@ class EnglishLocalization {
 
   // Action Menu
   static const String options = 'Options';
-  static const String reportIssue = 'Report Issue';
+  static const String reportIssue = 'Debug';
 
   // Purchase History Screen
   static const String purchaseHistory = 'Purchase History';
