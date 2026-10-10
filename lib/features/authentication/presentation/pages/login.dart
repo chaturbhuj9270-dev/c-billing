@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -1034,49 +1036,99 @@ class _LoginPageV2State extends State<LoginPageV2>
   }
 
   Widget _buildSignInButton() {
+    const radius = BorderRadius.all(Radius.circular(28));
     return Container(
       width: double.infinity,
+      height: 54,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: radius,
         boxShadow: [
           BoxShadow(
-            color: AppTheme.mint.withValues(alpha: 0.28),
-            blurRadius: 22,
-            offset: const Offset(0, 8),
+            color: const Color(0xFF3DDC97).withValues(alpha: 0.45),
+            blurRadius: 28,
+            spreadRadius: -2,
+          ),
+          BoxShadow(
+            color: const Color(0xFF7CFFC4).withValues(alpha: 0.22),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: ElevatedButton(
-        onPressed: _loading ? null : _submit,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.mint,
-          disabledBackgroundColor: AppColors.chipFill(context),
-          foregroundColor: AppTheme.onMint,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-          ),
-          elevation: 0,
-          shadowColor: Colors.transparent,
-        ),
-        child: _loading
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.onMint),
-                  strokeWidth: 2,
+      child: ClipRRect(
+        borderRadius: radius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _loading ? null : _submit,
+              child: Ink(
+                decoration: BoxDecoration(
+                  borderRadius: radius,
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      const Color(0xFF7CFFC4).withValues(alpha: 0.82),
+                      const Color(0xFF3DDC97).withValues(alpha: 0.72),
+                      const Color(0xFF1FA86E).withValues(alpha: 0.78),
+                    ],
+                  ),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.38),
+                  ),
                 ),
-              )
-            : Text(
-                _localizations.signIn,
-                style: TextStyle(
-                  color: AppTheme.onMint,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  fontFamily: 'Literata',
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Positioned(
+                      top: 1,
+                      left: 18,
+                      right: 18,
+                      child: Container(
+                        height: 16,
+                        decoration: BoxDecoration(
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(20),
+                          ),
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.38),
+                              Colors.white.withValues(alpha: 0),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    _loading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            _localizations.signIn,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Literata',
+                            ),
+                          ),
+                  ],
                 ),
               ),
+            ),
+          ),
+        ),
       ),
     );
   }

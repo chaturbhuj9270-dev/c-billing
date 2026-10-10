@@ -54,7 +54,6 @@ import 'package:c_billing/features/customer/offline/controllers/customer_transac
 import 'package:c_billing/features/customer/domain/entities/customer_transaction.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
-import 'package:c_billing/common_widgets/quick_actions_overlay.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -1515,123 +1514,16 @@ class _BillingPageState extends State<BillingPage> {
   }
 
   Widget _buildBillComposer() {
-    if (_billItems.isNotEmpty) {
-      return Column(
-        children: [
-          Container(
-            margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
-            decoration: BoxDecoration(
-              color: AppColors.card(context),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: AppColors.border(context)),
-            ),
-            child: _buildComposerHeader(),
-          ),
-          if (_showCustomerOnBill || _generateBillViaContact)
-            _buildCustomerSection(),
-          _buildAddItemsSection(),
-        ],
-      );
-    }
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      padding: const EdgeInsets.fromLTRB(12, 14, 12, 18),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.border(context)),
-      ),
-      child: Column(
-        children: [
-          _buildComposerHeader(),
-          const SizedBox(height: 14),
-          if (_showCustomerOnBill || _generateBillViaContact) ...[
-            _buildCustomerSection(nested: true),
-            const SizedBox(height: 12),
-          ],
-          _buildAddItemsSection(nested: true),
+    return Column(
+      children: [
+        if (_showCustomerOnBill || _generateBillViaContact)
+          _buildCustomerSection(),
+        _buildAddItemsSection(),
+        if (_billItems.isEmpty) ...[
           const SizedBox(height: 28),
           _buildEmptyBillState(),
         ],
-      ),
-    );
-  }
-
-  Widget _buildComposerHeader() {
-    return Row(
-      children: [
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: const Color(0xFF14352C),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: const Icon(
-            Icons.receipt_long_rounded,
-            color: Color(0xFF3DDC97),
-            size: 22,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'New bill',
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18,
-                  color: AppColors.primaryText(context),
-                ),
-              ),
-              Text(
-                _localizations.generateInvoice,
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  fontSize: 12,
-                  color: AppColors.mutedText(context),
-                ),
-              ),
-            ],
-          ),
-        ),
-        _composerIconButton(
-          icon: _showQuickStats ? Icons.close_rounded : Icons.insights_rounded,
-          onTap: _toggleQuickStats,
-        ),
-        const SizedBox(width: 8),
-        _composerIconButton(
-          icon: Icons.apps_rounded,
-          onTap: () => showQuickActionsSheet(context),
-        ),
       ],
-    );
-  }
-
-  Widget _composerIconButton({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border(context)),
-          ),
-          child: Icon(icon, size: 18, color: AppColors.secondaryText(context)),
-        ),
-      ),
     );
   }
 
