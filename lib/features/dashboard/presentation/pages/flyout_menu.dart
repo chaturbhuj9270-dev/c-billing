@@ -419,9 +419,11 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           child: ClipRRect(
             key: _panelKey,
             borderRadius: BorderRadius.circular(28),
-            child: SizedBox(
-              width: double.infinity,
-              child: Stack(
+            child: Material(
+              type: MaterialType.transparency,
+              child: SizedBox(
+                width: double.infinity,
+                child: Stack(
                 children: [
                   Container(
                     width: double.infinity,
@@ -498,6 +500,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                   ),
                 ],
               ),
+            ),
             ),
           ),
         ),

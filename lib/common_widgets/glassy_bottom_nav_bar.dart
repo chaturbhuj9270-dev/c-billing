@@ -2,7 +2,6 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 import '../core/theme/app_theme.dart';
@@ -43,24 +42,19 @@ class GlassyBottomNavBar extends StatefulWidget {
 class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
     with SingleTickerProviderStateMixin {
   late final AnimationController _slideController;
-  double _slideFrom = 0;
-  double _slideTo = 0;
+  late int _fromIndex;
+  late int _toIndex;
   double _slideT = 1;
-
-  double get _visualIndex {
-    final t = Curves.easeInOutCubic.transform(_slideT);
-    return lerpDouble(_slideFrom, _slideTo, t) ?? _slideTo;
-  }
 
   @override
   void initState() {
     super.initState();
-    _slideFrom = widget.selectedIndex.toDouble();
-    _slideTo = _slideFrom;
+    _fromIndex = widget.selectedIndex;
+    _toIndex = widget.selectedIndex;
     _slideController =
         AnimationController(
           vsync: this,
-          duration: const Duration(milliseconds: 480),
+          duration: const Duration(milliseconds: 520),
         )..addListener(() {
           setState(() => _slideT = _slideController.value);
         });
@@ -69,11 +63,13 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
   @override
   void didUpdateWidget(GlassyBottomNavBar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.selectedIndex != widget.selectedIndex) {
-      _slideFrom = _visualIndex;
-      _slideTo = widget.selectedIndex.toDouble();
-      _slideController.forward(from: 0);
-    }
+    if (oldWidget.selectedIndex == widget.selectedIndex) return;
+    final leaving = _slideT >= 1
+        ? _toIndex
+        : (_slideT < 0.45 ? _fromIndex : _toIndex);
+    _fromIndex = leaving;
+    _toIndex = widget.selectedIndex;
+    _slideController.forward(from: 0);
   }
 
   @override
@@ -82,38 +78,71 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
     super.dispose();
   }
 
-  double _labelWidth(int index) {
-    final painter = TextPainter(
-      text: TextSpan(
-        text: widget.items[index].label,
-        style: const TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          fontFamily: 'Literata',
+  double _chipLeft(double index, double slot, double chipWidth, double width) {
+    const inset = 4.0;
+    final ideal = (index * slot) + (slot - chipWidth) / 2;
+    return ideal.clamp(inset, math.max(inset, width - chipWidth - inset));
+  }
+
+  Widget _glassChip({
+    required double left,
+    required double top,
+    required double width,
+    required double height,
+    required bool isDark,
+    double opacity = 1,
+  }) {
+    const radius = 14.0;
+    return Positioned(
+      left: left,
+      top: top,
+      width: width,
+      height: height,
+      child: IgnorePointer(
+        child: Opacity(
+          opacity: opacity.clamp(0.0, 1.0),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(radius),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.10),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+                if (!isDark)
+                  BoxShadow(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    blurRadius: 0,
+                    offset: const Offset(0, -1),
+                  ),
+              ],
+            ),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(radius),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: isDark
+                      ? [
+                          Colors.white.withValues(alpha: 0.20),
+                          AppTheme.mint.withValues(alpha: 0.16),
+                        ]
+                      : [
+                          Colors.white.withValues(alpha: 0.96),
+                          Colors.white.withValues(alpha: 0.78),
+                        ],
+                ),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: isDark ? 0.32 : 0.95),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
-      textDirection: TextDirection.ltr,
-      maxLines: 1,
-    )..layout();
-    return painter.width;
-  }
-
-  /// Selected chip is at least a square, and wider when the label needs room.
-  double _restingWidth(int index, double size) {
-    const labelMargin = 22.0;
-    return math.max(size, _labelWidth(index) + labelMargin);
-  }
-
-  double _widthAt(double index, double size, int count) {
-    final start = index.floor().clamp(0, count - 1);
-    final end = index.ceil().clamp(0, count - 1);
-    final local = (index - start).clamp(0.0, 1.0);
-    return lerpDouble(
-          _restingWidth(start, size),
-          _restingWidth(end, size),
-          local,
-        ) ??
-        size;
+    );
   }
 
   Widget _slidingGlassPill(double width, double height, bool isDark) {
@@ -121,67 +150,48 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
     if (count == 0 || width <= 0 || height <= 0) {
       return const SizedBox.shrink();
     }
+    const inset = 4.0;
     final slot = width / count;
-    final size = math.min(slot - 8, height);
-    final t = Curves.easeInOutCubic.transform(_slideT);
-    final centerIndex = lerpDouble(_slideFrom, _slideTo, t) ?? _slideTo;
-    final travel = (_slideTo - _slideFrom).abs();
-    final stretch = math.sin(t * math.pi) * math.min(travel, 1.8) * slot * 0.72;
-    final baseWidth = _widthAt(centerIndex, size, count);
-    final pillWidth = math.min(baseWidth + stretch, width - 8);
-    final idealLeft = (centerIndex * slot) + (slot - pillWidth) / 2;
-    final left = idealLeft
-        .clamp(4.0, math.max(4.0, width - pillWidth - 4))
-        .toDouble();
-    final top = (height - size) / 2;
-    final radius = pillWidth > size + 1 ? size / 2 : 14.0;
+    final chipWidth = math.max(0.0, slot - inset * 2);
+    final chipHeight = math.max(0.0, height - 4);
+    final restingTop = (height - chipHeight) / 2;
+    final moving = _slideT < 1 && _fromIndex != _toIndex;
 
-    return Positioned(
-      left: left,
-      top: top,
-      width: pillWidth,
-      height: size,
-      child: IgnorePointer(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(radius),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.10),
-                blurRadius: 14,
-                offset: const Offset(0, 4),
-              ),
-              if (!isDark)
-                BoxShadow(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  blurRadius: 0,
-                  offset: const Offset(0, -1),
-                ),
-            ],
-          ),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(radius),
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: isDark
-                    ? [
-                        Colors.white.withValues(alpha: 0.20),
-                        AppTheme.mint.withValues(alpha: 0.16),
-                      ]
-                    : [
-                        Colors.white.withValues(alpha: 0.96),
-                        Colors.white.withValues(alpha: 0.78),
-                      ],
-              ),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: isDark ? 0.32 : 0.95),
-              ),
-            ),
-          ),
+    if (!moving) {
+      return _glassChip(
+        left: _chipLeft(_toIndex.toDouble(), slot, chipWidth, width),
+        top: restingTop,
+        width: chipWidth,
+        height: chipHeight,
+        isDark: isDark,
+      );
+    }
+
+    final t = Curves.easeInOutCubic.transform(_slideT);
+    final travelIndex =
+        lerpDouble(_fromIndex.toDouble(), _toIndex.toDouble(), t) ??
+        _toIndex.toDouble();
+    final coverOpacity = 1 - Curves.easeIn.transform(t);
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        _glassChip(
+          left: _chipLeft(travelIndex, slot, chipWidth, width),
+          top: restingTop + (1 - t) * 7,
+          width: chipWidth,
+          height: chipHeight,
+          isDark: isDark,
         ),
-      ),
+        _glassChip(
+          left: _chipLeft(_fromIndex.toDouble(), slot, chipWidth, width),
+          top: restingTop,
+          width: chipWidth,
+          height: chipHeight,
+          isDark: isDark,
+          opacity: coverOpacity,
+        ),
+      ],
     );
   }
 
@@ -245,6 +255,7 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
               child: Stack(
                 alignment: Alignment.center,
+                clipBehavior: Clip.none,
                 children: [
                   Row(
                     children: [
@@ -263,6 +274,7 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
                       child: LayoutBuilder(
                         builder: (context, constraints) {
                           return Stack(
+                            clipBehavior: Clip.none,
                             children: [
                               _slidingGlassPill(
                                 constraints.maxWidth,
@@ -312,42 +324,18 @@ class _GlassyNavItemButton extends StatelessWidget {
           children: [
             Icon(item.icon, color: iconColor, size: 22),
             const SizedBox(height: 3),
-            if (selected)
-              OverflowBox(
-                fit: OverflowBoxFit.deferToChild,
-                alignment: Alignment.center,
-                minWidth: 0,
-                maxWidth: 140,
-                minHeight: 0,
-                maxHeight: 16,
-                child: Text(
-                  item.label,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  softWrap: false,
-                  overflow: TextOverflow.visible,
-                  style: TextStyle(
-                    color: iconColor,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Literata',
-                    height: 1,
-                  ),
-                ),
-              )
-            else
-              Text(
-                item.label,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: iconColor,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: 'Literata',
-                ),
+            Text(
+              item.label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: iconColor,
+                fontSize: 10,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                fontFamily: 'Literata',
               ),
+            ),
           ],
         ),
       ),
