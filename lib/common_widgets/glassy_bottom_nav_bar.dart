@@ -2,10 +2,10 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 import '../core/theme/app_theme.dart';
-import 'water_drop_effect.dart';
 
 /// Item definition for [GlassyBottomNavBar].
 class GlassyNavItem {
@@ -20,8 +20,8 @@ class GlassyNavItem {
   });
 }
 
-/// iOS Control Center–style glassy bottom tab bar with a water-drop
-/// splash animation when switching tabs.
+/// Frosted bottom tab bar. The selected tab is a glass pill that slides
+/// between items.
 class GlassyBottomNavBar extends StatefulWidget {
   final int selectedIndex;
   final ValueChanged<int> onTap;
@@ -41,41 +41,36 @@ class GlassyBottomNavBar extends StatefulWidget {
 }
 
 class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
-    with TickerProviderStateMixin {
-  late final AnimationController _dropController;
+    with SingleTickerProviderStateMixin {
   late final AnimationController _slideController;
-  Offset? _dropOrigin;
-  final GlobalKey _barKey = GlobalKey();
-  double _indicatorIndex = 0;
   double _slideFrom = 0;
   double _slideTo = 0;
+  double _slideT = 1;
+
+  double get _visualIndex {
+    final t = Curves.easeInOutCubic.transform(_slideT);
+    return lerpDouble(_slideFrom, _slideTo, t) ?? _slideTo;
+  }
 
   @override
   void initState() {
     super.initState();
-    _indicatorIndex = widget.selectedIndex.toDouble();
-    _slideFrom = _indicatorIndex;
-    _slideTo = _indicatorIndex;
-    _dropController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    );
-    _slideController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 420),
-    )..addListener(() {
-      final t = Curves.easeInOutCubic.transform(_slideController.value);
-      setState(() {
-        _indicatorIndex = lerpDouble(_slideFrom, _slideTo, t) ?? _slideTo;
-      });
-    });
+    _slideFrom = widget.selectedIndex.toDouble();
+    _slideTo = _slideFrom;
+    _slideController =
+        AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 480),
+        )..addListener(() {
+          setState(() => _slideT = _slideController.value);
+        });
   }
 
   @override
   void didUpdateWidget(GlassyBottomNavBar oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.selectedIndex != widget.selectedIndex) {
-      _slideFrom = _indicatorIndex;
+      _slideFrom = _visualIndex;
       _slideTo = widget.selectedIndex.toDouble();
       _slideController.forward(from: 0);
     }
@@ -83,86 +78,114 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
 
   @override
   void dispose() {
-    _dropController.dispose();
     _slideController.dispose();
     super.dispose();
   }
 
-  Widget _slidingGlassPill(double width, bool isDark) {
+  double _labelWidth(int index) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: widget.items[index].label,
+        style: const TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          fontFamily: 'Literata',
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout();
+    return painter.width;
+  }
+
+  /// Selected chip is at least a square, and wider when the label needs room.
+  double _restingWidth(int index, double size) {
+    const labelMargin = 22.0;
+    return math.max(size, _labelWidth(index) + labelMargin);
+  }
+
+  double _widthAt(double index, double size, int count) {
+    final start = index.floor().clamp(0, count - 1);
+    final end = index.ceil().clamp(0, count - 1);
+    final local = (index - start).clamp(0.0, 1.0);
+    return lerpDouble(
+          _restingWidth(start, size),
+          _restingWidth(end, size),
+          local,
+        ) ??
+        size;
+  }
+
+  Widget _slidingGlassPill(double width, double height, bool isDark) {
     final count = widget.items.length;
-    if (count == 0 || width <= 0) return const SizedBox.shrink();
+    if (count == 0 || width <= 0 || height <= 0) {
+      return const SizedBox.shrink();
+    }
     final slot = width / count;
-    final pillWidth = slot - 8;
-    final left = (_indicatorIndex * slot) + 4;
+    final size = math.min(slot - 8, height);
+    final t = Curves.easeInOutCubic.transform(_slideT);
+    final centerIndex = lerpDouble(_slideFrom, _slideTo, t) ?? _slideTo;
+    final travel = (_slideTo - _slideFrom).abs();
+    final stretch = math.sin(t * math.pi) * math.min(travel, 1.8) * slot * 0.72;
+    final baseWidth = _widthAt(centerIndex, size, count);
+    final pillWidth = math.min(baseWidth + stretch, width - 8);
+    final idealLeft = (centerIndex * slot) + (slot - pillWidth) / 2;
+    final left = idealLeft
+        .clamp(4.0, math.max(4.0, width - pillWidth - 4))
+        .toDouble();
+    final top = (height - size) / 2;
+    final radius = pillWidth > size + 1 ? size / 2 : 14.0;
 
     return Positioned(
       left: left,
-      top: 0,
-      bottom: 0,
+      top: top,
       width: pillWidth,
+      height: size,
       child: IgnorePointer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.10),
-                    blurRadius: 14,
-                    offset: const Offset(0, 4),
-                  ),
-                  if (!isDark)
-                    BoxShadow(
-                      color: Colors.white.withValues(alpha: 0.8),
-                      blurRadius: 0,
-                      offset: const Offset(0, -1),
-                    ),
-                ],
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(radius),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.10),
+                blurRadius: 14,
+                offset: const Offset(0, 4),
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: isDark
-                            ? [
-                                Colors.white.withValues(alpha: 0.20),
-                                AppTheme.mint.withValues(alpha: 0.16),
-                              ]
-                            : [
-                                Colors.white.withValues(alpha: 0.96),
-                                Colors.white.withValues(alpha: 0.78),
-                              ],
-                      ),
-                      border: Border.all(
-                        color: Colors.white.withValues(
-                          alpha: isDark ? 0.32 : 0.95,
-                        ),
-                      ),
-                    ),
-                  ),
+              if (!isDark)
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  blurRadius: 0,
+                  offset: const Offset(0, -1),
                 ),
+            ],
+          ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(radius),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: isDark
+                    ? [
+                        Colors.white.withValues(alpha: 0.20),
+                        AppTheme.mint.withValues(alpha: 0.16),
+                      ]
+                    : [
+                        Colors.white.withValues(alpha: 0.96),
+                        Colors.white.withValues(alpha: 0.78),
+                      ],
+              ),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: isDark ? 0.32 : 0.95),
               ),
             ),
           ),
+        ),
+      ),
     );
   }
 
-  void _triggerWaterDrop(Offset globalPosition) {
-    final box = _barKey.currentContext?.findRenderObject() as RenderBox?;
-    if (box == null || !box.hasSize) return;
-
-    final local = box.globalToLocal(globalPosition);
-    setState(() => _dropOrigin = local);
-    _dropController.forward(from: 0);
-  }
-
-  void _onItemTap(int index, Offset globalPosition) {
-    _triggerWaterDrop(globalPosition);
+  void _onItemTap(int index) {
     if (index != widget.selectedIndex) {
       HapticFeedback.lightImpact();
     }
@@ -196,79 +219,64 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
             ],
           ),
           child: ClipRRect(
-            key: _barKey,
             borderRadius: BorderRadius.circular(28),
-            child: Stack(
-              children: [
-                // Glass bar + tabs
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(28),
-                    color: isDark ? AppTheme.darkCard : null,
-                    gradient: isDark
-                        ? null
-                        : LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              AppColors.glassFill(context),
-                              AppColors.glassFillSecondary(context),
-                              widget.accentColor.withValues(alpha: 0.10),
-                            ],
-                          ),
-                    border: Border.all(
-                      color: isDark
-                          ? AppTheme.darkBorder
-                          : AppColors.glassBorder(context),
-                      width: 1.1,
-                    ),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 6,
-                  ),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          _slidingGlassPill(constraints.maxWidth, isDark),
-                          Row(
-                            children: [
-                              for (var i = 0; i < widget.items.length; i++)
-                                Expanded(
-                                  child: _GlassyNavItemButton(
-                                    item: widget.items[i],
-                                    selected: widget.selectedIndex == i,
-                                    onTapDown: (details) =>
-                                        _onItemTap(i, details.globalPosition),
-                                  ),
-                                ),
-                            ],
-                          ),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                color: isDark ? AppTheme.darkCard : null,
+                gradient: isDark
+                    ? null
+                    : LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.glassFill(context),
+                          AppColors.glassFillSecondary(context),
+                          widget.accentColor.withValues(alpha: 0.10),
                         ],
-                      );
-                    },
-                  ),
+                      ),
+                border: Border.all(
+                  color: isDark
+                      ? AppTheme.darkBorder
+                      : AppColors.glassBorder(context),
+                  width: 1.1,
                 ),
-                // Water-drop splash drawn ON TOP so it is clearly visible.
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: AnimatedBuilder(
-                      animation: _dropController,
-                      builder: (context, _) {
-                        return CustomPaint(
-                          painter: WaterDropPainter(
-                            origin: _dropOrigin,
-                            progress: _dropController.value,
-                            accentColor: widget.accentColor,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Row(
+                    children: [
+                      for (var i = 0; i < widget.items.length; i++)
+                        Expanded(
+                          child: _GlassyNavItemButton(
+                            item: widget.items[i],
+                            selected: widget.selectedIndex == i,
+                            onTap: () => _onItemTap(i),
                           ),
-                        );
-                      },
+                        ),
+                    ],
+                  ),
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return Stack(
+                            children: [
+                              _slidingGlassPill(
+                                constraints.maxWidth,
+                                constraints.maxHeight,
+                                isDark,
+                              ),
+                            ],
+                          );
+                        },
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -280,12 +288,12 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
 class _GlassyNavItemButton extends StatelessWidget {
   final GlassyNavItem item;
   final bool selected;
-  final GestureTapDownCallback onTapDown;
+  final VoidCallback onTap;
 
   const _GlassyNavItemButton({
     required this.item,
     required this.selected,
-    required this.onTapDown,
+    required this.onTap,
   });
 
   @override
@@ -295,7 +303,7 @@ class _GlassyNavItemButton extends StatelessWidget {
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTapDown: onTapDown,
+      onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
         child: Column(
@@ -304,18 +312,42 @@ class _GlassyNavItemButton extends StatelessWidget {
           children: [
             Icon(item.icon, color: iconColor, size: 22),
             const SizedBox(height: 3),
-            Text(
-              item.label,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: iconColor,
-                fontSize: 10,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                fontFamily: 'Literata',
+            if (selected)
+              OverflowBox(
+                fit: OverflowBoxFit.deferToChild,
+                alignment: Alignment.center,
+                minWidth: 0,
+                maxWidth: 140,
+                minHeight: 0,
+                maxHeight: 16,
+                child: Text(
+                  item.label,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.visible,
+                  style: TextStyle(
+                    color: iconColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Literata',
+                    height: 1,
+                  ),
+                ),
+              )
+            else
+              Text(
+                item.label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: iconColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Literata',
+                ),
               ),
-            ),
           ],
         ),
       ),

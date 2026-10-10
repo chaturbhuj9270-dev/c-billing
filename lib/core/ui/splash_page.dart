@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -64,7 +63,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     );
     _ringController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2200),
+      duration: const Duration(milliseconds: 2800),
     );
 
     _logoFade = CurvedAnimation(
@@ -373,474 +372,174 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  Widget _pulseRing(double phase) {
-    final t = (_ringController.value + phase) % 1.0;
-    final size = 120 + (t * 78);
-    final opacity = (1 - t) * 0.32;
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: const Color(0xFF1B4D3E).withValues(alpha: opacity),
-          width: 1.6,
-        ),
-      ),
-    );
-  }
-
-  Widget _loadingDots() {
-    return AnimatedBuilder(
-      animation: _pulseController,
-      builder: (context, _) {
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(3, (index) {
-            final wave = ((_pulseController.value + index * 0.18) % 1.0);
-            final lift = wave < 0.5 ? wave * 2 : (1 - wave) * 2;
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Transform.translate(
-                offset: Offset(0, -5 * lift),
-                child: Container(
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: const Color(
-                      0xFF1B4D3E,
-                    ).withValues(alpha: 0.35 + (0.5 * lift)),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            );
-          }),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
+    final isDark = AppColors.isDark(context);
+    final titleColor = isDark ? Colors.white : const Color(0xFF10241C);
+    final muted = isDark ? const Color(0xFF8E9892) : const Color(0xFF5E6B64);
+    final mint = AppTheme.mint;
+    final appTitle = _localizations.appName == 'C-BILLING'
+        ? 'C-Billing'
+        : _localizations.appName;
+    final tagline = _localizations.tagline == 'THE BACKBONE FOR YOUR\nBUSINESS'
+        ? 'THE BACKBONE FOR\nYOUR BUSINESS'
+        : _localizations.tagline;
 
     return Scaffold(
-      backgroundColor: AppColors.scaffold(context),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
+      backgroundColor: isDark
+          ? const Color(0xFF070908)
+          : const Color(0xFFF4F7F5),
+      body: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: AppColors.isDark(context)
+          gradient: RadialGradient(
+            center: const Alignment(0, -0.22),
+            radius: isDark ? 0.95 : 1.05,
+            colors: isDark
                 ? const [
-                    AppTheme.darkScaffold,
-                    AppTheme.darkSurface,
-                    AppTheme.darkCard,
+                    Color(0xFF1A4034),
+                    Color(0xFF0E1C17),
+                    Color(0xFF070908),
                   ]
-                : [
-                    AppColors.chipFill(context),
-                    const Color(0xFFE8E8E4),
-                    const Color(0xFFF1F8E9),
+                : const [
+                    Color(0xFFD7F6E8),
+                    Color(0xFFEEF6F2),
+                    Color(0xFFF4F7F5),
                   ],
+            stops: const [0.0, 0.42, 1],
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              // Top spacer
-              SizedBox(height: screenHeight * 0.08),
-
-              // Center section with logo and text
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Logo with entrance scale and a soft pulse ring
-                    SizedBox(
-                      width: 200,
-                      height: 200,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          AnimatedBuilder(
-                            animation: _ringController,
-                            builder: (context, _) {
-                              return Stack(
-                                alignment: Alignment.center,
-                                children: [_pulseRing(0), _pulseRing(0.5)],
-                              );
-                            },
-                          ),
-                          FadeTransition(
-                            opacity: _logoFade,
-                            child: ScaleTransition(
-                              scale: _logoScale,
-                              child: ScaleTransition(
-                                scale: _pulseScale,
-                                child: Hero(
-                                  tag: 'app_logo',
-                                  child: Container(
-                                    width: 120,
-                                    height: 120,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(32),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: const Color(
-                                            0xFF1B4D3E,
-                                          ).withValues(alpha: 0.25),
-                                          blurRadius: 30,
-                                          offset: const Offset(0, 10),
-                                          spreadRadius: 2,
-                                        ),
-                                        BoxShadow(
-                                          color: AppColors.card(context),
-                                          blurRadius: 15,
-                                          offset: const Offset(-5, -5),
-                                        ),
-                                      ],
-                                    ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(32),
-                                      child: Image.asset(
-                                        'assets/images/app_logo.png',
-                                        fit: BoxFit.cover,
-                                        gaplessPlayback: true,
-                                        cacheWidth: 360,
-                                        cacheHeight: 360,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 28),
+            child: Column(
+              children: [
+                const Spacer(flex: 3),
+                FadeTransition(
+                  opacity: _logoFade,
+                  child: ScaleTransition(
+                    scale: _logoScale,
+                    child: _SplashMark(
+                      isDark: isDark,
+                      mint: mint,
+                      rings: _ringController,
+                      pulse: _pulseScale,
                     ),
-                    const SizedBox(height: 8),
-
-                    FadeTransition(
-                      opacity: _nameFade,
-                      child: SlideTransition(
-                        position: _nameSlide,
-                        child: ShaderMask(
-                          shaderCallback: (bounds) => LinearGradient(
-                            colors: AppColors.headerGradient(context),
-                          ).createShader(bounds),
-                          child: Text(
-                            _localizations.appName,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 48,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Literata',
-                              letterSpacing: 2.5,
-                              height: 1.1,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    AnimatedBuilder(
-                      animation: _lineProgress,
-                      builder: (context, _) {
-                        return Container(
-                          width: 60 * _lineProgress.value,
-                          height: 3,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: AppColors.headerGradient(context),
-                            ),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 12),
-
-                    FadeTransition(
-                      opacity: _taglineFade,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 40),
-                        child: Text(
-                          _localizations.tagline,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: AppColors.accentSoft(context, 0.6),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            fontFamily: 'Literata',
-                            letterSpacing: 1.2,
-                            height: 1.6,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              if (!_showUnlockButton)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: FadeTransition(
-                    opacity: _footerFade,
-                    child: _loadingDots(),
                   ),
                 ),
-
-              // Unlock Now Button - Only visible when biometric lock is enabled
-              if (_showUnlockButton)
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: 1),
-                  duration: const Duration(milliseconds: 450),
-                  curve: Curves.easeOutCubic,
-                  builder: (context, value, child) {
-                    return Opacity(
-                      opacity: value,
-                      child: Transform.translate(
-                        offset: Offset(0, 18 * (1 - value)),
-                        child: child,
+                const SizedBox(height: 36),
+                FadeTransition(
+                  opacity: _nameFade,
+                  child: SlideTransition(
+                    position: _nameSlide,
+                    child: Text(
+                      appTitle,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: titleColor,
+                        fontSize: 40,
+                        fontWeight: FontWeight.w800,
+                        fontFamily: 'Literata',
+                        letterSpacing: -0.4,
+                        height: 1,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                AnimatedBuilder(
+                  animation: _lineProgress,
+                  builder: (context, _) {
+                    return Container(
+                      width: 42 * _lineProgress.value,
+                      height: 3,
+                      decoration: BoxDecoration(
+                        color: mint,
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     );
                   },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 20,
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(28),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                        child: Container(
-                          width: double.infinity,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Colors.white.withValues(alpha: 0.25),
-                                Colors.white.withValues(alpha: 0.15),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(28),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.3),
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(
-                                  0xFF1B4D3E,
-                                ).withValues(alpha: 0.2),
-                                blurRadius: 20,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: _showUnlockBiometric,
-                              borderRadius: BorderRadius.circular(28),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  ClipOval(
-                                    child: BackdropFilter(
-                                      filter: ImageFilter.blur(
-                                        sigmaX: 10,
-                                        sigmaY: 10,
-                                      ),
-                                      child: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                            colors: [
-                                              Colors.white.withValues(
-                                                alpha: 0.3,
-                                              ),
-                                              Colors.white.withValues(
-                                                alpha: 0.2,
-                                              ),
-                                            ],
-                                          ),
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: Colors.white.withValues(
-                                              alpha: 0.4,
-                                            ),
-                                            width: 1.5,
-                                          ),
-                                        ),
-                                        child: Icon(
-                                          Icons.fingerprint,
-                                          size: 24,
-                                          color: AppColors.accent(context),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  ShaderMask(
-                                    shaderCallback: (bounds) =>
-                                        const LinearGradient(
-                                          colors: [
-                                            Color(0xFF1B4D3E),
-                                            Color(0xFF2E7D5B),
-                                          ],
-                                        ).createShader(bounds),
-                                    child: Text(
-                                      _localizations.unlockNow,
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.w700,
-                                        fontFamily: 'Literata',
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+                ),
+                const SizedBox(height: 16),
+                FadeTransition(
+                  opacity: _taglineFade,
+                  child: Text(
+                    tagline,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: muted,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Literata',
+                      letterSpacing: 1.6,
+                      height: 1.45,
                     ),
                   ),
                 ),
-
-              // Spacer to push footer up or down based on button visibility
-              SizedBox(height: _showUnlockButton ? 12 : 32),
-
-              FadeTransition(
-                opacity: _footerFade,
-                child: SlideTransition(
-                  position: _footerSlide,
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      bottom: _showUnlockButton ? 40 : 50,
-                    ),
+                const Spacer(flex: 2),
+                FadeTransition(
+                  opacity: _footerFade,
+                  child: _showUnlockButton
+                      ? _buildUnlockButton(mint)
+                      : _buildReadyBar(isDark, muted, mint),
+                ),
+                const SizedBox(height: 28),
+                FadeTransition(
+                  opacity: _footerFade,
+                  child: SlideTransition(
+                    position: _footerSlide,
                     child: Column(
                       children: [
-                        // Elegant divider
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 1,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.transparent,
-                                    const Color(
-                                      0xFF1B4D3E,
-                                    ).withValues(alpha: 0.3),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              child: Container(
-                                width: 4,
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  color: const Color(
-                                    0xFF1B4D3E,
-                                  ).withValues(alpha: 0.3),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              width: 40,
-                              height: 1,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    const Color(
-                                      0xFF1B4D3E,
-                                    ).withValues(alpha: 0.3),
-                                    Colors.transparent,
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 20),
-
-                        // Premium label with better styling
                         Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 6,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.accentSoft(context, 0.08),
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: isDark
+                                  ? const Color(0xFF3A4540)
+                                  : const Color(0xFFD3DDD7),
+                            ),
                           ),
                           child: Text(
                             'PREMIUM FINANCIAL SOLUTIONS',
                             style: TextStyle(
-                              color: const Color(
-                                0xFF1B4D3E,
-                              ).withValues(alpha: 0.65),
-                              fontSize: 9,
+                              color: muted,
+                              fontSize: 10,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'Literata',
-                              letterSpacing: 1.8,
+                              letterSpacing: 1.3,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 14),
-
-                        // Contact with icon
+                        const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
                               Icons.location_on_outlined,
-                              size: 11,
-                              color: AppColors.accentSoft(context, 0.5),
+                              size: 14,
+                              color: mint,
                             ),
-                            SizedBox(width: 4),
+                            const SizedBox(width: 4),
                             Text(
                               'Newasa',
                               style: TextStyle(
-                                color: AppColors.accent(context),
-                                fontSize: 10,
+                                color: mint,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 fontFamily: 'Literata',
                               ),
                             ),
-                            SizedBox(width: 8),
-                            Icon(
-                              Icons.phone_outlined,
-                              size: 11,
-                              color: AppColors.accentSoft(context, 0.5),
-                            ),
-                            SizedBox(width: 4),
+                            const SizedBox(width: 16),
+                            Icon(Icons.phone_outlined, size: 14, color: mint),
+                            const SizedBox(width: 4),
                             Text(
-                              '+91 9970662978',
+                              '+91 99706 62978',
                               style: TextStyle(
-                                color: AppColors.accent(context),
-                                fontSize: 10,
+                                color: mint,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 fontFamily: 'Literata',
                               ),
@@ -851,10 +550,171 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                     ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 18),
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildReadyBar(bool isDark, Color muted, Color mint) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_introController, _pulseController]),
+      builder: (context, _) {
+        final fill =
+            (0.22 +
+                    (_introController.value * 0.28) +
+                    (_pulseController.value * 0.06))
+                .clamp(0.18, 0.62);
+        return Column(
+          children: [
+            Container(
+              width: 168,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF2A3330)
+                    : const Color(0xFFD7E0DB),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              alignment: Alignment.centerLeft,
+              child: FractionallySizedBox(
+                widthFactor: fill,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: mint,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _localizations.loadingData == 'Loading data...'
+                  ? 'Getting things ready'
+                  : _localizations.loadingData,
+              style: TextStyle(
+                color: muted,
+                fontSize: 13,
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildUnlockButton(Color mint) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: Material(
+          color: mint,
+          borderRadius: BorderRadius.circular(26),
+          child: InkWell(
+            onTap: _showUnlockBiometric,
+            borderRadius: BorderRadius.circular(26),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.fingerprint, color: AppTheme.onMint, size: 22),
+                const SizedBox(width: 8),
+                Text(
+                  _localizations.unlockNow,
+                  style: const TextStyle(
+                    color: AppTheme.onMint,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SplashMark extends StatelessWidget {
+  final bool isDark;
+  final Color mint;
+  final Animation<double> rings;
+  final Animation<double> pulse;
+
+  const _SplashMark({
+    required this.isDark,
+    required this.mint,
+    required this.rings,
+    required this.pulse,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ring = isDark ? mint : const Color(0xFF1B4D3E);
+    return SizedBox(
+      width: 280,
+      height: 280,
+      child: AnimatedBuilder(
+        animation: rings,
+        builder: (context, child) {
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              _ripple(0, ring),
+              _ripple(0.33, ring),
+              _ripple(0.66, ring),
+              child!,
+            ],
+          );
+        },
+        child: ScaleTransition(
+          scale: pulse,
+          child: Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: mint.withValues(alpha: isDark ? 0.35 : 0.28),
+                  blurRadius: 28,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: ClipOval(
+              child: Image.asset(
+                'assets/images/app_logo.png',
+                width: 120,
+                height: 120,
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _ripple(double phase, Color color) {
+    final t = (rings.value + phase) % 1.0;
+    final size = 118 + (t * 150);
+    final opacity = (1 - t) * (isDark ? 0.55 : 0.32);
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: color.withValues(alpha: opacity), width: 1.6),
       ),
     );
   }
