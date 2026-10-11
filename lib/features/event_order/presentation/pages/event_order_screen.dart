@@ -526,11 +526,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       preferredSize: Size.fromHeight(72),
       child: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: AppColors.headerGradient(context),
-          ),
+          color: AppColors.appBar(context),
           boxShadow: [
             BoxShadow(
               color: AppColors.accentSoft(context, 0.3),

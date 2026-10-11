@@ -61,7 +61,8 @@ class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
-        backgroundColor: AppColors.card(context),
+        backgroundColor: AppColors.appBar(context),
+        foregroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -69,12 +70,12 @@ class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: _primary.withValues(alpha: 0.1),
+              color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.arrow_back_ios_new,
-              color: _primary,
+              color: Colors.white,
               size: 18,
             ),
           ),
@@ -84,7 +85,7 @@ class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
           style: const TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w800,
-            color: _primary,
+            color: Colors.white,
             fontSize: 20,
           ),
         ),

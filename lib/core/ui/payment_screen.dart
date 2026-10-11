@@ -201,6 +201,7 @@ class _PaymentScreenState extends State<PaymentScreen>
         height: double.infinity,
         decoration: const BoxDecoration(color: Color(0xFFE8E8E4)),
         child: SafeArea(
+          top: false,
           child: FadeTransition(
             opacity: _fadeAnimation,
             child: SlideTransition(
@@ -241,7 +242,13 @@ class _PaymentScreenState extends State<PaymentScreen>
 
   Widget _buildAppBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      color: AppColors.appBar(context),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        MediaQuery.of(context).padding.top + 12,
+        16,
+        12,
+      ),
       child: Row(
         children: [
           GestureDetector(
@@ -250,14 +257,14 @@ class _PaymentScreenState extends State<PaymentScreen>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.6),
+                color: Colors.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.accentSoft(context, 0.1)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.arrow_back_ios_new,
                 size: 18,
-                color: AppColors.accentSoft(context, 0.8),
+                color: Colors.white,
               ),
             ),
           ),
@@ -265,10 +272,10 @@ class _PaymentScreenState extends State<PaymentScreen>
             child: Text(
               _localizations.payment,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: AppColors.accent(context),
+                color: Colors.white,
                 fontFamily: 'Literata',
                 letterSpacing: 1,
               ),

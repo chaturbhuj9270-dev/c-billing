@@ -190,11 +190,7 @@ class _ExpensesPageState extends State<ExpensesPage>
 
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: AppColors.headerGradient(context),
-        ),
+        color: AppColors.appBar(context),
         boxShadow: [
           BoxShadow(
             color: AppColors.accentSoft(context, 0.3),

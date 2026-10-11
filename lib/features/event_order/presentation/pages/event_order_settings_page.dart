@@ -83,7 +83,8 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
-        backgroundColor: AppColors.card(context),
+        backgroundColor: AppColors.appBar(context),
+        foregroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
@@ -91,12 +92,12 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: _primaryColor.withValues(alpha: 0.1),
+              color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.arrow_back_ios_new,
-              color: _primaryColor,
+              color: Colors.white,
               size: 18,
             ),
           ),
@@ -109,7 +110,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
             fontFamily: 'Literata',
             fontWeight: FontWeight.w700,
             fontSize: 20,
-            color: Color(0xFF1A1A2E),
+            color: Colors.white,
           ),
         ),
         centerTitle: true,

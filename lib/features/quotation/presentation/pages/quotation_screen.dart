@@ -357,14 +357,15 @@ class _QuotationScreenState extends State<QuotationScreen> {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
-        backgroundColor: AppColors.card(context),
+        backgroundColor: AppColors.appBar(context),
+        foregroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         title: Text(
           _isEditing ? _l10n.quotation : _l10n.newQuotation,
           style: const TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w800,
-            color: _primary,
+            color: Colors.white,
           ),
         ),
         actions: [
@@ -374,7 +375,10 @@ class _QuotationScreenState extends State<QuotationScreen> {
               child: SizedBox(
                 width: 22,
                 height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2, color: _primary),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
               ),
             )
           else ...[
@@ -386,7 +390,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
                   height: 22,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: _primary,
+                    color: Colors.white,
                   ),
                 ),
               )
@@ -397,12 +401,12 @@ class _QuotationScreenState extends State<QuotationScreen> {
                 icon: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: _primary.withValues(alpha: 0.1),
+                    color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
                     Icons.print_rounded,
-                    color: _primary,
+                    color: Colors.white,
                     size: 20,
                   ),
                 ),
@@ -414,7 +418,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
                 style: const TextStyle(
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w700,
-                  color: _primary,
+                  color: Colors.white,
                 ),
               ),
             ),

@@ -230,6 +230,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
       body: SafeArea(
+        top: false,
         child: Column(
           children: [
             // Custom Header
@@ -259,9 +260,14 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(8, 12, 16, 12),
+      padding: EdgeInsets.fromLTRB(
+        8,
+        MediaQuery.of(context).padding.top + 12,
+        16,
+        12,
+      ),
       decoration: BoxDecoration(
-        color: AppColors.card(context),
+        color: AppColors.appBar(context),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -278,12 +284,12 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
             icon: Container(
               padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.accentSoft(context, 0.1),
+                color: Colors.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.arrow_back_ios_new_rounded,
-                color: AppColors.accent(context),
+                color: Colors.white,
                 size: 18,
               ),
             ),
@@ -296,8 +302,8 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
               children: [
                 Text(
                   _localizations.reportPreview,
-                  style: TextStyle(
-                    color: AppColors.accent(context),
+                  style: const TextStyle(
+                    color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                     fontFamily: 'Literata',
@@ -311,14 +317,14 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                           ? Icons.picture_as_pdf_rounded
                           : Icons.table_chart_rounded,
                       size: 14,
-                      color: AppColors.accentSoft(context, 0.6),
+                      color: Colors.white.withValues(alpha: 0.7),
                     ),
                     SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         widget.reportTitle,
                         style: TextStyle(
-                          color: AppColors.accentSoft(context, 0.7),
+                          color: Colors.white.withValues(alpha: 0.7),
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           fontFamily: 'Literata',

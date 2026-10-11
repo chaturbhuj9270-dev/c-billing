@@ -117,6 +117,8 @@ class AppTheme {
       primaryColor: isDark ? mint : primary,
       appBarTheme: AppBarTheme(
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: false,
         backgroundColor: isDark ? darkScaffold : primary,
         foregroundColor: Colors.white,
@@ -303,6 +305,11 @@ class AppColors {
 
   static Color shadow(BuildContext context) =>
       Colors.black.withValues(alpha: isDark(context) ? 0.55 : 0.06);
+
+  /// Solid top-bar color from [AppBarTheme]. The same color on every screen.
+  static Color appBar(BuildContext context) =>
+      Theme.of(context).appBarTheme.backgroundColor ??
+      (isDark(context) ? AppTheme.darkScaffold : AppTheme.primary);
 
   /// Deep green bar. Dark enough for light labels, tinted to match the screens.
   static List<Color> headerGradient(BuildContext context) => isDark(context)

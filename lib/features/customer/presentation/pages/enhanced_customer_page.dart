@@ -704,7 +704,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       backgroundColor: AppColors.scaffold(context),
       floatingActionButton: _buildFAB(),
       body: SafeArea(
-        top: !widget.isEmbedded,
+        top: false,
         child: Column(
           children: [
             // Header (only when not embedded)
@@ -802,11 +802,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
         16,
       ),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: AppColors.headerGradient(context),
-        ),
+        color: AppColors.appBar(context),
         boxShadow: [
           BoxShadow(
             color: AppColors.accentSoft(context, 0.3),

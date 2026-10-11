@@ -3084,7 +3084,7 @@ class _PurchasePageState extends State<PurchasePage>
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
       body: SafeArea(
-        top: !widget.isEmbedded,
+        top: false,
         child: Column(
           children: [
             // Scrollable content
@@ -3098,7 +3098,7 @@ class _PurchasePageState extends State<PurchasePage>
                       pinned: true,
                       delegate: _StickyHeaderDelegate(
                         child: _buildHeader(),
-                        height: 90,
+                        height: 90 + MediaQuery.of(context).padding.top,
                       ),
                     ),
                   // Sticky Quick Actions
@@ -3229,16 +3229,17 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  /// Modern header with gradient
+  /// Modern header with the theme app-bar color
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        MediaQuery.of(context).padding.top + 12,
+        16,
+        16,
+      ),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: AppColors.headerGradient(context),
-        ),
+        color: AppColors.appBar(context),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(24),
           bottomRight: Radius.circular(24),

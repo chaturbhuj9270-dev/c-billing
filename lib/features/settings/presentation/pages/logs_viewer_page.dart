@@ -173,7 +173,8 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
           _localizations.appLogs,
           style: TextStyle(fontFamily: 'Literata', fontWeight: FontWeight.w700),
         ),
-        backgroundColor: const Color(0xFF1B4D3E),
+        backgroundColor: AppColors.appBar(context),
+        surfaceTintColor: Colors.transparent,
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [

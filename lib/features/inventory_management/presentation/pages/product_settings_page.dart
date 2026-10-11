@@ -29,6 +29,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
       body: SafeArea(
+        top: false,
         child: Column(
           children: [
             _buildHeader(),
@@ -80,7 +81,13 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
 
   Widget _buildHeader() {
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        MediaQuery.of(context).padding.top + 16,
+        16,
+        8,
+      ),
+      color: AppColors.appBar(context),
       child: Row(
         children: [
           GestureDetector(
@@ -88,13 +95,13 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
             child: Container(
               padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.accentSoft(context, 0.1),
+                color: Colors.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.arrow_back_ios_rounded,
                 size: 20,
-                color: AppColors.accent(context),
+                color: Colors.white,
               ),
             ),
           ),
@@ -103,13 +110,13 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Product Settings',
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w800,
                     fontSize: 22,
-                    color: AppColors.accent(context),
+                    color: Colors.white,
                   ),
                 ),
                 Text(
@@ -118,7 +125,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w400,
                     fontSize: 12,
-                    color: Colors.grey[600],
+                    color: Colors.white.withValues(alpha: 0.7),
                   ),
                 ),
               ],

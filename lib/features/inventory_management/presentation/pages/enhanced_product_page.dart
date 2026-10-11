@@ -395,14 +395,16 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: AppColors.scaffold(context),
+      backgroundColor: AppColors.appBar(context),
+      foregroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
       elevation: 0,
       title: Text(
         _localizations.products,
-        style: TextStyle(
+        style: const TextStyle(
           fontFamily: 'Literata',
           fontWeight: FontWeight.w700,
-          color: AppColors.accent(context),
+          color: Colors.white,
         ),
       ),
       actions: [
@@ -433,7 +435,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
           ),
         // Barcode Generator
         IconButton(
-          icon: Icon(Icons.qr_code_2_rounded, color: AppColors.accent(context)),
+          icon: const Icon(Icons.qr_code_2_rounded, color: Colors.white),
           tooltip: 'Generate Barcode',
           onPressed: () {
             Navigator.push(
@@ -444,7 +446,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         ),
         // Settings
         IconButton(
-          icon: Icon(Icons.settings_outlined, color: AppColors.accent(context)),
+          icon: const Icon(Icons.settings_outlined, color: Colors.white),
           onPressed: () {
             Navigator.push(
               context,

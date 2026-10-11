@@ -135,7 +135,9 @@ class _CustomerAddEditPageState extends State<CustomerAddEditPage> {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
-        backgroundColor: AppTheme.primary,
+        backgroundColor: AppColors.appBar(context),
+        foregroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.of(context).pop(),

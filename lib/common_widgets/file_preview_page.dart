@@ -485,6 +485,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
       body: SafeArea(
+        top: false,
         child: Column(
           children: [
             _buildHeader(),
@@ -614,9 +615,14 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(8, 12, 16, 12),
+      padding: EdgeInsets.fromLTRB(
+        8,
+        MediaQuery.of(context).padding.top + 12,
+        16,
+        12,
+      ),
       decoration: BoxDecoration(
-        color: AppColors.card(context),
+        color: AppColors.appBar(context),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -635,12 +641,12 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             icon: Container(
               padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.accentSoft(context, 0.1),
+                color: Colors.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.arrow_back,
-                color: AppColors.accent(context),
+                color: Colors.white,
                 size: 20,
               ),
             ),
@@ -652,11 +658,11 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               children: [
                 Text(
                   widget.fileName,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.accent(context),
+                    color: Colors.white,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -667,7 +673,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                     style: TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 12,
-                      color: Colors.grey[600],
+                      color: Colors.white.withValues(alpha: 0.7),
                     ),
                   )
                 else
@@ -704,7 +710,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 11,
-                          color: Colors.grey[500],
+                          color: Colors.white.withValues(alpha: 0.7),
                         ),
                       ),
                     ],

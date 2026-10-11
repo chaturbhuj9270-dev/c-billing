@@ -139,19 +139,19 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       floating: false,
       pinned: true,
       elevation: 0,
-      backgroundColor: AppColors.card(context),
+      backgroundColor: AppColors.appBar(context),
       surfaceTintColor: Colors.transparent,
       leading: IconButton(
         onPressed: () => Navigator.of(context).pop(),
         icon: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: _primaryColor.withValues(alpha: 0.1),
+            color: Colors.white.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(10),
           ),
           child: const Icon(
             Icons.arrow_back_ios_new,
-            color: _primaryColor,
+            color: Colors.white,
             size: 18,
           ),
         ),
@@ -200,14 +200,14 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _primaryColor.withValues(alpha: 0.1),
+                  color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   Icons.summarize_rounded,
                   color: state is EventOrderLoaded && state.orders.isNotEmpty
-                      ? _primaryColor
-                      : Colors.grey,
+                      ? Colors.white
+                      : Colors.white54,
                   size: 20,
                 ),
               ),
@@ -225,12 +225,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _primaryColor.withValues(alpha: 0.1),
+                  color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
                   Icons.refresh_rounded,
-                  color: _primaryColor,
+                  color: Colors.white,
                   size: 20,
                 ),
               ),
@@ -243,12 +243,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: _primaryColor.withValues(alpha: 0.1),
+              color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.settings_rounded,
-              color: _primaryColor,
+              color: Colors.white,
               size: 20,
             ),
           ),
@@ -258,14 +258,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                _primaryColor.withValues(alpha: 0.08),
-                _primaryDark.withValues(alpha: 0.04),
-              ],
-            ),
+            color: AppColors.appBar(context),
           ),
           child: SafeArea(
             child: Padding(
@@ -336,7 +329,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                                 fontFamily: 'Literata',
                                 fontSize: 22,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFF1A1A2E),
+                                color: Colors.white,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -355,7 +348,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                               style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 12,
-                                color: Colors.grey[600],
+                                color: Colors.white.withValues(alpha: 0.7),
                               ),
                             ),
                           ],

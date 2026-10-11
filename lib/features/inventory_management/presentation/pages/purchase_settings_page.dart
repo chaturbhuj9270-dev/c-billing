@@ -1129,15 +1129,7 @@ class _SettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF1B4D3E),
-            Color(0xFF2D6A4F),
-            Color(0xFF1B4D3E).withValues(alpha: 0.9),
-          ],
-        ),
+        color: AppColors.appBar(context),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(28),
           bottomRight: Radius.circular(28),

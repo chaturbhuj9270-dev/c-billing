@@ -1325,7 +1325,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: _buildNewPurchaseBar(),
       body: SafeArea(
-        top: !widget.isEmbedded,
+        top: false,
         child: Column(
           children: [
             if (!widget.isEmbedded) _buildHeader(),
@@ -1683,7 +1683,13 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       child: FadeTransition(
         opacity: _opacityAnimation,
         child: Container(
-          padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            MediaQuery.of(context).padding.top + 16,
+            16,
+            8,
+          ),
+          color: AppColors.appBar(context),
           child: Row(
             children: [
               GestureDetector(
@@ -1691,13 +1697,13 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                 child: Container(
                   padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.accentSoft(context, 0.1),
+                    color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.arrow_back_ios_rounded,
                     size: 20,
-                    color: AppColors.accent(context),
+                    color: Colors.white,
                   ),
                 ),
               ),
@@ -1708,11 +1714,11 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   children: [
                     Text(
                       _localizations.purchaseHistory,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontFamily: 'Literata',
                         fontWeight: FontWeight.w800,
                         fontSize: 22,
-                        color: AppColors.accent(context),
+                        color: Colors.white,
                       ),
                     ),
                     Text(
@@ -1721,7 +1727,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                         fontFamily: 'Literata',
                         fontWeight: FontWeight.w400,
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: Colors.white.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -1744,13 +1750,13 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   child: Container(
                     padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.accentSoft(context, 0.1),
+                      color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.document_scanner_rounded,
                       size: 22,
-                      color: AppColors.accent(context),
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -1788,13 +1794,13 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                 icon: Container(
                   padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.accentSoft(context, 0.1),
+                    color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.settings_rounded,
                     size: 22,
-                    color: AppColors.accent(context),
+                    color: Colors.white,
                   ),
                 ),
                 shape: RoundedRectangleBorder(

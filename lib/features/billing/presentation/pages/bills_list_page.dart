@@ -810,11 +810,7 @@ class _BillsListPageState extends State<BillsListPage>
         preferredSize: Size.fromHeight(70),
         child: Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: AppColors.headerGradient(context),
-            ),
+            color: AppColors.appBar(context),
             boxShadow: [
               BoxShadow(
                 color: AppColors.accentSoft(context, 0.2),
@@ -2696,7 +2692,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
             expandedHeight: 120,
             pinned: true,
             stretch: true,
-            backgroundColor: const Color(0xFF1B4D3E),
+            backgroundColor: AppColors.appBar(context),
             leading: Padding(
               padding: const EdgeInsets.all(8),
               child: GestureDetector(
@@ -2759,11 +2755,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: AppColors.headerGradient(context),
-                  ),
+                  color: AppColors.appBar(context),
                 ),
                 child: SafeArea(
                   child: Padding(

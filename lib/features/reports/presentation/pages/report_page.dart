@@ -385,13 +385,7 @@ class _ReportPageState extends State<ReportPage>
       ),
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [_kGreen, _kGreenDark],
-            ),
-          ),
+          color: AppColors.appBar(context),
           child: SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(56, 12, 20, 0),
@@ -432,7 +426,7 @@ class _ReportPageState extends State<ReportPage>
           ),
         ),
       ),
-      backgroundColor: _kGreen,
+      backgroundColor: AppColors.appBar(context),
     );
   }
 

@@ -139,16 +139,18 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
-        backgroundColor: AppColors.card(context),
-        elevation: 2,
+        backgroundColor: AppColors.appBar(context),
+        foregroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: Icon(Icons.arrow_back, color: AppTheme.primary),
+          child: const Icon(Icons.arrow_back, color: Colors.white),
         ),
         title: Text(
           _localizations.myProfile,
-          style: TextStyle(
-            color: AppColors.primaryText(context),
+          style: const TextStyle(
+            color: Colors.white,
             fontSize: 22,
             fontWeight: FontWeight.w700,
             fontFamily: 'Literata',

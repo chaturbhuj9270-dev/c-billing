@@ -1083,16 +1083,18 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
     return Scaffold(
       backgroundColor: AppColors.chipFill(context),
       appBar: AppBar(
-        backgroundColor: AppColors.card(context),
+        backgroundColor: AppColors.appBar(context),
+        foregroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.accent(context)),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           _localizations.shopDetails,
-          style: TextStyle(
-            color: AppColors.accent(context),
+          style: const TextStyle(
+            color: Colors.white,
             fontSize: 22,
             fontWeight: FontWeight.w700,
             fontFamily: 'Literata',
