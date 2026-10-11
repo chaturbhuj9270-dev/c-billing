@@ -54,6 +54,7 @@ import 'package:c_billing/features/customer/offline/controllers/customer_transac
 import 'package:c_billing/features/customer/domain/entities/customer_transaction.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -845,7 +846,7 @@ class _BillingPageState extends State<BillingPage> {
   }
 
   void _showAddItemsPopup() {
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -2296,7 +2297,7 @@ class _BillingPageState extends State<BillingPage> {
     // Show batch selection for all products with batches
     if (productBatches.isNotEmpty) {
       _indexNoController.clear();
-      showModalBottomSheet(
+      showAppBottomSheet(
         context: context,
         isScrollControlled: true,
         backgroundColor: AppTheme.transparent,
@@ -6013,7 +6014,7 @@ class _BillingPageState extends State<BillingPage> {
     // Refresh customers before showing picker
     _loadCustomers();
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,

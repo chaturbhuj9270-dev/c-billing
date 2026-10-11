@@ -14,6 +14,7 @@ import 'package:c_billing/features/inventory_management/offline/entities/purchas
 import 'package:c_billing/features/availability/presentation/pages/report_preview_screen.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 /// Lets the dashboard download button open the stock report.
 class AvailabilityScreenActions {
@@ -204,7 +205,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   void _showReportBottomSheet() {
     ReportFormat selectedFormat = ReportFormat.pdf;
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,

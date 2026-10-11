@@ -20,6 +20,7 @@ import '../../../product/offline/entities/product_entity.dart';
 import '../../../billing/presentation/widgets/barcode_scanner_sheet.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 /// Event Management + Sales Order Screen
 /// Supports two modes: Event Mode (with sub-events) and Sales Order Mode (with products)
@@ -927,7 +928,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
 
     if (!mounted) return;
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -3618,7 +3619,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
 
   /// Show product selection sheet with tabs: Search, Code, Barcode
   void _showProductSelectionSheet() {
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,

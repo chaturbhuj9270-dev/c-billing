@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 /// Sort options for product list
 enum ProductSortField { name, stock, price, category }
@@ -347,7 +348,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
   }
 
   void _showCategoryPicker(BuildContext context) {
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       backgroundColor: AppTheme.transparent,
       builder: (context) => Container(

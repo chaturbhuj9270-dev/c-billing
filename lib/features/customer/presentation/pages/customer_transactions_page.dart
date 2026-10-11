@@ -15,6 +15,7 @@ import '../../../event_order/domain/entities/event_order.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 /// Date filter options for transactions
 enum TransactionDateFilter { thisMonth, thisYear, lastYear, custom, all }
@@ -706,7 +707,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
   }
 
   Future<void> _showReceivePaymentSheet() async {
-    final result = await showModalBottomSheet<Map<String, dynamic>>(
+    final result = await showAppBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,

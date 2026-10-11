@@ -11,6 +11,7 @@ import 'package:c_billing/features/event_order/domain/entities/event_order.dart'
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 /// Page to display customer details, pending balance, and transaction history
 /// Also provides functionality to receive payments
@@ -177,7 +178,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
   void _showReceivePaymentDialog() {
     if (_customer == null) return;
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,

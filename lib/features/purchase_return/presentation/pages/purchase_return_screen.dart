@@ -11,6 +11,7 @@ import '../../data/services/purchase_return_service.dart';
 import '../../domain/entities/purchase_return.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 // ──────────────────────────────────────────────────────────
 // A premium Purchase Return screen with:
@@ -652,7 +653,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
 
   void _showSupplierPicker() {
     _supplierSearchCtrl.clear();
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -1243,7 +1244,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
 
     if (!mounted) return;
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,

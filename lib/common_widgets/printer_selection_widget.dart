@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/printing/models/printer_models.dart';
 import '../core/printing/services/pos_printer_service.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 /// Widget for discovering and selecting POS printers
 /// Shows a bottom sheet with available printers
@@ -17,7 +18,7 @@ class PrinterSelectionWidget extends StatefulWidget {
 
   /// Show printer selection as a bottom sheet
   static Future<PosPrinterDevice?> show(BuildContext context) async {
-    return showModalBottomSheet<PosPrinterDevice>(
+    return showAppBottomSheet<PosPrinterDevice>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,

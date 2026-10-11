@@ -28,6 +28,7 @@ import 'flyout_menu.dart';
 import '../../../settings/presentation/pages/logs_viewer_page.dart';
 import '../../../../common_widgets/action_menu.dart';
 import '../../../../common_widgets/glassy_bottom_nav_bar.dart';
+import '../../../../common_widgets/glass_bevel_frame.dart';
 import '../../../../common_widgets/range_calendar_sheet.dart';
 import '../../../../common_widgets/quick_actions_overlay.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -532,16 +533,46 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
   Widget _buildCommonHeader() {
     final isDark = AppColors.isDark(context);
-    return Container(
+    final bar = AppColors.appBar(context);
+    const headerRadius = BorderRadius.vertical(bottom: Radius.circular(24));
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.appBar(context),
-        border: isDark
-            ? const Border(
-                bottom: BorderSide(color: AppTheme.darkBorder, width: 1),
-              )
-            : null,
+        borderRadius: headerRadius,
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: isDark ? 0.45 : 0.22),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: SafeArea(
+      child: ClipRRect(
+        borderRadius: headerRadius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: CustomPaint(
+            foregroundPainter: GlassBevelBorderPainter(
+              isDark: isDark,
+              themeColor: Theme.of(context).primaryColor,
+              radius: 24,
+              borderRadius: headerRadius,
+            ),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color.lerp(AppTheme.white, bar, isDark ? 0.78 : 0.55)!,
+                    bar,
+                    Color.lerp(bar, AppTheme.black, isDark ? 0.34 : 0.2)!,
+                  ],
+                  stops: const [0.0, 0.46, 1.0],
+                ),
+              ),
+              child: SafeArea(
         bottom: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
@@ -718,6 +749,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           ),
         ),
       ),
+              ),
+            ),
+          ),
+        ),
+    ),
     );
   }
 

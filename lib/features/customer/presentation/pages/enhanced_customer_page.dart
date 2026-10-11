@@ -21,6 +21,7 @@ import 'customer_finance_page.dart';
 import 'customer_transactions_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 class EnhancedCustomerPage extends StatefulWidget {
   final bool isEmbedded;
@@ -1007,7 +1008,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   // ━━━ CUSTOMER DETAILS BOTTOM SHEET ━━━
 
   void _showCustomerDetails(Map<String, dynamic> customer) {
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -1033,7 +1034,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   // ━━━ CUSTOMER CONTEXT MENU ━━━
 
   void _showCustomerContextMenu(Map<String, dynamic> customer) {
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       backgroundColor: AppTheme.transparent,
       builder: (context) => ClipRRect(
@@ -1156,7 +1157,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
   void _showAddCustomerSheet() {
     _clearForm();
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -1166,7 +1167,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
   void _showEditCustomerSheet(Map<String, dynamic> customer) {
     _editCustomer(customer);
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,

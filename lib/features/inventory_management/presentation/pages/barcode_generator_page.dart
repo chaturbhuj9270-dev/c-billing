@@ -20,6 +20,7 @@ import '../../offline/controllers/purchase_batch_offline_controller.dart';
 import '../../offline/entities/purchase_batch_entity.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 class BarcodeGeneratorPage extends StatefulWidget {
   const BarcodeGeneratorPage({super.key});
@@ -2703,7 +2704,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     final quantity = int.tryParse(_quantityController.text) ?? 1;
     final topLineInfo = _buildPreviewTopLine();
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,

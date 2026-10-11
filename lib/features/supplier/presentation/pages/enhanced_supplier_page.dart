@@ -15,6 +15,7 @@ import '../widgets/supplier_filter_widget.dart';
 import '../widgets/supplier_list_widget.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 class EnhancedSupplierPage extends StatefulWidget {
   final bool isEmbedded;
@@ -277,7 +278,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
 
     if (!mounted) return;
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -296,7 +297,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
     _editingSupplierLocalId = supplier['localId'] as int?;
     _isEditing = true;
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -723,7 +724,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
   // ━━━ UI: Context Menu ━━━
 
   void _showContextMenu(Map<String, dynamic> supplier) {
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       backgroundColor: AppTheme.transparent,
       builder: (ctx) => Container(

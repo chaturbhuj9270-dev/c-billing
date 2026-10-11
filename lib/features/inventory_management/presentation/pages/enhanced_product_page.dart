@@ -24,6 +24,7 @@ import 'product_settings_page.dart';
 import 'barcode_generator_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 class EnhancedProductPage extends StatefulWidget {
   final bool isEmbedded;
@@ -893,7 +894,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     final isLowStock = product.currentStock <= (product.minStockLevel ?? 5);
     final isOutOfStock = product.currentStock <= 0;
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -1337,7 +1338,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
   // ━━━ CONTEXT MENU ━━━
 
   void _showProductContextMenu(ProductEntity product) {
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       backgroundColor: AppTheme.transparent,
       builder: (context) => Container(
@@ -1583,7 +1584,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
     loadCompaniesAndSuppliers();
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -2022,7 +2023,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       }
     }
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -2602,7 +2603,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     BuildContext context,
     List<Map<String, dynamic>> companies,
   ) async {
-    return showModalBottomSheet<Map<String, dynamic>>(
+    return showAppBottomSheet<Map<String, dynamic>>(
       context: context,
       backgroundColor: AppTheme.transparent,
       builder: (context) => Container(
@@ -2681,7 +2682,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     BuildContext context,
     List<Map<String, dynamic>> suppliers,
   ) async {
-    return showModalBottomSheet<Map<String, dynamic>>(
+    return showAppBottomSheet<Map<String, dynamic>>(
       context: context,
       backgroundColor: AppTheme.transparent,
       builder: (context) => Container(

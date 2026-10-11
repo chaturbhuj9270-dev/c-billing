@@ -8,6 +8,7 @@ import '../../data/services/expense_sync_service.dart';
 import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 /// Date filter options for expenses
 enum ExpenseDateFilter { all, thisMonth, thisYear, lastYear, custom }
@@ -854,7 +855,7 @@ class _ExpensesPageState extends State<ExpensesPage>
   }
 
   Future<void> _showAddExpenseSheet() async {
-    final result = await showModalBottomSheet<Map<String, dynamic>>(
+    final result = await showAppBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -887,7 +888,7 @@ class _ExpensesPageState extends State<ExpensesPage>
   }
 
   Future<void> _showEditExpenseSheet(ExpenseEntity expense) async {
-    final result = await showModalBottomSheet<Map<String, dynamic>>(
+    final result = await showAppBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -917,7 +918,7 @@ class _ExpensesPageState extends State<ExpensesPage>
   }
 
   void _showExpenseDetails(ExpenseEntity expense) {
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       backgroundColor: AppTheme.transparent,
       builder: (context) => _ExpenseDetailsSheet(expense: expense),

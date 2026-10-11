@@ -22,20 +22,24 @@ class GlassBevelBorderPainter extends CustomPainter {
   final bool isDark;
   final Color themeColor;
   final double radius;
+  final BorderRadius? borderRadius;
 
   const GlassBevelBorderPainter({
     required this.isDark,
     required this.themeColor,
     required this.radius,
+    this.borderRadius,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final bounds = Offset.zero & size;
-    final outer = RRect.fromRectAndRadius(
-      bounds.deflate(1.15),
-      Radius.circular(radius - 1.15),
-    );
+    final outer = borderRadius == null
+        ? RRect.fromRectAndRadius(
+            bounds.deflate(1.15),
+            Radius.circular((radius - 1.15).clamp(0.0, radius)),
+          )
+        : borderRadius!.resolve(TextDirection.ltr).toRRect(bounds).deflate(1.15);
 
     final bevel = Paint()
       ..style = PaintingStyle.stroke
@@ -61,6 +65,7 @@ class GlassBevelBorderPainter extends CustomPainter {
   bool shouldRepaint(covariant GlassBevelBorderPainter oldDelegate) {
     return oldDelegate.isDark != isDark ||
         oldDelegate.themeColor != themeColor ||
-        oldDelegate.radius != radius;
+        oldDelegate.radius != radius ||
+        oldDelegate.borderRadius != borderRadius;
   }
 }

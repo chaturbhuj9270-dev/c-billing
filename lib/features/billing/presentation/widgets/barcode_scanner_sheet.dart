@@ -8,6 +8,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../../core/services/barcode_service.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 /// A beautiful bottom sheet for scanning barcodes for fast billing
 /// Features:
@@ -39,7 +40,7 @@ class BarcodeScannerSheet extends StatefulWidget {
     required Function(Map<String, dynamic> productData) onProductScanned,
     Function(String productKey)? onProductRemoved,
   }) {
-    return showModalBottomSheet(
+    return showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,

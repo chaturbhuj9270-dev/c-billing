@@ -5,6 +5,7 @@ import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 /// Filter options for purchase list
 enum PurchaseDateFilter { all, today, thisMonth, thisYear, custom }
@@ -430,7 +431,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
   void _showSupplierPicker(BuildContext context) {
     _supplierSearchController.clear();
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,

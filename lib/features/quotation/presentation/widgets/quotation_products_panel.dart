@@ -17,6 +17,7 @@ import '../../../product/data/services/product_sync_service.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../product/offline/entities/product_entity.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 /// Product add UI for quotations — same flow and line editing as billing.
 class QuotationProductsPanel extends StatefulWidget {
@@ -203,7 +204,7 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
   }
 
   void _showAddItemsPopup() {
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -325,7 +326,7 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
 
     if (productBatches.isNotEmpty) {
       _indexNoController.clear();
-      showModalBottomSheet(
+      showAppBottomSheet(
         context: context,
         isScrollControlled: true,
         backgroundColor: AppTheme.transparent,

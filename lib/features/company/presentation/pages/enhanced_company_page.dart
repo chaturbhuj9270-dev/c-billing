@@ -15,6 +15,7 @@ import '../widgets/company_filter_widget.dart';
 import '../widgets/company_list_widget.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 class EnhancedCompanyPage extends StatefulWidget {
   final bool isEmbedded;
@@ -271,7 +272,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
 
     if (!mounted) return;
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -289,7 +290,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
     _editingCompanyLocalId = company['localId'] as int?;
     _isEditing = true;
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -697,7 +698,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
   // ━━━ UI: Context Menu ━━━
 
   void _showContextMenu(Map<String, dynamic> company) {
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       backgroundColor: AppTheme.transparent,
       builder: (ctx) => Container(

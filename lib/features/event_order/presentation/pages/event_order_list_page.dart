@@ -21,6 +21,7 @@ import 'event_order_settings_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 /// Date filter options for event/order list
 enum DateFilter {
@@ -2062,7 +2063,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   ) {
     final filteredOrders = _filterOrdersByDate(allOrders);
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,

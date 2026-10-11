@@ -30,6 +30,7 @@ import 'purchase_settings_page.dart';
 import 'invoice_scanner_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 class PurchasePage extends StatefulWidget {
   final bool isEmbedded;
@@ -321,7 +322,7 @@ class _PurchasePageState extends State<PurchasePage>
       }
     }
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -1316,7 +1317,7 @@ class _PurchasePageState extends State<PurchasePage>
     _productSearchController.clear();
     _filteredProducts = _products;
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -1683,7 +1684,7 @@ class _PurchasePageState extends State<PurchasePage>
     _supplierSearchController.clear();
     _filteredSuppliers = _suppliers;
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -1931,7 +1932,7 @@ class _PurchasePageState extends State<PurchasePage>
     _companySearchController.clear();
     _filteredCompanies = _companies;
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -2470,7 +2471,7 @@ class _PurchasePageState extends State<PurchasePage>
     _newSupplierContactController.clear();
     _newSupplierAddressController.clear();
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -2812,7 +2813,7 @@ class _PurchasePageState extends State<PurchasePage>
     _newCompanyAddressController.clear();
     _newCompanyGstCodeController.clear();
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,

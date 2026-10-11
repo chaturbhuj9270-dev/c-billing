@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'glass_bottom_sheet.dart';
 import '../core/localization/app_localizations.dart';
 import '../core/services/language_service.dart';
 import '../features/billing/presentation/pages/bills_list_page.dart';
@@ -31,10 +32,10 @@ class QuickActionItem {
 
 /// Opens the quick-actions sheet used by billing and purchase.
 Future<void> showQuickActionsSheet(BuildContext context) {
-  return showModalBottomSheet<void>(
+  return showAppBottomSheet<void>(
     context: context,
-    backgroundColor: AppTheme.transparent,
     isScrollControlled: true,
+    showClose: true,
     builder: (sheetContext) {
       return QuickActionsPanel(
         actions: buildQuickActionItems(
@@ -134,63 +135,59 @@ class QuickActionsPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
     final bottom = MediaQuery.paddingOf(context).bottom;
-    return Container(
-      width: double.infinity,
+    return Padding(
       padding: EdgeInsets.fromLTRB(16, 10, 16, bottom + 20),
-      decoration: BoxDecoration(
-        color: AppColors.isDark(context)
-            ? AppTheme.paletteFF161A18
-            : AppColors.card(context),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        border: Border(top: BorderSide(color: AppColors.border(context))),
-      ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.mutedText(context).withValues(alpha: 0.45),
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            l10n.quickActions,
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w800,
-              fontSize: 20,
-              color: AppColors.primaryText(context),
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'Jump to any section',
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontSize: 13,
-              color: AppColors.mutedText(context),
-            ),
-          ),
-          const SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: actions.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 1.05,
-            ),
-            itemBuilder: (context, index) => _ActionTile(item: actions[index]),
-          ),
-        ],
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 36,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: AppColors.mutedText(context).withValues(
+                              alpha: 0.45,
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        l10n.quickActions,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w800,
+                          fontSize: 20,
+                          color: AppColors.primaryText(context),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Jump to any section',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 13,
+                          color: AppColors.mutedText(context),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: actions.length,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              childAspectRatio: 1.05,
+                            ),
+                        itemBuilder: (context, index) =>
+                            _ActionTile(item: actions[index]),
+                      ),
+                    ],
       ),
     );
   }
@@ -313,10 +310,14 @@ class _GlobalQuickActionsFABState extends State<GlobalQuickActionsFAB>
                 alignment: Alignment.bottomCenter,
                 child: GestureDetector(
                   onTap: () {},
-                  child: QuickActionsPanel(
-                    actions: buildQuickActionItems(
-                      context,
-                      beforeNavigate: _close,
+                  child: GlassSheetCard(
+                    showClose: true,
+                    onClose: _close,
+                    child: QuickActionsPanel(
+                      actions: buildQuickActionItems(
+                        context,
+                        beforeNavigate: _close,
+                      ),
                     ),
                   ),
                 ),

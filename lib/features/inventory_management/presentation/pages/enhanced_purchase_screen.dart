@@ -27,6 +27,7 @@ import 'invoice_scanner_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/quick_actions_overlay.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 /// Lets the dashboard download button trigger the visible purchase report.
 class PurchaseScreenActions {
@@ -272,7 +273,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
   /// Show purchase details bottom sheet
   void _showPurchaseDetails(PurchaseBatchEntity purchase) {
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -292,7 +293,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
   /// Show purchase context menu on long press
   void _showPurchaseContextMenu(PurchaseBatchEntity purchase) {
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       backgroundColor: AppTheme.transparent,
       builder: (context) => ClipRRect(

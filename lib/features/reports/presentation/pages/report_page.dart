@@ -13,6 +13,7 @@ import '../../domain/models/report_result_model.dart';
 import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 // ──────────────────────────────────────────────────────────
 // Premium Report Page — v2
@@ -1447,7 +1448,7 @@ class _ReportPageState extends State<ReportPage>
 
   void _showProductPicker() {
     _productSearchCtrl.clear();
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
@@ -1628,7 +1629,7 @@ class _ReportPageState extends State<ReportPage>
   // ─── SUPPLIER PICKER ───
 
   void _showSupplierPicker() {
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,

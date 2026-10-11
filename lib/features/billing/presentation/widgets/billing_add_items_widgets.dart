@@ -8,6 +8,7 @@ import '../../domain/entities/bill_item.dart';
 import '../../../inventory_management/domain/entities/product.dart';
 import '../../../inventory_management/offline/entities/purchase_batch_entity.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 /// Bottom sheet widget for adding multiple items to the bill
 /// Step 1: Shows products grouped by name with total stock
@@ -753,7 +754,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
     }
 
     // Has batches (1 or more) — always show batch selection bottom sheet
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
