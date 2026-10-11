@@ -378,14 +378,14 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF1B4D3E),
-        icon: const Icon(Icons.add_rounded, color: Colors.white),
+        backgroundColor: AppTheme.primary,
+        icon: const Icon(Icons.add_rounded, color: AppTheme.white),
         label: Text(
           _localizations.addProduct,
           style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w600,
-            color: Colors.white,
+            color: AppTheme.white,
           ),
         ),
         onPressed: _showAddProductSheet,
@@ -396,15 +396,15 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: AppColors.appBar(context),
-      foregroundColor: Colors.white,
-      surfaceTintColor: Colors.transparent,
+      foregroundColor: AppTheme.white,
+      surfaceTintColor: AppTheme.transparent,
       elevation: 0,
       title: Text(
         _localizations.products,
         style: const TextStyle(
           fontFamily: 'Literata',
           fontWeight: FontWeight.w700,
-          color: Colors.white,
+          color: AppTheme.white,
         ),
       ),
       actions: [
@@ -415,11 +415,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             child: GestureDetector(
               onTap: () => ProductSyncService.instance.syncNow(),
               child: Chip(
-                backgroundColor: Colors.orange[50],
+                backgroundColor: AppTheme.orange50,
                 avatar: Icon(
                   Icons.cloud_upload_rounded,
                   size: 16,
-                  color: Colors.orange[700],
+                  color: AppTheme.orange700,
                 ),
                 label: Text(
                   '$_unsyncedCount',
@@ -427,7 +427,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
-                    color: Colors.orange[700],
+                    color: AppTheme.orange700,
                   ),
                 ),
               ),
@@ -435,7 +435,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
           ),
         // Barcode Generator
         IconButton(
-          icon: const Icon(Icons.qr_code_2_rounded, color: Colors.white),
+          icon: const Icon(Icons.qr_code_2_rounded, color: AppTheme.white),
           tooltip: 'Generate Barcode',
           onPressed: () {
             Navigator.push(
@@ -446,7 +446,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         ),
         // Settings
         IconButton(
-          icon: const Icon(Icons.settings_outlined, color: Colors.white),
+          icon: const Icon(Icons.settings_outlined, color: AppTheme.white),
           onPressed: () {
             Navigator.push(
               context,
@@ -469,15 +469,15 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
               padding: EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
                 color: !_isGroupedView
-                    ? const Color(0xFF1B4D3E)
+                    ? AppTheme.primary
                     : AppColors.chipFill(context),
                 borderRadius: const BorderRadius.horizontal(
                   left: Radius.circular(10),
                 ),
                 border: Border.all(
                   color: !_isGroupedView
-                      ? const Color(0xFF1B4D3E)
-                      : Colors.grey[300]!,
+                      ? AppTheme.primary
+                      : AppTheme.grey300,
                 ),
               ),
               child: Row(
@@ -486,7 +486,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                   Icon(
                     Icons.view_list_rounded,
                     size: 18,
-                    color: !_isGroupedView ? Colors.white : Colors.grey[600],
+                    color: !_isGroupedView ? AppTheme.white : AppTheme.grey600,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -495,7 +495,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       fontFamily: 'Literata',
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
-                      color: !_isGroupedView ? Colors.white : Colors.grey[600],
+                      color: !_isGroupedView ? AppTheme.white : AppTheme.grey600,
                     ),
                   ),
                 ],
@@ -511,15 +511,15 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
               padding: EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
                 color: _isGroupedView
-                    ? const Color(0xFF1B4D3E)
+                    ? AppTheme.primary
                     : AppColors.chipFill(context),
                 borderRadius: const BorderRadius.horizontal(
                   right: Radius.circular(10),
                 ),
                 border: Border.all(
                   color: _isGroupedView
-                      ? const Color(0xFF1B4D3E)
-                      : Colors.grey[300]!,
+                      ? AppTheme.primary
+                      : AppTheme.grey300,
                 ),
               ),
               child: Row(
@@ -528,7 +528,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                   Icon(
                     Icons.account_tree_rounded,
                     size: 18,
-                    color: _isGroupedView ? Colors.white : Colors.grey[600],
+                    color: _isGroupedView ? AppTheme.white : AppTheme.grey600,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -537,7 +537,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       fontFamily: 'Literata',
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
-                      color: _isGroupedView ? Colors.white : Colors.grey[600],
+                      color: _isGroupedView ? AppTheme.white : AppTheme.grey600,
                     ),
                   ),
                 ],
@@ -629,7 +629,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w700,
                 fontSize: 18,
-                color: Colors.grey[700],
+                color: AppTheme.grey700,
               ),
               textAlign: TextAlign.center,
             ),
@@ -664,25 +664,25 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: AppTheme.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        data: Theme.of(context).copyWith(dividerColor: AppTheme.transparent),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           childrenPadding: EdgeInsets.zero,
           leading: CircleAvatar(
             radius: 22,
             backgroundColor: isLow
-                ? Colors.red.withValues(alpha: 0.15)
-                : const Color(0xFF1B4D3E).withValues(alpha: 0.15),
+                ? AppTheme.red.withValues(alpha: 0.15)
+                : AppTheme.primary.withValues(alpha: 0.15),
             child: Icon(
               Icons.inventory_2_rounded,
-              color: isLow ? Colors.red : const Color(0xFF1B4D3E),
+              color: isLow ? AppTheme.red : AppTheme.primary,
               size: 20,
             ),
           ),
@@ -707,8 +707,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                   ),
                   decoration: BoxDecoration(
                     color: isLow
-                        ? Colors.red.withValues(alpha: 0.15)
-                        : Colors.green.withValues(alpha: 0.15),
+                        ? AppTheme.red.withValues(alpha: 0.15)
+                        : AppTheme.green.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -717,7 +717,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       fontFamily: 'Literata',
-                      color: isLow ? Colors.red : Colors.green[700],
+                      color: isLow ? AppTheme.red : AppTheme.green700,
                     ),
                   ),
                 ),
@@ -729,7 +729,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withValues(alpha: 0.12),
+                      color: AppTheme.blue.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -738,7 +738,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
                         fontFamily: 'Literata',
-                        color: Colors.blue[700],
+                        color: AppTheme.blue700,
                       ),
                     ),
                   ),
@@ -824,7 +824,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           fontSize: 12,
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w600,
-                          color: Colors.green[700],
+                          color: AppTheme.green700,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -838,8 +838,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w700,
                           color: entry.stockQuantity <= 5
-                              ? Colors.red
-                              : Colors.black87,
+                              ? AppTheme.red
+                              : AppTheme.black87,
                         ),
                         textAlign: TextAlign.end,
                       ),
@@ -879,7 +879,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
           style: TextStyle(
             fontFamily: 'Literata',
             fontSize: 10,
-            color: Colors.grey[600],
+            color: AppTheme.grey600,
           ),
         ),
       ],
@@ -896,7 +896,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (context) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: Container(
@@ -915,7 +915,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: AppTheme.grey300,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -935,14 +935,12 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: isOutOfStock
-                              ? [Colors.red[400]!, Colors.red[300]!]
+                              ? [AppTheme.error, AppTheme.toneRose]
                               : isLowStock
-                              ? [Colors.orange[400]!, Colors.orange[300]!]
+                              ? [AppTheme.orange400, AppTheme.orange300]
                               : [
-                                  const Color(0xFF1B4D3E),
-                                  const Color(
-                                    0xFF1B4D3E,
-                                  ).withValues(alpha: 0.7),
+                                  AppTheme.primary,
+                                  AppTheme.primary.withValues(alpha: 0.7),
                                 ],
                         ),
                       ),
@@ -952,7 +950,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               ? product.name[0].toUpperCase()
                               : 'P',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppTheme.white,
                             fontSize: 24,
                             fontWeight: FontWeight.w700,
                             fontFamily: 'Literata',
@@ -986,8 +984,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                             ),
                             decoration: BoxDecoration(
                               color: isSynced
-                                  ? Colors.green[50]
-                                  : Colors.orange[50],
+                                  ? AppTheme.green50
+                                  : AppTheme.orange50,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
@@ -999,8 +997,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                                       : Icons.cloud_upload_rounded,
                                   size: 14,
                                   color: isSynced
-                                      ? Colors.green[700]
-                                      : Colors.orange[700],
+                                      ? AppTheme.green700
+                                      : AppTheme.orange700,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
@@ -1010,8 +1008,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                                     fontWeight: FontWeight.w600,
                                     fontSize: 11,
                                     color: isSynced
-                                        ? Colors.green[700]
-                                        : Colors.orange[700],
+                                        ? AppTheme.green700
+                                        : AppTheme.orange700,
                                   ),
                                 ),
                               ],
@@ -1023,7 +1021,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     // Close button
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.close_rounded, color: Colors.grey[600]),
+                      icon: Icon(Icons.close_rounded, color: AppTheme.grey600),
                     ),
                   ],
                 ),
@@ -1040,13 +1038,13 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       if (isOutOfStock)
                         _buildWarningBanner(
                           icon: Icons.error_outline_rounded,
-                          color: Colors.red,
+                          color: AppTheme.red,
                           message: _localizations.outOfStock,
                         )
                       else if (isLowStock)
                         _buildWarningBanner(
                           icon: Icons.warning_amber_rounded,
-                          color: Colors.orange,
+                          color: AppTheme.orange,
                           message: _localizations.lowStock,
                         ),
 
@@ -1080,7 +1078,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               label: _localizations.purchasePrice,
                               value:
                                   '₹${product.purchasePrice.toStringAsFixed(2)}',
-                              color: Colors.grey[700]!,
+                              color: AppTheme.grey700,
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -1089,7 +1087,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               label: _localizations.salesPrice,
                               value:
                                   '₹${product.salesPrice.toStringAsFixed(2)}',
-                              color: Colors.green[700]!,
+                              color: AppTheme.green700,
                             ),
                           ),
                         ],
@@ -1103,10 +1101,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               label: _localizations.currentStock,
                               value: '${product.currentStock}',
                               color: isOutOfStock
-                                  ? Colors.red[700]!
+                                  ? AppTheme.red700
                                   : isLowStock
-                                  ? Colors.orange[700]!
-                                  : const Color(0xFF1B4D3E),
+                                  ? AppTheme.orange700
+                                  : AppTheme.primary,
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -1115,7 +1113,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               label: 'GST',
                               value:
                                   '${(product.cgstPercent + product.sgstPercent).toStringAsFixed(1)}%',
-                              color: Colors.blue[700]!,
+                              color: AppTheme.blue700,
                             ),
                           ),
                         ],
@@ -1142,7 +1140,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w600,
                             fontSize: 14,
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -1158,7 +1156,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                             style: const TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 14,
-                              color: Colors.black87,
+                              color: AppTheme.black87,
                               height: 1.5,
                             ),
                           ),
@@ -1178,7 +1176,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               icon: Icon(Icons.edit_rounded),
                               label: Text(_localizations.edit),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: Color(0xFF1B4D3E),
+                                foregroundColor: AppTheme.primary,
                                 side: BorderSide(
                                   color: AppColors.accent(context),
                                 ),
@@ -1198,8 +1196,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               icon: const Icon(Icons.delete_outline_rounded),
                               label: Text(_localizations.delete),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                foregroundColor: Colors.white,
+                                backgroundColor: AppTheme.red,
+                                foregroundColor: AppTheme.white,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 12,
                                 ),
@@ -1279,7 +1277,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 12,
-                    color: Colors.grey[500],
+                    color: AppTheme.grey,
                   ),
                 ),
                 Text(
@@ -1288,7 +1286,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
-                    color: Colors.black87,
+                    color: AppTheme.black87,
                   ),
                 ),
               ],
@@ -1318,7 +1316,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             style: TextStyle(
               fontFamily: 'Literata',
               fontSize: 12,
-              color: Colors.grey[600],
+              color: AppTheme.grey600,
             ),
           ),
           const SizedBox(height: 4),
@@ -1341,7 +1339,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
   void _showProductContextMenu(ProductEntity product) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
           color: AppColors.card(context),
@@ -1356,7 +1354,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppTheme.grey300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -1406,13 +1404,13 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
               ListTile(
                 leading: const Icon(
                   Icons.delete_outline_rounded,
-                  color: Colors.red,
+                  color: AppTheme.red,
                 ),
                 title: Text(
                   _localizations.delete,
                   style: const TextStyle(
                     fontFamily: 'Literata',
-                    color: Colors.red,
+                    color: AppTheme.red,
                   ),
                 ),
                 onTap: () {
@@ -1454,7 +1452,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
               _localizations.cancel,
               style: const TextStyle(
                 fontFamily: 'Literata',
-                color: Colors.grey,
+                color: AppTheme.grey,
               ),
             ),
           ),
@@ -1463,12 +1461,12 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
               Navigator.pop(context);
               await _deleteProduct(product);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.red),
             child: Text(
               _localizations.delete,
               style: const TextStyle(
                 fontFamily: 'Literata',
-                color: Colors.white,
+                color: AppTheme.white,
               ),
             ),
           ),
@@ -1588,7 +1586,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
@@ -1607,7 +1605,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: AppTheme.grey300,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -1631,7 +1629,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                         onPressed: () => Navigator.pop(context),
                         icon: Icon(
                           Icons.close_rounded,
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                       ),
                     ],
@@ -1788,7 +1786,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     color: AppColors.card(context),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
+                        color: AppTheme.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, -2),
                       ),
@@ -1801,8 +1799,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           child: OutlinedButton(
                             onPressed: () => Navigator.pop(context),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.grey[700],
-                              side: BorderSide(color: Colors.grey[300]!),
+                              foregroundColor: AppTheme.grey700,
+                              side: BorderSide(color: AppTheme.grey300),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                             child: Text(
@@ -1831,7 +1829,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               customFieldValues: customFieldValues,
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF1B4D3E),
+                              backgroundColor: AppTheme.primary,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                             child: const Text(
@@ -1839,7 +1837,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white,
+                                color: AppTheme.white,
                               ),
                             ),
                           ),
@@ -2027,7 +2025,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
@@ -2046,7 +2044,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: AppTheme.grey300,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -2070,7 +2068,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                         onPressed: () => Navigator.pop(context),
                         icon: Icon(
                           Icons.close_rounded,
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                       ),
                     ],
@@ -2160,13 +2158,13 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           decoration: BoxDecoration(
                             color: AppColors.chipFill(context),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey[300]!),
+                            border: Border.all(color: AppTheme.grey300),
                           ),
                           child: Row(
                             children: [
                               Icon(
                                 Icons.inventory_rounded,
-                                color: Colors.grey[600],
+                                color: AppTheme.grey600,
                                 size: 20,
                               ),
                               const SizedBox(width: 12),
@@ -2179,7 +2177,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                                       style: TextStyle(
                                         fontFamily: 'Literata',
                                         fontSize: 12,
-                                        color: Colors.grey[600],
+                                        color: AppTheme.grey600,
                                       ),
                                     ),
                                     Text(
@@ -2233,7 +2231,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     color: AppColors.card(context),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
+                        color: AppTheme.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, -2),
                       ),
@@ -2246,8 +2244,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           child: OutlinedButton(
                             onPressed: () => Navigator.pop(context),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.grey[700],
-                              side: BorderSide(color: Colors.grey[300]!),
+                              foregroundColor: AppTheme.grey700,
+                              side: BorderSide(color: AppTheme.grey300),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                             child: Text(
@@ -2275,7 +2273,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               customFieldValues: customFieldValues,
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF1B4D3E),
+                              backgroundColor: AppTheme.primary,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                             child: Text(
@@ -2283,7 +2281,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               style: const TextStyle(
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white,
+                                color: AppTheme.white,
                               ),
                             ),
                           ),
@@ -2437,7 +2435,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           border: Border.all(
-            color: hasValue ? const Color(0xFF1B4D3E) : Colors.grey[400]!,
+            color: hasValue ? AppTheme.primary : AppTheme.grey400,
             width: hasValue ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -2446,7 +2444,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
           children: [
             Icon(
               icon,
-              color: hasValue ? const Color(0xFF1B4D3E) : Colors.grey,
+              color: hasValue ? AppTheme.primary : AppTheme.grey,
               size: 20,
             ),
             const SizedBox(width: 12),
@@ -2455,12 +2453,12 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 hasValue ? value : label,
                 style: TextStyle(
                   fontFamily: 'Literata',
-                  color: hasValue ? Colors.black87 : Colors.grey[600],
+                  color: hasValue ? AppTheme.black87 : AppTheme.grey600,
                   fontSize: 14,
                 ),
               ),
             ),
-            Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
+            Icon(Icons.arrow_drop_down, color: AppTheme.grey600),
           ],
         ),
       ),
@@ -2532,7 +2530,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             ),
             Switch(
               value: fieldValues[column.id] ?? false,
-              activeThumbColor: const Color(0xFF1B4D3E),
+              activeThumbColor: AppTheme.primary,
               onChanged: (value) {
                 setDialogState(() => fieldValues[column.id] = value);
               },
@@ -2589,8 +2587,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
               style: TextStyle(
                 fontFamily: 'Literata',
                 color: fieldValues[column.id] != null
-                    ? Colors.black87
-                    : Colors.grey[600],
+                    ? AppTheme.black87
+                    : AppTheme.grey600,
               ),
             ),
           ),
@@ -2606,7 +2604,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
   ) async {
     return showModalBottomSheet<Map<String, dynamic>>(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
           color: AppColors.card(context),
@@ -2621,7 +2619,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppTheme.grey300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -2647,7 +2645,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                             'No companies found',
                             style: TextStyle(
                               fontFamily: 'Literata',
-                              color: Colors.grey[600],
+                              color: AppTheme.grey600,
                             ),
                           ),
                         ),
@@ -2685,7 +2683,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
   ) async {
     return showModalBottomSheet<Map<String, dynamic>>(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
           color: AppColors.card(context),
@@ -2700,7 +2698,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppTheme.grey300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -2726,7 +2724,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                             'No suppliers found',
                             style: TextStyle(
                               fontFamily: 'Literata',
-                              color: Colors.grey[600],
+                              color: AppTheme.grey600,
                             ),
                           ),
                         ),

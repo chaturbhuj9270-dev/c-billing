@@ -41,7 +41,7 @@ class PurchaseCardWidget extends StatelessWidget {
           border: Border.all(color: AppColors.border(context)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.04),
+              color: AppTheme.black.withValues(alpha: isDark ? 0.18 : 0.04),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -50,7 +50,7 @@ class PurchaseCardWidget extends StatelessWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: Material(
-            color: Colors.transparent,
+            color: AppTheme.transparent,
             child: InkWell(
               onTap: onTap,
               onLongPress: onLongPress,
@@ -161,8 +161,8 @@ class PurchaseCardWidget extends StatelessWidget {
                           icon: Icons.layers_outlined,
                           label:
                               '${purchase.quantityPurchased} ${purchase.unit}',
-                          background: const Color(0xFFEEF0FF),
-                          foreground: const Color(0xFF5C6BC0),
+                          background: AppTheme.paletteFFEEF0FF,
+                          foreground: AppTheme.indigo400,
                         ),
                         const SizedBox(width: 8),
                         _buildDetailChip(
@@ -170,8 +170,8 @@ class PurchaseCardWidget extends StatelessWidget {
                           icon: Icons.sell_outlined,
                           label:
                               '₹${purchase.purchasePrice.toStringAsFixed(2)}/unit',
-                          background: const Color(0xFFFFF4E5),
-                          foreground: const Color(0xFFE0A85C),
+                          background: AppTheme.paletteFFFFF4E5,
+                          foreground: AppTheme.toneAmber,
                         ),
                       ],
                     ),
@@ -268,7 +268,7 @@ class PurchaseCardShimmer extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

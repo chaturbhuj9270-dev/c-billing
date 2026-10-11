@@ -36,7 +36,7 @@ class QuotationProductsPanel extends StatefulWidget {
 }
 
 class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
-  static const _primary = Color(0xFF1B4D3E);
+  static const _primary = AppTheme.primary;
   final _uuid = const Uuid();
 
   final _indexNoController = TextEditingController();
@@ -206,7 +206,7 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (ctx) => AddItemsBottomSheet(
         products: _products,
         allProducts: _allProducts,
@@ -328,7 +328,7 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppTheme.transparent,
         builder: (ctx) => BatchSelectionSheet(
           productName: product.name,
           productCode: product.indexNo,
@@ -452,7 +452,7 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
                   l10n.noProductsFound,
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                   ),
                 ),
               ),
@@ -485,13 +485,13 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.amber[700]!, Colors.amber[600]!],
+                colors: [AppTheme.amber700, AppTheme.amber600],
               ),
               borderRadius: BorderRadius.circular(6),
             ),
             child: const Icon(
               Icons.flash_on_rounded,
-              color: Colors.white,
+              color: AppTheme.white,
               size: 14,
             ),
           ),
@@ -509,7 +509,7 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
               decoration: InputDecoration(
                 hintText: l10n.enterProductCode,
                 hintStyle: TextStyle(
-                  color: Colors.grey[500],
+                  color: AppTheme.grey,
                   fontWeight: FontWeight.w400,
                   fontSize: 13,
                 ),
@@ -550,7 +550,7 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
               ),
               child: const Icon(
                 Icons.barcode_reader,
-                color: Colors.white,
+                color: AppTheme.white,
                 size: 18,
               ),
             ),

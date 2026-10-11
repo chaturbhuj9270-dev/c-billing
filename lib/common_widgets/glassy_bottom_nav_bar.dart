@@ -107,13 +107,13 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
               borderRadius: BorderRadius.circular(radius),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.10),
+                  color: AppTheme.black.withValues(alpha: isDark ? 0.28 : 0.10),
                   blurRadius: 14,
                   offset: const Offset(0, 4),
                 ),
                 if (!isDark)
                   BoxShadow(
-                    color: Colors.white.withValues(alpha: 0.8),
+                    color: AppTheme.white.withValues(alpha: 0.8),
                     blurRadius: 0,
                     offset: const Offset(0, -1),
                   ),
@@ -134,12 +134,12 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
                       end: Alignment.bottomCenter,
                       colors: isDark
                           ? [
-                              Colors.white.withValues(alpha: 0.16),
-                              Colors.white.withValues(alpha: 0.06),
+                              AppTheme.white.withValues(alpha: 0.16),
+                              AppTheme.white.withValues(alpha: 0.06),
                             ]
                           : [
-                              Colors.white.withValues(alpha: 0.96),
-                              Colors.white.withValues(alpha: 0.78),
+                              AppTheme.white.withValues(alpha: 0.96),
+                              AppTheme.white.withValues(alpha: 0.78),
                             ],
                     ),
                   ),
@@ -224,12 +224,12 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
+                color: AppTheme.black.withValues(alpha: isDark ? 0.35 : 0.12),
                 blurRadius: 24,
                 offset: const Offset(0, 8),
               ),
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
+                color: AppTheme.black.withValues(alpha: isDark ? 0.2 : 0.06),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -318,10 +318,10 @@ LinearGradient _glassBevelGradient(bool isDark, Color themeColor) {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [
-      Colors.white.withValues(alpha: isDark ? 0.72 : 0.98),
-      Color.lerp(Colors.white, themeColor, isDark ? 0.25 : 0.4)!,
+      AppTheme.white.withValues(alpha: isDark ? 0.72 : 0.98),
+      Color.lerp(AppTheme.white, themeColor, isDark ? 0.25 : 0.4)!,
       themeColor.withValues(alpha: isDark ? 0.7 : 0.92),
-      Color.lerp(themeColor, Colors.black, isDark ? 0.55 : 0.38)!,
+      Color.lerp(themeColor, AppTheme.black, isDark ? 0.55 : 0.38)!,
     ],
     stops: const [0.0, 0.22, 0.62, 1.0],
   );
@@ -359,8 +359,8 @@ class _GlassBevelBorderPainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          Colors.white.withValues(alpha: isDark ? 0.42 : 0.75),
-          Colors.white.withValues(alpha: 0),
+          AppTheme.white.withValues(alpha: isDark ? 0.42 : 0.75),
+          AppTheme.white.withValues(alpha: 0),
         ],
       ).createShader(bounds);
     canvas.drawRRect(outer.deflate(2.1), shine);

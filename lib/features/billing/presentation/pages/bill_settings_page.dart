@@ -147,7 +147,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                             // Bill Type Section
                             _buildSectionCard(
                               icon: Icons.description_rounded,
-                              iconColor: const Color(0xFF1B4D3E),
+                              iconColor: AppTheme.primary,
                               title: _localizations.billType,
                               subtitle: 'Choose your default bill format',
                               children: [_buildBillTypeSelector()],
@@ -157,13 +157,13 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                             // Billing Settings Section
                             _buildSectionCard(
                               icon: Icons.receipt_long_rounded,
-                              iconColor: const Color(0xFF7B68EE),
+                              iconColor: AppTheme.paletteFF7B68EE,
                               title: _localizations.billingSettings,
                               subtitle: 'Configure billing behavior',
                               children: [
                                 _buildModernToggle(
                                   icon: Icons.contact_phone_rounded,
-                                  iconColor: const Color(0xFF7B68EE),
+                                  iconColor: AppTheme.paletteFF7B68EE,
                                   title: _localizations.generateBillViaContact,
                                   subtitle: _localizations.requireContactNumber,
                                   value: _generateViaContact,
@@ -181,13 +181,13 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                             // Print Settings Section
                             _buildSectionCard(
                               icon: Icons.print_rounded,
-                              iconColor: const Color(0xFF4CAF50),
+                              iconColor: AppTheme.green,
                               title: _localizations.printSettings,
                               subtitle: 'Customize printed bill appearance',
                               children: [
                                 _buildModernToggle(
                                   icon: Icons.person_rounded,
-                                  iconColor: const Color(0xFF4CAF50),
+                                  iconColor: AppTheme.green,
                                   title:
                                       _localizations.showCustomerDetailsOnBill,
                                   subtitle:
@@ -203,7 +203,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                                 const SizedBox(height: 14),
                                 _buildNavigationTile(
                                   icon: Icons.view_column_rounded,
-                                  iconColor: const Color(0xFF2196F3),
+                                  iconColor: AppTheme.blue,
                                   title: 'Print Column Settings',
                                   subtitle:
                                       'Choose columns to show on printed bills',
@@ -224,14 +224,14 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                             // GST / Tax Settings Section
                             _buildSectionCard(
                               icon: Icons.account_balance_rounded,
-                              iconColor: const Color(0xFFFF6B6B),
+                              iconColor: AppTheme.coral,
                               title: _localizations.taxSettings,
                               subtitle: 'Configure tax calculation',
                               children: [
                                 // CGST Toggle
                                 _buildModernToggle(
                                   icon: Icons.percent_rounded,
-                                  iconColor: const Color(0xFFFF6B6B),
+                                  iconColor: AppTheme.coral,
                                   title: _localizations.enableCgst,
                                   subtitle: _localizations.cgstPercent,
                                   value: _taxSettings.enableCgst,
@@ -266,12 +266,12 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                                     vertical: 14,
                                   ),
                                   height: 1,
-                                  color: Colors.grey.withValues(alpha: 0.1),
+                                  color: AppTheme.grey.withValues(alpha: 0.1),
                                 ),
                                 // SGST Toggle
                                 _buildModernToggle(
                                   icon: Icons.percent_rounded,
-                                  iconColor: const Color(0xFFFF9800),
+                                  iconColor: AppTheme.orange,
                                   title: _localizations.enableSgst,
                                   subtitle: _localizations.sgstPercent,
                                   value: _taxSettings.enableSgst,
@@ -306,12 +306,12 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                                     vertical: 14,
                                   ),
                                   height: 1,
-                                  color: Colors.grey.withValues(alpha: 0.1),
+                                  color: AppTheme.grey.withValues(alpha: 0.1),
                                 ),
                                 // Other Tax Toggle
                                 _buildModernToggle(
                                   icon: Icons.add_circle_outline_rounded,
-                                  iconColor: const Color(0xFF9C27B0),
+                                  iconColor: AppTheme.purple,
                                   title: _localizations.enableOtherTax,
                                   subtitle: _localizations.otherTaxPercent,
                                   value: _taxSettings.enableOtherTax,
@@ -361,7 +361,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                               // Default GST Mode
                               _buildSectionCard(
                                 icon: Icons.calculate_rounded,
-                                iconColor: const Color(0xFF2196F3),
+                                iconColor: AppTheme.blue,
                                 title: _localizations.defaultGstMode,
                                 subtitle: 'Set how GST is applied by default',
                                 children: [
@@ -420,8 +420,8 @@ class _BillSettingsPageState extends State<BillSettingsPage>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Color(0xFF1B4D3E).withValues(alpha: 0.05),
-            Color(0xFF1B4D3E).withValues(alpha: 0.02),
+            AppTheme.primary.withValues(alpha: 0.05),
+            AppTheme.primary.withValues(alpha: 0.02),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -462,7 +462,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                   _localizations.contactNumberNote,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                     fontFamily: 'Literata',
                     height: 1.4,
                   ),
@@ -492,15 +492,15 @@ class _BillSettingsPageState extends State<BillSettingsPage>
           gradient: isSelected
               ? LinearGradient(
                   colors: [
-                    const Color(0xFF1B4D3E).withValues(alpha: 0.1),
-                    Color(0xFF1B4D3E).withValues(alpha: 0.05),
+                    AppTheme.primary.withValues(alpha: 0.1),
+                    AppTheme.primary.withValues(alpha: 0.05),
                   ],
                 )
               : null,
           color: isSelected ? null : AppColors.scaffold(context),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
+            color: isSelected ? AppTheme.primary : AppTheme.grey300,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -510,12 +510,12 @@ class _BillSettingsPageState extends State<BillSettingsPage>
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: isSelected ? Color(0xFF1B4D3E) : AppColors.border(context),
+                color: isSelected ? AppTheme.primary : AppColors.border(context),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 icon,
-                color: isSelected ? Colors.white : Colors.grey[600],
+                color: isSelected ? AppTheme.white : AppTheme.grey600,
                 size: 22,
               ),
             ),
@@ -531,8 +531,8 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: isSelected
-                          ? const Color(0xFF1B4D3E)
-                          : Colors.grey[800],
+                          ? AppTheme.primary
+                          : AppTheme.grey800,
                     ),
                   ),
                   const SizedBox(height: 3),
@@ -541,7 +541,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                     style: TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 12,
-                      color: Colors.grey[600],
+                      color: AppTheme.grey600,
                     ),
                   ),
                 ],
@@ -554,19 +554,19 @@ class _BillSettingsPageState extends State<BillSettingsPage>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isSelected
-                    ? const Color(0xFF1B4D3E)
-                    : Colors.transparent,
+                    ? AppTheme.primary
+                    : AppTheme.transparent,
                 border: Border.all(
                   color: isSelected
-                      ? const Color(0xFF1B4D3E)
-                      : Colors.grey[400]!,
+                      ? AppTheme.primary
+                      : AppTheme.grey400,
                   width: 2,
                 ),
               ),
               child: isSelected
                   ? Icon(
                       Icons.check_rounded,
-                      color: Colors.white,
+                      color: AppTheme.white,
                       size: 16,
                     )
                   : null,
@@ -590,7 +590,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -635,7 +635,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                       ),
                     ],
                   ),
-                  child: Icon(icon, color: Colors.white, size: 24),
+                  child: Icon(icon, color: AppTheme.white, size: 24),
                 ),
                 SizedBox(width: 16),
                 Expanded(
@@ -656,7 +656,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                         subtitle,
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey[500],
+                          color: AppTheme.grey,
                           fontFamily: 'Literata',
                         ),
                       ),
@@ -718,7 +718,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                 subtitle,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey[500],
+                  color: AppTheme.grey,
                   fontFamily: 'Literata',
                 ),
               ),
@@ -730,11 +730,11 @@ class _BillSettingsPageState extends State<BillSettingsPage>
           child: Switch(
             value: value,
             onChanged: onChanged,
-            activeThumbColor: Colors.white,
-            activeTrackColor: const Color(0xFF1B4D3E),
-            inactiveThumbColor: Colors.white,
-            inactiveTrackColor: Colors.grey[300],
-            trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+            activeThumbColor: AppTheme.white,
+            activeTrackColor: AppTheme.primary,
+            inactiveThumbColor: AppTheme.white,
+            inactiveTrackColor: AppTheme.grey300,
+            trackOutlineColor: WidgetStateProperty.all(AppTheme.transparent),
           ),
         ),
       ],
@@ -783,7 +783,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                     subtitle,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[500],
+                      color: AppTheme.grey,
                       fontFamily: 'Literata',
                     ),
                   ),
@@ -861,15 +861,15 @@ class _BillSettingsPageState extends State<BillSettingsPage>
           gradient: isSelected
               ? LinearGradient(
                   colors: [
-                    const Color(0xFF1B4D3E).withValues(alpha: 0.1),
-                    Color(0xFF1B4D3E).withValues(alpha: 0.05),
+                    AppTheme.primary.withValues(alpha: 0.1),
+                    AppTheme.primary.withValues(alpha: 0.05),
                   ],
                 )
               : null,
           color: isSelected ? null : AppColors.scaffold(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? Color(0xFF1B4D3E) : Colors.grey[300]!,
+            color: isSelected ? AppTheme.primary : AppTheme.grey300,
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
@@ -906,7 +906,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
               ),
               child: Icon(
                 icon,
-                color: isSelected ? Colors.white : Colors.grey[600],
+                color: isSelected ? AppTheme.white : AppTheme.grey600,
                 size: 26,
               ),
             ),
@@ -917,7 +917,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                 fontFamily: 'Literata',
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[800],
+                color: isSelected ? AppTheme.primary : AppTheme.grey800,
               ),
             ),
             const SizedBox(height: 4),
@@ -926,7 +926,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 11,
-                color: Colors.grey[600],
+                color: AppTheme.grey600,
               ),
               textAlign: TextAlign.center,
             ),
@@ -940,11 +940,11 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                         colors: AppColors.headerGradient(context),
                       )
                     : null,
-                color: isSelected ? null : Colors.transparent,
+                color: isSelected ? null : AppTheme.transparent,
                 borderRadius: BorderRadius.circular(20),
                 border: isSelected
                     ? null
-                    : Border.all(color: Colors.grey[300]!),
+                    : Border.all(color: AppTheme.grey300),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -952,7 +952,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                   if (isSelected)
                     const Icon(
                       Icons.check_rounded,
-                      color: Colors.white,
+                      color: AppTheme.white,
                       size: 14,
                     ),
                   if (isSelected) const SizedBox(width: 4),
@@ -962,7 +962,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                       fontFamily: 'Literata',
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: isSelected ? Colors.white : Colors.grey[600],
+                      color: isSelected ? AppTheme.white : AppTheme.grey600,
                     ),
                   ),
                 ],
@@ -991,7 +991,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 13,
-                color: Colors.grey[600],
+                color: AppTheme.grey600,
               ),
             ),
           ),
@@ -1022,7 +1022,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                     fontFamily: 'Literata',
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey[500],
+                    color: AppTheme.grey,
                   ),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 14,
@@ -1065,9 +1065,9 @@ class _BillSettingsPageState extends State<BillSettingsPage>
           hintStyle: TextStyle(
             fontFamily: 'Literata',
             fontSize: 13,
-            color: Colors.grey[400],
+            color: AppTheme.grey400,
           ),
-          prefixIcon: Icon(icon, color: Colors.grey[400], size: 20),
+          prefixIcon: Icon(icon, color: AppTheme.grey400, size: 20),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 14,
             vertical: 14,
@@ -1149,15 +1149,15 @@ class _BillSettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
+                            color: AppTheme.white.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.2),
+                              color: AppTheme.white.withValues(alpha: 0.2),
                             ),
                           ),
                           child: Icon(
                             Icons.arrow_back_ios_new_rounded,
-                            color: Colors.white,
+                            color: AppTheme.white,
                             size: 20,
                           ),
                         ),
@@ -1175,7 +1175,7 @@ class _BillSettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
                                 fontSize: isCollapsed ? 20 : 24,
                                 fontWeight: FontWeight.w800,
                                 fontFamily: 'Literata',
-                                color: Colors.white,
+                                color: AppTheme.white,
                                 letterSpacing: 0.5,
                               ),
                             ),
@@ -1206,7 +1206,7 @@ class _BillSettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
+                                color: AppTheme.black.withValues(alpha: 0.1),
                                 blurRadius: 8,
                                 offset: Offset(0, 2),
                               ),

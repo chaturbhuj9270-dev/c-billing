@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Singleton service for handling communication actions
 /// Provides call, SMS, and WhatsApp functionality
@@ -194,7 +195,7 @@ class CommunicationActionButtons extends StatelessWidget {
         // Call button
         _ActionButton(
           icon: Icons.call_rounded,
-          color: callColor ?? const Color(0xFF2E7D32),
+          color: callColor ?? AppTheme.green800,
           label: showLabels ? 'Call' : null,
           onTap: () => service.makeCall(phoneNumber, context: context),
           iconSize: iconSize,
@@ -203,7 +204,7 @@ class CommunicationActionButtons extends StatelessWidget {
         // SMS button
         _ActionButton(
           icon: Icons.message_rounded,
-          color: smsColor ?? const Color(0xFF1976D2),
+          color: smsColor ?? AppTheme.blue700,
           label: showLabels ? 'SMS' : null,
           onTap: () => service.sendSms(
             phoneNumber,
@@ -216,7 +217,7 @@ class CommunicationActionButtons extends StatelessWidget {
         // WhatsApp button
         _ActionButton(
           icon: FontAwesomeIcons.whatsapp,
-          color: whatsAppColor ?? const Color(0xFF25D366),
+          color: whatsAppColor ?? AppTheme.paletteFF25D366,
           label: showLabels ? 'WhatsApp' : null,
           onTap: () => service.openWhatsApp(
             phoneNumber,
@@ -251,7 +252,7 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent,
+      color: AppTheme.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
@@ -313,7 +314,7 @@ class CommunicationActionIcons extends StatelessWidget {
         // Call icon
         _CompactActionIcon(
           icon: Icons.call_rounded,
-          color: const Color(0xFF2E7D32),
+          color: AppTheme.green800,
           onTap: () => service.makeCall(phoneNumber, context: context),
           iconSize: iconSize,
           containerSize: containerSize,
@@ -322,7 +323,7 @@ class CommunicationActionIcons extends StatelessWidget {
         // SMS icon
         _CompactActionIcon(
           icon: Icons.message_rounded,
-          color: const Color(0xFF1976D2),
+          color: AppTheme.blue700,
           onTap: () => service.sendSms(phoneNumber, context: context),
           iconSize: iconSize,
           containerSize: containerSize,
@@ -331,7 +332,7 @@ class CommunicationActionIcons extends StatelessWidget {
         // WhatsApp icon
         _CompactActionIcon(
           icon: FontAwesomeIcons.whatsapp,
-          color: const Color(0xFF25D366),
+          color: AppTheme.paletteFF25D366,
           onTap: () => service.openWhatsApp(phoneNumber, context: context),
           iconSize: iconSize,
           containerSize: containerSize,

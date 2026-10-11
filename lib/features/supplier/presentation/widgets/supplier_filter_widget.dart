@@ -40,7 +40,7 @@ class SupplierFilterWidget extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: AppTheme.black.withValues(alpha: 0.04),
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
@@ -51,19 +51,19 @@ class SupplierFilterWidget extends StatelessWidget {
             decoration: InputDecoration(
               hintText: 'Search suppliers...',
               hintStyle: TextStyle(
-                color: Colors.grey[400],
+                color: AppTheme.grey400,
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w400,
               ),
               prefixIcon: Icon(
                 Icons.search_rounded,
-                color: Colors.grey[500],
+                color: AppTheme.grey,
               ),
               suffixIcon: searchQuery.isNotEmpty
                   ? IconButton(
                       icon: Icon(
                         Icons.clear_rounded,
-                        color: Colors.grey[500],
+                        color: AppTheme.grey,
                       ),
                       onPressed: () => onSearchChanged(''),
                     )
@@ -130,8 +130,8 @@ class SupplierFilterWidget extends StatelessWidget {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: AppColors.isDark(context)
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                      ? AppTheme.white.withValues(alpha: 0.1)
+                      : AppTheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -140,8 +140,8 @@ class SupplierFilterWidget extends StatelessWidget {
                       : Icons.arrow_downward_rounded,
                   size: 18,
                   color: AppColors.isDark(context)
-                      ? Colors.white
-                      : const Color(0xFF1B4D3E),
+                      ? AppTheme.white
+                      : AppTheme.primary,
                 ),
               ),
             ),
@@ -177,7 +177,7 @@ class SupplierFilterWidget extends StatelessWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(
+                    color: AppTheme.black.withValues(
                       alpha: AppColors.isDark(context) ? 0.35 : 0.15,
                     ),
                     blurRadius: 8,

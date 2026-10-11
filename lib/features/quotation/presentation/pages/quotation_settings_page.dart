@@ -16,7 +16,7 @@ class QuotationSettingsPage extends StatefulWidget {
 }
 
 class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
-  static const _primary = Color(0xFF1B4D3E);
+  static const _primary = AppTheme.primary;
   static const _keyShowCustomerOnBill = 'bill_show_customer_details';
 
   late AppLocalizations _l10n;
@@ -62,20 +62,20 @@ class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
       backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
         backgroundColor: AppColors.appBar(context),
-        foregroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
+        foregroundColor: AppTheme.white,
+        surfaceTintColor: AppTheme.transparent,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context, true),
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
+              color: AppTheme.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.arrow_back_ios_new,
-              color: Colors.white,
+              color: AppTheme.white,
               size: 18,
             ),
           ),
@@ -85,7 +85,7 @@ class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
           style: const TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w800,
-            color: Colors.white,
+            color: AppTheme.white,
             fontSize: 20,
           ),
         ),
@@ -148,7 +148,7 @@ class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                       ),
                       value: _showCustomerDetails,
@@ -176,10 +176,10 @@ class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
       decoration: BoxDecoration(
         color: AppColors.card(context),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+        border: Border.all(color: AppTheme.grey.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -209,7 +209,7 @@ class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
                         fontFamily: 'Literata',
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
-                        color: Color(0xFF1A1A2E),
+                        color: AppTheme.ink,
                       ),
                     ),
                     Text(
@@ -217,7 +217,7 @@ class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
                       style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                       ),
                     ),
                   ],
@@ -259,13 +259,13 @@ class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
           color: isSelected ? null : AppColors.scaffold(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? _primary : Colors.grey[300]!,
+            color: isSelected ? _primary : AppTheme.grey300,
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Column(
           children: [
-            Icon(icon, color: isSelected ? _primary : Colors.grey[500], size: 28),
+            Icon(icon, color: isSelected ? _primary : AppTheme.grey, size: 28),
             const SizedBox(height: 8),
             Text(
               title,
@@ -274,7 +274,7 @@ class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
-                color: isSelected ? _primary : Colors.grey[800],
+                color: isSelected ? _primary : AppTheme.grey800,
               ),
             ),
             const SizedBox(height: 4),
@@ -284,7 +284,7 @@ class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 11,
-                color: Colors.grey[600],
+                color: AppTheme.grey600,
               ),
             ),
           ],

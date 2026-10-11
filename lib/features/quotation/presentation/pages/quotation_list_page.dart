@@ -21,7 +21,7 @@ class QuotationListPage extends StatefulWidget {
 }
 
 class _QuotationListPageState extends State<QuotationListPage> {
-  static const _primary = Color(0xFF1B4D3E);
+  static const _primary = AppTheme.primary;
   late AppLocalizations _l10n;
   StreamSubscription<List<QuotationEntity>>? _subscription;
   List<QuotationEntity> _quotations = [];
@@ -83,11 +83,11 @@ class _QuotationListPageState extends State<QuotationListPage> {
   Color _typeColor(int type) {
     switch (type) {
       case 0:
-        return const Color(0xFF2196F3);
+        return AppTheme.blue;
       case 1:
-        return const Color(0xFF9C27B0);
+        return AppTheme.purple;
       default:
-        return const Color(0xFF00897B);
+        return AppTheme.teal600;
     }
   }
 
@@ -111,20 +111,20 @@ class _QuotationListPageState extends State<QuotationListPage> {
       backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
         backgroundColor: AppColors.appBar(context),
-        foregroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
+        foregroundColor: AppTheme.white,
+        surfaceTintColor: AppTheme.transparent,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
+              color: AppTheme.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.arrow_back_ios_new,
-              color: Colors.white,
+              color: AppTheme.white,
               size: 18,
             ),
           ),
@@ -134,7 +134,7 @@ class _QuotationListPageState extends State<QuotationListPage> {
           style: const TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w800,
-            color: Colors.white,
+            color: AppTheme.white,
             fontSize: 20,
           ),
         ),
@@ -152,12 +152,12 @@ class _QuotationListPageState extends State<QuotationListPage> {
             icon: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
+                color: AppTheme.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
                 Icons.settings_rounded,
-                color: Colors.white,
+                color: AppTheme.white,
                 size: 20,
               ),
             ),
@@ -168,12 +168,12 @@ class _QuotationListPageState extends State<QuotationListPage> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openQuotation(),
         backgroundColor: _primary,
-        icon: const Icon(Icons.add_rounded, color: Colors.white),
+        icon: const Icon(Icons.add_rounded, color: AppTheme.white),
         label: Text(
           _l10n.newQuotation,
           style: const TextStyle(
             fontFamily: 'Literata',
-            color: Colors.white,
+            color: AppTheme.white,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -199,7 +199,7 @@ class _QuotationListPageState extends State<QuotationListPage> {
                       fontFamily: 'Literata',
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey[700],
+                      color: AppTheme.grey700,
                     ),
                   ),
                 ],
@@ -272,7 +272,7 @@ class _QuotationListPageState extends State<QuotationListPage> {
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 13,
-                              color: Colors.grey[600],
+                              color: AppTheme.grey600,
                             ),
                           ),
                           const SizedBox(height: 10),
@@ -283,7 +283,7 @@ class _QuotationListPageState extends State<QuotationListPage> {
                                 style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontSize: 12,
-                                  color: Colors.grey[500],
+                                  color: AppTheme.grey,
                                 ),
                               ),
                               const Spacer(),
@@ -304,7 +304,7 @@ class _QuotationListPageState extends State<QuotationListPage> {
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 11,
-                              color: Colors.grey[500],
+                              color: AppTheme.grey,
                             ),
                           ),
                               ],
@@ -338,7 +338,7 @@ class _QuotationListPageState extends State<QuotationListPage> {
                                   child: Icon(
                                     Icons.print_rounded,
                                     size: 16,
-                                    color: Colors.grey[600],
+                                    color: AppTheme.grey600,
                                   ),
                                 ),
                               ),

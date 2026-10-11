@@ -580,12 +580,12 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
+                      color: AppTheme.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
                       Icons.arrow_back,
-                      color: Colors.white,
+                      color: AppTheme.white,
                       size: 22,
                     ),
                   ),
@@ -599,7 +599,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                       Text(
                         _localizations.returnBill,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppTheme.white,
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
                           fontFamily: 'Literata',
@@ -609,7 +609,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                       Text(
                         _localizations.processBillReturns,
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
+                          color: AppTheme.white.withValues(alpha: 0.7),
                           fontSize: 11,
                           fontFamily: 'Literata',
                           height: 1.2,
@@ -628,12 +628,12 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                       height: 40,
                       margin: const EdgeInsets.only(right: 8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: AppTheme.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
                         Icons.share_rounded,
-                        color: Colors.white,
+                        color: AppTheme.white,
                         size: 20,
                       ),
                     ),
@@ -646,7 +646,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                       height: 40,
                       margin: const EdgeInsets.only(right: 8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: AppTheme.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: _isPrinting
@@ -657,14 +657,14 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
+                                    AppTheme.white,
                                   ),
                                 ),
                               ),
                             )
                           : const Icon(
                               Icons.print_rounded,
-                              color: Colors.white,
+                              color: AppTheme.white,
                               size: 20,
                             ),
                     ),
@@ -674,12 +674,12 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: AppTheme.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     Icons.assignment_return,
-                    color: Colors.white,
+                    color: AppTheme.white,
                     size: 20,
                   ),
                 ),
@@ -699,7 +699,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppTheme.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -725,7 +725,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 12,
-                color: Colors.grey[600],
+                color: AppTheme.grey600,
               ),
             ),
             SizedBox(height: 16),
@@ -736,7 +736,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                 hintStyle: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 13,
-                  color: Colors.grey[400],
+                  color: AppTheme.grey400,
                 ),
                 prefixIcon: Icon(
                   Icons.search,
@@ -762,7 +762,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                 ),
                 errorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.red, width: 1.5),
+                  borderSide: const BorderSide(color: AppTheme.red, width: 1.5),
                 ),
               ),
               style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
@@ -780,15 +780,13 @@ class _ReturnBillPageState extends State<ReturnBillPage>
               child: ElevatedButton(
                 onPressed: _isSearching ? null : _searchBill,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B4D3E),
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: AppTheme.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  disabledBackgroundColor: const Color(
-                    0xFF1B4D3E,
-                  ).withValues(alpha: 0.5),
+                  disabledBackgroundColor: AppTheme.primary.withValues(alpha: 0.5),
                 ),
                 child: _isSearching
                     ? const SizedBox(
@@ -797,7 +795,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
+                            AppTheme.white,
                           ),
                         ),
                       )
@@ -829,13 +827,13 @@ class _ReturnBillPageState extends State<ReturnBillPage>
       margin: const EdgeInsets.only(top: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.red[50],
+        color: AppTheme.red50,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red[200]!),
+        border: Border.all(color: AppTheme.red200),
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline, color: Colors.red[700], size: 20),
+          Icon(Icons.error_outline, color: AppTheme.red700, size: 20),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -843,13 +841,13 @@ class _ReturnBillPageState extends State<ReturnBillPage>
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 13,
-                color: Colors.red[700],
+                color: AppTheme.red700,
               ),
             ),
           ),
           GestureDetector(
             onTap: () => setState(() => _errorMessage = null),
-            child: Icon(Icons.close, color: Colors.red[700], size: 18),
+            child: Icon(Icons.close, color: AppTheme.red700, size: 18),
           ),
         ],
       ),
@@ -861,13 +859,13 @@ class _ReturnBillPageState extends State<ReturnBillPage>
       margin: const EdgeInsets.only(top: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.green[50],
+        color: AppTheme.green50,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.green[200]!),
+        border: Border.all(color: AppTheme.green200),
       ),
       child: Row(
         children: [
-          Icon(Icons.check_circle_outline, color: Colors.green[700], size: 20),
+          Icon(Icons.check_circle_outline, color: AppTheme.green700, size: 20),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -875,7 +873,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 13,
-                color: Colors.green[700],
+                color: AppTheme.green700,
               ),
             ),
           ),
@@ -895,7 +893,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppTheme.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -927,7 +925,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                       style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                       ),
                     ),
                   ],
@@ -940,13 +938,13 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                 ),
                 decoration: BoxDecoration(
                   color: bill.returnStatus
-                      ? Colors.orange[50]
-                      : Colors.green[50],
+                      ? AppTheme.orange50
+                      : AppTheme.green50,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: bill.returnStatus
-                        ? Colors.orange[200]!
-                        : Colors.green[200]!,
+                        ? AppTheme.orange200
+                        : AppTheme.green200,
                   ),
                 ),
                 child: Text(
@@ -958,8 +956,8 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: bill.returnStatus
-                        ? Colors.orange[700]
-                        : Colors.green[700],
+                        ? AppTheme.orange700
+                        : AppTheme.green700,
                   ),
                 ),
               ),
@@ -1054,7 +1052,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                             fontFamily: 'Literata',
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: Colors.grey[700],
+                            color: AppTheme.grey700,
                           ),
                         ),
                       ),
@@ -1080,9 +1078,9 @@ class _ReturnBillPageState extends State<ReturnBillPage>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.orange[50],
+                color: AppTheme.orange50,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.orange[200]!),
+                border: Border.all(color: AppTheme.orange200),
               ),
               child: Column(
                 children: [
@@ -1094,7 +1092,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 13,
-                          color: Colors.orange[800],
+                          color: AppTheme.orange800,
                         ),
                       ),
                       Text(
@@ -1103,7 +1101,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                           fontFamily: 'Literata',
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Colors.orange[800],
+                          color: AppTheme.orange800,
                         ),
                       ),
                     ],
@@ -1118,7 +1116,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                           fontFamily: 'Literata',
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: Colors.orange[800],
+                          color: AppTheme.orange800,
                         ),
                       ),
                       Text(
@@ -1127,7 +1125,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                           fontFamily: 'Literata',
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
-                          color: Colors.orange[800],
+                          color: AppTheme.orange800,
                         ),
                       ),
                     ],
@@ -1147,7 +1145,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 13,
-                  color: Colors.grey[600],
+                  color: AppTheme.grey600,
                 ),
               ),
               Text(
@@ -1170,7 +1168,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 13,
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                   ),
                 ),
                 Text(
@@ -1188,7 +1186,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 13,
-                    color: Colors.green[700],
+                    color: AppTheme.green700,
                   ),
                 ),
                 Text(
@@ -1197,7 +1195,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                     fontFamily: 'Literata',
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Colors.green[700],
+                    color: AppTheme.green700,
                   ),
                 ),
               ],
@@ -1241,15 +1239,15 @@ class _ReturnBillPageState extends State<ReturnBillPage>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.orange[50],
+                color: AppTheme.orange50,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.orange[200]!),
+                border: Border.all(color: AppTheme.orange200),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.assignment_return,
-                    color: Colors.orange[700],
+                    color: AppTheme.orange700,
                     size: 20,
                   ),
                   const SizedBox(width: 8),
@@ -1262,7 +1260,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 11,
-                            color: Colors.orange[700],
+                            color: AppTheme.orange700,
                           ),
                         ),
                         Text(
@@ -1271,7 +1269,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                             fontFamily: 'Literata',
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: Colors.orange[800],
+                            color: AppTheme.orange800,
                           ),
                         ),
                       ],
@@ -1289,14 +1287,14 @@ class _ReturnBillPageState extends State<ReturnBillPage>
   Widget _buildDetailRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: Colors.grey[500]),
+        Icon(icon, size: 18, color: AppTheme.grey),
         const SizedBox(width: 8),
         Text(
           '$label: ',
           style: TextStyle(
             fontFamily: 'Literata',
             fontSize: 13,
-            color: Colors.grey[600],
+            color: AppTheme.grey600,
           ),
         ),
         Expanded(
@@ -1326,11 +1324,11 @@ class _ReturnBillPageState extends State<ReturnBillPage>
             ? AppColors.border(context)
             : returnQty >
                   0.001 // Tolerance for floats
-            ? Colors.orange[50]
+            ? AppTheme.orange50
             : AppColors.scaffold(context),
         borderRadius: BorderRadius.circular(10),
         border: returnQty > 0.001
-            ? Border.all(color: Colors.orange[300]!, width: 1.5)
+            ? Border.all(color: AppTheme.orange300, width: 1.5)
             : null,
       ),
       child: Column(
@@ -1352,8 +1350,8 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: isFullyReturned
-                                  ? Colors.grey[500]
-                                  : Colors.black,
+                                  ? AppTheme.grey
+                                  : AppTheme.black,
                               decoration: isFullyReturned
                                   ? TextDecoration.lineThrough
                                   : null,
@@ -1367,7 +1365,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.grey[400],
+                              color: AppTheme.grey400,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -1376,7 +1374,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                                 fontFamily: 'Literata',
                                 fontSize: 9,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white,
+                                color: AppTheme.white,
                               ),
                             ),
                           ),
@@ -1387,7 +1385,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.orange[400],
+                              color: AppTheme.orange400,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -1396,7 +1394,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                                 fontFamily: 'Literata',
                                 fontSize: 9,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white,
+                                color: AppTheme.white,
                               ),
                             ),
                           ),
@@ -1411,7 +1409,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 11,
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                           ),
                         ),
                         if (item.returnedQuantity > 0) ...[
@@ -1420,7 +1418,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 11,
-                              color: Colors.grey[400],
+                              color: AppTheme.grey400,
                             ),
                           ),
                           Text(
@@ -1428,7 +1426,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 11,
-                              color: Colors.orange[600],
+                              color: AppTheme.orange600,
                             ),
                           ),
                         ],
@@ -1437,7 +1435,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 11,
-                            color: Colors.grey[400],
+                            color: AppTheme.grey400,
                           ),
                         ),
                         Text(
@@ -1447,8 +1445,8 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: remainingQty > 0
-                                ? const Color(0xFF1B4D3E)
-                                : Colors.grey[500],
+                                ? AppTheme.primary
+                                : AppTheme.grey,
                           ),
                         ),
                       ],
@@ -1463,8 +1461,8 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: isFullyReturned
-                      ? Colors.grey[400]
-                      : const Color(0xFF1B4D3E),
+                      ? AppTheme.grey400
+                      : AppTheme.primary,
                 ),
               ),
             ],
@@ -1478,7 +1476,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 12,
-                    color: Colors.grey[700],
+                    color: AppTheme.grey700,
                   ),
                 ),
                 SizedBox(width: 12),
@@ -1492,7 +1490,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                     height: 32,
                     decoration: BoxDecoration(
                       color: returnQty > 0
-                          ? Colors.orange[100]
+                          ? AppTheme.orange100
                           : AppColors.border(context),
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -1500,8 +1498,8 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                       Icons.remove,
                       size: 18,
                       color: returnQty > 0
-                          ? Colors.orange[700]
-                          : Colors.grey[400],
+                          ? AppTheme.orange700
+                          : AppTheme.grey400,
                     ),
                   ),
                 ),
@@ -1516,8 +1514,8 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: returnQty > 0
-                          ? Colors.orange[700]
-                          : Colors.grey[600],
+                          ? AppTheme.orange700
+                          : AppTheme.grey600,
                     ),
                   ),
                 ),
@@ -1531,7 +1529,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                     height: 32,
                     decoration: BoxDecoration(
                       color: returnQty < remainingQty
-                          ? Colors.orange[100]
+                          ? AppTheme.orange100
                           : AppColors.border(context),
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -1539,8 +1537,8 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                       Icons.add,
                       size: 18,
                       color: returnQty < remainingQty
-                          ? Colors.orange[700]
-                          : Colors.grey[400],
+                          ? AppTheme.orange700
+                          : AppTheme.grey400,
                     ),
                   ),
                 ),
@@ -1555,7 +1553,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.orange[100],
+                        color: AppTheme.orange100,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -1564,7 +1562,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                           fontFamily: 'Literata',
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: Colors.orange[700],
+                          color: AppTheme.orange700,
                         ),
                       ),
                     ),
@@ -1579,7 +1577,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                   fontFamily: 'Literata',
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Colors.orange[700],
+                  color: AppTheme.orange700,
                 ),
               ),
             ],
@@ -1603,14 +1601,14 @@ class _ReturnBillPageState extends State<ReturnBillPage>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.info_outline, color: Colors.grey[600], size: 20),
+            Icon(Icons.info_outline, color: AppTheme.grey600, size: 20),
             const SizedBox(width: 8),
             Text(
               _localizations.allItemsReturned,
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: AppTheme.grey600,
               ),
             ),
           ],
@@ -1629,14 +1627,14 @@ class _ReturnBillPageState extends State<ReturnBillPage>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.touch_app_outlined, color: Colors.grey[600], size: 20),
+            Icon(Icons.touch_app_outlined, color: AppTheme.grey600, size: 20),
             const SizedBox(width: 8),
             Text(
               _localizations.selectItemsToReturn,
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: AppTheme.grey600,
               ),
             ),
           ],
@@ -1649,13 +1647,13 @@ class _ReturnBillPageState extends State<ReturnBillPage>
       child: ElevatedButton(
         onPressed: _isProcessing ? null : _showReturnConfirmationDialog,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.orange[600],
-          foregroundColor: Colors.white,
+          backgroundColor: AppTheme.orange600,
+          foregroundColor: AppTheme.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          disabledBackgroundColor: Colors.orange[300],
+          disabledBackgroundColor: AppTheme.orange300,
         ),
         child: _isProcessing
             ? Row(
@@ -1666,7 +1664,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                     width: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      valueColor: AlwaysStoppedAnimation<Color>(AppTheme.white),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1738,12 +1736,12 @@ class _ReturnConfirmationDialog extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.orange[50],
+              color: AppTheme.orange50,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               Icons.warning_amber_rounded,
-              color: Colors.orange[700],
+              color: AppTheme.orange700,
               size: 24,
             ),
           ),
@@ -1776,7 +1774,7 @@ class _ReturnConfirmationDialog extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 14,
-                  color: Colors.grey[700],
+                  color: AppTheme.grey700,
                 ),
               ),
               const SizedBox(height: 16),
@@ -1798,7 +1796,7 @@ class _ReturnConfirmationDialog extends StatelessWidget {
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 12,
-                              color: Colors.grey[600],
+                              color: AppTheme.grey600,
                             ),
                           ),
                         ),
@@ -1844,7 +1842,7 @@ class _ReturnConfirmationDialog extends StatelessWidget {
                                 fontFamily: 'Literata',
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.orange[700],
+                                color: AppTheme.orange700,
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -1872,7 +1870,7 @@ class _ReturnConfirmationDialog extends StatelessWidget {
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 12,
-                              color: Colors.grey[600],
+                              color: AppTheme.grey600,
                             ),
                           ),
                         ),
@@ -1900,7 +1898,7 @@ class _ReturnConfirmationDialog extends StatelessWidget {
                               fontFamily: 'Literata',
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: Colors.orange[700],
+                              color: AppTheme.orange700,
                             ),
                           ),
                         ),
@@ -1911,7 +1909,7 @@ class _ReturnConfirmationDialog extends StatelessWidget {
                               fontFamily: 'Literata',
                               fontSize: 16,
                               fontWeight: FontWeight.w800,
-                              color: Colors.orange[700],
+                              color: AppTheme.orange700,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1925,13 +1923,13 @@ class _ReturnConfirmationDialog extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.blue[50],
+                  color: AppTheme.blue50,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue[200]!),
+                  border: Border.all(color: AppTheme.blue200),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline, color: Colors.blue[700], size: 16),
+                    Icon(Icons.info_outline, color: AppTheme.blue700, size: 16),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -1939,7 +1937,7 @@ class _ReturnConfirmationDialog extends StatelessWidget {
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 11,
-                          color: Colors.blue[700],
+                          color: AppTheme.blue700,
                         ),
                       ),
                     ),
@@ -1955,14 +1953,14 @@ class _ReturnConfirmationDialog extends StatelessWidget {
           onPressed: () => Navigator.pop(context, false),
           child: Text(
             _localizations.cancel,
-            style: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
+            style: TextStyle(fontFamily: 'Literata', color: AppTheme.grey600),
           ),
         ),
         ElevatedButton(
           onPressed: () => Navigator.pop(context, true),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.orange[600],
-            foregroundColor: Colors.white,
+            backgroundColor: AppTheme.orange600,
+            foregroundColor: AppTheme.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),

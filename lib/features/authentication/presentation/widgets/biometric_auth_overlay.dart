@@ -61,7 +61,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
                 ),
                 border: Border(
                   top: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.3),
+                    color: AppTheme.white.withValues(alpha: 0.3),
                     width: 1.5,
                   ),
                 ),
@@ -141,7 +141,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
           'Use your fingerprint or face to unlock the app securely',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: Colors.grey[600],
+            color: AppTheme.grey600,
             fontSize: 14,
             fontFamily: 'Literata',
           ),
@@ -152,7 +152,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
           child: ElevatedButton(
             onPressed: _authenticateUser,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1B4D3E),
+              backgroundColor: AppTheme.primary,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -162,12 +162,12 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: const [
-                Icon(Icons.lock_open, color: Colors.white, size: 20),
+                Icon(Icons.lock_open, color: AppTheme.white, size: 20),
                 SizedBox(width: 8),
                 Text(
                   'Authenticate',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppTheme.white,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     fontFamily: 'Literata',
@@ -224,7 +224,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
               height: 40,
               child: CircularProgressIndicator(
                 strokeWidth: 3,
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B4D3E)),
+                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
               ),
             ),
           ),
@@ -244,7 +244,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
           'Place your finger on the sensor or look at the camera',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: Colors.grey[600],
+            color: AppTheme.grey600,
             fontSize: 13,
             fontFamily: 'Literata',
           ),
@@ -287,18 +287,18 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: const Color(0xFFFF6B6B).withValues(alpha: 0.1),
+            color: AppTheme.coral.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: const Center(
-            child: Icon(Icons.error, color: Color(0xFFFF6B6B), size: 40),
+            child: Icon(Icons.error, color: AppTheme.coral, size: 40),
           ),
         ),
         const SizedBox(height: 16),
         const Text(
           'Authentication Failed',
           style: TextStyle(
-            color: Color(0xFFFF6B6B),
+            color: AppTheme.coral,
             fontSize: 18,
             fontWeight: FontWeight.w700,
             fontFamily: 'Literata',
@@ -309,7 +309,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
           message,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: Colors.grey[600],
+            color: AppTheme.grey600,
             fontSize: 12,
             fontFamily: 'Literata',
           ),
@@ -349,7 +349,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
                   _authenticateUser();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B4D3E),
+                  backgroundColor: AppTheme.primary,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -358,7 +358,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
                 child: Text(
                   'Try Again',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppTheme.white,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     fontFamily: 'Literata',
@@ -380,18 +380,18 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: Colors.orange.withValues(alpha: 0.1),
+            color: AppTheme.orange.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: const Center(
-            child: Icon(Icons.cancel, color: Colors.orange, size: 40),
+            child: Icon(Icons.cancel, color: AppTheme.orange, size: 40),
           ),
         ),
         const SizedBox(height: 16),
         const Text(
           'Authentication Cancelled',
           style: TextStyle(
-            color: Colors.orange,
+            color: AppTheme.orange,
             fontSize: 18,
             fontWeight: FontWeight.w700,
             fontFamily: 'Literata',
@@ -402,7 +402,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
           'You cancelled the authentication process',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: Colors.grey[600],
+            color: AppTheme.grey600,
             fontSize: 13,
             fontFamily: 'Literata',
           ),
@@ -442,7 +442,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
                   _authenticateUser();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B4D3E),
+                  backgroundColor: AppTheme.primary,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -451,7 +451,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
                 child: Text(
                   'Try Again',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppTheme.white,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     fontFamily: 'Literata',

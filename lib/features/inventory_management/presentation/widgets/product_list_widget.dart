@@ -228,10 +228,10 @@ class _ProductCard extends StatelessWidget {
     final isOutOfStock = product.currentStock <= 0;
 
     const accentColors = [
-      Color(0xFF1B4D3E),
-      Color(0xFF0F3B2F),
-      Color(0xFF2C6F5E),
-      Color(0xFF1A5E52),
+      AppTheme.primary,
+      AppTheme.primaryDark,
+      AppTheme.paletteFF2C6F5E,
+      AppTheme.paletteFF1A5E52,
     ];
     final accentColor = accentColors[product.name.hashCode.abs() % 4];
     final initials = product.name.isNotEmpty
@@ -248,7 +248,7 @@ class _ProductCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: AppTheme.black.withValues(alpha: 0.03),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -280,9 +280,9 @@ class _ProductCard extends StatelessWidget {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: isOutOfStock
-                                ? [Colors.red[400]!, Colors.red[300]!]
+                                ? [AppTheme.error, AppTheme.toneRose]
                                 : isLowStock
-                                ? [Colors.orange[400]!, Colors.orange[300]!]
+                                ? [AppTheme.orange400, AppTheme.orange300]
                                 : [
                                     accentColor,
                                     accentColor.withValues(alpha: 0.7),
@@ -291,9 +291,9 @@ class _ProductCard extends StatelessWidget {
                           boxShadow: [
                             BoxShadow(
                               color: isOutOfStock
-                                  ? Colors.red.withValues(alpha: 0.3)
+                                  ? AppTheme.red.withValues(alpha: 0.3)
                                   : isLowStock
-                                  ? Colors.orange.withValues(alpha: 0.3)
+                                  ? AppTheme.orange.withValues(alpha: 0.3)
                                   : accentColor.withValues(alpha: 0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
@@ -313,7 +313,7 @@ class _ProductCard extends StatelessWidget {
                                     errorBuilder: (_, _, _) => Text(
                                       initials,
                                       style: TextStyle(
-                                        color: Colors.white,
+                                        color: AppTheme.white,
                                         fontSize: 20,
                                         fontWeight: FontWeight.w700,
                                         fontFamily: 'Literata',
@@ -324,7 +324,7 @@ class _ProductCard extends StatelessWidget {
                               : Text(
                                   initials,
                                   style: const TextStyle(
-                                    color: Colors.white,
+                                    color: AppTheme.white,
                                     fontSize: 20,
                                     fontWeight: FontWeight.w700,
                                     fontFamily: 'Literata',
@@ -341,9 +341,9 @@ class _ProductCard extends StatelessWidget {
                             width: 14,
                             height: 14,
                             decoration: BoxDecoration(
-                              color: isOutOfStock ? Colors.red : Colors.orange,
+                              color: isOutOfStock ? AppTheme.red : AppTheme.orange,
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
+                              border: Border.all(color: AppTheme.white, width: 2),
                             ),
                             child: Center(
                               child: Icon(
@@ -351,7 +351,7 @@ class _ProductCard extends StatelessWidget {
                                     ? Icons.close_rounded
                                     : Icons.warning_rounded,
                                 size: 8,
-                                color: Colors.white,
+                                color: AppTheme.white,
                               ),
                             ),
                           ),
@@ -394,7 +394,7 @@ class _ProductCard extends StatelessWidget {
                                 style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
-                                  color: Colors.white,
+                                  color: AppTheme.white,
                                   fontFamily: 'Literata',
                                 ),
                               ),
@@ -420,7 +420,7 @@ class _ProductCard extends StatelessWidget {
                                     ? Icons.cloud_done_rounded
                                     : Icons.cloud_upload_rounded,
                                 size: 16,
-                                color: isSynced ? Colors.green : Colors.orange,
+                                color: isSynced ? AppTheme.green : AppTheme.orange,
                               ),
                             ),
                           ],
@@ -460,9 +460,7 @@ class _ProductCard extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Color(
-                                0xFF1B4D3E,
-                              ).withValues(alpha: 0.1),
+                              color: AppTheme.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -515,8 +513,8 @@ class _ProductCard extends StatelessWidget {
                       label: 'Sale',
                       value: '₹${product.salesPrice.toStringAsFixed(0)}',
                       color: AppColors.isDark(context)
-                          ? Colors.white
-                          : Colors.green[700]!,
+                          ? AppTheme.white
+                          : AppTheme.green700,
                     ),
                     Container(
                       width: 1,
@@ -531,12 +529,12 @@ class _ProductCard extends StatelessWidget {
                       value: '${product.currentStock}',
                       color: isOutOfStock
                           ? (AppColors.isDark(context)
-                              ? Colors.white70
-                              : Colors.red[700]!)
+                              ? AppTheme.white70
+                              : AppTheme.red700)
                           : isLowStock
                           ? (AppColors.isDark(context)
-                              ? Colors.white60
-                              : Colors.orange[700]!)
+                              ? AppTheme.white60
+                              : AppTheme.orange700)
                           : AppColors.accent(context),
                     ),
                   ],
@@ -554,21 +552,21 @@ class _ProductCard extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.red[50],
+          color: AppTheme.red50,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.red[100]!, width: 1),
+          border: Border.all(color: AppTheme.red100, width: 1),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.warning_rounded, size: 16, color: Colors.red[700]),
+            Icon(Icons.warning_rounded, size: 16, color: AppTheme.red700),
             const SizedBox(height: 2),
             Text(
               'Out',
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
-                color: Colors.red[700],
+                color: AppTheme.red700,
                 fontFamily: 'Literata',
               ),
             ),
@@ -579,9 +577,9 @@ class _ProductCard extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.orange[50],
+          color: AppTheme.orange50,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.orange[100]!, width: 1),
+          border: Border.all(color: AppTheme.orange100, width: 1),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -591,7 +589,7 @@ class _ProductCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: Colors.orange[700],
+                color: AppTheme.orange700,
                 fontFamily: 'Literata',
               ),
             ),
@@ -600,7 +598,7 @@ class _ProductCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w500,
-                color: Colors.orange[400],
+                color: AppTheme.orange400,
                 fontFamily: 'Literata',
               ),
             ),
@@ -611,7 +609,7 @@ class _ProductCard extends StatelessWidget {
       return Icon(
         Icons.chevron_right_rounded,
         size: 24,
-        color: Colors.grey[400],
+        color: AppTheme.grey400,
       );
     }
   }
@@ -702,7 +700,7 @@ class _ShimmerCardState extends State<_ShimmerCard>
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
+                color: AppTheme.black.withValues(alpha: 0.03),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),

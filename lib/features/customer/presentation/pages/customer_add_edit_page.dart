@@ -136,17 +136,17 @@ class _CustomerAddEditPageState extends State<CustomerAddEditPage> {
       backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
         backgroundColor: AppColors.appBar(context),
-        foregroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
+        foregroundColor: AppTheme.white,
+        surfaceTintColor: AppTheme.transparent,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.white),
         ),
         title: Text(
           _isEditing ? 'Edit Customer' : 'Add Customer',
           style: const TextStyle(
-            color: Colors.white,
+            color: AppTheme.white,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -160,7 +160,7 @@ class _CustomerAddEditPageState extends State<CustomerAddEditPage> {
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.white70),
                 ),
               ),
             )
@@ -170,7 +170,7 @@ class _CustomerAddEditPageState extends State<CustomerAddEditPage> {
               child: const Text(
                 'Save',
                 style: TextStyle(
-                  color: Color(0xFF6C63FF),
+                  color: AppTheme.paletteFF6C63FF,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
@@ -229,15 +229,15 @@ class _CustomerAddEditPageState extends State<CustomerAddEditPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue.withValues(alpha: 0.1),
+                color: AppTheme.blue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
+                border: Border.all(color: AppTheme.blue.withValues(alpha: 0.2)),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.cloud_off_outlined,
-                    color: Colors.blue.shade300,
+                    color: AppTheme.blue300,
                     size: 20,
                   ),
                   const SizedBox(width: 12),
@@ -245,7 +245,7 @@ class _CustomerAddEditPageState extends State<CustomerAddEditPage> {
                     child: Text(
                       'Customer will be saved locally and synced when online',
                       style: TextStyle(
-                        color: Colors.blue.shade300,
+                        color: AppTheme.blue300,
                         fontSize: 13,
                       ),
                     ),
@@ -285,7 +285,7 @@ class _CustomerAddEditPageState extends State<CustomerAddEditPage> {
           prefixIcon: Icon(icon, color: AppColors.mutedText(context)),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.all(16),
-          errorStyle: TextStyle(color: Colors.red.shade300),
+          errorStyle: TextStyle(color: AppTheme.toneRose),
         ),
       ),
     );

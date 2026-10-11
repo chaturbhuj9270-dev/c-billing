@@ -547,15 +547,15 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   icon: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.18),
+                      color: AppTheme.white.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.25),
+                        color: AppTheme.white.withValues(alpha: 0.25),
                       ),
                     ),
                     child: const Icon(
                       Icons.arrow_back_ios_new,
-                      color: Colors.white,
+                      color: AppTheme.white,
                       size: 16,
                     ),
                   ),
@@ -571,7 +571,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         titleText,
                         style: const TextStyle(
                           fontFamily: 'Literata',
-                          color: Colors.white,
+                          color: AppTheme.white,
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.3,
@@ -584,7 +584,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                             : 'Fill in the details below',
                         style: TextStyle(
                           fontFamily: 'Literata',
-                          color: Colors.white.withValues(alpha: 0.7),
+                          color: AppTheme.white.withValues(alpha: 0.7),
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
                         ),
@@ -603,7 +603,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   _buildAppBarAction(
                     onTap: _isPdfLoading ? null : _printOrder,
                     icon: Icons.print_rounded,
-                    color: Colors.amber[300]!,
+                    color: AppTheme.amber300,
                   ),
                 ],
                 if (_isLoading)
@@ -615,7 +615,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.white.withValues(alpha: 0.9),
+                          AppTheme.white.withValues(alpha: 0.9),
                         ),
                       ),
                     ),
@@ -631,7 +631,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   Widget _buildAppBarAction({
     required VoidCallback? onTap,
     required IconData icon,
-    Color color = Colors.white,
+    Color color = AppTheme.white,
     bool isLoading = false,
   }) {
     return GestureDetector(
@@ -639,9 +639,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       child: Container(
         padding: EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.15),
+          color: AppTheme.white.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+          border: Border.all(color: AppTheme.white.withValues(alpha: 0.2)),
         ),
         child: isLoading
             ? SizedBox(
@@ -671,7 +671,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             offset: Offset(0, 4),
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: AppTheme.black.withValues(alpha: 0.03),
             blurRadius: 4,
             offset: Offset(0, 1),
           ),
@@ -698,8 +698,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           ],
         ),
         indicatorPadding: EdgeInsets.zero,
-        labelColor: Colors.white,
-        unselectedLabelColor: const Color(0xFF5A6A72),
+        labelColor: AppTheme.white,
+        unselectedLabelColor: AppTheme.paletteFF5A6A72,
         labelStyle: const TextStyle(
           fontWeight: FontWeight.w700,
           fontFamily: 'Literata',
@@ -711,8 +711,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           fontFamily: 'Literata',
           fontSize: 13,
         ),
-        dividerColor: Colors.transparent,
-        overlayColor: WidgetStateProperty.all(Colors.transparent),
+        dividerColor: AppTheme.transparent,
+        overlayColor: WidgetStateProperty.all(AppTheme.transparent),
         tabs: [
           Tab(
             height: 44,
@@ -769,7 +769,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           ],
         ),
         child: Material(
-          color: Colors.transparent,
+          color: AppTheme.transparent,
           child: InkWell(
             onTap: _showCustomerPickerSheet,
             borderRadius: BorderRadius.circular(10),
@@ -781,14 +781,14 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   const Icon(
                     Icons.person_search_rounded,
                     size: 16,
-                    color: Colors.white,
+                    color: AppTheme.white,
                   ),
                   const SizedBox(width: 6),
                   Text(
                     l10n.selectText,
                     style: const TextStyle(
                       fontFamily: 'Literata',
-                      color: Colors.white,
+                      color: AppTheme.white,
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
                     ),
@@ -822,10 +822,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               decoration: BoxDecoration(
                 color: AppColors.card(context),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
+                border: Border.all(color: AppTheme.grey.withValues(alpha: 0.15)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
+                    color: AppTheme.black.withValues(alpha: 0.08),
                     blurRadius: 8,
                     offset: Offset(0, 4),
                   ),
@@ -850,9 +850,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           dense: true,
                           leading: CircleAvatar(
                             radius: 16,
-                            backgroundColor: Color(
-                              0xFF1B4D3E,
-                            ).withValues(alpha: 0.15),
+                            backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
                             child: Text(
                               customer.name.isNotEmpty
                                   ? customer.name[0].toUpperCase()
@@ -869,7 +867,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                             customer.name,
                             style: const TextStyle(
                               fontFamily: 'Literata',
-                              color: Color(0xFF1A1A2E),
+                              color: AppTheme.ink,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -880,7 +878,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                                 customer.mobile,
                                 style: TextStyle(
                                   fontFamily: 'Literata',
-                                  color: Colors.grey[600],
+                                  color: AppTheme.grey600,
                                   fontSize: 12,
                                 ),
                               ),
@@ -889,7 +887,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                                   customer.address!,
                                   style: TextStyle(
                                     fontFamily: 'Literata',
-                                    color: Colors.grey[500],
+                                    color: AppTheme.grey,
                                     fontSize: 11,
                                   ),
                                   maxLines: 1,
@@ -932,7 +930,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (ctx) => _CustomerPickerSheet(
         customers: allCustomers,
         onCustomerSelected: (customer) {
@@ -1009,9 +1007,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             return Theme(
               data: Theme.of(context).copyWith(
                 colorScheme: ColorScheme.light(
-                  primary: Color(0xFF1B4D3E),
+                  primary: AppTheme.primary,
                   surface: AppColors.card(context),
-                  onSurface: Color(0xFF1A1A2E),
+                  onSurface: AppTheme.ink,
                 ),
               ),
               child: child!,
@@ -1030,7 +1028,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF1B4D3E).withValues(alpha: 0.04),
+              AppTheme.primary.withValues(alpha: 0.04),
               AppColors.scaffold(context),
             ],
           ),
@@ -1053,7 +1051,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 _orderType == OrderType.event
                     ? Icons.calendar_today_rounded
                     : Icons.local_shipping_rounded,
-                color: Colors.white,
+                color: AppTheme.white,
                 size: 16,
               ),
             ),
@@ -1066,7 +1064,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     l10n.dateRequired,
                     style: TextStyle(
                       fontFamily: 'Literata',
-                      color: Colors.grey[500],
+                      color: AppTheme.grey,
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
                     ),
@@ -1076,7 +1074,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     DateFormat('dd MMM yyyy').format(_eventDate),
                     style: const TextStyle(
                       fontFamily: 'Literata',
-                      color: Color(0xFF1A1A2E),
+                      color: AppTheme.ink,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -1086,7 +1084,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             ),
             Icon(
               Icons.keyboard_arrow_down_rounded,
-              color: Colors.grey[400],
+              color: AppTheme.grey400,
               size: 20,
             ),
           ],
@@ -1105,9 +1103,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             return Theme(
               data: Theme.of(context).copyWith(
                 colorScheme: ColorScheme.light(
-                  primary: Color(0xFF1B4D3E),
+                  primary: AppTheme.primary,
                   surface: AppColors.card(context),
-                  onSurface: Color(0xFF1A1A2E),
+                  onSurface: AppTheme.ink,
                 ),
               ),
               child: child!,
@@ -1126,12 +1124,12 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.orange.withValues(alpha: 0.04),
+              AppTheme.orange.withValues(alpha: 0.04),
               AppColors.scaffold(context),
             ],
           ),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.orange.withValues(alpha: 0.12)),
+          border: Border.all(color: AppTheme.orange.withValues(alpha: 0.12)),
         ),
         child: Row(
           children: [
@@ -1139,13 +1137,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.orange[700]!, Colors.orange[500]!],
+                  colors: [AppTheme.orange700, AppTheme.orange],
                 ),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
                 Icons.access_time_rounded,
-                color: Colors.white,
+                color: AppTheme.white,
                 size: 16,
               ),
             ),
@@ -1160,7 +1158,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     ).timeRequired,
                     style: TextStyle(
                       fontFamily: 'Literata',
-                      color: Colors.grey[500],
+                      color: AppTheme.grey,
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
                     ),
@@ -1170,7 +1168,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     _eventTime.format(context),
                     style: const TextStyle(
                       fontFamily: 'Literata',
-                      color: Color(0xFF1A1A2E),
+                      color: AppTheme.ink,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -1180,7 +1178,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             ),
             Icon(
               Icons.keyboard_arrow_down_rounded,
-              color: Colors.grey[400],
+              color: AppTheme.grey400,
               size: 20,
             ),
           ],
@@ -1231,7 +1229,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     l10n.noSubEventsAdded,
                     style: const TextStyle(
                       fontFamily: 'Literata',
-                      color: Color(0xFF4A5568),
+                      color: AppTheme.paletteFF4A5568,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
                     ),
@@ -1241,7 +1239,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     l10n.tapToAddSubEvents,
                     style: TextStyle(
                       fontFamily: 'Literata',
-                      color: Colors.grey[400],
+                      color: AppTheme.grey400,
                       fontSize: 12,
                     ),
                   ),
@@ -1291,7 +1289,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       width: 5,
                       height: 5,
                       decoration: const BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.white,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -1308,8 +1306,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            const Color(0xFF1B4D3E).withValues(alpha: 0.3),
-                            const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                            AppTheme.primary.withValues(alpha: 0.3),
+                            AppTheme.primary.withValues(alpha: 0.08),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(1),
@@ -1336,7 +1334,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
+                    color: AppTheme.black.withValues(alpha: 0.03),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -1358,7 +1356,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         ),
                         child: const Icon(
                           Icons.celebration,
-                          color: Colors.white,
+                          color: AppTheme.white,
                           size: 16,
                         ),
                       ),
@@ -1371,7 +1369,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                               subEvent.name,
                               style: const TextStyle(
                                 fontFamily: 'Literata',
-                                color: Color(0xFF1A1A2E),
+                                color: AppTheme.ink,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 14,
                               ),
@@ -1382,7 +1380,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                                 Icon(
                                   Icons.calendar_today_rounded,
                                   size: 11,
-                                  color: Colors.grey[500],
+                                  color: AppTheme.grey,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
@@ -1391,7 +1389,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                                   ).format(subEvent.date),
                                   style: TextStyle(
                                     fontFamily: 'Literata',
-                                    color: Colors.grey[600],
+                                    color: AppTheme.grey600,
                                     fontSize: 11,
                                   ),
                                 ),
@@ -1399,7 +1397,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                                 Icon(
                                   Icons.access_time_rounded,
                                   size: 11,
-                                  color: Colors.grey[500],
+                                  color: AppTheme.grey,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
@@ -1408,7 +1406,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                                   ).format(context),
                                   style: TextStyle(
                                     fontFamily: 'Literata',
-                                    color: Colors.grey[600],
+                                    color: AppTheme.grey600,
                                     fontSize: 11,
                                   ),
                                 ),
@@ -1426,22 +1424,20 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              const Color(0xFF4CAF50).withValues(alpha: 0.15),
-                              const Color(0xFF4CAF50).withValues(alpha: 0.05),
+                              AppTheme.green.withValues(alpha: 0.15),
+                              AppTheme.green.withValues(alpha: 0.05),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: const Color(
-                              0xFF4CAF50,
-                            ).withValues(alpha: 0.2),
+                            color: AppTheme.green.withValues(alpha: 0.2),
                           ),
                         ),
                         child: Text(
                           '₹${subEvent.charges.toStringAsFixed(0)}',
                           style: TextStyle(
                             fontFamily: 'Literata',
-                            color: Color(0xFF2E7D32),
+                            color: AppTheme.green800,
                             fontWeight: FontWeight.w800,
                             fontSize: 14,
                           ),
@@ -1450,7 +1446,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       PopupMenuButton<String>(
                         icon: Icon(
                           Icons.more_vert,
-                          color: Colors.grey[400],
+                          color: AppTheme.grey400,
                           size: 20,
                         ),
                         color: AppColors.card(context),
@@ -1472,7 +1468,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                               children: [
                                 Icon(
                                   Icons.edit,
-                                  color: Colors.grey[700],
+                                  color: AppTheme.grey700,
                                   size: 18,
                                 ),
                                 const SizedBox(width: 8),
@@ -1480,7 +1476,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                                   'Edit',
                                   style: TextStyle(
                                     fontFamily: 'Literata',
-                                    color: Colors.grey[800],
+                                    color: AppTheme.grey800,
                                   ),
                                 ),
                               ],
@@ -1490,13 +1486,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                             value: 'delete',
                             child: Row(
                               children: [
-                                Icon(Icons.delete, color: Colors.red, size: 18),
+                                Icon(Icons.delete, color: AppTheme.red, size: 18),
                                 SizedBox(width: 8),
                                 Text(
                                   'Delete',
                                   style: TextStyle(
                                     fontFamily: 'Literata',
-                                    color: Colors.red,
+                                    color: AppTheme.red,
                                   ),
                                 ),
                               ],
@@ -1522,7 +1518,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           Icon(
                             Icons.note_rounded,
                             size: 12,
-                            color: Colors.grey[400],
+                            color: AppTheme.grey400,
                           ),
                           const SizedBox(width: 6),
                           Expanded(
@@ -1530,7 +1526,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                               subEvent.notes!,
                               style: TextStyle(
                                 fontFamily: 'Literata',
-                                color: Colors.grey[600],
+                                color: AppTheme.grey600,
                                 fontSize: 11,
                               ),
                               maxLines: 1,
@@ -1572,7 +1568,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1A2332), Color(0xFF1B4D3E)],
+          colors: [AppTheme.paletteFF1A2332, AppTheme.primary],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
@@ -1592,15 +1588,15 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
+                  color: AppTheme.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.1),
+                    color: AppTheme.white.withValues(alpha: 0.1),
                   ),
                 ),
                 child: const Icon(
                   Icons.receipt_long_rounded,
-                  color: Colors.white,
+                  color: AppTheme.white,
                   size: 20,
                 ),
               ),
@@ -1611,7 +1607,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   fontFamily: 'Literata',
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: AppTheme.white,
                   letterSpacing: 0.3,
                 ),
               ),
@@ -1624,7 +1620,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               'Sub-Events (${_subEvents.length})',
               _subEventsTotal,
               Icons.celebration,
-              Colors.white.withValues(alpha: 0.7),
+              AppTheme.white.withValues(alpha: 0.7),
             ),
             const SizedBox(height: 10),
           ],
@@ -1634,7 +1630,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               'Products (${_orderItems.length})',
               _productsTotal,
               Icons.shopping_bag,
-              Colors.white.withValues(alpha: 0.7),
+              AppTheme.white.withValues(alpha: 0.7),
             ),
             const SizedBox(height: 10),
           ],
@@ -1646,9 +1642,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.white.withValues(alpha: 0.0),
-                    Colors.white.withValues(alpha: 0.2),
-                    Colors.white.withValues(alpha: 0.0),
+                    AppTheme.white.withValues(alpha: 0.0),
+                    AppTheme.white.withValues(alpha: 0.2),
+                    AppTheme.white.withValues(alpha: 0.0),
                   ],
                 ),
               ),
@@ -1664,7 +1660,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   fontFamily: 'Literata',
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
-                  color: Colors.white,
+                  color: AppTheme.white,
                 ),
               ),
               Container(
@@ -1675,13 +1671,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Colors.white.withValues(alpha: 0.2),
-                      Colors.white.withValues(alpha: 0.1),
+                      AppTheme.white.withValues(alpha: 0.2),
+                      AppTheme.white.withValues(alpha: 0.1),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.15),
+                    color: AppTheme.white.withValues(alpha: 0.15),
                   ),
                 ),
                 child: Text(
@@ -1690,7 +1686,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     fontFamily: 'Literata',
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
-                    color: Colors.white,
+                    color: AppTheme.white,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -1759,15 +1755,15 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       decoration: BoxDecoration(
         color: AppColors.card(context),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.08)),
+        border: Border.all(color: AppTheme.grey.withValues(alpha: 0.08)),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.withValues(alpha: 0.06),
+            color: AppTheme.green.withValues(alpha: 0.06),
             blurRadius: 20,
             offset: const Offset(0, 6),
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: AppTheme.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1778,7 +1774,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         child: Container(
           decoration: const BoxDecoration(
             border: Border(
-              left: BorderSide(color: Color(0xFF43A047), width: 4),
+              left: BorderSide(color: AppTheme.green600, width: 4),
             ),
           ),
           child: Column(
@@ -1794,9 +1790,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                     colors: [
-                      const Color(0xFF43A047).withValues(alpha: 0.08),
-                      const Color(0xFF43A047).withValues(alpha: 0.03),
-                      Colors.transparent,
+                      AppTheme.green600.withValues(alpha: 0.08),
+                      AppTheme.green600.withValues(alpha: 0.03),
+                      AppTheme.transparent,
                     ],
                   ),
                   borderRadius: const BorderRadius.only(
@@ -1811,22 +1807,20 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            const Color(0xFF1B4D3E),
-                            const Color(0xFF1B4D3E).withValues(alpha: 0.8),
+                            AppTheme.primary,
+                            AppTheme.primary.withValues(alpha: 0.8),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(10),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(
-                              0xFF1B4D3E,
-                            ).withValues(alpha: 0.3),
+                            color: AppTheme.primary.withValues(alpha: 0.3),
                             blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),
                         ],
                       ),
-                      child: Icon(icon, color: Colors.white, size: 18),
+                      child: Icon(icon, color: AppTheme.white, size: 18),
                     ),
                     SizedBox(width: 10),
                     Expanded(
@@ -1847,7 +1841,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 11,
-                              color: Colors.grey[600],
+                              color: AppTheme.grey600,
                             ),
                           ),
                         ],
@@ -1878,13 +1872,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [Colors.amber[700]!, Colors.amber[600]!],
+                            colors: [AppTheme.amber700, AppTheme.amber600],
                           ),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Icon(
                           Icons.flash_on_rounded,
-                          color: Colors.white,
+                          color: AppTheme.white,
                           size: 14,
                         ),
                       ),
@@ -1904,7 +1898,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           decoration: InputDecoration(
                             hintText: 'Enter product code',
                             hintStyle: TextStyle(
-                              color: Colors.grey[500],
+                              color: AppTheme.grey,
                               fontWeight: FontWeight.w400,
                               fontSize: 13,
                             ),
@@ -1923,9 +1917,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         child: Container(
                           padding: EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: Color(
-                              0xFF1B4D3E,
-                            ).withValues(alpha: 0.1),
+                            color: AppTheme.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Icon(
@@ -1954,7 +1946,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           ),
                           child: const Icon(
                             Icons.qr_code_scanner,
-                            color: Colors.white,
+                            color: AppTheme.white,
                             size: 18,
                           ),
                         ),
@@ -1976,7 +1968,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       color: AppColors.scaffold(context),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: Colors.green.withValues(alpha: 0.1),
+                        color: AppTheme.green.withValues(alpha: 0.1),
                       ),
                     ),
                     child: Column(
@@ -1984,13 +1976,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.06),
+                            color: AppTheme.green.withValues(alpha: 0.06),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             icon,
                             size: 32,
-                            color: Colors.green.withValues(alpha: 0.3),
+                            color: AppTheme.green.withValues(alpha: 0.3),
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -1998,7 +1990,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           emptyHint,
                           style: const TextStyle(
                             fontFamily: 'Literata',
-                            color: Color(0xFF4A5568),
+                            color: AppTheme.paletteFF4A5568,
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                           ),
@@ -2020,7 +2012,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   separatorBuilder: (_, _) => Divider(
                     height: 1,
                     thickness: 0.5,
-                    color: Colors.grey.withValues(alpha: 0.12),
+                    color: AppTheme.grey.withValues(alpha: 0.12),
                   ),
                   itemBuilder: (context, index) {
                     final item = _orderItems[index];
@@ -2034,17 +2026,17 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   child: Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withValues(alpha: 0.08),
+                      color: AppTheme.blue.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: Colors.blue.withValues(alpha: 0.15),
+                        color: AppTheme.blue.withValues(alpha: 0.15),
                       ),
                     ),
                     child: Row(
                       children: [
                         Icon(
                           Icons.info_outline,
-                          color: Colors.blue.shade600,
+                          color: AppTheme.blue600,
                           size: 14,
                         ),
                         const SizedBox(width: 8),
@@ -2053,7 +2045,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                             'Stock deducted when converted to bill',
                             style: TextStyle(
                               fontFamily: 'Literata',
-                              color: Colors.blue.shade700,
+                              color: AppTheme.blue700,
                               fontSize: 11,
                             ),
                           ),
@@ -2077,10 +2069,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 16),
-        color: Colors.red[400],
+        color: AppTheme.error,
         child: const Icon(
           Icons.delete_outline_rounded,
-          color: Colors.white,
+          color: AppTheme.white,
           size: 20,
         ),
       ),
@@ -2105,7 +2097,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     fontFamily: 'Literata',
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: AppTheme.white,
                   ),
                 ),
               ),
@@ -2123,7 +2115,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       fontFamily: 'Literata',
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
-                      color: Color(0xFF1A1A2E),
+                      color: AppTheme.ink,
                       height: 1.2,
                     ),
                     maxLines: 1,
@@ -2140,16 +2132,14 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                             fontFamily: 'Literata',
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: const Color(
-                              0xFF1B4D3E,
-                            ).withValues(alpha: 0.8),
+                            color: AppTheme.primary.withValues(alpha: 0.8),
                           ),
                         ),
                         const SizedBox(width: 3),
                         Icon(
                           Icons.edit_rounded,
                           size: 10,
-                          color: Colors.grey[400],
+                          color: AppTheme.grey400,
                         ),
                         if (item.discountPercent > 0) ...[
                           const SizedBox(width: 6),
@@ -2159,7 +2149,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                               vertical: 1,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.orange[50],
+                              color: AppTheme.orange50,
                               borderRadius: BorderRadius.circular(3),
                             ),
                             child: Text(
@@ -2167,7 +2157,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                               style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 9,
-                                color: Colors.orange[700],
+                                color: AppTheme.orange700,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -2186,7 +2176,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               decoration: BoxDecoration(
                 color: AppColors.scaffold(context),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
+                border: Border.all(color: AppTheme.grey.withValues(alpha: 0.15)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -2231,7 +2221,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         fontFamily: 'Literata',
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF1A1A2E),
+                        color: AppTheme.ink,
                       ),
                     ),
                   ),
@@ -2291,23 +2281,23 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       decoration: BoxDecoration(
         color: AppColors.scaffold(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+        border: Border.all(color: AppTheme.grey.withValues(alpha: 0.1)),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.green.withValues(alpha: 0.1),
+            color: AppTheme.green.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Icon(Icons.inventory, color: Colors.green),
+          child: const Icon(Icons.inventory, color: AppTheme.green),
         ),
         title: Text(
           item.productName,
           style: const TextStyle(
             fontFamily: 'Literata',
-            color: Color(0xFF1A1A2E),
+            color: AppTheme.ink,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -2318,7 +2308,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               '${item.quantity} × ₹${item.rate.toStringAsFixed(0)}',
               style: TextStyle(
                 fontFamily: 'Literata',
-                color: Colors.grey[600],
+                color: AppTheme.grey600,
                 fontSize: 12,
               ),
             ),
@@ -2327,7 +2317,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 'Discount: ${item.discountPercent}%',
                 style: TextStyle(
                   fontFamily: 'Literata',
-                  color: Colors.orange.shade700,
+                  color: AppTheme.orange700,
                   fontSize: 11,
                 ),
               ),
@@ -2340,13 +2330,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               '₹${item.total.toStringAsFixed(0)}',
               style: TextStyle(
                 fontFamily: 'Literata',
-                color: Color(0xFF4CAF50),
+                color: AppTheme.green,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
               ),
             ),
             PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, color: Colors.grey[500]),
+              icon: Icon(Icons.more_vert, color: AppTheme.grey),
               color: AppColors.card(context),
               elevation: 8,
               shape: RoundedRectangleBorder(
@@ -2364,13 +2354,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   value: 'edit',
                   child: Row(
                     children: [
-                      Icon(Icons.edit, color: Colors.grey[700], size: 18),
+                      Icon(Icons.edit, color: AppTheme.grey700, size: 18),
                       const SizedBox(width: 8),
                       Text(
                         'Edit',
                         style: TextStyle(
                           fontFamily: 'Literata',
-                          color: Colors.grey[800],
+                          color: AppTheme.grey800,
                         ),
                       ),
                     ],
@@ -2380,13 +2370,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(Icons.delete, color: Colors.red, size: 18),
+                      Icon(Icons.delete, color: AppTheme.red, size: 18),
                       SizedBox(width: 8),
                       Text(
                         'Delete',
                         style: TextStyle(
                           fontFamily: 'Literata',
-                          color: Colors.red,
+                          color: AppTheme.red,
                         ),
                       ),
                     ],
@@ -2404,7 +2394,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     return _buildSectionCard(
       title: 'Event Charges',
       icon: Icons.event_note,
-      accentColor: Colors.purple,
+      accentColor: AppTheme.purple,
       child: _buildTextField(
         controller: _eventChargesController,
         label: 'Additional Event Charges',
@@ -2419,7 +2409,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     return _buildSectionCard(
       title: 'Advance Payment',
       icon: Icons.account_balance_wallet,
-      accentColor: const Color(0xFF2196F3),
+      accentColor: AppTheme.blue,
       child: _buildTextField(
         controller: _advanceController,
         label: 'Advance Amount Received',
@@ -2434,7 +2424,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     return _buildSectionCard(
       title: 'Notes',
       icon: Icons.note_alt_outlined,
-      accentColor: Colors.amber.shade700,
+      accentColor: AppTheme.amber700,
       child: _buildTextField(
         controller: _notesController,
         label: 'Additional Notes (Optional)',
@@ -2547,7 +2537,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               ? DateFormat('dd/MM/yyyy').format(selectedDate)
               : 'Select Date',
           style: TextStyle(
-            color: selectedDate != null ? Colors.black : Colors.grey,
+            color: selectedDate != null ? AppTheme.black : AppTheme.grey,
           ),
         ),
       ),
@@ -2590,7 +2580,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           _customFieldValues[column.id] = newValue;
         });
       },
-      activeThumbColor: const Color(0xFF1B4D3E),
+      activeThumbColor: AppTheme.primary,
       contentPadding: EdgeInsets.zero,
     );
   }
@@ -2601,7 +2591,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1A2332), Color(0xFF1B4D3E), Color(0xFF1A3A30)],
+          colors: [AppTheme.paletteFF1A2332, AppTheme.primary, AppTheme.paletteFF1A3A30],
         ),
         boxShadow: [
           BoxShadow(
@@ -2625,7 +2615,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     label: 'Total',
                     amount: _totalAmount,
                     icon: Icons.receipt_long_rounded,
-                    color: Colors.white,
+                    color: AppTheme.white,
                   ),
                   const SizedBox(width: 12),
                   // Advance
@@ -2633,7 +2623,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     label: 'Advance',
                     amount: _advanceAmount,
                     icon: Icons.account_balance_wallet_rounded,
-                    color: const Color(0xFF66BB6A),
+                    color: AppTheme.green400,
                   ),
                   const SizedBox(width: 12),
                   // Remaining
@@ -2646,19 +2636,19 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       gradient: LinearGradient(
                         colors: _remainingAmount > 0
                             ? [
-                                Colors.orange.withValues(alpha: 0.2),
-                                Colors.orange.withValues(alpha: 0.1),
+                                AppTheme.orange.withValues(alpha: 0.2),
+                                AppTheme.orange.withValues(alpha: 0.1),
                               ]
                             : [
-                                Colors.green.withValues(alpha: 0.2),
-                                Colors.green.withValues(alpha: 0.1),
+                                AppTheme.green.withValues(alpha: 0.2),
+                                AppTheme.green.withValues(alpha: 0.1),
                               ],
                       ),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: _remainingAmount > 0
-                            ? Colors.orange.withValues(alpha: 0.3)
-                            : Colors.green.withValues(alpha: 0.3),
+                            ? AppTheme.orange.withValues(alpha: 0.3)
+                            : AppTheme.green.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Column(
@@ -2668,7 +2658,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           'Due',
                           style: TextStyle(
                             fontFamily: 'Literata',
-                            color: Colors.white.withValues(alpha: 0.6),
+                            color: AppTheme.white.withValues(alpha: 0.6),
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
                           ),
@@ -2678,8 +2668,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           style: TextStyle(
                             fontFamily: 'Literata',
                             color: _remainingAmount > 0
-                                ? Colors.orange[300]
-                                : Colors.green[300],
+                                ? AppTheme.orange300
+                                : AppTheme.green300,
                             fontWeight: FontWeight.w800,
                             fontSize: 15,
                           ),
@@ -2698,8 +2688,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   onPressed: _isLoading ? null : _saveOrder,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.card(context),
-                    foregroundColor: const Color(0xFF1B4D3E),
-                    disabledBackgroundColor: Colors.white.withValues(
+                    foregroundColor: AppTheme.primary,
+                    disabledBackgroundColor: AppTheme.white.withValues(
                       alpha: 0.5,
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -2715,7 +2705,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           child: CircularProgressIndicator(
                             strokeWidth: 2.5,
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              Color(0xFF1B4D3E),
+                              AppTheme.primary,
                             ),
                           ),
                         )
@@ -2759,9 +2749,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.08),
+          color: AppTheme.white.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          border: Border.all(color: AppTheme.white.withValues(alpha: 0.1)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2770,7 +2760,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               children: [
                 Icon(
                   icon,
-                  color: Colors.white.withValues(alpha: 0.5),
+                  color: AppTheme.white.withValues(alpha: 0.5),
                   size: 12,
                 ),
                 const SizedBox(width: 4),
@@ -2778,7 +2768,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   label,
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    color: Colors.white.withValues(alpha: 0.6),
+                    color: AppTheme.white.withValues(alpha: 0.6),
                     fontSize: 10,
                     fontWeight: FontWeight.w500,
                   ),
@@ -2806,7 +2796,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     required IconData icon,
     required Widget child,
     Widget? trailing,
-    Color accentColor = const Color(0xFF1B4D3E),
+    Color accentColor = AppTheme.primary,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -2819,7 +2809,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             offset: const Offset(0, 6),
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: AppTheme.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -2847,7 +2837,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     colors: [
                       accentColor.withValues(alpha: 0.06),
                       accentColor.withValues(alpha: 0.02),
-                      Colors.transparent,
+                      AppTheme.transparent,
                     ],
                   ),
                 ),
@@ -2877,7 +2867,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         title,
                         style: TextStyle(
                           fontFamily: 'Literata',
-                          color: const Color(0xFF1A1A2E),
+                          color: AppTheme.ink,
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.2,
@@ -2919,10 +2909,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       decoration: BoxDecoration(
         color: AppColors.scaffold(context),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE8ECF0)),
+        border: Border.all(color: AppTheme.paletteFFE8ECF0),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: AppTheme.black.withValues(alpha: 0.02),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -2940,7 +2930,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         onChanged: onChanged,
         style: const TextStyle(
           fontFamily: 'Literata',
-          color: Color(0xFF1A1A2E),
+          color: AppTheme.ink,
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
@@ -2948,7 +2938,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           labelText: label,
           labelStyle: TextStyle(
             fontFamily: 'Literata',
-            color: Colors.grey[500],
+            color: AppTheme.grey,
             fontSize: 13,
           ),
           floatingLabelStyle: TextStyle(
@@ -2958,28 +2948,28 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           ),
           prefixIcon: Padding(
             padding: const EdgeInsets.only(left: 12, right: 8),
-            child: Icon(icon, color: const Color(0xFF9CA3AF), size: 20),
+            child: Icon(icon, color: AppTheme.paletteFF9CA3AF, size: 20),
           ),
           prefixIconConstraints: const BoxConstraints(minWidth: 44),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 1.5),
+            borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+            borderSide: BorderSide(color: AppTheme.error, width: 1.5),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+            borderSide: BorderSide(color: AppTheme.error, width: 1.5),
           ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 16,
           ),
-          errorStyle: TextStyle(color: Colors.red.shade600, fontSize: 11),
+          errorStyle: TextStyle(color: AppTheme.red600, fontSize: 11),
         ),
       ),
     );
@@ -3049,7 +3039,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               editIndex != null ? 'Edit Sub-Event' : 'Add Sub-Event',
               style: const TextStyle(
                 fontFamily: 'Literata',
-                color: Color(0xFF1A1A2E),
+                color: AppTheme.ink,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -3061,18 +3051,18 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     controller: nameController,
                     style: TextStyle(
                       fontFamily: 'Literata',
-                      color: Color(0xFF1A1A2E),
+                      color: AppTheme.ink,
                     ),
                     decoration: InputDecoration(
                       labelText: 'Event Name *',
                       labelStyle: TextStyle(
                         fontFamily: 'Literata',
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                       ),
                       hintText: 'e.g., Haldi, Sangeet, Reception',
                       hintStyle: TextStyle(
                         fontFamily: 'Literata',
-                        color: Colors.grey[400],
+                        color: AppTheme.grey400,
                       ),
                       filled: true,
                       fillColor: AppColors.scaffold(context),
@@ -3088,18 +3078,18 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     keyboardType: TextInputType.number,
                     style: TextStyle(
                       fontFamily: 'Literata',
-                      color: Color(0xFF1A1A2E),
+                      color: AppTheme.ink,
                     ),
                     decoration: InputDecoration(
                       labelText: 'Charges *',
                       labelStyle: TextStyle(
                         fontFamily: 'Literata',
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                       ),
                       prefixText: '₹ ',
                       prefixStyle: TextStyle(
                         fontFamily: 'Literata',
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                       ),
                       filled: true,
                       fillColor: AppColors.scaffold(context),
@@ -3132,9 +3122,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                               builder: (context, child) => Theme(
                                 data: Theme.of(context).copyWith(
                                   colorScheme: ColorScheme.light(
-                                    primary: Color(0xFF1B4D3E),
+                                    primary: AppTheme.primary,
                                     surface: AppColors.card(context),
-                                    onSurface: Color(0xFF1A1A2E),
+                                    onSurface: AppTheme.ink,
                                   ),
                                 ),
                                 child: child!,
@@ -3157,7 +3147,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                               children: [
                                 Icon(
                                   Icons.calendar_today,
-                                  color: Colors.grey[600],
+                                  color: AppTheme.grey600,
                                   size: 18,
                                 ),
                                 const SizedBox(width: 8),
@@ -3167,7 +3157,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                                   ).format(selectedDate),
                                   style: const TextStyle(
                                     fontFamily: 'Literata',
-                                    color: Color(0xFF1A1A2E),
+                                    color: AppTheme.ink,
                                     fontSize: 13,
                                   ),
                                 ),
@@ -3187,9 +3177,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                               builder: (context, child) => Theme(
                                 data: Theme.of(context).copyWith(
                                   colorScheme: ColorScheme.light(
-                                    primary: Color(0xFF1B4D3E),
+                                    primary: AppTheme.primary,
                                     surface: AppColors.card(context),
-                                    onSurface: Color(0xFF1A1A2E),
+                                    onSurface: AppTheme.ink,
                                   ),
                                 ),
                                 child: child!,
@@ -3212,7 +3202,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                               children: [
                                 Icon(
                                   Icons.access_time,
-                                  color: Colors.grey[600],
+                                  color: AppTheme.grey600,
                                   size: 18,
                                 ),
                                 const SizedBox(width: 8),
@@ -3220,7 +3210,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                                   selectedTime.format(context),
                                   style: const TextStyle(
                                     fontFamily: 'Literata',
-                                    color: Color(0xFF1A1A2E),
+                                    color: AppTheme.ink,
                                     fontSize: 13,
                                   ),
                                 ),
@@ -3237,13 +3227,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     maxLines: 2,
                     style: TextStyle(
                       fontFamily: 'Literata',
-                      color: Color(0xFF1A1A2E),
+                      color: AppTheme.ink,
                     ),
                     decoration: InputDecoration(
                       labelText: 'Notes (Optional)',
                       labelStyle: TextStyle(
                         fontFamily: 'Literata',
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                       ),
                       filled: true,
                       fillColor: AppColors.scaffold(context),
@@ -3263,7 +3253,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         'Custom Fields',
                         style: TextStyle(
                           fontFamily: 'Literata',
-                          color: Colors.grey[700],
+                          color: AppTheme.grey700,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -3296,7 +3286,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   'Cancel',
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                   ),
                 ),
               ),
@@ -3370,8 +3360,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B4D3E),
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: AppTheme.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -3405,13 +3395,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           controller: textControllers[column.id],
           style: TextStyle(
             fontFamily: 'Literata',
-            color: Color(0xFF1A1A2E),
+            color: AppTheme.ink,
           ),
           decoration: InputDecoration(
             labelText: column.isRequired ? '${column.name} *' : column.name,
             labelStyle: TextStyle(
               fontFamily: 'Literata',
-              color: Colors.grey[600],
+              color: AppTheme.grey600,
             ),
             filled: true,
             fillColor: AppColors.scaffold(context),
@@ -3427,13 +3417,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           keyboardType: TextInputType.number,
           style: TextStyle(
             fontFamily: 'Literata',
-            color: Color(0xFF1A1A2E),
+            color: AppTheme.ink,
           ),
           decoration: InputDecoration(
             labelText: column.isRequired ? '${column.name} *' : column.name,
             labelStyle: TextStyle(
               fontFamily: 'Literata',
-              color: Colors.grey[600],
+              color: AppTheme.grey600,
             ),
             filled: true,
             fillColor: AppColors.scaffold(context),
@@ -3449,13 +3439,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           style: TextStyle(
             fontFamily: 'Literata',
-            color: Color(0xFF1A1A2E),
+            color: AppTheme.ink,
           ),
           decoration: InputDecoration(
             labelText: column.isRequired ? '${column.name} *' : column.name,
             labelStyle: TextStyle(
               fontFamily: 'Literata',
-              color: Colors.grey[600],
+              color: AppTheme.grey600,
             ),
             filled: true,
             fillColor: AppColors.scaffold(context),
@@ -3495,7 +3485,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             ),
             child: Row(
               children: [
-                Icon(Icons.calendar_today, color: Colors.grey[600], size: 18),
+                Icon(Icons.calendar_today, color: AppTheme.grey600, size: 18),
                 const SizedBox(width: 12),
                 Text(
                   selectedDate != null
@@ -3504,8 +3494,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   style: TextStyle(
                     fontFamily: 'Literata',
                     color: selectedDate != null
-                        ? const Color(0xFF1A1A2E)
-                        : Colors.grey[600],
+                        ? AppTheme.ink
+                        : AppTheme.grey600,
                   ),
                 ),
               ],
@@ -3521,7 +3511,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             labelText: column.name,
             labelStyle: TextStyle(
               fontFamily: 'Literata',
-              color: Colors.grey[600],
+              color: AppTheme.grey600,
             ),
             filled: true,
             fillColor: AppColors.scaffold(context),
@@ -3560,7 +3550,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               fieldValues[column.id] = newValue;
             });
           },
-          activeThumbColor: const Color(0xFF1B4D3E),
+          activeThumbColor: AppTheme.primary,
           contentPadding: EdgeInsets.zero,
         );
     }
@@ -3576,20 +3566,20 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           'Delete Sub-Event?',
           style: TextStyle(
             fontFamily: 'Literata',
-            color: Color(0xFF1A1A2E),
+            color: AppTheme.ink,
             fontWeight: FontWeight.bold,
           ),
         ),
         content: Text(
           'Are you sure you want to delete "${_subEvents[index].name}"?',
-          style: TextStyle(fontFamily: 'Literata', color: Colors.grey[700]),
+          style: TextStyle(fontFamily: 'Literata', color: AppTheme.grey700),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
+              style: TextStyle(fontFamily: 'Literata', color: AppTheme.grey600),
             ),
           ),
           ElevatedButton(
@@ -3598,8 +3588,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+              backgroundColor: AppTheme.red,
+              foregroundColor: AppTheme.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -3631,7 +3621,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (context) => _ProductSelectionSheet(
         products: _products,
         productByIndexNo: _productByIndexNo,
@@ -3806,7 +3796,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               editIndex != null ? 'Edit Product' : 'Add Product',
               style: const TextStyle(
                 fontFamily: 'Literata',
-                color: Color(0xFF1A1A2E),
+                color: AppTheme.ink,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -3824,17 +3814,17 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         },
                         style: TextStyle(
                           fontFamily: 'Literata',
-                          color: Color(0xFF1A1A2E),
+                          color: AppTheme.ink,
                         ),
                         decoration: InputDecoration(
                           labelText: 'Search Product',
                           labelStyle: TextStyle(
                             fontFamily: 'Literata',
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                           ),
                           prefixIcon: Icon(
                             Icons.search,
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                           ),
                           filled: true,
                           fillColor: AppColors.scaffold(context),
@@ -3862,9 +3852,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                             return ListTile(
                               dense: true,
                               selected: isSelected,
-                              selectedTileColor: const Color(
-                                0xFF1B4D3E,
-                              ).withValues(alpha: 0.1),
+                              selectedTileColor: AppTheme.primary.withValues(alpha: 0.1),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -3873,8 +3861,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                                 style: TextStyle(
                                   fontFamily: 'Literata',
                                   color: isSelected
-                                      ? const Color(0xFF1B4D3E)
-                                      : const Color(0xFF1A1A2E),
+                                      ? AppTheme.primary
+                                      : AppTheme.ink,
                                   fontWeight: isSelected
                                       ? FontWeight.w600
                                       : FontWeight.normal,
@@ -3884,7 +3872,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                                 '₹${product.salesPrice.toStringAsFixed(0)} | Stock: ${product.currentStock}',
                                 style: TextStyle(
                                   fontFamily: 'Literata',
-                                  color: Colors.grey[600],
+                                  color: AppTheme.grey600,
                                   fontSize: 12,
                                 ),
                               ),
@@ -3921,7 +3909,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                                 item.productName,
                                 style: const TextStyle(
                                   fontFamily: 'Literata',
-                                  color: Color(0xFF1A1A2E),
+                                  color: AppTheme.ink,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -3936,13 +3924,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       keyboardType: TextInputType.number,
                       style: TextStyle(
                         fontFamily: 'Literata',
-                        color: Color(0xFF1A1A2E),
+                        color: AppTheme.ink,
                       ),
                       decoration: InputDecoration(
                         labelText: 'Quantity *',
                         labelStyle: TextStyle(
                           fontFamily: 'Literata',
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                         filled: true,
                         fillColor: AppColors.scaffold(context),
@@ -3959,18 +3947,18 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       keyboardType: TextInputType.number,
                       style: TextStyle(
                         fontFamily: 'Literata',
-                        color: Color(0xFF1A1A2E),
+                        color: AppTheme.ink,
                       ),
                       decoration: InputDecoration(
                         labelText: 'Rate *',
                         labelStyle: TextStyle(
                           fontFamily: 'Literata',
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                         prefixText: '₹ ',
                         prefixStyle: TextStyle(
                           fontFamily: 'Literata',
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                         filled: true,
                         fillColor: AppColors.scaffold(context),
@@ -3987,18 +3975,18 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       keyboardType: TextInputType.number,
                       style: TextStyle(
                         fontFamily: 'Literata',
-                        color: Color(0xFF1A1A2E),
+                        color: AppTheme.ink,
                       ),
                       decoration: InputDecoration(
                         labelText: 'Discount %',
                         labelStyle: TextStyle(
                           fontFamily: 'Literata',
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                         suffixText: '%',
                         suffixStyle: TextStyle(
                           fontFamily: 'Literata',
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                         filled: true,
                         fillColor: AppColors.scaffold(context),
@@ -4019,7 +4007,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   'Cancel',
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                   ),
                 ),
               ),
@@ -4068,8 +4056,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B4D3E),
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: AppTheme.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -4100,20 +4088,20 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           'Delete Product?',
           style: TextStyle(
             fontFamily: 'Literata',
-            color: Color(0xFF1A1A2E),
+            color: AppTheme.ink,
             fontWeight: FontWeight.bold,
           ),
         ),
         content: Text(
           'Are you sure you want to remove "${_orderItems[index].productName}"?',
-          style: TextStyle(fontFamily: 'Literata', color: Colors.grey[700]),
+          style: TextStyle(fontFamily: 'Literata', color: AppTheme.grey700),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
+              style: TextStyle(fontFamily: 'Literata', color: AppTheme.grey600),
             ),
           ),
           ElevatedButton(
@@ -4122,8 +4110,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+              backgroundColor: AppTheme.red,
+              foregroundColor: AppTheme.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -4252,7 +4240,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppTheme.grey300,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -4284,7 +4272,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                             fontFamily: 'Literata',
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF1A1A2E),
+                            color: AppTheme.ink,
                           ),
                         ),
                         Text(
@@ -4292,7 +4280,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                           ),
                         ),
                       ],
@@ -4310,7 +4298,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                 style: TextStyle(fontFamily: 'Literata', fontSize: 14),
                 decoration: InputDecoration(
                   hintText: 'Search by name, phone or address',
-                  hintStyle: TextStyle(color: Colors.grey[500]),
+                  hintStyle: TextStyle(color: AppTheme.grey),
                   prefixIcon: Icon(
                     Icons.search,
                     color: AppColors.accent(context),
@@ -4348,14 +4336,14 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                           Icon(
                             Icons.person_outline,
                             size: 48,
-                            color: Colors.grey[400],
+                            color: AppTheme.grey400,
                           ),
                           const SizedBox(height: 12),
                           Text(
                             'No customers found',
                             style: TextStyle(
                               fontFamily: 'Literata',
-                              color: Colors.grey[600],
+                              color: AppTheme.grey600,
                             ),
                           ),
                         ],
@@ -4378,7 +4366,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                             ),
                           ),
                           child: Material(
-                            color: Colors.transparent,
+                            color: AppTheme.transparent,
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
                               onTap: () => widget.onCustomerSelected(customer),
@@ -4387,13 +4375,13 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                                 child: Row(
                                   children: [
                                     CircleAvatar(
-                                      backgroundColor: const Color(0xFF1B4D3E),
+                                      backgroundColor: AppTheme.primary,
                                       child: Text(
                                         customer.name.isNotEmpty
                                             ? customer.name[0].toUpperCase()
                                             : '?',
                                         style: const TextStyle(
-                                          color: Colors.white,
+                                          color: AppTheme.white,
                                           fontWeight: FontWeight.w600,
                                           fontSize: 16,
                                         ),
@@ -4411,7 +4399,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                                               fontFamily: 'Literata',
                                               fontWeight: FontWeight.w700,
                                               fontSize: 15,
-                                              color: Color(0xFF1A1A2E),
+                                              color: AppTheme.ink,
                                             ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
@@ -4422,7 +4410,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                                               Icon(
                                                 Icons.phone,
                                                 size: 12,
-                                                color: Colors.grey[500],
+                                                color: AppTheme.grey,
                                               ),
                                               const SizedBox(width: 4),
                                               Text(
@@ -4431,7 +4419,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                                                     : '—',
                                                 style: TextStyle(
                                                   fontFamily: 'Literata',
-                                                  color: Colors.grey[600],
+                                                  color: AppTheme.grey600,
                                                   fontSize: 12,
                                                 ),
                                               ),
@@ -4445,7 +4433,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                                                 Icon(
                                                   Icons.location_on,
                                                   size: 12,
-                                                  color: Colors.grey[500],
+                                                  color: AppTheme.grey,
                                                 ),
                                                 const SizedBox(width: 4),
                                                 Expanded(
@@ -4453,7 +4441,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                                                     customer.address!,
                                                     style: TextStyle(
                                                       fontFamily: 'Literata',
-                                                      color: Colors.grey[500],
+                                                      color: AppTheme.grey,
                                                       fontSize: 11,
                                                     ),
                                                     maxLines: 1,
@@ -4470,7 +4458,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                                     const SizedBox(width: 8),
                                     Icon(
                                       Icons.chevron_right,
-                                      color: Colors.grey[400],
+                                      color: AppTheme.grey400,
                                     ),
                                   ],
                                 ),
@@ -4620,7 +4608,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: AppTheme.grey300,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -4635,15 +4623,15 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        const Color(0xFF1B4D3E),
-                        const Color(0xFF1B4D3E).withValues(alpha: 0.8),
+                        AppTheme.primary,
+                        AppTheme.primary.withValues(alpha: 0.8),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.add_shopping_cart_rounded,
-                    color: Colors.white,
+                    color: AppTheme.white,
                     size: 20,
                   ),
                 ),
@@ -4658,7 +4646,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                           fontFamily: 'Literata',
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A1A2E),
+                          color: AppTheme.ink,
                         ),
                       ),
                       Text(
@@ -4666,7 +4654,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                       ),
                     ],
@@ -4675,7 +4663,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                 IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close),
-                  color: Colors.grey[600],
+                  color: AppTheme.grey600,
                 ),
               ],
             ),
@@ -4699,13 +4687,13 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Colors.amber[700]!, Colors.amber[600]!],
+                        colors: [AppTheme.amber700, AppTheme.amber600],
                       ),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Icon(
                       Icons.flash_on_rounded,
-                      color: Colors.white,
+                      color: AppTheme.white,
                       size: 14,
                     ),
                   ),
@@ -4724,7 +4712,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                       decoration: InputDecoration(
                         hintText: 'Enter product code',
                         hintStyle: TextStyle(
-                          color: Colors.grey[500],
+                          color: AppTheme.grey,
                           fontWeight: FontWeight.w400,
                           fontSize: 13,
                         ),
@@ -4776,7 +4764,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                       ),
                       child: const Icon(
                         Icons.qr_code_scanner,
-                        color: Colors.white,
+                        color: AppTheme.white,
                         size: 18,
                       ),
                     ),
@@ -4795,7 +4783,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
               style: TextStyle(fontFamily: 'Literata', fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Search products by name...',
-                hintStyle: TextStyle(color: Colors.grey[500]),
+                hintStyle: TextStyle(color: AppTheme.grey),
                 prefixIcon: Icon(Icons.search, color: AppColors.accent(context)),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
@@ -4830,14 +4818,14 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                         Icon(
                           Icons.inventory_2_outlined,
                           size: 48,
-                          color: Colors.grey[400],
+                          color: AppTheme.grey400,
                         ),
                         const SizedBox(height: 12),
                         Text(
                           'No products found',
                           style: TextStyle(
                             fontFamily: 'Literata',
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                           ),
                         ),
                       ],
@@ -4855,17 +4843,17 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                         decoration: BoxDecoration(
                           color: isSelected
                               ? AppColors.chipFill(context)
-                              : Colors.white,
+                              : AppTheme.white,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isSelected
-                                ? const Color(0xFF1B4D3E)
+                                ? AppTheme.primary
                                 : AppColors.border(context)!,
                             width: isSelected ? 1.5 : 1,
                           ),
                         ),
                         child: Material(
-                          color: Colors.transparent,
+                          color: AppTheme.transparent,
                           child: InkWell(
                             borderRadius: BorderRadius.circular(12),
                             onTap: () => _selectProduct(product),
@@ -4887,7 +4875,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                                             ? '${product.indexNo}'
                                             : '#',
                                         style: const TextStyle(
-                                          color: Colors.white,
+                                          color: AppTheme.white,
                                           fontWeight: FontWeight.w700,
                                           fontSize: 14,
                                           fontFamily: 'Literata',
@@ -4930,7 +4918,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                                               style: TextStyle(
                                                 fontFamily: 'Literata',
                                                 fontSize: 11,
-                                                color: Colors.grey[600],
+                                                color: AppTheme.grey600,
                                               ),
                                             ),
                                           ],
@@ -4948,7 +4936,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                                   else
                                     Icon(
                                       Icons.add_circle_outline,
-                                      color: Colors.grey[400],
+                                      color: AppTheme.grey400,
                                       size: 24,
                                     ),
                                 ],
@@ -4975,7 +4963,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: AppTheme.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, -4),
           ),
@@ -5009,7 +4997,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                           style: const TextStyle(
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF1A1A2E),
+                            color: AppTheme.ink,
                           ),
                         ),
                         Text(
@@ -5017,7 +5005,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                           ),
                         ),
                       ],
@@ -5025,7 +5013,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                   ),
                   IconButton(
                     onPressed: () => setState(() => _selectedProduct = null),
-                    icon: const Icon(Icons.close, color: Colors.grey),
+                    icon: const Icon(Icons.close, color: AppTheme.grey),
                     iconSize: 20,
                   ),
                 ],
@@ -5044,7 +5032,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                       labelText: 'Qty',
                       labelStyle: TextStyle(
                         fontFamily: 'Literata',
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                         fontSize: 12,
                       ),
                       filled: true,
@@ -5071,7 +5059,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                       labelText: 'Rate',
                       labelStyle: TextStyle(
                         fontFamily: 'Literata',
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                         fontSize: 12,
                       ),
                       prefixText: '₹ ',
@@ -5098,7 +5086,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                       labelText: 'Disc%',
                       labelStyle: TextStyle(
                         fontFamily: 'Literata',
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                         fontSize: 12,
                       ),
                       filled: true,
@@ -5131,8 +5119,8 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B4D3E),
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: AppTheme.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

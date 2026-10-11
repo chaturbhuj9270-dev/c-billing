@@ -61,7 +61,7 @@ class CustomerSummaryWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(
+            color: AppTheme.black.withValues(
               alpha: AppColors.isDark(context) ? 0.45 : 0.3,
             ),
             blurRadius: 12,
@@ -81,7 +81,7 @@ class CustomerSummaryWidget extends StatelessWidget {
             icon: Icons.account_balance_wallet_rounded,
             label: pendingLabel,
             value: '₹${totalPending.toStringAsFixed(0)}',
-            valueColor: totalPending > 0 ? Colors.amber[300] : null,
+            valueColor: totalPending > 0 ? AppTheme.amber300 : null,
           ),
           _buildDivider(),
           Expanded(
@@ -92,8 +92,8 @@ class CustomerSummaryWidget extends StatelessWidget {
               label: unsyncedCount > 0 ? unsyncedLabel : allSyncedLabel,
               value: unsyncedCount > 0 ? '$unsyncedCount' : '✓',
               valueColor: unsyncedCount > 0
-                  ? Colors.orange[300]
-                  : Colors.green[300],
+                  ? AppTheme.orange300
+                  : AppTheme.green300,
               isExpanded: true,
             ),
           ),
@@ -114,7 +114,7 @@ class CustomerSummaryWidget extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white, size: 20),
+          Icon(icon, color: AppTheme.white, size: 20),
           const SizedBox(height: 6),
           Text(
             value,
@@ -122,7 +122,7 @@ class CustomerSummaryWidget extends StatelessWidget {
               fontFamily: 'Literata',
               fontWeight: FontWeight.w800,
               fontSize: 16,
-              color: valueColor ?? Colors.white,
+              color: valueColor ?? AppTheme.white,
             ),
           ),
           const SizedBox(height: 2),
@@ -132,7 +132,7 @@ class CustomerSummaryWidget extends StatelessWidget {
               fontFamily: 'Literata',
               fontWeight: FontWeight.w400,
               fontSize: 11,
-              color: Colors.white.withValues(alpha: 0.7),
+              color: AppTheme.white.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -144,7 +144,7 @@ class CustomerSummaryWidget extends StatelessWidget {
     return Container(
       width: 1,
       height: 40,
-      color: Colors.white.withValues(alpha: 0.2),
+      color: AppTheme.white.withValues(alpha: 0.2),
     );
   }
 }

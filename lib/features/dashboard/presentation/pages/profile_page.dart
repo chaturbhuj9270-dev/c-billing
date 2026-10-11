@@ -140,17 +140,17 @@ class _ProfilePageState extends State<ProfilePage> {
       backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
         backgroundColor: AppColors.appBar(context),
-        foregroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
+        foregroundColor: AppTheme.white,
+        surfaceTintColor: AppTheme.transparent,
         elevation: 0,
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: const Icon(Icons.arrow_back, color: Colors.white),
+          child: const Icon(Icons.arrow_back, color: AppTheme.white),
         ),
         title: Text(
           _localizations.myProfile,
           style: const TextStyle(
-            color: Colors.white,
+            color: AppTheme.white,
             fontSize: 22,
             fontWeight: FontWeight.w700,
             fontFamily: 'Literata',
@@ -176,12 +176,12 @@ class _ProfilePageState extends State<ProfilePage> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: const Color(0xFF4CAF50),
+                              color: AppTheme.green,
                               width: 4,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
+                                color: AppTheme.black.withValues(alpha: 0.1),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -246,7 +246,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 color: AppColors.accent(context),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.2),
+                                    color: AppTheme.black.withValues(alpha: 0.2),
                                     blurRadius: 4,
                                     offset: const Offset(0, 2),
                                   ),
@@ -254,7 +254,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                               child: Icon(
                                 Icons.camera_alt,
-                                color: Colors.white,
+                                color: AppTheme.white,
                                 size: 20,
                               ),
                             ),
@@ -305,9 +305,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(
-                                0xFF1B4D3E,
-                              ).withValues(alpha: 0.3),
+                              color: AppTheme.primary.withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -320,7 +318,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 child: Center(
                                   child: CircularProgressIndicator(
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
+                                      AppTheme.white,
                                     ),
                                     strokeWidth: 2,
                                   ),
@@ -330,7 +328,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 _localizations.saveChanges,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: AppTheme.white,
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                   fontFamily: 'Literata',
@@ -371,7 +369,7 @@ class _ProfilePageState extends State<ProfilePage> {
             borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: AppTheme.black.withValues(alpha: 0.05),
                 blurRadius: 8,
                 offset: Offset(0, 2),
               ),
@@ -387,20 +385,20 @@ class _ProfilePageState extends State<ProfilePage> {
               prefixIcon: Icon(icon, color: AppColors.accent(context), size: 20),
               hintText: hint,
               hintStyle: TextStyle(
-                color: Color(0xFFBDBDBD),
+                color: AppTheme.grey400,
                 fontSize: 14,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: const BorderSide(
-                  color: Color(0xFFEEEEEE),
+                  color: AppTheme.grey200,
                   width: 1,
                 ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(
-                  color: Color(0xFFEEEEEE),
+                  color: AppTheme.grey200,
                   width: 1,
                 ),
               ),
@@ -417,7 +415,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             style: const TextStyle(
-              color: Color(0xFF212121),
+              color: AppTheme.grey900,
               fontSize: 14,
               fontFamily: 'Literata',
             ),

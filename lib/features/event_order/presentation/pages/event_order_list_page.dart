@@ -19,6 +19,7 @@ import '../../../../common_widgets/file_preview_page.dart';
 import 'event_order_screen.dart';
 import 'event_order_settings_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Date filter options for event/order list
@@ -63,10 +64,10 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   VoidCallback? _offlineControllerListener;
 
   // Primary colors - aligned with app theme (availability screen style)
-  static const _primaryColor = Color(0xFF1B4D3E);
-  static const _primaryDark = Color(0xFF2D6B5A);
-  static const _eventColor = Color(0xFF9C27B0);
-  static const _salesColor = Color(0xFF2196F3);
+  static const _primaryColor = AppTheme.primary;
+  static const _primaryDark = AppTheme.paletteFF2D6B5A;
+  static const _eventColor = AppTheme.purple;
+  static const _salesColor = AppTheme.blue;
 
   @override
   void initState() {
@@ -140,18 +141,18 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       pinned: true,
       elevation: 0,
       backgroundColor: AppColors.appBar(context),
-      surfaceTintColor: Colors.transparent,
+      surfaceTintColor: AppTheme.transparent,
       leading: IconButton(
         onPressed: () => Navigator.of(context).pop(),
         icon: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.15),
+            color: AppTheme.white.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(10),
           ),
           child: const Icon(
             Icons.arrow_back_ios_new,
-            color: Colors.white,
+            color: AppTheme.white,
             size: 18,
           ),
         ),
@@ -172,11 +173,11 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                 );
               },
               child: Chip(
-                backgroundColor: Colors.orange[50],
+                backgroundColor: AppTheme.orange50,
                 avatar: Icon(
                   Icons.cloud_upload_rounded,
                   size: 16,
-                  color: Colors.orange[700],
+                  color: AppTheme.orange700,
                 ),
                 label: Text(
                   '$_unsyncedCount',
@@ -184,7 +185,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
-                    color: Colors.orange[700],
+                    color: AppTheme.orange700,
                   ),
                 ),
               ),
@@ -200,14 +201,14 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
+                  color: AppTheme.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   Icons.summarize_rounded,
                   color: state is EventOrderLoaded && state.orders.isNotEmpty
-                      ? Colors.white
-                      : Colors.white54,
+                      ? AppTheme.white
+                      : AppTheme.white54,
                   size: 20,
                 ),
               ),
@@ -225,12 +226,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
+                  color: AppTheme.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
                   Icons.refresh_rounded,
-                  color: Colors.white,
+                  color: AppTheme.white,
                   size: 20,
                 ),
               ),
@@ -243,12 +244,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
+              color: AppTheme.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.settings_rounded,
-              color: Colors.white,
+              color: AppTheme.white,
               size: 20,
             ),
           ),
@@ -304,7 +305,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                           _selectedType == OrderType.salesOrder
                               ? Icons.shopping_bag_rounded
                               : Icons.celebration_rounded,
-                          color: Colors.white,
+                          color: AppTheme.white,
                           size: 22,
                         ),
                       ),
@@ -329,7 +330,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                                 fontFamily: 'Literata',
                                 fontSize: 22,
                                 fontWeight: FontWeight.w800,
-                                color: Colors.white,
+                                color: AppTheme.white,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -348,7 +349,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                               style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 12,
-                                color: Colors.white.withValues(alpha: 0.7),
+                                color: AppTheme.white.withValues(alpha: 0.7),
                               ),
                             ),
                           ],
@@ -399,7 +400,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: AppTheme.black.withValues(alpha: 0.04),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -431,7 +432,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                         ).events,
                         value: eventCount,
                         icon: Icons.celebration_rounded,
-                        gradient: [_eventColor, const Color(0xFFBA68C8)],
+                        gradient: [_eventColor, AppTheme.purple300],
                         isActive: _selectedType == OrderType.event,
                         onTap: () =>
                             _onTypeFilterChanged(context, OrderType.event),
@@ -443,7 +444,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                         ).sales,
                         value: salesCount,
                         icon: Icons.shopping_bag_rounded,
-                        gradient: [_salesColor, const Color(0xFF64B5F6)],
+                        gradient: [_salesColor, AppTheme.blue300],
                         isActive: _selectedType == OrderType.salesOrder,
                         onTap: () =>
                             _onTypeFilterChanged(context, OrderType.salesOrder),
@@ -455,7 +456,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                         ).pending,
                         value: pendingCount,
                         icon: Icons.schedule_rounded,
-                        gradient: [Colors.orange, Colors.orangeAccent],
+                        gradient: [AppTheme.orange, AppTheme.orangeAccent],
                         isActive: _selectedStatus == OrderStatus.pending,
                         onTap: () => _onStatusFilterChanged(
                           context,
@@ -469,7 +470,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                         ).confirmed,
                         value: confirmedCount,
                         icon: Icons.check_circle_rounded,
-                        gradient: [Colors.green, Colors.lightGreen],
+                        gradient: [AppTheme.green, AppTheme.lightGreen],
                         isActive: _selectedStatus == OrderStatus.confirmed,
                         onTap: () => _onStatusFilterChanged(
                           context,
@@ -513,7 +514,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isActive
-                ? Colors.transparent
+                ? AppTheme.transparent
                 : gradient[0].withValues(alpha: 0.2),
             width: 1.5,
           ),
@@ -529,7 +530,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         ),
         child: Column(
           children: [
-            Icon(icon, color: isActive ? Colors.white : gradient[0], size: 20),
+            Icon(icon, color: isActive ? AppTheme.white : gradient[0], size: 20),
             const SizedBox(height: 8),
             Text(
               value.toString(),
@@ -537,7 +538,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
                 fontFamily: 'Literata',
-                color: isActive ? Colors.white : gradient[0],
+                color: isActive ? AppTheme.white : gradient[0],
               ),
             ),
             const SizedBox(height: 4),
@@ -546,8 +547,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               style: TextStyle(
                 fontSize: 9,
                 color: isActive
-                    ? Colors.white.withValues(alpha: 0.85)
-                    : Colors.grey[600],
+                    ? AppTheme.white.withValues(alpha: 0.85)
+                    : AppTheme.grey600,
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
               ),
@@ -573,7 +574,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color: AppTheme.black.withValues(alpha: 0.04),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -597,7 +598,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                       LanguageService.instance.currentLanguage,
                     ).searchEventsOrOrders,
                     hintStyle: TextStyle(
-                      color: Colors.grey[400],
+                      color: AppTheme.grey400,
                       fontFamily: 'Literata',
                     ),
                     prefixIcon: Container(
@@ -606,7 +607,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                         Icons.search_rounded,
                         color: _searchQuery.isNotEmpty
                             ? _primaryColor
-                            : Colors.grey[400],
+                            : AppTheme.grey400,
                       ),
                     ),
                     suffixIcon: _searchQuery.isNotEmpty
@@ -620,7 +621,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                               child: Icon(
                                 Icons.close,
                                 size: 16,
-                                color: Colors.grey,
+                                color: AppTheme.grey,
                               ),
                             ),
                             onPressed: () {
@@ -646,7 +647,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                       borderSide: BorderSide(
-                        color: Colors.grey.withValues(alpha: 0.1),
+                        color: AppTheme.grey.withValues(alpha: 0.1),
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
@@ -724,7 +725,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                             Icon(
                               Icons.filter_alt_off_rounded,
                               size: 14,
-                              color: Colors.grey[600],
+                              color: AppTheme.grey600,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -733,7 +734,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
                                 fontFamily: 'Literata',
-                                color: Colors.grey[600],
+                                color: AppTheme.grey600,
                               ),
                             ),
                           ],
@@ -828,7 +829,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               fontSize: 18,
               fontWeight: FontWeight.w700,
               fontFamily: 'Literata',
-              color: Color(0xFF1A1A2E),
+              color: AppTheme.ink,
             ),
           ),
           const SizedBox(height: 8),
@@ -839,7 +840,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             style: TextStyle(
               fontSize: 13,
               fontFamily: 'Literata',
-              color: Colors.grey[500],
+              color: AppTheme.grey,
             ),
           ),
           const SizedBox(height: 80),
@@ -856,13 +857,13 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.red.withValues(alpha: 0.1),
+              color: AppTheme.red.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.error_outline_rounded,
               size: 56,
-              color: Colors.red,
+              color: AppTheme.red,
             ),
           ),
           const SizedBox(height: 20),
@@ -874,7 +875,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               fontSize: 18,
               fontWeight: FontWeight.w700,
               fontFamily: 'Literata',
-              color: Color(0xFF1A1A2E),
+              color: AppTheme.ink,
             ),
           ),
           const SizedBox(height: 8),
@@ -885,7 +886,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             style: TextStyle(
               fontSize: 13,
               fontFamily: 'Literata',
-              color: Colors.grey[500],
+              color: AppTheme.grey,
             ),
           ),
           const SizedBox(height: 20),
@@ -901,7 +902,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: _primaryColor,
-              foregroundColor: Colors.white,
+              foregroundColor: AppTheme.white,
               padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -925,20 +926,20 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: order.status == OrderStatus.pending
-              ? Colors.orange.withValues(alpha: 0.2)
-              : Colors.transparent,
+              ? AppTheme.orange.withValues(alpha: 0.2)
+              : AppTheme.transparent,
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Material(
-        color: Colors.transparent,
+        color: AppTheme.transparent,
         child: InkWell(
           onTap: () => _navigateToEdit(context, order),
           borderRadius: BorderRadius.circular(18),
@@ -973,7 +974,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                         isEvent
                             ? Icons.celebration_rounded
                             : Icons.shopping_bag_rounded,
-                        color: Colors.white,
+                        color: AppTheme.white,
                         size: 24,
                       ),
                     ),
@@ -989,7 +990,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'Literata',
-                              color: Color(0xFF1A1A2E),
+                              color: AppTheme.ink,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -1000,7 +1001,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                               Icon(
                                 Icons.person_outline_rounded,
                                 size: 14,
-                                color: Colors.grey[500],
+                                color: AppTheme.grey,
                               ),
                               const SizedBox(width: 4),
                               Expanded(
@@ -1009,7 +1010,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontFamily: 'Literata',
-                                    color: Colors.grey[600],
+                                    color: AppTheme.grey600,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -1067,13 +1068,13 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                       ),
                       decoration: BoxDecoration(
                         color: order.isSynced
-                            ? Colors.green[50]
-                            : Colors.orange[50],
+                            ? AppTheme.green50
+                            : AppTheme.orange50,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: order.isSynced
-                              ? Colors.green[200]!
-                              : Colors.orange[200]!,
+                              ? AppTheme.green200
+                              : AppTheme.orange200,
                           width: 0.5,
                         ),
                       ),
@@ -1086,8 +1087,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                                 : Icons.cloud_upload_rounded,
                             size: 14,
                             color: order.isSynced
-                                ? Colors.green[700]
-                                : Colors.orange[700],
+                                ? AppTheme.green700
+                                : AppTheme.orange700,
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -1097,8 +1098,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                               fontWeight: FontWeight.w500,
                               fontFamily: 'Literata',
                               color: order.isSynced
-                                  ? Colors.green[700]
-                                  : Colors.orange[700],
+                                  ? AppTheme.green700
+                                  : AppTheme.orange700,
                             ),
                           ),
                         ],
@@ -1107,7 +1108,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                     _buildInfoBadge(
                       Icons.calendar_today_rounded,
                       DateFormat('dd MMM yyyy').format(order.eventDate),
-                      Colors.grey[600]!,
+                      AppTheme.grey600,
                     ),
                     if (isEvent && order.subEvents.isNotEmpty)
                       _buildInfoBadge(
@@ -1119,13 +1120,13 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                       _buildInfoBadge(
                         Icons.shopping_bag_rounded,
                         '${order.items.length} products',
-                        isEvent ? Colors.green : typeColor,
+                        isEvent ? AppTheme.green : typeColor,
                       ),
                     if (order.customerContact.isNotEmpty)
                       _buildInfoBadge(
                         Icons.phone_rounded,
                         order.customerContact,
-                        Colors.grey[600]!,
+                        AppTheme.grey600,
                       ),
                   ],
                 ),
@@ -1150,33 +1151,33 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                         child: _buildAmountColumn(
                           'Total',
                           order.totalAmount,
-                          const Color(0xFF1A1A2E),
+                          AppTheme.ink,
                         ),
                       ),
                       Container(
                         width: 1,
                         height: 36,
-                        color: Colors.grey.withValues(alpha: 0.15),
+                        color: AppTheme.grey.withValues(alpha: 0.15),
                       ),
                       Expanded(
                         child: _buildAmountColumn(
                           'Advance',
                           order.advanceAmount,
-                          Colors.green,
+                          AppTheme.green,
                         ),
                       ),
                       Container(
                         width: 1,
                         height: 36,
-                        color: Colors.grey.withValues(alpha: 0.15),
+                        color: AppTheme.grey.withValues(alpha: 0.15),
                       ),
                       Expanded(
                         child: _buildAmountColumn(
                           'Due',
                           order.remainingAmount,
                           order.remainingAmount > 0
-                              ? Colors.orange
-                              : Colors.green,
+                              ? AppTheme.orange
+                              : AppTheme.green,
                         ),
                       ),
                     ],
@@ -1191,7 +1192,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                       context,
                       icon: Icons.receipt_long_rounded,
                       label: 'Invoice',
-                      color: Colors.teal,
+                      color: AppTheme.teal,
                       isLoading: _processingOrderId == order.id,
                       onTap: () => _showInvoicePreview(context, order),
                     ),
@@ -1209,7 +1210,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                       context,
                       icon: Icons.print_rounded,
                       label: 'Print',
-                      color: Colors.orange,
+                      color: AppTheme.orange,
                       isLoading: _processingOrderId == order.id,
                       onTap: () => _printOrder(context, order),
                     ),
@@ -1218,7 +1219,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                       context,
                       icon: Icons.delete_outline_rounded,
                       label: 'Delete',
-                      color: Colors.red,
+                      color: AppTheme.red,
                       onTap: () => _confirmDelete(context, order),
                     ),
                   ],
@@ -1313,7 +1314,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             fontSize: 10,
             fontWeight: FontWeight.w500,
             fontFamily: 'Literata',
-            color: Colors.grey[500],
+            color: AppTheme.grey,
           ),
         ),
         const SizedBox(height: 4),
@@ -1338,13 +1339,13 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           backgroundColor: _primaryColor,
           elevation: 4,
           highlightElevation: 8,
-          icon: const Icon(Icons.add_rounded, color: Colors.white),
+          icon: const Icon(Icons.add_rounded, color: AppTheme.white),
           label: const Text(
             'New Order',
             style: TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w600,
-              color: Colors.white,
+              color: AppTheme.white,
             ),
           ),
         );
@@ -1355,17 +1356,17 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   Map<String, dynamic> _getStatusInfo(OrderStatus status) {
     switch (status) {
       case OrderStatus.pending:
-        return {'color': Colors.orange, 'icon': Icons.schedule_rounded};
+        return {'color': AppTheme.orange, 'icon': Icons.schedule_rounded};
       case OrderStatus.confirmed:
-        return {'color': Colors.blue, 'icon': Icons.check_circle_rounded};
+        return {'color': AppTheme.blue, 'icon': Icons.check_circle_rounded};
       case OrderStatus.inProgress:
         return {'color': _primaryColor, 'icon': Icons.sync_rounded};
       case OrderStatus.delivered:
-        return {'color': Colors.green, 'icon': Icons.task_alt_rounded};
+        return {'color': AppTheme.green, 'icon': Icons.task_alt_rounded};
       case OrderStatus.cancelled:
-        return {'color': Colors.red, 'icon': Icons.cancel_rounded};
+        return {'color': AppTheme.red, 'icon': Icons.cancel_rounded};
       case OrderStatus.convertedToBill:
-        return {'color': Colors.teal, 'icon': Icons.receipt_long_rounded};
+        return {'color': AppTheme.teal, 'icon': Icons.receipt_long_rounded};
     }
   }
 
@@ -1458,12 +1459,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? _primaryColor : Colors.white,
+          color: isSelected ? _primaryColor : AppTheme.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
                 ? _primaryColor
-                : Colors.grey.withValues(alpha: 0.2),
+                : AppTheme.grey.withValues(alpha: 0.2),
           ),
           boxShadow: isSelected
               ? [
@@ -1481,7 +1482,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             Icon(
               icon,
               size: 14,
-              color: isSelected ? Colors.white : Colors.grey[600],
+              color: isSelected ? AppTheme.white : AppTheme.grey600,
             ),
             const SizedBox(width: 6),
             Text(
@@ -1490,7 +1491,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 fontFamily: 'Literata',
-                color: isSelected ? Colors.white : Colors.grey[700],
+                color: isSelected ? AppTheme.white : AppTheme.grey700,
               ),
             ),
           ],
@@ -1518,24 +1519,11 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       end: _customEndDate ?? now,
     );
 
-    final picked = await showDateRangePicker(
+    final picked = await showAppRangeCalendar(
       context: context,
       firstDate: DateTime(now.year - 2),
       lastDate: DateTime(now.year + 2),
       initialDateRange: initialRange,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: _primaryColor,
-              onPrimary: Colors.white,
-              surface: AppColors.card(context),
-              onSurface: Color(0xFF1A1A2E),
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (picked != null) {
@@ -2021,19 +2009,19 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1A1A2E),
+            color: AppTheme.ink,
           ),
         ),
         content: Text(
           'Are you sure you want to delete "${order.orderName}"? This action cannot be undone.',
-          style: TextStyle(fontFamily: 'Literata', color: Colors.grey[700]),
+          style: TextStyle(fontFamily: 'Literata', color: AppTheme.grey700),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'Cancel',
-              style: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
+              style: TextStyle(fontFamily: 'Literata', color: AppTheme.grey600),
             ),
           ),
           ElevatedButton(
@@ -2047,8 +2035,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               context.read<EventOrderCubit>().deleteEventOrder(localId);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+              backgroundColor: AppTheme.red,
+              foregroundColor: AppTheme.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -2077,7 +2065,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (ctx) => Container(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -2095,7 +2083,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppTheme.grey300,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -2131,7 +2119,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                             fontFamily: 'Literata',
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF1A1A2E),
+                            color: AppTheme.ink,
                           ),
                         ),
                         Text(
@@ -2139,7 +2127,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                           ),
                         ),
                       ],
@@ -2172,7 +2160,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                             fontFamily: 'Literata',
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF1A1A2E),
+                            color: AppTheme.ink,
                           ),
                         ),
                         Text(
@@ -2184,7 +2172,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                           ),
                         ),
                       ],
@@ -2207,19 +2195,19 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   _buildReportSummaryItem(
                     'Total Amount',
                     'Rs. ${_formatAmount(filteredOrders.fold(0.0, (sum, o) => sum + o.totalAmount))}',
-                    Colors.green,
+                    AppTheme.green,
                   ),
-                  Container(height: 30, width: 1, color: Colors.grey[300]),
+                  Container(height: 30, width: 1, color: AppTheme.grey300),
                   _buildReportSummaryItem(
                     'Advance',
                     'Rs. ${_formatAmount(filteredOrders.fold(0.0, (sum, o) => sum + o.advanceAmount))}',
-                    Colors.blue,
+                    AppTheme.blue,
                   ),
-                  Container(height: 30, width: 1, color: Colors.grey[300]),
+                  Container(height: 30, width: 1, color: AppTheme.grey300),
                   _buildReportSummaryItem(
                     'Due',
                     'Rs. ${_formatAmount(filteredOrders.fold(0.0, (sum, o) => sum + o.remainingAmount))}',
-                    Colors.orange,
+                    AppTheme.orange,
                   ),
                 ],
               ),
@@ -2251,7 +2239,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.picture_as_pdf, size: 20, color: Colors.white),
+                      Icon(Icons.picture_as_pdf, size: 20, color: AppTheme.white),
                       SizedBox(width: 8),
                       Text(
                         'Preview & Generate PDF',
@@ -2259,7 +2247,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                           fontFamily: 'Literata',
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: AppTheme.white,
                         ),
                       ),
                     ],
@@ -2281,7 +2269,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           style: TextStyle(
             fontFamily: 'Literata',
             fontSize: 10,
-            color: Colors.grey[600],
+            color: AppTheme.grey600,
           ),
         ),
         const SizedBox(height: 4),

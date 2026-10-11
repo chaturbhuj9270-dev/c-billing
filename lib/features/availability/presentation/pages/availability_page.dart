@@ -207,7 +207,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setSheetState) => Container(
           padding: EdgeInsets.only(
@@ -226,7 +226,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppTheme.grey300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -266,7 +266,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 12,
-                              color: Colors.grey,
+                              color: AppTheme.grey,
                             ),
                           ),
                         ],
@@ -311,7 +311,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 12,
-                              color: Colors.grey[600],
+                              color: AppTheme.grey600,
                             ),
                           ),
                         ],
@@ -343,7 +343,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                           child: _buildFormatOption(
                             'PDF',
                             Icons.picture_as_pdf,
-                            Colors.red,
+                            AppTheme.red,
                             ReportFormat.pdf,
                             selectedFormat,
                             (format) =>
@@ -355,7 +355,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                           child: _buildFormatOption(
                             'CSV (Excel)',
                             Icons.table_chart,
-                            Colors.green,
+                            AppTheme.green,
                             ReportFormat.csv,
                             selectedFormat,
                             (format) =>
@@ -385,7 +385,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                             await _openPreviewScreen(selectedFormat);
                           },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1B4D3E),
+                      backgroundColor: AppTheme.primary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -402,7 +402,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                             fontFamily: 'Literata',
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            color: AppTheme.white,
                           ),
                         ),
                       ],
@@ -451,7 +451,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                 fontFamily: 'Literata',
                 fontSize: 13,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? color : Colors.black87,
+                color: isSelected ? color : AppTheme.black87,
               ),
             ),
           ],
@@ -657,13 +657,13 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.grey.withValues(alpha: 0.08),
+                  color: AppTheme.grey.withValues(alpha: 0.08),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.inventory_2_outlined,
                   size: 64,
-                  color: Colors.grey[400],
+                  color: AppTheme.grey400,
                 ),
               ),
               const SizedBox(height: 24),
@@ -673,7 +673,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                     : _localizations.noProductsMatch,
                 style: TextStyle(
                   fontSize: 18,
-                  color: Colors.grey[600],
+                  color: AppTheme.grey600,
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w600,
                 ),
@@ -685,7 +685,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                     : _localizations.tryDifferentSearchTerm,
                 style: TextStyle(
                   fontSize: 13,
-                  color: Colors.grey[400],
+                  color: AppTheme.grey400,
                   fontFamily: 'Literata',
                 ),
               ),
@@ -711,12 +711,12 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     final isOut = group.totalStock == 0;
     final isLow = group.totalStock > 0 && group.totalStock <= 10;
     final tileBackground = isOut
-        ? const Color(0xFF3A2424)
+        ? AppTheme.paletteFF3A2424
         : isLow
-        ? const Color(0xFF3A2E14)
-        : const Color(0xFF14352C);
+        ? AppTheme.paletteFF3A2E14
+        : AppTheme.headerDarkStart;
     final tileForeground = isOut
-        ? const Color(0xFFEF5350)
+        ? AppTheme.error
         : isLow
         ? AppTheme.toneAmber
         : AppTheme.mint;
@@ -733,7 +733,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
         border: Border.all(color: AppColors.border(context)),
       ),
       child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        data: Theme.of(context).copyWith(dividerColor: AppTheme.transparent),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           childrenPadding: EdgeInsets.zero,
@@ -801,7 +801,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                     _buildBadge(
                       label: statusLabel,
                       color: isOut
-                          ? const Color(0xFFEF5350)
+                          ? AppTheme.error
                           : isLow
                           ? AppTheme.toneAmber
                           : AppTheme.mint,
@@ -815,7 +815,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                       _buildBadge(
                         label:
                             '$expiredBatchCount ${_localizations.expired.toLowerCase()}',
-                        color: const Color(0xFFB388FF),
+                        color: AppTheme.toneViolet,
                         icon: Icons.event_busy_rounded,
                       ),
                   ],
@@ -858,8 +858,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    const Color(0xFF1B4D3E).withValues(alpha: 0.06),
-                    const Color(0xFF1B4D3E).withValues(alpha: 0.02),
+                    AppTheme.primary.withValues(alpha: 0.06),
+                    AppTheme.primary.withValues(alpha: 0.02),
                   ],
                 ),
               ),
@@ -874,7 +874,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                   Container(
                     width: 1,
                     height: 32,
-                    color: Colors.grey.withValues(alpha: 0.15),
+                    color: AppTheme.grey.withValues(alpha: 0.15),
                   ),
                   _buildInfoChip(
                     Icons.sell_outlined,
@@ -884,7 +884,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                   Container(
                     width: 1,
                     height: 32,
-                    color: Colors.grey.withValues(alpha: 0.15),
+                    color: AppTheme.grey.withValues(alpha: 0.15),
                   ),
                   _buildInfoChip(
                     Icons.account_balance_wallet_outlined,
@@ -913,7 +913,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Literata',
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -926,7 +926,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Literata',
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                         letterSpacing: 0.5,
                       ),
                       textAlign: TextAlign.center,
@@ -940,7 +940,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Literata',
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                         letterSpacing: 0.5,
                       ),
                       textAlign: TextAlign.center,
@@ -978,14 +978,14 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               Color? rowColor;
               Color? borderColor;
               if (isExpired) {
-                rowColor = const Color(0xFF9C27B0).withValues(alpha: 0.06);
-                borderColor = const Color(0xFF9C27B0);
+                rowColor = AppTheme.purple.withValues(alpha: 0.06);
+                borderColor = AppTheme.purple;
               } else if (isOutBatch) {
-                rowColor = Colors.red.withValues(alpha: 0.04);
-                borderColor = Colors.red;
+                rowColor = AppTheme.red.withValues(alpha: 0.04);
+                borderColor = AppTheme.red;
               } else if (isLowBatch) {
-                rowColor = Colors.orange.withValues(alpha: 0.04);
-                borderColor = Colors.orange;
+                rowColor = AppTheme.orange.withValues(alpha: 0.04);
+                borderColor = AppTheme.orange;
               }
 
               return Container(
@@ -993,14 +993,14 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                 decoration: BoxDecoration(
                   color:
                       rowColor ??
-                      (isEven ? Colors.white : AppColors.scaffold(context)),
+                      (isEven ? AppTheme.white : AppColors.scaffold(context)),
                   border: Border(
                     bottom: BorderSide(
-                      color: Colors.grey.withValues(alpha: 0.1),
+                      color: AppTheme.grey.withValues(alpha: 0.1),
                       width: 0.5,
                     ),
                     left: BorderSide(
-                      color: borderColor ?? Colors.transparent,
+                      color: borderColor ?? AppTheme.transparent,
                       width: borderColor != null ? 3 : 0,
                     ),
                   ),
@@ -1038,25 +1038,25 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                                   if (isExpired)
                                     _buildMicroBadge(
                                       label: _localizations.expired,
-                                      color: const Color(0xFF9C27B0),
+                                      color: AppTheme.purple,
                                       icon: Icons.event_busy_rounded,
                                     ),
                                   if (isExpiringSoon && !isExpired)
                                     _buildMicroBadge(
                                       label: _localizations.expiringSoon,
-                                      color: const Color(0xFFFF5722),
+                                      color: AppTheme.deepOrange,
                                       icon: Icons.schedule,
                                     ),
                                   if (isOutBatch)
                                     _buildMicroBadge(
                                       label: _localizations.outOfStock,
-                                      color: Colors.red,
+                                      color: AppTheme.red,
                                       icon: Icons.error_outline,
                                     ),
                                   if (isLowBatch && !isOutBatch)
                                     _buildMicroBadge(
                                       label: _localizations.lowStock,
-                                      color: Colors.orange,
+                                      color: AppTheme.orange,
                                       icon: Icons.warning_amber_rounded,
                                     ),
                                 ],
@@ -1072,7 +1072,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                         style: TextStyle(
                           fontSize: 11,
                           fontFamily: 'Literata',
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -1085,7 +1085,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                           fontSize: 12,
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w600,
-                          color: Colors.green[700],
+                          color: AppTheme.green700,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -1102,16 +1102,12 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                             ),
                             decoration: BoxDecoration(
                               color: isExpired
-                                  ? const Color(
-                                      0xFF9C27B0,
-                                    ).withValues(alpha: 0.1)
+                                  ? AppTheme.purple.withValues(alpha: 0.1)
                                   : isOutBatch
-                                  ? Colors.red.withValues(alpha: 0.1)
+                                  ? AppTheme.red.withValues(alpha: 0.1)
                                   : isLowBatch
-                                  ? Colors.orange.withValues(alpha: 0.1)
-                                  : const Color(
-                                      0xFF1B4D3E,
-                                    ).withValues(alpha: 0.08),
+                                  ? AppTheme.orange.withValues(alpha: 0.1)
+                                  : AppTheme.primary.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -1121,12 +1117,12 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w800,
                                 color: isExpired
-                                    ? const Color(0xFF9C27B0)
+                                    ? AppTheme.purple
                                     : isOutBatch
-                                    ? Colors.red
+                                    ? AppTheme.red
                                     : isLowBatch
-                                    ? Colors.orange
-                                    : const Color(0xFF1B4D3E),
+                                    ? AppTheme.orange
+                                    : AppTheme.primary,
                               ),
                             ),
                           ),
@@ -1147,8 +1143,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      const Color(0xFF9C27B0).withValues(alpha: 0.08),
-                      const Color(0xFF9C27B0).withValues(alpha: 0.04),
+                      AppTheme.purple.withValues(alpha: 0.08),
+                      AppTheme.purple.withValues(alpha: 0.04),
                     ],
                   ),
                   borderRadius: group.totalStock == 0 || group.totalStock <= 10
@@ -1163,12 +1159,12 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF9C27B0).withValues(alpha: 0.1),
+                        color: AppTheme.purple.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
                         Icons.event_busy_rounded,
-                        color: Color(0xFF9C27B0),
+                        color: AppTheme.purple,
                         size: 16,
                       ),
                     ),
@@ -1178,7 +1174,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                         '${group.expiredBatchCount} ${_localizations.batch}${group.expiredBatchCount > 1 ? 's' : ''} ${_localizations.batchExpiredRemove}',
                         style: const TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF7B1FA2),
+                          color: AppTheme.purple700,
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w500,
                         ),
@@ -1196,8 +1192,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Colors.red.withValues(alpha: 0.08),
-                      Colors.red.withValues(alpha: 0.04),
+                      AppTheme.red.withValues(alpha: 0.08),
+                      AppTheme.red.withValues(alpha: 0.04),
                     ],
                   ),
                   borderRadius: const BorderRadius.only(
@@ -1210,12 +1206,12 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.1),
+                        color: AppTheme.red.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
                         Icons.error_outline,
-                        color: Colors.red,
+                        color: AppTheme.red,
                         size: 16,
                       ),
                     ),
@@ -1225,7 +1221,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                         _localizations.outOfStockMessage,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.red[700],
+                          color: AppTheme.red700,
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w500,
                         ),
@@ -1243,8 +1239,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Colors.orange.withValues(alpha: 0.08),
-                      Colors.orange.withValues(alpha: 0.04),
+                      AppTheme.orange.withValues(alpha: 0.08),
+                      AppTheme.orange.withValues(alpha: 0.04),
                     ],
                   ),
                   borderRadius: const BorderRadius.only(
@@ -1257,12 +1253,12 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Colors.orange.withValues(alpha: 0.1),
+                        color: AppTheme.orange.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
                         Icons.warning_amber_rounded,
-                        color: Colors.orange,
+                        color: AppTheme.orange,
                         size: 16,
                       ),
                     ),
@@ -1272,7 +1268,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                         _localizations.lowStockMessage,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.orange[800],
+                          color: AppTheme.orange800,
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w500,
                         ),
@@ -1378,7 +1374,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           style: TextStyle(
             fontSize: 10,
             fontFamily: 'Literata',
-            color: Colors.grey[500],
+            color: AppTheme.grey,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -1390,17 +1386,17 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     if (stock == 0) {
       return {
         'label': _localizations.outOfStock.toUpperCase(),
-        'color': Colors.red,
+        'color': AppTheme.red,
       };
     } else if (stock <= 10) {
       return {
         'label': _localizations.lowStock.toUpperCase(),
-        'color': Colors.orange,
+        'color': AppTheme.orange,
       };
     } else {
       return {
         'label': _localizations.inStock.toUpperCase(),
-        'color': Colors.green,
+        'color': AppTheme.green,
       };
     }
   }
@@ -1444,7 +1440,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                   children: [
                     _iconWell(
                       icon: Icons.inventory_2_outlined,
-                      background: const Color(0xFF14352C),
+                      background: AppTheme.headerDarkStart,
                       foreground: AppTheme.mint,
                     ),
                     const SizedBox(width: 12),
@@ -1538,7 +1534,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     required VoidCallback onTap,
   }) {
     return Material(
-      color: Colors.transparent,
+      color: AppTheme.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
@@ -1629,7 +1625,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           _filterChip(
             label: _localizations.outOfStock,
             count: outOfStock,
-            color: const Color(0xFFEF5350),
+            color: AppTheme.error,
             selected: _stockFilter == 'out_of_stock',
             onTap: () => _onStockFilterChanged('out_of_stock'),
           ),
@@ -1637,7 +1633,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           _filterChip(
             label: _localizations.expired,
             count: expired,
-            color: const Color(0xFFB388FF),
+            color: AppTheme.toneViolet,
             selected: _stockFilter == 'expired',
             onTap: () => _onStockFilterChanged('expired'),
           ),
@@ -1659,7 +1655,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? color.withValues(alpha: 0.12) : Colors.transparent,
+          color: selected ? color.withValues(alpha: 0.12) : AppTheme.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: selected

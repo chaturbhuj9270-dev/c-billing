@@ -261,12 +261,12 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                     icon: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
+                        color: AppTheme.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
                         Icons.arrow_back_ios_new_rounded,
-                        color: Colors.white,
+                        color: AppTheme.white,
                         size: 18,
                       ),
                     ),
@@ -276,7 +276,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                   const Text(
                     'Finance History',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppTheme.white,
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                       fontFamily: 'Literata',
@@ -289,12 +289,12 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                     icon: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
+                        color: AppTheme.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
                         Icons.refresh_rounded,
-                        color: Colors.white,
+                        color: AppTheme.white,
                         size: 18,
                       ),
                     ),
@@ -311,10 +311,10 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
+                color: AppTheme.white.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.15),
+                  color: AppTheme.white.withValues(alpha: 0.15),
                   width: 1,
                 ),
               ),
@@ -331,13 +331,13 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            Colors.white.withValues(alpha: 0.25),
-                            Colors.white.withValues(alpha: 0.1),
+                            AppTheme.white.withValues(alpha: 0.25),
+                            AppTheme.white.withValues(alpha: 0.1),
                           ],
                         ),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.3),
+                          color: AppTheme.white.withValues(alpha: 0.3),
                           width: 2,
                         ),
                       ),
@@ -345,7 +345,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                         child: Text(
                           initials,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppTheme.white,
                             fontSize: 22,
                             fontWeight: FontWeight.w700,
                             fontFamily: 'Literata',
@@ -363,7 +363,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                         Text(
                           widget.customerName,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppTheme.white,
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
                             fontFamily: 'Literata',
@@ -377,7 +377,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                             Icon(
                               Icons.phone_rounded,
                               size: 13,
-                              color: Colors.white.withValues(alpha: 0.7),
+                              color: AppTheme.white.withValues(alpha: 0.7),
                             ),
                             SizedBox(width: 5),
                             Text(
@@ -401,10 +401,10 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.2),
+                        color: AppTheme.red.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: Colors.red.withValues(alpha: 0.3),
+                          color: AppTheme.red.withValues(alpha: 0.3),
                           width: 1,
                         ),
                       ),
@@ -414,7 +414,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                           Text(
                             '₹${widget.currentPendingAmount.toStringAsFixed(0)}',
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppTheme.white,
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'Literata',
@@ -423,7 +423,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                           Text(
                             'pending',
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.7),
+                              color: AppTheme.white.withValues(alpha: 0.7),
                               fontSize: 10,
                               fontWeight: FontWeight.w500,
                               fontFamily: 'Literata',
@@ -439,10 +439,10 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.2),
+                        color: AppTheme.green.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: Colors.green.withValues(alpha: 0.3),
+                          color: AppTheme.green.withValues(alpha: 0.3),
                           width: 1,
                         ),
                       ),
@@ -451,14 +451,14 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                         children: [
                           Icon(
                             Icons.check_circle_rounded,
-                            color: Colors.green[300],
+                            color: AppTheme.green300,
                             size: 14,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             'Clear',
                             style: TextStyle(
-                              color: Colors.green[200],
+                              color: AppTheme.green200,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               fontFamily: 'Literata',
@@ -485,7 +485,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -493,14 +493,14 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
       ),
       child: TabBar(
         controller: _tabController,
-        labelColor: Colors.white,
-        unselectedLabelColor: Color(0xFF1B4D3E),
+        labelColor: AppTheme.white,
+        unselectedLabelColor: AppTheme.primary,
         indicator: BoxDecoration(
           color: AppColors.accent(context),
           borderRadius: BorderRadius.circular(10),
         ),
         indicatorSize: TabBarIndicatorSize.tab,
-        dividerColor: Colors.transparent,
+        dividerColor: AppTheme.transparent,
         labelStyle: const TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
@@ -561,7 +561,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
               label: isEventTab ? 'Advance' : 'Received',
               value:
                   '₹${_formatAmount(isEventTab ? _totalAdvanceAmount : _totalPaidAmount)}',
-              color: Colors.green,
+              color: AppTheme.green,
             ),
           ),
           const SizedBox(width: 12),
@@ -571,7 +571,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
               label: isEventTab ? 'Remaining' : 'Pending',
               value:
                   '₹${_formatAmount(isEventTab ? _totalEventPending : _totalPendingAmount)}',
-              color: Colors.red,
+              color: AppTheme.red,
             ),
           ),
         ],
@@ -660,7 +660,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
               subtitle,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: AppTheme.grey600,
                 fontFamily: 'Literata',
               ),
               textAlign: TextAlign.center,
@@ -727,7 +727,7 @@ class _StatCard extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 11,
-              color: Colors.grey[600],
+              color: AppTheme.grey600,
               fontFamily: 'Literata',
             ),
           ),
@@ -754,15 +754,15 @@ class _BillCard extends StatelessWidget {
     IconData statusIcon;
 
     if (isPaid) {
-      statusColor = Colors.green;
+      statusColor = AppTheme.green;
       statusText = 'Paid';
       statusIcon = Icons.check_circle_rounded;
     } else if (isPartial) {
-      statusColor = Colors.orange;
+      statusColor = AppTheme.orange;
       statusText = 'Partial';
       statusIcon = Icons.hourglass_bottom_rounded;
     } else {
-      statusColor = Colors.red;
+      statusColor = AppTheme.red;
       statusText = 'Pending';
       statusIcon = Icons.schedule_rounded;
     }
@@ -774,7 +774,7 @@ class _BillCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: AppTheme.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -819,7 +819,7 @@ class _BillCard extends StatelessWidget {
                         dateFormat.format(bill.billDate),
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                           fontFamily: 'Literata',
                         ),
                       ),
@@ -871,13 +871,13 @@ class _BillCard extends StatelessWidget {
                 _AmountDetail(
                   label: 'Paid',
                   amount: bill.paidAmount,
-                  color: Colors.green,
+                  color: AppTheme.green,
                 ),
                 const SizedBox(width: 24),
                 _AmountDetail(
                   label: 'Due',
                   amount: bill.pendingAmount,
-                  color: Colors.red,
+                  color: AppTheme.red,
                 ),
                 const Spacer(),
                 // Items count
@@ -894,7 +894,7 @@ class _BillCard extends StatelessWidget {
                     '${bill.items.length} items',
                     style: TextStyle(
                       fontSize: 11,
-                      color: Colors.grey[700],
+                      color: AppTheme.grey700,
                       fontFamily: 'Literata',
                     ),
                   ),
@@ -929,7 +929,7 @@ class _AmountDetail extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 10,
-            color: Colors.grey[500],
+            color: AppTheme.grey,
             fontFamily: 'Literata',
           ),
         ),
@@ -965,22 +965,22 @@ class _EventOrderCard extends StatelessWidget {
 
     switch (status) {
       case OrderStatus.pending:
-        statusColor = Colors.orange;
+        statusColor = AppTheme.orange;
         break;
       case OrderStatus.confirmed:
-        statusColor = Colors.blue;
+        statusColor = AppTheme.blue;
         break;
       case OrderStatus.inProgress:
-        statusColor = Colors.purple;
+        statusColor = AppTheme.purple;
         break;
       case OrderStatus.delivered:
-        statusColor = Colors.green;
+        statusColor = AppTheme.green;
         break;
       case OrderStatus.cancelled:
-        statusColor = Colors.red;
+        statusColor = AppTheme.red;
         break;
       case OrderStatus.convertedToBill:
-        statusColor = Colors.teal;
+        statusColor = AppTheme.teal;
         break;
     }
 
@@ -993,7 +993,7 @@ class _EventOrderCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: AppTheme.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1010,14 +1010,14 @@ class _EventOrderCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: (isEvent ? Colors.purple : Colors.blue).withValues(
+                    color: (isEvent ? AppTheme.purple : AppTheme.blue).withValues(
                       alpha: 0.1,
                     ),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     typeIcon,
-                    color: isEvent ? Colors.purple : Colors.blue,
+                    color: isEvent ? AppTheme.purple : AppTheme.blue,
                     size: 20,
                   ),
                 ),
@@ -1045,14 +1045,14 @@ class _EventOrderCard extends StatelessWidget {
                           Icon(
                             Icons.calendar_today_rounded,
                             size: 12,
-                            color: Colors.grey[500],
+                            color: AppTheme.grey,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             dateFormat.format(order.eventDate),
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey[600],
+                              color: AppTheme.grey600,
                               fontFamily: 'Literata',
                             ),
                           ),
@@ -1068,7 +1068,7 @@ class _EventOrderCard extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: (isEvent ? Colors.purple : Colors.blue).withValues(
+                    color: (isEvent ? AppTheme.purple : AppTheme.blue).withValues(
                       alpha: 0.1,
                     ),
                     borderRadius: BorderRadius.circular(6),
@@ -1078,7 +1078,7 @@ class _EventOrderCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: isEvent ? Colors.purple : Colors.blue,
+                      color: isEvent ? AppTheme.purple : AppTheme.blue,
                       fontFamily: 'Literata',
                     ),
                   ),
@@ -1131,7 +1131,7 @@ class _EventOrderCard extends StatelessWidget {
                         'Adv: ₹${order.advanceAmount.toStringAsFixed(0)}',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.green[600],
+                          color: AppTheme.green600,
                           fontFamily: 'Literata',
                         ),
                       ),
@@ -1148,7 +1148,7 @@ class _EventOrderCard extends StatelessWidget {
                   Icon(
                     Icons.location_on_rounded,
                     size: 14,
-                    color: Colors.grey[500],
+                    color: AppTheme.grey,
                   ),
                   const SizedBox(width: 4),
                   Expanded(
@@ -1156,7 +1156,7 @@ class _EventOrderCard extends StatelessWidget {
                       order.eventLocation!,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                         fontFamily: 'Literata',
                       ),
                       maxLines: 1,

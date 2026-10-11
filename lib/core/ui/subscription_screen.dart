@@ -89,7 +89,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         body: Container(
           width: double.infinity,
           height: double.infinity,
-          decoration: const BoxDecoration(color: Color(0xFFE8E8E4)),
+          decoration: const BoxDecoration(color: AppTheme.paletteFFE8E8E4),
           child: SafeArea(
             child: FadeTransition(
               opacity: _fadeAnimation,
@@ -155,7 +155,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
           Container(
             padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.7),
+              color: AppTheme.white.withValues(alpha: 0.7),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: AppColors.accentSoft(context, 0.2),
@@ -259,9 +259,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.1),
+        color: AppTheme.red.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.red.withValues(alpha: 0.3), width: 1),
+        border: Border.all(color: AppTheme.red.withValues(alpha: 0.3), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -270,7 +270,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
             width: 8,
             height: 8,
             decoration: const BoxDecoration(
-              color: Colors.red,
+              color: AppTheme.red,
               shape: BoxShape.circle,
             ),
           ),
@@ -278,7 +278,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
           Text(
             _localizations.subscriptionExpired,
             style: const TextStyle(
-              color: Colors.red,
+              color: AppTheme.red,
               fontSize: 13,
               fontWeight: FontWeight.w600,
               fontFamily: 'Literata',
@@ -308,13 +308,13 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFF1B4D3E).withValues(alpha: 0.15),
-                  Color(0xFF2E7D32).withValues(alpha: 0.08),
+                  AppTheme.primary.withValues(alpha: 0.15),
+                  AppTheme.green800.withValues(alpha: 0.08),
                 ],
               ),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.5),
+                color: AppTheme.white.withValues(alpha: 0.5),
                 width: 1.5,
               ),
               boxShadow: [
@@ -342,7 +342,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                      color: AppTheme.white,
                       letterSpacing: 1.5,
                       fontFamily: 'Literata',
                     ),
@@ -396,10 +396,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.15),
+                    color: AppTheme.red.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: Colors.red.withValues(alpha: 0.4),
+                      color: AppTheme.red.withValues(alpha: 0.4),
                       width: 1,
                     ),
                   ),
@@ -409,7 +409,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                       Icon(
                         Icons.local_fire_department,
                         size: 14,
-                        color: Colors.red[700],
+                        color: AppTheme.red700,
                       ),
                       const SizedBox(width: 5),
                       Flexible(
@@ -418,7 +418,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: Colors.red[700],
+                            color: AppTheme.red700,
                             fontFamily: 'Literata',
                           ),
                           textAlign: TextAlign.center,
@@ -437,9 +437,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        const Color(0xFF1B4D3E).withValues(alpha: 0.1),
-                        const Color(0xFF1B4D3E),
-                        const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                        AppTheme.primary.withValues(alpha: 0.1),
+                        AppTheme.primary,
+                        AppTheme.primary.withValues(alpha: 0.1),
                       ],
                     ),
                   ),
@@ -452,7 +452,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.5),
+                    color: AppTheme.white.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -478,7 +478,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
       width: double.infinity,
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.6),
+        color: AppTheme.white.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: AppColors.card(context),
@@ -553,13 +553,13 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFF1B4D3E).withValues(alpha: 0.9),
-                  Color(0xFF2E7D32).withValues(alpha: 0.85),
+                  AppTheme.primary.withValues(alpha: 0.9),
+                  AppTheme.green800.withValues(alpha: 0.85),
                 ],
               ),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.3),
+                color: AppTheme.white.withValues(alpha: 0.3),
                 width: 1.5,
               ),
               boxShadow: [
@@ -571,7 +571,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
               ],
             ),
             child: Material(
-              color: Colors.transparent,
+              color: AppTheme.transparent,
               child: InkWell(
                 onTap: _handleSubscribe,
                 borderRadius: BorderRadius.circular(14),
@@ -583,13 +583,13 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                       Icon(
                         Icons.diamond_outlined,
                         size: 22,
-                        color: Colors.white,
+                        color: AppTheme.white,
                       ),
                       const SizedBox(width: 10),
                       Text(
                         _localizations.subscribeNow,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppTheme.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           fontFamily: 'Literata',
@@ -624,7 +624,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.6),
+              color: AppTheme.white.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(30),
               border: Border.all(
                 color: AppColors.accentSoft(context, 0.2),
@@ -666,9 +666,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                const Color(0xFF1B4D3E).withValues(alpha: 0.05),
-                const Color(0xFF1B4D3E),
-                Color(0xFF1B4D3E).withValues(alpha: 0.05),
+                AppTheme.primary.withValues(alpha: 0.05),
+                AppTheme.primary,
+                AppTheme.primary.withValues(alpha: 0.05),
               ],
             ),
           ),

@@ -375,8 +375,8 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
-    final titleColor = isDark ? Colors.white : const Color(0xFF10241C);
-    final muted = isDark ? const Color(0xFF8E9892) : const Color(0xFF5E6B64);
+    final titleColor = isDark ? AppTheme.white : AppTheme.headerDarkEnd;
+    final muted = isDark ? AppTheme.paletteFF8E9892 : AppTheme.paletteFF5E6B64;
     final mint = AppTheme.mint;
     final appTitle = _localizations.appName == 'C-BILLING'
         ? 'C-Billing'
@@ -387,8 +387,8 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
 
     return Scaffold(
       backgroundColor: isDark
-          ? const Color(0xFF070908)
-          : const Color(0xFFF4F7F5),
+          ? AppTheme.paletteFF070908
+          : AppTheme.darkTextPrimary,
       body: DecoratedBox(
         decoration: BoxDecoration(
           gradient: RadialGradient(
@@ -396,14 +396,14 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
             radius: isDark ? 0.95 : 1.05,
             colors: isDark
                 ? const [
-                    Color(0xFF1A4034),
-                    Color(0xFF0E1C17),
-                    Color(0xFF070908),
+                    AppTheme.paletteFF1A4034,
+                    AppTheme.paletteFF0E1C17,
+                    AppTheme.paletteFF070908,
                   ]
                 : const [
-                    Color(0xFFD7F6E8),
-                    Color(0xFFEEF6F2),
-                    Color(0xFFF4F7F5),
+                    AppTheme.paletteFFD7F6E8,
+                    AppTheme.paletteFFEEF6F2,
+                    AppTheme.darkTextPrimary,
                   ],
             stops: const [0.0, 0.42, 1],
           ),
@@ -498,8 +498,8 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                             borderRadius: BorderRadius.circular(24),
                             border: Border.all(
                               color: isDark
-                                  ? const Color(0xFF3A4540)
-                                  : const Color(0xFFD3DDD7),
+                                  ? AppTheme.darkOutline
+                                  : AppTheme.paletteFFD3DDD7,
                             ),
                           ),
                           child: Text(
@@ -575,8 +575,8 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
               height: 4,
               decoration: BoxDecoration(
                 color: isDark
-                    ? const Color(0xFF2A3330)
-                    : const Color(0xFFD7E0DB),
+                    ? AppTheme.paletteFF2A3330
+                    : AppTheme.paletteFFD7E0DB,
                 borderRadius: BorderRadius.circular(4),
               ),
               alignment: Alignment.centerLeft,
@@ -658,7 +658,7 @@ class _SplashMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ring = isDark ? mint : const Color(0xFF1B4D3E);
+    final ring = isDark ? mint : AppTheme.primary;
     return SizedBox(
       width: 280,
       height: 280,

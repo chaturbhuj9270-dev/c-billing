@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// A premium glassmorphic toast overlay used throughout the app.
 ///
@@ -133,11 +134,11 @@ class _GlassyToastWidgetState extends State<_GlassyToastWidget>
   Widget build(BuildContext context) {
     final isError = widget.isError;
     final accentColor = isError
-        ? const Color(0xFFC62828)
-        : const Color(0xFF1B4D3E);
+        ? AppTheme.red800
+        : AppTheme.primary;
     final accentColorLight = isError
-        ? const Color(0xFFEF5350)
-        : const Color(0xFF2D6A4F);
+        ? AppTheme.error
+        : AppTheme.paletteFF2D6A4F;
     final iconData =
         widget.icon ??
         (isError ? Icons.error_outline_rounded : Icons.check_rounded);
@@ -157,7 +158,7 @@ class _GlassyToastWidgetState extends State<_GlassyToastWidget>
               }
             },
             child: Material(
-              color: Colors.transparent,
+              color: AppTheme.transparent,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(18),
                 child: BackdropFilter(
@@ -174,18 +175,18 @@ class _GlassyToastWidgetState extends State<_GlassyToastWidget>
                         end: Alignment.bottomRight,
                         colors: isError
                             ? [
-                                Colors.white.withValues(alpha: 0.60),
-                                const Color(0xFFFFEBEE).withValues(alpha: 0.45),
+                                AppTheme.white.withValues(alpha: 0.60),
+                                AppTheme.red50.withValues(alpha: 0.45),
                               ]
                             : [
-                                Colors.white.withValues(alpha: 0.55),
-                                Colors.white.withValues(alpha: 0.30),
+                                AppTheme.white.withValues(alpha: 0.55),
+                                AppTheme.white.withValues(alpha: 0.30),
                               ],
                       ),
                       border: Border.all(
                         color: isError
-                            ? const Color(0xFFEF9A9A).withValues(alpha: 0.5)
-                            : Colors.white.withValues(alpha: 0.6),
+                            ? AppTheme.red200.withValues(alpha: 0.5)
+                            : AppTheme.white.withValues(alpha: 0.6),
                         width: 1.5,
                       ),
                       boxShadow: [
@@ -196,7 +197,7 @@ class _GlassyToastWidgetState extends State<_GlassyToastWidget>
                           spreadRadius: -4,
                         ),
                         BoxShadow(
-                          color: Colors.white.withValues(alpha: 0.7),
+                          color: AppTheme.white.withValues(alpha: 0.7),
                           blurRadius: 1,
                           offset: const Offset(0, -1),
                         ),
@@ -222,7 +223,7 @@ class _GlassyToastWidgetState extends State<_GlassyToastWidget>
                               ),
                             ],
                           ),
-                          child: Icon(iconData, color: Colors.white, size: 22),
+                          child: Icon(iconData, color: AppTheme.white, size: 22),
                         ),
                         const SizedBox(width: 14),
                         Expanded(

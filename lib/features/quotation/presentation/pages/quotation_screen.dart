@@ -25,7 +25,7 @@ class QuotationScreen extends StatefulWidget {
 }
 
 class _QuotationScreenState extends State<QuotationScreen> {
-  static const _primary = Color(0xFF1B4D3E);
+  static const _primary = AppTheme.primary;
   final _formKey = GlobalKey<FormState>();
   final _uuid = const Uuid();
 
@@ -181,7 +181,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: _primary),
-            child: Text(_l10n.add, style: const TextStyle(color: Colors.white)),
+            child: Text(_l10n.add, style: const TextStyle(color: AppTheme.white)),
           ),
         ],
       ),
@@ -358,14 +358,14 @@ class _QuotationScreenState extends State<QuotationScreen> {
       backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
         backgroundColor: AppColors.appBar(context),
-        foregroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
+        foregroundColor: AppTheme.white,
+        surfaceTintColor: AppTheme.transparent,
         title: Text(
           _isEditing ? _l10n.quotation : _l10n.newQuotation,
           style: const TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w800,
-            color: Colors.white,
+            color: AppTheme.white,
           ),
         ),
         actions: [
@@ -377,7 +377,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
                 height: 22,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.white,
+                  color: AppTheme.white,
                 ),
               ),
             )
@@ -390,7 +390,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
                   height: 22,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.white,
+                    color: AppTheme.white,
                   ),
                 ),
               )
@@ -401,12 +401,12 @@ class _QuotationScreenState extends State<QuotationScreen> {
                 icon: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
+                    color: AppTheme.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
                     Icons.print_rounded,
-                    color: Colors.white,
+                    color: AppTheme.white,
                     size: 20,
                   ),
                 ),
@@ -418,7 +418,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
                 style: const TextStyle(
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: AppTheme.white,
                 ),
               ),
             ),
@@ -477,7 +477,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
                   if (_customerSuggestions.isNotEmpty)
                     ..._customerSuggestions.map(
                       (c) => Material(
-                        color: Colors.transparent,
+                        color: AppTheme.transparent,
                         child: ListTile(
                           dense: true,
                           title: Text(c.name),
@@ -528,7 +528,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
                   ),
                   const SizedBox(height: 8),
                   Material(
-                    color: Colors.transparent,
+                    color: AppTheme.transparent,
                     child: ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
@@ -587,7 +587,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
                     ),
                     ..._subEvents.map(
                       (e) => Material(
-                        color: Colors.transparent,
+                        color: AppTheme.transparent,
                         child: ListTile(
                           title: Text(e.name),
                           subtitle: Text(dateFormat.format(e.date)),
@@ -670,7 +670,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
     return Material(
       color: AppColors.card(context),
       elevation: 0,
-      shadowColor: Colors.transparent,
+      shadowColor: AppTheme.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         width: double.infinity,
@@ -679,7 +679,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: AppTheme.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),

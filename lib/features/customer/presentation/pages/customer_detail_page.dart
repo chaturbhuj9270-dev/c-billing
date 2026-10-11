@@ -72,7 +72,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
             onPressed: () => Navigator.of(context).pop(true),
             child: Text(
               'Delete',
-              style: TextStyle(color: Colors.red.shade400),
+              style: TextStyle(color: AppTheme.error),
             ),
           ),
         ],
@@ -111,17 +111,17 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
       backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
         backgroundColor: AppColors.appBar(context),
-        foregroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
+        foregroundColor: AppTheme.white,
+        surfaceTintColor: AppTheme.transparent,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.white),
         ),
         title: const Text(
           'Customer Details',
           style: TextStyle(
-            color: Colors.white,
+            color: AppTheme.white,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -129,7 +129,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
         actions: [
           IconButton(
             onPressed: _editCustomer,
-            icon: const Icon(Icons.edit_outlined, color: Colors.white70),
+            icon: const Icon(Icons.edit_outlined, color: AppTheme.white70),
           ),
           if (_isDeleting)
             const Padding(
@@ -139,14 +139,14 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.white70),
                 ),
               ),
             )
           else
             IconButton(
               onPressed: _deleteCustomer,
-              icon: Icon(Icons.delete_outline, color: Colors.red.shade400),
+              icon: Icon(Icons.delete_outline, color: AppTheme.error),
             ),
         ],
       ),
@@ -195,8 +195,8 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
                   label: 'Pending Amount',
                   value: '₹${_customer.currentPendingAmount.toStringAsFixed(2)}',
                   valueColor: _customer.currentPendingAmount > 0 
-                      ? Colors.red.shade400 
-                      : Colors.green.shade400,
+                      ? AppTheme.error 
+                      : AppTheme.green400,
                 ),
                 _InfoItem(
                   icon: Icons.shopping_cart_outlined,
@@ -242,14 +242,14 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFF6C63FF),
-            const Color(0xFF8B7CFF),
+            AppTheme.paletteFF6C63FF,
+            AppTheme.paletteFF8B7CFF,
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6C63FF).withValues(alpha: 0.3),
+            color: AppTheme.paletteFF6C63FF.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -262,7 +262,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: AppTheme.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Center(
@@ -271,7 +271,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
                     ? _customer.name[0].toUpperCase()
                     : '?',
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: AppTheme.white,
                   fontSize: 36,
                   fontWeight: FontWeight.bold,
                 ),
@@ -283,7 +283,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
           Text(
             _customer.name,
             style: TextStyle(
-              color: Colors.white,
+              color: AppTheme.white,
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
@@ -308,17 +308,17 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.amber.withValues(alpha: 0.1),
+        color: AppTheme.amber.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.amber.withValues(alpha: 0.3),
+          color: AppTheme.amber.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
         children: [
           Icon(
             Icons.cloud_upload_outlined,
-            color: Colors.amber.shade400,
+            color: AppTheme.amber400,
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -326,7 +326,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
             child: Text(
               'This customer has not been synced to the server yet',
               style: TextStyle(
-                color: Colors.amber.shade400,
+                color: AppTheme.amber400,
                 fontSize: 13,
               ),
             ),

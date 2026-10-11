@@ -33,7 +33,7 @@ class QuickActionItem {
 Future<void> showQuickActionsSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
-    backgroundColor: Colors.transparent,
+    backgroundColor: AppTheme.transparent,
     isScrollControlled: true,
     builder: (sheetContext) {
       return QuickActionsPanel(
@@ -61,64 +61,64 @@ List<QuickActionItem> buildQuickActionItems(
     QuickActionItem(
       icon: Icons.receipt_long_rounded,
       label: l10n.invoices,
-      color: const Color(0xFF7C8CFF),
-      gradient: const [Color(0xFF667eea), Color(0xFF764ba2)],
+      color: AppTheme.toneBlue,
+      gradient: const [AppTheme.paletteFF667EEA, AppTheme.paletteFF764BA2],
       onTap: () => open(const BillsListPage()),
     ),
     QuickActionItem(
       icon: Icons.inventory_2_rounded,
       label: l10n.products,
-      color: const Color(0xFFC084FC),
-      gradient: const [Color(0xFFf093fb), Color(0xFFf5576c)],
+      color: AppTheme.paletteFFC084FC,
+      gradient: const [AppTheme.paletteFFF093FB, AppTheme.paletteFFF5576C],
       onTap: () => open(const EnhancedProductPage()),
     ),
     QuickActionItem(
       icon: Icons.local_shipping_rounded,
       label: l10n.suppliers,
-      color: const Color(0xFFFF8A65),
-      gradient: const [Color(0xFFFF6B6B), Color(0xFFee5a24)],
+      color: AppTheme.deepOrange300,
+      gradient: const [AppTheme.coral, AppTheme.paletteFFEE5A24],
       onTap: () => open(const EnhancedSupplierPage()),
     ),
     QuickActionItem(
       icon: Icons.business_rounded,
       label: l10n.companies,
-      color: const Color(0xFFB388FF),
-      gradient: const [Color(0xFF9C27B0), Color(0xFF7B1FA2)],
+      color: AppTheme.toneViolet,
+      gradient: const [AppTheme.purple, AppTheme.purple700],
       onTap: () => open(const EnhancedCompanyPage()),
     ),
     QuickActionItem(
       icon: Icons.keyboard_return_rounded,
       label: l10n.purchaseReturnShort,
-      color: const Color(0xFFFFB74D),
-      gradient: const [Color(0xFFE65100), Color(0xFFFF8F00)],
+      color: AppTheme.orange300,
+      gradient: const [AppTheme.orange900, AppTheme.amber800],
       onTap: () => open(const PurchaseReturnScreen()),
     ),
     QuickActionItem(
       icon: Icons.auto_awesome_rounded,
       label: l10n.events,
-      color: const Color(0xFFB39DDB),
-      gradient: const [Color(0xFF6C63FF), Color(0xFF8B5CF6)],
+      color: AppTheme.deepPurple200,
+      gradient: const [AppTheme.paletteFF6C63FF, AppTheme.paletteFF8B5CF6],
       onTap: () => open(const EventOrderListPage()),
     ),
     QuickActionItem(
       icon: Icons.description_outlined,
       label: l10n.quotations,
-      color: const Color(0xFF64B5F6),
-      gradient: const [Color(0xFF1565C0), Color(0xFF42A5F5)],
+      color: AppTheme.blue300,
+      gradient: const [AppTheme.blue800, AppTheme.blue400],
       onTap: () => open(const QuotationListPage()),
     ),
     QuickActionItem(
       icon: Icons.qr_code_scanner_rounded,
       label: l10n.barcode,
-      color: const Color(0xFF69F0AE),
-      gradient: const [Color(0xFF00897B), Color(0xFF004D40)],
+      color: AppTheme.greenAccent,
+      gradient: const [AppTheme.teal600, AppTheme.teal900],
       onTap: () => open(const BarcodeGeneratorPage()),
     ),
     QuickActionItem(
       icon: Icons.people_alt_rounded,
       label: l10n.customers,
-      color: const Color(0xFF4DD0E1),
-      gradient: const [Color(0xFF00ACC1), Color(0xFF0097A7)],
+      color: AppTheme.toneCyan,
+      gradient: const [AppTheme.cyan600, AppTheme.cyan700],
       onTap: () => open(const EnhancedCustomerPage()),
     ),
   ];
@@ -139,7 +139,7 @@ class QuickActionsPanel extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(16, 10, 16, bottom + 20),
       decoration: BoxDecoration(
         color: AppColors.isDark(context)
-            ? const Color(0xFF161A18)
+            ? AppTheme.paletteFF161A18
             : AppColors.card(context),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         border: Border(top: BorderSide(color: AppColors.border(context))),
@@ -205,7 +205,7 @@ class _ActionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: AppColors.isDark(context)
-          ? const Color(0xFF1E2422)
+          ? AppTheme.paletteFF1E2422
           : AppColors.chipFill(context),
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
@@ -309,7 +309,7 @@ class _GlobalQuickActionsFABState extends State<GlobalQuickActionsFAB>
             child: GestureDetector(
               onTap: _close,
               child: Container(
-                color: Colors.black.withValues(alpha: 0.45),
+                color: AppTheme.black.withValues(alpha: 0.45),
                 alignment: Alignment.bottomCenter,
                 child: GestureDetector(
                   onTap: () {},
@@ -334,15 +334,15 @@ class _GlobalQuickActionsFABState extends State<GlobalQuickActionsFAB>
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E),
+                  color: AppTheme.primary,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.12),
+                    color: AppTheme.white.withValues(alpha: 0.12),
                   ),
                 ),
                 child: Icon(
                   _isOpen ? Icons.close_rounded : Icons.apps_rounded,
-                  color: Colors.white,
+                  color: AppTheme.white,
                   size: 24,
                 ),
               ),

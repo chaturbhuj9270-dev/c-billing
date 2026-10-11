@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:intl/intl.dart';
+import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
@@ -242,13 +243,13 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: widget.selectedSupplierId != null
-              ? const Color(0xFF1B4D3E).withValues(alpha: 0.1)
+              ? AppTheme.primary.withValues(alpha: 0.1)
               : AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: widget.selectedSupplierId != null
-                ? const Color(0xFF1B4D3E)
-                : Colors.grey[300]!,
+                ? AppTheme.primary
+                : AppTheme.grey300,
             width: 1,
           ),
         ),
@@ -259,8 +260,8 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
               Icons.person_outline_rounded,
               size: 16,
               color: widget.selectedSupplierId != null
-                  ? const Color(0xFF1B4D3E)
-                  : Colors.grey[600],
+                  ? AppTheme.primary
+                  : AppTheme.grey600,
             ),
             const SizedBox(width: 6),
             ConstrainedBox(
@@ -272,8 +273,8 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                   color: widget.selectedSupplierId != null
-                      ? const Color(0xFF1B4D3E)
-                      : Colors.grey[700],
+                      ? AppTheme.primary
+                      : AppTheme.grey700,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -284,8 +285,8 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
               Icons.arrow_drop_down_rounded,
               size: 20,
               color: widget.selectedSupplierId != null
-                  ? const Color(0xFF1B4D3E)
-                  : Colors.grey[600],
+                  ? AppTheme.primary
+                  : AppTheme.grey600,
             ),
           ],
         ),
@@ -304,7 +305,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
               fontFamily: 'Literata',
               fontWeight: FontWeight.w500,
               fontSize: 11,
-              color: Colors.grey[600],
+              color: AppTheme.grey600,
             ),
           ),
           if (widget.selectedDateFilter == PurchaseDateFilter.today)
@@ -413,29 +414,11 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
       end: widget.customEndDate ?? now,
     );
 
-    final picked = await showDateRangePicker(
+    final picked = await showAppRangeCalendar(
       context: context,
       firstDate: DateTime(2020),
       lastDate: now,
       initialDateRange: initialRange,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Color(0xFF1B4D3E),
-              onPrimary: Colors.white,
-              surface: AppColors.card(context),
-              onSurface: Colors.black87,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF1B4D3E),
-              ),
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (picked != null) {
@@ -450,7 +433,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) {
           final query = _supplierSearchController.text.toLowerCase();
@@ -485,7 +468,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: Colors.grey[300],
+                        color: AppTheme.grey300,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -517,7 +500,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                   fontFamily: 'Literata',
                                   fontWeight: FontWeight.w600,
                                   fontSize: 14,
-                                  color: Colors.red,
+                                  color: AppTheme.red,
                                 ),
                               ),
                             ),
@@ -533,10 +516,10 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                         onChanged: (_) => setSheetState(() {}),
                         decoration: InputDecoration(
                           hintText: _localizations.searchSupplier,
-                          hintStyle: TextStyle(color: Colors.grey[500]),
+                          hintStyle: TextStyle(color: AppTheme.grey),
                           prefixIcon: Icon(
                             Icons.search_rounded,
-                            color: Colors.grey[500],
+                            color: AppTheme.grey,
                           ),
                           filled: true,
                           fillColor: AppColors.chipFill(context),
@@ -566,7 +549,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                     Icon(
                                       Icons.person_off_rounded,
                                       size: 48,
-                                      color: Colors.grey[400],
+                                      color: AppTheme.grey400,
                                     ),
                                     const SizedBox(height: 12),
                                     Text(
@@ -575,7 +558,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                         fontFamily: 'Literata',
                                         fontWeight: FontWeight.w500,
                                         fontSize: 14,
-                                        color: Colors.grey[600],
+                                        color: AppTheme.grey600,
                                       ),
                                     ),
                                   ],
@@ -605,14 +588,12 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                     padding: EdgeInsets.all(12),
                                     decoration: BoxDecoration(
                                       color: isSelected
-                                          ? const Color(
-                                              0xFF1B4D3E,
-                                            ).withValues(alpha: 0.1)
+                                          ? AppTheme.primary.withValues(alpha: 0.1)
                                           : AppColors.scaffold(context),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: isSelected
-                                            ? const Color(0xFF1B4D3E)
+                                            ? AppTheme.primary
                                             : AppColors.border(context)!,
                                         width: isSelected ? 1.5 : 1,
                                       ),
@@ -624,7 +605,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                           height: 40,
                                           decoration: BoxDecoration(
                                             color: isSelected
-                                                ? const Color(0xFF1B4D3E)
+                                                ? AppTheme.primary
                                                 : AppColors.border(context),
                                             borderRadius: BorderRadius.circular(
                                               10,
@@ -633,8 +614,8 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                           child: Icon(
                                             Icons.person_rounded,
                                             color: isSelected
-                                                ? Colors.white
-                                                : Colors.grey[600],
+                                                ? AppTheme.white
+                                                : AppTheme.grey600,
                                             size: 20,
                                           ),
                                         ),
@@ -656,8 +637,8 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                                       : FontWeight.w600,
                                                   fontSize: 14,
                                                   color: isSelected
-                                                      ? const Color(0xFF1B4D3E)
-                                                      : Colors.grey[800],
+                                                      ? AppTheme.primary
+                                                      : AppTheme.grey800,
                                                 ),
                                               ),
                                               if (supplier['contact'] !=
@@ -669,7 +650,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                                     fontFamily: 'Literata',
                                                     fontWeight: FontWeight.w400,
                                                     fontSize: 12,
-                                                    color: Colors.grey[600],
+                                                    color: AppTheme.grey600,
                                                   ),
                                                 ),
                                               ],

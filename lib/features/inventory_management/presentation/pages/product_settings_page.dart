@@ -65,14 +65,14 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddColumnDialog(),
-        backgroundColor: const Color(0xFF1B4D3E),
-        icon: const Icon(Icons.add_rounded, color: Colors.white),
+        backgroundColor: AppTheme.primary,
+        icon: const Icon(Icons.add_rounded, color: AppTheme.white),
         label: const Text(
           'Add Column',
           style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w600,
-            color: Colors.white,
+            color: AppTheme.white,
           ),
         ),
       ),
@@ -95,13 +95,13 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
             child: Container(
               padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
+                color: AppTheme.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
                 Icons.arrow_back_ios_rounded,
                 size: 20,
-                color: Colors.white,
+                color: AppTheme.white,
               ),
             ),
           ),
@@ -116,7 +116,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w800,
                     fontSize: 22,
-                    color: Colors.white,
+                    color: AppTheme.white,
                   ),
                 ),
                 Text(
@@ -125,7 +125,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w400,
                     fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: AppTheme.white.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -172,26 +172,26 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
               fontFamily: 'Literata',
               fontWeight: FontWeight.w400,
               fontSize: 14,
-              color: Colors.grey[600],
+              color: AppTheme.grey600,
             ),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () => _showAddColumnDialog(),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1B4D3E),
+              backgroundColor: AppTheme.primary,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            icon: const Icon(Icons.add_rounded, color: Colors.white),
+            icon: const Icon(Icons.add_rounded, color: AppTheme.white),
             label: const Text(
               'Add First Column',
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
-                color: Colors.white,
+                color: AppTheme.white,
               ),
             ),
           ),
@@ -212,8 +212,8 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
           color: column.isActive
-              ? const Color(0xFF1B4D3E).withValues(alpha: 0.2)
-              : Colors.grey.withValues(alpha: 0.2),
+              ? AppTheme.primary.withValues(alpha: 0.2)
+              : AppTheme.grey.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -234,7 +234,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                   padding: const EdgeInsets.all(8),
                   child: Icon(
                     Icons.drag_indicator_rounded,
-                    color: Colors.grey[400],
+                    color: AppTheme.grey400,
                   ),
                 ),
               ),
@@ -274,7 +274,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.red.withValues(alpha: 0.1),
+                              color: AppTheme.red.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: const Text(
@@ -283,7 +283,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w600,
                                 fontSize: 10,
-                                color: Colors.red,
+                                color: AppTheme.red,
                               ),
                             ),
                           ),
@@ -297,7 +297,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                         fontFamily: 'Literata',
                         fontWeight: FontWeight.w500,
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                       ),
                     ),
                     if (column.type == CustomColumnType.dropdown &&
@@ -310,7 +310,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w400,
                           fontSize: 11,
-                          color: Colors.grey[500],
+                          color: AppTheme.grey,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -321,7 +321,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
               ),
               // Actions
               PopupMenuButton<String>(
-                icon: Icon(Icons.more_vert_rounded, color: Colors.grey[600]),
+                icon: Icon(Icons.more_vert_rounded, color: AppTheme.grey600),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -334,7 +334,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                         Icon(
                           Icons.edit_rounded,
                           size: 20,
-                          color: Colors.grey[700],
+                          color: AppTheme.grey700,
                         ),
                         const SizedBox(width: 12),
                         const Text('Edit'),
@@ -350,7 +350,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                               ? Icons.visibility_off_rounded
                               : Icons.visibility_rounded,
                           size: 20,
-                          color: Colors.grey[700],
+                          color: AppTheme.grey700,
                         ),
                         const SizedBox(width: 12),
                         Text(column.isActive ? 'Disable' : 'Enable'),
@@ -365,12 +365,12 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                         const Icon(
                           Icons.delete_rounded,
                           size: 20,
-                          color: Colors.red,
+                          color: AppTheme.red,
                         ),
                         const SizedBox(width: 12),
                         const Text(
                           'Delete',
-                          style: TextStyle(color: Colors.red),
+                          style: TextStyle(color: AppTheme.red),
                         ),
                       ],
                     ),
@@ -404,17 +404,17 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
   Color _getTypeColor(CustomColumnType type) {
     switch (type) {
       case CustomColumnType.text:
-        return const Color(0xFF667eea);
+        return AppTheme.paletteFF667EEA;
       case CustomColumnType.number:
-        return const Color(0xFFf093fb);
+        return AppTheme.paletteFFF093FB;
       case CustomColumnType.decimal:
-        return const Color(0xFFFF6B6B);
+        return AppTheme.coral;
       case CustomColumnType.date:
-        return const Color(0xFF1B4D3E);
+        return AppTheme.primary;
       case CustomColumnType.dropdown:
-        return const Color(0xFF9C27B0);
+        return AppTheme.purple;
       case CustomColumnType.boolean:
-        return const Color(0xFFFF9800);
+        return AppTheme.orange;
     }
   }
 
@@ -454,7 +454,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
+              style: TextStyle(fontFamily: 'Literata', color: AppTheme.grey600),
             ),
           ),
           ElevatedButton(
@@ -464,14 +464,14 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
               GlassyToast.show(context, '${column.name} deleted');
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppTheme.red,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
             child: const Text(
               'Delete',
-              style: TextStyle(fontFamily: 'Literata', color: Colors.white),
+              style: TextStyle(fontFamily: 'Literata', color: AppTheme.white),
             ),
           ),
         ],
@@ -554,7 +554,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[400]!),
+                      border: Border.all(color: AppTheme.grey400),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: DropdownButtonHideUnderline(
@@ -679,10 +679,10 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                       style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                       ),
                     ),
-                    activeThumbColor: const Color(0xFF1B4D3E),
+                    activeThumbColor: AppTheme.primary,
                     contentPadding: EdgeInsets.zero,
                   ),
                 ],
@@ -695,7 +695,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                   'Cancel',
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                   ),
                 ),
               ),
@@ -754,7 +754,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                             : 'Column added');
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B4D3E),
+                  backgroundColor: AppTheme.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -763,7 +763,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                   existingColumn != null ? 'Update' : 'Add',
                   style: const TextStyle(
                     fontFamily: 'Literata',
-                    color: Colors.white,
+                    color: AppTheme.white,
                   ),
                 ),
               ),

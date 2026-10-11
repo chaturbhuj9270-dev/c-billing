@@ -24,9 +24,9 @@ class EventOrderSettingsPage extends StatefulWidget {
 
 class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
   static const _prefsKey = 'event_order_show_event_mode';
-  static const _primaryColor = Color(0xFF1B4D3E);
-  static const _eventColor = Color(0xFF9C27B0);
-  static const _salesColor = Color(0xFF2196F3);
+  static const _primaryColor = AppTheme.primary;
+  static const _eventColor = AppTheme.purple;
+  static const _salesColor = AppTheme.blue;
 
   bool _showEventMode = true;
   bool _isLoading = true;
@@ -84,20 +84,20 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
       backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
         backgroundColor: AppColors.appBar(context),
-        foregroundColor: Colors.white,
+        foregroundColor: AppTheme.white,
         elevation: 0,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppTheme.transparent,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
+              color: AppTheme.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.arrow_back_ios_new,
-              color: Colors.white,
+              color: AppTheme.white,
               size: 18,
             ),
           ),
@@ -110,7 +110,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
             fontFamily: 'Literata',
             fontWeight: FontWeight.w700,
             fontSize: 20,
-            color: Colors.white,
+            color: AppTheme.white,
           ),
         ),
         centerTitle: true,
@@ -133,7 +133,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                         fontFamily: 'Literata',
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                       ),
                     ),
                   ),
@@ -144,7 +144,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
+                          color: AppTheme.black.withValues(alpha: 0.04),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -177,7 +177,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                                   _showEventMode
                                       ? Icons.celebration_rounded
                                       : Icons.shopping_bag_rounded,
-                                  color: Colors.white,
+                                  color: AppTheme.white,
                                   size: 22,
                                 ),
                               ),
@@ -196,7 +196,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                                         fontFamily: 'Literata',
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600,
-                                        color: Color(0xFF1A1A2E),
+                                        color: AppTheme.ink,
                                       ),
                                     ),
                                     const SizedBox(height: 2),
@@ -215,7 +215,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                                       style: TextStyle(
                                         fontFamily: 'Literata',
                                         fontSize: 12,
-                                        color: Colors.grey[600],
+                                        color: AppTheme.grey600,
                                       ),
                                     ),
                                   ],
@@ -302,7 +302,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                                   fontFamily: 'Literata',
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1A1A2E),
+                                  color: AppTheme.ink,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -313,7 +313,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                                 style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontSize: 12,
-                                  color: Colors.grey[700],
+                                  color: AppTheme.grey700,
                                   height: 1.5,
                                 ),
                               ),
@@ -335,7 +335,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                         fontFamily: 'Literata',
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                       ),
                     ),
                   ),
@@ -357,7 +357,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
+                            color: AppTheme.black.withValues(alpha: 0.04),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -390,7 +390,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                                     fontFamily: 'Literata',
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
-                                    color: Color(0xFF1A1A2E),
+                                    color: AppTheme.ink,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -401,7 +401,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                                   style: TextStyle(
                                     fontFamily: 'Literata',
                                     fontSize: 12,
-                                    color: Colors.grey[600],
+                                    color: AppTheme.grey600,
                                   ),
                                 ),
                               ],
@@ -409,7 +409,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                           ),
                           Icon(
                             Icons.arrow_forward_ios_rounded,
-                            color: Colors.grey[400],
+                            color: AppTheme.grey400,
                             size: 16,
                           ),
                         ],
@@ -442,7 +442,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
       ),
       child: Row(
         children: [
-          Icon(icon, color: isActive ? color : Colors.grey[400], size: 20),
+          Icon(icon, color: isActive ? color : AppTheme.grey400, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -454,7 +454,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                     fontFamily: 'Literata',
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: isActive ? color : Colors.grey[600],
+                    color: isActive ? color : AppTheme.grey600,
                   ),
                 ),
                 Text(
@@ -462,7 +462,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 11,
-                    color: Colors.grey[500],
+                    color: AppTheme.grey,
                   ),
                 ),
               ],

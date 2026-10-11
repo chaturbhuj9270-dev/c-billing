@@ -11,6 +11,7 @@ import '../models/print_bill_data.dart';
 import '../../../features/quotation/data/services/quotation_format_settings.dart';
 import '../../../features/shop/domain/entities/shop.dart';
 import '../../services/bill_report_settings_service.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Service for generating PDF bills and sharing them
 class PdfBillService {
@@ -108,7 +109,7 @@ class PdfBillService {
     final primaryColor = PdfColor.fromHex('#1A1A1A'); // Black
     final accentColor = PdfColor.fromHex('#4A4A4A'); // Dark grey
     final lightBg = PdfColor.fromHex('#F5F5F5'); // Light grey
-    final borderColor = PdfColors.grey400;
+    final borderColor = PdfColor.fromInt(AppTheme.grey400.toARGB32());
     final thinBorder = pw.BorderSide(color: borderColor, width: 0.5);
 
     return pw.Container(
@@ -145,7 +146,7 @@ class PdfBillService {
                     height: 50,
                     margin: const pw.EdgeInsets.only(right: 12),
                     decoration: pw.BoxDecoration(
-                      color: PdfColors.white,
+                      color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                       borderRadius: pw.BorderRadius.circular(6),
                     ),
                     padding: const pw.EdgeInsets.all(4),
@@ -166,7 +167,7 @@ class PdfBillService {
                         style: pw.TextStyle(
                           fontSize: 20,
                           fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.white,
+                          color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                           letterSpacing: 1.2,
                         ),
                       ),
@@ -176,7 +177,7 @@ class PdfBillService {
                           shopDetails.address,
                           style: pw.TextStyle(
                             fontSize: 9,
-                            color: PdfColors.white,
+                            color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                           ),
                         ),
                       ],
@@ -188,7 +189,7 @@ class PdfBillService {
                               'Ph: ${shopDetails.phone}',
                               style: pw.TextStyle(
                                 fontSize: 9,
-                                color: PdfColors.white,
+                                color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                               ),
                             ),
                           if (shopDetails.phone.isNotEmpty &&
@@ -198,7 +199,7 @@ class PdfBillService {
                               ' | ',
                               style: pw.TextStyle(
                                 fontSize: 9,
-                                color: PdfColors.white,
+                                color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                               ),
                             ),
                           if (shopDetails.email != null &&
@@ -207,7 +208,7 @@ class PdfBillService {
                               shopDetails.email!,
                               style: pw.TextStyle(
                                 fontSize: 9,
-                                color: PdfColors.white,
+                                color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                               ),
                             ),
                         ],
@@ -224,7 +225,7 @@ class PdfBillService {
                       vertical: 6,
                     ),
                     decoration: pw.BoxDecoration(
-                      color: PdfColors.white,
+                      color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                       borderRadius: pw.BorderRadius.circular(4),
                     ),
                     child: pw.Column(
@@ -479,7 +480,7 @@ class PdfBillService {
                             style: pw.TextStyle(
                               fontSize: 8,
                               fontWeight: pw.FontWeight.bold,
-                              color: PdfColors.orange800,
+                              color: PdfColor.fromInt(AppTheme.orange800.toARGB32()),
                             ),
                           ),
                         ],
@@ -524,25 +525,25 @@ class PdfBillService {
                             _buildSummaryRow(
                               'CGST (${billData.cgstPercent.toStringAsFixed(1)}%)',
                               billData.cgstAmount,
-                              color: PdfColors.orange800,
+                              color: PdfColor.fromInt(AppTheme.orange800.toARGB32()),
                             ),
                           if (billData.sgstAmount > 0)
                             _buildSummaryRow(
                               'SGST (${billData.sgstPercent.toStringAsFixed(1)}%)',
                               billData.sgstAmount,
-                              color: PdfColors.orange800,
+                              color: PdfColor.fromInt(AppTheme.orange800.toARGB32()),
                             ),
                           if (billData.otherTaxAmount > 0)
                             _buildSummaryRow(
                               '${billData.otherTaxName.isNotEmpty ? billData.otherTaxName : "TAX"} (${billData.otherTaxPercent.toStringAsFixed(1)}%)',
                               billData.otherTaxAmount,
-                              color: PdfColors.orange800,
+                              color: PdfColor.fromInt(AppTheme.orange800.toARGB32()),
                             ),
                           _buildSummaryRow(
                             'Total Tax',
                             billData.totalTaxAmount,
                             bold: true,
-                            color: PdfColors.orange900,
+                            color: PdfColor.fromInt(AppTheme.orange900.toARGB32()),
                           ),
                         ],
                         _buildSummaryRow('Sub Total', billData.subtotal),
@@ -565,7 +566,7 @@ class PdfBillService {
                                 style: pw.TextStyle(
                                   fontSize: 10,
                                   fontWeight: pw.FontWeight.bold,
-                                  color: PdfColors.white,
+                                  color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                                 ),
                               ),
                               pw.Text(
@@ -573,7 +574,7 @@ class PdfBillService {
                                 style: pw.TextStyle(
                                   fontSize: 12,
                                   fontWeight: pw.FontWeight.bold,
-                                  color: PdfColors.white,
+                                  color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                                 ),
                               ),
                             ],
@@ -584,14 +585,14 @@ class PdfBillService {
                           _buildSummaryRow(
                             'Paid Amount',
                             billData.paidAmount ?? 0,
-                            color: PdfColors.green800,
+                            color: PdfColor.fromInt(AppTheme.green800.toARGB32()),
                           ),
                           if (billData.hasPendingAmount)
                             _buildSummaryRow(
                               'Balance Due',
                               billData.pendingAmount!,
                               bold: true,
-                              color: PdfColors.red700,
+                              color: PdfColor.fromInt(AppTheme.red700.toARGB32()),
                             ),
                         ],
                       ],
@@ -612,7 +613,7 @@ class PdfBillService {
                 horizontal: 12,
                 vertical: 8,
               ),
-              color: PdfColors.orange50,
+              color: PdfColor.fromInt(AppTheme.orange50.toARGB32()),
               child: pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
@@ -621,7 +622,7 @@ class PdfBillService {
                     style: pw.TextStyle(
                       fontSize: 11,
                       fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.orange900,
+                      color: PdfColor.fromInt(AppTheme.orange900.toARGB32()),
                     ),
                   ),
                   pw.Text(
@@ -629,7 +630,7 @@ class PdfBillService {
                     style: pw.TextStyle(
                       fontSize: 12,
                       fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.orange900,
+                      color: PdfColor.fromInt(AppTheme.orange900.toARGB32()),
                     ),
                   ),
                 ],
@@ -762,10 +763,10 @@ class PdfBillService {
                           pw.SizedBox(height: 25),
                           pw.Container(
                             width: 90,
-                            decoration: const pw.BoxDecoration(
+                            decoration: pw.BoxDecoration(
                               border: pw.Border(
                                 bottom: pw.BorderSide(
-                                  color: PdfColors.grey500,
+                                  color: PdfColor.fromInt(AppTheme.grey.toARGB32()),
                                   width: 0.5,
                                 ),
                               ),
@@ -806,10 +807,10 @@ class PdfBillService {
                             pw.SizedBox(height: 20),
                           pw.Container(
                             width: 90,
-                            decoration: const pw.BoxDecoration(
+                            decoration: pw.BoxDecoration(
                               border: pw.Border(
                                 bottom: pw.BorderSide(
-                                  color: PdfColors.grey500,
+                                  color: PdfColor.fromInt(AppTheme.grey.toARGB32()),
                                   width: 0.5,
                                 ),
                               ),
@@ -839,7 +840,7 @@ class PdfBillService {
       children: [
         pw.Text(
           '$label: ',
-          style: pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+          style: pw.TextStyle(fontSize: 9, color: PdfColor.fromInt(AppTheme.grey700.toARGB32())),
         ),
         pw.Text(
           value,
@@ -1217,7 +1218,7 @@ class PdfBillService {
                       'CGST(${item.cgstPercent.toStringAsFixed(1)}%): ${item.cgstAmount.toStringAsFixed(2)}',
                       style: pw.TextStyle(
                         fontSize: 7,
-                        color: PdfColors.orange800,
+                        color: PdfColor.fromInt(AppTheme.orange800.toARGB32()),
                       ),
                     ),
                   if (item.cgstPercent > 0 && item.sgstPercent > 0)
@@ -1225,7 +1226,7 @@ class PdfBillService {
                       '  |  ',
                       style: pw.TextStyle(
                         fontSize: 7,
-                        color: PdfColors.grey600,
+                        color: PdfColor.fromInt(AppTheme.grey600.toARGB32()),
                       ),
                     ),
                   if (item.sgstPercent > 0)
@@ -1233,7 +1234,7 @@ class PdfBillService {
                       'SGST(${item.sgstPercent.toStringAsFixed(1)}%): ${item.sgstAmount.toStringAsFixed(2)}',
                       style: pw.TextStyle(
                         fontSize: 7,
-                        color: PdfColors.orange800,
+                        color: PdfColor.fromInt(AppTheme.orange800.toARGB32()),
                       ),
                     ),
                 ],
@@ -1251,7 +1252,7 @@ class PdfBillService {
       columnWidths: columnWidths,
       children: [
         pw.TableRow(
-          decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+          decoration: pw.BoxDecoration(color: PdfColor.fromInt(AppTheme.grey200.toARGB32())),
           children: headerCells,
         ),
         ...itemRows,
@@ -1637,7 +1638,7 @@ class PdfBillService {
                             item.companyName!,
                             style: pw.TextStyle(
                               fontSize: 5,
-                              color: PdfColors.grey700,
+                              color: PdfColor.fromInt(AppTheme.grey700.toARGB32()),
                             ),
                           ),
                         if (item.hsnCode != null && item.hsnCode!.isNotEmpty)
@@ -1645,7 +1646,7 @@ class PdfBillService {
                             'HSN:${item.hsnCode}',
                             style: pw.TextStyle(
                               fontSize: 4,
-                              color: PdfColors.grey600,
+                              color: PdfColor.fromInt(AppTheme.grey600.toARGB32()),
                             ),
                           ),
                       ],
@@ -1686,7 +1687,7 @@ class PdfBillService {
                   'Ret: -${item.returnedQuantity} qty (-Rs.${item.returnedAmount.toStringAsFixed(2)})',
                   style: pw.TextStyle(
                     fontSize: 5,
-                    color: PdfColors.orange800,
+                    color: PdfColor.fromInt(AppTheme.orange800.toARGB32()),
                     fontWeight: pw.FontWeight.bold,
                   ),
                 ),
@@ -1697,7 +1698,7 @@ class PdfBillService {
                 padding: const pw.EdgeInsets.only(left: 4, bottom: 2),
                 child: pw.Text(
                   'GST: CGST ${item.cgstPercent.toStringAsFixed(1)}%=${item.cgstAmount.toStringAsFixed(2)} | SGST ${item.sgstPercent.toStringAsFixed(1)}%=${item.sgstAmount.toStringAsFixed(2)}',
-                  style: pw.TextStyle(fontSize: 4, color: PdfColors.grey700),
+                  style: pw.TextStyle(fontSize: 4, color: PdfColor.fromInt(AppTheme.grey700.toARGB32())),
                 ),
               ),
           ],
@@ -1740,14 +1741,14 @@ class PdfBillService {
                       'Returned:',
                       style: pw.TextStyle(
                         fontSize: 6,
-                        color: PdfColors.orange800,
+                        color: PdfColor.fromInt(AppTheme.orange800.toARGB32()),
                       ),
                     ),
                     pw.Text(
                       '-Rs.${billData.totalReturnedAmount.toStringAsFixed(2)}',
                       style: pw.TextStyle(
                         fontSize: 6,
-                        color: PdfColors.orange800,
+                        color: PdfColor.fromInt(AppTheme.orange800.toARGB32()),
                         fontWeight: pw.FontWeight.bold,
                       ),
                     ),
@@ -1775,7 +1776,7 @@ class PdfBillService {
                 pw.Container(
                   width: receiptWidth,
                   padding: const pw.EdgeInsets.symmetric(vertical: 3),
-                  decoration: pw.BoxDecoration(color: PdfColors.grey100),
+                  decoration: pw.BoxDecoration(color: PdfColor.fromInt(AppTheme.grey100.toARGB32())),
                   child: pw.Column(
                     children: [
                       if (billData.cgstAmount > 0)
@@ -1813,7 +1814,7 @@ class PdfBillService {
                     style: pw.TextStyle(
                       fontSize: 5,
                       fontStyle: pw.FontStyle.italic,
-                      color: PdfColors.grey600,
+                      color: PdfColor.fromInt(AppTheme.grey600.toARGB32()),
                     ),
                   ),
                 ],
@@ -1824,7 +1825,7 @@ class PdfBillService {
 
         // Grand Total Separator
         pw.SizedBox(height: 4),
-        pw.Container(width: receiptWidth, height: 1.5, color: PdfColors.black),
+        pw.Container(width: receiptWidth, height: 1.5, color: PdfColor.fromInt(AppTheme.black.toARGB32())),
         pw.SizedBox(height: 4),
 
         // ═══════════════════════════════════════════════
@@ -1863,7 +1864,7 @@ class PdfBillService {
             textAlign: pw.TextAlign.center,
           ),
         ),
-        pw.Container(width: receiptWidth, height: 1.5, color: PdfColors.black),
+        pw.Container(width: receiptWidth, height: 1.5, color: PdfColor.fromInt(AppTheme.black.toARGB32())),
 
         // ═══════════════════════════════════════════════
         // PAYMENT STATUS
@@ -1885,7 +1886,7 @@ class PdfBillService {
                         style: pw.TextStyle(
                           fontSize: 7,
                           fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.green800,
+                          color: PdfColor.fromInt(AppTheme.green800.toARGB32()),
                         ),
                       ),
                       pw.Text(
@@ -1893,7 +1894,7 @@ class PdfBillService {
                         style: pw.TextStyle(
                           fontSize: 7,
                           fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.green800,
+                          color: PdfColor.fromInt(AppTheme.green800.toARGB32()),
                         ),
                       ),
                     ],
@@ -1908,7 +1909,7 @@ class PdfBillService {
                         style: pw.TextStyle(
                           fontSize: 7,
                           fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.red700,
+                          color: PdfColor.fromInt(AppTheme.red700.toARGB32()),
                         ),
                       ),
                       pw.Text(
@@ -1916,7 +1917,7 @@ class PdfBillService {
                         style: pw.TextStyle(
                           fontSize: 7,
                           fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.red700,
+                          color: PdfColor.fromInt(AppTheme.red700.toARGB32()),
                         ),
                       ),
                     ],
@@ -1935,8 +1936,8 @@ class PdfBillService {
             width: receiptWidth,
             padding: const pw.EdgeInsets.all(6),
             decoration: pw.BoxDecoration(
-              color: PdfColors.orange50,
-              border: pw.Border.all(color: PdfColors.orange300, width: 0.5),
+              color: PdfColor.fromInt(AppTheme.orange50.toARGB32()),
+              border: pw.Border.all(color: PdfColor.fromInt(AppTheme.orange300.toARGB32()), width: 0.5),
             ),
             child: pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -1953,7 +1954,7 @@ class PdfBillService {
                   style: pw.TextStyle(
                     fontSize: 7,
                     fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.orange800,
+                    color: PdfColor.fromInt(AppTheme.orange800.toARGB32()),
                   ),
                 ),
               ],
@@ -2119,7 +2120,7 @@ class PdfBillService {
             child: pw.Container(
               height: 0.5,
               margin: const pw.EdgeInsets.symmetric(horizontal: 0.5),
-              color: PdfColors.grey700,
+              color: PdfColor.fromInt(AppTheme.grey700.toARGB32()),
             ),
           ),
         ),

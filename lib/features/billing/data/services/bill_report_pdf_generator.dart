@@ -9,6 +9,7 @@ import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/services/bill_report_settings_service.dart';
 import '../../domain/entities/bill.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Fast PDF generator for Bill Reports.
 /// Generates reports with columns based on user's Bill Report Settings.
@@ -272,8 +273,8 @@ class BillReportPdfGenerator {
                 fontWeight: pw.FontWeight.bold,
               ),
               cellStyle: const pw.TextStyle(fontSize: 7),
-              headerDecoration: const pw.BoxDecoration(
-                color: PdfColors.grey300,
+              headerDecoration: pw.BoxDecoration(
+                color: PdfColor.fromInt(AppTheme.grey300.toARGB32()),
               ),
               cellHeight: 20,
               columnWidths: columnWidths,

@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:c_billing/features/inventory_management/domain/entities/product.dart';
 import 'stock_report_settings_service.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Report type enumeration
 enum ReportType { outOfStock, lowStock, allProducts }
@@ -122,7 +123,7 @@ class InventoryReportService {
                     style: pw.TextStyle(
                       fontSize: 22,
                       fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.green800,
+                      color: PdfColor.fromInt(AppTheme.green800.toARGB32()),
                     ),
                   ),
                 pw.SizedBox(height: 4),
@@ -131,7 +132,7 @@ class InventoryReportService {
                   style: pw.TextStyle(
                     fontSize: 18,
                     fontWeight: pw.FontWeight.normal,
-                    color: PdfColors.grey800,
+                    color: PdfColor.fromInt(AppTheme.grey800.toARGB32()),
                   ),
                 ),
                 if (subtitle != null && subtitle.isNotEmpty)
@@ -139,9 +140,9 @@ class InventoryReportService {
                     padding: const pw.EdgeInsets.only(top: 4),
                     child: pw.Text(
                       subtitle,
-                      style: const pw.TextStyle(
+                      style: pw.TextStyle(
                         fontSize: 11,
-                        color: PdfColors.grey700,
+                        color: PdfColor.fromInt(AppTheme.grey700.toARGB32()),
                       ),
                     ),
                   ),
@@ -152,9 +153,9 @@ class InventoryReportService {
               children: [
                 pw.Text(
                   'Generated on:',
-                  style: const pw.TextStyle(
+                  style: pw.TextStyle(
                     fontSize: 10,
-                    color: PdfColors.grey600,
+                    color: PdfColor.fromInt(AppTheme.grey600.toARGB32()),
                   ),
                 ),
                 pw.Text(
@@ -169,7 +170,7 @@ class InventoryReportService {
           ],
         ),
         pw.SizedBox(height: 8),
-        pw.Divider(thickness: 1, color: PdfColors.green800),
+        pw.Divider(thickness: 1, color: PdfColor.fromInt(AppTheme.green800.toARGB32())),
       ],
     );
   }
@@ -180,7 +181,7 @@ class InventoryReportService {
       margin: const pw.EdgeInsets.only(top: 8),
       child: pw.Text(
         'Page ${context.pageNumber} of ${context.pagesCount}',
-        style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600),
+        style: pw.TextStyle(fontSize: 10, color: PdfColor.fromInt(AppTheme.grey600.toARGB32())),
       ),
     );
   }
@@ -196,7 +197,7 @@ class InventoryReportService {
     return pw.Container(
       padding: const pw.EdgeInsets.all(12),
       decoration: pw.BoxDecoration(
-        color: PdfColors.grey100,
+        color: PdfColor.fromInt(AppTheme.grey100.toARGB32()),
         borderRadius: pw.BorderRadius.circular(8),
       ),
       child: pw.Row(
@@ -218,7 +219,7 @@ class InventoryReportService {
       children: [
         pw.Text(
           label,
-          style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+          style: pw.TextStyle(fontSize: 10, color: PdfColor.fromInt(AppTheme.grey700.toARGB32())),
         ),
         pw.SizedBox(height: 4),
         pw.Text(
@@ -322,9 +323,9 @@ class InventoryReportService {
       headerStyle: pw.TextStyle(
         fontWeight: pw.FontWeight.bold,
         fontSize: 10,
-        color: PdfColors.white,
+        color: PdfColor.fromInt(AppTheme.white.toARGB32()),
       ),
-      headerDecoration: const pw.BoxDecoration(color: PdfColors.green800),
+      headerDecoration: pw.BoxDecoration(color: PdfColor.fromInt(AppTheme.green800.toARGB32())),
       cellStyle: const pw.TextStyle(fontSize: 9),
       cellAlignment: pw.Alignment.centerLeft,
       cellPadding: const pw.EdgeInsets.all(6),

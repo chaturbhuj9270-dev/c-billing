@@ -100,13 +100,13 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
             onPressed: () => Navigator.pop(context, false),
             child: Text(
               _localizations.cancel,
-              style: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
+              style: TextStyle(fontFamily: 'Literata', color: AppTheme.grey600),
             ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1B4D3E),
+              backgroundColor: AppTheme.primary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -115,7 +115,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
               _localizations.resetButton,
               style: TextStyle(
                 fontFamily: 'Literata',
-                color: Colors.white,
+                color: AppTheme.white,
               ),
             ),
           ),
@@ -227,8 +227,8 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Color(0xFF1B4D3E).withValues(alpha: 0.1),
-            Color(0xFF1B4D3E).withValues(alpha: 0.05),
+            AppTheme.primary.withValues(alpha: 0.1),
+            AppTheme.primary.withValues(alpha: 0.05),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
@@ -256,7 +256,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
             ),
             child: Icon(
               Icons.view_column_rounded,
-              color: Colors.white,
+              color: AppTheme.white,
               size: 28,
             ),
           ),
@@ -281,7 +281,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w400,
                     fontSize: 13,
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                   ),
                 ),
               ],
@@ -326,7 +326,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: column.isVisible
-              ? Color(0xFF1B4D3E).withValues(alpha: 0.3)
+              ? AppTheme.primary.withValues(alpha: 0.3)
               : AppColors.border(context)!,
           width: column.isVisible ? 1.5 : 1,
         ),
@@ -340,7 +340,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
               ]
             : [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
+                  color: AppTheme.black.withValues(alpha: 0.03),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -355,8 +355,8 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
             gradient: column.isVisible
                 ? LinearGradient(
                     colors: [
-                      const Color(0xFF1B4D3E).withValues(alpha: 0.15),
-                      Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                      AppTheme.primary.withValues(alpha: 0.15),
+                      AppTheme.primary.withValues(alpha: 0.08),
                     ],
                   )
                 : null,
@@ -366,8 +366,8 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
           child: Icon(
             _getColumnIcon(column.id),
             color: column.isVisible
-                ? const Color(0xFF1B4D3E)
-                : Colors.grey[400],
+                ? AppTheme.primary
+                : AppTheme.grey400,
             size: 22,
           ),
         ),
@@ -377,7 +377,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
             fontFamily: 'Literata',
             fontWeight: FontWeight.w600,
             fontSize: 15,
-            color: column.isVisible ? Colors.black87 : Colors.grey[600],
+            color: column.isVisible ? AppTheme.black87 : AppTheme.grey600,
           ),
         ),
         subtitle: Text(
@@ -385,7 +385,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
           style: TextStyle(
             fontFamily: 'Literata',
             fontSize: 12,
-            color: Colors.grey[500],
+            color: AppTheme.grey,
           ),
         ),
         trailing: Transform.scale(
@@ -393,11 +393,11 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
           child: Switch(
             value: column.isVisible,
             onChanged: (value) => _toggleColumn(column.id, value),
-            activeThumbColor: Colors.white,
-            activeTrackColor: const Color(0xFF1B4D3E),
-            inactiveThumbColor: Colors.white,
-            inactiveTrackColor: Colors.grey[300],
-            trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+            activeThumbColor: AppTheme.white,
+            activeTrackColor: AppTheme.primary,
+            inactiveThumbColor: AppTheme.white,
+            inactiveTrackColor: AppTheme.grey300,
+            trackOutlineColor: WidgetStateProperty.all(AppTheme.transparent),
           ),
         ),
       ),
@@ -410,24 +410,24 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Colors.blue.withValues(alpha: 0.08),
-            Colors.blue.withValues(alpha: 0.03),
+            AppTheme.blue.withValues(alpha: 0.08),
+            AppTheme.blue.withValues(alpha: 0.03),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blue.withValues(alpha: 0.15)),
+        border: Border.all(color: AppTheme.blue.withValues(alpha: 0.15)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.blue.withValues(alpha: 0.1),
+              color: AppTheme.blue.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               Icons.lightbulb_outline_rounded,
-              color: Colors.blue[700],
+              color: AppTheme.blue700,
               size: 22,
             ),
           ),
@@ -442,7 +442,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     fontFamily: 'Literata',
-                    color: Colors.blue[700],
+                    color: AppTheme.blue700,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -450,7 +450,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
                   _localizations.columnSelectionTip,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                     fontFamily: 'Literata',
                     height: 1.4,
                   ),
@@ -585,15 +585,15 @@ class _BillReportHeaderDelegate extends SliverPersistentHeaderDelegate {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
+                            color: AppTheme.white.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.2),
+                              color: AppTheme.white.withValues(alpha: 0.2),
                             ),
                           ),
                           child: const Icon(
                             Icons.arrow_back_ios_new_rounded,
-                            color: Colors.white,
+                            color: AppTheme.white,
                             size: 20,
                           ),
                         ),
@@ -611,7 +611,7 @@ class _BillReportHeaderDelegate extends SliverPersistentHeaderDelegate {
                                 fontSize: isCollapsed ? 18 : 22,
                                 fontWeight: FontWeight.w800,
                                 fontFamily: 'Literata',
-                                color: Colors.white,
+                                color: AppTheme.white,
                                 letterSpacing: 0.5,
                               ),
                             ),
@@ -638,10 +638,10 @@ class _BillReportHeaderDelegate extends SliverPersistentHeaderDelegate {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
+                            color: AppTheme.white.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.2),
+                              color: AppTheme.white.withValues(alpha: 0.2),
                             ),
                           ),
                           child: Row(
@@ -649,7 +649,7 @@ class _BillReportHeaderDelegate extends SliverPersistentHeaderDelegate {
                             children: [
                               Icon(
                                 Icons.restart_alt_rounded,
-                                color: Colors.white,
+                                color: AppTheme.white,
                                 size: 16,
                               ),
                               SizedBox(width: 6),

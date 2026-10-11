@@ -84,14 +84,14 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                     // Date Fields Section
                     _buildSectionCard(
                       icon: Icons.calendar_month_rounded,
-                      iconColor: const Color(0xFF1B4D3E),
+                      iconColor: AppTheme.primary,
                       title: 'Date Fields',
                       subtitle:
                           'Control date field visibility on purchase form',
                       children: [
                         _buildModernToggle(
                           icon: Icons.factory_rounded,
-                          iconColor: const Color(0xFF4CAF50),
+                          iconColor: AppTheme.green,
                           title: 'Manufacturing Date',
                           subtitle: 'Show production date field',
                           value: _showManufacturingDate,
@@ -104,11 +104,11 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                         Container(
                           margin: const EdgeInsets.symmetric(vertical: 8),
                           height: 1,
-                          color: Colors.grey.withValues(alpha: 0.1),
+                          color: AppTheme.grey.withValues(alpha: 0.1),
                         ),
                         _buildModernToggle(
                           icon: Icons.event_busy_rounded,
-                          iconColor: const Color(0xFFFF6B6B),
+                          iconColor: AppTheme.coral,
                           title: 'Expiry Date',
                           subtitle: 'Show expiration date field',
                           value: _showExpiryDate,
@@ -126,7 +126,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                     // Measurement Units Section
                     _buildSectionCard(
                       icon: Icons.straighten_rounded,
-                      iconColor: Color(0xFF7B68EE),
+                      iconColor: AppTheme.paletteFF7B68EE,
                       title: 'Measurement Units',
                       subtitle: 'Configure available units for purchases',
                       children: [
@@ -147,21 +147,21 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                         const SizedBox(height: 20),
                         Container(
                           height: 1,
-                          color: Colors.grey.withValues(alpha: 0.1),
+                          color: AppTheme.grey.withValues(alpha: 0.1),
                         ),
                         const SizedBox(height: 20),
                         // Default Unit
                         _buildSubSectionHeader(
                           icon: Icons.star_rounded,
                           title: 'Default Unit',
-                          color: const Color(0xFFFF6F00),
+                          color: AppTheme.amber900,
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Pre-selected unit on new purchases',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[500],
+                            color: AppTheme.grey,
                             fontFamily: 'Literata',
                           ),
                         ),
@@ -175,13 +175,13 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                     // Warranty Section
                     _buildSectionCard(
                       icon: Icons.verified_user_rounded,
-                      iconColor: const Color(0xFF9C27B0),
+                      iconColor: AppTheme.purple,
                       title: 'Warranty Settings',
                       subtitle: 'Configure product warranty options',
                       children: [
                         _buildModernToggle(
                           icon: Icons.shield_rounded,
-                          iconColor: const Color(0xFF9C27B0),
+                          iconColor: AppTheme.purple,
                           title: 'Enable Warranty Field',
                           subtitle: 'Show warranty selection on purchase form',
                           value: _showWarranty,
@@ -195,41 +195,41 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                           const SizedBox(height: 20),
                           Container(
                             height: 1,
-                            color: Colors.grey.withValues(alpha: 0.1),
+                            color: AppTheme.grey.withValues(alpha: 0.1),
                           ),
                           const SizedBox(height: 20),
                           // Warranty Options
                           _buildSubSectionHeader(
                             icon: Icons.schedule_rounded,
                             title: 'Warranty Periods',
-                            color: const Color(0xFF9C27B0),
+                            color: AppTheme.purple,
                           ),
                           const SizedBox(height: 12),
                           _buildWarrantyChipSelector(),
                           const SizedBox(height: 16),
                           _buildAddCustomButton(
                             label: 'Add Custom Warranty',
-                            color: const Color(0xFF9C27B0),
+                            color: AppTheme.purple,
                             onPressed: _showAddCustomWarrantyDialog,
                           ),
                           const SizedBox(height: 20),
                           Container(
                             height: 1,
-                            color: Colors.grey.withValues(alpha: 0.1),
+                            color: AppTheme.grey.withValues(alpha: 0.1),
                           ),
                           const SizedBox(height: 20),
                           // Default Warranty
                           _buildSubSectionHeader(
                             icon: Icons.star_rounded,
                             title: 'Default Warranty',
-                            color: const Color(0xFFE91E63),
+                            color: AppTheme.pink,
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Pre-selected warranty on new purchases',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey[500],
+                              color: AppTheme.grey,
                               fontFamily: 'Literata',
                             ),
                           ),
@@ -247,8 +247,8 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Color(0xFF1B4D3E).withValues(alpha: 0.05),
-                            Color(0xFF1B4D3E).withValues(alpha: 0.02),
+                            AppTheme.primary.withValues(alpha: 0.05),
+                            AppTheme.primary.withValues(alpha: 0.02),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(16),
@@ -261,9 +261,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                           Container(
                             padding: EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: Color(
-                                0xFF1B4D3E,
-                              ).withValues(alpha: 0.1),
+                              color: AppTheme.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
@@ -291,7 +289,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                                   'Settings are saved automatically. Changes will apply to new purchases immediately.',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.grey[600],
+                                    color: AppTheme.grey600,
                                     fontFamily: 'Literata',
                                     height: 1.4,
                                   ),
@@ -326,7 +324,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -371,7 +369,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                       ),
                     ],
                   ),
-                  child: Icon(icon, color: Colors.white, size: 24),
+                  child: Icon(icon, color: AppTheme.white, size: 24),
                 ),
                 SizedBox(width: 16),
                 Expanded(
@@ -392,7 +390,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                         subtitle,
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey[500],
+                          color: AppTheme.grey,
                           fontFamily: 'Literata',
                         ),
                       ),
@@ -454,7 +452,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                 subtitle,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey[500],
+                  color: AppTheme.grey,
                   fontFamily: 'Literata',
                 ),
               ),
@@ -466,11 +464,11 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
           child: Switch(
             value: value,
             onChanged: onChanged,
-            activeThumbColor: Colors.white,
-            activeTrackColor: const Color(0xFF1B4D3E),
-            inactiveThumbColor: Colors.white,
-            inactiveTrackColor: Colors.grey[300],
-            trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+            activeThumbColor: AppTheme.white,
+            activeTrackColor: AppTheme.primary,
+            inactiveThumbColor: AppTheme.white,
+            inactiveTrackColor: AppTheme.grey300,
+            trackOutlineColor: WidgetStateProperty.all(AppTheme.transparent),
           ),
         ),
       ],
@@ -519,7 +517,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                 Text(
                   unit,
                   style: TextStyle(
-                    color: isSelected ? Colors.white : Colors.grey[700],
+                    color: isSelected ? AppTheme.white : AppTheme.grey700,
                     fontFamily: 'Literata',
                     fontWeight: isDefault ? FontWeight.w700 : FontWeight.w500,
                     fontSize: 13,
@@ -530,7 +528,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                   Icon(
                     Icons.star_rounded,
                     size: 14,
-                    color: isSelected ? Colors.amber[300] : Colors.amber,
+                    color: isSelected ? AppTheme.amber300 : AppTheme.amber,
                   ),
                 ],
                 if (isCustom && !isDefault) ...[
@@ -540,7 +538,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                     child: Icon(
                       Icons.close_rounded,
                       size: 16,
-                      color: isSelected ? Colors.white70 : Colors.grey[400],
+                      color: isSelected ? AppTheme.white70 : AppTheme.grey400,
                     ),
                   ),
                 ],
@@ -549,11 +547,11 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
             selected: isSelected,
             onSelected: (selected) =>
                 _handleUnitSelection(unit, selected, isDefault),
-            selectedColor: const Color(0xFF1B4D3E),
-            checkmarkColor: Colors.white,
+            selectedColor: AppTheme.primary,
+            checkmarkColor: AppTheme.white,
             backgroundColor: AppColors.chipFill(context),
             side: BorderSide(
-              color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
+              color: isSelected ? AppTheme.primary : AppTheme.grey300,
               width: isSelected ? 0 : 1,
             ),
             shape: RoundedRectangleBorder(
@@ -599,12 +597,12 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFFF6B6B).withValues(alpha: 0.1),
+                color: AppTheme.coral.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
                 Icons.delete_outline_rounded,
-                color: Color(0xFFFF6B6B),
+                color: AppTheme.coral,
                 size: 22,
               ),
             ),
@@ -628,14 +626,14 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
             onPressed: () => Navigator.pop(context, false),
             child: Text(
               'Cancel',
-              style: TextStyle(color: Colors.grey[600], fontFamily: 'Literata'),
+              style: TextStyle(color: AppTheme.grey600, fontFamily: 'Literata'),
             ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF6B6B),
-              foregroundColor: Colors.white,
+              backgroundColor: AppTheme.coral,
+              foregroundColor: AppTheme.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -670,7 +668,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
           label: Text(
             unit,
             style: TextStyle(
-              color: isSelected ? Colors.white : Colors.grey[700],
+              color: isSelected ? AppTheme.white : AppTheme.grey700,
               fontFamily: 'Literata',
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               fontSize: 13,
@@ -683,10 +681,10 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
               await PurchaseSettingsService.instance.setDefaultUnit(unit);
             }
           },
-          selectedColor: const Color(0xFFFF6F00),
+          selectedColor: AppTheme.amber900,
           backgroundColor: AppColors.chipFill(context),
           side: BorderSide(
-            color: isSelected ? const Color(0xFFFF6F00) : Colors.grey[300]!,
+            color: isSelected ? AppTheme.amber900 : AppTheme.grey300,
             width: isSelected ? 0 : 1,
           ),
           shape: RoundedRectangleBorder(
@@ -716,7 +714,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
               Text(
                 PurchaseSettingsService.instance.getWarrantyLabel(months),
                 style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.grey[700],
+                  color: isSelected ? AppTheme.white : AppTheme.grey700,
                   fontFamily: 'Literata',
                   fontWeight: isDefault ? FontWeight.w700 : FontWeight.w500,
                   fontSize: 13,
@@ -727,7 +725,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                 Icon(
                   Icons.star_rounded,
                   size: 14,
-                  color: isSelected ? Colors.amber[300] : Colors.amber,
+                  color: isSelected ? AppTheme.amber300 : AppTheme.amber,
                 ),
               ],
             ],
@@ -735,11 +733,11 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
           selected: isSelected,
           onSelected: (selected) =>
               _handleWarrantySelection(months, selected, isDefault),
-          selectedColor: const Color(0xFF9C27B0),
-          checkmarkColor: Colors.white,
+          selectedColor: AppTheme.purple,
+          checkmarkColor: AppTheme.white,
           backgroundColor: AppColors.chipFill(context),
           side: BorderSide(
-            color: isSelected ? const Color(0xFF9C27B0) : Colors.grey[300]!,
+            color: isSelected ? AppTheme.purple : AppTheme.grey300,
             width: isSelected ? 0 : 1,
           ),
           shape: RoundedRectangleBorder(
@@ -789,7 +787,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
           label: Text(
             PurchaseSettingsService.instance.getWarrantyLabel(months),
             style: TextStyle(
-              color: isSelected ? Colors.white : Colors.grey[700],
+              color: isSelected ? AppTheme.white : AppTheme.grey700,
               fontFamily: 'Literata',
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               fontSize: 13,
@@ -802,10 +800,10 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
               await PurchaseSettingsService.instance.setDefaultWarranty(months);
             }
           },
-          selectedColor: const Color(0xFFE91E63),
+          selectedColor: AppTheme.pink,
           backgroundColor: AppColors.chipFill(context),
           side: BorderSide(
-            color: isSelected ? const Color(0xFFE91E63) : Colors.grey[300]!,
+            color: isSelected ? AppTheme.pink : AppTheme.grey300,
             width: isSelected ? 0 : 1,
           ),
           shape: RoundedRectangleBorder(
@@ -856,15 +854,15 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFF1B4D3E),
-                    const Color(0xFF1B4D3E).withValues(alpha: 0.8),
+                    AppTheme.primary,
+                    AppTheme.primary.withValues(alpha: 0.8),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 Icons.add_rounded,
-                color: Colors.white,
+                color: AppTheme.white,
                 size: 20,
               ),
             ),
@@ -887,7 +885,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
           decoration: InputDecoration(
             hintText: 'Enter unit name (e.g., Yard)',
             hintStyle: TextStyle(
-              color: Colors.grey[400],
+              color: AppTheme.grey400,
               fontFamily: 'Literata',
             ),
             filled: true,
@@ -911,7 +909,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: TextStyle(color: Colors.grey[600], fontFamily: 'Literata'),
+              style: TextStyle(color: AppTheme.grey600, fontFamily: 'Literata'),
             ),
           ),
           ElevatedButton(
@@ -947,8 +945,8 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
               GlassyToast.show(context, '"$unitName" added successfully');
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1B4D3E),
-              foregroundColor: Colors.white,
+              backgroundColor: AppTheme.primary,
+              foregroundColor: AppTheme.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -981,15 +979,15 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFF9C27B0),
-                    const Color(0xFF9C27B0).withValues(alpha: 0.8),
+                    AppTheme.purple,
+                    AppTheme.purple.withValues(alpha: 0.8),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
                 Icons.add_rounded,
-                color: Colors.white,
+                color: AppTheme.white,
                 size: 20,
               ),
             ),
@@ -1012,12 +1010,12 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
           decoration: InputDecoration(
             hintText: 'Enter warranty in months',
             hintStyle: TextStyle(
-              color: Colors.grey[400],
+              color: AppTheme.grey400,
               fontFamily: 'Literata',
             ),
             suffixText: 'months',
             suffixStyle: TextStyle(
-              color: Colors.grey[600],
+              color: AppTheme.grey600,
               fontFamily: 'Literata',
             ),
             filled: true,
@@ -1028,7 +1026,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF9C27B0), width: 2),
+              borderSide: const BorderSide(color: AppTheme.purple, width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
@@ -1041,7 +1039,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: TextStyle(color: Colors.grey[600], fontFamily: 'Literata'),
+              style: TextStyle(color: AppTheme.grey600, fontFamily: 'Literata'),
             ),
           ),
           ElevatedButton(
@@ -1079,8 +1077,8 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF9C27B0),
-              foregroundColor: Colors.white,
+              backgroundColor: AppTheme.purple,
+              foregroundColor: AppTheme.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -1165,15 +1163,15 @@ class _SettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
+                            color: AppTheme.white.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.2),
+                              color: AppTheme.white.withValues(alpha: 0.2),
                             ),
                           ),
                           child: Icon(
                             Icons.arrow_back_ios_new_rounded,
-                            color: Colors.white,
+                            color: AppTheme.white,
                             size: 20,
                           ),
                         ),
@@ -1191,7 +1189,7 @@ class _SettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
                                 fontSize: isCollapsed ? 20 : 24,
                                 fontWeight: FontWeight.w800,
                                 fontFamily: 'Literata',
-                                color: Colors.white,
+                                color: AppTheme.white,
                                 letterSpacing: 0.5,
                               ),
                             ),
@@ -1222,7 +1220,7 @@ class _SettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
+                                color: AppTheme.black.withValues(alpha: 0.1),
                                 blurRadius: 8,
                                 offset: Offset(0, 2),
                               ),

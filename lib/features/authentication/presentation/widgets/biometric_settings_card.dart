@@ -112,15 +112,15 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Colors.white.withValues(alpha: 0.95),
-                Colors.white.withValues(alpha: 0.85),
+                AppTheme.white.withValues(alpha: 0.95),
+                AppTheme.white.withValues(alpha: 0.85),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.3),
+              color: AppTheme.white.withValues(alpha: 0.3),
               width: 1.5,
             ),
             boxShadow: [
@@ -146,9 +146,7 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: Color(
-                              0xFF1B4D3E,
-                            ).withValues(alpha: 0.1),
+                            color: AppTheme.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Center(
@@ -177,7 +175,7 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
                                   ? 'Enabled on this device'
                                   : 'Disabled',
                               style: TextStyle(
-                                color: Colors.grey[600],
+                                color: AppTheme.grey600,
                                 fontSize: 12,
                                 fontFamily: 'Literata',
                               ),
@@ -189,10 +187,8 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
                     Switch(
                       value: _isBiometricEnabled,
                       onChanged: _toggleBiometric,
-                      activeThumbColor: Color(0xFF1B4D3E),
-                      activeTrackColor: Color(
-                        0xFF1B4D3E,
-                      ).withValues(alpha: 0.3),
+                      activeThumbColor: AppTheme.primary,
+                      activeTrackColor: AppTheme.primary.withValues(alpha: 0.3),
                     ),
                   ],
                 ),
@@ -208,7 +204,7 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
                       children: [
                         Icon(
                           Icons.check_circle,
-                          color: Colors.green[600],
+                          color: AppTheme.green600,
                           size: 18,
                         ),
                         const SizedBox(width: 8),
@@ -216,7 +212,7 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
                           child: Text(
                             'Your identity will be verified using $_preferredType authentication when you log in',
                             style: TextStyle(
-                              color: Colors.grey[700],
+                              color: AppTheme.grey700,
                               fontSize: 12,
                               fontFamily: 'Literata',
                               height: 1.5,

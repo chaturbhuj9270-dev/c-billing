@@ -5,6 +5,7 @@ import '../features/shop/domain/entities/shop.dart';
 import '../features/shop/data/repositories/shop_repository.dart';
 import 'printer_selection_widget.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Reusable widget for printing bills with printer selection and status display
 class PrintBillButton extends StatefulWidget {
@@ -124,14 +125,14 @@ class _PrintBillButtonState extends State<PrintBillButton> {
             onPressed: _isPrinting ? null : _handlePrint,
             style: ElevatedButton.styleFrom(
               backgroundColor:
-                  widget.backgroundColor ?? const Color(0xFF1B4D3E),
-              foregroundColor: widget.foregroundColor ?? Colors.white,
+                  widget.backgroundColor ?? AppTheme.primary,
+              foregroundColor: widget.foregroundColor ?? AppTheme.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
               disabledBackgroundColor:
-                  (widget.backgroundColor ?? const Color(0xFF1B4D3E))
+                  (widget.backgroundColor ?? AppTheme.primary)
                       .withValues(alpha: 0.5),
             ),
             child: _isPrinting
@@ -144,7 +145,7 @@ class _PrintBillButtonState extends State<PrintBillButton> {
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
+                            AppTheme.white,
                           ),
                         ),
                       ),
@@ -155,7 +156,7 @@ class _PrintBillButtonState extends State<PrintBillButton> {
                           fontFamily: 'Literata',
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: widget.foregroundColor ?? Colors.white,
+                          color: widget.foregroundColor ?? AppTheme.white,
                         ),
                       ),
                     ],
@@ -186,7 +187,7 @@ class _PrintBillButtonState extends State<PrintBillButton> {
                 width: 8,
                 height: 8,
                 decoration: const BoxDecoration(
-                  color: Colors.green,
+                  color: AppTheme.green,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -196,7 +197,7 @@ class _PrintBillButtonState extends State<PrintBillButton> {
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 11,
-                  color: Colors.grey[600],
+                  color: AppTheme.grey600,
                 ),
               ),
             ],
@@ -215,12 +216,12 @@ class _PrintBillButtonState extends State<PrintBillButton> {
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B4D3E)),
+                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
               ),
             )
           : Icon(
               widget.icon ?? Icons.print,
-              color: widget.backgroundColor ?? const Color(0xFF1B4D3E),
+              color: widget.backgroundColor ?? AppTheme.primary,
             ),
       tooltip: widget.buttonText ?? 'Print Bill',
     );

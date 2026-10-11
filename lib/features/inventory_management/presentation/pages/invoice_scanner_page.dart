@@ -908,10 +908,10 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.1),
+                            color: AppTheme.green.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
                             border: Border.all(
-                              color: Colors.green.withValues(alpha: 0.3),
+                              color: AppTheme.green.withValues(alpha: 0.3),
                             ),
                           ),
                           child: Row(
@@ -920,14 +920,14 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
                               Icon(
                                 Icons.check_circle,
                                 size: 12,
-                                color: Colors.green[700],
+                                color: AppTheme.green700,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 'Matched',
                                 style: TextStyle(
                                   fontSize: 10,
-                                  color: Colors.green[700],
+                                  color: AppTheme.green700,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -1008,9 +1008,9 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
                   value: 'remove',
                   child: Row(
                     children: [
-                      Icon(Icons.delete, color: Colors.red),
+                      Icon(Icons.delete, color: AppTheme.red),
                       SizedBox(width: 8),
-                      Text('Remove', style: TextStyle(color: Colors.red)),
+                      Text('Remove', style: TextStyle(color: AppTheme.red)),
                     ],
                   ),
                 ),
@@ -1071,7 +1071,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
               },
               child: const Text(
                 'Clear Key',
-                style: TextStyle(color: Colors.red),
+                style: TextStyle(color: AppTheme.red),
               ),
             ),
           TextButton(

@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../domain/models/report_result_model.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Professional PDF generator for inventory reports.
 /// Generates landscape PDF with:
@@ -21,9 +22,9 @@ class ReportPdfGenerator {
 
   static final _dateFormat = DateFormat('dd MMM yyyy');
   static final _dateTimeFormat = DateFormat('dd MMM yyyy, hh:mm a');
-  static const _green = PdfColor.fromInt(0xFF1B4D3E);
-  static const _red = PdfColor.fromInt(0xFFD32F2F);
-  static const _amber = PdfColor.fromInt(0xFFF57F17);
+  static final _green = PdfColor.fromInt(AppTheme.primary.toARGB32());
+  static final _red = PdfColor.fromInt(AppTheme.red700.toARGB32());
+  static final _amber = PdfColor.fromInt(AppTheme.yellow900.toARGB32());
 
   /// Generate PDF document from report result.
   static Future<Uint8List> generate(ReportResultModel report) async {
@@ -36,7 +37,7 @@ class ReportPdfGenerator {
     final headerStyle = pw.TextStyle(
       fontSize: 9,
       fontWeight: pw.FontWeight.bold,
-      color: PdfColors.white,
+      color: PdfColor.fromInt(AppTheme.white.toARGB32()),
     );
     final cellStyle = const pw.TextStyle(fontSize: 8);
 
@@ -51,12 +52,12 @@ class ReportPdfGenerator {
           pw.Container(
             padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: pw.BoxDecoration(
-              color: const PdfColor.fromInt(0xFFF5F5F5),
+              color: PdfColor.fromInt(AppTheme.grey100.toARGB32()),
               borderRadius: pw.BorderRadius.circular(4),
             ),
             child: pw.Text(
               report.filterSummary,
-              style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
+              style: pw.TextStyle(fontSize: 8, color: PdfColor.fromInt(AppTheme.grey700.toARGB32())),
             ),
           ),
           pw.SizedBox(height: 12),
@@ -128,18 +129,18 @@ class ReportPdfGenerator {
                 }
                 final row = report.rows[rowNum];
                 if (row.isExpired) {
-                  return const pw.BoxDecoration(
-                    color: PdfColor.fromInt(0xFFFFEBEE),
+                  return pw.BoxDecoration(
+                    color: PdfColor.fromInt(AppTheme.red50.toARGB32()),
                   );
                 }
                 if (row.isExpiringThisWeek) {
-                  return const pw.BoxDecoration(
-                    color: PdfColor.fromInt(0xFFFFF8E1),
+                  return pw.BoxDecoration(
+                    color: PdfColor.fromInt(AppTheme.amber50.toARGB32()),
                   );
                 }
                 if (rowNum % 2 == 0) {
-                  return const pw.BoxDecoration(
-                    color: PdfColor.fromInt(0xFFFAFAFA),
+                  return pw.BoxDecoration(
+                    color: PdfColor.fromInt(AppTheme.grey50.toARGB32()),
                   );
                 }
                 return const pw.BoxDecoration();
@@ -151,7 +152,7 @@ class ReportPdfGenerator {
                 padding: const pw.EdgeInsets.all(40),
                 child: pw.Text(
                   'No data available for the selected filters.',
-                  style: pw.TextStyle(fontSize: 14, color: PdfColors.grey600),
+                  style: pw.TextStyle(fontSize: 14, color: PdfColor.fromInt(AppTheme.grey600.toARGB32())),
                 ),
               ),
             ),
@@ -164,10 +165,10 @@ class ReportPdfGenerator {
           pw.SizedBox(height: 10),
           pw.Row(
             children: [
-              _buildLegendDot(const PdfColor.fromInt(0xFFFFEBEE), 'Expired'),
+              _buildLegendDot(PdfColor.fromInt(AppTheme.red50.toARGB32()), 'Expired'),
               pw.SizedBox(width: 16),
               _buildLegendDot(
-                const PdfColor.fromInt(0xFFFFF8E1),
+                PdfColor.fromInt(AppTheme.amber50.toARGB32()),
                 'Expiring This Week',
               ),
             ],
@@ -254,9 +255,9 @@ class ReportPdfGenerator {
               pw.SizedBox(height: 2),
               pw.Text(
                 'Generated: ${_dateTimeFormat.format(report.generatedAt)}',
-                style: const pw.TextStyle(
+                style: pw.TextStyle(
                   fontSize: 9,
-                  color: PdfColors.grey600,
+                  color: PdfColor.fromInt(AppTheme.grey600.toARGB32()),
                 ),
               ),
             ],
@@ -274,9 +275,9 @@ class ReportPdfGenerator {
               ),
               pw.Text(
                 'Total Products: ${report.totalProducts}',
-                style: const pw.TextStyle(
+                style: pw.TextStyle(
                   fontSize: 9,
-                  color: PdfColors.grey700,
+                  color: PdfColor.fromInt(AppTheme.grey700.toARGB32()),
                 ),
               ),
             ],
@@ -293,7 +294,7 @@ class ReportPdfGenerator {
       margin: const pw.EdgeInsets.only(top: 8),
       child: pw.Text(
         'Page ${context.pageNumber} of ${context.pagesCount}',
-        style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
+        style: pw.TextStyle(fontSize: 8, color: PdfColor.fromInt(AppTheme.grey600.toARGB32())),
       ),
     );
   }
@@ -331,7 +332,7 @@ class ReportPdfGenerator {
               _buildSummaryCell(
                 'Total Profit',
                 _fmtAmt(report.totalProfit),
-                color: PdfColors.green800,
+                color: PdfColor.fromInt(AppTheme.green800.toARGB32()),
               ),
               _buildSummaryCell(
                 'Total Loss',
@@ -372,8 +373,9 @@ class ReportPdfGenerator {
   static pw.Widget _buildSummaryCell(
     String label,
     String value, {
-    PdfColor color = PdfColors.black,
+    PdfColor? color,
   }) {
+    final ink = color ?? PdfColor.fromInt(AppTheme.black.toARGB32());
     return pw.Expanded(
       child: pw.Padding(
         padding: const pw.EdgeInsets.symmetric(horizontal: 4),
@@ -382,7 +384,7 @@ class ReportPdfGenerator {
           children: [
             pw.Text(
               label,
-              style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
+              style: pw.TextStyle(fontSize: 8, color: PdfColor.fromInt(AppTheme.grey700.toARGB32())),
             ),
             pw.SizedBox(height: 2),
             pw.Text(
@@ -390,7 +392,7 @@ class ReportPdfGenerator {
               style: pw.TextStyle(
                 fontSize: 10,
                 fontWeight: pw.FontWeight.bold,
-                color: color,
+                color: ink,
               ),
             ),
           ],
@@ -406,7 +408,7 @@ class ReportPdfGenerator {
         pw.SizedBox(width: 4),
         pw.Text(
           label,
-          style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
+          style: pw.TextStyle(fontSize: 8, color: PdfColor.fromInt(AppTheme.grey700.toARGB32())),
         ),
       ],
     );

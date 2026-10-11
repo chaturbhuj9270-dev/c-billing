@@ -67,13 +67,13 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
   late AppLocalizations _localizations;
 
   // Theme colors
-  static const Color _primaryColor = Color(0xFF1B4D3E);
-  static const Color _accentColor = Color(0xFF2E7D5A);
+  static const Color _primaryColor = AppTheme.primary;
+  static const Color _accentColor = AppTheme.paletteFF2E7D5A;
   // Prefer theme scaffold; kept as method for call sites using field style.
   Color _backgroundColor(BuildContext context) => AppColors.scaffold(context);
-  static const Color _cardColor = Colors.white;
-  static const Color _successColor = Color(0xFF4CAF50);
-  static const Color _warningColor = Color(0xFFFFA726);
+  static const Color _cardColor = AppTheme.white;
+  static const Color _successColor = AppTheme.green;
+  static const Color _warningColor = AppTheme.orange400;
 
   @override
   void initState() {
@@ -236,8 +236,8 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
               barcode: BarcodeService.instance.getBarcodeRenderer(format),
               data: data,
               drawText: false,
-              color: Colors.black,
-              backgroundColor: Colors.transparent,
+              color: AppTheme.black,
+              backgroundColor: AppTheme.transparent,
               errorBuilder: (context, error) => _buildBarcodePlaceholder(
                 width: width,
                 height: height,
@@ -298,13 +298,13 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
       height: height,
       decoration: BoxDecoration(
         color: isError
-            ? Colors.red.withValues(alpha: 0.05)
-            : Colors.grey.withValues(alpha: 0.05),
+            ? AppTheme.red.withValues(alpha: 0.05)
+            : AppTheme.grey.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isError
-              ? Colors.red.withValues(alpha: 0.2)
-              : Colors.grey.withValues(alpha: 0.2),
+              ? AppTheme.red.withValues(alpha: 0.2)
+              : AppTheme.grey.withValues(alpha: 0.2),
           style: BorderStyle.solid,
         ),
       ),
@@ -314,7 +314,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
           Icon(
             isError ? Icons.error_outline_rounded : Icons.qr_code_2_rounded,
             size: 24,
-            color: isError ? Colors.red.shade300 : Colors.grey.shade400,
+            color: isError ? AppTheme.toneRose : AppTheme.grey400,
           ),
           const SizedBox(height: 4),
           Text(
@@ -322,7 +322,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             style: TextStyle(
               fontFamily: 'Literata',
               fontSize: 10,
-              color: isError ? Colors.red.shade300 : Colors.grey.shade500,
+              color: isError ? AppTheme.toneRose : AppTheme.grey,
             ),
             textAlign: TextAlign.center,
           ),
@@ -741,7 +741,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
           borderRadius: BorderRadius.circular(10),
         ),
         indicatorSize: TabBarIndicatorSize.tab,
-        labelColor: Colors.white,
+        labelColor: AppTheme.white,
         unselectedLabelColor: _primaryColor,
         labelStyle: const TextStyle(
           fontFamily: 'Literata',
@@ -753,7 +753,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
           fontWeight: FontWeight.w500,
           fontSize: 14,
         ),
-        dividerColor: Colors.transparent,
+        dividerColor: AppTheme.transparent,
         padding: const EdgeInsets.all(4),
         tabs: [
           Tab(
@@ -789,7 +789,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -808,19 +808,19 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                 hintText: 'Search products...',
                 hintStyle: TextStyle(
                   fontFamily: 'Literata',
-                  color: Colors.grey[400],
+                  color: AppTheme.grey400,
                   fontSize: 13,
                 ),
                 prefixIcon: Icon(
                   Icons.search,
-                  color: Colors.grey[400],
+                  color: AppTheme.grey400,
                   size: 20,
                 ),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
                         icon: Icon(
                           Icons.clear,
-                          color: Colors.grey[400],
+                          color: AppTheme.grey400,
                           size: 20,
                         ),
                         onPressed: () {
@@ -890,7 +890,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -949,7 +949,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -1014,7 +1014,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -1095,7 +1095,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                     borderRadius: BorderRadius.circular(8),
                     border: isSelected
                         ? null
-                        : Border.all(color: Colors.grey.shade300),
+                        : Border.all(color: AppTheme.grey300),
                   ),
                   child: Text(
                     format.code,
@@ -1103,7 +1103,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                       fontFamily: 'Literata',
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: isSelected ? Colors.white : Colors.grey[700],
+                      color: isSelected ? AppTheme.white : AppTheme.grey700,
                     ),
                   ),
                 ),
@@ -1130,7 +1130,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
               decoration: BoxDecoration(
                 color: AppColors.scaffold(context),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: AppTheme.grey200),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<PurchaseBatchEntity>(
@@ -1208,7 +1208,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                       style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 11,
-                        color: Colors.grey[500],
+                        color: AppTheme.grey,
                       ),
                     ),
                   ],
@@ -1218,7 +1218,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                 decoration: BoxDecoration(
                   color: AppColors.scaffold(context),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(color: AppTheme.grey200),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1301,7 +1301,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                       hintText: 'Enter barcode...',
                       hintStyle: TextStyle(
                         fontFamily: 'Literata',
-                        color: Colors.grey[400],
+                        color: AppTheme.grey400,
                         fontSize: 13,
                       ),
                       filled: true,
@@ -1312,11 +1312,11 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.grey.shade200),
+                        borderSide: BorderSide(color: AppTheme.grey200),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.grey.shade200),
+                        borderSide: BorderSide(color: AppTheme.grey200),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -1344,7 +1344,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                     style: TextStyle(
                       fontFamily: 'Literata',
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: AppTheme.white,
                     ),
                   ),
                 ),
@@ -1379,7 +1379,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
               fontFamily: 'Literata',
               fontSize: 16,
               fontWeight: FontWeight.w500,
-              color: Colors.grey[600],
+              color: AppTheme.grey600,
             ),
           ),
         ],
@@ -1399,7 +1399,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
         color: AppColors.appBar(context),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 2),
           ),
@@ -1413,13 +1413,13 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             child: Container(
               padding: EdgeInsets.all(isMobile ? 8 : 10),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
+                color: AppTheme.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(isMobile ? 10 : 12),
               ),
               child: Icon(
                 Icons.arrow_back_ios_rounded,
                 size: isMobile ? 18 : 20,
-                color: Colors.white,
+                color: AppTheme.white,
               ),
             ),
           ),
@@ -1445,7 +1445,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                       child: Icon(
                         Icons.qr_code_2_rounded,
                         size: isMobile ? 18 : 22,
-                        color: Colors.white,
+                        color: AppTheme.white,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -1456,7 +1456,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w800,
                           fontSize: isMobile ? 16 : 22,
-                          color: Colors.white,
+                          color: AppTheme.white,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1472,7 +1472,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                       fontFamily: 'Literata',
                       fontWeight: FontWeight.w400,
                       fontSize: 12,
-                      color: Colors.white.withValues(alpha: 0.7),
+                      color: AppTheme.white.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -1484,7 +1484,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
+                color: AppTheme.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -1492,7 +1492,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                   const Icon(
                     Icons.inventory_2_outlined,
                     size: 18,
-                    color: Colors.white,
+                    color: AppTheme.white,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -1501,7 +1501,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                       fontFamily: 'Literata',
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
-                      color: Colors.white,
+                      color: AppTheme.white,
                     ),
                   ),
                 ],
@@ -1520,7 +1520,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -1568,19 +1568,19 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                     hintText: 'Search by name, company or code...',
                     hintStyle: TextStyle(
                       fontFamily: 'Literata',
-                      color: Colors.grey[400],
+                      color: AppTheme.grey400,
                       fontSize: 13,
                     ),
                     prefixIcon: Icon(
                       Icons.search,
-                      color: Colors.grey[400],
+                      color: AppTheme.grey400,
                       size: 20,
                     ),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
                             icon: Icon(
                               Icons.clear,
-                              color: Colors.grey[400],
+                              color: AppTheme.grey400,
                               size: 20,
                             ),
                             onPressed: () {
@@ -1601,7 +1601,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade200),
+                      borderSide: BorderSide(color: AppTheme.grey200),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1651,7 +1651,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             child: Icon(
               Icons.inventory_2_outlined,
               size: 48,
-              color: Colors.grey[400],
+              color: AppTheme.grey400,
             ),
           ),
           const SizedBox(height: 16),
@@ -1663,7 +1663,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
               fontFamily: 'Literata',
               fontWeight: FontWeight.w600,
               fontSize: 16,
-              color: Colors.grey[600],
+              color: AppTheme.grey600,
             ),
           ),
           const SizedBox(height: 8),
@@ -1674,7 +1674,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             style: TextStyle(
               fontFamily: 'Literata',
               fontSize: 13,
-              color: Colors.grey[500],
+              color: AppTheme.grey,
             ),
           ),
         ],
@@ -1687,7 +1687,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
       duration: const Duration(milliseconds: 200),
       margin: const EdgeInsets.only(bottom: 8),
       child: Material(
-        color: Colors.transparent,
+        color: AppTheme.transparent,
         child: InkWell(
           onTap: () => _selectProduct(product),
           borderRadius: BorderRadius.circular(14),
@@ -1700,7 +1700,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                   : AppColors.scaffold(context),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isSelected ? _primaryColor : Colors.transparent,
+                color: isSelected ? _primaryColor : AppTheme.transparent,
                 width: isSelected ? 1.5 : 0,
               ),
             ),
@@ -1728,7 +1728,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                         fontFamily: 'Literata',
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
-                        color: isSelected ? Colors.white : Colors.grey[600],
+                        color: isSelected ? AppTheme.white : AppTheme.grey600,
                       ),
                     ),
                   ),
@@ -1745,7 +1745,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
-                          color: isSelected ? _primaryColor : Colors.grey[800],
+                          color: isSelected ? _primaryColor : AppTheme.grey800,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1757,7 +1757,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 12,
-                            color: Colors.grey[500],
+                            color: AppTheme.grey,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -1817,7 +1817,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                     child: const Icon(
                       Icons.check,
                       size: 14,
-                      color: Colors.white,
+                      color: AppTheme.white,
                     ),
                   ),
                 ],
@@ -1851,7 +1851,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -1909,7 +1909,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -1997,7 +1997,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             style: TextStyle(
               fontFamily: 'Literata',
               fontSize: 14,
-              color: Colors.grey[500],
+              color: AppTheme.grey,
             ),
           ),
         ],
@@ -2038,7 +2038,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             style: TextStyle(
               fontFamily: 'Literata',
               fontSize: 14,
-              color: Colors.grey[500],
+              color: AppTheme.grey,
             ),
           ),
           const SizedBox(height: 20),
@@ -2054,7 +2054,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             ),
             icon: const Icon(
               Icons.auto_fix_high_rounded,
-              color: Colors.white,
+              color: AppTheme.white,
               size: 20,
             ),
             label: const Text(
@@ -2063,7 +2063,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
-                color: Colors.white,
+                color: AppTheme.white,
               ),
             ),
           ),
@@ -2090,10 +2090,10 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
               decoration: BoxDecoration(
                 color: AppColors.card(context),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: AppTheme.grey200),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: AppTheme.black.withValues(alpha: 0.05),
                     blurRadius: 15,
                     offset: const Offset(0, 6),
                   ),
@@ -2209,7 +2209,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -2268,7 +2268,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   child: Material(
-                    color: Colors.transparent,
+                    color: AppTheme.transparent,
                     child: InkWell(
                       onTap: () {
                         if (_selectedFormat != format) {
@@ -2296,7 +2296,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                           borderRadius: BorderRadius.circular(10),
                           border: isSelected
                               ? null
-                              : Border.all(color: Colors.grey.shade300),
+                              : Border.all(color: AppTheme.grey300),
                         ),
                         child: Text(
                           format.code,
@@ -2304,7 +2304,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                             fontFamily: 'Literata',
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: isSelected ? Colors.white : Colors.grey[700],
+                            color: isSelected ? AppTheme.white : AppTheme.grey700,
                           ),
                         ),
                       ),
@@ -2333,7 +2333,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                 decoration: BoxDecoration(
                   color: AppColors.scaffold(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(color: AppTheme.grey200),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<PurchaseBatchEntity>(
@@ -2412,7 +2412,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 11,
-                          color: Colors.grey[500],
+                          color: AppTheme.grey,
                         ),
                       ),
                     ],
@@ -2423,7 +2423,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                   decoration: BoxDecoration(
                     color: AppColors.scaffold(context),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: AppTheme.grey200),
                   ),
                   child: Row(
                     children: [
@@ -2504,7 +2504,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                         hintText: 'Enter custom barcode...',
                         hintStyle: TextStyle(
                           fontFamily: 'Literata',
-                          color: Colors.grey[400],
+                          color: AppTheme.grey400,
                           fontSize: 13,
                         ),
                         filled: true,
@@ -2515,11 +2515,11 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.grey.shade200),
+                          borderSide: BorderSide(color: AppTheme.grey200),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.grey.shade200),
+                          borderSide: BorderSide(color: AppTheme.grey200),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -2547,7 +2547,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                       style: TextStyle(
                         fontFamily: 'Literata',
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: AppTheme.white,
                       ),
                     ),
                   ),
@@ -2580,7 +2580,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w500,
                     fontSize: 13,
-                    color: Color(0xFF333333),
+                    color: AppTheme.paletteFF333333,
                   ),
                 ),
                 Text(
@@ -2588,7 +2588,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 11,
-                    color: Colors.grey[500],
+                    color: AppTheme.grey,
                   ),
                 ),
               ],
@@ -2615,7 +2615,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     required bool isPrimary,
   }) {
     return Material(
-      color: Colors.transparent,
+      color: AppTheme.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
@@ -2642,7 +2642,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
               Icon(
                 icon,
                 size: 20,
-                color: isPrimary ? Colors.white : _primaryColor,
+                color: isPrimary ? AppTheme.white : _primaryColor,
               ),
               const SizedBox(width: 10),
               Text(
@@ -2651,7 +2651,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
-                  color: isPrimary ? Colors.white : _primaryColor,
+                  color: isPrimary ? AppTheme.white : _primaryColor,
                 ),
               ),
             ],
@@ -2679,7 +2679,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.visibility_rounded, size: 20, color: Colors.white),
+            const Icon(Icons.visibility_rounded, size: 20, color: AppTheme.white),
             const SizedBox(width: 10),
             Text(
               isMobile ? 'Preview' : 'Preview & Print',
@@ -2687,7 +2687,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
-                color: Colors.white,
+                color: AppTheme.white,
               ),
             ),
           ],
@@ -2706,7 +2706,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (context) => Container(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.85,
@@ -2724,7 +2724,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppTheme.grey300,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -2743,7 +2743,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                     ),
                     child: const Icon(
                       Icons.qr_code_2_rounded,
-                      color: Colors.white,
+                      color: AppTheme.white,
                       size: 24,
                     ),
                   ),
@@ -2766,7 +2766,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 13,
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                           ),
                         ),
                       ],
@@ -2789,10 +2789,10 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
               decoration: BoxDecoration(
                 color: AppColors.card(context),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: AppTheme.grey200),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: AppTheme.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -2880,7 +2880,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                     icon: Icons.share_rounded,
                     label: 'Share Barcode',
                     subtitle: 'Share as PDF image',
-                    color: const Color(0xFF5C6BC0),
+                    color: AppTheme.indigo400,
                     onTap: () {
                       Navigator.pop(context);
                       _shareBarcode();
@@ -2930,7 +2930,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     required VoidCallback onTap,
   }) {
     return Material(
-      color: Colors.transparent,
+      color: AppTheme.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
@@ -2970,7 +2970,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                       style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                       ),
                     ),
                   ],

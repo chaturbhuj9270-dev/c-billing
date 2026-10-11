@@ -40,18 +40,18 @@ class WelcomeCard extends StatelessWidget {
             height: 56,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF4CAF50), Color(0xFF81C784)],
+                colors: [AppTheme.green, AppTheme.green300],
               ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF4CAF50).withValues(alpha: 0.4),
+                  color: AppTheme.green.withValues(alpha: 0.4),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
-            child: Icon(icon, color: Colors.white, size: 28),
+            child: Icon(icon, color: AppTheme.white, size: 28),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -61,7 +61,7 @@ class WelcomeCard extends StatelessWidget {
                 Text(
                   greeting,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppTheme.white,
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                     fontFamily: 'Literata',

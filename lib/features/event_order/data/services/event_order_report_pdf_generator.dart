@@ -10,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../domain/entities/event_order.dart';
 import '../../../shop/domain/entities/shop.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// PDF Report generator for Event Orders / Sales Orders.
 /// Generates professional tabular reports with shop branding.
@@ -20,9 +21,9 @@ class EventOrderReportPdfGenerator {
   static final _dateTimeFmt = DateFormat('dd MMM yyyy, hh:mm a');
 
   // Professional color palette
-  static const _primaryColor = PdfColor.fromInt(0xFF1A1A1A);
-  static const _lightBg = PdfColor.fromInt(0xFFF8F9FA);
-  static const _borderColor = PdfColor.fromInt(0xFFE0E0E0);
+  static final _primaryColor = PdfColor.fromInt(AppTheme.lightText.toARGB32());
+  static final _lightBg = PdfColor.fromInt(AppTheme.paletteFFF8F9FA.toARGB32());
+  static final _borderColor = PdfColor.fromInt(AppTheme.grey300.toARGB32());
 
   /// Generate PDF bytes from a list of event orders.
   static Future<Uint8List> generate({
@@ -152,11 +153,11 @@ class EventOrderReportPdfGenerator {
               headerStyle: pw.TextStyle(
                 fontSize: 8,
                 fontWeight: pw.FontWeight.bold,
-                color: PdfColors.white,
+                color: PdfColor.fromInt(AppTheme.white.toARGB32()),
               ),
               cellStyle: const pw.TextStyle(fontSize: 7.5),
               headerDecoration: pw.BoxDecoration(color: _primaryColor),
-              oddRowDecoration: const pw.BoxDecoration(color: PdfColors.grey50),
+              oddRowDecoration: pw.BoxDecoration(color: PdfColor.fromInt(AppTheme.grey50.toARGB32())),
               cellHeight: 18,
               columnWidths: columnWidths,
               data: data,
@@ -233,7 +234,7 @@ class EventOrderReportPdfGenerator {
                   height: 35,
                   margin: const pw.EdgeInsets.only(right: 8),
                   decoration: pw.BoxDecoration(
-                    color: PdfColors.white,
+                    color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                     borderRadius: pw.BorderRadius.circular(4),
                   ),
                   padding: const pw.EdgeInsets.all(2),
@@ -250,16 +251,16 @@ class EventOrderReportPdfGenerator {
                       style: pw.TextStyle(
                         fontSize: 12,
                         fontWeight: pw.FontWeight.bold,
-                        color: PdfColors.white,
+                        color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                       ),
                     ),
                     if (shopDetails?.phone != null &&
                         shopDetails!.phone.isNotEmpty)
                       pw.Text(
                         shopDetails.phone,
-                        style: const pw.TextStyle(
+                        style: pw.TextStyle(
                           fontSize: 7,
-                          color: PdfColors.grey300,
+                          color: PdfColor.fromInt(AppTheme.grey300.toARGB32()),
                         ),
                       ),
                   ],
@@ -277,7 +278,7 @@ class EventOrderReportPdfGenerator {
                         vertical: 3,
                       ),
                       decoration: pw.BoxDecoration(
-                        color: PdfColors.white,
+                        color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                         borderRadius: pw.BorderRadius.circular(3),
                       ),
                       child: pw.Text(
@@ -292,9 +293,9 @@ class EventOrderReportPdfGenerator {
                     pw.SizedBox(height: 2),
                     pw.Text(
                       _dateTimeFmt.format(generatedAt),
-                      style: const pw.TextStyle(
+                      style: pw.TextStyle(
                         fontSize: 7,
-                        color: PdfColors.grey300,
+                        color: PdfColor.fromInt(AppTheme.grey300.toARGB32()),
                       ),
                     ),
                   ],
@@ -306,19 +307,19 @@ class EventOrderReportPdfGenerator {
                 child: pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.end,
                   children: [
-                    _buildMiniStat('Total', '$totalOrders', PdfColors.white),
+                    _buildMiniStat('Total', '$totalOrders', PdfColor.fromInt(AppTheme.white.toARGB32())),
                     pw.SizedBox(width: 4),
                     _buildMiniStat(
                       'CNF',
                       '$confirmedCount',
-                      PdfColors.green200,
+                      PdfColor.fromInt(AppTheme.green200.toARGB32()),
                     ),
                     pw.SizedBox(width: 4),
-                    _buildMiniStat('PND', '$pendingCount', PdfColors.orange200),
+                    _buildMiniStat('PND', '$pendingCount', PdfColor.fromInt(AppTheme.orange200.toARGB32())),
                     pw.SizedBox(width: 4),
-                    _buildMiniStat('DLV', '$deliveredCount', PdfColors.blue200),
+                    _buildMiniStat('DLV', '$deliveredCount', PdfColor.fromInt(AppTheme.blue200.toARGB32())),
                     pw.SizedBox(width: 4),
-                    _buildMiniStat('CNL', '$cancelledCount', PdfColors.red200),
+                    _buildMiniStat('CNL', '$cancelledCount', PdfColor.fromInt(AppTheme.red200.toARGB32())),
                   ],
                 ),
               ),
@@ -337,7 +338,7 @@ class EventOrderReportPdfGenerator {
             ),
             child: pw.Text(
               'Filter: $filterDescription',
-              style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey700),
+              style: pw.TextStyle(fontSize: 7, color: PdfColor.fromInt(AppTheme.grey700.toARGB32())),
             ),
           ),
         ],
@@ -405,7 +406,7 @@ class EventOrderReportPdfGenerator {
 
     return pw.Container(
       padding: const pw.EdgeInsets.only(top: 6),
-      decoration: const pw.BoxDecoration(
+      decoration: pw.BoxDecoration(
         border: pw.Border(top: pw.BorderSide(color: _borderColor, width: 1)),
       ),
       child: pw.Row(
@@ -475,10 +476,10 @@ class EventOrderReportPdfGenerator {
                 pw.SizedBox(height: 20),
                 pw.Container(
                   width: 90,
-                  decoration: const pw.BoxDecoration(
+                  decoration: pw.BoxDecoration(
                     border: pw.Border(
                       bottom: pw.BorderSide(
-                        color: PdfColors.grey400,
+                        color: PdfColor.fromInt(AppTheme.grey400.toARGB32()),
                         width: 0.5,
                       ),
                     ),
@@ -505,10 +506,10 @@ class EventOrderReportPdfGenerator {
                   pw.SizedBox(height: 20),
                 pw.Container(
                   width: 90,
-                  decoration: const pw.BoxDecoration(
+                  decoration: pw.BoxDecoration(
                     border: pw.Border(
                       bottom: pw.BorderSide(
-                        color: PdfColors.grey400,
+                        color: PdfColor.fromInt(AppTheme.grey400.toARGB32()),
                         width: 0.5,
                       ),
                     ),
@@ -544,21 +545,21 @@ class EventOrderReportPdfGenerator {
                         style: pw.TextStyle(
                           fontSize: 7,
                           fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.white,
+                          color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                         ),
                       ),
                       pw.Text(
                         'Advance: Rs.${totalAdvance.toStringAsFixed(0)}',
-                        style: const pw.TextStyle(
+                        style: pw.TextStyle(
                           fontSize: 7,
-                          color: PdfColors.green200,
+                          color: PdfColor.fromInt(AppTheme.green200.toARGB32()),
                         ),
                       ),
                       pw.Text(
                         'Due: Rs.${totalDue.toStringAsFixed(0)}',
-                        style: const pw.TextStyle(
+                        style: pw.TextStyle(
                           fontSize: 7,
-                          color: PdfColors.red200,
+                          color: PdfColor.fromInt(AppTheme.red200.toARGB32()),
                         ),
                       ),
                     ],
@@ -569,16 +570,16 @@ class EventOrderReportPdfGenerator {
                     children: [
                       pw.Text(
                         'Page $pageNumber of $totalPages',
-                        style: const pw.TextStyle(
+                        style: pw.TextStyle(
                           fontSize: 6,
-                          color: PdfColors.grey400,
+                          color: PdfColor.fromInt(AppTheme.grey400.toARGB32()),
                         ),
                       ),
                       pw.Text(
                         'C-Billing',
-                        style: const pw.TextStyle(
+                        style: pw.TextStyle(
                           fontSize: 6,
-                          color: PdfColors.grey400,
+                          color: PdfColor.fromInt(AppTheme.grey400.toARGB32()),
                         ),
                       ),
                     ],
@@ -611,7 +612,7 @@ class EventOrderReportPdfGenerator {
       return pw.Container(
         width: width,
         height: height,
-        color: PdfColors.grey200,
+        color: PdfColor.fromInt(AppTheme.grey200.toARGB32()),
       );
     }
   }

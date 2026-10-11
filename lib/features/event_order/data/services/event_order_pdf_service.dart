@@ -11,6 +11,7 @@ import 'package:intl/intl.dart';
 import '../../domain/entities/event_order.dart';
 import '../../domain/entities/order_item.dart';
 import '../../../shop/domain/entities/shop.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Service for generating PDF for Event Orders / Sales Orders
 class EventOrderPdfService {
@@ -60,7 +61,7 @@ class EventOrderPdfService {
     final accentColor = PdfColor.fromHex('#4A4A4A');
     final lightBg = PdfColor.fromHex('#F8F9FA');
     final borderSide = pw.BorderSide(color: primaryColor, width: 0.8);
-    final thinBorder = pw.BorderSide(color: PdfColors.grey400, width: 0.5);
+    final thinBorder = pw.BorderSide(color: PdfColor.fromInt(AppTheme.grey400.toARGB32()), width: 0.5);
 
     // Calculate totals
     final subEventsTotal = order.subEvents.fold(
@@ -102,7 +103,7 @@ class EventOrderPdfService {
                     height: 36,
                     margin: const pw.EdgeInsets.only(right: 8),
                     decoration: pw.BoxDecoration(
-                      color: PdfColors.white,
+                      color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                       borderRadius: pw.BorderRadius.circular(4),
                     ),
                     padding: const pw.EdgeInsets.all(2),
@@ -121,16 +122,16 @@ class EventOrderPdfService {
                         style: pw.TextStyle(
                           fontSize: 13,
                           fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.white,
+                          color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                           letterSpacing: 0.8,
                         ),
                       ),
                       if (shopDetails.address.isNotEmpty)
                         pw.Text(
                           shopDetails.address,
-                          style: const pw.TextStyle(
+                          style: pw.TextStyle(
                             fontSize: 7,
-                            color: PdfColors.grey300,
+                            color: PdfColor.fromInt(AppTheme.grey300.toARGB32()),
                           ),
                           maxLines: 1,
                         ),
@@ -139,9 +140,9 @@ class EventOrderPdfService {
                           if (shopDetails.phone.isNotEmpty)
                             pw.Text(
                               shopDetails.phone,
-                              style: const pw.TextStyle(
+                              style: pw.TextStyle(
                                 fontSize: 7,
-                                color: PdfColors.grey300,
+                                color: PdfColor.fromInt(AppTheme.grey300.toARGB32()),
                               ),
                             ),
                           if (shopDetails.phone.isNotEmpty &&
@@ -149,18 +150,18 @@ class EventOrderPdfService {
                               shopDetails.email!.isNotEmpty)
                             pw.Text(
                               ' | ',
-                              style: const pw.TextStyle(
+                              style: pw.TextStyle(
                                 fontSize: 7,
-                                color: PdfColors.grey500,
+                                color: PdfColor.fromInt(AppTheme.grey.toARGB32()),
                               ),
                             ),
                           if (shopDetails.email != null &&
                               shopDetails.email!.isNotEmpty)
                             pw.Text(
                               shopDetails.email!,
-                              style: const pw.TextStyle(
+                              style: pw.TextStyle(
                                 fontSize: 7,
-                                color: PdfColors.grey300,
+                                color: PdfColor.fromInt(AppTheme.grey300.toARGB32()),
                               ),
                             ),
                         ],
@@ -175,7 +176,7 @@ class EventOrderPdfService {
                     vertical: 4,
                   ),
                   decoration: pw.BoxDecoration(
-                    color: PdfColors.white,
+                    color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                     borderRadius: pw.BorderRadius.circular(3),
                   ),
                   child: pw.Text(
@@ -199,7 +200,7 @@ class EventOrderPdfService {
                     ),
                     decoration: pw.BoxDecoration(
                       border: pw.Border.all(
-                        color: PdfColors.grey500,
+                        color: PdfColor.fromInt(AppTheme.grey.toARGB32()),
                         width: 0.5,
                       ),
                       borderRadius: pw.BorderRadius.circular(2),
@@ -208,9 +209,9 @@ class EventOrderPdfService {
                       children: [
                         pw.Text(
                           'GSTIN',
-                          style: const pw.TextStyle(
+                          style: pw.TextStyle(
                             fontSize: 5,
-                            color: PdfColors.grey400,
+                            color: PdfColor.fromInt(AppTheme.grey400.toARGB32()),
                           ),
                         ),
                         pw.Text(
@@ -218,7 +219,7 @@ class EventOrderPdfService {
                           style: pw.TextStyle(
                             fontSize: 7,
                             fontWeight: pw.FontWeight.bold,
-                            color: PdfColors.white,
+                            color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                           ),
                         ),
                       ],
@@ -246,9 +247,9 @@ class EventOrderPdfService {
                     children: [
                       pw.Text(
                         '${isEvent ? "Event" : "Order"}: ',
-                        style: const pw.TextStyle(
+                        style: pw.TextStyle(
                           fontSize: 8,
-                          color: PdfColors.grey600,
+                          color: PdfColor.fromInt(AppTheme.grey600.toARGB32()),
                         ),
                       ),
                       pw.Expanded(
@@ -267,7 +268,7 @@ class EventOrderPdfService {
                 pw.Container(
                   width: 1,
                   height: 12,
-                  color: PdfColors.grey400,
+                  color: PdfColor.fromInt(AppTheme.grey400.toARGB32()),
                   margin: const pw.EdgeInsets.symmetric(horizontal: 8),
                 ),
                 pw.Expanded(
@@ -281,7 +282,7 @@ class EventOrderPdfService {
                 pw.Container(
                   width: 1,
                   height: 12,
-                  color: PdfColors.grey400,
+                  color: PdfColor.fromInt(AppTheme.grey400.toARGB32()),
                   margin: const pw.EdgeInsets.symmetric(horizontal: 8),
                 ),
                 pw.Container(
@@ -298,21 +299,21 @@ class EventOrderPdfService {
                     style: pw.TextStyle(
                       fontSize: 7,
                       fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.white,
+                      color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                     ),
                   ),
                 ),
                 pw.Container(
                   width: 1,
                   height: 12,
-                  color: PdfColors.grey400,
+                  color: PdfColor.fromInt(AppTheme.grey400.toARGB32()),
                   margin: const pw.EdgeInsets.symmetric(horizontal: 8),
                 ),
                 pw.Text(
                   'Created: ${DateFormat('dd/MM/yy').format(order.createdAt)}',
-                  style: const pw.TextStyle(
+                  style: pw.TextStyle(
                     fontSize: 7,
-                    color: PdfColors.grey600,
+                    color: PdfColor.fromInt(AppTheme.grey600.toARGB32()),
                   ),
                 ),
               ],
@@ -351,7 +352,7 @@ class EventOrderPdfService {
                             style: pw.TextStyle(
                               fontSize: 6,
                               fontWeight: pw.FontWeight.bold,
-                              color: PdfColors.white,
+                              color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                             ),
                           ),
                         ),
@@ -379,9 +380,9 @@ class EventOrderPdfService {
                                       order.customerAddress!.isNotEmpty)
                                     pw.Text(
                                       ' | ',
-                                      style: const pw.TextStyle(
+                                      style: pw.TextStyle(
                                         fontSize: 8,
-                                        color: PdfColors.grey500,
+                                        color: PdfColor.fromInt(AppTheme.grey.toARGB32()),
                                       ),
                                     ),
                                   if (order.customerAddress != null &&
@@ -416,9 +417,9 @@ class EventOrderPdfService {
                           pw.Expanded(
                             child: pw.Text(
                               'Loc: ${order.eventLocation}',
-                              style: const pw.TextStyle(
+                              style: pw.TextStyle(
                                 fontSize: 7,
-                                color: PdfColors.grey700,
+                                color: PdfColor.fromInt(AppTheme.grey700.toARGB32()),
                               ),
                               maxLines: 1,
                               textAlign: pw.TextAlign.right,
@@ -493,9 +494,9 @@ class EventOrderPdfService {
                           children: [
                             pw.Text(
                               'Amount: ',
-                              style: const pw.TextStyle(
+                              style: pw.TextStyle(
                                 fontSize: 7,
-                                color: PdfColors.grey600,
+                                color: PdfColor.fromInt(AppTheme.grey600.toARGB32()),
                               ),
                             ),
                             pw.Expanded(
@@ -514,9 +515,9 @@ class EventOrderPdfService {
                           pw.SizedBox(height: 4),
                           pw.Text(
                             'Desc: ${order.description}',
-                            style: const pw.TextStyle(
+                            style: pw.TextStyle(
                               fontSize: 7,
-                              color: PdfColors.grey700,
+                              color: PdfColor.fromInt(AppTheme.grey700.toARGB32()),
                             ),
                             maxLines: 2,
                           ),
@@ -525,9 +526,9 @@ class EventOrderPdfService {
                           pw.SizedBox(height: 3),
                           pw.Text(
                             'Notes: ${order.notes}',
-                            style: const pw.TextStyle(
+                            style: pw.TextStyle(
                               fontSize: 7,
-                              color: PdfColors.grey700,
+                              color: PdfColor.fromInt(AppTheme.grey700.toARGB32()),
                             ),
                             maxLines: 2,
                           ),
@@ -537,9 +538,9 @@ class EventOrderPdfService {
                           pw.SizedBox(height: 4),
                           pw.Text(
                             'T&C: ${shopDetails.termsAndConditions}',
-                            style: const pw.TextStyle(
+                            style: pw.TextStyle(
                               fontSize: 6,
-                              color: PdfColors.grey600,
+                              color: PdfColor.fromInt(AppTheme.grey600.toARGB32()),
                             ),
                             maxLines: 2,
                           ),
@@ -579,7 +580,7 @@ class EventOrderPdfService {
                               _buildCompactSummaryLine(
                                 'Advance',
                                 order.advanceAmount,
-                                color: PdfColors.green700,
+                                color: PdfColor.fromInt(AppTheme.green700.toARGB32()),
                               ),
                             ],
                           ),
@@ -594,7 +595,7 @@ class EventOrderPdfService {
                                 vertical: 4,
                               ),
                               decoration: pw.BoxDecoration(
-                                color: PdfColors.grey200,
+                                color: PdfColor.fromInt(AppTheme.grey200.toARGB32()),
                                 borderRadius: pw.BorderRadius.circular(2),
                               ),
                               child: pw.Column(
@@ -625,8 +626,8 @@ class EventOrderPdfService {
                               ),
                               decoration: pw.BoxDecoration(
                                 color: balanceDue > 0
-                                    ? PdfColors.orange100
-                                    : PdfColors.green100,
+                                    ? PdfColor.fromInt(AppTheme.orange100.toARGB32())
+                                    : PdfColor.fromInt(AppTheme.green100.toARGB32()),
                                 borderRadius: pw.BorderRadius.circular(2),
                               ),
                               child: pw.Column(
@@ -638,8 +639,8 @@ class EventOrderPdfService {
                                       fontSize: 6,
                                       fontWeight: pw.FontWeight.bold,
                                       color: balanceDue > 0
-                                          ? PdfColors.orange800
-                                          : PdfColors.green800,
+                                          ? PdfColor.fromInt(AppTheme.orange800.toARGB32())
+                                          : PdfColor.fromInt(AppTheme.green800.toARGB32()),
                                     ),
                                   ),
                                   pw.Text(
@@ -648,8 +649,8 @@ class EventOrderPdfService {
                                       fontSize: 10,
                                       fontWeight: pw.FontWeight.bold,
                                       color: balanceDue > 0
-                                          ? PdfColors.orange900
-                                          : PdfColors.green900,
+                                          ? PdfColor.fromInt(AppTheme.orange900.toARGB32())
+                                          : PdfColor.fromInt(AppTheme.green900.toARGB32()),
                                     ),
                                   ),
                                 ],
@@ -682,7 +683,7 @@ class EventOrderPdfService {
                       color: lightBg,
                       borderRadius: pw.BorderRadius.circular(3),
                       border: pw.Border.all(
-                        color: PdfColors.grey400,
+                        color: PdfColor.fromInt(AppTheme.grey400.toARGB32()),
                         width: 0.5,
                       ),
                     ),
@@ -714,9 +715,9 @@ class EventOrderPdfService {
                                 ),
                                 pw.Text(
                                   'Scan to Pay',
-                                  style: const pw.TextStyle(
+                                  style: pw.TextStyle(
                                     fontSize: 5,
-                                    color: PdfColors.grey600,
+                                    color: PdfColor.fromInt(AppTheme.grey600.toARGB32()),
                                   ),
                                 ),
                               ],
@@ -774,9 +775,9 @@ class EventOrderPdfService {
                             child: pw.Center(
                               child: pw.Text(
                                 'Bank Details Not Available',
-                                style: const pw.TextStyle(
+                                style: pw.TextStyle(
                                   fontSize: 7,
-                                  color: PdfColors.grey500,
+                                  color: PdfColor.fromInt(AppTheme.grey.toARGB32()),
                                 ),
                               ),
                             ),
@@ -797,10 +798,10 @@ class EventOrderPdfService {
                         pw.SizedBox(height: 20),
                         pw.Container(
                           width: 80,
-                          decoration: const pw.BoxDecoration(
+                          decoration: pw.BoxDecoration(
                             border: pw.Border(
                               bottom: pw.BorderSide(
-                                color: PdfColors.grey500,
+                                color: PdfColor.fromInt(AppTheme.grey.toARGB32()),
                                 width: 0.5,
                               ),
                             ),
@@ -839,10 +840,10 @@ class EventOrderPdfService {
                           pw.SizedBox(height: 18),
                         pw.Container(
                           width: 80,
-                          decoration: const pw.BoxDecoration(
+                          decoration: pw.BoxDecoration(
                             border: pw.Border(
                               bottom: pw.BorderSide(
-                                color: PdfColors.grey500,
+                                color: PdfColor.fromInt(AppTheme.grey.toARGB32()),
                                 width: 0.5,
                               ),
                             ),
@@ -872,15 +873,15 @@ class EventOrderPdfService {
   PdfColor _getStatusColor(OrderStatus status) {
     switch (status) {
       case OrderStatus.confirmed:
-        return PdfColors.green700;
+        return PdfColor.fromInt(AppTheme.green700.toARGB32());
       case OrderStatus.pending:
-        return PdfColors.orange700;
+        return PdfColor.fromInt(AppTheme.orange700.toARGB32());
       case OrderStatus.delivered:
-        return PdfColors.blue700;
+        return PdfColor.fromInt(AppTheme.blue700.toARGB32());
       case OrderStatus.cancelled:
-        return PdfColors.red700;
+        return PdfColor.fromInt(AppTheme.red700.toARGB32());
       default:
-        return PdfColors.grey700;
+        return PdfColor.fromInt(AppTheme.grey700.toARGB32());
     }
   }
 
@@ -897,7 +898,7 @@ class EventOrderPdfService {
         children: [
           pw.Text(
             label,
-            style: pw.TextStyle(fontSize: 7, color: color ?? PdfColors.grey700),
+            style: pw.TextStyle(fontSize: 7, color: color ?? PdfColor.fromInt(AppTheme.grey700.toARGB32())),
           ),
           pw.Text(
             'Rs. ${amount.toStringAsFixed(0)}',
@@ -935,7 +936,7 @@ class EventOrderPdfService {
             width: double.infinity,
             padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: pw.BoxDecoration(
-              color: PdfColors.blue800,
+              color: PdfColor.fromInt(AppTheme.blue800.toARGB32()),
               border: pw.Border(bottom: thinBorder),
             ),
             child: pw.Row(
@@ -946,7 +947,7 @@ class EventOrderPdfService {
                   style: pw.TextStyle(
                     fontSize: 9,
                     fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.white,
+                    color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                   ),
                 ),
                 pw.Container(
@@ -955,7 +956,7 @@ class EventOrderPdfService {
                     vertical: 2,
                   ),
                   decoration: pw.BoxDecoration(
-                    color: PdfColors.white,
+                    color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                     borderRadius: pw.BorderRadius.circular(2),
                   ),
                   child: pw.Text(
@@ -963,7 +964,7 @@ class EventOrderPdfService {
                     style: pw.TextStyle(
                       fontSize: 7,
                       fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.blue800,
+                      color: PdfColor.fromInt(AppTheme.blue800.toARGB32()),
                     ),
                   ),
                 ),
@@ -987,7 +988,7 @@ class EventOrderPdfService {
             children: [
               // Header
               pw.TableRow(
-                decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+                decoration: pw.BoxDecoration(color: PdfColor.fromInt(AppTheme.grey200.toARGB32())),
                 children: [
                   _buildTableCellCompact('Sr', isHeader: true),
                   _buildTableCellCompact(
@@ -1006,7 +1007,7 @@ class EventOrderPdfService {
               // Main Event
               if (mainEventCharges > 0)
                 pw.TableRow(
-                  decoration: const pw.BoxDecoration(color: PdfColors.amber50),
+                  decoration: pw.BoxDecoration(color: PdfColor.fromInt(AppTheme.amber50.toARGB32())),
                   children: [
                     _buildTableCellCompact('1', isHeader: true),
                     _buildTableCellCompact(
@@ -1031,7 +1032,7 @@ class EventOrderPdfService {
                 final srNo = mainEventCharges > 0 ? idx + 2 : idx + 1;
                 return pw.TableRow(
                   decoration: pw.BoxDecoration(
-                    color: idx % 2 == 0 ? PdfColors.white : PdfColors.grey50,
+                    color: idx % 2 == 0 ? PdfColor.fromInt(AppTheme.white.toARGB32()) : PdfColor.fromInt(AppTheme.grey50.toARGB32()),
                   ),
                   children: [
                     _buildTableCellCompact('$srNo'),
@@ -1049,7 +1050,7 @@ class EventOrderPdfService {
               }),
               // Total
               pw.TableRow(
-                decoration: const pw.BoxDecoration(color: PdfColors.blue100),
+                decoration: pw.BoxDecoration(color: PdfColor.fromInt(AppTheme.blue100.toARGB32())),
                 children: [
                   _buildTableCellCompact(''),
                   _buildTableCellCompact(
@@ -1093,7 +1094,7 @@ class EventOrderPdfService {
             width: double.infinity,
             padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: pw.BoxDecoration(
-              color: PdfColors.green800,
+              color: PdfColor.fromInt(AppTheme.green800.toARGB32()),
               border: pw.Border(bottom: thinBorder),
             ),
             child: pw.Row(
@@ -1104,7 +1105,7 @@ class EventOrderPdfService {
                   style: pw.TextStyle(
                     fontSize: 9,
                     fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.white,
+                    color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                   ),
                 ),
                 pw.Container(
@@ -1113,7 +1114,7 @@ class EventOrderPdfService {
                     vertical: 2,
                   ),
                   decoration: pw.BoxDecoration(
-                    color: PdfColors.white,
+                    color: PdfColor.fromInt(AppTheme.white.toARGB32()),
                     borderRadius: pw.BorderRadius.circular(2),
                   ),
                   child: pw.Text(
@@ -1121,7 +1122,7 @@ class EventOrderPdfService {
                     style: pw.TextStyle(
                       fontSize: 7,
                       fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.green800,
+                      color: PdfColor.fromInt(AppTheme.green800.toARGB32()),
                     ),
                   ),
                 ),
@@ -1147,7 +1148,7 @@ class EventOrderPdfService {
             children: [
               // Header
               pw.TableRow(
-                decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+                decoration: pw.BoxDecoration(color: PdfColor.fromInt(AppTheme.grey200.toARGB32())),
                 children: [
                   _buildTableCellCompact('Sr', isHeader: true),
                   _buildTableCellCompact(
@@ -1175,7 +1176,7 @@ class EventOrderPdfService {
                 final item = entry.value;
                 return pw.TableRow(
                   decoration: pw.BoxDecoration(
-                    color: idx % 2 == 0 ? PdfColors.white : PdfColors.grey50,
+                    color: idx % 2 == 0 ? PdfColor.fromInt(AppTheme.white.toARGB32()) : PdfColor.fromInt(AppTheme.grey50.toARGB32()),
                   ),
                   children: [
                     _buildTableCellCompact('${idx + 1}'),
@@ -1202,7 +1203,7 @@ class EventOrderPdfService {
               }),
               // Total
               pw.TableRow(
-                decoration: const pw.BoxDecoration(color: PdfColors.green100),
+                decoration: pw.BoxDecoration(color: PdfColor.fromInt(AppTheme.green100.toARGB32())),
                 children: [
                   _buildTableCellCompact(''),
                   _buildTableCellCompact(

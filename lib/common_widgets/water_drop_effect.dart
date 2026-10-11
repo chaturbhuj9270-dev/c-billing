@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Water-drop impact + expanding ripples for glass UI surfaces.
 class WaterDropPainter extends CustomPainter {
@@ -8,7 +9,7 @@ class WaterDropPainter extends CustomPainter {
   final double progress;
   final Color accentColor;
 
-  static const _water = Color(0xFF4FC3F7);
+  static const _water = AppTheme.lightBlue300;
 
   const WaterDropPainter({
     required this.origin,
@@ -33,7 +34,7 @@ class WaterDropPainter extends CustomPainter {
       final flash = Paint()
         ..shader = RadialGradient(
           colors: [
-            Colors.white.withValues(alpha: impactOpacity),
+            AppTheme.white.withValues(alpha: impactOpacity),
             tint.withValues(alpha: impactOpacity * 0.55),
             tint.withValues(alpha: 0),
           ],
@@ -45,7 +46,7 @@ class WaterDropPainter extends CustomPainter {
       canvas.drawCircle(
         center,
         4.5 * (1.0 - impactT * 0.4),
-        Paint()..color = Colors.white.withValues(alpha: coreOpacity),
+        Paint()..color = AppTheme.white.withValues(alpha: coreOpacity),
       );
     }
 
@@ -66,7 +67,7 @@ class WaterDropPainter extends CustomPainter {
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = stroke
-          ..color = Color.lerp(Colors.white, tint, 0.4)!
+          ..color = Color.lerp(AppTheme.white, tint, 0.4)!
               .withValues(alpha: opacity),
       );
 
@@ -105,7 +106,7 @@ class WaterDropPainter extends CustomPainter {
           p,
           r,
           Paint()
-            ..color = Color.lerp(Colors.white, tint, 0.35)!
+            ..color = Color.lerp(AppTheme.white, tint, 0.35)!
                 .withValues(alpha: fade * 0.7),
         );
       }

@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -233,9 +231,9 @@ class _LoginPageV2State extends State<LoginPageV2>
                     AppTheme.darkScaffold,
                   ]
                 : const [
-                    Color(0xFFE8F5E9),
-                    Color(0xFFF5F5F5),
-                    Color(0xFFE8F5E9),
+                    AppTheme.green50,
+                    AppTheme.grey100,
+                    AppTheme.green50,
                   ],
           ),
         ),
@@ -259,9 +257,9 @@ class _LoginPageV2State extends State<LoginPageV2>
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              Color(0xFF1B4D3E),
-                              Color(0xFF134E3A),
-                              Color(0xFF0F3B2F),
+                              AppTheme.primary,
+                              AppTheme.headerLightEnd,
+                              AppTheme.primaryDark,
                             ],
                           ),
                         ),
@@ -277,7 +275,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                     decoration: BoxDecoration(
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withValues(
+                                          color: AppTheme.black.withValues(
                                             alpha: 0.3,
                                           ),
                                           blurRadius: 32,
@@ -298,7 +296,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                       fontFamily: 'Literata',
                                       fontSize: 48,
                                       fontWeight: FontWeight.w900,
-                                      color: Colors.white,
+                                      color: AppTheme.white,
                                       letterSpacing: 3,
                                     ),
                                   ),
@@ -310,7 +308,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                       fontSize: 16,
                                       fontWeight: FontWeight.w400,
                                       fontStyle: FontStyle.italic,
-                                      color: Colors.white.withValues(
+                                      color: AppTheme.white.withValues(
                                         alpha: 0.7,
                                       ),
                                     ),
@@ -331,7 +329,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                         style: TextStyle(
                                           fontFamily: 'Literata',
                                           fontSize: 14,
-                                          color: Colors.white.withValues(
+                                          color: AppTheme.white.withValues(
                                             alpha: 0.8,
                                           ),
                                         ),
@@ -394,7 +392,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                   width: 72,
                                   height: 72,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF14352C),
+                                    color: AppTheme.headerDarkStart,
                                     borderRadius: BorderRadius.circular(22),
                                     boxShadow: [
                                       BoxShadow(
@@ -555,7 +553,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                             children: [
                                               Expanded(
                                                 child: Divider(
-                                                  color: Colors.grey[300],
+                                                  color: AppTheme.grey300,
                                                   thickness: 1,
                                                 ),
                                               ),
@@ -567,7 +565,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                                 child: Text(
                                                   _localizations.orDivider,
                                                   style: TextStyle(
-                                                    color: Colors.grey[600],
+                                                    color: AppTheme.grey600,
                                                     fontSize: 12,
                                                     fontWeight: FontWeight.w600,
                                                     letterSpacing: 1,
@@ -577,7 +575,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                               ),
                                               Expanded(
                                                 child: Divider(
-                                                  color: Colors.grey[300],
+                                                  color: AppTheme.grey300,
                                                   thickness: 1,
                                                 ),
                                               ),
@@ -681,7 +679,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                 Text(
                                   _localizations.dontHaveAccount,
                                   style: TextStyle(
-                                    color: Colors.grey[600],
+                                    color: AppTheme.grey600,
                                     fontSize: 14,
                                     fontWeight: FontWeight.w400,
                                   ),
@@ -742,7 +740,7 @@ class _LoginPageV2State extends State<LoginPageV2>
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w400,
-            color: Colors.grey[700],
+            color: AppTheme.grey700,
             fontFamily: 'Literata',
           ),
         ),
@@ -809,13 +807,13 @@ class _LoginPageV2State extends State<LoginPageV2>
         const SizedBox(height: 24),
         Row(
           children: [
-            Expanded(child: Divider(color: Colors.grey[300], thickness: 1)),
+            Expanded(child: Divider(color: AppTheme.grey300, thickness: 1)),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 _localizations.orDivider,
                 style: TextStyle(
-                  color: Colors.grey[600],
+                  color: AppTheme.grey600,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1,
@@ -823,7 +821,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                 ),
               ),
             ),
-            Expanded(child: Divider(color: Colors.grey[300], thickness: 1)),
+            Expanded(child: Divider(color: AppTheme.grey300, thickness: 1)),
           ],
         ),
         const SizedBox(height: 24),
@@ -858,7 +856,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Colors.red,
+                          color: AppTheme.red,
                         ),
                       ),
                     ),
@@ -885,7 +883,7 @@ class _LoginPageV2State extends State<LoginPageV2>
             Text(
               _localizations.dontHaveAccount,
               style: TextStyle(
-                color: Colors.grey[600],
+                color: AppTheme.grey600,
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
               ),
@@ -1044,91 +1042,41 @@ class _LoginPageV2State extends State<LoginPageV2>
         borderRadius: radius,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF3DDC97).withValues(alpha: 0.45),
-            blurRadius: 28,
-            spreadRadius: -2,
-          ),
-          BoxShadow(
-            color: const Color(0xFF7CFFC4).withValues(alpha: 0.22),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
+            color: AppTheme.mint.withValues(alpha: 0.28),
+            blurRadius: 22,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: radius,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: _loading ? null : _submit,
-              child: Ink(
-                decoration: BoxDecoration(
-                  borderRadius: radius,
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      const Color(0xFF7CFFC4).withValues(alpha: 0.82),
-                      const Color(0xFF3DDC97).withValues(alpha: 0.72),
-                      const Color(0xFF1FA86E).withValues(alpha: 0.78),
-                    ],
-                  ),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.38),
-                  ),
+      child: ElevatedButton(
+        onPressed: _loading ? null : _submit,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.mint,
+          foregroundColor: AppTheme.onMint,
+          disabledBackgroundColor: AppTheme.mint.withValues(alpha: 0.5),
+          disabledForegroundColor: AppTheme.onMint,
+          elevation: 0,
+          minimumSize: const Size.fromHeight(54),
+          shape: const RoundedRectangleBorder(borderRadius: radius),
+        ),
+        child: _loading
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.onMint),
+                  strokeWidth: 2,
                 ),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Positioned(
-                      top: 1,
-                      left: 18,
-                      right: 18,
-                      child: Container(
-                        height: 16,
-                        decoration: BoxDecoration(
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(20),
-                          ),
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.white.withValues(alpha: 0.38),
-                              Colors.white.withValues(alpha: 0),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    _loading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : Text(
-                            _localizations.signIn,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Literata',
-                            ),
-                          ),
-                  ],
+              )
+            : Text(
+                _localizations.signIn,
+                style: const TextStyle(
+                  color: AppTheme.onMint,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Literata',
                 ),
               ),
-            ),
-          ),
-        ),
       ),
     );
   }

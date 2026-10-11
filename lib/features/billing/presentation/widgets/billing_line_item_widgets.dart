@@ -90,10 +90,10 @@ class BillItemsLineList extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.card(context),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.08)),
+        border: Border.all(color: AppTheme.grey.withValues(alpha: 0.08)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: AppTheme.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -109,7 +109,7 @@ class BillItemsLineList extends StatelessWidget {
           thickness: 0.5,
           indent: 12,
           endIndent: 12,
-          color: Colors.grey.withValues(alpha: 0.12),
+          color: AppTheme.grey.withValues(alpha: 0.12),
         ),
         itemBuilder: (context, index) {
           final item = items[index];
@@ -125,10 +125,10 @@ class BillItemsLineList extends StatelessWidget {
             background: Container(
               alignment: Alignment.centerRight,
               padding: const EdgeInsets.only(right: 16),
-              color: Colors.red[400],
+              color: AppTheme.error,
               child: const Icon(
                 Icons.delete_outline_rounded,
-                color: Colors.white,
+                color: AppTheme.white,
                 size: 20,
               ),
             ),
@@ -152,7 +152,7 @@ class BillItemsLineList extends StatelessWidget {
                           fontFamily: 'Literata',
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                       ),
                     ),
@@ -169,7 +169,7 @@ class BillItemsLineList extends StatelessWidget {
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w600,
                             fontSize: 12,
-                            color: Color(0xFF1A1A2E),
+                            color: AppTheme.ink,
                             height: 1.2,
                           ),
                           maxLines: 1,
@@ -213,16 +213,14 @@ class BillItemsLineList extends StatelessWidget {
                                   fontFamily: 'Literata',
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: const Color(
-                                    0xFF1B4D3E,
-                                  ).withValues(alpha: 0.8),
+                                  color: AppTheme.primary.withValues(alpha: 0.8),
                                 ),
                               ),
                               const SizedBox(width: 3),
                               Icon(
                                 Icons.edit_rounded,
                                 size: 10,
-                                color: Colors.grey[400],
+                                color: AppTheme.grey400,
                               ),
                               if (item.cgstPercent > 0 || item.sgstPercent > 0) ...[
                                 const SizedBox(width: 6),
@@ -232,7 +230,7 @@ class BillItemsLineList extends StatelessWidget {
                                     vertical: 1,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.orange[50],
+                                    color: AppTheme.orange50,
                                     borderRadius: BorderRadius.circular(3),
                                   ),
                                   child: Text(
@@ -240,7 +238,7 @@ class BillItemsLineList extends StatelessWidget {
                                     style: TextStyle(
                                       fontFamily: 'Literata',
                                       fontSize: 9,
-                                      color: Colors.orange[700],
+                                      color: AppTheme.orange700,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -259,7 +257,7 @@ class BillItemsLineList extends StatelessWidget {
                       color: AppColors.scaffold(context),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: Colors.grey.withValues(alpha: 0.15),
+                        color: AppTheme.grey.withValues(alpha: 0.15),
                       ),
                     ),
                     child: Row(
@@ -296,9 +294,7 @@ class BillItemsLineList extends StatelessWidget {
                             width: 28,
                             height: 30,
                             decoration: BoxDecoration(
-                              color: Color(
-                                0xFF1B4D3E,
-                              ).withValues(alpha: 0.08),
+                              color: AppTheme.primary.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.only(
                                 topLeft: Radius.circular(7),
                                 bottomLeft: Radius.circular(7),
@@ -369,9 +365,7 @@ class BillItemsLineList extends StatelessWidget {
                             height: 30,
                             decoration: BoxDecoration(
                               color: item.quantity < maxStock
-                                  ? const Color(
-                                      0xFF1B4D3E,
-                                    ).withValues(alpha: 0.08)
+                                  ? AppTheme.primary.withValues(alpha: 0.08)
                                   : AppColors.chipFill(context),
                               borderRadius: const BorderRadius.only(
                                 topRight: Radius.circular(7),
@@ -382,8 +376,8 @@ class BillItemsLineList extends StatelessWidget {
                               Icons.add,
                               size: 14,
                               color: item.quantity < maxStock
-                                  ? const Color(0xFF1B4D3E)
-                                  : Colors.grey[400],
+                                  ? AppTheme.primary
+                                  : AppTheme.grey400,
                             ),
                           ),
                         ),
@@ -466,7 +460,7 @@ void showEditBillItemSellPriceDialog({
                 ),
                 child: Icon(
                   Icons.currency_rupee_rounded,
-                  color: Colors.white,
+                  color: AppTheme.white,
                   size: 20,
                 ),
               ),
@@ -481,7 +475,7 @@ void showEditBillItemSellPriceDialog({
                         fontFamily: 'Literata',
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF1A1A2E),
+                        color: AppTheme.ink,
                       ),
                     ),
                     Text(
@@ -489,7 +483,7 @@ void showEditBillItemSellPriceDialog({
                       style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -508,7 +502,7 @@ void showEditBillItemSellPriceDialog({
                   color: AppColors.scaffold(context),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: Colors.grey.withValues(alpha: 0.1),
+                    color: AppTheme.grey.withValues(alpha: 0.1),
                   ),
                 ),
                 child: Row(
@@ -522,7 +516,7 @@ void showEditBillItemSellPriceDialog({
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 11,
-                            color: Colors.grey[500],
+                            color: AppTheme.grey,
                           ),
                         ),
                         Text(
@@ -545,7 +539,7 @@ void showEditBillItemSellPriceDialog({
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 11,
-                            color: Colors.grey[500],
+                            color: AppTheme.grey,
                           ),
                         ),
                         Text(
@@ -554,7 +548,7 @@ void showEditBillItemSellPriceDialog({
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
-                            color: Colors.blue[700],
+                            color: AppTheme.blue700,
                           ),
                         ),
                       ],
@@ -595,7 +589,7 @@ void showEditBillItemSellPriceDialog({
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
+                    borderSide: BorderSide(color: AppTheme.grey300),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -636,14 +630,14 @@ void showEditBillItemSellPriceDialog({
               },
               icon: Icon(
                 Icons.refresh_rounded,
-                color: Colors.orange[700],
+                color: AppTheme.orange700,
                 size: 20,
               ),
               label: Text(
                 localizations.reset,
                 style: TextStyle(
                   fontFamily: 'Literata',
-                  color: Colors.orange[700],
+                  color: AppTheme.orange700,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -655,7 +649,7 @@ void showEditBillItemSellPriceDialog({
                 localizations.cancel,
                 style: TextStyle(
                   fontFamily: 'Literata',
-                  color: Colors.grey[600],
+                  color: AppTheme.grey600,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -672,8 +666,8 @@ void showEditBillItemSellPriceDialog({
                     }
                   : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1B4D3E),
-                foregroundColor: Colors.white,
+                backgroundColor: AppTheme.primary,
+                foregroundColor: AppTheme.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

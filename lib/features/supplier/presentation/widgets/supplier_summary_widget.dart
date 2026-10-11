@@ -49,7 +49,7 @@ class SupplierSummaryWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(
+            color: AppTheme.black.withValues(
               alpha: AppColors.isDark(context) ? 0.45 : 0.3,
             ),
             blurRadius: 12,
@@ -69,7 +69,7 @@ class SupplierSummaryWidget extends StatelessWidget {
             icon: Icons.check_circle_rounded,
             label: 'Active',
             value: '$activeCount',
-            valueColor: activeCount > 0 ? Colors.green[300] : null,
+            valueColor: activeCount > 0 ? AppTheme.green300 : null,
           ),
           _buildDivider(),
           Expanded(
@@ -79,7 +79,7 @@ class SupplierSummaryWidget extends StatelessWidget {
                   : Icons.cloud_done_rounded,
               label: unsyncedCount > 0 ? 'Unsynced' : 'All Synced',
               value: unsyncedCount > 0 ? '$unsyncedCount' : '✓',
-              valueColor: unsyncedCount > 0 ? Colors.orange[300] : Colors.green[300],
+              valueColor: unsyncedCount > 0 ? AppTheme.orange300 : AppTheme.green300,
               isExpanded: true,
             ),
           ),
@@ -102,7 +102,7 @@ class SupplierSummaryWidget extends StatelessWidget {
         children: [
           Icon(
             icon,
-            color: Colors.white,
+            color: AppTheme.white,
             size: 20,
           ),
           const SizedBox(height: 6),
@@ -112,7 +112,7 @@ class SupplierSummaryWidget extends StatelessWidget {
               fontFamily: 'Literata',
               fontWeight: FontWeight.w800,
               fontSize: 16,
-              color: valueColor ?? Colors.white,
+              color: valueColor ?? AppTheme.white,
             ),
           ),
           const SizedBox(height: 2),
@@ -122,7 +122,7 @@ class SupplierSummaryWidget extends StatelessWidget {
               fontFamily: 'Literata',
               fontWeight: FontWeight.w400,
               fontSize: 11,
-              color: Colors.white.withValues(alpha: 0.7),
+              color: AppTheme.white.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -134,7 +134,7 @@ class SupplierSummaryWidget extends StatelessWidget {
     return Container(
       width: 1,
       height: 40,
-      color: Colors.white.withValues(alpha: 0.2),
+      color: AppTheme.white.withValues(alpha: 0.2),
     );
   }
 }

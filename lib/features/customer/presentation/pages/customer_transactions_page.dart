@@ -13,6 +13,7 @@ import '../../../event_order/offline/controllers/event_order_offline_controller.
 import '../../../event_order/offline/entities/event_order_entity.dart';
 import '../../../event_order/domain/entities/event_order.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Date filter options for transactions
@@ -374,12 +375,12 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
                     icon: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
+                        color: AppTheme.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
                         Icons.arrow_back_ios_new_rounded,
-                        color: Colors.white,
+                        color: AppTheme.white,
                         size: 18,
                       ),
                     ),
@@ -388,7 +389,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
                   const Text(
                     'Transactions',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppTheme.white,
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                       fontFamily: 'Literata',
@@ -400,12 +401,12 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
                     icon: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
+                        color: AppTheme.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
                         Icons.refresh_rounded,
-                        color: Colors.white,
+                        color: AppTheme.white,
                         size: 18,
                       ),
                     ),
@@ -421,10 +422,10 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
+                color: AppTheme.white.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.15),
+                  color: AppTheme.white.withValues(alpha: 0.15),
                   width: 1,
                 ),
               ),
@@ -438,8 +439,8 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Colors.white.withValues(alpha: 0.25),
-                          Colors.white.withValues(alpha: 0.1),
+                          AppTheme.white.withValues(alpha: 0.25),
+                          AppTheme.white.withValues(alpha: 0.1),
                         ],
                       ),
                       shape: BoxShape.circle,
@@ -448,7 +449,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
                       child: Text(
                         initials,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppTheme.white,
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           fontFamily: 'Literata',
@@ -464,7 +465,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
                         Text(
                           widget.customerName,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppTheme.white,
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                             fontFamily: 'Literata',
@@ -478,7 +479,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
                             Icon(
                               Icons.phone_rounded,
                               size: 12,
-                              color: Colors.white.withValues(alpha: 0.7),
+                              color: AppTheme.white.withValues(alpha: 0.7),
                             ),
                             SizedBox(width: 4),
                             Text(
@@ -513,8 +514,8 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
               icon: Icons.arrow_downward_rounded,
               label: 'Received',
               value: '₹${_formatAmount(_totalReceived)}',
-              color: Colors.green,
-              iconBackground: Colors.green.withValues(alpha: 0.1),
+              color: AppTheme.green,
+              iconBackground: AppTheme.green.withValues(alpha: 0.1),
             ),
           ),
           const SizedBox(width: 12),
@@ -523,8 +524,8 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
               icon: Icons.schedule_rounded,
               label: 'Pending',
               value: '₹${_formatAmount(_currentPending)}',
-              color: _currentPending > 0 ? Colors.red : Colors.green,
-              iconBackground: (_currentPending > 0 ? Colors.red : Colors.green)
+              color: _currentPending > 0 ? AppTheme.red : AppTheme.green,
+              iconBackground: (_currentPending > 0 ? AppTheme.red : AppTheme.green)
                   .withValues(alpha: 0.1),
             ),
           ),
@@ -593,24 +594,13 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
   }
 
   Future<void> _showCustomDatePicker() async {
-    final picked = await showDateRangePicker(
+    final picked = await showAppRangeCalendar(
       context: context,
       firstDate: DateTime(2020),
       lastDate: DateTime.now().add(const Duration(days: 365)),
       initialDateRange: _customStartDate != null && _customEndDate != null
           ? DateTimeRange(start: _customStartDate!, end: _customEndDate!)
           : null,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF1B4D3E),
-              onPrimary: Colors.white,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (picked != null) {
@@ -687,7 +677,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
               'Record payments received from this customer',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: AppTheme.grey600,
                 fontFamily: 'Literata',
               ),
               textAlign: TextAlign.center,
@@ -701,13 +691,13 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
   Widget _buildReceivePaymentFAB() {
     return FloatingActionButton.extended(
       onPressed: _showReceivePaymentSheet,
-      backgroundColor: const Color(0xFF1B4D3E),
+      backgroundColor: AppTheme.primary,
       elevation: 4,
-      icon: const Icon(Icons.add_rounded, color: Colors.white),
+      icon: const Icon(Icons.add_rounded, color: AppTheme.white),
       label: const Text(
         'Receive Payment',
         style: TextStyle(
-          color: Colors.white,
+          color: AppTheme.white,
           fontWeight: FontWeight.w600,
           fontFamily: 'Literata',
         ),
@@ -719,7 +709,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (context) => _ReceivePaymentSheet(
         customerName: widget.customerName,
         pendingAmount: _currentPending,
@@ -808,7 +798,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text('Delete', style: TextStyle(color: AppTheme.red)),
           ),
         ],
       ),
@@ -884,7 +874,7 @@ class _SummaryCard extends StatelessWidget {
                   label,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                     fontFamily: 'Literata',
                   ),
                 ),
@@ -930,7 +920,7 @@ class _FilterChip extends StatelessWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(
+                    color: AppTheme.black.withValues(
                       alpha: AppColors.isDark(context) ? 0.35 : 0.15,
                     ),
                     blurRadius: 8,
@@ -979,22 +969,22 @@ class _TransactionCard extends StatelessWidget {
     switch (transaction.transactionType) {
       case TransactionType.payment:
         icon = Icons.arrow_downward_rounded;
-        color = Colors.green;
+        color = AppTheme.green;
         typeLabel = 'Payment Received';
         break;
       case TransactionType.billCreated:
         icon = Icons.receipt_rounded;
-        color = Colors.orange;
+        color = AppTheme.orange;
         typeLabel = 'Bill Created';
         break;
       case TransactionType.billReturn:
         icon = Icons.undo_rounded;
-        color = Colors.blue;
+        color = AppTheme.blue;
         typeLabel = 'Bill Return';
         break;
       case TransactionType.adjustment:
         icon = Icons.tune_rounded;
-        color = Colors.purple;
+        color = AppTheme.purple;
         typeLabel = 'Adjustment';
         break;
     }
@@ -1009,12 +999,12 @@ class _TransactionCard extends StatelessWidget {
       background: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: Colors.red.shade400,
+          color: AppTheme.error,
           borderRadius: BorderRadius.circular(16),
         ),
         alignment: Alignment.centerRight,
         padding: EdgeInsets.only(right: 20),
-        child: Icon(Icons.delete_rounded, color: Colors.white),
+        child: Icon(Icons.delete_rounded, color: AppTheme.white),
       ),
       child: Container(
         margin: EdgeInsets.only(bottom: 12),
@@ -1023,7 +1013,7 @@ class _TransactionCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: AppTheme.black.withValues(alpha: 0.03),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -1068,7 +1058,7 @@ class _TransactionCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: isPayment ? Colors.green : Colors.orange,
+                            color: isPayment ? AppTheme.green : AppTheme.orange,
                             fontFamily: 'Literata',
                           ),
                         ),
@@ -1110,7 +1100,7 @@ class _TransactionCard extends StatelessWidget {
                                   transaction.description!,
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.grey[600],
+                                    color: AppTheme.grey600,
                                     fontFamily: 'Literata',
                                   ),
                                   maxLines: 1,
@@ -1126,14 +1116,14 @@ class _TransactionCard extends StatelessWidget {
                         Icon(
                           Icons.access_time_rounded,
                           size: 12,
-                          color: Colors.grey[500],
+                          color: AppTheme.grey,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           dateFormat.format(transaction.transactionDate),
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors.grey[500],
+                            color: AppTheme.grey,
                             fontFamily: 'Literata',
                           ),
                         ),
@@ -1144,8 +1134,8 @@ class _TransactionCard extends StatelessWidget {
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: runningBalance > 0
-                                ? Colors.red[400]
-                                : Colors.green[400],
+                                ? AppTheme.error
+                                : AppTheme.green400,
                             fontFamily: 'Literata',
                           ),
                         ),
@@ -1224,7 +1214,7 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: AppTheme.grey300,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -1245,7 +1235,7 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
                 'From ${widget.customerName}',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey[600],
+                  color: AppTheme.grey600,
                   fontFamily: 'Literata',
                 ),
               ),
@@ -1258,7 +1248,7 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.1),
+                    color: AppTheme.red.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
@@ -1267,7 +1257,7 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
                       Icon(
                         Icons.info_outline_rounded,
                         size: 16,
-                        color: Colors.red[400],
+                        color: AppTheme.error,
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -1275,7 +1265,7 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Colors.red[700],
+                          color: AppTheme.red700,
                           fontFamily: 'Literata',
                         ),
                       ),
@@ -1305,7 +1295,7 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
                     fontFamily: 'Literata',
                   ),
                   labelStyle: TextStyle(
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                     fontFamily: 'Literata',
                   ),
                   filled: true,
@@ -1340,7 +1330,7 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Colors.grey[700],
+                  color: AppTheme.grey700,
                   fontFamily: 'Literata',
                 ),
               ),
@@ -1361,13 +1351,13 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? const Color(0xFF1B4D3E)
+                            ? AppTheme.primary
                             : AppColors.chipFill(context),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: isSelected
-                              ? const Color(0xFF1B4D3E)
-                              : Colors.grey.shade300,
+                              ? AppTheme.primary
+                              : AppTheme.grey300,
                         ),
                       ),
                       child: Text(
@@ -1375,7 +1365,7 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: isSelected ? Colors.white : Colors.grey[700],
+                          color: isSelected ? AppTheme.white : AppTheme.grey700,
                           fontFamily: 'Literata',
                         ),
                       ),
@@ -1391,7 +1381,7 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
                 decoration: InputDecoration(
                   labelText: 'Notes (Optional)',
                   labelStyle: TextStyle(
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                     fontFamily: 'Literata',
                   ),
                   filled: true,
@@ -1410,8 +1400,8 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
                 child: ElevatedButton(
                   onPressed: _savePayment,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1B4D3E),
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppTheme.primary,
+                    foregroundColor: AppTheme.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -1472,7 +1462,7 @@ class _EventOrderCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1512,8 +1502,8 @@ class _EventOrderCard extends StatelessWidget {
                             ),
                             decoration: BoxDecoration(
                               color: isEvent
-                                  ? Colors.purple.withValues(alpha: 0.1)
-                                  : Colors.blue.withValues(alpha: 0.1),
+                                  ? AppTheme.purple.withValues(alpha: 0.1)
+                                  : AppTheme.blue.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -1522,7 +1512,7 @@ class _EventOrderCard extends StatelessWidget {
                                 fontFamily: 'Literata',
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: isEvent ? Colors.purple : Colors.blue,
+                                color: isEvent ? AppTheme.purple : AppTheme.blue,
                               ),
                             ),
                           ),
@@ -1579,17 +1569,17 @@ class _EventOrderCard extends StatelessWidget {
                   _buildAmountItem(
                     'Total',
                     eventOrder.totalAmount,
-                    Colors.blue,
+                    AppTheme.blue,
                   ),
                   _buildAmountItem(
                     'Advance',
                     eventOrder.advanceAmount,
-                    Colors.green,
+                    AppTheme.green,
                   ),
                   _buildAmountItem(
                     'Due',
                     eventOrder.remainingAmount,
-                    Colors.orange,
+                    AppTheme.orange,
                   ),
                 ],
               ),
@@ -1600,7 +1590,7 @@ class _EventOrderCard extends StatelessWidget {
                 Icon(
                   Icons.calendar_today_rounded,
                   size: 14,
-                  color: Colors.grey[500],
+                  color: AppTheme.grey,
                 ),
                 const SizedBox(width: 6),
                 Text(
@@ -1608,7 +1598,7 @@ class _EventOrderCard extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 12,
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                   ),
                 ),
                 const Spacer(),
@@ -1619,8 +1609,8 @@ class _EventOrderCard extends StatelessWidget {
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: runningBalance > 0
-                        ? Colors.red[400]
-                        : Colors.green[400],
+                        ? AppTheme.error
+                        : AppTheme.green400,
                   ),
                 ),
               ],
@@ -1639,7 +1629,7 @@ class _EventOrderCard extends StatelessWidget {
           style: TextStyle(
             fontFamily: 'Literata',
             fontSize: 11,
-            color: Colors.grey[600],
+            color: AppTheme.grey600,
           ),
         ),
         const SizedBox(height: 2),
@@ -1659,17 +1649,17 @@ class _EventOrderCard extends StatelessWidget {
   Color _getStatusColor(OrderStatus status) {
     switch (status) {
       case OrderStatus.pending:
-        return Colors.orange;
+        return AppTheme.orange;
       case OrderStatus.confirmed:
-        return Colors.blue;
+        return AppTheme.blue;
       case OrderStatus.inProgress:
-        return Colors.purple;
+        return AppTheme.purple;
       case OrderStatus.delivered:
-        return Colors.green;
+        return AppTheme.green;
       case OrderStatus.cancelled:
-        return Colors.red;
+        return AppTheme.red;
       case OrderStatus.convertedToBill:
-        return Colors.teal;
+        return AppTheme.teal;
     }
   }
 }

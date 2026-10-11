@@ -180,7 +180,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (context) => ReceivePaymentSheet(
         customer: _customer!,
         transactionService: _transactionService,
@@ -204,8 +204,8 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
           ),
         ),
         backgroundColor: AppColors.appBar(context),
-        surfaceTintColor: Colors.transparent,
-        foregroundColor: Colors.white,
+        surfaceTintColor: AppTheme.transparent,
+        foregroundColor: AppTheme.white,
         elevation: 0,
       ),
       body: _isLoading
@@ -217,7 +217,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+                  Icon(Icons.error_outline, size: 48, color: AppTheme.toneRose),
                   const SizedBox(height: 16),
                   Text(_error!, style: const TextStyle(fontFamily: 'Literata')),
                   const SizedBox(height: 16),
@@ -251,7 +251,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                                 Icon(
                                   Icons.receipt_long,
                                   size: 48,
-                                  color: Colors.grey[400],
+                                  color: AppTheme.grey400,
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
@@ -259,7 +259,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                                   style: TextStyle(
                                     fontFamily: 'Literata',
                                     fontSize: 16,
-                                    color: Colors.grey[600],
+                                    color: AppTheme.grey600,
                                   ),
                                 ),
                               ],
@@ -281,7 +281,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
       floatingActionButton: _customer != null && _customer!.hasPendingBalance
           ? FloatingActionButton.extended(
               onPressed: _showReceivePaymentDialog,
-              backgroundColor: const Color(0xFF1B4D3E),
+              backgroundColor: AppTheme.primary,
               icon: const Icon(Icons.payments),
               label: const Text(
                 'Receive Payment',
@@ -303,7 +303,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppTheme.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -316,7 +316,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundColor: Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
                 child: Text(
                   _customer!.firstName.isNotEmpty
                       ? _customer!.firstName[0].toUpperCase()
@@ -345,14 +345,14 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(Icons.phone, size: 14, color: Colors.grey[600]),
+                        Icon(Icons.phone, size: 14, color: AppTheme.grey600),
                         const SizedBox(width: 4),
                         Text(
                           _customer!.contact,
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 14,
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                           ),
                         ),
                       ],
@@ -367,7 +367,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
+                Icon(Icons.location_on, size: 16, color: AppTheme.grey600),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -375,7 +375,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                     style: TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 14,
-                      color: Colors.grey[600],
+                      color: AppTheme.grey600,
                     ),
                   ),
                 ),
@@ -396,8 +396,8 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: _customer!.hasPendingBalance
-              ? [const Color(0xFFFF6B6B), const Color(0xFFEE5A5A)]
-              : [const Color(0xFF1B4D3E), const Color(0xFF0F3B2F)],
+              ? [AppTheme.coral, AppTheme.paletteFFEE5A5A]
+              : [AppTheme.primary, AppTheme.primaryDark],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -406,8 +406,8 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
           BoxShadow(
             color:
                 (_customer!.hasPendingBalance
-                        ? const Color(0xFFFF6B6B)
-                        : const Color(0xFF1B4D3E))
+                        ? AppTheme.coral
+                        : AppTheme.primary)
                     .withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
@@ -432,7 +432,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                 _customer!.hasPendingBalance
                     ? Icons.warning_amber_rounded
                     : Icons.check_circle,
-                color: Colors.white,
+                color: AppTheme.white,
               ),
             ],
           ),
@@ -443,7 +443,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
               fontFamily: 'Literata',
               fontSize: 32,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: AppTheme.white,
             ),
           ),
           const SizedBox(height: 16),
@@ -458,7 +458,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
               Container(
                 width: 1,
                 height: 30,
-                color: Colors.white.withValues(alpha: 0.3),
+                color: AppTheme.white.withValues(alpha: 0.3),
               ),
               Expanded(
                 child: _buildStatItem(
@@ -482,7 +482,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
             fontFamily: 'Literata',
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: Colors.white,
+            color: AppTheme.white,
           ),
         ),
         const SizedBox(height: 4),
@@ -491,7 +491,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
           style: TextStyle(
             fontFamily: 'Literata',
             fontSize: 11,
-            color: Colors.white.withValues(alpha: 0.7),
+            color: AppTheme.white.withValues(alpha: 0.7),
           ),
         ),
       ],
@@ -517,7 +517,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
             style: TextStyle(
               fontFamily: 'Literata',
               fontSize: 12,
-              color: Colors.grey[600],
+              color: AppTheme.grey600,
             ),
           ),
         ],
@@ -545,13 +545,13 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
             height: 40,
             decoration: BoxDecoration(
               color: isPayment
-                  ? Colors.green.withValues(alpha: 0.1)
-                  : Colors.orange.withValues(alpha: 0.1),
+                  ? AppTheme.green.withValues(alpha: 0.1)
+                  : AppTheme.orange.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               isPayment ? Icons.arrow_downward : Icons.receipt_long,
-              color: isPayment ? Colors.green : Colors.orange,
+              color: isPayment ? AppTheme.green : AppTheme.orange,
               size: 20,
             ),
           ),
@@ -575,7 +575,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 11,
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                   ),
                 ),
                 if (transaction.billNumber != null) ...[
@@ -585,7 +585,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                     style: TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 11,
-                      color: Colors.grey[500],
+                      color: AppTheme.grey,
                     ),
                   ),
                 ],
@@ -624,7 +624,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                   fontFamily: 'Literata',
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: isPayment ? Colors.green : Colors.orange,
+                  color: isPayment ? AppTheme.green : AppTheme.orange,
                 ),
               ),
               const SizedBox(height: 4),
@@ -633,7 +633,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 11,
-                  color: Colors.grey[600],
+                  color: AppTheme.grey600,
                 ),
               ),
             ],
@@ -665,7 +665,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppTheme.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: Offset(0, 2),
           ),
@@ -710,7 +710,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                     fontFamily: 'Literata',
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: AppTheme.white,
                   ),
                 ),
               ),
@@ -724,21 +724,21 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                 child: _buildEventStatItem(
                   'Total Amount',
                   '₹${_totalEventsAmount.toStringAsFixed(0)}',
-                  Colors.blue,
+                  AppTheme.blue,
                 ),
               ),
               Expanded(
                 child: _buildEventStatItem(
                   'Advance Paid',
                   '₹${_totalAdvanceReceived.toStringAsFixed(0)}',
-                  Colors.green,
+                  AppTheme.green,
                 ),
               ),
               Expanded(
                 child: _buildEventStatItem(
                   'Due',
                   '₹${(_totalEventsAmount - _totalAdvanceReceived).toStringAsFixed(0)}',
-                  Colors.orange,
+                  AppTheme.orange,
                 ),
               ),
             ],
@@ -748,19 +748,19 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.1),
+                color: AppTheme.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.orange[700], size: 16),
+                  Icon(Icons.info_outline, color: AppTheme.orange700, size: 16),
                   const SizedBox(width: 8),
                   Text(
                     '$pendingOrders ${pendingOrders == 1 ? 'order' : 'orders'} with pending payment',
                     style: TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 12,
-                      color: Colors.orange[700],
+                      color: AppTheme.orange700,
                     ),
                   ),
                 ],
@@ -790,7 +790,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
           style: TextStyle(
             fontFamily: 'Literata',
             fontSize: 11,
-            color: Colors.grey[600],
+            color: AppTheme.grey600,
           ),
         ),
       ],
@@ -888,7 +888,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 11,
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -899,8 +899,8 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                   ),
                   decoration: BoxDecoration(
                     color: isEvent
-                        ? Colors.purple.withValues(alpha: 0.1)
-                        : Colors.blue.withValues(alpha: 0.1),
+                        ? AppTheme.purple.withValues(alpha: 0.1)
+                        : AppTheme.blue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -909,7 +909,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                       fontFamily: 'Literata',
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
-                      color: isEvent ? Colors.purple : Colors.blue,
+                      color: isEvent ? AppTheme.purple : AppTheme.blue,
                     ),
                   ),
                 ),
@@ -936,7 +936,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 10,
-                    color: Colors.green[600],
+                    color: AppTheme.green600,
                   ),
                 ),
               if (order.remainingAmount > 0)
@@ -945,7 +945,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 10,
-                    color: Colors.orange[600],
+                    color: AppTheme.orange600,
                   ),
                 ),
             ],
@@ -958,17 +958,17 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
   Color _getStatusColor(OrderStatus status) {
     switch (status) {
       case OrderStatus.pending:
-        return Colors.orange;
+        return AppTheme.orange;
       case OrderStatus.confirmed:
-        return Colors.blue;
+        return AppTheme.blue;
       case OrderStatus.inProgress:
-        return Colors.purple;
+        return AppTheme.purple;
       case OrderStatus.delivered:
-        return Colors.green;
+        return AppTheme.green;
       case OrderStatus.cancelled:
-        return Colors.red;
+        return AppTheme.red;
       case OrderStatus.convertedToBill:
-        return const Color(0xFF1B4D3E);
+        return AppTheme.primary;
     }
   }
 }
@@ -1095,7 +1095,7 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppTheme.grey300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -1116,7 +1116,7 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: AppTheme.grey600,
               ),
             ),
             const SizedBox(height: 20),
@@ -1124,10 +1124,10 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFFF6B6B).withValues(alpha: 0.1),
+                color: AppTheme.coral.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFFFF6B6B).withValues(alpha: 0.3),
+                  color: AppTheme.coral.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
@@ -1147,7 +1147,7 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
                       fontFamily: 'Literata',
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFFFF6B6B),
+                      color: AppTheme.coral,
                     ),
                   ),
                 ],
@@ -1230,11 +1230,11 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
                     mode.displayName,
                     style: TextStyle(
                       fontFamily: 'Literata',
-                      color: isSelected ? Colors.white : Colors.black87,
+                      color: isSelected ? AppTheme.white : AppTheme.black87,
                     ),
                   ),
                   selected: isSelected,
-                  selectedColor: const Color(0xFF1B4D3E),
+                  selectedColor: AppTheme.primary,
                   onSelected: (_) =>
                       setState(() => _selectedPaymentMode = mode),
                 );
@@ -1275,10 +1275,10 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.1),
+                  color: AppTheme.green.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: Colors.green.withValues(alpha: 0.3),
+                    color: AppTheme.green.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -1298,7 +1298,7 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
                         fontFamily: 'Literata',
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: Colors.green,
+                        color: AppTheme.green,
                       ),
                     ),
                   ],
@@ -1313,13 +1313,13 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
                     ? _processPayment
                     : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B4D3E),
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: AppTheme.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  disabledBackgroundColor: Colors.grey[300],
+                  disabledBackgroundColor: AppTheme.grey300,
                 ),
                 child: _isProcessing
                     ? const SizedBox(
@@ -1328,7 +1328,7 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
+                            AppTheme.white,
                           ),
                         ),
                       )

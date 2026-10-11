@@ -275,7 +275,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (context) => _PurchaseDetailsSheet(
         purchase: purchase,
         onEdit: () {
@@ -294,7 +294,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   void _showPurchaseContextMenu(PurchaseBatchEntity purchase) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (context) => ClipRRect(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         child: BackdropFilter(
@@ -315,7 +315,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: AppTheme.grey300,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -384,7 +384,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
             Icon(
               icon,
               size: 22,
-              color: isDestructive ? Colors.red : Colors.grey[700],
+              color: isDestructive ? AppTheme.red : AppTheme.grey700,
             ),
             const SizedBox(width: 16),
             Text(
@@ -393,7 +393,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w500,
                 fontSize: 15,
-                color: isDestructive ? Colors.red : Colors.grey[800],
+                color: isDestructive ? AppTheme.red : AppTheme.grey800,
               ),
             ),
           ],
@@ -442,7 +442,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
               side: BorderSide(
-                color: Colors.white.withValues(alpha: 0.3),
+                color: AppTheme.white.withValues(alpha: 0.3),
                 width: 1.5,
               ),
             ),
@@ -480,7 +480,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w500,
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -558,7 +558,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                         vertical: 14,
                       ),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
+                        border: Border.all(color: AppTheme.grey300),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -566,7 +566,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                           Icon(
                             Icons.person_rounded,
                             size: 20,
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -577,8 +577,8 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                                 fontFamily: 'Literata',
                                 fontSize: 14,
                                 color: selectedSupplierName != null
-                                    ? Colors.black87
-                                    : Colors.grey[500],
+                                    ? AppTheme.black87
+                                    : AppTheme.grey,
                               ),
                             ),
                           ),
@@ -593,13 +593,13 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                               child: Icon(
                                 Icons.close,
                                 size: 18,
-                                color: Colors.grey[500],
+                                color: AppTheme.grey,
                               ),
                             ),
                           if (selectedSupplierName == null)
                             Icon(
                               Icons.arrow_drop_down,
-                              color: Colors.grey[500],
+                              color: AppTheme.grey,
                             ),
                         ],
                       ),
@@ -710,7 +710,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                           Icon(
                             Icons.tune_rounded,
                             size: 16,
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -719,7 +719,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                               fontFamily: 'Literata',
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: Colors.grey[600],
+                              color: AppTheme.grey600,
                             ),
                           ),
                         ],
@@ -769,7 +769,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   _localizations.cancel,
                   style: const TextStyle(
                     fontFamily: 'Literata',
-                    color: Colors.grey,
+                    color: AppTheme.grey,
                   ),
                 ),
               ),
@@ -847,7 +847,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B4D3E),
+                  backgroundColor: AppTheme.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -856,7 +856,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   _localizations.update,
                   style: const TextStyle(
                     fontFamily: 'Literata',
-                    color: Colors.white,
+                    color: AppTheme.white,
                   ),
                 ),
               ),
@@ -885,16 +885,16 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
         labelStyle: TextStyle(
           fontFamily: 'Literata',
           fontSize: 13,
-          color: Colors.grey[600],
+          color: AppTheme.grey600,
         ),
         prefixIcon: Icon(icon, size: 20, color: AppColors.accent(context)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: AppTheme.grey300),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: AppTheme.grey300),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -919,7 +919,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: AppTheme.grey300),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -935,7 +935,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 10,
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                   ),
                 ),
                 Text(
@@ -946,7 +946,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     fontFamily: 'Literata',
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: date != null ? Colors.black87 : Colors.grey[400],
+                    color: date != null ? AppTheme.black87 : AppTheme.grey400,
                   ),
                 ),
               ],
@@ -977,7 +977,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
   /// Build a read-only custom field display widget
   Widget _buildCustomFieldDisplay(CustomColumn column, dynamic value) {
-    final primaryColor = const Color(0xFF1B4D3E);
+    final primaryColor = AppTheme.primary;
     String displayValue = '';
     IconData icon = Icons.text_fields_rounded;
 
@@ -1023,7 +1023,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: AppTheme.grey300),
         borderRadius: BorderRadius.circular(12),
         color: AppColors.scaffold(context),
       ),
@@ -1040,7 +1040,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 10,
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -1051,8 +1051,8 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                     color: displayValue != '-'
-                        ? Colors.black87
-                        : Colors.grey[400],
+                        ? AppTheme.black87
+                        : AppTheme.grey400,
                   ),
                 ),
               ],
@@ -1128,7 +1128,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                               _localizations.noSuppliersFound,
                               style: TextStyle(
                                 fontFamily: 'Literata',
-                                color: Colors.grey[500],
+                                color: AppTheme.grey,
                                 fontSize: 13,
                               ),
                             ),
@@ -1152,7 +1152,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                                         style: TextStyle(
                                           fontFamily: 'Literata',
                                           fontSize: 12,
-                                          color: Colors.grey[500],
+                                          color: AppTheme.grey,
                                         ),
                                       )
                                     : null,
@@ -1186,7 +1186,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
             style: const TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w700,
-              color: Colors.red,
+              color: AppTheme.red,
               fontSize: 16,
             ),
           ),
@@ -1199,16 +1199,16 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 14,
-                  color: Colors.grey[700],
+                  color: AppTheme.grey700,
                 ),
               ),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.05),
+                  color: AppTheme.red.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+                  border: Border.all(color: AppTheme.red.withValues(alpha: 0.2)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1227,7 +1227,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                       style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                       ),
                     ),
                     if (purchase.quantityRemaining <
@@ -1238,7 +1238,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                         style: const TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 11,
-                          color: Colors.orange,
+                          color: AppTheme.orange,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -1252,7 +1252,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 12,
-                  color: Colors.grey[500],
+                  color: AppTheme.grey,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -1265,7 +1265,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                 _localizations.cancel,
                 style: const TextStyle(
                   fontFamily: 'Literata',
-                  color: Colors.grey,
+                  color: AppTheme.grey,
                 ),
               ),
             ),
@@ -1302,14 +1302,14 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: AppTheme.red,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
               child: const Text(
                 'Delete',
-                style: TextStyle(fontFamily: 'Literata', color: Colors.white),
+                style: TextStyle(fontFamily: 'Literata', color: AppTheme.white),
               ),
             ),
           ],
@@ -1424,14 +1424,14 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(28),
                           border: Border.all(
-                            color: const Color(0xFFE0B84A),
+                            color: AppTheme.paletteFFE0B84A,
                             width: 1,
                           ),
                           gradient: LinearGradient(
                             colors: [
-                              Color.lerp(base, Colors.black, 0.34)!,
+                              Color.lerp(base, AppTheme.black, 0.34)!,
                               base,
-                              Color.lerp(base, Colors.white, 0.18)!,
+                              Color.lerp(base, AppTheme.white, 0.18)!,
                             ],
                           ),
                           boxShadow: [
@@ -1443,7 +1443,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                           ],
                         ),
                         child: Material(
-                          color: Colors.transparent,
+                          color: AppTheme.transparent,
                           borderRadius: BorderRadius.circular(28),
                           child: InkWell(
                             onTap: _navigateToAddPurchase,
@@ -1451,7 +1451,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.add, color: Colors.white, size: 22),
+                                Icon(Icons.add, color: AppTheme.white, size: 22),
                                 SizedBox(width: 6),
                                 Text(
                                   'New purchase',
@@ -1459,7 +1459,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                                     fontFamily: 'Literata',
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,
-                                    color: Colors.white,
+                                    color: AppTheme.white,
                                   ),
                                 ),
                               ],
@@ -1472,9 +1472,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                 ),
                 const SizedBox(width: 10),
                 Material(
-                  color: const Color(0xFF1B4D3E),
+                  color: AppTheme.primary,
                   shape: const CircleBorder(
-                    side: BorderSide(color: Color(0xFFE0B84A), width: 1),
+                    side: BorderSide(color: AppTheme.paletteFFE0B84A, width: 1),
                   ),
                   child: InkWell(
                     customBorder: const CircleBorder(),
@@ -1484,7 +1484,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                       height: 54,
                       child: Icon(
                         Icons.apps_rounded,
-                        color: Colors.white,
+                        color: AppTheme.white,
                         size: 24,
                       ),
                     ),
@@ -1697,13 +1697,13 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                 child: Container(
                   padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
+                    color: AppTheme.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
                     Icons.arrow_back_ios_rounded,
                     size: 20,
-                    color: Colors.white,
+                    color: AppTheme.white,
                   ),
                 ),
               ),
@@ -1718,7 +1718,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                         fontFamily: 'Literata',
                         fontWeight: FontWeight.w800,
                         fontSize: 22,
-                        color: Colors.white,
+                        color: AppTheme.white,
                       ),
                     ),
                     Text(
@@ -1727,7 +1727,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                         fontFamily: 'Literata',
                         fontWeight: FontWeight.w400,
                         fontSize: 12,
-                        color: Colors.white.withValues(alpha: 0.7),
+                        color: AppTheme.white.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -1735,7 +1735,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
               ),
               // Scan Invoice button
               Material(
-                color: Colors.transparent,
+                color: AppTheme.transparent,
                 child: InkWell(
                   onTap: () async {
                     final result = await Navigator.push(
@@ -1750,13 +1750,13 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   child: Container(
                     padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
+                      color: AppTheme.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
                       Icons.document_scanner_rounded,
                       size: 22,
-                      color: Colors.white,
+                      color: AppTheme.white,
                     ),
                   ),
                 ),
@@ -1764,7 +1764,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
               const SizedBox(width: 8),
               // Report button
               Material(
-                color: Colors.transparent,
+                color: AppTheme.transparent,
                 child: InkWell(
                   onTap: () {
                     debugPrint(
@@ -1794,13 +1794,13 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                 icon: Container(
                   padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
+                    color: AppTheme.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
                     Icons.settings_rounded,
                     size: 22,
-                    color: Colors.white,
+                    color: AppTheme.white,
                   ),
                 ),
                 shape: RoundedRectangleBorder(
@@ -1832,7 +1832,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                       children: [
                         Icon(
                           Icons.tune_rounded,
-                          color: Colors.grey[700],
+                          color: AppTheme.grey700,
                           size: 20,
                         ),
                         const SizedBox(width: 12),
@@ -1852,7 +1852,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                       children: [
                         Icon(
                           Icons.view_column_rounded,
-                          color: Colors.grey[700],
+                          color: AppTheme.grey700,
                           size: 20,
                         ),
                         const SizedBox(width: 12),
@@ -1940,7 +1940,7 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: Colors.grey[300],
+                        color: AppTheme.grey300,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -1984,7 +1984,7 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
                                   fontFamily: 'Literata',
                                   fontWeight: FontWeight.w500,
                                   fontSize: 14,
-                                  color: Colors.grey[600],
+                                  color: AppTheme.grey600,
                                 ),
                               ),
                           ],
@@ -2072,7 +2072,7 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w400,
                           fontSize: 13,
-                          color: Colors.grey[700],
+                          color: AppTheme.grey700,
                         ),
                       ),
                     ),
@@ -2086,7 +2086,7 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
                         Icon(
                           Icons.tune_rounded,
                           size: 16,
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -2095,7 +2095,7 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
                             fontFamily: 'Literata',
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                           ),
                         ),
                       ],
@@ -2146,7 +2146,7 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
                           icon: Icon(Icons.edit_rounded, size: 18),
                           label: Text('Edit'),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Color(0xFF1B4D3E),
+                            foregroundColor: AppTheme.primary,
                             side: BorderSide(color: AppColors.accent(context)),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
@@ -2165,8 +2165,8 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
                           ),
                           label: const Text('Delete'),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.red,
-                            side: const BorderSide(color: Colors.red),
+                            foregroundColor: AppTheme.red,
+                            side: const BorderSide(color: AppTheme.red),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -2219,7 +2219,7 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
               fontFamily: 'Literata',
               fontWeight: FontWeight.w500,
               fontSize: 14,
-              color: Colors.grey[600],
+              color: AppTheme.grey600,
             ),
           ),
           Text(
@@ -2228,7 +2228,7 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
               fontFamily: 'Literata',
               fontWeight: highlight ? FontWeight.w800 : FontWeight.w600,
               fontSize: highlight ? 16 : 14,
-              color: highlight ? const Color(0xFF1B4D3E) : Colors.grey[800],
+              color: highlight ? AppTheme.primary : AppTheme.grey800,
             ),
           ),
         ],

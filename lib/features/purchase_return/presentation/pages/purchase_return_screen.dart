@@ -399,7 +399,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                       onTap: () => Navigator.pop(context),
                       child: const Icon(
                         Icons.arrow_back_rounded,
-                        color: Colors.white,
+                        color: AppTheme.white,
                         size: 24,
                       ),
                     ),
@@ -411,7 +411,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                           Text(
                             _localizations.purchaseReturn,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppTheme.white,
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'Literata',
@@ -420,7 +420,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                           Text(
                             _localizations.returnStockToSupplier,
                             style: const TextStyle(
-                              color: Colors.white70,
+                              color: AppTheme.white70,
                               fontSize: 11,
                               fontFamily: 'Literata',
                             ),
@@ -435,7 +435,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
+                        color: AppTheme.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -445,7 +445,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                             _isPartialMode
                                 ? Icons.tune_rounded
                                 : Icons.all_inclusive_rounded,
-                            color: Colors.white,
+                            color: AppTheme.white,
                             size: 14,
                           ),
                           const SizedBox(width: 6),
@@ -458,7 +458,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                                   ? _localizations.partial
                                   : _localizations.fullBatch,
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: AppTheme.white,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 fontFamily: 'Literata',
@@ -474,10 +474,10 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
               // Tab bar
               TabBar(
                 controller: _tabController,
-                indicatorColor: Colors.white,
+                indicatorColor: AppTheme.white,
                 indicatorWeight: 3,
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.white54,
+                labelColor: AppTheme.white,
+                unselectedLabelColor: AppTheme.white54,
                 labelStyle: const TextStyle(
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w700,
@@ -536,7 +536,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -563,13 +563,13 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
               decoration: BoxDecoration(
                 color: AppColors.scaffold(context),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!),
+                border: Border.all(color: AppTheme.grey300),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.local_shipping_outlined,
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                     size: 20,
                   ),
                   const SizedBox(width: 10),
@@ -582,15 +582,15 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                         fontFamily: 'Literata',
                         fontSize: 14,
                         color: _selectedSupplier != null
-                            ? const Color(0xFF1B4D3E)
-                            : Colors.grey[500],
+                            ? AppTheme.primary
+                            : AppTheme.grey,
                         fontWeight: _selectedSupplier != null
                             ? FontWeight.w600
                             : FontWeight.normal,
                       ),
                     ),
                   ),
-                  Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
+                  Icon(Icons.keyboard_arrow_down, color: AppTheme.grey600),
                 ],
               ),
             ),
@@ -604,13 +604,13 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
               decoration: BoxDecoration(
                 color: AppColors.scaffold(context),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!),
+                border: Border.all(color: AppTheme.grey300),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.calendar_today_outlined,
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                     size: 18,
                   ),
                   SizedBox(width: 10),
@@ -640,7 +640,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
       lastDate: DateTime.now(),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(primary: Color(0xFF1B4D3E)),
+          colorScheme: const ColorScheme.light(primary: AppTheme.primary),
         ),
         child: child!,
       ),
@@ -655,7 +655,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (_) => _buildSupplierPickerSheet(),
     );
   }
@@ -689,7 +689,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: AppTheme.grey300,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -715,7 +715,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                       decoration: BoxDecoration(
                         color: AppColors.scaffold(context),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey[300]!),
+                        border: Border.all(color: AppTheme.grey300),
                       ),
                       child: TextField(
                         controller: _supplierSearchCtrl,
@@ -725,10 +725,10 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                         ),
                         decoration: InputDecoration(
                           hintText: _localizations.searchSupplier,
-                          hintStyle: TextStyle(color: Colors.grey[400]),
+                          hintStyle: TextStyle(color: AppTheme.grey400),
                           prefixIcon: Icon(
                             Icons.search,
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                             size: 20,
                           ),
                           border: InputBorder.none,
@@ -755,7 +755,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                         child: Text(
                           _localizations.noSuppliersFound,
                           style: TextStyle(
-                            color: Colors.grey[500],
+                            color: AppTheme.grey,
                             fontFamily: 'Literata',
                           ),
                         ),
@@ -775,7 +775,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                             ),
                             leading: CircleAvatar(
                               backgroundColor: isSelected
-                                  ? const Color(0xFF1B4D3E)
+                                  ? AppTheme.primary
                                   : AppColors.border(context),
                               child: Text(
                                 (s['name'] as String).isNotEmpty
@@ -783,8 +783,8 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                                     : 'S',
                                 style: TextStyle(
                                   color: isSelected
-                                      ? Colors.white
-                                      : Colors.grey[700],
+                                      ? AppTheme.white
+                                      : AppTheme.grey700,
                                   fontWeight: FontWeight.w700,
                                   fontFamily: 'Literata',
                                 ),
@@ -796,8 +796,8 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w600,
                                 color: isSelected
-                                    ? const Color(0xFF1B4D3E)
-                                    : Colors.black87,
+                                    ? AppTheme.primary
+                                    : AppTheme.black87,
                               ),
                             ),
                             subtitle: Text(
@@ -805,7 +805,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                               style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 12,
-                                color: Colors.grey[600],
+                                color: AppTheme.grey600,
                               ),
                             ),
                             trailing: isSelected
@@ -834,10 +834,10 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
       decoration: BoxDecoration(
         color: AppColors.card(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: AppTheme.grey300),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: AppTheme.black.withValues(alpha: 0.03),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -848,15 +848,15 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
         style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
         decoration: InputDecoration(
           hintText: _localizations.searchProducts,
-          hintStyle: TextStyle(color: Colors.grey[400]),
-          prefixIcon: Icon(Icons.search, color: Colors.grey[600], size: 20),
+          hintStyle: TextStyle(color: AppTheme.grey400),
+          prefixIcon: Icon(Icons.search, color: AppTheme.grey600, size: 20),
           suffixIcon: _productSearchCtrl.text.isNotEmpty
               ? GestureDetector(
                   onTap: () {
                     _productSearchCtrl.clear();
                     setState(() {});
                   },
-                  child: Icon(Icons.close, color: Colors.grey[600], size: 18),
+                  child: Icon(Icons.close, color: AppTheme.grey600, size: 18),
                 )
               : null,
           border: InputBorder.none,
@@ -894,7 +894,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
               Icon(
                 Icons.inventory_2_outlined,
                 size: 48,
-                color: Colors.grey[300],
+                color: AppTheme.grey300,
               ),
               SizedBox(height: 12),
               Text(
@@ -902,7 +902,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                     ? _localizations.noReturnableProducts
                     : _localizations.noProductsMatchSearch,
                 style: TextStyle(
-                  color: Colors.grey[500],
+                  color: AppTheme.grey,
                   fontFamily: 'Literata',
                   fontSize: 14,
                 ),
@@ -920,7 +920,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -947,7 +947,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                 Text(
                   '${filtered.length} ${_localizations.itemsLabel}',
                   style: TextStyle(
-                    color: Colors.grey[500],
+                    color: AppTheme.grey,
                     fontSize: 12,
                     fontFamily: 'Literata',
                   ),
@@ -982,8 +982,8 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
-        color: Colors.red[50],
-        child: Icon(Icons.delete_outline, color: Colors.red[400]),
+        color: AppTheme.red50,
+        child: Icon(Icons.delete_outline, color: AppTheme.error),
       ),
       onDismissed: (_) => _removeProduct(product.productId),
       child: GestureDetector(
@@ -1016,7 +1016,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                             product.companyName,
                             style: TextStyle(
                               fontSize: 11,
-                              color: Colors.grey[600],
+                              color: AppTheme.grey600,
                               fontFamily: 'Literata',
                             ),
                           ),
@@ -1048,15 +1048,15 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                   // Available
                   _buildMiniTag(
                     'Avail: ${product.quantityRemaining}',
-                    Colors.blue[50]!,
-                    Colors.blue[700]!,
+                    AppTheme.blue50,
+                    AppTheme.blue700,
                   ),
                   const SizedBox(width: 8),
                   // Purchase rate
                   _buildMiniTag(
                     '₹${product.purchasePrice.toStringAsFixed(0)}/unit',
-                    Colors.green[50]!,
-                    Colors.green[700]!,
+                    AppTheme.green50,
+                    AppTheme.green700,
                   ),
                   Spacer(),
                   // Amount
@@ -1081,7 +1081,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                     style: TextStyle(
                       fontSize: 12,
                       fontFamily: 'Literata',
-                      color: Colors.grey,
+                      color: AppTheme.grey,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -1109,21 +1109,21 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                         fontFamily: 'Literata',
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: hasError ? Colors.red : const Color(0xFF1B4D3E),
+                        color: hasError ? AppTheme.red : AppTheme.primary,
                       ),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: hasError ? Colors.red[50] : AppColors.scaffold(context),
+                        fillColor: hasError ? AppTheme.red50 : AppColors.scaffold(context),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(
-                            color: hasError ? Colors.red : Colors.grey[300]!,
+                            color: hasError ? AppTheme.red : AppTheme.grey300,
                           ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(
-                            color: hasError ? Colors.red : Colors.grey[300]!,
+                            color: hasError ? AppTheme.red : AppTheme.grey300,
                           ),
                         ),
                         contentPadding: EdgeInsets.zero,
@@ -1185,7 +1185,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                   child: Text(
                     'Max qty: ${product.quantityRemaining}',
                     style: const TextStyle(
-                      color: Colors.red,
+                      color: AppTheme.red,
                       fontSize: 11,
                       fontFamily: 'Literata',
                     ),
@@ -1226,7 +1226,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
         decoration: BoxDecoration(
           color: AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey[300]!),
+          border: Border.all(color: AppTheme.grey300),
         ),
         child: Icon(icon, size: 16, color: AppColors.accent(context)),
       ),
@@ -1246,7 +1246,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (_) => Container(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.6,
@@ -1265,7 +1265,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppTheme.grey300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -1291,7 +1291,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                           '${batches.length} batches available',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                             fontFamily: 'Literata',
                           ),
                         ),
@@ -1319,11 +1319,11 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                   return Container(
                     padding: EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: priceDiffers ? Colors.amber[50] : AppColors.scaffold(context),
+                      color: priceDiffers ? AppTheme.amber50 : AppColors.scaffold(context),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: priceDiffers
-                            ? Colors.amber[300]!
+                            ? AppTheme.amber300
                             : AppColors.border(context)!,
                       ),
                     ),
@@ -1346,14 +1346,14 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                               Icon(
                                 Icons.warning_amber_rounded,
                                 size: 16,
-                                color: Colors.amber[700],
+                                color: AppTheme.amber700,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 'Price differs',
                                 style: TextStyle(
                                   fontSize: 10,
-                                  color: Colors.amber[800],
+                                  color: AppTheme.amber800,
                                   fontFamily: 'Literata',
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -1364,7 +1364,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                               DateFormat('dd MMM yy').format(b.purchaseDate),
                               style: TextStyle(
                                 fontSize: 11,
-                                color: Colors.grey[600],
+                                color: AppTheme.grey600,
                                 fontFamily: 'Literata',
                               ),
                             ),
@@ -1375,20 +1375,20 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                           children: [
                             _buildMiniTag(
                               'Qty: ${b.quantityRemaining}',
-                              Colors.blue[50]!,
-                              Colors.blue[700]!,
+                              AppTheme.blue50,
+                              AppTheme.blue700,
                             ),
                             const SizedBox(width: 8),
                             _buildMiniTag(
                               '₹${b.purchasePrice.toStringAsFixed(0)}',
-                              Colors.green[50]!,
-                              Colors.green[700]!,
+                              AppTheme.green50,
+                              AppTheme.green700,
                             ),
                             const SizedBox(width: 8),
                             _buildMiniTag(
                               'Sell: ₹${b.sellingPrice.toStringAsFixed(0)}',
-                              Colors.purple[50]!,
-                              Colors.purple[700]!,
+                              AppTheme.purple50,
+                              AppTheme.purple700,
                             ),
                           ],
                         ),
@@ -1414,7 +1414,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -1439,16 +1439,16 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
             style: TextStyle(fontFamily: 'Literata', fontSize: 14),
             decoration: InputDecoration(
               hintText: 'Enter reason for return (optional)',
-              hintStyle: TextStyle(color: Colors.grey[400]),
+              hintStyle: TextStyle(color: AppTheme.grey400),
               filled: true,
               fillColor: AppColors.scaffold(context),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderSide: BorderSide(color: AppTheme.grey300),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderSide: BorderSide(color: AppTheme.grey300),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -1474,8 +1474,8 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF1B4D3E).withValues(alpha: 0.08),
-            Color(0xFF1B4D3E).withValues(alpha: 0.03),
+            AppTheme.primary.withValues(alpha: 0.08),
+            AppTheme.primary.withValues(alpha: 0.03),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -1535,7 +1535,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
             label,
             style: TextStyle(
               fontSize: 11,
-              color: Colors.grey[600],
+              color: AppTheme.grey600,
               fontFamily: 'Literata',
             ),
           ),
@@ -1553,7 +1553,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
         color: AppColors.card(context),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: AppTheme.black.withValues(alpha: 0.08),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
@@ -1569,8 +1569,8 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                 ? _showConfirmationDialog
                 : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1B4D3E),
-              disabledBackgroundColor: Colors.grey[300],
+              backgroundColor: AppTheme.primary,
+              disabledBackgroundColor: AppTheme.grey300,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
               ),
@@ -1582,7 +1582,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                     height: 24,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation(Colors.white),
+                      valueColor: AlwaysStoppedAnimation(AppTheme.white),
                     ),
                   )
                 : const Row(
@@ -1590,14 +1590,14 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                     children: [
                       Icon(
                         Icons.keyboard_return_rounded,
-                        color: Colors.white,
+                        color: AppTheme.white,
                         size: 20,
                       ),
                       SizedBox(width: 10),
                       Text(
                         'Process Return',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppTheme.white,
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                           fontFamily: 'Literata',
@@ -1679,7 +1679,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                       ),
                       SizedBox(width: 10),
@@ -1711,14 +1711,14 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
               _buildImpactRow(
                 'Supplier Credit',
                 '₹${impact.supplierCreditAdjustment.toStringAsFixed(0)}',
-                Colors.blue[700]!,
+                AppTheme.blue700,
               ),
               _buildImpactRow(
                 'Inventory Value',
                 '${impact.inventoryValueChange >= 0 ? '+' : ''}₹${impact.inventoryValueChange.toStringAsFixed(0)}',
                 impact.inventoryValueChange >= 0
-                    ? Colors.green[700]!
-                    : Colors.red[700]!,
+                    ? AppTheme.green700
+                    : AppTheme.red700,
               ),
               // Stock after return
               if (impact.stockAfterReturn.isNotEmpty) ...[
@@ -1733,7 +1733,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                   return _buildImpactRow(
                     productName,
                     'Stock: ${e.value}',
-                    Colors.grey[700]!,
+                    AppTheme.grey700,
                   );
                 }),
               ],
@@ -1765,7 +1765,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(ctx, true),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1B4D3E),
+                        backgroundColor: AppTheme.primary,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -1776,7 +1776,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                          color: AppTheme.white,
                         ),
                       ),
                     ),
@@ -1801,7 +1801,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
             style: TextStyle(
               fontFamily: 'Literata',
               fontSize: 12,
-              color: Colors.grey[600],
+              color: AppTheme.grey600,
             ),
             overflow: TextOverflow.ellipsis,
           ),
@@ -1851,7 +1851,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 fontFamily: 'Literata',
-                color: Colors.grey[700],
+                color: AppTheme.grey700,
               ),
             ),
             const SizedBox(height: 6),
@@ -1860,7 +1860,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
               style: TextStyle(
                 fontSize: 13,
                 fontFamily: 'Literata',
-                color: Colors.grey[500],
+                color: AppTheme.grey,
               ),
             ),
           ],
@@ -1888,7 +1888,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: Offset(0, 2),
           ),
@@ -1929,7 +1929,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                       DateFormat('dd MMM yyyy').format(ret.returnDate),
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                         fontFamily: 'Literata',
                       ),
                     ),
@@ -1950,8 +1950,8 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                   ),
                   _buildMiniTag(
                     '${ret.totalItems} items',
-                    Colors.blue[50]!,
-                    Colors.blue[700]!,
+                    AppTheme.blue50,
+                    AppTheme.blue700,
                   ),
                 ],
               ),
@@ -1970,7 +1970,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                   Icon(
                     Icons.comment_outlined,
                     size: 14,
-                    color: Colors.grey[500],
+                    color: AppTheme.grey,
                   ),
                   const SizedBox(width: 6),
                   Expanded(
@@ -1979,7 +1979,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                       style: TextStyle(
                         fontSize: 12,
                         fontFamily: 'Literata',
-                        color: Colors.grey[700],
+                        color: AppTheme.grey700,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -2004,7 +2004,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                           style: TextStyle(
                             fontSize: 12,
                             fontFamily: 'Literata',
-                            color: Colors.grey[700],
+                            color: AppTheme.grey700,
                           ),
                         ),
                         const Spacer(),
@@ -2013,7 +2013,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                           style: TextStyle(
                             fontSize: 11,
                             fontFamily: 'Literata',
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                           ),
                         ),
                       ],
@@ -2026,7 +2026,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                 style: TextStyle(
                   fontSize: 11,
                   fontFamily: 'Literata',
-                  color: Colors.grey[500],
+                  color: AppTheme.grey,
                   fontStyle: FontStyle.italic,
                 ),
               ),

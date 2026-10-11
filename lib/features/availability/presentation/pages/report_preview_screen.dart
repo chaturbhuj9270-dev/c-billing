@@ -270,7 +270,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
         color: AppColors.appBar(context),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -284,12 +284,12 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
             icon: Container(
               padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
+                color: AppTheme.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
                 Icons.arrow_back_ios_new_rounded,
-                color: Colors.white,
+                color: AppTheme.white,
                 size: 18,
               ),
             ),
@@ -303,7 +303,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                 Text(
                   _localizations.reportPreview,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: AppTheme.white,
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                     fontFamily: 'Literata',
@@ -317,14 +317,14 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                           ? Icons.picture_as_pdf_rounded
                           : Icons.table_chart_rounded,
                       size: 14,
-                      color: Colors.white.withValues(alpha: 0.7),
+                      color: AppTheme.white.withValues(alpha: 0.7),
                     ),
                     SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         widget.reportTitle,
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
+                          color: AppTheme.white.withValues(alpha: 0.7),
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           fontFamily: 'Literata',
@@ -343,16 +343,16 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: widget.selectedFormat == ReportFormat.pdf
-                    ? [const Color(0xFFE53935), const Color(0xFFC62828)]
-                    : [const Color(0xFF43A047), const Color(0xFF2E7D32)],
+                    ? [AppTheme.red600, AppTheme.red800]
+                    : [AppTheme.green600, AppTheme.green800],
               ),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
                   color:
                       (widget.selectedFormat == ReportFormat.pdf
-                              ? Colors.red
-                              : Colors.green)
+                              ? AppTheme.red
+                              : AppTheme.green)
                           .withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
@@ -362,7 +362,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
             child: Text(
               widget.selectedFormat == ReportFormat.pdf ? 'PDF' : 'CSV',
               style: const TextStyle(
-                color: Colors.white,
+                color: AppTheme.white,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 fontFamily: 'Literata',
@@ -385,8 +385,8 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Color(0xFF1B4D3E).withValues(alpha: 0.08),
-            Color(0xFF1B4D3E).withValues(alpha: 0.04),
+            AppTheme.primary.withValues(alpha: 0.08),
+            AppTheme.primary.withValues(alpha: 0.04),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -403,17 +403,17 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                color: _allSelected ? const Color(0xFF1B4D3E) : Colors.white,
+                color: _allSelected ? AppTheme.primary : AppTheme.white,
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
                   color: _allSelected
-                      ? Color(0xFF1B4D3E)
-                      : Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                      ? AppTheme.primary
+                      : AppTheme.primary.withValues(alpha: 0.3),
                   width: 2,
                 ),
               ),
               child: _allSelected
-                  ? Icon(Icons.check, color: Colors.white, size: 16)
+                  ? Icon(Icons.check, color: AppTheme.white, size: 16)
                   : _noneSelected
                   ? null
                   : Container(
@@ -466,7 +466,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
-                color: Colors.white,
+                color: AppTheme.white,
               ),
             ),
           ),
@@ -501,7 +501,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
             _localizations.noItemsToDisplay,
             style: TextStyle(
               fontSize: 16,
-              color: Colors.grey[600],
+              color: AppTheme.grey600,
               fontFamily: 'Literata',
               fontWeight: FontWeight.w600,
             ),
@@ -511,7 +511,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
             _localizations.addProductsToGenerateReport,
             style: TextStyle(
               fontSize: 13,
-              color: Colors.grey[400],
+              color: AppTheme.grey400,
               fontFamily: 'Literata',
             ),
           ),
@@ -580,15 +580,15 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
-                ? const Color(0xFF1B4D3E).withValues(alpha: 0.4)
-                : Colors.grey.withValues(alpha: 0.15),
+                ? AppTheme.primary.withValues(alpha: 0.4)
+                : AppTheme.grey.withValues(alpha: 0.15),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
               color: isSelected
-                  ? const Color(0xFF1B4D3E).withValues(alpha: 0.08)
-                  : Colors.black.withValues(alpha: 0.03),
+                  ? AppTheme.primary.withValues(alpha: 0.08)
+                  : AppTheme.black.withValues(alpha: 0.03),
               blurRadius: isSelected ? 12 : 6,
               offset: const Offset(0, 3),
             ),
@@ -604,8 +604,8 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? const Color(0xFF1B4D3E).withValues(alpha: 0.04)
-                      : Colors.grey.withValues(alpha: 0.02),
+                      ? AppTheme.primary.withValues(alpha: 0.04)
+                      : AppTheme.grey.withValues(alpha: 0.02),
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(15),
                   ),
@@ -618,20 +618,20 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                       height: 28,
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? const Color(0xFF1B4D3E)
-                            : Colors.transparent,
+                            ? AppTheme.primary
+                            : AppTheme.transparent,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: isSelected
-                              ? const Color(0xFF1B4D3E)
-                              : Colors.grey.withValues(alpha: 0.3),
+                              ? AppTheme.primary
+                              : AppTheme.grey.withValues(alpha: 0.3),
                           width: 2,
                         ),
                       ),
                       child: isSelected
                           ? Icon(
                               Icons.check_rounded,
-                              color: Colors.white,
+                              color: AppTheme.white,
                               size: 18,
                             )
                           : null,
@@ -684,7 +684,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                               style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 12,
-                                color: Colors.grey[600],
+                                color: AppTheme.grey600,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -771,19 +771,19 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                             _buildPriceChip(
                               'Purchase',
                               '₹${numberFormat.format(product.purchasePrice)}',
-                              Colors.orange,
+                              AppTheme.orange,
                             ),
                           if (_visibleColumnIds.contains('selling_price'))
                             _buildPriceChip(
                               'Selling',
                               '₹${numberFormat.format(product.salesPrice)}',
-                              Colors.blue,
+                              AppTheme.blue,
                             ),
                           if (_visibleColumnIds.contains('stock_value'))
                             _buildPriceChip(
                               'Value',
                               '₹${numberFormat.format(product.getStockValue())}',
-                              const Color(0xFF1B4D3E),
+                              AppTheme.primary,
                             ),
                         ]),
                       ),
@@ -852,20 +852,20 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.grey.withValues(alpha: 0.08),
+        color: AppTheme.grey.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: Colors.grey[600]),
+          Icon(icon, size: 14, color: AppTheme.grey600),
           const SizedBox(width: 6),
           Text(
             '$label: ',
             style: TextStyle(
               fontFamily: 'Literata',
               fontSize: 11,
-              color: Colors.grey[500],
+              color: AppTheme.grey,
             ),
           ),
           Text(
@@ -874,7 +874,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
               fontFamily: 'Literata',
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF333333),
+              color: AppTheme.paletteFF333333,
             ),
           ),
         ],
@@ -997,7 +997,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 10,
-                    color: Colors.grey[500],
+                    color: AppTheme.grey,
                   ),
                 ),
               ],
@@ -1041,7 +1041,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                 ),
                 disabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
+                  borderSide: BorderSide(color: AppTheme.grey300),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -1049,7 +1049,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                 ),
                 hintText: '-',
                 hintStyle: TextStyle(
-                  color: Colors.grey[400],
+                  color: AppTheme.grey400,
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w400,
                 ),
@@ -1074,7 +1074,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: AppTheme.black.withValues(alpha: 0.08),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
@@ -1086,7 +1086,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
             // Cancel button
             Expanded(
               child: Material(
-                color: Colors.transparent,
+                color: AppTheme.transparent,
                 child: InkWell(
                   onTap: _isGenerating
                       ? null
@@ -1129,7 +1129,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
             Expanded(
               flex: 2,
               child: Material(
-                color: Colors.transparent,
+                color: AppTheme.transparent,
                 child: InkWell(
                   onTap: _isGenerating || _noneSelected
                       ? null
@@ -1141,19 +1141,17 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                     decoration: BoxDecoration(
                       gradient: _isGenerating || _noneSelected
                           ? LinearGradient(
-                              colors: [Colors.grey[400]!, Colors.grey[500]!],
+                              colors: [AppTheme.grey400, AppTheme.grey],
                             )
                           : const LinearGradient(
-                              colors: [Color(0xFF2E7D4A), Color(0xFF1B4D3E)],
+                              colors: [AppTheme.paletteFF2E7D4A, AppTheme.primary],
                             ),
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: _isGenerating || _noneSelected
                           ? null
                           : [
                               BoxShadow(
-                                color: const Color(
-                                  0xFF1B4D3E,
-                                ).withValues(alpha: 0.4),
+                                color: AppTheme.primary.withValues(alpha: 0.4),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),
@@ -1168,7 +1166,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2.5,
-                              color: Colors.white,
+                              color: AppTheme.white,
                             ),
                           )
                         else
@@ -1176,7 +1174,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                             widget.selectedFormat == ReportFormat.pdf
                                 ? Icons.picture_as_pdf_rounded
                                 : Icons.table_chart_rounded,
-                            color: Colors.white,
+                            color: AppTheme.white,
                             size: 20,
                           ),
                         const SizedBox(width: 10),
@@ -1188,7 +1186,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
-                            color: Colors.white,
+                            color: AppTheme.white,
                           ),
                         ),
                       ],
@@ -1214,8 +1212,8 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
   }
 
   Color _getStockColor(int stock) {
-    if (stock == 0) return const Color(0xFFE53935);
-    if (stock <= 10) return const Color(0xFFFB8C00);
-    return const Color(0xFF43A047);
+    if (stock == 0) return AppTheme.red600;
+    if (stock <= 10) return AppTheme.orange600;
+    return AppTheme.green600;
   }
 }

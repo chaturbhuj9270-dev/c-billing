@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../offline/controllers/expense_offline_controller.dart';
 import '../../offline/entities/expense_entity.dart';
 import '../../data/services/expense_sync_service.dart';
+import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
@@ -213,12 +214,12 @@ class _ExpensesPageState extends State<ExpensesPage>
                       icon: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
+                          color: AppTheme.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
                           Icons.arrow_back_ios_new_rounded,
-                          color: Colors.white,
+                          color: AppTheme.white,
                           size: 18,
                         ),
                       ),
@@ -227,7 +228,7 @@ class _ExpensesPageState extends State<ExpensesPage>
                   const Text(
                     'Expenses',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppTheme.white,
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Literata',
@@ -242,12 +243,12 @@ class _ExpensesPageState extends State<ExpensesPage>
                     icon: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
+                        color: AppTheme.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
                         Icons.sync_rounded,
-                        color: Colors.white,
+                        color: AppTheme.white,
                         size: 18,
                       ),
                     ),
@@ -263,10 +264,10 @@ class _ExpensesPageState extends State<ExpensesPage>
             child: Container(
               height: 44,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
+                color: AppTheme.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: AppTheme.white.withValues(alpha: 0.2),
                   width: 1,
                 ),
               ),
@@ -277,20 +278,20 @@ class _ExpensesPageState extends State<ExpensesPage>
                   _loadExpenses();
                 },
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: AppTheme.white,
                   fontSize: 14,
                   fontFamily: 'Literata',
                 ),
                 decoration: InputDecoration(
                   hintText: 'Search expenses...',
                   hintStyle: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.6),
+                    color: AppTheme.white.withValues(alpha: 0.6),
                     fontSize: 14,
                     fontFamily: 'Literata',
                   ),
                   prefixIcon: Icon(
                     Icons.search_rounded,
-                    color: Colors.white.withValues(alpha: 0.6),
+                    color: AppTheme.white.withValues(alpha: 0.6),
                     size: 20,
                   ),
                   border: InputBorder.none,
@@ -321,8 +322,8 @@ class _ExpensesPageState extends State<ExpensesPage>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFF1B4D3E),
-                  Color(0xFF1B4D3E).withValues(alpha: 0.85),
+                  AppTheme.primary,
+                  AppTheme.primary.withValues(alpha: 0.85),
                 ],
               ),
               borderRadius: BorderRadius.circular(20),
@@ -343,12 +344,12 @@ class _ExpensesPageState extends State<ExpensesPage>
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: AppTheme.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
                         Icons.account_balance_wallet_rounded,
-                        color: Colors.white,
+                        color: AppTheme.white,
                         size: 22,
                       ),
                     ),
@@ -368,7 +369,7 @@ class _ExpensesPageState extends State<ExpensesPage>
                           _getDateFilterLabel(),
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors.white.withValues(alpha: 0.6),
+                            color: AppTheme.white.withValues(alpha: 0.6),
                             fontFamily: 'Literata',
                           ),
                         ),
@@ -382,7 +383,7 @@ class _ExpensesPageState extends State<ExpensesPage>
                   style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: AppTheme.white,
                     fontFamily: 'Literata',
                   ),
                 ),
@@ -391,7 +392,7 @@ class _ExpensesPageState extends State<ExpensesPage>
                   '${_expenses.length} transactions',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: AppTheme.white.withValues(alpha: 0.7),
                     fontFamily: 'Literata',
                   ),
                 ),
@@ -455,18 +456,18 @@ class _ExpensesPageState extends State<ExpensesPage>
               padding: EdgeInsets.all(cardPadding),
               decoration: BoxDecoration(
                 color: _selectedCategory == category
-                    ? const Color(0xFF1B4D3E).withValues(alpha: 0.1)
-                    : Colors.white,
+                    ? AppTheme.primary.withValues(alpha: 0.1)
+                    : AppTheme.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: _selectedCategory == category
-                      ? const Color(0xFF1B4D3E)
-                      : Colors.grey.shade200,
+                      ? AppTheme.primary
+                      : AppTheme.grey200,
                   width: _selectedCategory == category ? 2 : 1,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
+                    color: AppTheme.black.withValues(alpha: 0.03),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -512,7 +513,7 @@ class _ExpensesPageState extends State<ExpensesPage>
                           style: TextStyle(
                             fontSize: labelFontSize,
                             fontWeight: FontWeight.w600,
-                            color: Colors.grey[700],
+                            color: AppTheme.grey700,
                             fontFamily: 'Literata',
                           ),
                           maxLines: 1,
@@ -638,24 +639,13 @@ class _ExpensesPageState extends State<ExpensesPage>
   }
 
   Future<void> _showCustomDatePicker() async {
-    final picked = await showDateRangePicker(
+    final picked = await showAppRangeCalendar(
       context: context,
       firstDate: DateTime(2020),
       lastDate: DateTime.now().add(const Duration(days: 365)),
       initialDateRange: _customStartDate != null && _customEndDate != null
           ? DateTimeRange(start: _customStartDate!, end: _customEndDate!)
           : null,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF1B4D3E),
-              onPrimary: Colors.white,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (picked != null) {
@@ -707,7 +697,7 @@ class _ExpensesPageState extends State<ExpensesPage>
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey[600],
+                      color: AppTheme.grey600,
                       fontFamily: 'Literata',
                     ),
                   ),
@@ -783,7 +773,7 @@ class _ExpensesPageState extends State<ExpensesPage>
               'Start tracking your business expenses\nby adding your first expense',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: AppTheme.grey600,
                 fontFamily: 'Literata',
                 height: 1.4,
               ),
@@ -793,8 +783,8 @@ class _ExpensesPageState extends State<ExpensesPage>
             ElevatedButton.icon(
               onPressed: _showAddExpenseSheet,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1B4D3E),
-                foregroundColor: Colors.white,
+                backgroundColor: AppTheme.primary,
+                foregroundColor: AppTheme.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 14,
@@ -822,13 +812,13 @@ class _ExpensesPageState extends State<ExpensesPage>
   Widget _buildAddExpenseFAB() {
     return FloatingActionButton.extended(
       onPressed: _showAddExpenseSheet,
-      backgroundColor: const Color(0xFF1B4D3E),
+      backgroundColor: AppTheme.primary,
       elevation: 4,
-      icon: const Icon(Icons.add_rounded, color: Colors.white),
+      icon: const Icon(Icons.add_rounded, color: AppTheme.white),
       label: const Text(
         'Add Expense',
         style: TextStyle(
-          color: Colors.white,
+          color: AppTheme.white,
           fontWeight: FontWeight.w600,
           fontFamily: 'Literata',
         ),
@@ -867,7 +857,7 @@ class _ExpensesPageState extends State<ExpensesPage>
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (context) => const _AddExpenseSheet(),
     );
 
@@ -900,7 +890,7 @@ class _ExpensesPageState extends State<ExpensesPage>
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (context) => _AddExpenseSheet(expense: expense),
     );
 
@@ -929,7 +919,7 @@ class _ExpensesPageState extends State<ExpensesPage>
   void _showExpenseDetails(ExpenseEntity expense) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (context) => _ExpenseDetailsSheet(expense: expense),
     );
   }
@@ -947,7 +937,7 @@ class _ExpensesPageState extends State<ExpensesPage>
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text('Delete', style: TextStyle(color: AppTheme.red)),
           ),
         ],
       ),
@@ -998,7 +988,7 @@ class _DateFilterChip extends StatelessWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(
+                    color: AppTheme.black.withValues(
                       alpha: AppColors.isDark(context) ? 0.35 : 0.15,
                     ),
                     blurRadius: 8,
@@ -1046,11 +1036,11 @@ class _CategoryFilterChip extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFF1B4D3E).withValues(alpha: 0.1)
+              ? AppTheme.primary.withValues(alpha: 0.1)
               : AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey.shade200,
+            color: isSelected ? AppTheme.primary : AppTheme.grey200,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -1064,7 +1054,7 @@ class _CategoryFilterChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[600],
+                color: isSelected ? AppTheme.primary : AppTheme.grey600,
                 fontFamily: 'Literata',
               ),
             ),
@@ -1101,12 +1091,12 @@ class _ExpenseCard extends StatelessWidget {
       background: Container(
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
-          color: Colors.red.shade400,
+          color: AppTheme.error,
           borderRadius: BorderRadius.circular(16),
         ),
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
-        child: Icon(Icons.delete_rounded, color: Colors.white),
+        child: Icon(Icons.delete_rounded, color: AppTheme.white),
       ),
       child: GestureDetector(
         onTap: onTap,
@@ -1118,7 +1108,7 @@ class _ExpenseCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
+                color: AppTheme.black.withValues(alpha: 0.03),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -1177,7 +1167,7 @@ class _ExpenseCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.grey[600],
+                                color: AppTheme.grey600,
                                 fontFamily: 'Literata',
                               ),
                             ),
@@ -1189,7 +1179,7 @@ class _ExpenseCard extends StatelessWidget {
                                 expense.vendorName!,
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: Colors.grey[500],
+                                  color: AppTheme.grey,
                                   fontFamily: 'Literata',
                                 ),
                                 maxLines: 1,
@@ -1212,7 +1202,7 @@ class _ExpenseCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: Colors.red,
+                        color: AppTheme.red,
                         fontFamily: 'Literata',
                       ),
                     ),
@@ -1221,7 +1211,7 @@ class _ExpenseCard extends StatelessWidget {
                         expense.paymentMethod!,
                         style: TextStyle(
                           fontSize: 10,
-                          color: Colors.grey[500],
+                          color: AppTheme.grey,
                           fontFamily: 'Literata',
                         ),
                       ),
@@ -1319,7 +1309,7 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppTheme.grey300,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1418,13 +1408,13 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                             ),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? const Color(0xFF1B4D3E)
+                                  ? AppTheme.primary
                                   : AppColors.chipFill(context),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: isSelected
-                                    ? const Color(0xFF1B4D3E)
-                                    : Colors.grey.shade300,
+                                    ? AppTheme.primary
+                                    : AppTheme.grey300,
                               ),
                             ),
                             child: Row(
@@ -1441,8 +1431,8 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     color: isSelected
-                                        ? Colors.white
-                                        : Colors.grey[700],
+                                        ? AppTheme.white
+                                        : AppTheme.grey700,
                                     fontFamily: 'Literata',
                                   ),
                                 ),
@@ -1464,14 +1454,14 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                         decoration: BoxDecoration(
                           color: AppColors.scaffold(context),
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: Colors.grey.shade200),
+                          border: Border.all(color: AppTheme.grey200),
                         ),
                         child: Row(
                           children: [
                             Icon(
                               Icons.calendar_today_rounded,
                               size: 18,
-                              color: Colors.grey[600],
+                              color: AppTheme.grey600,
                             ),
                             const SizedBox(width: 10),
                             Text(
@@ -1504,7 +1494,7 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                             ),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? const Color(0xFF1B4D3E)
+                                  ? AppTheme.primary
                                   : AppColors.chipFill(context),
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -1514,8 +1504,8 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: isSelected
-                                    ? Colors.white
-                                    : Colors.grey[700],
+                                    ? AppTheme.white
+                                    : AppTheme.grey700,
                                 fontFamily: 'Literata',
                               ),
                             ),
@@ -1564,7 +1554,7 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                                 'Mark if this expense repeats monthly',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: Colors.grey[600],
+                                  color: AppTheme.grey600,
                                   fontFamily: 'Literata',
                                 ),
                               ),
@@ -1574,7 +1564,7 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                         Switch(
                           value: _isRecurring,
                           onChanged: (v) => setState(() => _isRecurring = v),
-                          activeThumbColor: const Color(0xFF1B4D3E),
+                          activeThumbColor: AppTheme.primary,
                         ),
                       ],
                     ),
@@ -1587,8 +1577,8 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                       child: ElevatedButton(
                         onPressed: _saveExpense,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1B4D3E),
-                          foregroundColor: Colors.white,
+                          backgroundColor: AppTheme.primary,
+                          foregroundColor: AppTheme.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -1622,7 +1612,7 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
         style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: Colors.grey[700],
+          color: AppTheme.grey700,
           fontFamily: 'Literata',
         ),
       ),
@@ -1632,16 +1622,16 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(color: Colors.grey[400], fontFamily: 'Literata'),
+      hintStyle: TextStyle(color: AppTheme.grey400, fontFamily: 'Literata'),
       filled: true,
       fillColor: AppColors.scaffold(context),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: Colors.grey.shade200),
+        borderSide: BorderSide(color: AppTheme.grey200),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: Colors.grey.shade200),
+        borderSide: BorderSide(color: AppTheme.grey200),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
@@ -1661,8 +1651,8 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF1B4D3E),
-              onPrimary: Colors.white,
+              primary: AppTheme.primary,
+              onPrimary: AppTheme.white,
             ),
           ),
           child: child!,
@@ -1728,7 +1718,7 @@ class _ExpenseDetailsSheet extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppTheme.grey300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -1770,7 +1760,7 @@ class _ExpenseDetailsSheet extends StatelessWidget {
                         expense.category.displayName,
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                           fontFamily: 'Literata',
                         ),
                       ),
@@ -1782,7 +1772,7 @@ class _ExpenseDetailsSheet extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
-                    color: Colors.red,
+                    color: AppTheme.red,
                     fontFamily: 'Literata',
                   ),
                 ),

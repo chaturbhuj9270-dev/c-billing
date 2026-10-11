@@ -45,7 +45,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   late List<Animation<double>> _menuItemFadeAnimations;
   Offset? _dropOrigin;
   final GlobalKey _panelKey = GlobalKey();
-  static const _accent = Color(0xFF1B4D3E);
+  static const _accent = AppTheme.primary;
 
   // Menu items with icons and colors
   final List<_MenuItem> _menuItems = [
@@ -405,12 +405,12 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.14),
+                color: AppTheme.black.withValues(alpha: 0.14),
                 blurRadius: 28,
                 offset: const Offset(6, 0),
               ),
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
+                color: AppTheme.black.withValues(alpha: 0.06),
                 blurRadius: 10,
                 offset: const Offset(2, 0),
               ),
@@ -551,7 +551,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF14352C),
+                color: AppTheme.headerDarkStart,
                 border: Border.all(color: AppTheme.mint, width: 1.6),
               ),
               child: Text(
@@ -590,7 +590,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF14352C),
+                      color: AppTheme.headerDarkStart,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -798,12 +798,12 @@ class _ThemeDialog extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF5E35B1).withValues(alpha: 0.12),
+              color: AppTheme.deepPurple600.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               Icons.brightness_6_rounded,
-              color: Color(0xFF5E35B1),
+              color: AppTheme.deepPurple600,
               size: 24,
             ),
           ),
@@ -869,7 +869,7 @@ class _ThemeDialog extends StatelessWidget {
     required String subtitle,
   }) {
     final isSelected = currentMode == mode;
-    const accent = Color(0xFF5E35B1);
+    const accent = AppTheme.deepPurple600;
 
     return GestureDetector(
       onTap: () {
@@ -882,8 +882,8 @@ class _ThemeDialog extends StatelessWidget {
           color: isSelected
               ? accent.withValues(alpha: 0.12)
               : AppColors.isDark(context)
-              ? Colors.white.withValues(alpha: 0.06)
-              : Colors.grey.withValues(alpha: 0.05),
+              ? AppTheme.white.withValues(alpha: 0.06)
+              : AppTheme.grey.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? accent : AppColors.divider(context),
@@ -933,7 +933,7 @@ class _ThemeDialog extends StatelessWidget {
                   color: accent,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check, color: Colors.white, size: 16),
+                child: const Icon(Icons.check, color: AppTheme.white, size: 16),
               ),
           ],
         ),
@@ -960,12 +960,12 @@ class _LanguageDialog extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFFFF6F00).withValues(alpha: 0.1),
+              color: AppTheme.amber900.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.language_rounded,
-              color: Color(0xFFFF6F00),
+              color: AppTheme.amber900,
               size: 24,
             ),
           ),
@@ -997,7 +997,7 @@ class _LanguageDialog extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
           child: Text(
             AppLocalizations(LanguageService.instance.currentLanguage).cancel,
-            style: const TextStyle(color: Colors.grey, fontFamily: 'Literata'),
+            style: const TextStyle(color: AppTheme.grey, fontFamily: 'Literata'),
           ),
         ),
       ],
@@ -1021,13 +1021,13 @@ class _LanguageDialog extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFFFF6F00).withValues(alpha: 0.1)
-              : Colors.grey.withValues(alpha: 0.05),
+              ? AppTheme.amber900.withValues(alpha: 0.1)
+              : AppTheme.grey.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? const Color(0xFFFF6F00)
-                : Colors.grey.withValues(alpha: 0.2),
+                ? AppTheme.amber900
+                : AppTheme.grey.withValues(alpha: 0.2),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -1048,15 +1048,15 @@ class _LanguageDialog extends StatelessWidget {
                           : FontWeight.w500,
                       fontFamily: 'Literata',
                       color: isSelected
-                          ? const Color(0xFFFF6F00)
-                          : Colors.black87,
+                          ? AppTheme.amber900
+                          : AppTheme.black87,
                     ),
                   ),
                   Text(
                     nativeName,
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.grey[600],
+                      color: AppTheme.grey600,
                       fontFamily: 'Literata',
                     ),
                   ),
@@ -1067,10 +1067,10 @@ class _LanguageDialog extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: const BoxDecoration(
-                  color: Color(0xFFFF6F00),
+                  color: AppTheme.amber900,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check, color: Colors.white, size: 16),
+                child: const Icon(Icons.check, color: AppTheme.white, size: 16),
               ),
           ],
         ),
@@ -1112,12 +1112,12 @@ class _SettingsDialogState extends State<_SettingsDialog> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF78909C).withValues(alpha: 0.1),
+              color: AppTheme.blueGrey400.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.settings_rounded,
-              color: Color(0xFF78909C),
+              color: AppTheme.blueGrey400,
               size: 24,
             ),
           ),
@@ -1141,14 +1141,14 @@ class _SettingsDialogState extends State<_SettingsDialog> {
             decoration: BoxDecoration(
               color: widget.canUseBiometrics
                   ? (_biometricEnabled
-                        ? const Color(0xFF2E7D32).withValues(alpha: 0.1)
-                        : Colors.grey.withValues(alpha: 0.05))
-                  : Colors.grey.withValues(alpha: 0.1),
+                        ? AppTheme.green800.withValues(alpha: 0.1)
+                        : AppTheme.grey.withValues(alpha: 0.05))
+                  : AppTheme.grey.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: widget.canUseBiometrics && _biometricEnabled
-                    ? const Color(0xFF2E7D32)
-                    : Colors.grey.withValues(alpha: 0.2),
+                    ? AppTheme.green800
+                    : AppTheme.grey.withValues(alpha: 0.2),
                 width: _biometricEnabled ? 2 : 1,
               ),
             ),
@@ -1158,15 +1158,15 @@ class _SettingsDialogState extends State<_SettingsDialog> {
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: widget.canUseBiometrics
-                        ? const Color(0xFF2E7D32).withValues(alpha: 0.1)
-                        : Colors.grey.withValues(alpha: 0.1),
+                        ? AppTheme.green800.withValues(alpha: 0.1)
+                        : AppTheme.grey.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     Icons.fingerprint,
                     color: widget.canUseBiometrics
-                        ? const Color(0xFF2E7D32)
-                        : Colors.grey,
+                        ? AppTheme.green800
+                        : AppTheme.grey,
                     size: 24,
                   ),
                 ),
@@ -1184,8 +1184,8 @@ class _SettingsDialogState extends State<_SettingsDialog> {
                           fontWeight: FontWeight.w600,
                           fontFamily: 'Literata',
                           color: widget.canUseBiometrics
-                              ? Colors.black87
-                              : Colors.grey,
+                              ? AppTheme.black87
+                              : AppTheme.grey,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -1199,7 +1199,7 @@ class _SettingsDialogState extends State<_SettingsDialog> {
                               ).biometricsNotAvailable,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                           fontFamily: 'Literata',
                         ),
                       ),
@@ -1216,7 +1216,7 @@ class _SettingsDialogState extends State<_SettingsDialog> {
                           widget.onBiometricToggle(value);
                         }
                       : null,
-                  activeThumbColor: const Color(0xFF2E7D32),
+                  activeThumbColor: AppTheme.green800,
                 ),
               ],
             ),
@@ -1229,7 +1229,7 @@ class _SettingsDialogState extends State<_SettingsDialog> {
           child: Text(
             AppLocalizations(LanguageService.instance.currentLanguage).close,
             style: const TextStyle(
-              color: Color(0xFF78909C),
+              color: AppTheme.blueGrey400,
               fontFamily: 'Literata',
               fontWeight: FontWeight.w600,
             ),

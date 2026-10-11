@@ -199,7 +199,7 @@ class _PaymentScreenState extends State<PaymentScreen>
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(color: Color(0xFFE8E8E4)),
+        decoration: const BoxDecoration(color: AppTheme.paletteFFE8E8E4),
         child: SafeArea(
           top: false,
           child: FadeTransition(
@@ -257,14 +257,14 @@ class _PaymentScreenState extends State<PaymentScreen>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
+                color: AppTheme.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                border: Border.all(color: AppTheme.white.withValues(alpha: 0.2)),
               ),
               child: const Icon(
                 Icons.arrow_back_ios_new,
                 size: 18,
-                color: Colors.white,
+                color: AppTheme.white,
               ),
             ),
           ),
@@ -275,7 +275,7 @@ class _PaymentScreenState extends State<PaymentScreen>
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: Colors.white,
+                color: AppTheme.white,
                 fontFamily: 'Literata',
                 letterSpacing: 1,
               ),
@@ -300,13 +300,13 @@ class _PaymentScreenState extends State<PaymentScreen>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                const Color(0xFF1B4D3E).withValues(alpha: 0.15),
-                const Color(0xFF2E7D32).withValues(alpha: 0.08),
+                AppTheme.primary.withValues(alpha: 0.15),
+                AppTheme.green800.withValues(alpha: 0.08),
               ],
             ),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.5),
+              color: AppTheme.white.withValues(alpha: 0.5),
               width: 1.5,
             ),
           ),
@@ -360,7 +360,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: AppTheme.white,
                     fontFamily: 'Literata',
                     letterSpacing: 0.5,
                   ),
@@ -433,7 +433,7 @@ class _PaymentScreenState extends State<PaymentScreen>
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.red[700],
+                color: AppTheme.red700,
                 fontFamily: 'Literata',
                 height: 1.35,
               ),
@@ -479,10 +479,10 @@ class _PaymentScreenState extends State<PaymentScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF8E1),
+        color: AppTheme.amber50,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFFFE082).withValues(alpha: 0.5),
+          color: AppTheme.amber200.withValues(alpha: 0.5),
           width: 1,
         ),
       ),
@@ -495,13 +495,13 @@ class _PaymentScreenState extends State<PaymentScreen>
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFB300).withValues(alpha: 0.2),
+                  color: AppTheme.amber600.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.info_outline,
                   size: 16,
-                  color: Color(0xFFFF8F00),
+                  color: AppTheme.amber800,
                 ),
               ),
               const SizedBox(width: 10),
@@ -510,7 +510,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFFE65100),
+                  color: AppTheme.orange900,
                   fontFamily: 'Literata',
                 ),
               ),
@@ -548,8 +548,8 @@ class _PaymentScreenState extends State<PaymentScreen>
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      const Color(0xFF1B4D3E).withValues(alpha: 0.95),
-                      const Color(0xFF2E7D32).withValues(alpha: 0.88),
+                      AppTheme.primary.withValues(alpha: 0.95),
+                      AppTheme.green800.withValues(alpha: 0.88),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(14),
@@ -562,7 +562,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                   ],
                 ),
                 child: Material(
-                  color: Colors.transparent,
+                  color: AppTheme.transparent,
                   child: InkWell(
                     onTap: canPay ? _startPlayPurchase : null,
                     borderRadius: BorderRadius.circular(14),
@@ -577,14 +577,14 @@ class _PaymentScreenState extends State<PaymentScreen>
                               height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                color: AppTheme.white,
                               ),
                             )
                           else
                             const Icon(
                               Icons.payment,
                               size: 22,
-                              color: Colors.white,
+                              color: AppTheme.white,
                             ),
                           const SizedBox(width: 10),
                           Text(
@@ -592,7 +592,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                                 ? _localizations.processingPayment
                                 : _localizations.payWithGooglePlay,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppTheme.white,
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               fontFamily: 'Literata',
@@ -612,7 +612,7 @@ class _PaymentScreenState extends State<PaymentScreen>
           width: double.infinity,
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.6),
+              color: AppTheme.white.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: AppColors.accentSoft(context, 0.3),
@@ -620,7 +620,7 @@ class _PaymentScreenState extends State<PaymentScreen>
               ),
             ),
             child: Material(
-              color: Colors.transparent,
+              color: AppTheme.transparent,
               child: InkWell(
                 onTap: _isPaying ? null : _restorePurchases,
                 borderRadius: BorderRadius.circular(14),
@@ -656,7 +656,7 @@ class _PaymentScreenState extends State<PaymentScreen>
           width: double.infinity,
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.6),
+              color: AppTheme.white.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: AppColors.accentSoft(context, 0.3),
@@ -664,7 +664,7 @@ class _PaymentScreenState extends State<PaymentScreen>
               ),
             ),
             child: Material(
-              color: Colors.transparent,
+              color: AppTheme.transparent,
               child: InkWell(
                 onTap: _callSupport,
                 borderRadius: BorderRadius.circular(14),
@@ -708,9 +708,9 @@ class _PaymentScreenState extends State<PaymentScreen>
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                const Color(0xFF1B4D3E).withValues(alpha: 0.05),
-                const Color(0xFF1B4D3E),
-                const Color(0xFF1B4D3E).withValues(alpha: 0.05),
+                AppTheme.primary.withValues(alpha: 0.05),
+                AppTheme.primary,
+                AppTheme.primary.withValues(alpha: 0.05),
               ],
             ),
           ),

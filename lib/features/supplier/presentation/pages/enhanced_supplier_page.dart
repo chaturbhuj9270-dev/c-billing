@@ -280,7 +280,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (ctx) => _buildSupplierFormSheet(ctx),
     );
   }
@@ -299,7 +299,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (ctx) => _buildSupplierFormSheet(ctx),
     );
   }
@@ -335,7 +335,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
                         width: 40,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: Colors.grey[300],
+                          color: AppTheme.grey300,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -423,8 +423,8 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
                                 ? null
                                 : () => _saveSupplier(ctx, setSheetState),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF1B4D3E),
-                              foregroundColor: Colors.white,
+                              backgroundColor: AppTheme.primary,
+                              foregroundColor: AppTheme.white,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -438,7 +438,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
                                       valueColor: AlwaysStoppedAnimation(
-                                        Colors.white,
+                                        AppTheme.white,
                                       ),
                                     ),
                                   )
@@ -461,8 +461,8 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
                                   ? null
                                   : () => _deleteSupplier(ctx, setSheetState),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.red,
-                                side: const BorderSide(color: Colors.red),
+                                foregroundColor: AppTheme.red,
+                                side: const BorderSide(color: AppTheme.red),
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 14,
                                 ),
@@ -517,7 +517,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
               ),
             ),
             if (isRequired)
-              const Text(' *', style: TextStyle(color: Colors.red)),
+              const Text(' *', style: TextStyle(color: AppTheme.red)),
           ],
         ),
         const SizedBox(height: 8),
@@ -529,28 +529,28 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
           maxLength: maxLength,
           readOnly: isReadOnly,
           style: TextStyle(
-            color: isReadOnly ? Colors.grey[600] : null,
+            color: isReadOnly ? AppTheme.grey600 : null,
             fontFamily: 'Literata',
           ),
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: Colors.grey[600]),
+            prefixIcon: Icon(icon, color: AppTheme.grey600),
             suffixIcon: isReadOnly
                 ? Tooltip(
                     message: 'Auto-generated',
                     child: Icon(
                       Icons.lock_outline,
                       size: 18,
-                      color: Colors.grey[500],
+                      color: AppTheme.grey,
                     ),
                   )
                 : null,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderSide: BorderSide(color: AppTheme.grey300),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderSide: BorderSide(color: AppTheme.grey300),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -669,7 +669,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.red),
             child: const Text('Delete'),
           ),
         ],
@@ -725,7 +725,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
   void _showContextMenu(Map<String, dynamic> supplier) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (ctx) => Container(
         decoration: BoxDecoration(
           color: AppColors.card(context),
@@ -744,7 +744,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: AppTheme.grey300,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -768,7 +768,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
                 _buildContextMenuItem(
                   icon: Icons.delete_rounded,
                   label: 'Delete',
-                  color: Colors.red,
+                  color: AppTheme.red,
                   onTap: () {
                     Navigator.pop(ctx);
                     _firstNameController.text = supplier['firstName'] ?? '';
@@ -793,13 +793,13 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
     Color? color,
   }) {
     return ListTile(
-      leading: Icon(icon, color: color ?? const Color(0xFF1B4D3E)),
+      leading: Icon(icon, color: color ?? AppTheme.primary),
       title: Text(
         label,
         style: TextStyle(
           fontFamily: 'Literata',
           fontWeight: FontWeight.w600,
-          color: color ?? Colors.grey[800],
+          color: color ?? AppTheme.grey800,
         ),
       ),
       onTap: onTap,
@@ -897,7 +897,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
                   },
                   child: Icon(
                     Icons.arrow_back_rounded,
-                    color: Colors.white,
+                    color: AppTheme.white,
                     size: 24,
                   ),
                 ),
@@ -910,7 +910,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
                       Text(
                         _localizations.mySuppliers,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppTheme.white,
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           fontFamily: 'Literata',
@@ -920,7 +920,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
                       Text(
                         _localizations.manageYourVendors,
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
+                          color: AppTheme.white.withValues(alpha: 0.7),
                           fontSize: 11,
                           fontFamily: 'Literata',
                           height: 1.2,
@@ -956,9 +956,9 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
       ),
       child: FloatingActionButton(
         onPressed: _showAddSupplierSheet,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppTheme.transparent,
         elevation: 0,
-        child: const Icon(Icons.add, color: Colors.white),
+        child: const Icon(Icons.add, color: AppTheme.white),
       ),
     );
   }

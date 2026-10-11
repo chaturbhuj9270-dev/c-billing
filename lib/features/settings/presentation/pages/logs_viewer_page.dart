@@ -138,8 +138,8 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+              backgroundColor: AppTheme.red,
+              foregroundColor: AppTheme.white,
             ),
             child: Text(
               _localizations.clear,
@@ -154,13 +154,13 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
   Color _getLevelColor(LogLevel level) {
     switch (level) {
       case LogLevel.debug:
-        return Colors.grey;
+        return AppTheme.grey;
       case LogLevel.info:
-        return Colors.blue;
+        return AppTheme.blue;
       case LogLevel.warning:
-        return Colors.orange;
+        return AppTheme.orange;
       case LogLevel.error:
-        return Colors.red;
+        return AppTheme.red;
     }
   }
 
@@ -174,8 +174,8 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
           style: TextStyle(fontFamily: 'Literata', fontWeight: FontWeight.w700),
         ),
         backgroundColor: AppColors.appBar(context),
-        surfaceTintColor: Colors.transparent,
-        foregroundColor: Colors.white,
+        surfaceTintColor: AppTheme.transparent,
+        foregroundColor: AppTheme.white,
         elevation: 0,
         actions: [
           // Auto-scroll toggle
@@ -223,7 +223,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
               color: AppColors.card(context),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: AppTheme.black.withValues(alpha: 0.05),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -237,31 +237,31 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                     _buildStatChip(
                       _localizations.total,
                       _logger.logs.length,
-                      Colors.grey,
+                      AppTheme.grey,
                     ),
                     const SizedBox(width: 8),
                     _buildStatChip(
                       _localizations.debug,
                       _logger.getLogsByLevel(LogLevel.debug).length,
-                      Colors.grey,
+                      AppTheme.grey,
                     ),
                     const SizedBox(width: 8),
                     _buildStatChip(
                       _localizations.info,
                       _logger.getLogsByLevel(LogLevel.info).length,
-                      Colors.blue,
+                      AppTheme.blue,
                     ),
                     const SizedBox(width: 8),
                     _buildStatChip(
                       _localizations.warn,
                       _logger.getLogsByLevel(LogLevel.warning).length,
-                      Colors.orange,
+                      AppTheme.orange,
                     ),
                     const SizedBox(width: 8),
                     _buildStatChip(
                       _localizations.error,
                       _logger.getLogsByLevel(LogLevel.error).length,
-                      Colors.red,
+                      AppTheme.red,
                     ),
                   ],
                 ),
@@ -279,7 +279,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                         ),
                         decoration: InputDecoration(
                           hintText: _localizations.searchLogs,
-                          hintStyle: TextStyle(color: Colors.grey[500]),
+                          hintStyle: TextStyle(color: AppTheme.grey),
                           prefixIcon: const Icon(Icons.search, size: 20),
                           suffixIcon: _searchController.text.isNotEmpty
                               ? IconButton(
@@ -368,7 +368,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                         Icon(
                           Icons.description_outlined,
                           size: 64,
-                          color: Colors.grey[400],
+                          color: AppTheme.grey400,
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -376,7 +376,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 16,
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                           ),
                         ),
                       ],
@@ -442,7 +442,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
         border: Border.all(color: color.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: AppTheme.black.withValues(alpha: 0.03),
             blurRadius: 4,
             offset: const Offset(0, 1),
           ),
@@ -480,7 +480,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
               style: const TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 12,
-                color: Colors.black87,
+                color: AppTheme.black87,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -491,7 +491,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 10,
-                color: Colors.grey[600],
+                color: AppTheme.grey600,
               ),
             ),
           ],
@@ -518,7 +518,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                       fontFamily: 'Literata',
                       fontWeight: FontWeight.w600,
                       fontSize: 11,
-                      color: Colors.red,
+                      color: AppTheme.red,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -527,7 +527,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                     style: const TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 11,
-                      color: Colors.red,
+                      color: AppTheme.red,
                     ),
                   ),
                 ],
@@ -539,7 +539,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                       fontFamily: 'Literata',
                       fontWeight: FontWeight.w600,
                       fontSize: 11,
-                      color: Colors.orange,
+                      color: AppTheme.orange,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -548,7 +548,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                     style: const TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 10,
-                      color: Colors.orange,
+                      color: AppTheme.orange,
                     ),
                   ),
                 ],

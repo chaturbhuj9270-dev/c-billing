@@ -10,6 +10,7 @@ import '../../data/services/report_service.dart';
 import '../../data/services/report_pdf_generator.dart';
 import '../../domain/models/report_filter_model.dart';
 import '../../domain/models/report_result_model.dart';
+import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
@@ -24,8 +25,8 @@ import 'package:c_billing/core/theme/app_theme.dart';
 //   ✅ Loading overlay, empty states, snackbars
 // ──────────────────────────────────────────────────────────
 
-const _kGreen = Color(0xFF1B4D3E);
-const _kGreenDark = Color(0xFF0F3B2F);
+const _kGreen = AppTheme.primary;
+const _kGreenDark = AppTheme.primaryDark;
 
 class ReportPage extends StatefulWidget {
   const ReportPage({super.key});
@@ -166,19 +167,13 @@ class _ReportPageState extends State<ReportPage>
   }
 
   Future<void> _pickCustomDateRange() async {
-    final picked = await showDateRangePicker(
+    final picked = await showAppRangeCalendar(
       context: context,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
       initialDateRange: DateTimeRange(
         start: _filter.startDate,
         end: _filter.endDate,
-      ),
-      builder: (ctx, child) => Theme(
-        data: Theme.of(
-          ctx,
-        ).copyWith(colorScheme: const ColorScheme.light(primary: _kGreen)),
-        child: child!,
       ),
     );
     if (picked != null) {
@@ -381,7 +376,7 @@ class _ReportPageState extends State<ReportPage>
       pinned: true,
       leading: GestureDetector(
         onTap: () => Navigator.pop(context),
-        child: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+        child: const Icon(Icons.arrow_back_rounded, color: AppTheme.white),
       ),
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
@@ -395,7 +390,7 @@ class _ReportPageState extends State<ReportPage>
                   const Text(
                     'Reports',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppTheme.white,
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
                       fontFamily: 'Literata',
@@ -405,7 +400,7 @@ class _ReportPageState extends State<ReportPage>
                   Text(
                     'Generate • Save • Share',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
+                      color: AppTheme.white.withValues(alpha: 0.7),
                       fontSize: 12,
                       fontFamily: 'Literata',
                     ),
@@ -422,7 +417,7 @@ class _ReportPageState extends State<ReportPage>
             fontSize: 17,
             fontWeight: FontWeight.w800,
             fontFamily: 'Literata',
-            color: Colors.white,
+            color: AppTheme.white,
           ),
         ),
       ),
@@ -492,7 +487,7 @@ class _ReportPageState extends State<ReportPage>
                         color: selected ? _kGreen : AppColors.chipFill(context),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: selected ? _kGreen : Colors.grey[300]!,
+                          color: selected ? _kGreen : AppTheme.grey300,
                         ),
                       ),
                       child: Row(
@@ -501,7 +496,7 @@ class _ReportPageState extends State<ReportPage>
                           Icon(
                             icons[i],
                             size: 14,
-                            color: selected ? Colors.white : Colors.grey[600],
+                            color: selected ? AppTheme.white : AppTheme.grey600,
                           ),
                           const SizedBox(width: 5),
                           Text(
@@ -510,7 +505,7 @@ class _ReportPageState extends State<ReportPage>
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               fontFamily: 'Literata',
-                              color: selected ? Colors.white : Colors.grey[700],
+                              color: selected ? AppTheme.white : AppTheme.grey700,
                             ),
                           ),
                         ],
@@ -531,14 +526,14 @@ class _ReportPageState extends State<ReportPage>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.event, size: 14, color: Colors.grey[600]),
+                Icon(Icons.event, size: 14, color: AppTheme.grey600),
                 const SizedBox(width: 6),
                 Text(
                   '${DateFormat('dd MMM yyyy').format(_filter.startDate)} — ${DateFormat('dd MMM yyyy').format(_filter.endDate)}',
                   style: TextStyle(
                     fontSize: 12,
                     fontFamily: 'Literata',
-                    color: Colors.grey[700],
+                    color: AppTheme.grey700,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -575,13 +570,13 @@ class _ReportPageState extends State<ReportPage>
         _buildActiveChip(
           'Expired',
           Icons.warning_amber_rounded,
-          color: Colors.red,
+          color: AppTheme.red,
         ),
       );
     }
     if (_filter.expiringThisWeek) {
       chips.add(
-        _buildActiveChip('Expiring Soon', Icons.schedule, color: Colors.orange),
+        _buildActiveChip('Expiring Soon', Icons.schedule, color: AppTheme.orange),
       );
     }
     if (_filter.returnedOnly) {
@@ -592,7 +587,7 @@ class _ReportPageState extends State<ReportPage>
         _buildActiveChip(
           'Low Stock',
           Icons.trending_down,
-          color: Colors.orange,
+          color: AppTheme.orange,
         ),
       );
     }
@@ -687,7 +682,7 @@ class _ReportPageState extends State<ReportPage>
                       child: const Text(
                         'Active',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppTheme.white,
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           fontFamily: 'Literata',
@@ -698,7 +693,7 @@ class _ReportPageState extends State<ReportPage>
                   AnimatedRotation(
                     turns: _showAdvanced ? 0.5 : 0,
                     duration: const Duration(milliseconds: 200),
-                    child: Icon(Icons.expand_more, color: Colors.grey[600]),
+                    child: Icon(Icons.expand_more, color: AppTheme.grey600),
                   ),
                 ],
               ),
@@ -792,7 +787,7 @@ class _ReportPageState extends State<ReportPage>
                 padding: EdgeInsets.symmetric(horizontal: 8),
                 child: Text(
                   '—',
-                  style: TextStyle(color: Colors.grey, fontFamily: 'Literata'),
+                  style: TextStyle(color: AppTheme.grey, fontFamily: 'Literata'),
                 ),
               ),
               Expanded(child: _buildPriceField(_maxPriceCtrl, 'Max Price')),
@@ -835,7 +830,7 @@ class _ReportPageState extends State<ReportPage>
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _kGreen,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppTheme.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -870,8 +865,8 @@ class _ReportPageState extends State<ReportPage>
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: _kGreen,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: Colors.grey[300],
+          foregroundColor: AppTheme.white,
+          disabledBackgroundColor: AppTheme.grey300,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -931,7 +926,7 @@ class _ReportPageState extends State<ReportPage>
                         style: TextStyle(
                           fontSize: 11,
                           fontFamily: 'Literata',
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                       ),
                     ],
@@ -944,13 +939,13 @@ class _ReportPageState extends State<ReportPage>
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.1),
+                      color: AppTheme.green.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.check_circle, size: 12, color: Colors.green),
+                        Icon(Icons.check_circle, size: 12, color: AppTheme.green),
                         SizedBox(width: 3),
                         Text(
                           'Saved',
@@ -958,7 +953,7 @@ class _ReportPageState extends State<ReportPage>
                             fontSize: 10,
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w600,
-                            color: Colors.green,
+                            color: AppTheme.green,
                           ),
                         ),
                       ],
@@ -978,7 +973,7 @@ class _ReportPageState extends State<ReportPage>
                       icon: Icons.shopping_cart_outlined,
                       label: 'Total Purchase',
                       value: _fmtAmt(r.totalPurchaseAmount),
-                      color: const Color(0xFF0277BD),
+                      color: AppTheme.lightBlue800,
                     ),
                     const SizedBox(width: 10),
                     _buildStatTile(
@@ -996,14 +991,14 @@ class _ReportPageState extends State<ReportPage>
                       icon: Icons.trending_up_rounded,
                       label: 'Profit',
                       value: _fmtAmt(r.totalProfit),
-                      color: const Color(0xFF2E7D32),
+                      color: AppTheme.green800,
                     ),
                     const SizedBox(width: 10),
                     _buildStatTile(
                       icon: Icons.trending_down_rounded,
                       label: 'Loss',
                       value: _fmtAmt(r.totalLoss),
-                      color: const Color(0xFFC62828),
+                      color: AppTheme.red800,
                     ),
                   ],
                 ),
@@ -1015,7 +1010,7 @@ class _ReportPageState extends State<ReportPage>
                       label: 'Expired',
                       value: '${r.expiredCount} items',
                       sub: _fmtAmt(r.expiredStockValue),
-                      color: const Color(0xFFD32F2F),
+                      color: AppTheme.red700,
                     ),
                     const SizedBox(width: 10),
                     _buildStatTile(
@@ -1023,7 +1018,7 @@ class _ReportPageState extends State<ReportPage>
                       label: 'Returned',
                       value: '${r.returnedCount} items',
                       sub: _fmtAmt(r.returnedStockValue),
-                      color: const Color(0xFFE65100),
+                      color: AppTheme.orange900,
                     ),
                   ],
                 ),
@@ -1063,7 +1058,7 @@ class _ReportPageState extends State<ReportPage>
                     style: TextStyle(
                       fontSize: 11,
                       fontFamily: 'Literata',
-                      color: Colors.grey[600],
+                      color: AppTheme.grey600,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -1137,7 +1132,7 @@ class _ReportPageState extends State<ReportPage>
                       style: TextStyle(
                         fontSize: 11,
                         fontFamily: 'Literata',
-                        color: Colors.grey,
+                        color: AppTheme.grey,
                       ),
                     ),
                   ],
@@ -1153,7 +1148,7 @@ class _ReportPageState extends State<ReportPage>
                 child: _buildActionBtn(
                   icon: Icons.save_alt_rounded,
                   label: _savedFilePath != null ? 'Saved ✓' : 'Save',
-                  color: const Color(0xFF0277BD),
+                  color: AppTheme.lightBlue800,
                   onTap: _savedFilePath != null ? null : _saveLocally,
                   filled: _savedFilePath == null,
                 ),
@@ -1163,7 +1158,7 @@ class _ReportPageState extends State<ReportPage>
                 child: _buildActionBtn(
                   icon: Icons.share_rounded,
                   label: 'Share',
-                  color: const Color(0xFF7B1FA2),
+                  color: AppTheme.purple700,
                   onTap: _shareReport,
                   filled: true,
                 ),
@@ -1210,9 +1205,9 @@ class _ReportPageState extends State<ReportPage>
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: color,
-                foregroundColor: Colors.white,
+                foregroundColor: AppTheme.white,
                 disabledBackgroundColor: color.withValues(alpha: 0.5),
-                disabledForegroundColor: Colors.white70,
+                disabledForegroundColor: AppTheme.white70,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1245,7 +1240,7 @@ class _ReportPageState extends State<ReportPage>
 
   Widget _buildLoadingOverlay() {
     return Container(
-      color: Colors.black.withValues(alpha: 0.3),
+      color: AppTheme.black.withValues(alpha: 0.3),
       child: Center(
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 32, vertical: 24),
@@ -1254,7 +1249,7 @@ class _ReportPageState extends State<ReportPage>
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
+                color: AppTheme.black.withValues(alpha: 0.15),
                 blurRadius: 20,
                 offset: const Offset(0, 4),
               ),
@@ -1287,7 +1282,7 @@ class _ReportPageState extends State<ReportPage>
                 style: TextStyle(
                   fontSize: 12,
                   fontFamily: 'Literata',
-                  color: Colors.grey[500],
+                  color: AppTheme.grey,
                 ),
               ),
             ],
@@ -1307,7 +1302,7 @@ class _ReportPageState extends State<ReportPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -1324,7 +1319,7 @@ class _ReportPageState extends State<ReportPage>
         fontSize: 12,
         fontWeight: FontWeight.w700,
         fontFamily: 'Literata',
-        color: Colors.grey[700],
+        color: AppTheme.grey700,
       ),
     );
   }
@@ -1335,11 +1330,11 @@ class _ReportPageState extends State<ReportPage>
       decoration: BoxDecoration(
         color: AppColors.scaffold(context),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: AppTheme.grey300),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: Colors.grey[600]),
+          Icon(icon, size: 18, color: AppTheme.grey600),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -1347,12 +1342,12 @@ class _ReportPageState extends State<ReportPage>
               style: TextStyle(
                 fontSize: 13,
                 fontFamily: 'Literata',
-                color: hasValue ? _kGreen : Colors.grey[500],
+                color: hasValue ? _kGreen : AppTheme.grey,
                 fontWeight: hasValue ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
           ),
-          Icon(Icons.keyboard_arrow_down, color: Colors.grey[500], size: 20),
+          Icon(Icons.keyboard_arrow_down, color: AppTheme.grey, size: 20),
         ],
       ),
     );
@@ -1373,13 +1368,13 @@ class _ReportPageState extends State<ReportPage>
           color: active ? _kGreen.withValues(alpha: 0.12) : AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: active ? _kGreen.withValues(alpha: 0.4) : Colors.grey[300]!,
+            color: active ? _kGreen.withValues(alpha: 0.4) : AppTheme.grey300,
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: active ? _kGreen : Colors.grey[600]),
+            Icon(icon, size: 14, color: active ? _kGreen : AppTheme.grey600),
             const SizedBox(width: 6),
             Text(
               label,
@@ -1387,7 +1382,7 @@ class _ReportPageState extends State<ReportPage>
                 fontSize: 12,
                 fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                 fontFamily: 'Literata',
-                color: active ? _kGreen : Colors.grey[700],
+                color: active ? _kGreen : AppTheme.grey700,
               ),
             ),
           ],
@@ -1405,22 +1400,22 @@ class _ReportPageState extends State<ReportPage>
         style: TextStyle(fontFamily: 'Literata', fontSize: 13),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 12),
+          hintStyle: TextStyle(color: AppTheme.grey400, fontSize: 12),
           prefixText: '₹ ',
           prefixStyle: TextStyle(
             fontFamily: 'Literata',
             fontSize: 13,
-            color: Colors.grey[600],
+            color: AppTheme.grey600,
           ),
           filled: true,
           fillColor: AppColors.scaffold(context),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Colors.grey[300]!),
+            borderSide: BorderSide(color: AppTheme.grey300),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Colors.grey[300]!),
+            borderSide: BorderSide(color: AppTheme.grey300),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
@@ -1455,7 +1450,7 @@ class _ReportPageState extends State<ReportPage>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (_) => _buildProductPickerSheet(),
     );
   }
@@ -1511,7 +1506,7 @@ class _ReportPageState extends State<ReportPage>
                               'Clear',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Colors.red,
+                                color: AppTheme.red,
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w600,
                               ),
@@ -1549,13 +1544,13 @@ class _ReportPageState extends State<ReportPage>
                             Icon(
                               Icons.inventory_2_outlined,
                               size: 40,
-                              color: Colors.grey[300],
+                              color: AppTheme.grey300,
                             ),
                             SizedBox(height: 8),
                             Text(
                               'No products found',
                               style: TextStyle(
-                                color: Colors.grey[500],
+                                color: AppTheme.grey,
                                 fontFamily: 'Literata',
                               ),
                             ),
@@ -1585,8 +1580,8 @@ class _ReportPageState extends State<ReportPage>
                                     : 'P',
                                 style: TextStyle(
                                   color: selected
-                                      ? Colors.white
-                                      : Colors.grey[700],
+                                      ? AppTheme.white
+                                      : AppTheme.grey700,
                                   fontWeight: FontWeight.w700,
                                   fontFamily: 'Literata',
                                   fontSize: 14,
@@ -1599,7 +1594,7 @@ class _ReportPageState extends State<ReportPage>
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
-                                color: selected ? _kGreen : Colors.black87,
+                                color: selected ? _kGreen : AppTheme.black87,
                               ),
                             ),
                             subtitle: p.companyName.isNotEmpty
@@ -1608,7 +1603,7 @@ class _ReportPageState extends State<ReportPage>
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontFamily: 'Literata',
-                                      color: Colors.grey[600],
+                                      color: AppTheme.grey600,
                                     ),
                                   )
                                 : null,
@@ -1636,7 +1631,7 @@ class _ReportPageState extends State<ReportPage>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (_) => _buildSupplierPickerSheet(),
     );
   }
@@ -1678,7 +1673,7 @@ class _ReportPageState extends State<ReportPage>
                           'Clear',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.red,
+                            color: AppTheme.red,
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w600,
                           ),
@@ -1701,13 +1696,13 @@ class _ReportPageState extends State<ReportPage>
                             Icon(
                               Icons.local_shipping_outlined,
                               size: 40,
-                              color: Colors.grey[300],
+                              color: AppTheme.grey300,
                             ),
                             SizedBox(height: 8),
                             Text(
                               'No suppliers found',
                               style: TextStyle(
-                                color: Colors.grey[500],
+                                color: AppTheme.grey,
                                 fontFamily: 'Literata',
                               ),
                             ),
@@ -1737,8 +1732,8 @@ class _ReportPageState extends State<ReportPage>
                                     : 'S',
                                 style: TextStyle(
                                   color: selected
-                                      ? Colors.white
-                                      : Colors.grey[700],
+                                      ? AppTheme.white
+                                      : AppTheme.grey700,
                                   fontWeight: FontWeight.w700,
                                   fontFamily: 'Literata',
                                   fontSize: 14,
@@ -1751,7 +1746,7 @@ class _ReportPageState extends State<ReportPage>
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
-                                color: selected ? _kGreen : Colors.black87,
+                                color: selected ? _kGreen : AppTheme.black87,
                               ),
                             ),
                             subtitle: Text(
@@ -1759,7 +1754,7 @@ class _ReportPageState extends State<ReportPage>
                               style: TextStyle(
                                 fontSize: 12,
                                 fontFamily: 'Literata',
-                                color: Colors.grey[600],
+                                color: AppTheme.grey600,
                               ),
                             ),
                             trailing: selected
@@ -1789,7 +1784,7 @@ class _ReportPageState extends State<ReportPage>
         width: 40,
         height: 4,
         decoration: BoxDecoration(
-          color: Colors.grey[300],
+          color: AppTheme.grey300,
           borderRadius: BorderRadius.circular(2),
         ),
       ),
@@ -1806,15 +1801,15 @@ class _ReportPageState extends State<ReportPage>
       decoration: BoxDecoration(
         color: AppColors.scaffold(context),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: AppTheme.grey300),
       ),
       child: TextField(
         controller: ctrl,
         style: const TextStyle(fontFamily: 'Literata', fontSize: 13),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 12),
-          prefixIcon: Icon(Icons.search, color: Colors.grey[600], size: 18),
+          hintStyle: TextStyle(color: AppTheme.grey400, fontSize: 12),
+          prefixIcon: Icon(Icons.search, color: AppTheme.grey600, size: 18),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
         ),

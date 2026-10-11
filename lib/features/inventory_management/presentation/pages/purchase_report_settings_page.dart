@@ -66,17 +66,17 @@ class _PurchaseReportSettingsPageState
             onPressed: () => Navigator.pop(context, false),
             child: const Text(
               'Cancel',
-              style: TextStyle(fontFamily: 'Literata', color: Colors.grey),
+              style: TextStyle(fontFamily: 'Literata', color: AppTheme.grey),
             ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1B4D3E),
+              backgroundColor: AppTheme.primary,
             ),
             child: const Text(
               'Reset',
-              style: TextStyle(fontFamily: 'Literata', color: Colors.white),
+              style: TextStyle(fontFamily: 'Literata', color: AppTheme.white),
             ),
           ),
         ],
@@ -132,13 +132,13 @@ class _PurchaseReportSettingsPageState
             child: Container(
               padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
+                color: AppTheme.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
                 Icons.arrow_back_ios_rounded,
                 size: 20,
-                color: Colors.white,
+                color: AppTheme.white,
               ),
             ),
           ),
@@ -153,7 +153,7 @@ class _PurchaseReportSettingsPageState
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w800,
                     fontSize: 22,
-                    color: Colors.white,
+                    color: AppTheme.white,
                   ),
                 ),
                 Text(
@@ -162,7 +162,7 @@ class _PurchaseReportSettingsPageState
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w400,
                     fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: AppTheme.white.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -172,7 +172,7 @@ class _PurchaseReportSettingsPageState
             onPressed: _resetToDefaults,
             icon: const Icon(Icons.restart_alt_rounded, size: 18),
             label: const Text('Reset'),
-            style: TextButton.styleFrom(foregroundColor: Colors.white),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.white),
           ),
         ],
       ),
@@ -209,7 +209,7 @@ class _PurchaseReportSettingsPageState
                   ),
                   child: Icon(
                     Icons.view_column_rounded,
-                    color: Colors.white,
+                    color: AppTheme.white,
                     size: 24,
                   ),
                 ),
@@ -233,7 +233,7 @@ class _PurchaseReportSettingsPageState
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w400,
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                       ),
                     ],
@@ -273,7 +273,7 @@ class _PurchaseReportSettingsPageState
                 children: [
                   Icon(
                     Icons.info_outline_rounded,
-                    color: Colors.grey[400],
+                    color: AppTheme.grey400,
                     size: 24,
                   ),
                   const SizedBox(width: 12),
@@ -283,7 +283,7 @@ class _PurchaseReportSettingsPageState
                       style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 13,
-                        color: Colors.grey[600],
+                        color: AppTheme.grey600,
                       ),
                     ),
                   ),
@@ -324,7 +324,7 @@ class _PurchaseReportSettingsPageState
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: column.isVisible
-              ? Color(0xFF1B4D3E).withValues(alpha: 0.3)
+              ? AppTheme.primary.withValues(alpha: 0.3)
               : AppColors.border(context)!,
           width: column.isVisible ? 1.5 : 1,
         ),
@@ -345,15 +345,15 @@ class _PurchaseReportSettingsPageState
           height: 40,
           decoration: BoxDecoration(
             color: column.isVisible
-                ? const Color(0xFF1B4D3E).withValues(alpha: 0.1)
+                ? AppTheme.primary.withValues(alpha: 0.1)
                 : AppColors.chipFill(context),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
             _getColumnIcon(column.id),
             color: column.isVisible
-                ? const Color(0xFF1B4D3E)
-                : Colors.grey[400],
+                ? AppTheme.primary
+                : AppTheme.grey400,
             size: 20,
           ),
         ),
@@ -363,7 +363,7 @@ class _PurchaseReportSettingsPageState
             fontFamily: 'Literata',
             fontWeight: FontWeight.w600,
             fontSize: 14,
-            color: column.isVisible ? Colors.black87 : Colors.grey[600],
+            color: column.isVisible ? AppTheme.black87 : AppTheme.grey600,
           ),
         ),
         subtitle: Text(
@@ -371,14 +371,14 @@ class _PurchaseReportSettingsPageState
           style: TextStyle(
             fontFamily: 'Literata',
             fontSize: 11,
-            color: Colors.grey[500],
+            color: AppTheme.grey,
           ),
         ),
         trailing: Switch(
           value: column.isVisible,
           onChanged: (value) => _toggleColumn(column.id, value),
-          activeThumbColor: const Color(0xFF1B4D3E),
-          activeTrackColor: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+          activeThumbColor: AppTheme.primary,
+          activeTrackColor: AppTheme.primary.withValues(alpha: 0.3),
         ),
       ),
     );

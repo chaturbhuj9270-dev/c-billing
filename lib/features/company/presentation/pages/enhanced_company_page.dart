@@ -274,7 +274,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (ctx) => _buildCompanyFormSheet(ctx),
     );
   }
@@ -292,7 +292,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (ctx) => _buildCompanyFormSheet(ctx),
     );
   }
@@ -328,7 +328,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
                         width: 40,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: Colors.grey[300],
+                          color: AppTheme.grey300,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -408,8 +408,8 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
                                 ? null
                                 : () => _saveCompany(ctx, setSheetState),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF1B4D3E),
-                              foregroundColor: Colors.white,
+                              backgroundColor: AppTheme.primary,
+                              foregroundColor: AppTheme.white,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -423,7 +423,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
                                       valueColor: AlwaysStoppedAnimation(
-                                        Colors.white,
+                                        AppTheme.white,
                                       ),
                                     ),
                                   )
@@ -446,8 +446,8 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
                                   ? null
                                   : () => _deleteCompany(ctx, setSheetState),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.red,
-                                side: const BorderSide(color: Colors.red),
+                                foregroundColor: AppTheme.red,
+                                side: const BorderSide(color: AppTheme.red),
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 14,
                                 ),
@@ -501,7 +501,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
               ),
             ),
             if (isRequired)
-              const Text(' *', style: TextStyle(color: Colors.red)),
+              const Text(' *', style: TextStyle(color: AppTheme.red)),
           ],
         ),
         const SizedBox(height: 8),
@@ -512,28 +512,28 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
           minLines: maxLines,
           readOnly: isReadOnly,
           style: TextStyle(
-            color: isReadOnly ? Colors.grey[600] : null,
+            color: isReadOnly ? AppTheme.grey600 : null,
             fontFamily: 'Literata',
           ),
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: Colors.grey[600]),
+            prefixIcon: Icon(icon, color: AppTheme.grey600),
             suffixIcon: isReadOnly
                 ? Tooltip(
                     message: 'Auto-generated',
                     child: Icon(
                       Icons.lock_outline,
                       size: 18,
-                      color: Colors.grey[500],
+                      color: AppTheme.grey,
                     ),
                   )
                 : null,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderSide: BorderSide(color: AppTheme.grey300),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderSide: BorderSide(color: AppTheme.grey300),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -643,7 +643,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.red),
             child: const Text('Delete'),
           ),
         ],
@@ -699,7 +699,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
   void _showContextMenu(Map<String, dynamic> company) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (ctx) => Container(
         decoration: BoxDecoration(
           color: AppColors.card(context),
@@ -718,7 +718,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: AppTheme.grey300,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -743,7 +743,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
                 _buildContextMenuItem(
                   icon: Icons.delete_rounded,
                   label: 'Delete',
-                  color: Colors.red,
+                  color: AppTheme.red,
                   onTap: () {
                     Navigator.pop(ctx);
                     _companyNameController.text = company['companyName'] ?? '';
@@ -768,13 +768,13 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
     Color? color,
   }) {
     return ListTile(
-      leading: Icon(icon, color: color ?? const Color(0xFF1B4D3E)),
+      leading: Icon(icon, color: color ?? AppTheme.primary),
       title: Text(
         label,
         style: TextStyle(
           fontFamily: 'Literata',
           fontWeight: FontWeight.w600,
-          color: color ?? Colors.grey[800],
+          color: color ?? AppTheme.grey800,
         ),
       ),
       onTap: onTap,
@@ -872,7 +872,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
                   },
                   child: Icon(
                     Icons.arrow_back_rounded,
-                    color: Colors.white,
+                    color: AppTheme.white,
                     size: 24,
                   ),
                 ),
@@ -885,7 +885,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
                       Text(
                         _localizations.myCompanies,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppTheme.white,
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           fontFamily: 'Literata',
@@ -895,7 +895,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
                       Text(
                         _localizations.manageYourBusinesses,
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
+                          color: AppTheme.white.withValues(alpha: 0.7),
                           fontSize: 11,
                           fontFamily: 'Literata',
                           height: 1.2,
@@ -931,9 +931,9 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
       ),
       child: FloatingActionButton(
         onPressed: _showAddCompanySheet,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppTheme.transparent,
         elevation: 0,
-        child: const Icon(Icons.add, color: Colors.white),
+        child: const Icon(Icons.add, color: AppTheme.white),
       ),
     );
   }

@@ -226,9 +226,9 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                     AppTheme.darkScaffold,
                   ]
                 : const [
-                    Color(0xFFE8F5E9),
-                    Color(0xFFF5F5F5),
-                    Color(0xFFE8F5E9),
+                    AppTheme.green50,
+                    AppTheme.grey100,
+                    AppTheme.green50,
                   ],
           ),
         ),
@@ -250,7 +250,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                             width: 72,
                             height: 72,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF14352C),
+                              color: AppTheme.headerDarkStart,
                               borderRadius: BorderRadius.circular(22),
                               boxShadow: [
                                 BoxShadow(
@@ -412,7 +412,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                   children: [
                                     Expanded(
                                       child: Divider(
-                                        color: Colors.grey[300],
+                                        color: AppTheme.grey300,
                                         thickness: 1,
                                       ),
                                     ),
@@ -423,7 +423,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                       child: Text(
                                         _localizations.orDivider,
                                         style: TextStyle(
-                                          color: Colors.grey[600],
+                                          color: AppTheme.grey600,
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
                                           letterSpacing: 1,
@@ -433,7 +433,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                     ),
                                     Expanded(
                                       child: Divider(
-                                        color: Colors.grey[300],
+                                        color: AppTheme.grey300,
                                         thickness: 1,
                                       ),
                                     ),
@@ -447,7 +447,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                     Text(
                                       _localizations.alreadyHaveAccount,
                                       style: TextStyle(
-                                        color: Colors.grey[600],
+                                        color: AppTheme.grey600,
                                         fontSize: 14,
                                         fontFamily: 'Literata',
                                       ),
@@ -652,7 +652,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
       decoration: BoxDecoration(
         color: AppColors.scaffold(context),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey[300]!, width: 1),
+        border: Border.all(color: AppTheme.grey300, width: 1),
       ),
       child: TextField(
         controller: controller,
@@ -660,8 +660,8 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
         obscureText: obscureText,
         decoration: InputDecoration(
           hintText: label,
-          hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
-          prefixIcon: Icon(icon, color: Colors.grey[500], size: 20),
+          hintStyle: TextStyle(color: AppTheme.grey, fontSize: 14),
+          prefixIcon: Icon(icon, color: AppTheme.grey, size: 20),
           suffixIcon: suffix,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -669,7 +669,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
             vertical: 16,
           ),
         ),
-        style: const TextStyle(color: Colors.black87, fontSize: 14),
+        style: const TextStyle(color: AppTheme.black87, fontSize: 14),
       ),
     );
   }

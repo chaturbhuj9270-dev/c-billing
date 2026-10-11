@@ -512,7 +512,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
             style: TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w700,
-              color: Colors.red,
+              color: AppTheme.red,
             ),
           ),
           content: Column(
@@ -524,16 +524,16 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 14,
-                  color: Colors.grey[700],
+                  color: AppTheme.grey700,
                 ),
               ),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.05),
+                  color: AppTheme.red.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+                  border: Border.all(color: AppTheme.red.withValues(alpha: 0.2)),
                 ),
                 child: Row(
                   children: [
@@ -579,7 +579,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                               style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 12,
-                                color: Colors.grey[600],
+                                color: AppTheme.grey600,
                               ),
                             ),
                         ],
@@ -594,7 +594,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 12,
-                  color: Colors.grey[500],
+                  color: AppTheme.grey,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -607,14 +607,14 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                 _localizations.cancel,
                 style: const TextStyle(
                   fontFamily: 'Literata',
-                  color: Colors.grey,
+                  color: AppTheme.grey,
                 ),
               ),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: AppTheme.red,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -623,7 +623,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                 _localizations.delete,
                 style: const TextStyle(
                   fontFamily: 'Literata',
-                  color: Colors.white,
+                  color: AppTheme.white,
                 ),
               ),
             ),
@@ -820,12 +820,12 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
+                  color: AppTheme.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
                   Icons.arrow_back_rounded,
-                  color: Colors.white,
+                  color: AppTheme.white,
                   size: 20,
                 ),
               ),
@@ -838,7 +838,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                   Text(
                     _localizations.manageCustomers,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppTheme.white,
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Literata',
@@ -848,7 +848,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                   Text(
                     '${_customers.length} ${_localizations.customers.toLowerCase()}',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
+                      color: AppTheme.white.withValues(alpha: 0.7),
                       fontSize: 11,
                       fontFamily: 'Literata',
                       height: 1.2,
@@ -886,9 +886,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
         ),
         child: FloatingActionButton(
           onPressed: _showAddCustomerSheet,
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppTheme.transparent,
           elevation: 0,
-          child: const Icon(Icons.person_add_rounded, color: Colors.white),
+          child: const Icon(Icons.person_add_rounded, color: AppTheme.white),
         ),
       ),
     );
@@ -1010,7 +1010,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (context) => _CustomerDetailsSheet(
         customer: customer,
         localizations: _localizations,
@@ -1035,7 +1035,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   void _showCustomerContextMenu(Map<String, dynamic> customer) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (context) => ClipRRect(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         child: BackdropFilter(
@@ -1056,7 +1056,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: AppTheme.grey300,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -1134,7 +1134,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
             Icon(
               icon,
               size: 22,
-              color: isDestructive ? Colors.red : Colors.grey[700],
+              color: isDestructive ? AppTheme.red : AppTheme.grey700,
             ),
             const SizedBox(width: 16),
             Text(
@@ -1143,7 +1143,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w500,
                 fontSize: 15,
-                color: isDestructive ? Colors.red : Colors.grey[800],
+                color: isDestructive ? AppTheme.red : AppTheme.grey800,
               ),
             ),
           ],
@@ -1159,7 +1159,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (_) => _buildFormSheet(),
     );
   }
@@ -1169,7 +1169,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (_) => _buildFormSheet(),
     );
   }
@@ -1200,7 +1200,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: AppTheme.grey300,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -1274,7 +1274,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                       child: ElevatedButton(
                         onPressed: _isSaving ? null : _saveCustomer,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1B4D3E),
+                          backgroundColor: AppTheme.primary,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -1287,7 +1287,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   valueColor: AlwaysStoppedAnimation(
-                                    Colors.white,
+                                    AppTheme.white,
                                   ),
                                 ),
                               )
@@ -1296,7 +1296,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                                     ? _localizations.update
                                     : _localizations.addCustomer,
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: AppTheme.white,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   fontFamily: 'Literata',
@@ -1359,15 +1359,15 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       style: TextStyle(fontFamily: 'Literata', fontSize: 14),
       decoration: InputDecoration(
         labelText: isRequired ? '$label *' : label,
-        labelStyle: TextStyle(color: Colors.grey[600], fontFamily: 'Literata'),
-        prefixIcon: Icon(icon, color: Colors.grey[600]),
+        labelStyle: TextStyle(color: AppTheme.grey600, fontFamily: 'Literata'),
+        prefixIcon: Icon(icon, color: AppTheme.grey600),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: AppTheme.grey300),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: AppTheme.grey300),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -1425,7 +1425,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
         (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0.0;
     final isSynced = customer['isSynced'] as bool? ?? true;
 
-    const accentColor = Color(0xFF1B4D3E);
+    const accentColor = AppTheme.primary;
     final initials = firstName.isNotEmpty ? firstName[0].toUpperCase() : 'C';
 
     return ClipRRect(
@@ -1454,7 +1454,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
                         width: 40,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: Colors.grey[300],
+                          color: AppTheme.grey300,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -1489,7 +1489,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
                             child: Text(
                               initials,
                               style: TextStyle(
-                                color: Colors.white,
+                                color: AppTheme.white,
                                 fontSize: 24,
                                 fontWeight: FontWeight.w700,
                                 fontFamily: 'Literata',
@@ -1523,8 +1523,8 @@ class _CustomerDetailsSheet extends StatelessWidget {
                                     ),
                                     decoration: BoxDecoration(
                                       color: isSynced
-                                          ? Colors.green[50]
-                                          : Colors.orange[50],
+                                          ? AppTheme.green50
+                                          : AppTheme.orange50,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Row(
@@ -1536,8 +1536,8 @@ class _CustomerDetailsSheet extends StatelessWidget {
                                               : Icons.cloud_upload_rounded,
                                           size: 12,
                                           color: isSynced
-                                              ? Colors.green[700]
-                                              : Colors.orange[700],
+                                              ? AppTheme.green700
+                                              : AppTheme.orange700,
                                         ),
                                         const SizedBox(width: 4),
                                         Text(
@@ -1549,8 +1549,8 @@ class _CustomerDetailsSheet extends StatelessWidget {
                                             fontSize: 10,
                                             fontWeight: FontWeight.w600,
                                             color: isSynced
-                                                ? Colors.green[700]
-                                                : Colors.orange[700],
+                                                ? AppTheme.green700
+                                                : AppTheme.orange700,
                                           ),
                                         ),
                                       ],
@@ -1565,7 +1565,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
                                     Icon(
                                       Icons.phone_rounded,
                                       size: 14,
-                                      color: Colors.grey[500],
+                                      color: AppTheme.grey,
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
@@ -1573,7 +1573,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
                                       style: TextStyle(
                                         fontFamily: 'Literata',
                                         fontSize: 14,
-                                        color: Colors.grey[600],
+                                        color: AppTheme.grey600,
                                       ),
                                     ),
                                   ],
@@ -1593,21 +1593,21 @@ class _CustomerDetailsSheet extends StatelessWidget {
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.red[50],
+                          color: AppTheme.red50,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: Colors.red[100]!),
+                          border: Border.all(color: AppTheme.red100),
                         ),
                         child: Row(
                           children: [
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: Colors.red[100],
+                                color: AppTheme.red100,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Icon(
                                 Icons.account_balance_wallet_rounded,
-                                color: Colors.red[700],
+                                color: AppTheme.red700,
                                 size: 22,
                               ),
                             ),
@@ -1621,7 +1621,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
                                     style: TextStyle(
                                       fontFamily: 'Literata',
                                       fontSize: 12,
-                                      color: Colors.red[400],
+                                      color: AppTheme.error,
                                     ),
                                   ),
                                   Text(
@@ -1630,7 +1630,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
                                       fontFamily: 'Literata',
                                       fontWeight: FontWeight.w700,
                                       fontSize: 20,
-                                      color: Colors.red[700],
+                                      color: AppTheme.red700,
                                     ),
                                   ),
                                 ],
@@ -1714,16 +1714,16 @@ class _CustomerDetailsSheet extends StatelessWidget {
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: AppColors.isDark(context)
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                  ? AppTheme.white.withValues(alpha: 0.1)
+                  : AppTheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               icon,
               size: 18,
               color: AppColors.isDark(context)
-                  ? Colors.white
-                  : const Color(0xFF1B4D3E),
+                  ? AppTheme.white
+                  : AppTheme.primary,
             ),
           ),
           const SizedBox(width: 12),
@@ -1766,11 +1766,11 @@ class _CustomerDetailsSheet extends StatelessWidget {
     bool isDestructive = false,
   }) {
     final isDark = AppColors.isDark(context);
-    final primaryFill = isDark ? Colors.white : const Color(0xFF1B4D3E);
-    final onPrimary = isDark ? Colors.black : Colors.white;
+    final primaryFill = isDark ? AppTheme.white : AppTheme.primary;
+    final onPrimary = isDark ? AppTheme.black : AppTheme.white;
     final destructiveFill = isDark
-        ? Colors.red.withValues(alpha: 0.18)
-        : Colors.red[50]!;
+        ? AppTheme.red.withValues(alpha: 0.18)
+        : AppTheme.red50;
     final muted = AppColors.secondaryText(context);
 
     return GestureDetector(
@@ -1787,8 +1787,8 @@ class _CustomerDetailsSheet extends StatelessWidget {
           border: isDestructive
               ? Border.all(
                   color: isDark
-                      ? Colors.red.withValues(alpha: 0.4)
-                      : Colors.red[200]!,
+                      ? AppTheme.red.withValues(alpha: 0.4)
+                      : AppTheme.red200,
                 )
               : null,
         ),
@@ -1801,7 +1801,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
               color: isPrimary
                   ? onPrimary
                   : isDestructive
-                  ? (isDark ? Colors.red[300] : Colors.red[700])
+                  ? (isDark ? AppTheme.toneRose : AppTheme.red700)
                   : muted,
             ),
             const SizedBox(height: 4),
@@ -1814,7 +1814,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
                 color: isPrimary
                     ? onPrimary
                     : isDestructive
-                    ? (isDark ? Colors.red[300] : Colors.red[700])
+                    ? (isDark ? AppTheme.toneRose : AppTheme.red700)
                     : muted,
               ),
               maxLines: 1,

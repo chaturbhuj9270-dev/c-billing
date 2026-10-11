@@ -73,7 +73,7 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -147,13 +147,13 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
         decoration: InputDecoration(
           hintText: widget.searchHint,
           hintStyle: TextStyle(
-            color: Colors.grey[400],
+            color: AppTheme.grey400,
             fontFamily: 'Literata',
             fontSize: 13,
           ),
           prefixIcon: Icon(
             Icons.search_rounded,
-            color: Colors.grey[500],
+            color: AppTheme.grey,
             size: 20,
           ),
           suffixIcon: _searchController.text.isNotEmpty
@@ -165,7 +165,7 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
                   },
                   child: Icon(
                     Icons.close_rounded,
-                    color: Colors.grey[500],
+                    color: AppTheme.grey,
                     size: 18,
                   ),
                 )

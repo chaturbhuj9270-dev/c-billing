@@ -21,8 +21,8 @@ class ActionMenu extends StatelessWidget {
     this.onReportSettingsTap,
     this.onLanguageTap,
     this.onBugReportTap,
-    this.menuColor = const Color(0xFF1B4D3E),
-    this.iconColor = Colors.white,
+    this.menuColor = AppTheme.primary,
+    this.iconColor = AppTheme.white,
     this.iconSize = 22,
   });
 
@@ -74,7 +74,7 @@ class ActionMenu extends StatelessWidget {
       );
     }
 
-    final useMintButton = menuColor == const Color(0xFF1B4D3E);
+    final useMintButton = menuColor == AppTheme.primary;
     final buttonColor = useMintButton ? AppTheme.mint : menuColor;
     final dotColor = useMintButton ? AppTheme.onMint : iconColor;
 
@@ -92,7 +92,7 @@ class ActionMenu extends StatelessWidget {
       color: AppColors.isDark(context)
           ? AppTheme.darkCard
           : AppColors.card(context),
-      surfaceTintColor: Colors.transparent,
+      surfaceTintColor: AppTheme.transparent,
       onSelected: (index) => entries[index].onTap(),
       itemBuilder: (context) {
         final items = <PopupMenuEntry<int>>[

@@ -338,7 +338,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                           ),
                         ),
                     ],
@@ -372,7 +372,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 13,
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                       ),
                     ],
@@ -397,7 +397,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                               decoration: BoxDecoration(
                                 color: selectedSellUnit == unit
                                     ? AppTheme.mint
-                                    : Colors.transparent,
+                                    : AppTheme.transparent,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Center(
@@ -423,7 +423,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                               decoration: BoxDecoration(
                                 color: selectedSellUnit == subUnit
                                     ? AppTheme.mint
-                                    : Colors.transparent,
+                                    : AppTheme.transparent,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Center(
@@ -474,12 +474,12 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                       icon: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEF5350).withValues(alpha: 0.16),
+                          color: AppTheme.error.withValues(alpha: 0.16),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
                           Icons.remove,
-                          color: Color(0xFFEF5350),
+                          color: AppTheme.error,
                           size: 20,
                         ),
                       ),
@@ -508,7 +508,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(color: AppTheme.grey300),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -577,14 +577,14 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                 },
                 icon: Icon(
                   Icons.delete_outline,
-                  color: Colors.red[700],
+                  color: AppTheme.red700,
                   size: 20,
                 ),
                 label: Text(
                   widget.localizations.delete,
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    color: Colors.red[700],
+                    color: AppTheme.red700,
                   ),
                 ),
               ),
@@ -596,7 +596,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                   widget.localizations.cancel,
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                   ),
                 ),
               ),
@@ -756,7 +756,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (ctx) => BatchSelectionSheet(
         productName: group.productName,
         productCode: group.indexNo,
@@ -830,7 +830,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                     padding: EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: AppColors.isDark(context)
-                          ? const Color(0xFF14352C)
+                          ? AppTheme.headerDarkStart
                           : AppTheme.mint.withValues(alpha: 0.16),
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -951,14 +951,14 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                           Icon(
                             Icons.inventory_2_outlined,
                             size: 48,
-                            color: Colors.grey[400],
+                            color: AppTheme.grey400,
                           ),
                           const SizedBox(height: 12),
                           Text(
                             widget.localizations.noProductsFound,
                             style: TextStyle(
                               fontFamily: 'Literata',
-                              color: Colors.grey[600],
+                              color: AppTheme.grey600,
                             ),
                           ),
                         ],
@@ -987,7 +987,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                             ),
                           ),
                           child: Material(
-                            color: Colors.transparent,
+                            color: AppTheme.transparent,
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
                               onTap: () => _showBatchSelection(group),
@@ -1001,7 +1001,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                       height: 44,
                                       decoration: BoxDecoration(
                                         color: AppColors.isDark(context)
-                                            ? const Color(0xFF14352C)
+                                            ? AppTheme.headerDarkStart
                                             : AppTheme.mint.withValues(
                                                 alpha: 0.16,
                                               ),
@@ -1119,7 +1119,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                                             .withValues(
                                                               alpha: 0.16,
                                                             )
-                                                      : const Color(0xFFEF5350)
+                                                      : AppTheme.error
                                                             .withValues(
                                                               alpha: 0.16,
                                                             ),
@@ -1136,9 +1136,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                                         ? AppTheme.mint
                                                         : group.totalStock > 0
                                                         ? AppTheme.toneAmber
-                                                        : const Color(
-                                                            0xFFEF5350,
-                                                          ),
+                                                        : AppTheme.error,
                                                   ),
                                                 ),
                                               ),
@@ -1228,7 +1226,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                 color: AppColors.card(context),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: AppTheme.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, -2),
                   ),
@@ -1557,7 +1555,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: AppTheme.grey600,
                           ),
                         ),
                     ],
@@ -1591,7 +1589,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 13,
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                       ),
                     ],
@@ -1613,12 +1611,12 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                       icon: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEF5350).withValues(alpha: 0.16),
+                          color: AppTheme.error.withValues(alpha: 0.16),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
                           Icons.remove,
-                          color: Color(0xFFEF5350),
+                          color: AppTheme.error,
                           size: 20,
                         ),
                       ),
@@ -1644,7 +1642,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(color: AppTheme.grey300),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -1697,14 +1695,14 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                 },
                 icon: Icon(
                   Icons.delete_outline,
-                  color: Colors.red[700],
+                  color: AppTheme.red700,
                   size: 20,
                 ),
                 label: Text(
                   widget.localizations.delete,
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    color: Colors.red[700],
+                    color: AppTheme.red700,
                   ),
                 ),
               ),
@@ -1716,7 +1714,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                   widget.localizations.cancel,
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                   ),
                 ),
               ),
@@ -2019,7 +2017,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: AppColors.isDark(context)
-            ? const Color(0xFF14352C)
+            ? AppTheme.headerDarkStart
             : AppTheme.mint.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(14),
       ),
@@ -2042,7 +2040,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: selected ? AppTheme.mint : Colors.transparent,
+            color: selected ? AppTheme.mint : AppTheme.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Center(
@@ -2084,7 +2082,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
         ),
       ),
       child: Material(
-        color: Colors.transparent,
+        color: AppTheme.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: onTap,
@@ -2101,7 +2099,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: AppColors.isDark(context)
-                            ? const Color(0xFF14352C)
+                            ? AppTheme.headerDarkStart
                             : AppTheme.mint.withValues(alpha: 0.16),
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -2320,7 +2318,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                 style: const TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 11,
-                  color: Color(0xFFEF5350),
+                  color: AppTheme.error,
                 ),
               ),
             ),
@@ -2371,7 +2369,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
 
   Widget _stepButton(IconData icon, VoidCallback onTap) {
     return Material(
-      color: Colors.transparent,
+      color: AppTheme.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),

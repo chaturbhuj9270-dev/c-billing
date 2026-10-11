@@ -49,7 +49,7 @@ class ProductSummaryWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(
+            color: AppTheme.black.withValues(
               alpha: AppColors.isDark(context) ? 0.45 : 0.3,
             ),
             blurRadius: 12,
@@ -75,7 +75,7 @@ class ProductSummaryWidget extends StatelessWidget {
             icon: Icons.warning_amber_rounded,
             label: 'Out of Stock',
             value: '$outOfStock',
-            valueColor: outOfStock > 0 ? Colors.red[300] : null,
+            valueColor: outOfStock > 0 ? AppTheme.toneRose : null,
           ),
           _buildDivider(),
           Expanded(
@@ -86,8 +86,8 @@ class ProductSummaryWidget extends StatelessWidget {
               label: unsyncedCount > 0 ? 'Pending' : 'Synced',
               value: unsyncedCount > 0 ? '$unsyncedCount' : '✓',
               valueColor: unsyncedCount > 0
-                  ? Colors.orange[300]
-                  : Colors.green[300],
+                  ? AppTheme.orange300
+                  : AppTheme.green300,
               isExpanded: true,
             ),
           ),
@@ -108,7 +108,7 @@ class ProductSummaryWidget extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white, size: 18),
+          Icon(icon, color: AppTheme.white, size: 18),
           const SizedBox(height: 6),
           Text(
             value,
@@ -116,7 +116,7 @@ class ProductSummaryWidget extends StatelessWidget {
               fontFamily: 'Literata',
               fontWeight: FontWeight.w800,
               fontSize: 15,
-              color: valueColor ?? Colors.white,
+              color: valueColor ?? AppTheme.white,
             ),
           ),
           const SizedBox(height: 2),
@@ -126,7 +126,7 @@ class ProductSummaryWidget extends StatelessWidget {
               fontFamily: 'Literata',
               fontWeight: FontWeight.w400,
               fontSize: 10,
-              color: Colors.white.withValues(alpha: 0.7),
+              color: AppTheme.white.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -138,7 +138,7 @@ class ProductSummaryWidget extends StatelessWidget {
     return Container(
       width: 1,
       height: 40,
-      color: Colors.white.withValues(alpha: 0.2),
+      color: AppTheme.white.withValues(alpha: 0.2),
     );
   }
 }

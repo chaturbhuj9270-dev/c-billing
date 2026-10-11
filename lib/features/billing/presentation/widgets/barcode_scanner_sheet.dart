@@ -42,7 +42,7 @@ class BarcodeScannerSheet extends StatefulWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (context) => BarcodeScannerSheet(
         onProductScanned: onProductScanned,
         onProductRemoved: onProductRemoved,
@@ -251,7 +251,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
     return Container(
       height: screenHeight * 0.85,
       decoration: const BoxDecoration(
-        color: Colors.black,
+        color: AppTheme.black,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
@@ -303,7 +303,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
       width: 40,
       height: 4,
       decoration: BoxDecoration(
-        color: Colors.grey[600],
+        color: AppTheme.grey600,
         borderRadius: BorderRadius.circular(2),
       ),
     );
@@ -331,7 +331,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
             ),
             child: const Icon(
               Icons.qr_code_scanner_rounded,
-              color: Colors.white,
+              color: AppTheme.white,
               size: 22,
             ),
           ),
@@ -346,7 +346,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                     fontFamily: 'Literata',
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: AppTheme.white,
                   ),
                 ),
                 Text(
@@ -354,7 +354,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 12,
-                    color: Colors.grey[400],
+                    color: AppTheme.grey400,
                   ),
                 ),
               ],
@@ -362,7 +362,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
           ),
           // Close button
           Material(
-            color: Colors.transparent,
+            color: AppTheme.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(10),
               onTap: () {
@@ -376,12 +376,12 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
               child: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.grey[800],
+                  color: AppTheme.grey800,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
                   Icons.close_rounded,
-                  color: Colors.white,
+                  color: AppTheme.white,
                   size: 20,
                 ),
               ),
@@ -424,8 +424,8 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                 decoration: BoxDecoration(
                   border: Border.all(
                     color: _isProcessing
-                        ? const Color(0xFF1B4D3E)
-                        : Colors.white.withValues(alpha: 0.8),
+                        ? AppTheme.primary
+                        : AppTheme.white.withValues(alpha: 0.8),
                     width: 2,
                   ),
                   borderRadius: BorderRadius.circular(16),
@@ -451,18 +451,16 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  Colors.transparent,
-                                  const Color(0xFF1B4D3E),
-                                  const Color(0xFF2D6A4F),
-                                  const Color(0xFF1B4D3E),
-                                  Colors.transparent,
+                                  AppTheme.transparent,
+                                  AppTheme.primary,
+                                  AppTheme.paletteFF2D6A4F,
+                                  AppTheme.primary,
+                                  AppTheme.transparent,
                                 ],
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(
-                                    0xFF1B4D3E,
-                                  ).withValues(alpha: 0.5),
+                                  color: AppTheme.primary.withValues(alpha: 0.5),
                                   blurRadius: 8,
                                   spreadRadius: 2,
                                 ),
@@ -491,7 +489,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                   ),
                   child: const Center(
                     child: CircularProgressIndicator(
-                      color: Colors.white,
+                      color: AppTheme.white,
                       strokeWidth: 3,
                     ),
                   ),
@@ -572,7 +570,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
     required VoidCallback onTap,
   }) {
     return Material(
-      color: Colors.transparent,
+      color: AppTheme.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
@@ -584,25 +582,25 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: isActive
-                    ? const Color(0xFF1B4D3E).withValues(alpha: 0.8)
-                    : Colors.black.withValues(alpha: 0.5),
+                    ? AppTheme.primary.withValues(alpha: 0.8)
+                    : AppTheme.black.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isActive
-                      ? const Color(0xFF1B4D3E)
-                      : Colors.white.withValues(alpha: 0.2),
+                      ? AppTheme.primary
+                      : AppTheme.white.withValues(alpha: 0.2),
                 ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(icon, color: Colors.white, size: 20),
+                  Icon(icon, color: AppTheme.white, size: 20),
                   const SizedBox(width: 8),
                   Text(
                     label,
                     style: const TextStyle(
                       fontFamily: 'Literata',
-                      color: Colors.white,
+                      color: AppTheme.white,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
@@ -628,9 +626,9 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.7),
+              color: AppTheme.black.withValues(alpha: 0.7),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+              border: Border.all(color: AppTheme.white.withValues(alpha: 0.2)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -640,7 +638,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                   'Manual Entry',
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    color: Colors.white,
+                    color: AppTheme.white,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
@@ -653,18 +651,18 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                         controller: _manualBarcodeController,
                         style: const TextStyle(
                           fontFamily: 'Literata',
-                          color: Colors.white,
+                          color: AppTheme.white,
                           fontSize: 14,
                         ),
                         decoration: InputDecoration(
                           hintText: 'Enter barcode number',
                           hintStyle: TextStyle(
                             fontFamily: 'Literata',
-                            color: Colors.grey[500],
+                            color: AppTheme.grey,
                             fontSize: 13,
                           ),
                           filled: true,
-                          fillColor: Colors.white.withValues(alpha: 0.1),
+                          fillColor: AppTheme.white.withValues(alpha: 0.1),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide.none,
@@ -681,7 +679,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                     ),
                     const SizedBox(width: 12),
                     Material(
-                      color: Colors.transparent,
+                      color: AppTheme.transparent,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(10),
                         onTap: _submitManualBarcode,
@@ -690,15 +688,15 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                const Color(0xFF1B4D3E),
-                                const Color(0xFF2D6A4F),
+                                AppTheme.primary,
+                                AppTheme.paletteFF2D6A4F,
                               ],
                             ),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(
                             Icons.add_rounded,
-                            color: Colors.white,
+                            color: AppTheme.white,
                             size: 22,
                           ),
                         ),
@@ -736,17 +734,17 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: isRemoved
-                  ? Colors.grey.withValues(alpha: 0.2)
+                  ? AppTheme.grey.withValues(alpha: 0.2)
                   : item.success
-                  ? const Color(0xFF1B4D3E).withValues(alpha: 0.2)
-                  : Colors.red.withValues(alpha: 0.2),
+                  ? AppTheme.primary.withValues(alpha: 0.2)
+                  : AppTheme.red.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isRemoved
-                    ? Colors.grey.withValues(alpha: 0.3)
+                    ? AppTheme.grey.withValues(alpha: 0.3)
                     : item.success
-                    ? const Color(0xFF1B4D3E).withValues(alpha: 0.5)
-                    : Colors.red.withValues(alpha: 0.5),
+                    ? AppTheme.primary.withValues(alpha: 0.5)
+                    : AppTheme.red.withValues(alpha: 0.5),
               ),
             ),
             child: Column(
@@ -762,10 +760,10 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                           ? Icons.check_circle_rounded
                           : Icons.error_rounded,
                       color: isRemoved
-                          ? Colors.grey
+                          ? AppTheme.grey
                           : item.success
-                          ? const Color(0xFF1B4D3E)
-                          : Colors.red,
+                          ? AppTheme.primary
+                          : AppTheme.red,
                       size: 16,
                     ),
                     const SizedBox(width: 6),
@@ -779,10 +777,10 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: isRemoved
-                              ? Colors.grey[500]
+                              ? AppTheme.grey
                               : item.success
-                              ? Colors.white
-                              : Colors.red[200],
+                              ? AppTheme.white
+                              : AppTheme.red200,
                           decoration: isRemoved
                               ? TextDecoration.lineThrough
                               : null,
@@ -798,12 +796,12 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                         child: Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: Colors.red.withValues(alpha: 0.2),
+                            color: AppTheme.red.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Icon(
                             Icons.close_rounded,
-                            color: Colors.red,
+                            color: AppTheme.red,
                             size: 14,
                           ),
                         ),
@@ -816,7 +814,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 10,
-                    color: Colors.grey[400],
+                    color: AppTheme.grey400,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -826,7 +824,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 9,
-                    color: Colors.grey[500],
+                    color: AppTheme.grey,
                   ),
                 ),
               ],
@@ -899,7 +897,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                       '${_scannedItems.where((i) => i.success).length} items',
                       style: const TextStyle(
                         fontFamily: 'Literata',
-                        color: Colors.white,
+                        color: AppTheme.white,
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
                       ),
@@ -910,7 +908,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
             const Spacer(),
             // Done button
             Material(
-              color: Colors.transparent,
+              color: AppTheme.transparent,
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
                 onTap: () {
@@ -930,8 +928,8 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Color(0xFF1B4D3E),
-                        Color(0xFF2D6A4F),
+                        AppTheme.primary,
+                        AppTheme.paletteFF2D6A4F,
                       ],
                     ),
                     borderRadius: BorderRadius.circular(12),
@@ -946,13 +944,13 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.check_rounded, color: Colors.white, size: 20),
+                      Icon(Icons.check_rounded, color: AppTheme.white, size: 20),
                       SizedBox(width: 8),
                       Text(
                         'Done',
                         style: TextStyle(
                           fontFamily: 'Literata',
-                          color: Colors.white,
+                          color: AppTheme.white,
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
                         ),
@@ -996,7 +994,7 @@ class _ScanOverlayPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.black.withValues(alpha: 0.6);
+    final paint = Paint()..color = AppTheme.black.withValues(alpha: 0.6);
 
     // Draw the darkened area with a hole for the scan area
     final path = Path()

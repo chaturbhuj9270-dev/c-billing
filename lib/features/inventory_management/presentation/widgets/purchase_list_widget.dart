@@ -264,7 +264,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w400,
                     fontSize: 14,
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -304,9 +304,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w500,
                             fontSize: 13,
-                            color: const Color(
-                              0xFF1B4D3E,
-                            ).withValues(alpha: 0.8),
+                            color: AppTheme.primary.withValues(alpha: 0.8),
                           ),
                         ),
                       ],
@@ -415,7 +413,7 @@ class PurchaseSummaryWidget extends StatelessWidget {
         border: Border.all(color: AppColors.border(context)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(
+            color: AppTheme.black.withValues(
               alpha: AppColors.isDark(context) ? 0.18 : 0.04,
             ),
             blurRadius: 12,
@@ -428,21 +426,21 @@ class PurchaseSummaryWidget extends StatelessWidget {
           _buildStatItem(
             context,
             icon: Icons.receipt_long_rounded,
-            iconColor: const Color(0xFF7C8CFF),
+            iconColor: AppTheme.toneBlue,
             label: localizations.purchases,
             value: '${filtered.length}',
           ),
           _buildStatItem(
             context,
             icon: Icons.inventory_2_rounded,
-            iconColor: const Color(0xFFFFB74D),
+            iconColor: AppTheme.orange300,
             label: localizations.totalQty,
             value: '$totalQuantity',
           ),
           _buildStatItem(
             context,
             icon: Icons.currency_rupee_rounded,
-            iconColor: const Color(0xFF3DDC97),
+            iconColor: AppTheme.mint,
             label: localizations.totalValue,
             value: '₹${_compactAmount(totalAmount)}',
           ),

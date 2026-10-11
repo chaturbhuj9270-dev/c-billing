@@ -81,7 +81,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -160,13 +160,13 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
         decoration: InputDecoration(
           hintText: widget.searchHint,
           hintStyle: TextStyle(
-            color: Colors.grey[400],
+            color: AppTheme.grey400,
             fontFamily: 'Literata',
             fontSize: 13,
           ),
           prefixIcon: Icon(
             Icons.search_rounded,
-            color: Colors.grey[500],
+            color: AppTheme.grey,
             size: 20,
           ),
           suffixIcon: _searchController.text.isNotEmpty
@@ -178,7 +178,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                   },
                   child: Icon(
                     Icons.close_rounded,
-                    color: Colors.grey[500],
+                    color: AppTheme.grey,
                     size: 18,
                   ),
                 )
@@ -212,7 +212,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
             turns: widget.sortAscending ? 0 : 0.5,
             child: Icon(
               Icons.arrow_upward_rounded,
-              color: Colors.white,
+              color: AppTheme.white,
               size: 20,
             ),
           ),
@@ -230,10 +230,10 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
         decoration: BoxDecoration(
           color: AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[300]!, width: 1),
+          border: Border.all(color: AppTheme.grey300, width: 1),
         ),
         child: Center(
-          child: Icon(Icons.tune_rounded, color: Colors.grey[700], size: 20),
+          child: Icon(Icons.tune_rounded, color: AppTheme.grey700, size: 20),
         ),
       ),
     );
@@ -301,11 +301,11 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: hasSelection
-              ? const Color(0xFF1B4D3E).withValues(alpha: 0.1)
+              ? AppTheme.primary.withValues(alpha: 0.1)
               : AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: hasSelection ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
+            color: hasSelection ? AppTheme.primary : AppTheme.grey300,
             width: 1,
           ),
         ),
@@ -315,7 +315,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
             Icon(
               Icons.category_rounded,
               size: 16,
-              color: hasSelection ? const Color(0xFF1B4D3E) : Colors.grey[600],
+              color: hasSelection ? AppTheme.primary : AppTheme.grey600,
             ),
             const SizedBox(width: 6),
             ConstrainedBox(
@@ -327,8 +327,8 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                   color: hasSelection
-                      ? const Color(0xFF1B4D3E)
-                      : Colors.grey[700],
+                      ? AppTheme.primary
+                      : AppTheme.grey700,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -338,7 +338,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
             Icon(
               Icons.arrow_drop_down_rounded,
               size: 18,
-              color: hasSelection ? const Color(0xFF1B4D3E) : Colors.grey[600],
+              color: hasSelection ? AppTheme.primary : AppTheme.grey600,
             ),
           ],
         ),
@@ -349,7 +349,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
   void _showCategoryPicker(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
           color: AppColors.card(context),
@@ -364,7 +364,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppTheme.grey300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -386,8 +386,8 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                 leading: Icon(
                   Icons.all_inclusive_rounded,
                   color: widget.selectedCategory == null
-                      ? const Color(0xFF1B4D3E)
-                      : Colors.grey[600],
+                      ? AppTheme.primary
+                      : AppTheme.grey600,
                 ),
                 title: Text(
                   'All Categories',
@@ -397,8 +397,8 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                         ? FontWeight.w700
                         : FontWeight.w500,
                     color: widget.selectedCategory == null
-                        ? Color(0xFF1B4D3E)
-                        : Colors.grey[800],
+                        ? AppTheme.primary
+                        : AppTheme.grey800,
                   ),
                 ),
                 trailing: widget.selectedCategory == null
@@ -421,8 +421,8 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                       leading: Icon(
                         Icons.label_rounded,
                         color: isSelected
-                            ? const Color(0xFF1B4D3E)
-                            : Colors.grey[600],
+                            ? AppTheme.primary
+                            : AppTheme.grey600,
                       ),
                       title: Text(
                         category,
@@ -432,8 +432,8 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                               ? FontWeight.w700
                               : FontWeight.w500,
                           color: isSelected
-                              ? Color(0xFF1B4D3E)
-                              : Colors.grey[800],
+                              ? AppTheme.primary
+                              : AppTheme.grey800,
                         ),
                       ),
                       trailing: isSelected

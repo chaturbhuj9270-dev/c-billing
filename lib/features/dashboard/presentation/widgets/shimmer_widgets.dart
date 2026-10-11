@@ -71,10 +71,10 @@ class _ShimmerWidgetState extends State<ShimmerWidget>
     final isDark = AppColors.isDark(context);
     final base =
         widget.baseColor ??
-        (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE0E0E0));
+        (isDark ? AppTheme.paletteFF2A2A2A : AppTheme.grey300);
     final highlight =
         widget.highlightColor ??
-        (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF5F5F5));
+        (isDark ? AppTheme.paletteFF3A3A3A : AppTheme.grey100);
 
     return AnimatedBuilder(
       animation: _animation,

@@ -641,7 +641,7 @@ class _BillingPageState extends State<BillingPage> {
                     '${_localizations.customerNotFoundFor} $phoneNumber',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.grey[600],
+                      color: AppTheme.grey600,
                       fontFamily: 'Literata',
                     ),
                   ),
@@ -731,7 +731,7 @@ class _BillingPageState extends State<BillingPage> {
             },
             child: Text(
               _localizations.cancel,
-              style: TextStyle(color: Colors.grey[600], fontFamily: 'Literata'),
+              style: TextStyle(color: AppTheme.grey600, fontFamily: 'Literata'),
             ),
           ),
           TextButton(
@@ -772,7 +772,7 @@ class _BillingPageState extends State<BillingPage> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1B4D3E),
+              backgroundColor: AppTheme.primary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -780,7 +780,7 @@ class _BillingPageState extends State<BillingPage> {
             child: Text(
               _localizations.saveAndAttach,
               style: const TextStyle(
-                color: Colors.white,
+                color: AppTheme.white,
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
               ),
@@ -848,7 +848,7 @@ class _BillingPageState extends State<BillingPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (ctx) => AddItemsBottomSheet(
         products: _products,
         allProducts: _allProducts,
@@ -1450,7 +1450,7 @@ class _BillingPageState extends State<BillingPage> {
           isError: true,
           action: SnackBarAction(
             label: _localizations.retry,
-            textColor: Colors.white,
+            textColor: AppTheme.white,
             onPressed: () => _showBillPdfPreview(bill),
           ),
         );
@@ -1608,13 +1608,13 @@ class _BillingPageState extends State<BillingPage> {
         color: nested ? AppColors.scaffold(context) : AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         border: isCustomerRequired && _selectedCustomer == null
-            ? Border.all(color: Colors.red[300]!, width: 2)
+            ? Border.all(color: AppTheme.toneRose, width: 2)
             : Border.all(color: AppColors.border(context)),
         boxShadow: nested
             ? null
             : [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color: AppTheme.black.withValues(alpha: 0.04),
                   blurRadius: 12,
                   offset: const Offset(0, 3),
                 ),
@@ -1632,12 +1632,12 @@ class _BillingPageState extends State<BillingPage> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF3A242C),
+                    color: AppTheme.paletteFF3A242C,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.person_rounded,
-                    color: Color(0xFFE57373),
+                    color: AppTheme.toneRose,
                     size: 20,
                   ),
                 ),
@@ -1658,7 +1658,7 @@ class _BillingPageState extends State<BillingPage> {
                             fontSize: 15,
                             color:
                                 isCustomerRequired && _selectedCustomer == null
-                                ? Colors.red[400]
+                                ? AppTheme.error
                                 : AppColors.primaryText(context),
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -1689,7 +1689,7 @@ class _BillingPageState extends State<BillingPage> {
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.add, color: Color(0xFF3DDC97), size: 18),
+                        Icon(Icons.add, color: AppTheme.mint, size: 18),
                         SizedBox(width: 2),
                         Text(
                           'Add',
@@ -1697,7 +1697,7 @@ class _BillingPageState extends State<BillingPage> {
                             fontFamily: 'Literata',
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF3DDC97),
+                            color: AppTheme.mint,
                           ),
                         ),
                       ],
@@ -1728,8 +1728,8 @@ class _BillingPageState extends State<BillingPage> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          Color(0xFF1B4D3E).withValues(alpha: 0.08),
-                          Color(0xFF1B4D3E).withValues(alpha: 0.03),
+                          AppTheme.primary.withValues(alpha: 0.08),
+                          AppTheme.primary.withValues(alpha: 0.03),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(12),
@@ -1754,7 +1754,7 @@ class _BillingPageState extends State<BillingPage> {
                                       '?')[0]
                                   .toUpperCase(),
                               style: TextStyle(
-                                color: Colors.white,
+                                color: AppTheme.white,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 16,
                                 fontFamily: 'Literata',
@@ -1782,7 +1782,7 @@ class _BillingPageState extends State<BillingPage> {
                                   Icon(
                                     Icons.phone_rounded,
                                     size: 12,
-                                    color: Colors.grey[500],
+                                    color: AppTheme.grey,
                                   ),
                                   const SizedBox(width: 3),
                                   Text(
@@ -1790,7 +1790,7 @@ class _BillingPageState extends State<BillingPage> {
                                     style: TextStyle(
                                       fontFamily: 'Literata',
                                       fontSize: 12,
-                                      color: Colors.grey[600],
+                                      color: AppTheme.grey600,
                                     ),
                                   ),
                                 ],
@@ -1808,7 +1808,7 @@ class _BillingPageState extends State<BillingPage> {
                                     vertical: 3,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.orange.withValues(alpha: 0.1),
+                                    color: AppTheme.orange.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Row(
@@ -1817,7 +1817,7 @@ class _BillingPageState extends State<BillingPage> {
                                       Icon(
                                         Icons.account_balance_wallet_rounded,
                                         size: 12,
-                                        color: Colors.orange[700],
+                                        color: AppTheme.orange700,
                                       ),
                                       const SizedBox(width: 3),
                                       Text(
@@ -1826,7 +1826,7 @@ class _BillingPageState extends State<BillingPage> {
                                           fontFamily: 'Literata',
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,
-                                          color: Colors.orange[700],
+                                          color: AppTheme.orange700,
                                         ),
                                       ),
                                     ],
@@ -1846,12 +1846,12 @@ class _BillingPageState extends State<BillingPage> {
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: Colors.red.withValues(alpha: 0.1),
+                              color: AppTheme.red.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               Icons.close_rounded,
-                              color: Colors.red[400],
+                              color: AppTheme.error,
                               size: 16,
                             ),
                           ),
@@ -1897,7 +1897,7 @@ class _BillingPageState extends State<BillingPage> {
             decoration: InputDecoration(
               labelText: '${_localizations.enterPhoneNumber} *',
               hintText: '10 digit number',
-              hintStyle: TextStyle(color: Colors.grey[400], fontSize: 11),
+              hintStyle: TextStyle(color: AppTheme.grey400, fontSize: 11),
               counterText: '',
               labelStyle: TextStyle(
                 color: AppColors.accent(context),
@@ -1940,7 +1940,7 @@ class _BillingPageState extends State<BillingPage> {
                           _hasPhoneText = false;
                         });
                       },
-                      color: Colors.grey[600],
+                      color: AppTheme.grey600,
                     )
                   : null,
               contentPadding: const EdgeInsets.symmetric(
@@ -1966,9 +1966,9 @@ class _BillingPageState extends State<BillingPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.green.withValues(alpha: 0.1),
+          color: AppTheme.green.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+          border: Border.all(color: AppTheme.green.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -1976,7 +1976,7 @@ class _BillingPageState extends State<BillingPage> {
             const Icon(
               Icons.check_circle_rounded,
               size: 14,
-              color: Colors.green,
+              color: AppTheme.green,
             ),
             const SizedBox(width: 6),
             Flexible(
@@ -1984,7 +1984,7 @@ class _BillingPageState extends State<BillingPage> {
                 '${_localizations.customerColon} $_autoFoundCustomerName',
                 style: const TextStyle(
                   fontSize: 12,
-                  color: Colors.green,
+                  color: AppTheme.green,
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w600,
                 ),
@@ -2009,9 +2009,9 @@ class _BillingPageState extends State<BillingPage> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: Colors.orange.withValues(alpha: 0.1),
+            color: AppTheme.orange.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+            border: Border.all(color: AppTheme.orange.withValues(alpha: 0.3)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -2019,14 +2019,14 @@ class _BillingPageState extends State<BillingPage> {
               Icon(
                 Icons.person_add_rounded,
                 size: 14,
-                color: Colors.orange[700],
+                color: AppTheme.orange700,
               ),
               const SizedBox(width: 6),
               Text(
                 'Customer not found. Add new?',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.orange[700],
+                  color: AppTheme.orange700,
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w600,
                 ),
@@ -2035,7 +2035,7 @@ class _BillingPageState extends State<BillingPage> {
               Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: 10,
-                color: Colors.orange[700],
+                color: AppTheme.orange700,
               ),
             ],
           ),
@@ -2059,7 +2059,7 @@ class _BillingPageState extends State<BillingPage> {
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: isCustomerRequired
-                    ? Colors.red[200]!
+                    ? AppTheme.red200
                     : AppColors.border(context),
               ),
             ),
@@ -2130,7 +2130,7 @@ class _BillingPageState extends State<BillingPage> {
                                 _showAddCustomerPrompt = false;
                               });
                             },
-                            color: Colors.grey[500],
+                            color: AppTheme.grey,
                           )
                         : null,
                   ),
@@ -2142,7 +2142,7 @@ class _BillingPageState extends State<BillingPage> {
                           const Icon(
                             Icons.check_circle_rounded,
                             size: 14,
-                            color: Colors.green,
+                            color: AppTheme.green,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
@@ -2150,7 +2150,7 @@ class _BillingPageState extends State<BillingPage> {
                               _autoFoundCustomerName!,
                               style: const TextStyle(
                                 fontSize: 11,
-                                color: Colors.green,
+                                color: AppTheme.green,
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w600,
                               ),
@@ -2173,14 +2173,14 @@ class _BillingPageState extends State<BillingPage> {
                             Icon(
                               Icons.person_add_rounded,
                               size: 12,
-                              color: Colors.orange[700],
+                              color: AppTheme.orange700,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               'Add new?',
                               style: TextStyle(
                                 fontSize: 11,
-                                color: Colors.orange[700],
+                                color: AppTheme.orange700,
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w600,
                                 decoration: TextDecoration.underline,
@@ -2299,7 +2299,7 @@ class _BillingPageState extends State<BillingPage> {
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppTheme.transparent,
         builder: (ctx) => BatchSelectionSheet(
           productName: product.name,
           productCode: product.indexNo,
@@ -2457,12 +2457,12 @@ class _BillingPageState extends State<BillingPage> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF14352C),
+                    color: AppTheme.headerDarkStart,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.shopping_cart_outlined,
-                    color: Color(0xFF3DDC97),
+                    color: AppTheme.mint,
                     size: 20,
                   ),
                 ),
@@ -2552,7 +2552,7 @@ class _BillingPageState extends State<BillingPage> {
                 ),
                 const SizedBox(width: 10),
                 Material(
-                  color: const Color(0xFF3DDC97),
+                  color: AppTheme.mint,
                   borderRadius: BorderRadius.circular(14),
                   child: InkWell(
                     onTap: _showBarcodeScannerSheet,
@@ -2562,7 +2562,7 @@ class _BillingPageState extends State<BillingPage> {
                       height: 48,
                       child: Icon(
                         Icons.qr_code_scanner_rounded,
-                        color: Color(0xFF06281C),
+                        color: AppTheme.onMint,
                         size: 22,
                       ),
                     ),
@@ -2595,7 +2595,7 @@ class _BillingPageState extends State<BillingPage> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1A2438),
+                    color: AppTheme.paletteFF1A2438,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -2653,7 +2653,7 @@ class _BillingPageState extends State<BillingPage> {
               thickness: 0.5,
               indent: 12,
               endIndent: 12,
-              color: Colors.grey.withValues(alpha: 0.12),
+              color: AppTheme.grey.withValues(alpha: 0.12),
             ),
             itemBuilder: (context, index) {
               final item = _billItems[index];
@@ -2704,10 +2704,10 @@ class _BillingPageState extends State<BillingPage> {
                 background: Container(
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.only(right: 16),
-                  color: Colors.red[400],
+                  color: AppTheme.error,
                   child: const Icon(
                     Icons.delete_outline_rounded,
-                    color: Colors.white,
+                    color: AppTheme.white,
                     size: 20,
                   ),
                 ),
@@ -3042,19 +3042,17 @@ class _BillingPageState extends State<BillingPage> {
                     padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? const Color(0xFF1B4D3E)
+                          ? AppTheme.primary
                           : isAvailable
-                          ? const Color(0xFF1B4D3E).withValues(alpha: 0.08)
+                          ? AppTheme.primary.withValues(alpha: 0.08)
                           : AppColors.border(context),
                       borderRadius: BorderRadius.circular(6),
                       border: isSelected
                           ? null
                           : Border.all(
                               color: isAvailable
-                                  ? const Color(
-                                      0xFF1B4D3E,
-                                    ).withValues(alpha: 0.2)
-                                  : Colors.grey[300]!,
+                                  ? AppTheme.primary.withValues(alpha: 0.2)
+                                  : AppTheme.grey300,
                             ),
                     ),
                     child: Text(
@@ -3064,10 +3062,10 @@ class _BillingPageState extends State<BillingPage> {
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
                         color: isSelected
-                            ? Colors.white
+                            ? AppTheme.white
                             : isAvailable
-                            ? const Color(0xFF1B4D3E)
-                            : Colors.grey[500],
+                            ? AppTheme.primary
+                            : AppTheme.grey,
                       ),
                     ),
                   ),
@@ -3103,9 +3101,9 @@ class _BillingPageState extends State<BillingPage> {
                     color:
                         item.quantity == 1.0 &&
                             (item.sellUnit == 'kg' || item.sellUnit == 'ltr')
-                        ? const Color(0xFF1B4D3E)
+                        ? AppTheme.primary
                         : maxStock >= 1
-                        ? const Color(0xFF1B4D3E).withValues(alpha: 0.08)
+                        ? AppTheme.primary.withValues(alpha: 0.08)
                         : AppColors.border(context),
                     borderRadius: BorderRadius.circular(6),
                     border:
@@ -3114,8 +3112,8 @@ class _BillingPageState extends State<BillingPage> {
                         ? null
                         : Border.all(
                             color: maxStock >= 1
-                                ? const Color(0xFF1B4D3E).withValues(alpha: 0.2)
-                                : Colors.grey[300]!,
+                                ? AppTheme.primary.withValues(alpha: 0.2)
+                                : AppTheme.grey300,
                           ),
                   ),
                   child: Text(
@@ -3127,10 +3125,10 @@ class _BillingPageState extends State<BillingPage> {
                       color:
                           item.quantity == 1.0 &&
                               (item.sellUnit == 'kg' || item.sellUnit == 'ltr')
-                          ? Colors.white
+                          ? AppTheme.white
                           : maxStock >= 1
-                          ? const Color(0xFF1B4D3E)
-                          : Colors.grey[500],
+                          ? AppTheme.primary
+                          : AppTheme.grey,
                     ),
                   ),
                 ),
@@ -3147,13 +3145,13 @@ class _BillingPageState extends State<BillingPage> {
                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: isCustomValue
-                      ? const Color(0xFF7B68EE)
+                      ? AppTheme.paletteFF7B68EE
                       : AppColors.chipFill(context),
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
                     color: isCustomValue
-                        ? const Color(0xFF7B68EE)
-                        : Colors.grey[300]!,
+                        ? AppTheme.paletteFF7B68EE
+                        : AppTheme.grey300,
                   ),
                 ),
                 child: Row(
@@ -3162,7 +3160,7 @@ class _BillingPageState extends State<BillingPage> {
                     Icon(
                       Icons.edit_rounded,
                       size: 10,
-                      color: isCustomValue ? Colors.white : Colors.grey[600],
+                      color: isCustomValue ? AppTheme.white : AppTheme.grey600,
                     ),
                     const SizedBox(width: 3),
                     Text(
@@ -3171,7 +3169,7 @@ class _BillingPageState extends State<BillingPage> {
                         fontFamily: 'Literata',
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: isCustomValue ? Colors.white : Colors.grey[600],
+                        color: isCustomValue ? AppTheme.white : AppTheme.grey600,
                       ),
                     ),
                   ],
@@ -3251,7 +3249,7 @@ class _BillingPageState extends State<BillingPage> {
                     suffixStyle: TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 14,
-                      color: Colors.grey[600],
+                      color: AppTheme.grey600,
                     ),
                     filled: true,
                     fillColor: AppColors.scaffold(context),
@@ -3274,7 +3272,7 @@ class _BillingPageState extends State<BillingPage> {
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 11,
-                    color: Colors.grey[500],
+                    color: AppTheme.grey,
                   ),
                 ),
               ],
@@ -3286,7 +3284,7 @@ class _BillingPageState extends State<BillingPage> {
                   _localizations.cancel,
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                   ),
                 ),
               ),
@@ -3316,7 +3314,7 @@ class _BillingPageState extends State<BillingPage> {
                       }
                     : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B4D3E),
+                  backgroundColor: AppTheme.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -3325,7 +3323,7 @@ class _BillingPageState extends State<BillingPage> {
                   _localizations.done,
                   style: const TextStyle(
                     fontFamily: 'Literata',
-                    color: Colors.white,
+                    color: AppTheme.white,
                   ),
                 ),
               ),
@@ -3446,12 +3444,12 @@ class _BillingPageState extends State<BillingPage> {
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF7B68EE), Color(0xFF9B8DFF)],
+                      colors: [AppTheme.paletteFF7B68EE, AppTheme.paletteFF9B8DFF],
                     ),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF7B68EE).withValues(alpha: 0.3),
+                        color: AppTheme.paletteFF7B68EE.withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 3),
                       ),
@@ -3459,7 +3457,7 @@ class _BillingPageState extends State<BillingPage> {
                   ),
                   child: Icon(
                     Icons.edit_rounded,
-                    color: Colors.white,
+                    color: AppTheme.white,
                     size: 20,
                   ),
                 ),
@@ -3482,7 +3480,7 @@ class _BillingPageState extends State<BillingPage> {
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -3502,7 +3500,7 @@ class _BillingPageState extends State<BillingPage> {
                     color: AppColors.scaffold(context),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: Colors.grey.withValues(alpha: 0.1),
+                      color: AppTheme.grey.withValues(alpha: 0.1),
                     ),
                   ),
                   child: Row(
@@ -3516,7 +3514,7 @@ class _BillingPageState extends State<BillingPage> {
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 11,
-                              color: Colors.grey[500],
+                              color: AppTheme.grey,
                             ),
                           ),
                           Text(
@@ -3543,7 +3541,7 @@ class _BillingPageState extends State<BillingPage> {
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 11,
-                              color: Colors.grey[500],
+                              color: AppTheme.grey,
                             ),
                           ),
                           Text(
@@ -3552,7 +3550,7 @@ class _BillingPageState extends State<BillingPage> {
                               fontFamily: 'Literata',
                               fontWeight: FontWeight.w700,
                               fontSize: 16,
-                              color: Colors.blue[700],
+                              color: AppTheme.blue700,
                             ),
                           ),
                         ],
@@ -3578,8 +3576,8 @@ class _BillingPageState extends State<BillingPage> {
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               decoration: BoxDecoration(
                                 color: selectedSellUnit == unit
-                                    ? const Color(0xFF1B4D3E)
-                                    : Colors.transparent,
+                                    ? AppTheme.primary
+                                    : AppTheme.transparent,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Center(
@@ -3590,8 +3588,8 @@ class _BillingPageState extends State<BillingPage> {
                                     fontWeight: FontWeight.w700,
                                     fontSize: 13,
                                     color: selectedSellUnit == unit
-                                        ? Colors.white
-                                        : Colors.grey[600],
+                                        ? AppTheme.white
+                                        : AppTheme.grey600,
                                   ),
                                 ),
                               ),
@@ -3605,8 +3603,8 @@ class _BillingPageState extends State<BillingPage> {
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               decoration: BoxDecoration(
                                 color: selectedSellUnit == subUnit
-                                    ? const Color(0xFF1B4D3E)
-                                    : Colors.transparent,
+                                    ? AppTheme.primary
+                                    : AppTheme.transparent,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Center(
@@ -3617,8 +3615,8 @@ class _BillingPageState extends State<BillingPage> {
                                     fontWeight: FontWeight.w700,
                                     fontSize: 13,
                                     color: selectedSellUnit == subUnit
-                                        ? Colors.white
-                                        : Colors.grey[600],
+                                        ? AppTheme.white
+                                        : AppTheme.grey600,
                                   ),
                                 ),
                               ),
@@ -3635,7 +3633,7 @@ class _BillingPageState extends State<BillingPage> {
                   children: [
                     // Minus button
                     Material(
-                      color: Colors.transparent,
+                      color: AppTheme.transparent,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(12),
                         onTap: () {
@@ -3658,15 +3656,15 @@ class _BillingPageState extends State<BillingPage> {
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.red[50],
+                            color: AppTheme.red50,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: Colors.red.withValues(alpha: 0.2),
+                              color: AppTheme.red.withValues(alpha: 0.2),
                             ),
                           ),
                           child: Icon(
                             Icons.remove_rounded,
-                            color: Colors.red[700],
+                            color: AppTheme.red700,
                             size: 24,
                           ),
                         ),
@@ -3697,12 +3695,12 @@ class _BillingPageState extends State<BillingPage> {
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(color: AppTheme.grey300),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                             borderSide: BorderSide(
-                              color: Color(0xFF7B68EE),
+                              color: AppTheme.paletteFF7B68EE,
                               width: 2,
                             ),
                           ),
@@ -3718,7 +3716,7 @@ class _BillingPageState extends State<BillingPage> {
                     const SizedBox(width: 12),
                     // Plus button
                     Material(
-                      color: Colors.transparent,
+                      color: AppTheme.transparent,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(12),
                         onTap: () {
@@ -3745,15 +3743,15 @@ class _BillingPageState extends State<BillingPage> {
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.green[50],
+                            color: AppTheme.green50,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: Colors.green.withValues(alpha: 0.2),
+                              color: AppTheme.green.withValues(alpha: 0.2),
                             ),
                           ),
                           child: Icon(
                             Icons.add_rounded,
-                            color: Colors.green[700],
+                            color: AppTheme.green700,
                             size: 24,
                           ),
                         ),
@@ -3778,7 +3776,7 @@ class _BillingPageState extends State<BillingPage> {
                           .where((q) => q <= maxInUnit)
                           .map(
                             (qty) => Material(
-                              color: Colors.transparent,
+                              color: AppTheme.transparent,
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(8),
                                 onTap: () {
@@ -3794,7 +3792,7 @@ class _BillingPageState extends State<BillingPage> {
                                     color: AppColors.chipFill(context),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                      color: Colors.grey.withValues(alpha: 0.2),
+                                      color: AppTheme.grey.withValues(alpha: 0.2),
                                     ),
                                   ),
                                   child: Text(
@@ -3829,14 +3827,14 @@ class _BillingPageState extends State<BillingPage> {
                 },
                 icon: Icon(
                   Icons.delete_outline_rounded,
-                  color: Colors.red[600],
+                  color: AppTheme.red600,
                   size: 20,
                 ),
                 label: Text(
                   _localizations.delete,
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    color: Colors.red[600],
+                    color: AppTheme.red600,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -3849,7 +3847,7 @@ class _BillingPageState extends State<BillingPage> {
                   _localizations.cancel,
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -3884,8 +3882,8 @@ class _BillingPageState extends State<BillingPage> {
                       }
                     : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B4D3E),
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: AppTheme.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -3956,7 +3954,7 @@ class _BillingPageState extends State<BillingPage> {
                   ),
                   child: Icon(
                     Icons.currency_rupee_rounded,
-                    color: Colors.white,
+                    color: AppTheme.white,
                     size: 20,
                   ),
                 ),
@@ -3979,7 +3977,7 @@ class _BillingPageState extends State<BillingPage> {
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -3999,7 +3997,7 @@ class _BillingPageState extends State<BillingPage> {
                     color: AppColors.scaffold(context),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: Colors.grey.withValues(alpha: 0.1),
+                      color: AppTheme.grey.withValues(alpha: 0.1),
                     ),
                   ),
                   child: Row(
@@ -4013,7 +4011,7 @@ class _BillingPageState extends State<BillingPage> {
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 11,
-                              color: Colors.grey[500],
+                              color: AppTheme.grey,
                             ),
                           ),
                           Text(
@@ -4040,7 +4038,7 @@ class _BillingPageState extends State<BillingPage> {
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 11,
-                              color: Colors.grey[500],
+                              color: AppTheme.grey,
                             ),
                           ),
                           Text(
@@ -4049,7 +4047,7 @@ class _BillingPageState extends State<BillingPage> {
                               fontFamily: 'Literata',
                               fontWeight: FontWeight.w700,
                               fontSize: 16,
-                              color: Colors.blue[700],
+                              color: AppTheme.blue700,
                             ),
                           ),
                         ],
@@ -4089,7 +4087,7 @@ class _BillingPageState extends State<BillingPage> {
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
+                      borderSide: BorderSide(color: AppTheme.grey300),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -4132,14 +4130,14 @@ class _BillingPageState extends State<BillingPage> {
                 },
                 icon: Icon(
                   Icons.refresh_rounded,
-                  color: Colors.orange[700],
+                  color: AppTheme.orange700,
                   size: 20,
                 ),
                 label: Text(
                   _localizations.reset,
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    color: Colors.orange[700],
+                    color: AppTheme.orange700,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -4152,7 +4150,7 @@ class _BillingPageState extends State<BillingPage> {
                   _localizations.cancel,
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -4187,8 +4185,8 @@ class _BillingPageState extends State<BillingPage> {
                       }
                     : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B4D3E),
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: AppTheme.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -4232,7 +4230,7 @@ class _BillingPageState extends State<BillingPage> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF14352C),
+                    color: AppTheme.headerDarkStart,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -4345,7 +4343,7 @@ class _BillingPageState extends State<BillingPage> {
                                 ? _localizations.enterPercent
                                 : _localizations.enterAmount,
                             hintStyle: TextStyle(
-                              color: Colors.grey[400],
+                              color: AppTheme.grey400,
                               fontSize: 12,
                             ),
                             contentPadding: const EdgeInsets.symmetric(
@@ -4358,7 +4356,7 @@ class _BillingPageState extends State<BillingPage> {
                                     icon: Icon(
                                       Icons.clear_rounded,
                                       size: 16,
-                                      color: Colors.grey[500],
+                                      color: AppTheme.grey,
                                     ),
                                     onPressed: () {
                                       _discountController.clear();
@@ -4423,7 +4421,7 @@ class _BillingPageState extends State<BillingPage> {
           // GST breakdown
           if (_taxBreakdown != null) ...[
             const SizedBox(height: 10),
-            Divider(color: Colors.grey[300], height: 1),
+            Divider(color: AppTheme.grey300, height: 1),
             const SizedBox(height: 10),
             if (_gstMode == GstMode.includeGst)
               Padding(
@@ -4434,7 +4432,7 @@ class _BillingPageState extends State<BillingPage> {
                     fontFamily: 'Literata',
                     fontSize: 11,
                     fontStyle: FontStyle.italic,
-                    color: Colors.grey[600],
+                    color: AppTheme.grey600,
                   ),
                 ),
               ),
@@ -4468,13 +4466,13 @@ class _BillingPageState extends State<BillingPage> {
                     fontFamily: 'Literata',
                     fontSize: 11,
                     fontStyle: FontStyle.italic,
-                    color: Colors.orange[700],
+                    color: AppTheme.orange700,
                   ),
                 ),
               ),
           ],
           SizedBox(height: 12),
-          Divider(color: Colors.grey[300], height: 1),
+          Divider(color: AppTheme.grey300, height: 1),
           SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -4505,7 +4503,7 @@ class _BillingPageState extends State<BillingPage> {
                     fontFamily: 'Literata',
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: AppTheme.white,
                   ),
                 ),
               ),
@@ -4555,7 +4553,7 @@ class _BillingPageState extends State<BillingPage> {
               fontFamily: 'Literata',
               fontSize: 13,
               fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
-              color: Colors.orange[800],
+              color: AppTheme.orange800,
             ),
           ),
           Text(
@@ -4564,7 +4562,7 @@ class _BillingPageState extends State<BillingPage> {
               fontFamily: 'Literata',
               fontSize: 13,
               fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
-              color: Colors.orange[800],
+              color: AppTheme.orange800,
             ),
           ),
         ],
@@ -4579,10 +4577,10 @@ class _BillingPageState extends State<BillingPage> {
       decoration: BoxDecoration(
         color: AppColors.card(context),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+        border: Border.all(color: AppTheme.grey.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),
@@ -4597,8 +4595,8 @@ class _BillingPageState extends State<BillingPage> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.orange.withValues(alpha: 0.1),
-                  Colors.orange.withValues(alpha: 0.05),
+                  AppTheme.orange.withValues(alpha: 0.1),
+                  AppTheme.orange.withValues(alpha: 0.05),
                 ],
               ),
               borderRadius: const BorderRadius.only(
@@ -4613,12 +4611,12 @@ class _BillingPageState extends State<BillingPage> {
                   height: 44,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Colors.orange[700]!, Colors.orange[500]!],
+                      colors: [AppTheme.orange700, AppTheme.orange],
                     ),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.orange.withValues(alpha: 0.3),
+                        color: AppTheme.orange.withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 3),
                       ),
@@ -4626,7 +4624,7 @@ class _BillingPageState extends State<BillingPage> {
                   ),
                   child: Icon(
                     Icons.receipt_long_rounded,
-                    color: Colors.white,
+                    color: AppTheme.white,
                     size: 22,
                   ),
                 ),
@@ -4650,7 +4648,7 @@ class _BillingPageState extends State<BillingPage> {
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                       ),
                     ],
@@ -4663,9 +4661,9 @@ class _BillingPageState extends State<BillingPage> {
                     vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.orange[50],
+                    color: AppTheme.orange50,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.orange[200]!),
+                    border: Border.all(color: AppTheme.orange200),
                   ),
                   child: Text(
                     _gstMode == GstMode.noGst
@@ -4676,7 +4674,7 @@ class _BillingPageState extends State<BillingPage> {
                     style: TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 11,
-                      color: Colors.orange[800],
+                      color: AppTheme.orange800,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -4732,19 +4730,19 @@ class _BillingPageState extends State<BillingPage> {
         decoration: BoxDecoration(
           gradient: isSelected
               ? LinearGradient(
-                  colors: [Colors.orange[600]!, Colors.orange[500]!],
+                  colors: [AppTheme.orange600, AppTheme.orange],
                 )
               : null,
           color: isSelected ? null : AppColors.scaffold(context),
           borderRadius: BorderRadius.circular(25),
           border: Border.all(
-            color: isSelected ? Colors.transparent : Colors.grey[300]!,
+            color: isSelected ? AppTheme.transparent : AppTheme.grey300,
             width: 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Colors.orange.withValues(alpha: 0.3),
+                    color: AppTheme.orange.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
@@ -4759,14 +4757,14 @@ class _BillingPageState extends State<BillingPage> {
               height: 24,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? Colors.white.withValues(alpha: 0.2)
+                    ? AppTheme.white.withValues(alpha: 0.2)
                     : AppColors.border(context),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 icon,
                 size: 14,
-                color: isSelected ? Colors.white : Colors.grey[600],
+                color: isSelected ? AppTheme.white : AppTheme.grey600,
               ),
             ),
             const SizedBox(width: 8),
@@ -4776,7 +4774,7 @@ class _BillingPageState extends State<BillingPage> {
                 fontFamily: 'Literata',
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? Colors.white : Colors.grey[700],
+                color: isSelected ? AppTheme.white : AppTheme.grey700,
               ),
             ),
           ],
@@ -4791,10 +4789,10 @@ class _BillingPageState extends State<BillingPage> {
       decoration: BoxDecoration(
         color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+        border: Border.all(color: AppTheme.grey.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 3),
           ),
@@ -4809,8 +4807,8 @@ class _BillingPageState extends State<BillingPage> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF1B4D3E).withValues(alpha: 0.1),
-                  const Color(0xFF1B4D3E).withValues(alpha: 0.05),
+                  AppTheme.primary.withValues(alpha: 0.1),
+                  AppTheme.primary.withValues(alpha: 0.05),
                 ],
               ),
               borderRadius: const BorderRadius.only(
@@ -4838,7 +4836,7 @@ class _BillingPageState extends State<BillingPage> {
                   ),
                   child: Icon(
                     Icons.payments_rounded,
-                    color: Colors.white,
+                    color: AppTheme.white,
                     size: 18,
                   ),
                 ),
@@ -4861,7 +4859,7 @@ class _BillingPageState extends State<BillingPage> {
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 11,
-                          color: Colors.grey[600],
+                          color: AppTheme.grey600,
                         ),
                       ),
                     ],
@@ -4875,13 +4873,13 @@ class _BillingPageState extends State<BillingPage> {
                   ),
                   decoration: BoxDecoration(
                     color: _isFullPayment
-                        ? Colors.green[50]
-                        : Colors.orange[50],
+                        ? AppTheme.green50
+                        : AppTheme.orange50,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: _isFullPayment
-                          ? Colors.green[200]!
-                          : Colors.orange[200]!,
+                          ? AppTheme.green200
+                          : AppTheme.orange200,
                     ),
                   ),
                   child: Row(
@@ -4893,8 +4891,8 @@ class _BillingPageState extends State<BillingPage> {
                             : Icons.schedule_rounded,
                         size: 12,
                         color: _isFullPayment
-                            ? Colors.green[700]
-                            : Colors.orange[700],
+                            ? AppTheme.green700
+                            : AppTheme.orange700,
                       ),
                       const SizedBox(width: 3),
                       Text(
@@ -4905,8 +4903,8 @@ class _BillingPageState extends State<BillingPage> {
                           fontFamily: 'Literata',
                           fontSize: 10,
                           color: _isFullPayment
-                              ? Colors.green[700]
-                              : Colors.orange[700],
+                              ? AppTheme.green700
+                              : AppTheme.orange700,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -5014,12 +5012,12 @@ class _BillingPageState extends State<BillingPage> {
                                     fontFamily: 'Literata',
                                     fontSize: 15,
                                     fontWeight: FontWeight.w700,
-                                    color: Colors.grey[500],
+                                    color: AppTheme.grey,
                                   ),
                                   hintText: '0.00',
                                   hintStyle: TextStyle(
                                     fontFamily: 'Literata',
-                                    color: Colors.grey[400],
+                                    color: AppTheme.grey400,
                                   ),
                                   border: InputBorder.none,
                                   contentPadding: const EdgeInsets.symmetric(
@@ -5067,14 +5065,14 @@ class _BillingPageState extends State<BillingPage> {
                                 gradient: LinearGradient(
                                   colors: _pendingAmount > 0
                                       ? [
-                                          Colors.orange[50]!,
-                                          Colors.orange[100]!.withValues(
+                                          AppTheme.orange50,
+                                          AppTheme.orange100.withValues(
                                             alpha: 0.5,
                                           ),
                                         ]
                                       : [
-                                          Colors.green[50]!,
-                                          Colors.green[100]!.withValues(
+                                          AppTheme.green50,
+                                          AppTheme.green100.withValues(
                                             alpha: 0.5,
                                           ),
                                         ],
@@ -5082,8 +5080,8 @@ class _BillingPageState extends State<BillingPage> {
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
                                   color: _pendingAmount > 0
-                                      ? Colors.orange[300]!
-                                      : Colors.green[300]!,
+                                      ? AppTheme.orange300
+                                      : AppTheme.green300,
                                 ),
                               ),
                               child: Text(
@@ -5093,8 +5091,8 @@ class _BillingPageState extends State<BillingPage> {
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
                                   color: _pendingAmount > 0
-                                      ? Colors.orange[700]
-                                      : Colors.green[700],
+                                      ? AppTheme.orange700
+                                      : AppTheme.green700,
                                 ),
                               ),
                             ),
@@ -5136,12 +5134,12 @@ class _BillingPageState extends State<BillingPage> {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Colors.red[50]!,
-                            Colors.red[100]!.withValues(alpha: 0.5),
+                            AppTheme.red50,
+                            AppTheme.red100.withValues(alpha: 0.5),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.red[300]!),
+                        border: Border.all(color: AppTheme.toneRose),
                       ),
                       child: Row(
                         children: [
@@ -5149,13 +5147,13 @@ class _BillingPageState extends State<BillingPage> {
                             width: 32,
                             height: 32,
                             decoration: BoxDecoration(
-                              color: Colors.red[100],
+                              color: AppTheme.red100,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Icon(
                               Icons.warning_amber_rounded,
                               size: 18,
-                              color: Colors.red[700],
+                              color: AppTheme.red700,
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -5166,14 +5164,14 @@ class _BillingPageState extends State<BillingPage> {
                                 fontFamily: 'Literata',
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.red[800],
+                                color: AppTheme.red800,
                               ),
                             ),
                           ),
                           Icon(
                             Icons.arrow_forward_ios_rounded,
                             size: 14,
-                            color: Colors.red[700],
+                            color: AppTheme.red700,
                           ),
                         ],
                       ),
@@ -5189,8 +5187,8 @@ class _BillingPageState extends State<BillingPage> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          Color(0xFF1B4D3E).withValues(alpha: 0.08),
-                          Color(0xFF1B4D3E).withValues(alpha: 0.04),
+                          AppTheme.primary.withValues(alpha: 0.08),
+                          AppTheme.primary.withValues(alpha: 0.04),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(16),
@@ -5208,17 +5206,17 @@ class _BillingPageState extends State<BillingPage> {
                         _buildPaymentSummaryRow(
                           _localizations.received,
                           '₹${_receivedAmount.toStringAsFixed(2)}',
-                          color: Colors.green[700],
+                          color: AppTheme.green700,
                         ),
                         const SizedBox(height: 10),
-                        Divider(color: Colors.grey[300], height: 1),
+                        Divider(color: AppTheme.grey300, height: 1),
                         const SizedBox(height: 10),
                         _buildPaymentSummaryRow(
                           _localizations.pending,
                           '₹${_pendingAmount.toStringAsFixed(2)}',
                           color: _pendingAmount > 0
-                              ? Colors.orange[700]
-                              : Colors.green[700],
+                              ? AppTheme.orange700
+                              : AppTheme.green700,
                           isBold: true,
                         ),
                       ],
@@ -5248,7 +5246,7 @@ class _BillingPageState extends State<BillingPage> {
           gradient: isSelected
               ? LinearGradient(colors: AppColors.headerGradient(context))
               : null,
-          color: isSelected ? null : Colors.transparent,
+          color: isSelected ? null : AppTheme.transparent,
           borderRadius: BorderRadius.circular(8),
           boxShadow: isSelected
               ? [
@@ -5266,7 +5264,7 @@ class _BillingPageState extends State<BillingPage> {
             Icon(
               icon,
               size: 14,
-              color: isSelected ? Colors.white : Colors.grey[600],
+              color: isSelected ? AppTheme.white : AppTheme.grey600,
             ),
             const SizedBox(width: 4),
             Text(
@@ -5275,7 +5273,7 @@ class _BillingPageState extends State<BillingPage> {
                 fontFamily: 'Literata',
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : Colors.grey[600],
+                color: isSelected ? AppTheme.white : AppTheme.grey600,
               ),
             ),
           ],
@@ -5299,10 +5297,10 @@ class _BillingPageState extends State<BillingPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? Color(0xFF1B4D3E) : AppColors.chipFill(context),
+          color: isSelected ? AppTheme.primary : AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
+            color: isSelected ? AppTheme.primary : AppTheme.grey300,
           ),
         ),
         child: Text(
@@ -5311,7 +5309,7 @@ class _BillingPageState extends State<BillingPage> {
             fontFamily: 'Literata',
             fontSize: 11,
             fontWeight: FontWeight.w500,
-            color: isSelected ? Colors.white : Colors.grey[700],
+            color: isSelected ? AppTheme.white : AppTheme.grey700,
           ),
         ),
       ),
@@ -5361,7 +5359,7 @@ class _BillingPageState extends State<BillingPage> {
         height: 40,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.mint : Colors.transparent,
+          color: isSelected ? AppTheme.mint : AppTheme.transparent,
           shape: BoxShape.circle,
         ),
         child: Text(
@@ -5391,7 +5389,7 @@ class _BillingPageState extends State<BillingPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.mint : Colors.transparent,
+          color: isSelected ? AppTheme.mint : AppTheme.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? AppTheme.mint : AppColors.border(context),
@@ -5467,7 +5465,7 @@ class _BillingPageState extends State<BillingPage> {
       child: GestureDetector(
         onTap: _toggleQuickStats, // Tap outside to close
         child: Container(
-          color: Colors.black.withValues(alpha: 0.3),
+          color: AppTheme.black.withValues(alpha: 0.3),
           child: SafeArea(
             bottom: false,
             child: Column(
@@ -5513,11 +5511,11 @@ class _BillingPageState extends State<BillingPage> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0x33FFFFFF),
-            Color(0x99FFFFFF),
-            Color(0x4D1B4D3E),
-            Color(0x99FFFFFF),
-            Color(0x33FFFFFF),
+            AppTheme.palette33FFFFFF,
+            AppTheme.white60,
+            AppTheme.palette4D1B4D3E,
+            AppTheme.white60,
+            AppTheme.palette33FFFFFF,
           ],
           stops: [0.0, 0.25, 0.5, 0.75, 1.0],
         ),
@@ -5534,22 +5532,22 @@ class _BillingPageState extends State<BillingPage> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xD9FFFFFF),
-                  Color(0xBFFFFFFF),
-                  Color(0xCCF8FFFC),
+                  AppTheme.paletteD9FFFFFF,
+                  AppTheme.paletteBFFFFFFF,
+                  AppTheme.paletteCCF8FFFC,
                 ],
               ),
               borderRadius: BorderRadius.circular(26),
-              border: Border.all(width: 1.5, color: const Color(0xCCFFFFFF)),
+              border: Border.all(width: 1.5, color: AppTheme.paletteCCFFFFFF),
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x261B4D3E),
+                  color: AppTheme.palette261B4D3E,
                   blurRadius: 40,
                   spreadRadius: 5,
                   offset: Offset(0, 15),
                 ),
                 BoxShadow(
-                  color: Color(0xCCFFFFFF),
+                  color: AppTheme.paletteCCFFFFFF,
                   blurRadius: 20,
                   spreadRadius: -5,
                   offset: Offset(-5, -5),
@@ -5599,7 +5597,7 @@ class _BillingPageState extends State<BillingPage> {
           ),
           child: Icon(
             Icons.dashboard_customize_rounded,
-            color: Colors.white,
+            color: AppTheme.white,
             size: 18,
           ),
         ),
@@ -5645,8 +5643,8 @@ class _BillingPageState extends State<BillingPage> {
         icon: Icons.receipt_long_rounded,
         value: '',
         label: _localizations.invoices,
-        color: const Color(0xFF667eea),
-        gradient: [const Color(0xFF667eea), const Color(0xFF764ba2)],
+        color: AppTheme.paletteFF667EEA,
+        gradient: [AppTheme.paletteFF667EEA, AppTheme.paletteFF764BA2],
         onTap: () {
           _toggleQuickStats();
           Navigator.push(
@@ -5659,8 +5657,8 @@ class _BillingPageState extends State<BillingPage> {
         icon: Icons.inventory_2_rounded,
         value: '',
         label: _localizations.products,
-        color: const Color(0xFFf093fb),
-        gradient: [const Color(0xFFf093fb), const Color(0xFFf5576c)],
+        color: AppTheme.paletteFFF093FB,
+        gradient: [AppTheme.paletteFFF093FB, AppTheme.paletteFFF5576C],
         onTap: () {
           _toggleQuickStats();
           Navigator.push(
@@ -5673,8 +5671,8 @@ class _BillingPageState extends State<BillingPage> {
         icon: Icons.local_shipping_rounded,
         value: '',
         label: _localizations.suppliers,
-        color: const Color(0xFFFF6B6B),
-        gradient: [const Color(0xFFFF6B6B), const Color(0xFFee5a24)],
+        color: AppTheme.coral,
+        gradient: [AppTheme.coral, AppTheme.paletteFFEE5A24],
         onTap: () {
           _toggleQuickStats();
           Navigator.push(
@@ -5687,8 +5685,8 @@ class _BillingPageState extends State<BillingPage> {
         icon: Icons.business_rounded,
         value: '',
         label: _localizations.companies,
-        color: const Color(0xFF9C27B0),
-        gradient: [const Color(0xFF9C27B0), const Color(0xFF7B1FA2)],
+        color: AppTheme.purple,
+        gradient: [AppTheme.purple, AppTheme.purple700],
         onTap: () {
           _toggleQuickStats();
           Navigator.push(
@@ -5701,8 +5699,8 @@ class _BillingPageState extends State<BillingPage> {
         icon: Icons.keyboard_return_rounded,
         value: '',
         label: 'P. Return',
-        color: const Color(0xFFE65100),
-        gradient: [const Color(0xFFE65100), const Color(0xFFFF8F00)],
+        color: AppTheme.orange900,
+        gradient: [AppTheme.orange900, AppTheme.amber800],
         onTap: () {
           _toggleQuickStats();
           Navigator.push(
@@ -5715,8 +5713,8 @@ class _BillingPageState extends State<BillingPage> {
         icon: Icons.celebration_rounded,
         value: '',
         label: _localizations.events,
-        color: const Color(0xFF6C63FF),
-        gradient: [const Color(0xFF6C63FF), const Color(0xFF8B5CF6)],
+        color: AppTheme.paletteFF6C63FF,
+        gradient: [AppTheme.paletteFF6C63FF, AppTheme.paletteFF8B5CF6],
         onTap: () {
           _toggleQuickStats();
           Navigator.push(
@@ -5729,8 +5727,8 @@ class _BillingPageState extends State<BillingPage> {
         icon: Icons.request_quote_rounded,
         value: '',
         label: _localizations.quotations,
-        color: const Color(0xFF1565C0),
-        gradient: [const Color(0xFF1565C0), const Color(0xFF42A5F5)],
+        color: AppTheme.blue800,
+        gradient: [AppTheme.blue800, AppTheme.blue400],
         onTap: () {
           _toggleQuickStats();
           Navigator.push(
@@ -5743,8 +5741,8 @@ class _BillingPageState extends State<BillingPage> {
         icon: Icons.qr_code_2_rounded,
         value: '',
         label: _localizations.barcode,
-        color: const Color(0xFF00897B),
-        gradient: [const Color(0xFF00897B), const Color(0xFF004D40)],
+        color: AppTheme.teal600,
+        gradient: [AppTheme.teal600, AppTheme.teal900],
         onTap: () {
           _toggleQuickStats();
           Navigator.push(
@@ -5757,8 +5755,8 @@ class _BillingPageState extends State<BillingPage> {
         icon: Icons.people_alt_rounded,
         value: '',
         label: _localizations.customers,
-        color: const Color(0xFF00ACC1),
-        gradient: [const Color(0xFF00ACC1), const Color(0xFF0097A7)],
+        color: AppTheme.cyan600,
+        gradient: [AppTheme.cyan600, AppTheme.cyan700],
         onTap: () {
           _toggleQuickStats();
           Navigator.push(
@@ -5805,14 +5803,14 @@ class _BillingPageState extends State<BillingPage> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.white.withValues(alpha: 0.7),
-                    Colors.white.withValues(alpha: 0.4),
+                    AppTheme.white.withValues(alpha: 0.7),
+                    AppTheme.white.withValues(alpha: 0.4),
                     stat.color.withValues(alpha: 0.15),
                   ],
                   stops: const [0.0, 0.5, 1.0],
                 ),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.5),
+                  color: AppTheme.white.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
                 boxShadow: [
@@ -5822,7 +5820,7 @@ class _BillingPageState extends State<BillingPage> {
                     offset: const Offset(0, 4),
                   ),
                   BoxShadow(
-                    color: Colors.white.withValues(alpha: 0.6),
+                    color: AppTheme.white.withValues(alpha: 0.6),
                     blurRadius: 6,
                     spreadRadius: -2,
                     offset: const Offset(-2, -2),
@@ -5851,7 +5849,7 @@ class _BillingPageState extends State<BillingPage> {
                         ),
                       ],
                     ),
-                    child: Icon(stat.icon, color: Colors.white, size: 16),
+                    child: Icon(stat.icon, color: AppTheme.white, size: 16),
                   ),
                   const SizedBox(height: 6),
                   // Label
@@ -5891,7 +5889,7 @@ class _BillingPageState extends State<BillingPage> {
           decoration: BoxDecoration(
             color: AppColors.chipFill(context),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(color: AppTheme.grey200),
           ),
           child: Center(
             child: Container(
@@ -5955,8 +5953,8 @@ class _BillingPageState extends State<BillingPage> {
           const SizedBox(width: 12),
           Material(
             color: canSave
-                ? const Color(0xFF3DDC97)
-                : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE4E4E4)),
+                ? AppTheme.mint
+                : (isDark ? AppTheme.paletteFF2A2A2A : AppTheme.paletteFFE4E4E4),
             borderRadius: BorderRadius.circular(24),
             child: InkWell(
               onTap: canSave ? _saveBill : null,
@@ -5972,7 +5970,7 @@ class _BillingPageState extends State<BillingPage> {
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.5,
-                          valueColor: AlwaysStoppedAnimation(Color(0xFF06281C)),
+                          valueColor: AlwaysStoppedAnimation(AppTheme.onMint),
                         ),
                       )
                     : Row(
@@ -5982,7 +5980,7 @@ class _BillingPageState extends State<BillingPage> {
                             Icons.check_circle_outline_rounded,
                             size: 18,
                             color: canSave
-                                ? const Color(0xFF06281C)
+                                ? AppTheme.onMint
                                 : AppColors.mutedText(context),
                           ),
                           const SizedBox(width: 6),
@@ -5993,7 +5991,7 @@ class _BillingPageState extends State<BillingPage> {
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                               color: canSave
-                                  ? const Color(0xFF06281C)
+                                  ? AppTheme.onMint
                                   : AppColors.mutedText(context),
                             ),
                           ),
@@ -6014,7 +6012,7 @@ class _BillingPageState extends State<BillingPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.transparent,
       builder: (ctx) => _CustomerPickerBottomSheet(
         customers: _customers,
         localizations: _localizations,
@@ -6143,7 +6141,7 @@ class _CustomerPickerBottomSheetState
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppTheme.grey300,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -6183,7 +6181,7 @@ class _CustomerPickerBottomSheetState
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 12,
-                            color: Colors.grey,
+                            color: AppTheme.grey,
                           ),
                         ),
                       ],
@@ -6201,7 +6199,7 @@ class _CustomerPickerBottomSheetState
                 style: TextStyle(fontFamily: 'Literata', fontSize: 14),
                 decoration: InputDecoration(
                   hintText: widget.localizations.searchByNameOrPhone,
-                  hintStyle: TextStyle(color: Colors.grey[500]),
+                  hintStyle: TextStyle(color: AppTheme.grey),
                   prefixIcon: Icon(
                     Icons.search,
                     color: AppColors.accent(context),
@@ -6279,14 +6277,14 @@ class _CustomerPickerBottomSheetState
                           Icon(
                             Icons.person_outline,
                             size: 48,
-                            color: Colors.grey[400],
+                            color: AppTheme.grey400,
                           ),
                           const SizedBox(height: 12),
                           Text(
                             widget.localizations.noCustomersFound,
                             style: TextStyle(
                               fontFamily: 'Literata',
-                              color: Colors.grey[600],
+                              color: AppTheme.grey600,
                             ),
                           ),
                           if (widget.onAddNew != null) ...[
@@ -6299,7 +6297,7 @@ class _CustomerPickerBottomSheetState
                                 style: TextStyle(fontFamily: 'Literata'),
                               ),
                               style: TextButton.styleFrom(
-                                foregroundColor: const Color(0xFF1B4D3E),
+                                foregroundColor: AppTheme.primary,
                               ),
                             ),
                           ],
@@ -6323,7 +6321,7 @@ class _CustomerPickerBottomSheetState
                             ),
                           ),
                           child: Material(
-                            color: Colors.transparent,
+                            color: AppTheme.transparent,
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
                               onTap: () => widget.onCustomerSelected(customer),
@@ -6332,7 +6330,7 @@ class _CustomerPickerBottomSheetState
                                 child: Row(
                                   children: [
                                     CircleAvatar(
-                                      backgroundColor: const Color(0xFF1B4D3E),
+                                      backgroundColor: AppTheme.primary,
                                       child: Text(
                                         (customer['fullName'] as String)
                                                 .isNotEmpty
@@ -6341,7 +6339,7 @@ class _CustomerPickerBottomSheetState
                                                   .toUpperCase()
                                             : '?',
                                         style: const TextStyle(
-                                          color: Colors.white,
+                                          color: AppTheme.white,
                                           fontWeight: FontWeight.w600,
                                           fontSize: 16,
                                         ),
@@ -6368,7 +6366,7 @@ class _CustomerPickerBottomSheetState
                                             customer['contact'] ?? '—',
                                             style: TextStyle(
                                               fontFamily: 'Literata',
-                                              color: Colors.grey[600],
+                                              color: AppTheme.grey600,
                                               fontSize: 12,
                                             ),
                                           ),
@@ -6389,7 +6387,7 @@ class _CustomerPickerBottomSheetState
                                           vertical: 4,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: Colors.red[50],
+                                          color: AppTheme.red50,
                                           borderRadius: BorderRadius.circular(
                                             8,
                                           ),
@@ -6398,7 +6396,7 @@ class _CustomerPickerBottomSheetState
                                           '₹${(customer['pendingBalance'] as num).toDouble().toStringAsFixed(0)}',
                                           style: TextStyle(
                                             fontFamily: 'Literata',
-                                            color: Colors.red[700],
+                                            color: AppTheme.red700,
                                             fontSize: 11,
                                             fontWeight: FontWeight.w700,
                                           ),
@@ -6407,7 +6405,7 @@ class _CustomerPickerBottomSheetState
                                     const SizedBox(width: 4),
                                     Icon(
                                       Icons.chevron_right,
-                                      color: Colors.grey[400],
+                                      color: AppTheme.grey400,
                                     ),
                                   ],
                                 ),
@@ -6513,15 +6511,15 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
+                          color: AppTheme.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.2),
+                            color: AppTheme.white.withValues(alpha: 0.2),
                           ),
                         ),
                         child: Icon(
                           Icons.receipt_long_rounded,
-                          color: Colors.white,
+                          color: AppTheme.white,
                           size: 24,
                         ),
                       ),
@@ -6538,7 +6536,7 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                                 fontSize: isCollapsed ? 20 : 24,
                                 fontWeight: FontWeight.w800,
                                 fontFamily: 'Literata',
-                                color: Colors.white,
+                                color: AppTheme.white,
                                 letterSpacing: 0.5,
                               ),
                             ),
@@ -6628,9 +6626,7 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                                   width: 36,
                                   height: 36,
                                   decoration: BoxDecoration(
-                                    color: Color(
-                                      0xFF1B4D3E,
-                                    ).withValues(alpha: 0.1),
+                                    color: AppTheme.primary.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Icon(
@@ -6660,14 +6656,12 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                                   width: 36,
                                   height: 36,
                                   decoration: BoxDecoration(
-                                    color: const Color(
-                                      0xFF2196F3,
-                                    ).withValues(alpha: 0.1),
+                                    color: AppTheme.blue.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: const Icon(
                                     Icons.view_column_rounded,
-                                    color: Color(0xFF2196F3),
+                                    color: AppTheme.blue,
                                     size: 20,
                                   ),
                                 ),

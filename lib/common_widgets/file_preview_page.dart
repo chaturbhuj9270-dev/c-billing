@@ -512,7 +512,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.card(context),
-        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+        border: Border(bottom: BorderSide(color: AppTheme.grey200)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -575,8 +575,8 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             ),
             style: TextButton.styleFrom(
               foregroundColor: _zoomLevel != 1.0
-                  ? const Color(0xFF1B4D3E)
-                  : Colors.grey,
+                  ? AppTheme.primary
+                  : AppTheme.grey,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             ),
           ),
@@ -591,7 +591,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   }) {
     final isEnabled = onPressed != null;
     return Material(
-      color: Colors.transparent,
+      color: AppTheme.transparent,
       child: InkWell(
         onTap: onPressed,
         borderRadius: BorderRadius.circular(8),
@@ -599,14 +599,14 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: isEnabled
-                ? const Color(0xFF1B4D3E).withValues(alpha: 0.1)
-                : Colors.grey.withValues(alpha: 0.1),
+                ? AppTheme.primary.withValues(alpha: 0.1)
+                : AppTheme.grey.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
             icon,
             size: 20,
-            color: isEnabled ? const Color(0xFF1B4D3E) : Colors.grey,
+            color: isEnabled ? AppTheme.primary : AppTheme.grey,
           ),
         ),
       ),
@@ -625,7 +625,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         color: AppColors.appBar(context),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -641,12 +641,12 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             icon: Container(
               padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
+                color: AppTheme.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
                 Icons.arrow_back,
-                color: Colors.white,
+                color: AppTheme.white,
                 size: 20,
               ),
             ),
@@ -662,7 +662,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                     fontFamily: 'Literata',
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: AppTheme.white,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -673,7 +673,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                     style: TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 12,
-                      color: Colors.white.withValues(alpha: 0.7),
+                      color: AppTheme.white.withValues(alpha: 0.7),
                     ),
                   )
                 else
@@ -686,8 +686,8 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                         ),
                         decoration: BoxDecoration(
                           color: widget.fileType == FilePreviewType.pdf
-                              ? Colors.red.withValues(alpha: 0.1)
-                              : Colors.green.withValues(alpha: 0.1),
+                              ? AppTheme.red.withValues(alpha: 0.1)
+                              : AppTheme.green.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -699,8 +699,8 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                             color: widget.fileType == FilePreviewType.pdf
-                                ? Colors.red[700]
-                                : Colors.green[700],
+                                ? AppTheme.red700
+                                : AppTheme.green700,
                           ),
                         ),
                       ),
@@ -710,7 +710,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 11,
-                          color: Colors.white.withValues(alpha: 0.7),
+                          color: AppTheme.white.withValues(alpha: 0.7),
                         ),
                       ),
                     ],
@@ -757,7 +757,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               fontFamily: 'Literata',
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Colors.grey[700],
+              color: AppTheme.grey700,
             ),
           ),
           const SizedBox(height: 6),
@@ -766,7 +766,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             style: TextStyle(
               fontFamily: 'Literata',
               fontSize: 12,
-              color: Colors.grey[500],
+              color: AppTheme.grey,
             ),
           ),
         ],
@@ -784,12 +784,12 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.1),
+                color: AppTheme.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Icon(
                 Icons.error_outline,
-                color: Colors.red,
+                color: AppTheme.red,
                 size: 48,
               ),
             ),
@@ -809,7 +809,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 13,
-                color: Colors.grey[600],
+                color: AppTheme.grey600,
               ),
               textAlign: TextAlign.center,
             ),
@@ -825,8 +825,8 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1B4D3E),
-                foregroundColor: Colors.white,
+                backgroundColor: AppTheme.primary,
+                foregroundColor: AppTheme.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 12,
@@ -857,13 +857,13 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.1),
+                color: AppTheme.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Icon(
                 Icons.picture_as_pdf_rounded,
                 size: 48,
-                color: Colors.orange[700],
+                color: AppTheme.orange700,
               ),
             ),
             const SizedBox(height: 20),
@@ -873,7 +873,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                 fontFamily: 'Literata',
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
+                color: AppTheme.grey700,
               ),
             ),
             const SizedBox(height: 8),
@@ -882,7 +882,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 13,
-                color: Colors.grey[500],
+                color: AppTheme.grey,
               ),
             ),
             const SizedBox(height: 20),
@@ -898,8 +898,8 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               icon: const Icon(Icons.refresh_rounded, size: 18),
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1B4D3E),
-                foregroundColor: Colors.white,
+                backgroundColor: AppTheme.primary,
+                foregroundColor: AppTheme.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 12,
@@ -922,7 +922,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: AppColors.card(context),
-            border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+            border: Border(bottom: BorderSide(color: AppTheme.grey200)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -994,7 +994,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
+              color: AppTheme.black.withValues(alpha: 0.08),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),
@@ -1009,8 +1009,8 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Color(0xFF1B4D3E).withValues(alpha: 0.1),
-                    Color(0xFF2D6A4F).withValues(alpha: 0.1),
+                    AppTheme.primary.withValues(alpha: 0.1),
+                    AppTheme.paletteFF2D6A4F.withValues(alpha: 0.1),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -1036,7 +1036,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                       minHeight: 8,
                       backgroundColor: AppColors.border(context),
                       valueColor: const AlwaysStoppedAnimation<Color>(
-                        Color(0xFF1B4D3E),
+                        AppTheme.primary,
                       ),
                     ),
                   ),
@@ -1049,7 +1049,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                       fontFamily: 'Literata',
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Colors.grey[600],
+                      color: AppTheme.grey600,
                     ),
                   ),
                 ],
@@ -1061,7 +1061,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 11,
-                color: Colors.grey[500],
+                color: AppTheme.grey,
               ),
             ),
           ],
@@ -1078,7 +1078,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: AppTheme.black.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1103,7 +1103,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                         Icon(
                           Icons.broken_image_outlined,
                           size: 32,
-                          color: Colors.grey[400],
+                          color: AppTheme.grey400,
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -1111,7 +1111,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 12,
-                            color: Colors.grey[500],
+                            color: AppTheme.grey,
                           ),
                         ),
                       ],
@@ -1125,7 +1125,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               padding: EdgeInsets.symmetric(vertical: 6),
               decoration: BoxDecoration(
                 color: AppColors.scaffold(context),
-                border: Border(top: BorderSide(color: Colors.grey.shade200)),
+                border: Border(top: BorderSide(color: AppTheme.grey200)),
               ),
               child: Center(
                 child: Text(
@@ -1133,7 +1133,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 11,
-                    color: Colors.grey[500],
+                    color: AppTheme.grey,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -1154,7 +1154,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppTheme.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -1174,7 +1174,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 12,
-                color: Colors.grey[500],
+                color: AppTheme.grey,
               ),
             ),
           ],
@@ -1191,7 +1191,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
           style: TextStyle(
             fontFamily: 'Literata',
             fontSize: 14,
-            color: Colors.grey[600],
+            color: AppTheme.grey600,
           ),
         ),
       );
@@ -1210,7 +1210,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: AppTheme.black.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -1224,9 +1224,9 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFF217346), // Excel green
+                color: AppTheme.paletteFF217346, // Excel green
                 border: Border(
-                  bottom: BorderSide(color: const Color(0xFF185C37)),
+                  bottom: BorderSide(color: AppTheme.paletteFF185C37),
                 ),
               ),
               child: Row(
@@ -1234,12 +1234,12 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
+                      color: AppTheme.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Icon(
                       Icons.grid_on,
-                      color: Colors.white,
+                      color: AppTheme.white,
                       size: 18,
                     ),
                   ),
@@ -1254,7 +1254,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                             fontFamily: 'Literata',
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            color: AppTheme.white,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -1286,7 +1286,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                         Icon(
                           Icons.table_rows_outlined,
                           size: 14,
-                          color: const Color(0xFF217346),
+                          color: AppTheme.paletteFF217346,
                         ),
                         const SizedBox(width: 4),
                         Text(
@@ -1295,7 +1295,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                             fontFamily: 'Literata',
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF217346),
+                            color: AppTheme.paletteFF217346,
                           ),
                         ),
                       ],
@@ -1340,10 +1340,10 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                 width: rowNumberWidth,
                 height: headerHeight,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE7E6E6),
+                  color: AppTheme.paletteFFE7E6E6,
                   border: Border(
-                    right: BorderSide(color: const Color(0xFFB4B4B4)),
-                    bottom: BorderSide(color: const Color(0xFFB4B4B4)),
+                    right: BorderSide(color: AppTheme.paletteFFB4B4B4),
+                    bottom: BorderSide(color: AppTheme.paletteFFB4B4B4),
                   ),
                 ),
               ),
@@ -1358,10 +1358,10 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                         width: cellWidth,
                         height: headerHeight,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE7E6E6),
+                          color: AppTheme.paletteFFE7E6E6,
                           border: Border(
-                            right: BorderSide(color: const Color(0xFFB4B4B4)),
-                            bottom: BorderSide(color: const Color(0xFFB4B4B4)),
+                            right: BorderSide(color: AppTheme.paletteFFB4B4B4),
+                            bottom: BorderSide(color: AppTheme.paletteFFB4B4B4),
                           ),
                         ),
                         alignment: Alignment.center,
@@ -1371,7 +1371,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                             fontFamily: 'Literata',
                             fontSize: headerFontSize,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF444444),
+                            color: AppTheme.paletteFF444444,
                           ),
                         ),
                       );
@@ -1397,10 +1397,10 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                       width: rowNumberWidth,
                       height: cellHeight,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE7E6E6),
+                        color: AppTheme.paletteFFE7E6E6,
                         border: Border(
-                          right: BorderSide(color: const Color(0xFFB4B4B4)),
-                          bottom: BorderSide(color: const Color(0xFFD4D4D4)),
+                          right: BorderSide(color: AppTheme.paletteFFB4B4B4),
+                          bottom: BorderSide(color: AppTheme.paletteFFD4D4D4),
                         ),
                       ),
                       alignment: Alignment.center,
@@ -1410,7 +1410,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                           fontFamily: 'Literata',
                           fontSize: fontSize,
                           fontWeight: FontWeight.w500,
-                          color: const Color(0xFF444444),
+                          color: AppTheme.paletteFF444444,
                         ),
                       ),
                     );
@@ -1462,16 +1462,16 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                                     height: cellHeight,
                                     decoration: BoxDecoration(
                                       color: isHeader
-                                          ? const Color(0xFFF3F3F3)
+                                          ? AppTheme.paletteFFF3F3F3
                                           : isEvenRow
-                                          ? Colors.white
-                                          : const Color(0xFFFAFAFA),
+                                          ? AppTheme.white
+                                          : AppTheme.grey50,
                                       border: Border(
                                         right: BorderSide(
-                                          color: const Color(0xFFE0E0E0),
+                                          color: AppTheme.grey300,
                                         ),
                                         bottom: BorderSide(
-                                          color: const Color(0xFFE0E0E0),
+                                          color: AppTheme.grey300,
                                         ),
                                       ),
                                     ),
@@ -1488,8 +1488,8 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                                             ? FontWeight.w600
                                             : FontWeight.normal,
                                         color: isHeader
-                                            ? const Color(0xFF1B4D3E)
-                                            : const Color(0xFF333333),
+                                            ? AppTheme.primary
+                                            : AppTheme.paletteFF333333,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -1513,14 +1513,14 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: AppColors.chipFill(context),
-            border: Border(top: BorderSide(color: const Color(0xFFD4D4D4))),
+            border: Border(top: BorderSide(color: AppTheme.paletteFFD4D4D4)),
           ),
           child: Row(
             children: [
               Icon(
                 Icons.check_circle_outline,
                 size: 14,
-                color: Colors.green[700],
+                color: AppTheme.green700,
               ),
               const SizedBox(width: 6),
               Text(
@@ -1528,7 +1528,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 11,
-                  color: Colors.grey[600],
+                  color: AppTheme.grey600,
                 ),
               ),
               const Spacer(),
@@ -1537,7 +1537,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 11,
-                  color: Colors.grey[600],
+                  color: AppTheme.grey600,
                 ),
               ),
             ],
@@ -1569,7 +1569,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         color: AppColors.card(context),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: AppTheme.black.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, -4),
           ),
@@ -1613,8 +1613,8 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     return ElevatedButton(
       onPressed: _isSharingWhatsApp ? null : _handleWhatsAppShare,
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF25D366),
-        foregroundColor: Colors.white,
+        backgroundColor: AppTheme.paletteFF25D366,
+        foregroundColor: AppTheme.white,
         elevation: 2,
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1625,7 +1625,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               width: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Colors.white,
+                color: AppTheme.white,
               ),
             )
           : Row(
@@ -1659,8 +1659,8 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     return ElevatedButton(
       onPressed: isLoading ? null : onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: isPrimary ? Color(0xFF1B4D3E) : Colors.white,
-        foregroundColor: isPrimary ? Colors.white : Color(0xFF1B4D3E),
+        backgroundColor: isPrimary ? AppTheme.primary : AppTheme.white,
+        foregroundColor: isPrimary ? AppTheme.white : AppTheme.primary,
         elevation: isPrimary ? 2 : 0,
         padding: EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(
@@ -1676,7 +1676,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               width: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: isPrimary ? Colors.white : const Color(0xFF1B4D3E),
+                color: isPrimary ? AppTheme.white : AppTheme.primary,
               ),
             )
           : Row(

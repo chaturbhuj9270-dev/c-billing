@@ -255,10 +255,10 @@ class _CustomerCard extends StatelessWidget {
     final isSynced = customer['isSynced'] as bool? ?? true;
 
     const accentColors = [
-      Color(0xFF1B4D3E),
-      Color(0xFF0F3B2F),
-      Color(0xFF2C6F5E),
-      Color(0xFF1A5E52),
+      AppTheme.primary,
+      AppTheme.primaryDark,
+      AppTheme.paletteFF2C6F5E,
+      AppTheme.paletteFF1A5E52,
     ];
     final accentColor =
         accentColors[((customer['id'] ?? '').hashCode.abs()) % 4];
@@ -274,7 +274,7 @@ class _CustomerCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: AppTheme.black.withValues(alpha: 0.03),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -320,7 +320,7 @@ class _CustomerCard extends StatelessWidget {
                       child: Text(
                         initials,
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppTheme.white,
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
                           fontFamily: 'Literata',
@@ -357,7 +357,7 @@ class _CustomerCard extends StatelessWidget {
                                     ? Icons.cloud_done_rounded
                                     : Icons.cloud_upload_rounded,
                                 size: 16,
-                                color: isSynced ? Colors.green : Colors.orange,
+                                color: isSynced ? AppTheme.green : AppTheme.orange,
                               ),
                             ),
                           ],
@@ -394,9 +394,9 @@ class _CustomerCard extends StatelessWidget {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.red[50],
+                        color: AppTheme.red50,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.red[100]!, width: 1),
+                        border: Border.all(color: AppTheme.red100, width: 1),
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -406,7 +406,7 @@ class _CustomerCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
-                              color: Colors.red[700],
+                              color: AppTheme.red700,
                               fontFamily: 'Literata',
                             ),
                           ),
@@ -415,7 +415,7 @@ class _CustomerCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.w500,
-                              color: Colors.red[400],
+                              color: AppTheme.error,
                               fontFamily: 'Literata',
                             ),
                           ),
@@ -426,7 +426,7 @@ class _CustomerCard extends StatelessWidget {
                     Icon(
                       Icons.chevron_right_rounded,
                       size: 24,
-                      color: Colors.grey[400],
+                      color: AppTheme.grey400,
                     ),
                 ],
               ),
@@ -481,13 +481,13 @@ class _CustomerCard extends StatelessWidget {
                           width: 34,
                           height: 34,
                           decoration: BoxDecoration(
-                            color: Colors.orange.withValues(alpha: 0.1),
+                            color: AppTheme.orange.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
                             Icons.swap_horiz_rounded,
                             size: 16,
-                            color: Colors.orange,
+                            color: AppTheme.orange,
                           ),
                         ),
                       ),
@@ -502,9 +502,7 @@ class _CustomerCard extends StatelessWidget {
                           width: 34,
                           height: 34,
                           decoration: BoxDecoration(
-                            color: Color(
-                              0xFF1B4D3E,
-                            ).withValues(alpha: 0.1),
+                            color: AppTheme.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
@@ -575,7 +573,7 @@ class _ShimmerCardState extends State<_ShimmerCard>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: AppTheme.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

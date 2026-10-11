@@ -220,10 +220,10 @@ class _CompanyCard extends StatelessWidget {
     final isSynced = company['isSynced'] as bool? ?? true;
 
     const accentColors = [
-      Color(0xFF1B4D3E),
-      Color(0xFF0F3B2F),
-      Color(0xFF2C6F5E),
-      Color(0xFF1A5E52),
+      AppTheme.primary,
+      AppTheme.primaryDark,
+      AppTheme.paletteFF2C6F5E,
+      AppTheme.paletteFF1A5E52,
     ];
     final accentColor =
         accentColors[((company['id'] ?? '').hashCode.abs()) % 4];
@@ -239,7 +239,7 @@ class _CompanyCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: AppTheme.black.withValues(alpha: 0.03),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -282,7 +282,7 @@ class _CompanyCard extends StatelessWidget {
                       child: Text(
                         initials,
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppTheme.white,
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
                           fontFamily: 'Literata',
@@ -320,8 +320,8 @@ class _CompanyCard extends StatelessWidget {
                                     : Icons.cloud_upload_rounded,
                                 size: 16,
                                 color: isSynced
-                                    ? Colors.green
-                                    : Colors.orange,
+                                    ? AppTheme.green
+                                    : AppTheme.orange,
                               ),
                             ),
                           ],
@@ -355,7 +355,7 @@ class _CompanyCard extends StatelessWidget {
                                   'No contact',
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: Colors.grey[400],
+                                    color: AppTheme.grey400,
                                     fontFamily: 'Literata',
                                     fontStyle: FontStyle.italic,
                                   ),
@@ -401,7 +401,7 @@ class _CompanyCard extends StatelessWidget {
                         color: AppColors.chipFill(context),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: Colors.grey[300]!,
+                          color: AppTheme.grey300,
                           width: 1,
                         ),
                       ),
@@ -419,7 +419,7 @@ class _CompanyCard extends StatelessWidget {
                     Icon(
                       Icons.chevron_right_rounded,
                       size: 24,
-                      color: Colors.grey[400],
+                      color: AppTheme.grey400,
                     ),
                 ],
               ),
@@ -508,7 +508,7 @@ class _ShimmerCardState extends State<_ShimmerCard>
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
+                color: AppTheme.black.withValues(alpha: 0.03),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),

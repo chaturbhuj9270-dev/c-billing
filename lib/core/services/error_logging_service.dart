@@ -179,10 +179,10 @@ class ErrorLoggingService {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.1),
+                color: AppTheme.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.bug_report, color: Colors.red, size: 20),
+              child: const Icon(Icons.bug_report, color: AppTheme.red, size: 20),
             ),
             const SizedBox(width: 12),
             const Expanded(
@@ -219,7 +219,7 @@ class ErrorLoggingService {
             },
             child: const Text(
               'Clear',
-              style: TextStyle(color: Colors.red, fontSize: 13),
+              style: TextStyle(color: AppTheme.red, fontSize: 13),
             ),
           ),
           // Right side - Share and Copy buttons
@@ -235,11 +235,11 @@ class ErrorLoggingService {
                 icon: const Icon(
                   Icons.share,
                   size: 16,
-                  color: Color(0xFF1976D2),
+                  color: AppTheme.blue700,
                 ),
                 label: const Text(
                   'Share',
-                  style: TextStyle(color: Color(0xFF1976D2), fontSize: 13),
+                  style: TextStyle(color: AppTheme.blue700, fontSize: 13),
                 ),
               ),
               // Copy button
