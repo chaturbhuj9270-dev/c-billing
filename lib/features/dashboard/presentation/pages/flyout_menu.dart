@@ -51,7 +51,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       icon: Icons.person_rounded,
       label: 'Profile',
       route: 'Profile',
-      color: AppTheme.mint,
+      color: AppTheme.primary,
     ),
     _MenuItem(
       icon: Icons.storefront_outlined,
@@ -410,14 +410,15 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [
-                          AppColors.card(context).withValues(
-                            alpha: isDark ? 0.62 : 0.78,
-                          ),
-                          AppColors.card(context).withValues(
-                            alpha: isDark ? 0.82 : 0.92,
-                          ),
-                        ],
+                        colors: isDark
+                            ? const [
+                                AppTheme.darkElevated,
+                                AppTheme.darkCard,
+                              ]
+                            : [
+                                AppColors.card(context).withValues(alpha: 0.78),
+                                AppColors.card(context).withValues(alpha: 0.92),
+                              ],
                       ),
                     ),
                     child: Material(
@@ -524,14 +525,14 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppTheme.headerDarkStart,
-                border: Border.all(color: AppTheme.mint, width: 1.6),
+                border: Border.all(color: AppTheme.primary, width: 1.6),
               ),
               child: Text(
                 initial,
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: AppTheme.mint,
+                  color: AppTheme.primary,
                   fontFamily: 'Literata',
                   decoration: TextDecoration.none,
                 ),
@@ -573,14 +574,14 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                           height: 6,
                           decoration: const BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppTheme.mint,
+                            color: AppTheme.primary,
                           ),
                         ),
                         const SizedBox(width: 5),
                         Text(
                           _localizations.online,
                           style: const TextStyle(
-                            color: AppTheme.mint,
+                            color: AppTheme.primary,
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             fontFamily: 'Literata',
@@ -645,7 +646,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Row(
             children: [
-              _iconWell(Icons.fingerprint_rounded, AppTheme.mint),
+              _iconWell(Icons.fingerprint_rounded, AppTheme.primary),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -1068,137 +1069,164 @@ class _SettingsDialogState extends State<_SettingsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppTheme.blueGrey400.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
+    final isDark = AppColors.isDark(context);
+    final loc = AppLocalizations(LanguageService.instance.currentLanguage);
+    return Dialog(
+      backgroundColor: AppTheme.transparent,
+      elevation: 0,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: CustomPaint(
+            foregroundPainter: GlassBevelBorderPainter(
+              isDark: isDark,
+              themeColor: Theme.of(context).primaryColor,
+              radius: 24,
             ),
-            child: const Icon(
-              Icons.settings_rounded,
-              color: AppTheme.blueGrey400,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            AppLocalizations(LanguageService.instance.currentLanguage).settings,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'Literata',
-            ),
-          ),
-        ],
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Biometric Lock Toggle
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: widget.canUseBiometrics
-                  ? (_biometricEnabled
-                        ? AppTheme.green800.withValues(alpha: 0.1)
-                        : AppTheme.grey.withValues(alpha: 0.05))
-                  : AppTheme.grey.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: widget.canUseBiometrics && _biometricEnabled
-                    ? AppTheme.green800
-                    : AppTheme.grey.withValues(alpha: 0.2),
-                width: _biometricEnabled ? 2 : 1,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: isDark
+                      ? const [
+                          AppTheme.darkElevated,
+                          AppTheme.darkCard,
+                        ]
+                      : [
+                          AppColors.card(context).withValues(alpha: 0.92),
+                          AppColors.card(context).withValues(alpha: 0.98),
+                        ],
+                ),
               ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: widget.canUseBiometrics
-                        ? AppTheme.green800.withValues(alpha: 0.1)
-                        : AppTheme.grey.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.fingerprint,
-                    color: widget.canUseBiometrics
-                        ? AppTheme.green800
-                        : AppTheme.grey,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        AppLocalizations(
-                          LanguageService.instance.currentLanguage,
-                        ).biometricLock,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Literata',
-                          color: widget.canUseBiometrics
-                              ? AppTheme.black87
-                              : AppTheme.grey,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.settings_rounded,
+                            color: AppTheme.primary,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            loc.settings,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Literata',
+                              color: AppColors.primaryText(context),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.chipFill(context),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primary.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.fingerprint,
+                              color: widget.canUseBiometrics
+                                  ? AppTheme.primary
+                                  : AppColors.mutedText(context),
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  loc.biometricLock,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Literata',
+                                    color: widget.canUseBiometrics
+                                        ? AppColors.primaryText(context)
+                                        : AppColors.mutedText(context),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  widget.canUseBiometrics
+                                      ? loc.unlockWithBiometric
+                                      : loc.biometricsNotAvailable,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.secondaryText(context),
+                                    fontFamily: 'Literata',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Switch(
+                            value: _biometricEnabled,
+                            onChanged: widget.canUseBiometrics
+                                ? (value) {
+                                    setState(() {
+                                      _biometricEnabled = value;
+                                    });
+                                    widget.onBiometricToggle(value);
+                                  }
+                                : null,
+                            activeThumbColor: AppTheme.white,
+                            activeTrackColor: AppTheme.primary,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(
+                          loc.close,
+                          style: const TextStyle(
+                            color: AppTheme.primary,
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        widget.canUseBiometrics
-                            ? AppLocalizations(
-                                LanguageService.instance.currentLanguage,
-                              ).unlockWithBiometric
-                            : AppLocalizations(
-                                LanguageService.instance.currentLanguage,
-                              ).biometricsNotAvailable,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.grey600,
-                          fontFamily: 'Literata',
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                Switch(
-                  value: _biometricEnabled,
-                  onChanged: widget.canUseBiometrics
-                      ? (value) {
-                          setState(() {
-                            _biometricEnabled = value;
-                          });
-                          widget.onBiometricToggle(value);
-                        }
-                      : null,
-                  activeThumbColor: AppTheme.green800,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(
-            AppLocalizations(LanguageService.instance.currentLanguage).close,
-            style: const TextStyle(
-              color: AppTheme.blueGrey400,
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 }

@@ -440,7 +440,7 @@ class PurchaseSummaryWidget extends StatelessWidget {
           _buildStatItem(
             context,
             icon: Icons.currency_rupee_rounded,
-            iconColor: AppTheme.mint,
+            iconColor: AppTheme.primary,
             label: localizations.totalValue,
             value: '₹${_compactAmount(totalAmount)}',
           ),

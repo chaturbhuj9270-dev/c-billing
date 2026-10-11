@@ -685,7 +685,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                   child: Text(
                                     _localizations.signUp,
                                     style: TextStyle(
-                                      color: AppTheme.mint,
+                                      color: AppTheme.primary,
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -776,7 +776,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                 child: Text(
                   _localizations.forgotPasswordQuestion,
                   style: TextStyle(
-                    color: AppTheme.mint,
+                    color: AppTheme.primary,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                     fontFamily: 'Literata',
@@ -887,7 +887,7 @@ class _LoginPageV2State extends State<LoginPageV2>
               child: Text(
                 _localizations.signUp,
                 style: TextStyle(
-                  color: AppTheme.mint,
+                  color: AppTheme.primary,
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),

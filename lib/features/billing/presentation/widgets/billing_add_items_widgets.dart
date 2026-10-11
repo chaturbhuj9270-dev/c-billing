@@ -397,7 +397,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               decoration: BoxDecoration(
                                 color: selectedSellUnit == unit
-                                    ? AppTheme.mint
+                                    ? AppTheme.primary
                                     : AppTheme.transparent,
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -408,7 +408,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                     fontFamily: 'Literata',
                                     fontWeight: FontWeight.w600,
                                     color: selectedSellUnit == unit
-                                        ? AppTheme.onMint
+                                        ? AppTheme.white
                                         : AppColors.mutedText(context),
                                   ),
                                 ),
@@ -423,7 +423,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               decoration: BoxDecoration(
                                 color: selectedSellUnit == subUnit
-                                    ? AppTheme.mint
+                                    ? AppTheme.primary
                                     : AppTheme.transparent,
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -434,7 +434,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                     fontFamily: 'Literata',
                                     fontWeight: FontWeight.w600,
                                     color: selectedSellUnit == subUnit
-                                        ? AppTheme.onMint
+                                        ? AppTheme.white
                                         : AppColors.mutedText(context),
                                   ),
                                 ),
@@ -547,12 +547,12 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                       icon: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppTheme.mint.withValues(alpha: 0.16),
+                          color: AppTheme.primary.withValues(alpha: 0.16),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
                           Icons.add,
-                          color: AppTheme.mint,
+                          color: AppTheme.primary,
                           size: 20,
                         ),
                       ),
@@ -832,12 +832,12 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                     decoration: BoxDecoration(
                       color: AppColors.isDark(context)
                           ? AppTheme.headerDarkStart
-                          : AppTheme.mint.withValues(alpha: 0.16),
+                          : AppTheme.primary.withValues(alpha: 0.16),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(
                       Icons.add_shopping_cart,
-                      color: AppTheme.mint,
+                      color: AppTheme.primary,
                       size: 22,
                     ),
                   ),
@@ -873,7 +873,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: AppTheme.mint,
+                        color: AppTheme.primary,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -881,7 +881,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                         style: const TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 13,
-                          color: AppTheme.onMint,
+                          color: AppTheme.white,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -982,7 +982,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isAdded
-                                  ? AppTheme.mint
+                                  ? AppTheme.primary
                                   : AppColors.border(context),
                               width: isAdded ? 1.5 : 1,
                             ),
@@ -1003,7 +1003,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                       decoration: BoxDecoration(
                                         color: AppColors.isDark(context)
                                             ? AppTheme.headerDarkStart
-                                            : AppTheme.mint.withValues(
+                                            : AppTheme.primary.withValues(
                                                 alpha: 0.16,
                                               ),
                                         borderRadius: BorderRadius.circular(10),
@@ -1014,7 +1014,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                               ? '${group.indexNo}'
                                               : '#',
                                           style: const TextStyle(
-                                            color: AppTheme.mint,
+                                            color: AppTheme.primary,
                                             fontWeight: FontWeight.w700,
                                             fontSize: 14,
                                             fontFamily: 'Literata',
@@ -1070,7 +1070,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                                   fontFamily: 'Literata',
                                                   fontWeight: FontWeight.w700,
                                                   fontSize: 13,
-                                                  color: AppTheme.mint,
+                                                  color: AppTheme.primary,
                                                 ),
                                               ),
                                               // Variant count badge
@@ -1112,7 +1112,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                                     ),
                                                 decoration: BoxDecoration(
                                                   color: group.totalStock > 10
-                                                      ? AppTheme.mint.withValues(
+                                                      ? AppTheme.primary.withValues(
                                                           alpha: 0.16,
                                                         )
                                                       : group.totalStock > 0
@@ -1134,7 +1134,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                                     fontSize: 10,
                                                     fontWeight: FontWeight.w600,
                                                     color: group.totalStock > 10
-                                                        ? AppTheme.mint
+                                                        ? AppTheme.primary
                                                         : group.totalStock > 0
                                                         ? AppTheme.toneAmber
                                                         : AppTheme.error,
@@ -1155,7 +1155,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                           vertical: 6,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: AppTheme.mint,
+                                          color: AppTheme.primary,
                                           borderRadius: BorderRadius.circular(
                                             8,
                                           ),
@@ -1165,7 +1165,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                           children: [
                                             const Icon(
                                               Icons.check,
-                                              color: AppTheme.onMint,
+                                              color: AppTheme.white,
                                               size: 16,
                                             ),
                                             const SizedBox(width: 4),
@@ -1173,7 +1173,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                               '$qtyInBill',
                                               style: const TextStyle(
                                                 fontFamily: 'Literata',
-                                                color: AppTheme.onMint,
+                                                color: AppTheme.white,
                                                 fontWeight: FontWeight.w700,
                                                 fontSize: 13,
                                               ),
@@ -1189,7 +1189,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                               ? AppTheme.toneBlue.withValues(
                                                   alpha: 0.16,
                                                 )
-                                              : AppTheme.mint.withValues(
+                                              : AppTheme.primary.withValues(
                                                   alpha: 0.16,
                                                 ),
                                           borderRadius: BorderRadius.circular(
@@ -1202,7 +1202,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                               : Icons.add,
                                           color: hasMultipleBatches
                                               ? AppTheme.toneBlue
-                                              : AppTheme.mint,
+                                              : AppTheme.primary,
                                           size: 20,
                                         ),
                                       ),
@@ -1254,7 +1254,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                       fontFamily: 'Literata',
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.onMint,
+                      color: AppTheme.white,
                     ),
                   ),
                 ),
@@ -1667,12 +1667,12 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                       icon: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppTheme.mint.withValues(alpha: 0.16),
+                          color: AppTheme.primary.withValues(alpha: 0.16),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
                           Icons.add,
-                          color: AppTheme.mint,
+                          color: AppTheme.primary,
                           size: 20,
                         ),
                       ),
@@ -1803,7 +1803,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                   _iconWell(
                     const Icon(
                       Icons.inventory_2_outlined,
-                      color: AppTheme.mint,
+                      color: AppTheme.primary,
                       size: 22,
                     ),
                   ),
@@ -1918,7 +1918,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppTheme.mint),
+                      borderSide: const BorderSide(color: AppTheme.primary),
                     ),
                   ),
                 ),
@@ -1942,7 +1942,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                     height: 22,
                     alignment: Alignment.center,
                     decoration: const BoxDecoration(
-                      color: AppTheme.mint,
+                      color: AppTheme.primary,
                       shape: BoxShape.circle,
                     ),
                     child: Text(
@@ -1951,7 +1951,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                         fontFamily: 'Literata',
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        color: AppTheme.onMint,
+                        color: AppTheme.white,
                       ),
                     ),
                   ),
@@ -2019,7 +2019,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
       decoration: BoxDecoration(
         color: AppColors.isDark(context)
             ? AppTheme.headerDarkStart
-            : AppTheme.mint.withValues(alpha: 0.16),
+            : AppTheme.primary.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(14),
       ),
       child: child,
@@ -2052,7 +2052,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
                 color: selected
-                    ? AppTheme.onMint
+                    ? AppTheme.white
                     : AppColors.mutedText(context),
               ),
             ),
@@ -2101,7 +2101,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                       decoration: BoxDecoration(
                         color: AppColors.isDark(context)
                             ? AppTheme.headerDarkStart
-                            : AppTheme.mint.withValues(alpha: 0.16),
+                            : AppTheme.primary.withValues(alpha: 0.16),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
@@ -2110,7 +2110,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w800,
                           fontSize: 16,
-                          color: AppTheme.mint,
+                          color: AppTheme.primary,
                         ),
                       ),
                     ),
@@ -2184,7 +2184,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                       fontFamily: 'Literata',
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.mint,
+                      color: AppTheme.primary,
                     ),
                   ),
                 ],
@@ -2194,7 +2194,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                     _buildBatchInfoChip(
                       label: widget.localizations.sellPrice,
                       value: '₹${_money(batch.sellingPrice)}',
-                      valueColor: AppTheme.mint,
+                      valueColor: AppTheme.primary,
                     ),
                     const SizedBox(width: 8),
                     _buildBatchInfoChip(

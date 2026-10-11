@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'dart:ui';
 import '../cubit/biometric_cubit.dart';
 import '../cubit/biometric_state.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Bottom sheet overlay for biometric authentication
@@ -48,30 +48,31 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
   Widget build(BuildContext context) {
     return BlocBuilder<BiometricCubit, BiometricState>(
       builder: (context, state) {
-        return ClipRRect(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-            child: Container(
-              width: double.infinity,
+        final isDark = AppColors.isDark(context);
+        return GlassSheetCard(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: 300,
+              maxHeight: MediaQuery.of(context).size.height * 0.7,
+            ),
+            child: DecoratedBox(
               decoration: BoxDecoration(
-                color: AppColors.card(context),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(24),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: isDark
+                      ? const [
+                          AppTheme.darkElevated,
+                          AppTheme.darkCard,
+                        ]
+                      : [
+                          AppColors.card(context).withValues(alpha: 0.92),
+                          AppColors.card(context).withValues(alpha: 0.98),
+                        ],
                 ),
-                border: Border(
-                  top: BorderSide(
-                    color: AppTheme.white.withValues(alpha: 0.3),
-                    width: 1.5,
-                  ),
-                ),
-              ),
-              constraints: BoxConstraints(
-                minHeight: 300,
-                maxHeight: MediaQuery.of(context).size.height * 0.7,
               ),
               child: Padding(
-                padding: EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -141,7 +142,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
           'Use your fingerprint or face to unlock the app securely',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: AppTheme.grey600,
+            color: AppColors.secondaryText(context),
             fontSize: 14,
             fontFamily: 'Literata',
           ),
@@ -244,7 +245,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
           'Place your finger on the sensor or look at the camera',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: AppTheme.grey600,
+            color: AppColors.secondaryText(context),
             fontSize: 13,
             fontFamily: 'Literata',
           ),
@@ -309,7 +310,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
           message,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: AppTheme.grey600,
+            color: AppColors.secondaryText(context),
             fontSize: 12,
             fontFamily: 'Literata',
           ),
@@ -402,7 +403,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
           'You cancelled the authentication process',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: AppTheme.grey600,
+            color: AppColors.secondaryText(context),
             fontSize: 13,
             fontFamily: 'Literata',
           ),

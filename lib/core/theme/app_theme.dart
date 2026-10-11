@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 
 /// Shared palette from the billing / purchase screens.
 ///
-/// Dark surfaces are green-charcoal. Mint is the action color.
+/// Dark surfaces are green-charcoal. Primary green is the action color.
 /// Icon tones (blue, amber, rose) mark categories.
 class AppTheme {
   AppTheme._();
@@ -12,12 +12,6 @@ class AppTheme {
   static const Color primary = Color(0xFF1B4D3E);
   static const Color primaryLight = Color(0xFF2E7D5B);
   static const Color primaryDark = Color(0xFF0F3B2F);
-
-  /// Bright mint used for primary actions, selected tabs, and positive status.
-  static const Color mint = Color(0xFF3DDC97);
-
-  /// Text and icons that sit on [mint].
-  static const Color onMint = Color(0xFF06281C);
 
   // Category icon tones from the reference screens.
   static const Color toneBlue = Color(0xFF7C8CFF);
@@ -539,14 +533,9 @@ class AppColors {
 
   static Color selectedOnFill(BuildContext context) => AppTheme.white;
 
-  /// Emphasis color. Dark titles stay light; actions use [mint].
+  /// Emphasis color. Dark titles stay light; actions use [primary].
   static Color accent(BuildContext context) =>
       isDark(context) ? AppTheme.darkTextPrimary : AppTheme.primary;
-
-  /// Mint action color shared by buttons, tabs, and status labels.
-  static Color mint(BuildContext context) => AppTheme.mint;
-
-  static Color onMint(BuildContext context) => AppTheme.onMint;
 
   /// Soft accent wash behind icons/chips.
   static Color accentSoft(BuildContext context, [double alpha = 0.12]) =>

@@ -720,7 +720,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
         ? AppTheme.error
         : isLow
         ? AppTheme.toneAmber
-        : AppTheme.mint;
+        : AppTheme.primary;
     final statusLabel = isLow
         ? '${_localizations.lowStock.toUpperCase()} · ${group.variantCount} ${_localizations.batch.toUpperCase()}'
         : stockLevel['label'] as String;
@@ -805,7 +805,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                           ? AppTheme.error
                           : isLow
                           ? AppTheme.toneAmber
-                          : AppTheme.mint,
+                          : AppTheme.primary,
                       icon: isOut
                           ? Icons.error_outline
                           : isLow
@@ -1407,7 +1407,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: AppTheme.mint))
+          ? Center(child: CircularProgressIndicator(color: AppTheme.primary))
           : CustomScrollView(
               slivers: [
                 SliverToBoxAdapter(child: _buildPageHeader()),
@@ -1442,7 +1442,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                     _iconWell(
                       icon: Icons.inventory_2_outlined,
                       background: AppTheme.headerDarkStart,
-                      foreground: AppTheme.mint,
+                      foreground: AppTheme.primary,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -1602,7 +1602,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           _filterChip(
             label: _localizations.all,
             count: total,
-            color: AppTheme.mint,
+            color: AppTheme.primary,
             selected: _stockFilter == 'all',
             onTap: () => _onStockFilterChanged('all'),
           ),
@@ -1610,7 +1610,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           _filterChip(
             label: _localizations.inStock,
             count: inStock,
-            color: AppTheme.mint,
+            color: AppTheme.primary,
             selected: _stockFilter == 'in_stock',
             onTap: () => _onStockFilterChanged('in_stock'),
           ),
@@ -1737,7 +1737,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: AppTheme.mint, width: 1.4),
+            borderSide: const BorderSide(color: AppTheme.primary, width: 1.4),
           ),
         ),
       ),

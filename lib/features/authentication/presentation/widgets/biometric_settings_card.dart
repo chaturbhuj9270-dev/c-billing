@@ -1,5 +1,8 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bevel_frame.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/biometric_cubit.dart';
 import '../cubit/biometric_state.dart';
@@ -108,30 +111,34 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
     return BlocBuilder<BiometricCubit, BiometricState>(
       bloc: _biometricCubit,
       builder: (context, state) {
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppTheme.white.withValues(alpha: 0.95),
-                AppTheme.white.withValues(alpha: 0.85),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppTheme.white.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.accentSoft(context, 0.08),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
+        final isDark = AppColors.isDark(context);
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: CustomPaint(
+              foregroundPainter: GlassBevelBorderPainter(
+                isDark: isDark,
+                themeColor: Theme.of(context).primaryColor,
+                radius: 16,
               ),
-            ],
-          ),
-          child: Padding(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: isDark
+                        ? const [
+                            AppTheme.darkElevated,
+                            AppTheme.darkCard,
+                          ]
+                        : [
+                            AppTheme.white.withValues(alpha: 0.92),
+                            AppTheme.white.withValues(alpha: 0.8),
+                          ],
+                  ),
+                ),
+                child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,7 +182,7 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
                                   ? 'Enabled on this device'
                                   : 'Disabled',
                               style: TextStyle(
-                                color: AppTheme.grey600,
+                                color: AppColors.secondaryText(context),
                                 fontSize: 12,
                                 fontFamily: 'Literata',
                               ),
@@ -212,7 +219,7 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
                           child: Text(
                             'Your identity will be verified using $_preferredType authentication when you log in',
                             style: TextStyle(
-                              color: AppTheme.grey700,
+                              color: AppColors.secondaryText(context),
                               fontSize: 12,
                               fontFamily: 'Literata',
                               height: 1.5,
@@ -224,6 +231,9 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
                   ),
                 ],
               ],
+            ),
+          ),
+        ),
             ),
           ),
         );

@@ -23,12 +23,14 @@ class GlassBevelBorderPainter extends CustomPainter {
   final Color themeColor;
   final double radius;
   final BorderRadius? borderRadius;
+  final double strokeWidth;
 
   const GlassBevelBorderPainter({
     required this.isDark,
     required this.themeColor,
     required this.radius,
     this.borderRadius,
+    this.strokeWidth = 0.7,
   });
 
   @override
@@ -44,13 +46,13 @@ class GlassBevelBorderPainter extends CustomPainter {
 
     final bevel = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.7
+      ..strokeWidth = strokeWidth
       ..shader = glassBevelGradient(isDark, themeColor).createShader(bounds);
     canvas.drawRRect(outer, bevel);
 
     final shine = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.35
+      ..strokeWidth = strokeWidth * 0.5
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
@@ -67,6 +69,7 @@ class GlassBevelBorderPainter extends CustomPainter {
     return oldDelegate.isDark != isDark ||
         oldDelegate.themeColor != themeColor ||
         oldDelegate.radius != radius ||
-        oldDelegate.borderRadius != borderRadius;
+        oldDelegate.borderRadius != borderRadius ||
+        oldDelegate.strokeWidth != strokeWidth;
   }
 }

@@ -35,7 +35,7 @@ class ActionMenu extends StatelessWidget {
       entries.add(
         _MenuEntry(
           icon: Icons.settings_outlined,
-          color: AppTheme.mint,
+          color: AppTheme.primary,
           label: localizations.settings,
           onTap: onSettingsTap!,
         ),

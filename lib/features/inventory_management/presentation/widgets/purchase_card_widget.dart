@@ -143,7 +143,7 @@ class PurchaseCardWidget extends StatelessWidget {
                                   fontWeight: FontWeight.w700,
                                   color: synced
                                       ? (isDark
-                                            ? AppTheme.mint
+                                            ? AppTheme.primary
                                             : AppTheme.primaryLight)
                                       : AppTheme.toneAmber,
                                 ),

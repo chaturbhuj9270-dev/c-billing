@@ -378,7 +378,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     final isDark = AppColors.isDark(context);
     final titleColor = isDark ? AppTheme.white : AppTheme.headerDarkEnd;
     final muted = isDark ? AppTheme.paletteFF8E9892 : AppTheme.paletteFF5E6B64;
-    final mint = AppTheme.mint;
+    final themeColor = AppTheme.primary;
     final appTitle = _localizations.appName == 'C-BILLING'
         ? 'C-Billing'
         : _localizations.appName;
@@ -453,7 +453,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                       width: 42 * _lineProgress.value,
                       height: 3,
                       decoration: BoxDecoration(
-                        color: mint,
+                        color: themeColor,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     );
@@ -479,8 +479,8 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                 FadeTransition(
                   opacity: _footerFade,
                   child: _showUnlockButton
-                      ? _buildUnlockButton(mint)
-                      : _buildReadyBar(isDark, muted, mint),
+                      ? _buildUnlockButton(themeColor)
+                      : _buildReadyBar(isDark, muted, themeColor),
                 ),
                 const SizedBox(height: 28),
                 FadeTransition(
@@ -520,25 +520,25 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                             Icon(
                               Icons.location_on_outlined,
                               size: 14,
-                              color: mint,
+                              color: themeColor,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               'Newasa',
                               style: TextStyle(
-                                color: mint,
+                                color: themeColor,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 fontFamily: 'Literata',
                               ),
                             ),
                             const SizedBox(width: 16),
-                            Icon(Icons.phone_outlined, size: 14, color: mint),
+                            Icon(Icons.phone_outlined, size: 14, color: themeColor),
                             const SizedBox(width: 4),
                             Text(
                               '+91 99706 62978',
                               style: TextStyle(
-                                color: mint,
+                                color: themeColor,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 fontFamily: 'Literata',
@@ -559,7 +559,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildReadyBar(bool isDark, Color muted, Color mint) {
+  Widget _buildReadyBar(bool isDark, Color muted, Color themeColor) {
     return AnimatedBuilder(
       animation: Listenable.merge([_introController, _pulseController]),
       builder: (context, _) {
@@ -584,7 +584,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                 widthFactor: fill,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: mint,
+                    color: themeColor,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -608,14 +608,14 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildUnlockButton(Color mint) {
+  Widget _buildUnlockButton(Color themeColor) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: SizedBox(
         width: double.infinity,
         height: 52,
         child: Material(
-          color: mint,
+          color: themeColor,
           borderRadius: BorderRadius.circular(26),
           child: InkWell(
             onTap: _showUnlockBiometric,
@@ -623,12 +623,12 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.fingerprint, color: AppTheme.onMint, size: 22),
+                const Icon(Icons.fingerprint, color: AppTheme.white, size: 22),
                 const SizedBox(width: 8),
                 Text(
                   _localizations.unlockNow,
                   style: const TextStyle(
-                    color: AppTheme.onMint,
+                    color: AppTheme.white,
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     fontFamily: 'Literata',

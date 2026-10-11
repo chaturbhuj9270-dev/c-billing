@@ -33,7 +33,7 @@ class GlassyBottomNavBar extends StatefulWidget {
     required this.selectedIndex,
     required this.onTap,
     required this.items,
-    this.accentColor = AppTheme.mint,
+    this.accentColor = AppTheme.primary,
   });
 
   @override
@@ -94,7 +94,6 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
     double opacity = 1,
   }) {
     const radius = 14.0;
-    final themeColor = Theme.of(context).primaryColor;
     return Positioned(
       left: left,
       top: top,
@@ -103,51 +102,55 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
       child: IgnorePointer(
         child: Opacity(
           opacity: opacity.clamp(0.0, 1.0),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(radius),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.black.withValues(alpha: isDark ? 0.28 : 0.10),
-                  blurRadius: 14,
-                  offset: const Offset(0, 4),
-                ),
-                if (!isDark)
-                  BoxShadow(
-                    color: AppTheme.white.withValues(alpha: 0.8),
-                    blurRadius: 0,
-                    offset: const Offset(0, -1),
+          child: isDark
+              ? CustomPaint(
+                  foregroundPainter: const GlassBevelBorderPainter(
+                    isDark: false,
+                    themeColor: AppTheme.primary,
+                    radius: radius,
+                    strokeWidth: 1.4,
                   ),
-              ],
-            ),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(radius),
-                gradient: glassBevelGradient(isDark, themeColor),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(1.4),
-                child: DecoratedBox(
+                  child: const SizedBox.expand(),
+                )
+              : DecoratedBox(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(radius - 1.4),
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    colors: isDark
-                        ? [
-                            AppTheme.primaryLight,
-                            AppTheme.primary,
-                          ]
-                        : [
-                            AppTheme.white.withValues(alpha: 0.96),
-                            AppTheme.white.withValues(alpha: 0.78),
-                          ],
+                    borderRadius: BorderRadius.circular(radius),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.black.withValues(alpha: 0.10),
+                        blurRadius: 14,
+                        offset: const Offset(0, 4),
+                      ),
+                      BoxShadow(
+                        color: AppTheme.white.withValues(alpha: 0.8),
+                        blurRadius: 0,
+                        offset: const Offset(0, -1),
+                      ),
+                    ],
+                  ),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(radius),
+                      gradient: glassBevelGradient(false, AppTheme.primary),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(1.4),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(radius - 1.4),
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              AppTheme.white.withValues(alpha: 0.96),
+                              AppTheme.white.withValues(alpha: 0.78),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          ),
         ),
       ),
     );
@@ -242,8 +245,8 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
               filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
               child: CustomPaint(
                 foregroundPainter: GlassBevelBorderPainter(
-                  isDark: isDark,
-                  themeColor: Theme.of(context).primaryColor,
+                  isDark: false,
+                  themeColor: AppTheme.primary,
                   radius: 28,
                 ),
                 child: Container(
