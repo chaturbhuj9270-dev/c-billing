@@ -411,8 +411,17 @@ class PurchaseSummaryWidget extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       decoration: BoxDecoration(
         color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: AppColors.border(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(
+              alpha: AppColors.isDark(context) ? 0.18 : 0.04,
+            ),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [

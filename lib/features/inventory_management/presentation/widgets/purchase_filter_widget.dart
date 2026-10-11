@@ -65,109 +65,87 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
     _localizations = AppLocalizations.of(
       LanguageService.instance.currentLanguage,
     );
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Date filter row
-          Row(
-            children: [
-              // All filters in horizontal scroll
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildFilterChip(
-                        label: widget.allLabel,
-                        isSelected:
-                            widget.selectedDateFilter == PurchaseDateFilter.all,
-                        onTap: () =>
-                            widget.onDateFilterChanged(PurchaseDateFilter.all),
-                        icon: Icons.list_alt_rounded,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildFilterChip(
+                      label: widget.allLabel,
+                      isSelected:
+                          widget.selectedDateFilter == PurchaseDateFilter.all,
+                      onTap: () =>
+                          widget.onDateFilterChanged(PurchaseDateFilter.all),
+                      icon: Icons.list_alt_rounded,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildFilterChip(
+                      label: widget.todayLabel,
+                      isSelected:
+                          widget.selectedDateFilter == PurchaseDateFilter.today,
+                      onTap: () => widget.onDateFilterChanged(
+                        PurchaseDateFilter.today,
                       ),
-                      const SizedBox(width: 8),
-                      _buildFilterChip(
-                        label: widget.todayLabel,
-                        isSelected:
-                            widget.selectedDateFilter ==
-                            PurchaseDateFilter.today,
-                        onTap: () => widget.onDateFilterChanged(
-                          PurchaseDateFilter.today,
-                        ),
-                        icon: Icons.today_rounded,
-                      ),
-                      const SizedBox(width: 8),
-                      _buildFilterChip(
-                        label: widget.thisMonthLabel,
-                        isSelected:
-                            widget.selectedDateFilter ==
-                            PurchaseDateFilter.thisMonth,
-                        onTap: () => widget.onDateFilterChanged(
+                      icon: Icons.today_outlined,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildFilterChip(
+                      label: widget.thisMonthLabel,
+                      isSelected:
+                          widget.selectedDateFilter ==
                           PurchaseDateFilter.thisMonth,
-                        ),
-                        icon: Icons.calendar_month_rounded,
+                      onTap: () => widget.onDateFilterChanged(
+                        PurchaseDateFilter.thisMonth,
                       ),
-                      const SizedBox(width: 8),
-                      _buildFilterChip(
-                        label: widget.thisYearLabel,
-                        isSelected:
-                            widget.selectedDateFilter ==
-                            PurchaseDateFilter.thisYear,
-                        onTap: () => widget.onDateFilterChanged(
+                      icon: Icons.calendar_month_outlined,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildFilterChip(
+                      label: widget.thisYearLabel,
+                      isSelected:
+                          widget.selectedDateFilter ==
                           PurchaseDateFilter.thisYear,
-                        ),
-                        icon: Icons.calendar_today_rounded,
+                      onTap: () => widget.onDateFilterChanged(
+                        PurchaseDateFilter.thisYear,
                       ),
-                      const SizedBox(width: 8),
-                      _buildFilterChip(
-                        label:
-                            widget.selectedDateFilter ==
-                                    PurchaseDateFilter.custom &&
-                                widget.customStartDate != null
-                            ? _formatCustomDateLabel()
-                            : widget.customLabel,
-                        isSelected:
-                            widget.selectedDateFilter ==
-                            PurchaseDateFilter.custom,
-                        onTap: () => _showCustomDatePicker(context),
-                        icon: Icons.date_range_rounded,
-                      ),
-                      const SizedBox(width: 8),
-                      // Supplier dropdown in scroll
-                      _buildSupplierDropdown(),
-                    ],
-                  ),
+                      icon: Icons.calendar_today_outlined,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildFilterChip(
+                      label:
+                          widget.selectedDateFilter ==
+                                  PurchaseDateFilter.custom &&
+                              widget.customStartDate != null
+                          ? _formatCustomDateLabel()
+                          : widget.customLabel,
+                      isSelected:
+                          widget.selectedDateFilter == PurchaseDateFilter.custom,
+                      onTap: () => _showCustomDatePicker(context),
+                      icon: Icons.date_range_outlined,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildSupplierDropdown(),
+                  ],
                 ),
               ),
-              // Report button
-              if (widget.onReportTap != null) ...[
-                const SizedBox(width: 8),
-                _buildReportButton(),
-              ],
+            ),
+            if (widget.onReportTap != null) ...[
+              const SizedBox(width: 8),
+              _buildReportButton(),
             ],
-          ),
-
-          // Show active filters indicator
-          if (widget.selectedDateFilter != PurchaseDateFilter.all ||
-              widget.selectedSupplierId != null) ...[
-            const SizedBox(height: 10),
-            _buildActiveFiltersRow(),
           ],
+        ),
+        if (widget.selectedDateFilter != PurchaseDateFilter.all ||
+            widget.selectedSupplierId != null) ...[
+          const SizedBox(height: 8),
+          _buildActiveFiltersRow(),
         ],
-      ),
+      ],
     );
   }
 
@@ -175,8 +153,11 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
     return GestureDetector(
       onTap: widget.onReportTap,
       child: Container(
-        padding: const EdgeInsets.all(10),
+        width: 42,
+        height: 42,
+        alignment: Alignment.center,
         decoration: BoxDecoration(
+          color: AppColors.card(context),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.border(context)),
         ),
@@ -195,19 +176,22 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
     required VoidCallback onTap,
     required IconData icon,
   }) {
+    final accent = Theme.of(context).primaryColor;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        height: 42,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.chipFill(context) : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
+          color: isSelected
+              ? accent.withValues(alpha: 0.10)
+              : AppColors.card(context),
+          borderRadius: BorderRadius.circular(21),
           border: Border.all(
-            color: isSelected
-                ? AppColors.secondaryText(context).withValues(alpha: 0.55)
-                : AppColors.border(context),
+            color: isSelected ? accent : AppColors.border(context),
+            width: isSelected ? 1.4 : 1,
           ),
         ),
         child: Row(
@@ -215,10 +199,8 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
           children: [
             Icon(
               icon,
-              size: 15,
-              color: isSelected
-                  ? AppColors.primaryText(context)
-                  : AppColors.mutedText(context),
+              size: 16,
+              color: isSelected ? accent : AppColors.secondaryText(context),
             ),
             const SizedBox(width: 6),
             Text(
@@ -227,9 +209,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
-                color: isSelected
-                    ? AppColors.primaryText(context)
-                    : AppColors.mutedText(context),
+                color: isSelected ? accent : AppColors.secondaryText(context),
               ),
             ),
           ],

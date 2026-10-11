@@ -530,6 +530,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   }
 
   Widget _buildCommonHeader() {
+    if (_selectedIndex == 4) return _buildPurchaseHeader();
     final isDark = AppColors.isDark(context);
     return Container(
       decoration: BoxDecoration(
@@ -725,6 +726,130 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 },
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPurchaseHeader() {
+    final isDark = AppColors.isDark(context);
+    final accent = Theme.of(context).primaryColor;
+    final well = accent.withValues(alpha: isDark ? 0.18 : 0.12);
+
+    return ColoredBox(
+      color: AppColors.scaffold(context),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: _openFlyoutMenu,
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: well,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    Icons.shopping_cart_outlined,
+                    color: accent,
+                    size: 22,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: GestureDetector(
+                  onTap: _openFlyoutMenu,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _getPageTitle(),
+                        style: TextStyle(
+                          color: AppColors.primaryText(context),
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          fontFamily: 'Literata',
+                          height: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _getPageSubtitle(),
+                        style: TextStyle(
+                          color: AppColors.mutedText(context),
+                          fontSize: 12,
+                          fontFamily: 'Literata',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              _purchaseHeaderButton(
+                icon: Icons.open_in_full_rounded,
+                tooltip: 'Expand',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const EnhancedPurchaseScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
+              _purchaseHeaderButton(
+                icon: Icons.file_download_outlined,
+                tooltip: 'Download',
+                onTap: PurchaseScreenActions.download,
+              ),
+              const SizedBox(width: 8),
+              _purchaseHeaderButton(
+                icon: Icons.grid_view_rounded,
+                tooltip: 'Settings',
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PurchaseSettingsPage(),
+                    ),
+                  );
+                  if (mounted) setState(() {});
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _purchaseHeaderButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onTap,
+  }) {
+    final accent = Theme.of(context).primaryColor;
+    final isDark = AppColors.isDark(context);
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: accent.withValues(alpha: isDark ? 0.18 : 0.12),
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: Icon(icon, color: accent, size: 20),
           ),
         ),
       ),

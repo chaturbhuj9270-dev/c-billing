@@ -26,26 +26,36 @@ class PurchaseCardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd MMM yyyy');
     final timeFormat = DateFormat('hh:mm a');
+    final accent = Theme.of(context).primaryColor;
+    final isDark = AppColors.isDark(context);
+    final synced = purchase.syncStatus == BatchSyncStatus.synced;
 
     return GestureDetector(
       onTap: onTap,
       onLongPress: onLongPress,
       child: Container(
-        margin: EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
           color: AppColors.card(context),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppColors.border(context)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: onTap,
               onLongPress: onLongPress,
-              splashColor: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
-              highlightColor: const Color(0xFF1B4D3E).withValues(alpha: 0.05),
+              splashColor: accent.withValues(alpha: 0.08),
+              highlightColor: accent.withValues(alpha: 0.04),
               child: Padding(
                 padding: const EdgeInsets.all(14),
                 child: Column(
@@ -58,12 +68,12 @@ class PurchaseCardWidget extends StatelessWidget {
                           width: 42,
                           height: 42,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF2A2418),
+                            color: accent.withValues(alpha: isDark ? 0.18 : 0.12),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.inventory_2_outlined,
-                            color: Color(0xFFFFB74D),
+                            color: accent,
                             size: 20,
                           ),
                         ),
@@ -88,7 +98,7 @@ class PurchaseCardWidget extends StatelessWidget {
                                 Row(
                                   children: [
                                     Icon(
-                                      Icons.apartment_rounded,
+                                      Icons.receipt_long_outlined,
                                       size: 13,
                                       color: AppColors.mutedText(context),
                                     ),
@@ -126,18 +136,16 @@ class PurchaseCardWidget extends StatelessWidget {
                             if (showSyncStatus) ...[
                               const SizedBox(height: 4),
                               Text(
-                                purchase.syncStatus == BatchSyncStatus.synced
-                                    ? 'Synced'
-                                    : 'Pending',
+                                synced ? 'Synced' : 'Pending',
                                 style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color:
-                                      purchase.syncStatus ==
-                                          BatchSyncStatus.synced
-                                      ? const Color(0xFF3DDC97)
-                                      : const Color(0xFFFFB74D),
+                                  fontWeight: FontWeight.w700,
+                                  color: synced
+                                      ? (isDark
+                                            ? AppTheme.mint
+                                            : AppTheme.primaryLight)
+                                      : AppTheme.toneAmber,
                                 ),
                               ),
                             ],
@@ -149,17 +157,21 @@ class PurchaseCardWidget extends StatelessWidget {
                     Row(
                       children: [
                         _buildDetailChip(
-                          icon: Icons.layers_rounded,
+                          context,
+                          icon: Icons.layers_outlined,
                           label:
                               '${purchase.quantityPurchased} ${purchase.unit}',
-                          color: const Color(0xFF7C8CFF),
+                          background: const Color(0xFFEEF0FF),
+                          foreground: const Color(0xFF5C6BC0),
                         ),
                         const SizedBox(width: 8),
                         _buildDetailChip(
+                          context,
                           icon: Icons.sell_outlined,
                           label:
                               '₹${purchase.purchasePrice.toStringAsFixed(2)}/unit',
-                          color: const Color(0xFFFFB74D),
+                          background: const Color(0xFFFFF4E5),
+                          foreground: const Color(0xFFE0A85C),
                         ),
                       ],
                     ),
@@ -208,21 +220,24 @@ class PurchaseCardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailChip({
+  Widget _buildDetailChip(
+    BuildContext context, {
     required IconData icon,
     required String label,
-    required Color color,
+    required Color background,
+    required Color foreground,
   }) {
+    final isDark = AppColors.isDark(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        color: isDark ? foreground.withValues(alpha: 0.16) : background,
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: color.withValues(alpha: 0.8)),
+          Icon(icon, size: 14, color: foreground),
           const SizedBox(width: 6),
           Text(
             label,
@@ -230,7 +245,7 @@ class PurchaseCardWidget extends StatelessWidget {
               fontFamily: 'Literata',
               fontWeight: FontWeight.w600,
               fontSize: 12,
-              color: color.withValues(alpha: 0.9),
+              color: foreground,
             ),
           ),
         ],
