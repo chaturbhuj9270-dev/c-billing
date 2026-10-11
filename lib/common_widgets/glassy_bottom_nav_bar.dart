@@ -133,15 +133,15 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: isDark
-                          ? [
-                              AppTheme.white.withValues(alpha: 0.16),
-                              AppTheme.white.withValues(alpha: 0.06),
-                            ]
-                          : [
-                              AppTheme.white.withValues(alpha: 0.96),
-                              AppTheme.white.withValues(alpha: 0.78),
-                            ],
+                    colors: isDark
+                        ? [
+                            AppTheme.primaryLight,
+                            AppTheme.primary,
+                          ]
+                        : [
+                            AppTheme.white.withValues(alpha: 0.96),
+                            AppTheme.white.withValues(alpha: 0.78),
+                          ],
                     ),
                   ),
                 ),
@@ -326,7 +326,7 @@ class _GlassyNavItemButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iconColor = selected
-        ? Theme.of(context).primaryColor
+        ? (AppColors.isDark(context) ? AppTheme.white : AppTheme.primary)
         : AppColors.mutedText(context);
 
     return GestureDetector(

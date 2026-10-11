@@ -1024,9 +1024,8 @@ class _LoginPageV2State extends State<LoginPageV2>
   }
 
   Widget _buildSignInButton() {
-    final isDark = AppColors.isDark(context);
-    final fill = isDark ? AppTheme.mint : AppTheme.primary;
-    final label = isDark ? AppTheme.onMint : AppTheme.white;
+    const fill = AppTheme.primary;
+    const label = AppTheme.white;
     const radius = BorderRadius.all(Radius.circular(28));
     return Container(
       width: double.infinity,

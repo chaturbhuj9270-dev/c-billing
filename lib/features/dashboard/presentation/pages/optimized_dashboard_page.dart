@@ -1285,9 +1285,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     OptimizedDashboardState state,
   ) {
     final isSelected = state.params.filter == filter;
-    final isDark = AppColors.isDark(context);
-    final selectedFg = AppColors.selectedOnFill(context);
     final unselectedFg = AppColors.accent(context);
+    final selectedFill = Theme.of(context).primaryColor;
     return GestureDetector(
       onTap: () async {
         if (filter == DashboardFilter.custom) {
@@ -1296,48 +1295,24 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           context.read<OptimizedDashboardCubit>().changeFilter(filter);
         }
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          gradient: isSelected && !isDark
-              ? LinearGradient(colors: AppColors.headerGradient(context))
-              : null,
-          color: isSelected
-              ? (isDark ? AppTheme.white : null)
-              : AppColors.card(context),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected
-                ? (isDark ? AppTheme.white : AppTheme.transparent)
-                : AppColors.border(context),
-            width: 1.5,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppTheme.black.withValues(alpha: isDark ? 0.35 : 0.15),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: AppColors.shadow(context),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-        ),
-        child: Row(
+      child: _raisedGlass(
+        radius: 14,
+        color: isSelected ? selectedFill : null,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: isSelected ? selectedFg : unselectedFg),
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? AppTheme.white : unselectedFg,
+            ),
             const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? selectedFg : unselectedFg,
+                color: isSelected ? AppTheme.white : unselectedFg,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 fontFamily: 'Literata',
@@ -1345,7 +1320,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             ),
           ],
         ),
-      ),
+          ),
+        ),
     );
   }
 
@@ -1379,26 +1355,17 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   }) {
     return Row(
       children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(colors: AppColors.headerGradient(context)),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.black.withValues(
-                  alpha: AppColors.isDark(context) ? 0.4 : 0.2,
-                ),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Icon(
-            icon,
-            color: AppColors.isDark(context) ? AppTheme.white : AppTheme.white,
-            size: 22,
+        _raisedGlass(
+          radius: 14,
+          fill: LinearGradient(colors: AppColors.headerGradient(context)),
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Icon(
+              icon,
+              color: AppTheme.white,
+              size: 22,
+            ),
           ),
         ),
         const SizedBox(width: 14),
@@ -1518,6 +1485,67 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     );
   }
 
+  Widget _raisedGlass({
+    required Widget child,
+    double radius = 20,
+    Gradient? fill,
+    Color? color,
+  }) {
+    final isDark = AppColors.isDark(context);
+    final themeColor = Theme.of(context).primaryColor;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(radius),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: isDark ? 0.5 : 0.16),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+          BoxShadow(
+            color: themeColor.withValues(alpha: isDark ? 0.22 : 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: CustomPaint(
+            foregroundPainter: GlassBevelBorderPainter(
+              isDark: isDark,
+              themeColor: themeColor,
+              radius: radius,
+            ),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: color,
+                gradient: fill ??
+                    (color == null
+                        ? LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              AppColors.card(context).withValues(
+                                alpha: isDark ? 0.72 : 0.96,
+                              ),
+                              AppColors.card(context).withValues(
+                                alpha: isDark ? 0.92 : 0.82,
+                              ),
+                            ],
+                          )
+                        : null),
+              ),
+              child: child,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildGradientMetricCard({
     required String title,
     required String amount,
@@ -1528,37 +1556,21 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   }) {
     final isDark = AppColors.isDark(context);
     final lg = gradient as LinearGradient;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: lg.begin,
-              end: lg.end,
-              colors: isDark
-                  ? lg.colors
-                  : [
-                      lg.colors[0].withValues(alpha: 0.7),
-                      lg.colors[1].withValues(alpha: 0.7),
-                    ],
-            ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppTheme.white.withValues(alpha: isDark ? 0.14 : 0.2),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.black.withValues(alpha: isDark ? 0.45 : 0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
+    return _raisedGlass(
+      radius: 22,
+      fill: LinearGradient(
+        begin: lg.begin,
+        end: lg.end,
+        colors: isDark
+            ? lg.colors
+            : [
+                lg.colors[0].withValues(alpha: 0.88),
+                lg.colors[1].withValues(alpha: 0.72),
+              ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
@@ -1610,37 +1622,27 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             ],
           ),
         ),
-      ),
     );
   }
 
   Widget _buildProfitCard(DashboardSummary data, bool isLoading) {
     final isProfitable = data.profit >= 0;
     final isDark = AppColors.isDark(context);
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: isDark
-                  ? AppColors.darkMetricGradient(0)
-                  : [
-                      AppTheme.primary.withValues(alpha: 0.7),
-                      AppTheme.green800.withValues(alpha: 0.7),
-                    ],
-            ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppTheme.white.withValues(alpha: isDark ? 0.14 : 0.2),
-              width: 1.5,
-            ),
-          ),
-          child: Row(
+    return _raisedGlass(
+      radius: 22,
+      fill: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: isDark
+            ? AppColors.darkMetricGradient(0)
+            : [
+                AppTheme.primary.withValues(alpha: 0.92),
+                AppTheme.green800.withValues(alpha: 0.78),
+              ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
             children: [
               Expanded(
                 child: Column(
@@ -1727,7 +1729,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             ],
           ),
         ),
-      ),
     );
   }
 
@@ -1735,36 +1736,22 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     final isDark = AppColors.isDark(context);
     final color = isDark
         ? AppTheme.white
-        : (data.profit >= 0
-              ? AppTheme.green800
-              : AppTheme.red700);
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: isDark
-                  ? const [AppTheme.darkCard, AppTheme.darkSurface]
-                  : [
-                      color.withValues(alpha: 0.15),
-                      color.withValues(alpha: 0.05),
-                    ],
-            ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isDark
-                  ? AppTheme.darkBorder
-                  : color.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
-          ),
-          child: Row(
+        : (data.profit >= 0 ? AppTheme.green800 : AppTheme.red700);
+    return _raisedGlass(
+      radius: 22,
+      fill: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: isDark
+            ? const [AppTheme.darkCard, AppTheme.darkSurface]
+            : [
+                color.withValues(alpha: 0.22),
+                color.withValues(alpha: 0.06),
+              ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
             children: [
               Container(
                 width: 44,
@@ -1828,25 +1815,15 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             ],
           ),
         ),
-      ),
     );
   }
 
   Widget _buildInventoryCard(DashboardSummary data, bool isLoading) {
-    return Container(
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
+    return _raisedGlass(
+      radius: 22,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -1982,6 +1959,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           ),
         ],
       ),
+        ),
     );
   }
 
@@ -2096,40 +2074,21 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         : gradientColors;
     return GestureDetector(
       onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.card(context) : null,
-              gradient: isDark
-                  ? null
-                  : LinearGradient(
-                      colors: [
-                        AppTheme.white.withValues(alpha: 0.7),
-                        AppTheme.white.withValues(alpha: 0.5),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isDark
-                    ? AppColors.border(context)
-                    : tones[0].withValues(alpha: 0.2),
-                width: 1,
+      child: _raisedGlass(
+        radius: 18,
+        fill: isDark
+            ? null
+            : LinearGradient(
+                colors: [
+                  AppTheme.white.withValues(alpha: 0.86),
+                  tones[0].withValues(alpha: 0.14),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.black.withValues(alpha: isDark ? 0.35 : 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+          child: Row(
               children: [
                 Container(
                   width: 38,
@@ -2214,7 +2173,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             ),
           ),
         ),
-      ),
     );
   }
 

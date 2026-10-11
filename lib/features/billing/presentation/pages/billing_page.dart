@@ -5364,7 +5364,7 @@ class _BillingPageState extends State<BillingPage> {
         height: 40,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.mint : AppTheme.transparent,
+          color: isSelected ? AppTheme.primary : AppTheme.transparent,
           shape: BoxShape.circle,
         ),
         child: Text(
@@ -5394,10 +5394,10 @@ class _BillingPageState extends State<BillingPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.mint : AppTheme.transparent,
+          color: isSelected ? AppTheme.primary : AppTheme.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppTheme.mint : AppColors.border(context),
+            color: isSelected ? AppTheme.primary : AppColors.border(context),
           ),
         ),
         child: Text(

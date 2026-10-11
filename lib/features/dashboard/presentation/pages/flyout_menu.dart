@@ -662,8 +662,8 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
               Switch(
                 value: _biometricLockEnabled,
                 onChanged: _toggleBiometricLock,
-                activeThumbColor: AppTheme.onMint,
-                activeTrackColor: AppTheme.mint,
+                activeThumbColor: AppTheme.white,
+                activeTrackColor: AppTheme.primary,
                 inactiveThumbColor: AppColors.mutedText(context),
                 inactiveTrackColor: AppColors.chipFill(context),
               ),

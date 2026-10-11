@@ -3159,15 +3159,11 @@ class _PurchasePageState extends State<PurchasePage>
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: AppColors.headerGradient(context),
-          ),
+          color: AppTheme.primary,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.accentSoft(context, 0.4),
+              color: AppTheme.primary.withValues(alpha: 0.28),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),

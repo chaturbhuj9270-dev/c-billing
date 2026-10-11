@@ -496,9 +496,9 @@ class _AppRangeCalendarPageState extends State<AppRangeCalendarPage> {
                             ? AppTheme.white
                             : AppTheme.paletteFF163028,
                         endpointColor: isDark
-                            ? AppTheme.mint
+                            ? AppTheme.primary
                             : AppTheme.paletteFF1B7A4A,
-                        endpointText: isDark ? AppTheme.onMint : AppTheme.white,
+                        endpointText: AppTheme.white,
                         enabled: _enabled,
                         inRange: _inRange,
                         isEndpoint: _isEndpoint,
@@ -708,7 +708,7 @@ class _DateField extends StatelessWidget {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(
-            color: isDark ? AppTheme.mint : AppTheme.primary,
+            color: AppTheme.primary,
           ),
         ),
       ),
@@ -735,21 +735,12 @@ class _ApplyButton extends StatelessWidget {
       opacity: enabled ? 1 : 0.45,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: isDark ? null : AppTheme.paletteFF1B7A4A,
-          gradient: isDark
-              ? const LinearGradient(
-                  colors: [
-                    AppTheme.paletteFF146B45,
-                    AppTheme.paletteFF1E9A62,
-                    AppTheme.mint,
-                  ],
-                )
-              : null,
+          color: AppTheme.primary,
           borderRadius: BorderRadius.circular(16),
           boxShadow: enabled
               ? [
                   BoxShadow(
-                    color: (isDark ? AppTheme.mint : AppTheme.primary)
+                    color: AppTheme.primary
                         .withValues(alpha: isDark ? 0.32 : 0.16),
                     blurRadius: isDark ? 22 : 12,
                     offset: Offset(0, isDark ? 8 : 5),

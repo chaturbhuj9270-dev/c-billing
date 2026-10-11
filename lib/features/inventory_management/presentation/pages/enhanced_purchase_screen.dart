@@ -1418,65 +1418,48 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(
-                  child: Builder(
-                    builder: (context) {
-                      final base = Theme.of(context).colorScheme.primary;
-                      return DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(28),
-                          border: Border.all(
-                            color: AppTheme.paletteFFE0B84A,
-                            width: 1,
-                          ),
-                          gradient: LinearGradient(
-                            colors: [
-                              Color.lerp(base, AppTheme.black, 0.34)!,
-                              base,
-                              Color.lerp(base, AppTheme.white, 0.18)!,
-                            ],
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: base.withValues(alpha: 0.38),
-                              blurRadius: 18,
-                              offset: const Offset(0, 6),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(28),
+                      color: AppTheme.primary,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primary.withValues(alpha: 0.28),
+                          blurRadius: 18,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: AppTheme.transparent,
+                      borderRadius: BorderRadius.circular(28),
+                      child: InkWell(
+                        onTap: _navigateToAddPurchase,
+                        borderRadius: BorderRadius.circular(28),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add, color: AppTheme.white, size: 22),
+                            SizedBox(width: 6),
+                            Text(
+                              'New purchase',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.white,
+                              ),
                             ),
                           ],
                         ),
-                        child: Material(
-                          color: AppTheme.transparent,
-                          borderRadius: BorderRadius.circular(28),
-                          child: InkWell(
-                            onTap: _navigateToAddPurchase,
-                            borderRadius: BorderRadius.circular(28),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.add, color: AppTheme.white, size: 22),
-                                SizedBox(width: 6),
-                                Text(
-                                  'New purchase',
-                                  style: TextStyle(
-                                    fontFamily: 'Literata',
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppTheme.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Material(
                   color: AppTheme.primary,
-                  shape: const CircleBorder(
-                    side: BorderSide(color: AppTheme.paletteFFE0B84A, width: 1),
-                  ),
+                  shape: const CircleBorder(),
                   child: InkWell(
                     customBorder: const CircleBorder(),
                     onTap: () => showQuickActionsSheet(context),

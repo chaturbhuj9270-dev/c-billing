@@ -222,7 +222,6 @@ class AppTheme {
   static const Color paletteFFD7E0DB = Color(0xFFD7E0DB);
   static const Color paletteFFD7EDE3 = Color(0xFFD7EDE3);
   static const Color paletteFFD7F6E8 = Color(0xFFD7F6E8);
-  static const Color paletteFFE0B84A = Color(0xFFE0B84A);
   static const Color paletteFFE3E8E4 = Color(0xFFE3E8E4);
   static const Color paletteFFE4E4E4 = Color(0xFFE4E4E4);
   static const Color paletteFFE4E9E5 = Color(0xFFE4E9E5);
@@ -273,8 +272,8 @@ class AppTheme {
     // Explicit neutral ColorScheme — avoids green-tinted surfaces from seed.
     const scheme = ColorScheme(
       brightness: Brightness.dark,
-      primary: mint,
-      onPrimary: onMint,
+      primary: primary,
+      onPrimary: AppTheme.white,
       secondary: toneBlue,
       onSecondary: AppTheme.white,
       error: AppTheme.error,
@@ -320,7 +319,7 @@ class AppTheme {
       canvasColor: scaffold,
       cardColor: card,
       dividerColor: divider,
-      primaryColor: isDark ? mint : primary,
+      primaryColor: primary,
       appBarTheme: AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -367,13 +366,13 @@ class AppTheme {
         behavior: SnackBarBehavior.floating,
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: mint,
-        foregroundColor: onMint,
+        backgroundColor: primary,
+        foregroundColor: AppTheme.white,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: isDark ? mint : primary,
-          foregroundColor: isDark ? onMint : AppTheme.white,
+          backgroundColor: primary,
+          foregroundColor: AppTheme.white,
           disabledBackgroundColor: isDark ? darkElevated : AppTheme.grey300,
           disabledForegroundColor: isDark
               ? darkTextMuted
@@ -382,8 +381,8 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: mint,
-          foregroundColor: onMint,
+          backgroundColor: primary,
+          foregroundColor: AppTheme.white,
         ),
       ),
       popupMenuTheme: PopupMenuThemeData(
@@ -397,13 +396,13 @@ class AppTheme {
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return isDark ? onMint : mint;
+            return AppTheme.white;
           }
           return isDark ? AppTheme.grey : AppTheme.grey50;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return isDark ? mint : primaryLight.withValues(alpha: 0.45);
+            return primary;
           }
           return isDark ? AppTheme.white24 : AppTheme.black12;
         }),
@@ -425,10 +424,23 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: isDark ? mint : primary, width: 1.5),
+          borderSide: BorderSide(color: primary, width: 1.5),
         ),
       ),
       dividerTheme: DividerThemeData(color: divider, thickness: 1),
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return primary;
+          return null;
+        }),
+        checkColor: WidgetStateProperty.all(AppTheme.white),
+      ),
+      radioTheme: RadioThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return primary;
+          return null;
+        }),
+      ),
       iconTheme: IconThemeData(
         color: isDark ? darkTextSecondary : AppTheme.grey700,
       ),
@@ -522,10 +534,10 @@ class AppColors {
       ? const [AppTheme.headerDarkStart, AppTheme.headerDarkMid, AppTheme.headerDarkEnd]
       : const [AppTheme.primary, AppTheme.primaryDark, AppTheme.headerLightEnd];
 
-  /// Selected chips and the active tab use mint in both themes.
-  static Color selectedFill(BuildContext context) => AppTheme.mint;
+  /// Selected chips and the active tab use the theme green in both themes.
+  static Color selectedFill(BuildContext context) => AppTheme.primary;
 
-  static Color selectedOnFill(BuildContext context) => AppTheme.onMint;
+  static Color selectedOnFill(BuildContext context) => AppTheme.white;
 
   /// Emphasis color. Dark titles stay light; actions use [mint].
   static Color accent(BuildContext context) =>
@@ -539,7 +551,7 @@ class AppColors {
   /// Soft accent wash behind icons/chips.
   static Color accentSoft(BuildContext context, [double alpha = 0.12]) =>
       isDark(context)
-      ? AppTheme.mint.withValues(alpha: alpha)
+      ? AppTheme.primary.withValues(alpha: alpha)
       : AppTheme.primary.withValues(alpha: alpha);
 
   /// On-gradient / on-colored-card text (always light for contrast).

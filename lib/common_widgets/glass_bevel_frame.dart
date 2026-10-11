@@ -34,31 +34,32 @@ class GlassBevelBorderPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final bounds = Offset.zero & size;
+    const inset = 0.45;
     final outer = borderRadius == null
         ? RRect.fromRectAndRadius(
-            bounds.deflate(1.15),
-            Radius.circular((radius - 1.15).clamp(0.0, radius)),
+            bounds.deflate(inset),
+            Radius.circular((radius - inset).clamp(0.0, radius)),
           )
-        : borderRadius!.resolve(TextDirection.ltr).toRRect(bounds).deflate(1.15);
+        : borderRadius!.resolve(TextDirection.ltr).toRRect(bounds).deflate(inset);
 
     final bevel = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.2
+      ..strokeWidth = 0.7
       ..shader = glassBevelGradient(isDark, themeColor).createShader(bounds);
     canvas.drawRRect(outer, bevel);
 
     final shine = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.05
+      ..strokeWidth = 0.35
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          AppTheme.white.withValues(alpha: isDark ? 0.42 : 0.75),
+          AppTheme.white.withValues(alpha: isDark ? 0.28 : 0.5),
           AppTheme.white.withValues(alpha: 0),
         ],
       ).createShader(bounds);
-    canvas.drawRRect(outer.deflate(2.1), shine);
+    canvas.drawRRect(outer.deflate(0.85), shine);
   }
 
   @override

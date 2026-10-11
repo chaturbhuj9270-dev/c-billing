@@ -610,7 +610,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.mint.withValues(alpha: 0.28),
+            color: AppTheme.primary.withValues(alpha: 0.28),
             blurRadius: 22,
             offset: const Offset(0, 8),
           ),
@@ -619,8 +619,8 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
       child: ElevatedButton(
         onPressed: _submit,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.mint,
-          foregroundColor: AppTheme.onMint,
+          backgroundColor: AppTheme.primary,
+          foregroundColor: AppTheme.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(28),

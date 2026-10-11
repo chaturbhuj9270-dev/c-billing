@@ -645,8 +645,8 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                       }
                     : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.mint,
-                  foregroundColor: AppTheme.onMint,
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: AppTheme.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -1238,8 +1238,8 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.mint,
-                    foregroundColor: AppTheme.onMint,
+                    backgroundColor: AppTheme.primary,
+                    foregroundColor: AppTheme.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -1744,8 +1744,8 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                       }
                     : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.mint,
-                  foregroundColor: AppTheme.onMint,
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: AppTheme.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -2041,7 +2041,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: selected ? AppTheme.mint : AppTheme.transparent,
+            color: selected ? AppTheme.primary : AppTheme.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Center(
@@ -2078,7 +2078,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
         color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isSelected ? AppTheme.mint : AppColors.border(context),
+          color: isSelected ? AppTheme.primary : AppColors.border(context),
           width: isSelected ? 1.6 : 1,
         ),
       ),
@@ -2339,8 +2339,8 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                     }
                   : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.mint,
-                foregroundColor: AppTheme.onMint,
+                backgroundColor: AppTheme.primary,
+                foregroundColor: AppTheme.white,
                 disabledBackgroundColor: AppColors.chipFill(context),
                 disabledForegroundColor: AppColors.mutedText(context),
                 elevation: 0,
