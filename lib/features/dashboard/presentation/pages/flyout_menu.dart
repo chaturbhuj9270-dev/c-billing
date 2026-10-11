@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -6,7 +8,6 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/biometric_service.dart';
 import '../../../../core/services/logout_service.dart';
 import '../../../../features/authentication/presentation/pages/change_password_page.dart';
-import '../../../../common_widgets/water_drop_effect.dart';
 import '../../../../core/services/theme_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'profile_page.dart';
@@ -17,6 +18,7 @@ import '../../../inventory_management/presentation/pages/enhanced_purchase_scree
 import '../../../inventory_management/presentation/pages/enhanced_product_page.dart';
 import '../../../shop/presentation/pages/shop_details_page.dart';
 import '../../../expense/presentation/pages/expenses_page.dart';
+import 'package:c_billing/common_widgets/glass_bevel_frame.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 
 class FlyoutMenu extends StatefulWidget {
@@ -38,14 +40,10 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   // Animation controllers
   late AnimationController _slideController;
   late AnimationController _staggerController;
-  late AnimationController _dropController;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
   late List<Animation<Offset>> _menuItemAnimations;
   late List<Animation<double>> _menuItemFadeAnimations;
-  Offset? _dropOrigin;
-  final GlobalKey _panelKey = GlobalKey();
-  static const _accent = AppTheme.primary;
 
   // Menu items with icons and colors
   final List<_MenuItem> _menuItems = [
@@ -153,11 +151,6 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       );
     });
 
-    _dropController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    );
-
     // Start animations
     _slideController.forward();
     Future.delayed(const Duration(milliseconds: 200), () {
@@ -171,15 +164,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   void dispose() {
     _slideController.dispose();
     _staggerController.dispose();
-    _dropController.dispose();
     super.dispose();
-  }
-
-  void _triggerWaterDrop(Offset globalPosition) {
-    final box = _panelKey.currentContext?.findRenderObject() as RenderBox?;
-    if (box == null || !box.hasSize) return;
-    setState(() => _dropOrigin = box.globalToLocal(globalPosition));
-    _dropController.forward(from: 0);
   }
 
   String _resolveUserName(User? user) {
@@ -236,19 +221,11 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
     LogoutService.instance.logout(context);
   }
 
-  void _navigateToPage(String pageName, int index, {Offset? tapPosition}) {
-    if (tapPosition != null) {
-      HapticFeedback.lightImpact();
-      _triggerWaterDrop(tapPosition);
-    }
+  void _navigateToPage(String pageName, int index) {
+    HapticFeedback.lightImpact();
     if (index < 0) return;
 
-    // Slightly longer delay so the water-drop splash is visible before closing.
-    Future.delayed(const Duration(milliseconds: 280), () {
-      if (!mounted) return;
-      // Overlay is a *child* of Navigator — never use navigator.context for
-      // showDialog / Overlay.of (that causes "No Overlay widget found").
-      final navigator = Navigator.of(context, rootNavigator: true);
+    final navigator = Navigator.of(context, rootNavigator: true);
       final overlayContext = navigator.overlay?.context;
       Navigator.pop(context);
 
@@ -346,7 +323,6 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           afterClose(_showSettingsDialog);
           break;
       }
-    });
   }
 
   void _showThemeDialog(BuildContext dialogContext) {
@@ -396,6 +372,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppColors.isDark(context);
     return SlideTransition(
       position: _slideAnimation,
       child: Padding(
@@ -405,35 +382,47 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.black.withValues(alpha: 0.14),
-                blurRadius: 28,
-                offset: const Offset(6, 0),
+                color: AppTheme.black.withValues(alpha: isDark ? 0.35 : 0.12),
+                blurRadius: 24,
+                offset: const Offset(6, 8),
               ),
               BoxShadow(
-                color: AppTheme.black.withValues(alpha: 0.06),
-                blurRadius: 10,
-                offset: const Offset(2, 0),
+                color: AppTheme.black.withValues(alpha: isDark ? 0.2 : 0.06),
+                blurRadius: 8,
+                offset: const Offset(2, 2),
               ),
             ],
           ),
           child: ClipRRect(
-            key: _panelKey,
             borderRadius: BorderRadius.circular(28),
-            child: Material(
-              type: MaterialType.transparency,
-              child: SizedBox(
-                width: double.infinity,
-                child: Stack(
-                children: [
-                  Container(
-                    width: double.infinity,
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+              child: CustomPaint(
+                foregroundPainter: GlassBevelBorderPainter(
+                  isDark: isDark,
+                  themeColor: Theme.of(context).primaryColor,
+                  radius: 28,
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: AppColors.isDark(context)
-                          ? AppTheme.darkCard
-                          : AppColors.card(context),
-                      border: Border.all(color: AppColors.border(context)),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          AppColors.card(context).withValues(
+                            alpha: isDark ? 0.62 : 0.78,
+                          ),
+                          AppColors.card(context).withValues(
+                            alpha: isDark ? 0.82 : 0.92,
+                          ),
+                        ],
+                      ),
                     ),
-                    child: Column(
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: Column(
                       children: [
                         _buildHeader(),
                         Expanded(
@@ -479,28 +468,11 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                           child: _buildBottomSection(),
                         ),
                       ],
-                    ),
-                  ),
-                  // Water-drop splash over the glass panel
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: AnimatedBuilder(
-                        animation: _dropController,
-                        builder: (context, _) {
-                          return CustomPaint(
-                            painter: WaterDropPainter(
-                              origin: _dropOrigin,
-                              progress: _dropController.value,
-                              accentColor: _accent,
-                            ),
-                          );
-                        },
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
             ),
           ),
         ),
@@ -638,11 +610,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   Widget _buildMenuItem({required _MenuItem item, required int index}) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTapDown: (details) => _navigateToPage(
-        item.route,
-        index,
-        tapPosition: details.globalPosition,
-      ),
+      onTap: () => _navigateToPage(item.route, index),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         child: Row(
@@ -676,31 +644,31 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Row(
-        children: [
-          _iconWell(Icons.fingerprint_rounded, AppTheme.mint),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              _localizations.biometricLock,
-              style: TextStyle(
-                color: AppColors.primaryText(context),
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Literata',
-                decoration: TextDecoration.none,
+            children: [
+              _iconWell(Icons.fingerprint_rounded, AppTheme.mint),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  _localizations.biometricLock,
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Literata',
+                    decoration: TextDecoration.none,
+                  ),
+                ),
               ),
-            ),
+              Switch(
+                value: _biometricLockEnabled,
+                onChanged: _toggleBiometricLock,
+                activeThumbColor: AppTheme.onMint,
+                activeTrackColor: AppTheme.mint,
+                inactiveThumbColor: AppColors.mutedText(context),
+                inactiveTrackColor: AppColors.chipFill(context),
+              ),
+            ],
           ),
-          Switch(
-            value: _biometricLockEnabled,
-            onChanged: _toggleBiometricLock,
-            activeThumbColor: AppTheme.onMint,
-            activeTrackColor: AppTheme.mint,
-            inactiveThumbColor: AppColors.mutedText(context),
-            inactiveTrackColor: AppColors.chipFill(context),
-          ),
-        ],
-      ),
     );
   }
 
@@ -714,12 +682,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           mainAxisSize: MainAxisSize.min,
           children: [
             GestureDetector(
-              onTapDown: (details) {
-                _triggerWaterDrop(details.globalPosition);
-                Future.delayed(const Duration(milliseconds: 220), () {
-                  if (mounted) _logout();
-                });
-              },
+              onTap: _logout,
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 14),
@@ -730,28 +693,28 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                   ),
                 ),
                 child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.logout_rounded,
-                      color: AppTheme.toneRose,
-                      size: 18,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.logout_rounded,
+                          color: AppTheme.toneRose,
+                          size: 18,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Log out',
+                          style: TextStyle(
+                            color: AppTheme.toneRose,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Literata',
+                            decoration: TextDecoration.none,
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(width: 8),
-                    Text(
-                      'Log out',
-                      style: TextStyle(
-                        color: AppTheme.toneRose,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'Literata',
-                        decoration: TextDecoration.none,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
               ),
-            ),
             const SizedBox(height: 14),
             Text(
               _localizations.version,
