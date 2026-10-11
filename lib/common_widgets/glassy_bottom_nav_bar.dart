@@ -122,20 +122,28 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(radius),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: isDark
-                      ? [
-                          Colors.white.withValues(alpha: 0.16),
-                          Colors.white.withValues(alpha: 0.06),
-                        ]
-                      : [
-                          Colors.white.withValues(alpha: 0.96),
-                          Colors.white.withValues(alpha: 0.78),
-                        ],
+                gradient: _glassBevelGradient(isDark, themeColor),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(1.4),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(radius - 1.4),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: isDark
+                          ? [
+                              Colors.white.withValues(alpha: 0.16),
+                              Colors.white.withValues(alpha: 0.06),
+                            ]
+                          : [
+                              Colors.white.withValues(alpha: 0.96),
+                              Colors.white.withValues(alpha: 0.78),
+                            ],
+                    ),
+                  ),
                 ),
-                border: Border.all(color: themeColor, width: 1.2),
               ),
             ),
           ),
@@ -229,57 +237,140 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(28),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(28),
-                color: AppColors.card(context),
-                border: Border.all(
-                  color: Theme.of(context).primaryColor,
-                  width: 1.1,
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+              child: CustomPaint(
+                foregroundPainter: _GlassBevelBorderPainter(
+                  isDark: isDark,
+                  themeColor: Theme.of(context).primaryColor,
+                  radius: 28,
                 ),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-              child: Stack(
-                alignment: Alignment.center,
-                clipBehavior: Clip.none,
-                children: [
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          return Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              _slidingGlassPill(
-                                constraints.maxWidth,
-                                constraints.maxHeight,
-                                isDark,
-                              ),
-                            ],
-                          );
-                        },
-                      ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(28),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        AppColors.card(context).withValues(
+                          alpha: isDark ? 0.62 : 0.78,
+                        ),
+                        AppColors.card(context).withValues(
+                          alpha: isDark ? 0.82 : 0.92,
+                        ),
+                      ],
                     ),
                   ),
-                  Row(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 6,
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    clipBehavior: Clip.none,
                     children: [
-                      for (var i = 0; i < widget.items.length; i++)
-                        Expanded(
-                          child: _GlassyNavItemButton(
-                            item: widget.items[i],
-                            selected: widget.selectedIndex == i,
-                            onTap: () => _onItemTap(i),
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              return Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  _slidingGlassPill(
+                                    constraints.maxWidth,
+                                    constraints.maxHeight,
+                                    isDark,
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                         ),
+                      ),
+                      Row(
+                        children: [
+                          for (var i = 0; i < widget.items.length; i++)
+                            Expanded(
+                              child: _GlassyNavItemButton(
+                                item: widget.items[i],
+                                selected: widget.selectedIndex == i,
+                                onTap: () => _onItemTap(i),
+                              ),
+                            ),
+                        ],
+                      ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
         ),
       ),
     );
+  }
+}
+
+/// Raised glass rim: bright along the top, theme color through the middle,
+/// and a darker edge along the bottom.
+LinearGradient _glassBevelGradient(bool isDark, Color themeColor) {
+  return LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [
+      Colors.white.withValues(alpha: isDark ? 0.72 : 0.98),
+      Color.lerp(Colors.white, themeColor, isDark ? 0.25 : 0.4)!,
+      themeColor.withValues(alpha: isDark ? 0.7 : 0.92),
+      Color.lerp(themeColor, Colors.black, isDark ? 0.55 : 0.38)!,
+    ],
+    stops: const [0.0, 0.22, 0.62, 1.0],
+  );
+}
+
+class _GlassBevelBorderPainter extends CustomPainter {
+  final bool isDark;
+  final Color themeColor;
+  final double radius;
+
+  const _GlassBevelBorderPainter({
+    required this.isDark,
+    required this.themeColor,
+    required this.radius,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final bounds = Offset.zero & size;
+    final outer = RRect.fromRectAndRadius(
+      bounds.deflate(1.15),
+      Radius.circular(radius - 1.15),
+    );
+
+    final bevel = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2
+      ..shader = _glassBevelGradient(isDark, themeColor).createShader(bounds);
+    canvas.drawRRect(outer, bevel);
+
+    final shine = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.05
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Colors.white.withValues(alpha: isDark ? 0.42 : 0.75),
+          Colors.white.withValues(alpha: 0),
+        ],
+      ).createShader(bounds);
+    canvas.drawRRect(outer.deflate(2.1), shine);
+  }
+
+  @override
+  bool shouldRepaint(covariant _GlassBevelBorderPainter oldDelegate) {
+    return oldDelegate.isDark != isDark ||
+        oldDelegate.themeColor != themeColor ||
+        oldDelegate.radius != radius;
   }
 }
 
