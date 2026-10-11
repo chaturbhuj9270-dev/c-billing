@@ -309,7 +309,11 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
         case 'ChangePassword':
           afterClose(
             (ctx) => Navigator.of(ctx).push(
-              MaterialPageRoute(builder: (_) => const ChangePasswordPage()),
+              MaterialPageRoute(
+                builder: (_) => const _SelectedTheme(
+                  child: ChangePasswordPage(),
+                ),
+              ),
             ),
           );
           break;
@@ -328,7 +332,8 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   void _showThemeDialog(BuildContext dialogContext) {
     showDialog(
       context: dialogContext,
-      builder: (_) => _ThemeDialog(
+      builder: (_) => _SelectedTheme(
+        child: _ThemeDialog(
         currentMode: ThemeService.instance.themeMode,
         onModeSelected: (mode) async {
           await ThemeService.instance.setThemeMode(mode);
@@ -338,16 +343,19 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           );
         },
       ),
+      ),
     );
   }
 
   void _showSettingsDialog(BuildContext dialogContext) {
     showDialog(
       context: dialogContext,
-      builder: (_) => _SettingsDialog(
-        biometricLockEnabled: _biometricLockEnabled,
-        canUseBiometrics: _canUseBiometrics,
-        onBiometricToggle: _toggleBiometricLock,
+      builder: (_) => _SelectedTheme(
+        child: _SettingsDialog(
+          biometricLockEnabled: _biometricLockEnabled,
+          canUseBiometrics: _canUseBiometrics,
+          onBiometricToggle: _toggleBiometricLock,
+        ),
       ),
     );
   }
@@ -355,7 +363,8 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   void _showLanguageDialog(BuildContext dialogContext) {
     showDialog(
       context: dialogContext,
-      builder: (_) => _LanguageDialog(
+      builder: (_) => _SelectedTheme(
+        child: _LanguageDialog(
         currentLanguage: _selectedLanguage,
         onLanguageSelected: (language) async {
           await LanguageService.instance.setLanguage(language);
@@ -366,13 +375,14 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
             '${_localizations.languageChangedTo} $language',
           );
         },
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
+    final isDark = ThemeService.instance.isDark;
     return SlideTransition(
       position: _slideAnimation,
       child: Padding(
@@ -398,10 +408,11 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
               child: CustomPaint(
-                foregroundPainter: GlassBevelBorderPainter(
-                  isDark: isDark,
-                  themeColor: Theme.of(context).primaryColor,
+                foregroundPainter: const GlassBevelBorderPainter(
+                  isDark: false,
+                  themeColor: AppTheme.primary,
                   radius: 28,
+                  strokeWidth: 1.4,
                 ),
                 child: SizedBox(
                   width: double.infinity,
@@ -729,6 +740,27 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Forces a dialog or drawer onto the theme chosen in the app,
+/// including when that choice is not the device theme.
+class _SelectedTheme extends StatelessWidget {
+  final Widget child;
+
+  const _SelectedTheme({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: ThemeService.instance,
+      builder: (context, _) {
+        return Theme(
+          data: ThemeService.instance.isDark ? AppTheme.dark : AppTheme.light,
+          child: child,
+        );
+      },
     );
   }
 }
@@ -1069,7 +1101,7 @@ class _SettingsDialogState extends State<_SettingsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
+    final isDark = ThemeService.instance.isDark;
     final loc = AppLocalizations(LanguageService.instance.currentLanguage);
     return Dialog(
       backgroundColor: AppTheme.transparent,

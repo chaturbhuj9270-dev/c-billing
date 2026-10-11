@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:c_billing/common_widgets/glass_bevel_frame.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 /// A premium glassmorphic toast overlay used throughout the app.
@@ -41,11 +42,13 @@ class GlassyToast {
           WidgetsBinding.instance.platformDispatcher.views.first,
         );
 
+    final isDark = AppColors.isDark(context);
     late OverlayEntry entry;
     entry = OverlayEntry(
       builder: (_) => _GlassyToastWidget(
         message: message,
         isError: isError,
+        isDark: isDark,
         icon: icon,
         duration: duration,
         topPadding: mediaQuery.padding.top,
@@ -70,6 +73,7 @@ class GlassyToast {
 class _GlassyToastWidget extends StatefulWidget {
   final String message;
   final bool isError;
+  final bool isDark;
   final IconData? icon;
   final Duration duration;
   final double topPadding;
@@ -78,6 +82,7 @@ class _GlassyToastWidget extends StatefulWidget {
   const _GlassyToastWidget({
     required this.message,
     required this.isError,
+    required this.isDark,
     this.icon,
     required this.duration,
     required this.topPadding,
@@ -133,9 +138,8 @@ class _GlassyToastWidgetState extends State<_GlassyToastWidget>
   @override
   Widget build(BuildContext context) {
     final isError = widget.isError;
-    final accentColor = isError
-        ? AppTheme.red800
-        : AppTheme.primary;
+    final isDark = widget.isDark;
+    final accentColor = isError ? AppTheme.red800 : AppTheme.primary;
     final accentColorLight = isError
         ? AppTheme.error
         : AppTheme.paletteFF2D6A4F;
@@ -159,88 +163,100 @@ class _GlassyToastWidgetState extends State<_GlassyToastWidget>
             },
             child: Material(
               color: AppTheme.transparent,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 14,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: accentColor.withValues(alpha: isDark ? 0.28 : 0.16),
+                      blurRadius: 28,
+                      offset: const Offset(0, 8),
+                      spreadRadius: -4,
                     ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: isError
-                            ? [
-                                AppTheme.white.withValues(alpha: 0.60),
-                                AppTheme.red50.withValues(alpha: 0.45),
-                              ]
-                            : [
-                                AppTheme.white.withValues(alpha: 0.55),
-                                AppTheme.white.withValues(alpha: 0.30),
-                              ],
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                    child: CustomPaint(
+                      foregroundPainter: GlassBevelBorderPainter(
+                        isDark: false,
+                        themeColor: accentColor,
+                        radius: 18,
+                        strokeWidth: 1.4,
                       ),
-                      border: Border.all(
-                        color: isError
-                            ? AppTheme.red200.withValues(alpha: 0.5)
-                            : AppTheme.white.withValues(alpha: 0.6),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: accentColor.withValues(alpha: 0.16),
-                          blurRadius: 28,
-                          offset: const Offset(0, 8),
-                          spreadRadius: -4,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: isDark
+                                ? const [
+                                    AppTheme.darkElevated,
+                                    AppTheme.darkCard,
+                                  ]
+                                : isError
+                                ? [
+                                    AppTheme.white.withValues(alpha: 0.60),
+                                    AppTheme.red50.withValues(alpha: 0.45),
+                                  ]
+                                : [
+                                    AppTheme.white.withValues(alpha: 0.55),
+                                    AppTheme.white.withValues(alpha: 0.30),
+                                  ],
+                          ),
                         ),
-                        BoxShadow(
-                          color: AppTheme.white.withValues(alpha: 0.7),
-                          blurRadius: 1,
-                          offset: const Offset(0, -1),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [accentColorLight, accentColor],
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: accentColor.withValues(alpha: 0.35),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 14,
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [accentColorLight, accentColor],
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: accentColor.withValues(alpha: 0.35),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  iconData,
+                                  color: AppTheme.white,
+                                  size: 22,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Text(
+                                  widget.message,
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark ? AppTheme.white : accentColor,
+                                    letterSpacing: 0.2,
+                                  ),
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ],
                           ),
-                          child: Icon(iconData, color: AppTheme.white, size: 22),
                         ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Text(
-                            widget.message,
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: accentColor,
-                              letterSpacing: 0.2,
-                            ),
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),

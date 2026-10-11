@@ -31,6 +31,7 @@ import '../../../../common_widgets/glassy_bottom_nav_bar.dart';
 import '../../../../common_widgets/glass_bevel_frame.dart';
 import '../../../../common_widgets/range_calendar_sheet.dart';
 import '../../../../common_widgets/quick_actions_overlay.dart';
+import '../../../../core/services/theme_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 
@@ -1182,7 +1183,15 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       barrierColor: AppTheme.black.withValues(alpha: 0.35),
       barrierLabel: 'Flyout Menu',
       transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (_, _, _) => const SizedBox.expand(child: FlyoutMenu()),
+      pageBuilder: (_, _, _) => ListenableBuilder(
+        listenable: ThemeService.instance,
+        builder: (context, _) {
+          return Theme(
+            data: ThemeService.instance.isDark ? AppTheme.dark : AppTheme.light,
+            child: const SizedBox.expand(child: FlyoutMenu()),
+          );
+        },
+      ),
       transitionBuilder: (context, animation, _, child) {
         return SlideTransition(
           position: Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero)

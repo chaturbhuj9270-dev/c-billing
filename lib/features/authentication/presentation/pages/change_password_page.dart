@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:ui';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/localization/app_localizations.dart';
+import 'package:c_billing/common_widgets/glass_bevel_frame.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
@@ -146,11 +147,21 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [AppTheme.green50, AppTheme.grey100, AppTheme.green50],
+            colors: AppColors.isDark(context)
+                ? const [
+                    AppTheme.darkScaffold,
+                    AppTheme.darkSurface,
+                    AppTheme.darkScaffold,
+                  ]
+                : const [
+                    AppTheme.green50,
+                    AppTheme.grey100,
+                    AppTheme.green50,
+                  ],
           ),
         ),
         child: SafeArea(
@@ -180,13 +191,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   ),
                   const SizedBox(height: 24),
                   // Title
-                  const Center(
+                  Center(
                     child: Text(
                       'Update Your Password',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.lightText,
+                        color: AppColors.primaryText(context),
                         fontFamily: 'Literata',
                       ),
                     ),
@@ -197,7 +208,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       _localizations.enterOldAndNew,
                       style: TextStyle(
                         fontSize: 14,
-                        color: AppTheme.grey600,
+                        color: AppColors.secondaryText(context),
                         fontFamily: 'Literata',
                       ),
                     ),
@@ -208,25 +219,24 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(20),
                     child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                      child: Container(
-                        padding: EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: AppColors.card(context),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: AppTheme.white.withValues(alpha: 0.3),
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.black.withValues(alpha: 0.08),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
+                      filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                      child: CustomPaint(
+                        foregroundPainter: GlassBevelBorderPainter(
+                          isDark: false,
+                          themeColor: AppTheme.primary,
+                          radius: 20,
+                          strokeWidth: 1.4,
                         ),
-                        child: Column(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: AppColors.isDark(context)
+                                ? AppTheme.darkElevated
+                                : AppColors.card(context),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
                           children: [
                             // Old Password Field
                             _buildPasswordField(
@@ -327,6 +337,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                               ),
                             ),
                           ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -398,7 +410,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: AppTheme.lightText,
+            color: AppColors.primaryText(context),
             fontFamily: 'Literata',
           ),
         ),
@@ -410,7 +422,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
-              color: AppTheme.grey400,
+              color: AppColors.mutedText(context),
               fontSize: 14,
               fontFamily: 'Literata',
             ),
@@ -433,16 +445,16 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             fillColor: AppColors.scaffold(context),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppTheme.grey300),
+              borderSide: BorderSide(color: AppColors.border(context)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppTheme.grey300),
+              borderSide: BorderSide(color: AppColors.border(context)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: AppColors.accent(context),
+              borderSide: const BorderSide(
+                color: AppTheme.primary,
                 width: 1.5,
               ),
             ),
@@ -479,7 +491,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             text,
             style: TextStyle(
               fontSize: 12,
-              color: AppTheme.grey600,
+              color: AppColors.secondaryText(context),
               fontFamily: 'Literata',
             ),
           ),
