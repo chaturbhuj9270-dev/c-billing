@@ -93,6 +93,7 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
     double opacity = 1,
   }) {
     const radius = 14.0;
+    final themeColor = Theme.of(context).primaryColor;
     return Positioned(
       left: left,
       top: top,
@@ -126,17 +127,15 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
                   end: Alignment.bottomCenter,
                   colors: isDark
                       ? [
-                          Colors.white.withValues(alpha: 0.20),
-                          AppTheme.mint.withValues(alpha: 0.16),
+                          Colors.white.withValues(alpha: 0.16),
+                          Colors.white.withValues(alpha: 0.06),
                         ]
                       : [
                           Colors.white.withValues(alpha: 0.96),
                           Colors.white.withValues(alpha: 0.78),
                         ],
                 ),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: isDark ? 0.32 : 0.95),
-                ),
+                border: Border.all(color: themeColor, width: 1.2),
               ),
             ),
           ),
@@ -233,22 +232,9 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(28),
-                color: isDark ? AppTheme.darkCard : null,
-                gradient: isDark
-                    ? null
-                    : LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          AppColors.glassFill(context),
-                          AppColors.glassFillSecondary(context),
-                          widget.accentColor.withValues(alpha: 0.10),
-                        ],
-                      ),
+                color: AppColors.card(context),
                 border: Border.all(
-                  color: isDark
-                      ? AppTheme.darkBorder
-                      : AppColors.glassBorder(context),
+                  color: Theme.of(context).primaryColor,
                   width: 1.1,
                 ),
               ),
@@ -257,18 +243,6 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
                 alignment: Alignment.center,
                 clipBehavior: Clip.none,
                 children: [
-                  Row(
-                    children: [
-                      for (var i = 0; i < widget.items.length; i++)
-                        Expanded(
-                          child: _GlassyNavItemButton(
-                            item: widget.items[i],
-                            selected: widget.selectedIndex == i,
-                            onTap: () => _onItemTap(i),
-                          ),
-                        ),
-                    ],
-                  ),
                   Positioned.fill(
                     child: IgnorePointer(
                       child: LayoutBuilder(
@@ -286,6 +260,18 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
                         },
                       ),
                     ),
+                  ),
+                  Row(
+                    children: [
+                      for (var i = 0; i < widget.items.length; i++)
+                        Expanded(
+                          child: _GlassyNavItemButton(
+                            item: widget.items[i],
+                            selected: widget.selectedIndex == i,
+                            onTap: () => _onItemTap(i),
+                          ),
+                        ),
+                    ],
                   ),
                 ],
               ),
@@ -310,8 +296,9 @@ class _GlassyNavItemButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final inactiveColor = AppColors.mutedText(context);
-    final iconColor = selected ? AppTheme.mint : inactiveColor;
+    final iconColor = selected
+        ? Theme.of(context).primaryColor
+        : AppColors.mutedText(context);
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,

@@ -26,6 +26,7 @@ import 'purchase_report_settings_page.dart';
 import 'invoice_scanner_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/quick_actions_overlay.dart';
 
 /// Lets the dashboard download button trigger the visible purchase report.
 class PurchaseScreenActions {
@@ -1403,38 +1404,96 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
   Widget _buildNewPurchaseBar() {
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: widget.isEmbedded ? 76 : 0,
-        left: 8,
-        right: 8,
-      ),
-      child: SizedBox(
-        width: MediaQuery.sizeOf(context).width - 32,
-        height: 52,
-        child: Material(
-          color: const Color(0xFF3DDC97),
-          borderRadius: BorderRadius.circular(16),
-          child: InkWell(
-            onTap: _navigateToAddPurchase,
-            borderRadius: BorderRadius.circular(16),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+      padding: EdgeInsets.fromLTRB(12, 0, 12, widget.isEmbedded ? 8 : 0),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : MediaQuery.sizeOf(context).width - 24;
+          return SizedBox(
+            width: width,
+            height: 54,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Icon(Icons.add, color: Color(0xFF06281C), size: 22),
-                SizedBox(width: 6),
-                Text(
-                  'New purchase',
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF06281C),
+                Expanded(
+                  child: Builder(
+                    builder: (context) {
+                      final base = Theme.of(context).colorScheme.primary;
+                      return DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(
+                            color: const Color(0xFFE0B84A),
+                            width: 1,
+                          ),
+                          gradient: LinearGradient(
+                            colors: [
+                              Color.lerp(base, Colors.black, 0.34)!,
+                              base,
+                              Color.lerp(base, Colors.white, 0.18)!,
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: base.withValues(alpha: 0.38),
+                              blurRadius: 18,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(28),
+                          child: InkWell(
+                            onTap: _navigateToAddPurchase,
+                            borderRadius: BorderRadius.circular(28),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add, color: Colors.white, size: 22),
+                                SizedBox(width: 6),
+                                Text(
+                                  'New purchase',
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Material(
+                  color: const Color(0xFF1B4D3E),
+                  shape: const CircleBorder(
+                    side: BorderSide(color: Color(0xFFE0B84A), width: 1),
+                  ),
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: () => showQuickActionsSheet(context),
+                    child: const SizedBox(
+                      width: 54,
+                      height: 54,
+                      child: Icon(
+                        Icons.apps_rounded,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

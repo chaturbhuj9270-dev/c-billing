@@ -257,8 +257,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 ),
               ],
             ),
-            // Global Quick Actions FAB overlay
-            const Positioned.fill(child: GlobalQuickActionsFAB()),
+            if (_selectedIndex != 4)
+              const Positioned.fill(child: GlobalQuickActionsFAB()),
           ],
         ),
         bottomNavigationBar: isWide ? null : _buildBottomNavBar(),
