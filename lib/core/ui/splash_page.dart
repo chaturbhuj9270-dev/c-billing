@@ -15,6 +15,7 @@ import '../services/subscription_service.dart';
 import '../localization/app_localizations.dart';
 import 'subscription_screen.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_logo_mark.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 class SplashPage extends StatefulWidget {
@@ -418,9 +419,8 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                   opacity: _logoFade,
                   child: ScaleTransition(
                     scale: _logoScale,
-                    child: _SplashMark(
+                    child: AppLogoMark(
                       isDark: isDark,
-                      mint: mint,
                       rings: _ringController,
                       pulse: _pulseScale,
                     ),
@@ -638,83 +638,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _SplashMark extends StatelessWidget {
-  final bool isDark;
-  final Color mint;
-  final Animation<double> rings;
-  final Animation<double> pulse;
-
-  const _SplashMark({
-    required this.isDark,
-    required this.mint,
-    required this.rings,
-    required this.pulse,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final ring = isDark ? mint : AppTheme.primary;
-    return SizedBox(
-      width: 280,
-      height: 280,
-      child: AnimatedBuilder(
-        animation: rings,
-        builder: (context, child) {
-          return Stack(
-            alignment: Alignment.center,
-            children: [
-              _ripple(0, ring),
-              _ripple(0.33, ring),
-              _ripple(0.66, ring),
-              child!,
-            ],
-          );
-        },
-        child: ScaleTransition(
-          scale: pulse,
-          child: Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: mint.withValues(alpha: isDark ? 0.35 : 0.28),
-                  blurRadius: 28,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: ClipOval(
-              child: Image.asset(
-                'assets/images/app_logo.png',
-                width: 120,
-                height: 120,
-                fit: BoxFit.cover,
-                gaplessPlayback: true,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _ripple(double phase, Color color) {
-    final t = (rings.value + phase) % 1.0;
-    final size = 118 + (t * 150);
-    final opacity = (1 - t) * (isDark ? 0.55 : 0.32);
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: color.withValues(alpha: opacity), width: 1.6),
       ),
     );
   }

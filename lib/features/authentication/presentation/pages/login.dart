@@ -16,6 +16,7 @@ import '../../../../core/services/logout_service.dart';
 import '../../../../core/ui/subscription_screen.dart';
 import 'signup.dart';
 import 'change_password_page.dart';
+import 'package:c_billing/common_widgets/app_logo_mark.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
@@ -35,8 +36,11 @@ class _LoginPageV2State extends State<LoginPageV2>
   late AppLocalizations _localizations;
   late final AnimationController _animController;
   late final AnimationController _staggerController;
+  late final AnimationController _pulseController;
+  late final AnimationController _ringController;
   late final Animation<Offset> _offsetAnimation;
   late final Animation<double> _opacityAnimation;
+  late final Animation<double> _pulseScale;
   late final List<Animation<Offset>> _fieldAnimations;
   late final List<Animation<double>> _fieldFadeAnimations;
 
@@ -44,6 +48,8 @@ class _LoginPageV2State extends State<LoginPageV2>
   void dispose() {
     _animController.dispose();
     _staggerController.dispose();
+    _pulseController.dispose();
+    _ringController.dispose();
     _emailOrPhoneController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -61,6 +67,17 @@ class _LoginPageV2State extends State<LoginPageV2>
     _staggerController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
+    );
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    );
+    _ringController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2800),
+    );
+    _pulseScale = Tween<double>(begin: 1, end: 1.045).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
     _offsetAnimation = Tween<Offset>(
@@ -116,6 +133,8 @@ class _LoginPageV2State extends State<LoginPageV2>
       const Duration(milliseconds: 600),
       () => _staggerController.forward(),
     );
+    _pulseController.repeat(reverse: true);
+    _ringController.repeat();
   }
 
   void _submit() {
@@ -271,23 +290,11 @@ class _LoginPageV2State extends State<LoginPageV2>
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: AppTheme.black.withValues(
-                                            alpha: 0.3,
-                                          ),
-                                          blurRadius: 32,
-                                          offset: const Offset(0, 16),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Image.asset(
-                                      'assets/images/app_logo.png',
-                                      width: 120,
-                                      height: 120,
-                                    ),
+                                  AppLogoMark(
+                                    isDark: true,
+                                    rings: _ringController,
+                                    pulse: _pulseScale,
+                                    logoSize: 120,
                                   ),
                                   const SizedBox(height: 24),
                                   Text(
@@ -388,29 +395,12 @@ class _LoginPageV2State extends State<LoginPageV2>
                             opacity: _opacityAnimation,
                             child: Column(
                               children: [
-                                Container(
-                                  width: 72,
-                                  height: 72,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.headerDarkStart,
-                                    borderRadius: BorderRadius.circular(22),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppTheme.mint.withValues(
-                                          alpha: 0.28,
-                                        ),
-                                        blurRadius: 36,
-                                        spreadRadius: 4,
-                                      ),
-                                    ],
-                                  ),
-                                  child: const Icon(
-                                    Icons.receipt_long_rounded,
-                                    color: AppTheme.mint,
-                                    size: 32,
-                                  ),
+                                AppLogoMark(
+                                  isDark: AppColors.isDark(context),
+                                  rings: _ringController,
+                                  pulse: _pulseScale,
+                                  logoSize: 96,
                                 ),
-                                SizedBox(height: 5),
                                 Text(
                                   _localizations.appName,
                                   style: TextStyle(
@@ -1034,6 +1024,9 @@ class _LoginPageV2State extends State<LoginPageV2>
   }
 
   Widget _buildSignInButton() {
+    final isDark = AppColors.isDark(context);
+    final fill = isDark ? AppTheme.mint : AppTheme.primary;
+    final label = isDark ? AppTheme.onMint : AppTheme.white;
     const radius = BorderRadius.all(Radius.circular(28));
     return Container(
       width: double.infinity,
@@ -1042,7 +1035,7 @@ class _LoginPageV2State extends State<LoginPageV2>
         borderRadius: radius,
         boxShadow: [
           BoxShadow(
-            color: AppTheme.mint.withValues(alpha: 0.28),
+            color: fill.withValues(alpha: 0.28),
             blurRadius: 22,
             offset: const Offset(0, 8),
           ),
@@ -1051,27 +1044,27 @@ class _LoginPageV2State extends State<LoginPageV2>
       child: ElevatedButton(
         onPressed: _loading ? null : _submit,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.mint,
-          foregroundColor: AppTheme.onMint,
-          disabledBackgroundColor: AppTheme.mint.withValues(alpha: 0.5),
-          disabledForegroundColor: AppTheme.onMint,
+          backgroundColor: fill,
+          foregroundColor: label,
+          disabledBackgroundColor: fill.withValues(alpha: 0.5),
+          disabledForegroundColor: label,
           elevation: 0,
           minimumSize: const Size.fromHeight(54),
           shape: const RoundedRectangleBorder(borderRadius: radius),
         ),
         child: _loading
-            ? const SizedBox(
+            ? SizedBox(
                 height: 20,
                 width: 20,
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.onMint),
+                  valueColor: AlwaysStoppedAnimation<Color>(label),
                   strokeWidth: 2,
                 ),
               )
             : Text(
                 _localizations.signIn,
-                style: const TextStyle(
-                  color: AppTheme.onMint,
+                style: TextStyle(
+                  color: label,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   fontFamily: 'Literata',

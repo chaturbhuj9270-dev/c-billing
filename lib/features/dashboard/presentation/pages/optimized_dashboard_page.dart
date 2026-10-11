@@ -649,7 +649,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               ],
               // Action Menu (Settings, Language, Bug Report) - Three dots menu
               ActionMenu(
-                menuColor: AppTheme.primary,
                 iconColor: AppTheme.white,
                 onSettingsTap: (_selectedIndex == 2 || _selectedIndex == 4)
                     ? () async {

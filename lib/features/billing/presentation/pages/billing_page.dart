@@ -2552,17 +2552,21 @@ class _BillingPageState extends State<BillingPage> {
                 ),
                 const SizedBox(width: 10),
                 Material(
-                  color: AppTheme.mint,
+                  color: AppColors.isDark(context)
+                      ? AppTheme.mint
+                      : AppTheme.primary,
                   borderRadius: BorderRadius.circular(14),
                   child: InkWell(
                     onTap: _showBarcodeScannerSheet,
                     borderRadius: BorderRadius.circular(14),
-                    child: const SizedBox(
+                    child: SizedBox(
                       width: 48,
                       height: 48,
                       child: Icon(
                         Icons.qr_code_scanner_rounded,
-                        color: AppTheme.onMint,
+                        color: AppColors.isDark(context)
+                            ? AppTheme.onMint
+                            : AppTheme.white,
                         size: 22,
                       ),
                     ),
@@ -6592,13 +6596,16 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                         icon: Container(
                           width: 40,
                           height: 40,
-                          decoration: const BoxDecoration(
-                            color: AppTheme.mint,
+                          decoration: BoxDecoration(
+                            color: AppTheme.white.withValues(alpha: 0.15),
                             shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppTheme.white.withValues(alpha: 0.2),
+                            ),
                           ),
                           child: const Icon(
                             Icons.more_vert_rounded,
-                            color: AppTheme.onMint,
+                            color: AppTheme.white,
                             size: 22,
                           ),
                         ),

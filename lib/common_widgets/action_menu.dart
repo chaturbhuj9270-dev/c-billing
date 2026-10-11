@@ -11,7 +11,6 @@ class ActionMenu extends StatelessWidget {
   final VoidCallback? onReportSettingsTap;
   final VoidCallback? onLanguageTap;
   final VoidCallback? onBugReportTap;
-  final Color menuColor;
   final Color iconColor;
   final double iconSize;
 
@@ -21,7 +20,6 @@ class ActionMenu extends StatelessWidget {
     this.onReportSettingsTap,
     this.onLanguageTap,
     this.onBugReportTap,
-    this.menuColor = AppTheme.primary,
     this.iconColor = AppTheme.white,
     this.iconSize = 22,
   });
@@ -74,17 +72,17 @@ class ActionMenu extends StatelessWidget {
       );
     }
 
-    final useMintButton = menuColor == AppTheme.primary;
-    final buttonColor = useMintButton ? AppTheme.mint : menuColor;
-    final dotColor = useMintButton ? AppTheme.onMint : iconColor;
-
     return PopupMenuButton<int>(
       padding: EdgeInsets.zero,
       icon: Container(
         width: 40,
         height: 40,
-        decoration: BoxDecoration(color: buttonColor, shape: BoxShape.circle),
-        child: Icon(Icons.more_vert_rounded, color: dotColor, size: iconSize),
+        decoration: BoxDecoration(
+          color: AppTheme.white.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppTheme.white.withValues(alpha: 0.2)),
+        ),
+        child: Icon(Icons.more_vert_rounded, color: iconColor, size: iconSize),
       ),
       offset: const Offset(0, 48),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
