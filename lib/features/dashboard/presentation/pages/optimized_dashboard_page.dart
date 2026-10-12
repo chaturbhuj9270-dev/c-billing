@@ -260,8 +260,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 ),
               ],
             ),
-            if (_selectedIndex != 1 && _selectedIndex != 4)
-              const Positioned.fill(child: GlobalQuickActionsFAB()),
           ],
         ),
         bottomNavigationBar: isWide ? null : _buildBottomNavBar(),
@@ -637,51 +635,52 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   ),
                 ),
               ),
-              if (_selectedIndex == 2 ||
-                  _selectedIndex == 3 ||
-                  _selectedIndex == 4) ...[
-                _buildHeaderActionButton(
-                  icon: Icons.open_in_full_rounded,
-                  tooltip: 'Expand',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) {
-                          if (_selectedIndex == 2) return const BillingPage();
-                          if (_selectedIndex == 3) {
-                            return const AvailabilityPage();
-                          }
-                          return const EnhancedPurchaseScreen();
-                        },
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(width: 8),
-                _buildHeaderActionButton(
-                  icon: Icons.file_download_outlined,
-                  tooltip: 'Download',
-                  onTap: () {
-                    if (_selectedIndex == 2) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const BillsListPage(),
-                        ),
-                      );
-                    } else if (_selectedIndex == 3) {
-                      AvailabilityScreenActions.download();
-                    } else {
-                      PurchaseScreenActions.download();
-                    }
-                  },
-                ),
-                const SizedBox(width: 8),
-              ],
-              // Action Menu (Settings, Language, Bug Report) - Three dots menu
+              _buildHeaderActionButton(
+                icon: Icons.apps_rounded,
+                tooltip: 'Quick actions',
+                onTap: () => showQuickActionsSheet(context),
+              ),
+              const SizedBox(width: 8),
               ActionMenu(
                 iconColor: AppTheme.white,
+                onExpandTap: (_selectedIndex == 2 ||
+                        _selectedIndex == 3 ||
+                        _selectedIndex == 4)
+                    ? () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) {
+                              if (_selectedIndex == 2) {
+                                return const BillingPage();
+                              }
+                              if (_selectedIndex == 3) {
+                                return const AvailabilityPage();
+                              }
+                              return const EnhancedPurchaseScreen();
+                            },
+                          ),
+                        );
+                      }
+                    : null,
+                onDownloadTap: (_selectedIndex == 2 ||
+                        _selectedIndex == 3 ||
+                        _selectedIndex == 4)
+                    ? () {
+                        if (_selectedIndex == 2) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const BillsListPage(),
+                            ),
+                          );
+                        } else if (_selectedIndex == 3) {
+                          AvailabilityScreenActions.download();
+                        } else {
+                          PurchaseScreenActions.download();
+                        }
+                      }
+                    : null,
                 onSettingsTap: (_selectedIndex == 2 || _selectedIndex == 4)
                     ? () async {
                         if (_selectedIndex == 2) {

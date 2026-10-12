@@ -11,6 +11,8 @@ class ActionMenu extends StatelessWidget {
   final VoidCallback? onReportSettingsTap;
   final VoidCallback? onLanguageTap;
   final VoidCallback? onBugReportTap;
+  final VoidCallback? onExpandTap;
+  final VoidCallback? onDownloadTap;
   final Color iconColor;
   final double iconSize;
 
@@ -20,6 +22,8 @@ class ActionMenu extends StatelessWidget {
     this.onReportSettingsTap,
     this.onLanguageTap,
     this.onBugReportTap,
+    this.onExpandTap,
+    this.onDownloadTap,
     this.iconColor = AppTheme.white,
     this.iconSize = 22,
   });
@@ -31,6 +35,26 @@ class ActionMenu extends StatelessWidget {
     );
 
     final List<_MenuEntry> entries = [];
+    if (onExpandTap != null) {
+      entries.add(
+        _MenuEntry(
+          icon: Icons.open_in_full_rounded,
+          color: AppTheme.primary,
+          label: 'Expand',
+          onTap: onExpandTap!,
+        ),
+      );
+    }
+    if (onDownloadTap != null) {
+      entries.add(
+        _MenuEntry(
+          icon: Icons.file_download_outlined,
+          color: AppTheme.toneCyan,
+          label: 'Download',
+          onTap: onDownloadTap!,
+        ),
+      );
+    }
     if (onSettingsTap != null) {
       entries.add(
         _MenuEntry(

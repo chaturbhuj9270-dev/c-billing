@@ -22,7 +22,6 @@ import 'customer_transactions_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
-import 'package:c_billing/common_widgets/quick_actions_overlay.dart';
 
 class EnhancedCustomerPage extends StatefulWidget {
   final bool isEmbedded;
@@ -921,24 +920,6 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                             ),
                           ],
                         ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Material(
-                  color: AppTheme.primary,
-                  shape: const CircleBorder(),
-                  child: InkWell(
-                    customBorder: const CircleBorder(),
-                    onTap: () => showQuickActionsSheet(context),
-                    child: const SizedBox(
-                      width: 54,
-                      height: 54,
-                      child: Icon(
-                        Icons.apps_rounded,
-                        color: AppTheme.white,
-                        size: 24,
                       ),
                     ),
                   ),

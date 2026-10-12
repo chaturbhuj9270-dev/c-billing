@@ -26,7 +26,6 @@ import 'purchase_report_settings_page.dart';
 import 'invoice_scanner_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
-import 'package:c_billing/common_widgets/quick_actions_overlay.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 /// Lets the dashboard download button trigger the visible purchase report.
@@ -1452,24 +1451,6 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                             ),
                           ],
                         ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Material(
-                  color: AppTheme.primary,
-                  shape: const CircleBorder(),
-                  child: InkWell(
-                    customBorder: const CircleBorder(),
-                    onTap: () => showQuickActionsSheet(context),
-                    child: const SizedBox(
-                      width: 54,
-                      height: 54,
-                      child: Icon(
-                        Icons.apps_rounded,
-                        color: AppTheme.white,
-                        size: 24,
                       ),
                     ),
                   ),
