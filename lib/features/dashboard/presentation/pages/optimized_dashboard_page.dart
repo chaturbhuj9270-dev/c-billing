@@ -260,7 +260,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 ),
               ],
             ),
-            if (_selectedIndex != 4)
+            if (_selectedIndex != 1 && _selectedIndex != 4)
               const Positioned.fill(child: GlobalQuickActionsFAB()),
           ],
         ),

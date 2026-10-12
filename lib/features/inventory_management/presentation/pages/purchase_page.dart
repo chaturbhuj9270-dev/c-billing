@@ -2363,108 +2363,6 @@ class _PurchasePageState extends State<PurchasePage>
     super.dispose();
   }
 
-  // ============ QUICK ACTIONS BAR ============
-  Widget _buildQuickActionsBar() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.06),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildQuickActionChip(
-              icon: Icons.inventory_2_rounded,
-              label: _localizations.addProduct,
-              color: AppTheme.paletteFFF093FB,
-              onTap: _addNewProduct,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: _buildQuickActionChip(
-              icon: Icons.person_add_rounded,
-              label: _localizations.addSupplier,
-              color: AppTheme.coral,
-              onTap: _showAddSupplierDialog,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: _buildQuickActionChip(
-              icon: Icons.business_rounded,
-              label: _localizations.addCompany,
-              color: AppTheme.paletteFF7B68EE,
-              onTap: _showAddCompanyDialog,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActionChip({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              color.withValues(alpha: 0.12),
-              color.withValues(alpha: 0.04),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withValues(alpha: 0.15), width: 1),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: color, size: 14),
-            ),
-            SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: AppColors.accentSoft(context, 0.8),
-                  fontSize: 10,
-                  fontFamily: 'Literata',
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _showAddSupplierDialog() {
     _newSupplierFirstNameController.clear();
     _newSupplierLastNameController.clear();
@@ -3087,21 +2985,9 @@ class _PurchasePageState extends State<PurchasePage>
                       pinned: true,
                       delegate: _StickyHeaderDelegate(
                         child: _buildHeader(),
-                        height: 90 + MediaQuery.of(context).padding.top,
+                        height: 64 + MediaQuery.of(context).padding.top,
                       ),
                     ),
-                  // Sticky Quick Actions
-                  SliverPersistentHeader(
-                    pinned: true,
-                    delegate: _StickyHeaderDelegate(
-                      child: Container(
-                        color: AppColors.scaffold(context),
-                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
-                        child: _buildQuickActionsBar(),
-                      ),
-                      height: 62,
-                    ),
-                  ),
                   // Main Form Content
                   SliverToBoxAdapter(
                     child: SlideTransition(
@@ -3144,28 +3030,20 @@ class _PurchasePageState extends State<PurchasePage>
 
   /// Sticky bottom submit button
   Widget _buildStickyBottomButton() {
+    final isDark = AppColors.isDark(context);
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
+      color: AppColors.scaffold(context),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
           color: AppTheme.primary,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.primary.withValues(alpha: 0.28),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: AppTheme.primary.withValues(alpha: isDark ? 0.45 : 0.28),
+              blurRadius: isDark ? 22 : 14,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
@@ -3177,7 +3055,7 @@ class _PurchasePageState extends State<PurchasePage>
             disabledBackgroundColor: AppTheme.transparent,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(28),
             ),
           ),
           child: _isLoading
@@ -3214,47 +3092,45 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  /// Modern header with the theme app-bar color
+  Widget _headerCircle({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    final isDark = AppColors.isDark(context);
+    return Material(
+      color: isDark ? AppTheme.darkElevated : AppTheme.white,
+      elevation: isDark ? 0 : 1,
+      shadowColor: AppTheme.black.withValues(alpha: 0.08),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: Icon(icon, size: 20, color: AppColors.primaryText(context)),
+        ),
+      ),
+    );
+  }
+
+  /// Flat header on the page surface, with scan and settings still available.
   Widget _buildHeader() {
     return Container(
+      color: AppColors.scaffold(context),
       padding: EdgeInsets.fromLTRB(
         16,
-        MediaQuery.of(context).padding.top + 12,
+        MediaQuery.of(context).padding.top + 8,
         16,
-        16,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.appBar(context),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(24),
-          bottomRight: Radius.circular(24),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.accentSoft(context, 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        8,
       ),
       child: Row(
         children: [
-          GestureDetector(
+          _headerCircle(
+            icon: Icons.chevron_left_rounded,
             onTap: () => Navigator.pop(context),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppTheme.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.arrow_back_rounded,
-                color: AppTheme.white,
-                size: 22,
-              ),
-            ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -3262,16 +3138,18 @@ class _PurchasePageState extends State<PurchasePage>
                 Text(
                   _localizations.addPurchase,
                   style: TextStyle(
-                    color: AppTheme.white,
+                    color: AppColors.primaryText(context),
                     fontSize: 20,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                     fontFamily: 'Literata',
                   ),
                 ),
                 Text(
                   _localizations.recordNewInventoryPurchase,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: AppTheme.white.withValues(alpha: 0.7),
+                    color: AppColors.mutedText(context),
                     fontSize: 12,
                     fontFamily: 'Literata',
                   ),
@@ -3279,285 +3157,233 @@ class _PurchasePageState extends State<PurchasePage>
               ],
             ),
           ),
-          GestureDetector(
+          _headerCircle(
+            icon: Icons.qr_code_scanner_rounded,
             onTap: () async {
               final result = await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const InvoiceScannerPage()),
               );
               if (result == true && mounted) {
-                // Data auto-refreshes via Isar streams
                 setState(() {});
               }
             },
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppTheme.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.document_scanner_rounded,
-                color: AppTheme.white,
-                size: 22,
-              ),
-            ),
           ),
           const SizedBox(width: 8),
-          GestureDetector(
+          _headerCircle(
+            icon: Icons.settings_rounded,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const PurchaseSettingsPage()),
             ),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppTheme.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.settings_rounded,
-                color: AppTheme.white,
-                size: 22,
-              ),
-            ),
           ),
         ],
       ),
+    );
+  }
+
+  BoxDecoration _formCardDecoration() {
+    final isDark = AppColors.isDark(context);
+    return BoxDecoration(
+      color: isDark ? AppTheme.darkElevated : AppTheme.white,
+      borderRadius: BorderRadius.circular(24),
+      border: Border.all(
+        color: isDark ? AppTheme.darkBorder : AppTheme.grey200,
+      ),
+    );
+  }
+
+  Widget _sectionHeading(IconData icon, String title) {
+    final isDark = AppColors.isDark(context);
+    return Row(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppTheme.primary.withValues(alpha: isDark ? 0.22 : 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: AppTheme.primary, size: 18),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'Literata',
+            color: AppColors.primaryText(context),
+          ),
+        ),
+      ],
     );
   }
 
   /// Selection section with product, supplier, company cards
   Widget _buildSelectionSection() {
+    final productSubtitle = _selectedProduct != null
+        ? 'Stock: ${_selectedProduct!.currentStock} • ${_selectedProduct!.companyName}'
+        : null;
     return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.all(16),
+      decoration: _formCardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.accentSoft(context, 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.checklist_rounded,
-                  color: AppColors.accent(context),
-                  size: 20,
-                ),
-              ),
-              SizedBox(width: 12),
-              Text(
-                _localizations.selectionDetails,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Literata',
-                  color: AppColors.accent(context),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16),
-          // Product Selection
-          _buildSelectionCard(
-            title: _localizations.productText,
+          _sectionHeading(Icons.list_alt_rounded, _localizations.selectionDetails),
+          const SizedBox(height: 16),
+          _buildPickerRow(
+            label: _localizations.productText,
+            placeholder: 'Select product',
             value: _selectedProduct?.name,
-            subtitle: _selectedProduct != null
-                ? 'Stock: ${_selectedProduct!.currentStock} • ${_selectedProduct!.companyName}'
-                : null,
-            icon: Icons.inventory_2_rounded,
-            color: AppColors.accent(context),
-            onTap: _showProductSelectionBottomSheet,
-            isSelected: _selectedProduct != null,
+            subtitle: productSubtitle,
+            icon: Icons.inventory_2_outlined,
+            onSelect: _showProductSelectionBottomSheet,
+            onAdd: _addNewProduct,
           ),
-          const SizedBox(height: 12),
-          // Supplier & Company in row
-          Row(
-            children: [
-              Expanded(
-                child: _buildSelectionCard(
-                  title: _localizations.supplier,
-                  value: _selectedSupplier?['fullName'],
-                  icon: Icons.person_rounded,
-                  color: AppTheme.coral,
-                  onTap: _showSupplierSelectionBottomSheet,
-                  isSelected: _selectedSupplier != null,
-                  compact: true,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildSelectionCard(
-                  title: _localizations.company,
-                  value: _selectedCompany?['companyName'],
-                  icon: Icons.business_rounded,
-                  color: AppTheme.paletteFF7B68EE,
-                  onTap: _showCompanySelectionBottomSheet,
-                  isSelected: _selectedCompany != null,
-                  compact: true,
-                ),
-              ),
-            ],
+          const SizedBox(height: 14),
+          _buildPickerRow(
+            label: _localizations.supplier,
+            placeholder: 'Select supplier',
+            value: _selectedSupplier?['fullName']?.toString(),
+            icon: Icons.person_outline_rounded,
+            onSelect: _showSupplierSelectionBottomSheet,
+            onAdd: _showAddSupplierDialog,
+          ),
+          const SizedBox(height: 14),
+          _buildPickerRow(
+            label: _localizations.company,
+            placeholder: 'Select company',
+            value: _selectedCompany?['companyName']?.toString(),
+            icon: Icons.badge_outlined,
+            onSelect: _showCompanySelectionBottomSheet,
+            onAdd: _showAddCompanyDialog,
           ),
         ],
       ),
     );
   }
 
-  /// Reusable selection card widget
-  Widget _buildSelectionCard({
-    required String title,
+  Widget _buildPickerRow({
+    required String label,
+    required String placeholder,
     String? value,
     String? subtitle,
     required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-    required bool isSelected,
-    bool compact = false,
+    required VoidCallback onSelect,
+    required VoidCallback onAdd,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.all(compact ? 12 : 14),
-        decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.08) : AppColors.scaffold(context),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected
-                ? color.withValues(alpha: 0.4)
-                : AppColors.border(context)!,
-            width: isSelected ? 1.5 : 1,
+    final isDark = AppColors.isDark(context);
+    final hasValue = value != null && value.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Literata',
+            color: AppColors.secondaryText(context),
           ),
         ),
-        child: Row(
+        const SizedBox(height: 8),
+        Row(
           children: [
-            Container(
-              width: compact ? 36 : 42,
-              height: compact ? 36 : 42,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: isSelected
-                      ? [color, color.withValues(alpha: 0.8)]
-                      : [AppTheme.grey300, AppTheme.grey400],
-                ),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: AppTheme.white, size: compact ? 18 : 20),
-            ),
-            const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Literata',
-                      color: AppTheme.grey,
+              child: Material(
+                color: isDark ? AppTheme.darkScaffold : AppTheme.grey100,
+                borderRadius: BorderRadius.circular(16),
+                child: InkWell(
+                  onTap: onSelect,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 13,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(icon, size: 18, color: AppColors.mutedText(context)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                hasValue ? value : placeholder,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: hasValue
+                                      ? AppColors.primaryText(context)
+                                      : AppColors.mutedText(context),
+                                ),
+                              ),
+                              if (subtitle != null)
+                                Text(
+                                  subtitle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 11,
+                                    color: AppColors.mutedText(context),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          size: 20,
+                          color: AppColors.mutedText(context),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    value ?? 'Select $title',
-                    style: TextStyle(
-                      fontSize: compact ? 13 : 14,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Literata',
-                      color: isSelected ? AppTheme.black87 : AppTheme.grey400,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (subtitle != null && !compact) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontFamily: 'Literata',
-                        color: AppTheme.grey,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: isSelected ? color : AppTheme.grey400,
-              size: 20,
+            const SizedBox(width: 10),
+            Material(
+              color: isDark ? AppTheme.darkElevated : AppTheme.white,
+              shape: CircleBorder(
+                side: BorderSide(
+                  color: AppTheme.primary.withValues(alpha: 0.85),
+                  width: 1.4,
+                ),
+              ),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: onAdd,
+                child: const SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: Icon(Icons.add, color: AppTheme.primary, size: 22),
+                ),
+              ),
             ),
           ],
         ),
-      ),
+      ],
     );
   }
 
   /// Details section with dates, quantity, unit, warranty
   Widget _buildDetailsSection() {
     return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.all(16),
+      decoration: _formCardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.blue.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.tune_rounded,
-                  color: AppTheme.blue,
-                  size: 20,
-                ),
-              ),
-              SizedBox(width: 12),
-              Text(
-                _localizations.purchase,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Literata',
-                  color: AppColors.accent(context),
-                ),
-              ),
-            ],
-          ),
+          _sectionHeading(Icons.receipt_long_rounded, _localizations.purchase),
           const SizedBox(height: 16),
           // Date pickers row (if enabled)
           if (PurchaseSettingsService.instance.showManufacturingDate ||
@@ -3569,8 +3395,6 @@ class _PurchasePageState extends State<PurchasePage>
                     child: _buildDateField(
                       label: _localizations.mfgDate,
                       value: _productionDate,
-                      icon: Icons.event_rounded,
-                      color: AppTheme.green,
                       onTap: () => _selectDate(isProduction: true),
                     ),
                   ),
@@ -3582,8 +3406,6 @@ class _PurchasePageState extends State<PurchasePage>
                     child: _buildDateField(
                       label: _localizations.expiryDate,
                       value: _expiryDate,
-                      icon: Icons.event_busy_rounded,
-                      color: AppTheme.orange,
                       onTap: () => _selectDate(isProduction: false),
                     ),
                   ),
@@ -3635,8 +3457,6 @@ class _PurchasePageState extends State<PurchasePage>
   Widget _buildDateField({
     required String label,
     DateTime? value,
-    required IconData icon,
-    required Color color,
     required VoidCallback onTap,
   }) {
     final hasValue = value != null;
@@ -3644,67 +3464,57 @@ class _PurchasePageState extends State<PurchasePage>
         ? '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}'
         : _localizations.selectText;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: hasValue ? color.withValues(alpha: 0.08) : AppColors.scaffold(context),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: hasValue ? color.withValues(alpha: 0.3) : AppColors.border(context)!,
+    final isDark = AppColors.isDark(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Literata',
+            color: AppColors.secondaryText(context),
           ),
         ),
-        child: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: hasValue
-                    ? color.withValues(alpha: 0.15)
-                    : AppColors.border(context),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                icon,
-                color: hasValue ? color : AppTheme.grey,
-                size: 16,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        const SizedBox(height: 8),
+        Material(
+          color: isDark ? AppTheme.darkScaffold : AppTheme.grey100,
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+              child: Row(
                 children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Literata',
-                      color: AppTheme.grey,
-                    ),
+                  Icon(
+                    Icons.calendar_today_outlined,
+                    size: 16,
+                    color: AppColors.mutedText(context),
                   ),
-                  Text(
-                    dateStr,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Literata',
-                      color: hasValue ? AppTheme.black87 : AppTheme.grey400,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      dateStr,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Literata',
+                        color: hasValue
+                            ? AppColors.primaryText(context)
+                            : AppColors.mutedText(context),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            Icon(
-              Icons.calendar_month_rounded,
-              color: AppTheme.grey400,
-              size: 18,
-            ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -3755,6 +3565,7 @@ class _PurchasePageState extends State<PurchasePage>
     TextInputType keyboardType = TextInputType.text,
     Function(String)? onChanged,
   }) {
+    final isDark = AppColors.isDark(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -3764,7 +3575,7 @@ class _PurchasePageState extends State<PurchasePage>
             fontSize: 13,
             fontWeight: FontWeight.w600,
             fontFamily: 'Literata',
-            color: AppColors.accent(context),
+            color: AppColors.secondaryText(context),
           ),
         ),
         const SizedBox(height: 8),
@@ -3775,33 +3586,33 @@ class _PurchasePageState extends State<PurchasePage>
           style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w500,
+            fontSize: 14,
+            color: AppColors.primaryText(context),
           ),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
-              color: AppTheme.grey400,
+              color: AppColors.mutedText(context),
               fontFamily: 'Literata',
+              fontWeight: FontWeight.w500,
             ),
-            prefixIcon: Icon(icon, color: AppColors.accent(context), size: 20),
+            prefixIcon: Icon(icon, color: AppColors.mutedText(context), size: 18),
             filled: true,
-            fillColor: AppColors.scaffold(context),
+            fillColor: isDark ? AppTheme.darkScaffold : AppTheme.grey100,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.border(context)!),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: AppColors.accent(context),
-                width: 1.5,
-              ),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppTheme.primary, width: 1.4),
             ),
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
+              horizontal: 14,
               vertical: 14,
             ),
           ),
@@ -3829,7 +3640,7 @@ class _PurchasePageState extends State<PurchasePage>
             fontSize: 13,
             fontWeight: FontWeight.w600,
             fontFamily: 'Literata',
-            color: AppColors.accent(context),
+            color: AppColors.secondaryText(context),
           ),
         ),
         const SizedBox(height: 10),
@@ -3852,26 +3663,12 @@ class _PurchasePageState extends State<PurchasePage>
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      gradient: isSelected
-                          ? LinearGradient(
-                              colors: [color, color.withValues(alpha: 0.8)],
-                            )
-                          : null,
-                      color: isSelected ? null : AppColors.chipFill(context),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: isSelected ? color : AppTheme.grey300,
-                        width: isSelected ? 0 : 1,
-                      ),
-                      boxShadow: isSelected
-                          ? [
-                              BoxShadow(
-                                color: color.withValues(alpha: 0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ]
-                          : null,
+                      color: isSelected
+                          ? AppTheme.primary
+                          : (AppColors.isDark(context)
+                                ? AppTheme.darkScaffold
+                                : AppTheme.grey100),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -3879,7 +3676,9 @@ class _PurchasePageState extends State<PurchasePage>
                         Icon(
                           isSelected ? Icons.check_rounded : icon,
                           size: 16,
-                          color: isSelected ? AppTheme.white : AppTheme.grey600,
+                          color: isSelected
+                              ? AppTheme.white
+                              : AppColors.mutedText(context),
                         ),
                         const SizedBox(width: 6),
                         Text(
@@ -3888,7 +3687,9 @@ class _PurchasePageState extends State<PurchasePage>
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             fontFamily: 'Literata',
-                            color: isSelected ? AppTheme.white : AppTheme.grey700,
+                            color: isSelected
+                                ? AppTheme.white
+                                : AppColors.primaryText(context),
                           ),
                         ),
                       ],
@@ -3910,47 +3711,12 @@ class _PurchasePageState extends State<PurchasePage>
     final total = quantity * price;
 
     return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.all(16),
+      decoration: _formCardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.green.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.currency_rupee_rounded,
-                  color: AppTheme.green,
-                  size: 20,
-                ),
-              ),
-              SizedBox(width: 12),
-              Text(
-                _localizations.pricing,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Literata',
-                  color: AppColors.accent(context),
-                ),
-              ),
-            ],
-          ),
+          _sectionHeading(Icons.currency_rupee_rounded, _localizations.pricing),
           const SizedBox(height: 16),
           // Price fields row
           Row(
@@ -4118,57 +3884,26 @@ class _PurchasePageState extends State<PurchasePage>
   /// Notes section
   Widget _buildNotesSection() {
     return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.all(16),
+      decoration: _formCardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.orange.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.notes_rounded,
-                  color: AppTheme.orange,
-                  size: 20,
-                ),
-              ),
-              SizedBox(width: 12),
-              Text(
-                _localizations.notes,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Literata',
-                  color: AppColors.accent(context),
-                ),
-              ),
+              _sectionHeading(Icons.notes_rounded, _localizations.notes),
               const SizedBox(width: 8),
               Text(
                 '(${_localizations.optional})',
                 style: TextStyle(
                   fontSize: 12,
                   fontFamily: 'Literata',
-                  color: AppTheme.grey,
+                  color: AppColors.mutedText(context),
                 ),
               ),
             ],
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           TextField(
             controller: _notesController,
             maxLines: 3,

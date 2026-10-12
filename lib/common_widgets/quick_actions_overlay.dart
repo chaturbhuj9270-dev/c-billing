@@ -3,7 +3,10 @@ import 'package:c_billing/core/theme/app_theme.dart';
 import 'glass_bottom_sheet.dart';
 import '../core/localization/app_localizations.dart';
 import '../core/services/language_service.dart';
+import '../features/availability/presentation/pages/availability_page.dart';
+import '../features/billing/presentation/pages/billing_page.dart';
 import '../features/billing/presentation/pages/bills_list_page.dart';
+import '../features/inventory_management/presentation/pages/enhanced_purchase_screen.dart';
 import '../features/inventory_management/presentation/pages/enhanced_product_page.dart';
 import '../features/supplier/presentation/pages/enhanced_supplier_page.dart';
 import '../features/company/presentation/pages/enhanced_company_page.dart';
@@ -59,6 +62,35 @@ List<QuickActionItem> buildQuickActionItems(
   }
 
   return [
+    // Same order as the bottom tabs, after Dashboard.
+    QuickActionItem(
+      icon: Icons.people_rounded,
+      label: l10n.customers,
+      color: AppTheme.toneCyan,
+      gradient: const [AppTheme.cyan600, AppTheme.cyan700],
+      onTap: () => open(const EnhancedCustomerPage()),
+    ),
+    QuickActionItem(
+      icon: Icons.receipt_long_rounded,
+      label: l10n.billing,
+      color: AppTheme.toneBlue,
+      gradient: const [AppTheme.paletteFF667EEA, AppTheme.paletteFF764BA2],
+      onTap: () => open(const BillingPage()),
+    ),
+    QuickActionItem(
+      icon: Icons.event_available_rounded,
+      label: l10n.availability,
+      color: AppTheme.primary,
+      gradient: const [AppTheme.primaryLight, AppTheme.primary],
+      onTap: () => open(const AvailabilityPage()),
+    ),
+    QuickActionItem(
+      icon: Icons.shopping_cart_rounded,
+      label: l10n.purchase,
+      color: AppTheme.toneAmber,
+      gradient: const [AppTheme.orange900, AppTheme.amber800],
+      onTap: () => open(const EnhancedPurchaseScreen()),
+    ),
     QuickActionItem(
       icon: Icons.receipt_long_rounded,
       label: l10n.invoices,
@@ -114,13 +146,6 @@ List<QuickActionItem> buildQuickActionItems(
       color: AppTheme.greenAccent,
       gradient: const [AppTheme.teal600, AppTheme.teal900],
       onTap: () => open(const BarcodeGeneratorPage()),
-    ),
-    QuickActionItem(
-      icon: Icons.people_alt_rounded,
-      label: l10n.customers,
-      color: AppTheme.toneCyan,
-      gradient: const [AppTheme.cyan600, AppTheme.cyan700],
-      onTap: () => open(const EnhancedCustomerPage()),
     ),
   ];
 }

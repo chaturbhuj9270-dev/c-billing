@@ -22,6 +22,7 @@ import 'customer_transactions_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+import 'package:c_billing/common_widgets/quick_actions_overlay.dart';
 
 class EnhancedCustomerPage extends StatefulWidget {
   final bool isEmbedded;
@@ -703,7 +704,8 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      floatingActionButton: _buildFAB(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: _buildAddCustomerBar(),
       body: SafeArea(
         top: false,
         child: Column(
@@ -866,31 +868,85 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
   // ━━━ FAB ━━━
 
-  Widget _buildFAB() {
+  Widget _buildAddCustomerBar() {
     return Padding(
-      padding: EdgeInsets.only(bottom: widget.isEmbedded ? 88 : 0),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: AppColors.headerGradient(context),
-          ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.accentSoft(context, 0.4),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+      padding: EdgeInsets.fromLTRB(12, 0, 12, widget.isEmbedded ? 8 : 0),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : MediaQuery.sizeOf(context).width - 24;
+          return SizedBox(
+            width: width,
+            height: 54,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(28),
+                      color: AppTheme.primary,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primary.withValues(alpha: 0.28),
+                          blurRadius: 18,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: AppTheme.transparent,
+                      borderRadius: BorderRadius.circular(28),
+                      child: InkWell(
+                        onTap: _showAddCustomerSheet,
+                        borderRadius: BorderRadius.circular(28),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.add,
+                              color: AppTheme.white,
+                              size: 22,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              _localizations.addCustomer,
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Material(
+                  color: AppTheme.primary,
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: () => showQuickActionsSheet(context),
+                    child: const SizedBox(
+                      width: 54,
+                      height: 54,
+                      child: Icon(
+                        Icons.apps_rounded,
+                        color: AppTheme.white,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: FloatingActionButton(
-          onPressed: _showAddCustomerSheet,
-          backgroundColor: AppTheme.transparent,
-          elevation: 0,
-          child: const Icon(Icons.person_add_rounded, color: AppTheme.white),
-        ),
+          );
+        },
       ),
     );
   }
