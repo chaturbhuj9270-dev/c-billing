@@ -247,284 +247,222 @@ class _CustomerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final fullName =
         '${customer['firstName'] ?? ''} ${customer['lastName'] ?? ''}'.trim();
-    final firstName = (customer['firstName'] ?? '').toString();
     final contact = (customer['contact'] ?? '').toString();
     final address = (customer['address'] ?? '').toString();
     final pendingAmount =
         (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0.0;
     final isSynced = customer['isSynced'] as bool? ?? true;
 
-    const accentColors = [
-      AppTheme.primary,
-      AppTheme.primaryDark,
-      AppTheme.paletteFF2C6F5E,
-      AppTheme.paletteFF1A5E52,
-    ];
-    final accentColor =
-        accentColors[((customer['id'] ?? '').hashCode.abs()) % 4];
-    final initials = firstName.isNotEmpty ? firstName[0].toUpperCase() : 'C';
+    final accent = Theme.of(context).primaryColor;
+    final isDark = AppColors.isDark(context);
 
-    return GestureDetector(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: Container(
-        margin: EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: AppColors.card(context),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.black.withValues(alpha: 0.03),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-            BoxShadow(
-              color: accentColor.withValues(alpha: 0.08),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Row: Avatar + Info + Arrow
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border(context)),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: isDark ? 0.18 : 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Material(
+          color: AppTheme.transparent,
+          child: InkWell(
+            onTap: onTap,
+            onLongPress: onLongPress,
+            splashColor: accent.withValues(alpha: 0.08),
+            highlightColor: accent.withValues(alpha: 0.04),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Avatar with gradient
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          accentColor,
-                          accentColor.withValues(alpha: 0.7),
-                        ],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: accentColor.withValues(alpha: 0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        initials,
-                        style: TextStyle(
-                          color: AppTheme.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: 'Literata',
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Name + Contact
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                fullName.isNotEmpty ? fullName : '—',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.accent(context),
-                                  fontFamily: 'Literata',
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            // Sync status icon - always show (green for synced, orange for pending)
-                            Padding(
-                              padding: const EdgeInsets.only(left: 6),
-                              child: Icon(
-                                isSynced
-                                    ? Icons.cloud_done_rounded
-                                    : Icons.cloud_upload_rounded,
-                                size: 16,
-                                color: isSynced ? AppTheme.green : AppTheme.orange,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        // Contact
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.phone_rounded,
-                              size: 13,
-                              color: AppColors.mutedText(context),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              contact.isNotEmpty ? contact : '—',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppColors.secondaryText(context),
-                                fontFamily: 'Literata',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Pending amount badge or arrow
-                  if (pendingAmount > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.red50,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppTheme.red100, width: 1),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '₹${pendingAmount.toStringAsFixed(0)}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.red700,
-                              fontFamily: 'Literata',
-                            ),
-                          ),
-                          Text(
-                            pendingLabel,
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w500,
-                              color: AppTheme.error,
-                              fontFamily: 'Literata',
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      size: 24,
-                      color: AppTheme.grey400,
-                    ),
-                ],
-              ),
-              // Address row
-              if (address.isNotEmpty && address != 'N/A') ...[
-                const SizedBox(height: 10),
-                Container(
-                  padding: EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.scaffold(context),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.location_on_outlined,
-                        size: 14,
-                        color: AppColors.mutedText(context),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          address,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.secondaryText(context),
-                            fontFamily: 'Literata',
-                            height: 1.3,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: accent.withValues(alpha: isDark ? 0.18 : 0.12),
+                          borderRadius: BorderRadius.circular(12),
                         ),
+                        child: Icon(
+                          Icons.person_outline_rounded,
+                          color: accent,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              fullName.isNotEmpty ? fullName : '—',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                                color: AppColors.primaryText(context),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.phone_outlined,
+                                  size: 13,
+                                  color: AppColors.mutedText(context),
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    contact.isNotEmpty ? contact : '—',
+                                    style: TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontSize: 12,
+                                      color: AppColors.mutedText(context),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (pendingAmount > 0)
+                            Text(
+                              '₹${pendingAmount.toStringAsFixed(0)}',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                                color: AppTheme.toneRose,
+                              ),
+                            )
+                          else
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              size: 22,
+                              color: AppColors.mutedText(context),
+                            ),
+                          const SizedBox(height: 4),
+                          Text(
+                            isSynced ? 'Synced' : pendingLabel,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: isSynced
+                                  ? (isDark
+                                        ? AppTheme.primary
+                                        : AppTheme.primaryLight)
+                                  : AppTheme.toneAmber,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ),
-              ],
-              // Action icons row (Transactions + Finance + Communication)
-              if (contact.isNotEmpty ||
-                  onFinanceTap != null ||
-                  onTransactionsTap != null) ...[
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    // Transactions button
-                    if (onTransactionsTap != null)
-                      GestureDetector(
-                        onTap: onTransactionsTap,
-                        child: Container(
-                          width: 34,
-                          height: 34,
-                          decoration: BoxDecoration(
-                            color: AppTheme.orange.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            Icons.swap_horiz_rounded,
-                            size: 16,
-                            color: AppTheme.orange,
+                  if (address.isNotEmpty && address != 'N/A') ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 14,
+                          color: AppColors.mutedText(context),
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            address,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 12,
+                              color: AppColors.mutedText(context),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                      ),
-                    if (onTransactionsTap != null &&
-                        (onFinanceTap != null || contact.isNotEmpty))
-                      const SizedBox(width: 8),
-                    // Finance/History button
-                    if (onFinanceTap != null)
-                      GestureDetector(
-                        onTap: onFinanceTap,
-                        child: Container(
-                          width: 34,
-                          height: 34,
-                          decoration: BoxDecoration(
-                            color: AppTheme.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            Icons.account_balance_wallet_rounded,
-                            size: 16,
-                            color: AppColors.accent(context),
-                          ),
-                        ),
-                      ),
-                    if (onFinanceTap != null && contact.isNotEmpty)
-                      const SizedBox(width: 8),
-                    if (contact.isNotEmpty)
-                      CommunicationActionIcons(
-                        phoneNumber: contact,
-                        iconSize: 16,
-                        containerSize: 34,
-                        spacing: 8,
-                      ),
+                      ],
+                    ),
                   ],
-                ),
-              ],
-            ],
+                  if (contact.isNotEmpty ||
+                      onFinanceTap != null ||
+                      onTransactionsTap != null) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        if (onTransactionsTap != null)
+                          GestureDetector(
+                            onTap: onTransactionsTap,
+                            child: Container(
+                              width: 34,
+                              height: 34,
+                              decoration: BoxDecoration(
+                                color: AppTheme.toneAmber.withValues(alpha: 0.16),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(
+                                Icons.swap_horiz_rounded,
+                                size: 16,
+                                color: AppTheme.toneAmber,
+                              ),
+                            ),
+                          ),
+                        if (onTransactionsTap != null &&
+                            (onFinanceTap != null || contact.isNotEmpty))
+                          const SizedBox(width: 8),
+                        if (onFinanceTap != null)
+                          GestureDetector(
+                            onTap: onFinanceTap,
+                            child: Container(
+                              width: 34,
+                              height: 34,
+                              decoration: BoxDecoration(
+                                color: accent.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                Icons.account_balance_wallet_rounded,
+                                size: 16,
+                                color: accent,
+                              ),
+                            ),
+                          ),
+                        if (onFinanceTap != null && contact.isNotEmpty)
+                          const SizedBox(width: 8),
+                        if (contact.isNotEmpty)
+                          CommunicationActionIcons(
+                            phoneNumber: contact,
+                            iconSize: 16,
+                            containerSize: 34,
+                            spacing: 8,
+                          ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
         ),
       ),

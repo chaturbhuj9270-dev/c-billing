@@ -708,19 +708,16 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   }
 
   Widget _buildGroupedProductCard(GroupedProduct group) {
+    final accent = Theme.of(context).primaryColor;
+    final isDark = AppColors.isDark(context);
     final stockLevel = _getStockLevel(group.totalStock);
     final isOut = group.totalStock == 0;
     final isLow = group.totalStock > 0 && group.totalStock <= 10;
-    final tileBackground = isOut
-        ? AppTheme.paletteFF3A2424
-        : isLow
-        ? AppTheme.paletteFF3A2E14
-        : AppTheme.headerDarkStart;
-    final tileForeground = isOut
+    final statusColor = isOut
         ? AppTheme.error
         : isLow
         ? AppTheme.toneAmber
-        : AppTheme.primary;
+        : accent;
     final statusLabel = isLow
         ? '${_localizations.lowStock.toUpperCase()} · ${group.variantCount} ${_localizations.batch.toUpperCase()}'
         : stockLevel['label'] as String;
@@ -730,103 +727,80 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.border(context)),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: isDark ? 0.18 : 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: AppTheme.transparent),
         child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          tilePadding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
           childrenPadding: EdgeInsets.zero,
           iconColor: AppColors.mutedText(context),
           collapsedIconColor: AppColors.mutedText(context),
           shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(18)),
+            borderRadius: BorderRadius.all(Radius.circular(20)),
           ),
           collapsedShape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(18)),
+            borderRadius: BorderRadius.all(Radius.circular(20)),
           ),
           leading: Container(
-            width: 52,
-            height: 52,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
-              color: tileBackground,
-              borderRadius: BorderRadius.circular(14),
+              color: accent.withValues(alpha: isDark ? 0.18 : 0.12),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '${group.totalStock}',
-                  style: TextStyle(
-                    color: tileForeground,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    fontFamily: 'Literata',
-                    height: 1,
-                  ),
-                ),
-                Text(
-                  _localizations.units.toLowerCase(),
-                  style: TextStyle(
-                    color: tileForeground,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'Literata',
-                  ),
-                ),
-              ],
+            child: Icon(
+              Icons.inventory_2_outlined,
+              color: accent,
+              size: 20,
             ),
           ),
-          title: Text(
-            group.productName,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              fontFamily: 'Literata',
-              color: AppColors.primaryText(context),
-              height: 1.2,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  group.productName,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Literata',
+                    color: AppColors.primaryText(context),
+                    height: 1.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${group.totalStock}',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  color: statusColor,
+                ),
+              ),
+            ],
           ),
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    _buildBadge(
-                      label: statusLabel,
-                      color: isOut
-                          ? AppTheme.error
-                          : isLow
-                          ? AppTheme.toneAmber
-                          : AppTheme.primary,
-                      icon: isOut
-                          ? Icons.error_outline
-                          : isLow
-                          ? Icons.warning_amber_rounded
-                          : Icons.check_circle_outline,
-                    ),
-                    if (expiredBatchCount > 0)
-                      _buildBadge(
-                        label:
-                            '$expiredBatchCount ${_localizations.expired.toLowerCase()}',
-                        color: AppTheme.toneViolet,
-                        icon: Icons.event_busy_rounded,
-                      ),
-                  ],
-                ),
-                if (group.companies.isNotEmpty) ...[
-                  const SizedBox(height: 6),
+                if (group.companies.isNotEmpty)
                   Row(
                     children: [
                       Icon(
-                        Icons.apartment_outlined,
+                        Icons.receipt_long_outlined,
                         size: 13,
                         color: AppColors.mutedText(context),
                       ),
@@ -845,7 +819,29 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                       ),
                     ],
                   ),
-                ],
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    _buildBadge(
+                      label: statusLabel,
+                      color: statusColor,
+                      icon: isOut
+                          ? Icons.error_outline
+                          : isLow
+                          ? Icons.warning_amber_rounded
+                          : Icons.check_circle_outline,
+                    ),
+                    if (expiredBatchCount > 0)
+                      _buildBadge(
+                        label:
+                            '$expiredBatchCount ${_localizations.expired.toLowerCase()}',
+                        color: AppTheme.toneViolet,
+                        icon: Icons.event_busy_rounded,
+                      ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -1290,11 +1286,10 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     IconData? icon,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        color: color.withValues(alpha: AppColors.isDark(context) ? 0.16 : 0.12),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
