@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
@@ -828,10 +827,6 @@ class _BillsListPageState extends State<BillsListPage>
                 onTap: _generateBillReport,
               ),
               AppTopBar.action(
-                icon: Icons.refresh,
-                onTap: _loadBills,
-              ),
-              AppTopBar.action(
                 icon: Icons.settings_rounded,
                 onTap: () async {
                   await Navigator.push(
@@ -889,13 +884,13 @@ class _BillsListPageState extends State<BillsListPage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const SizedBox(
+                      SizedBox(
                         width: 40,
                         height: 40,
                         child: CircularProgressIndicator(
                           strokeWidth: 3,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            AppTheme.primary,
+                            AppColors.action(context),
                           ),
                         ),
                       ),
@@ -922,100 +917,76 @@ class _BillsListPageState extends State<BillsListPage>
     );
   }
 
+  Color _brandColor(BuildContext context) => AppColors.actionBright(context);
+
   Widget _buildStatsSection() {
-    // Use filtered stats to show calculations based on applied filters
+    final brand = _brandColor(context);
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      margin: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Row(
         children: [
-          // Filter indicator badge
-          if (_dateFilter != _BillDateFilter.none ||
-              _showReturnedOnly ||
-              _searchController.text.isNotEmpty)
-            Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppTheme.blue.withValues(alpha: 0.15),
-                    AppTheme.blue700.withValues(alpha: 0.08),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppTheme.blue.withValues(alpha: 0.3),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.filter_alt_rounded,
-                    size: 14,
-                    color: AppTheme.blue,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    _getFilterDescription(),
-                    style: const TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.blue,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          // Main Stats Row - Sales and Profit (based on filtered bills)
-          Row(
-            children: [
-              // Total Sales - Featured Card
-              Expanded(
-                child: _buildFeaturedStatCard(
-                  title: _localizations.totalSales,
-                  value: '₹${_formatAmount(_filteredSales)}',
-                  icon: Icons.account_balance_wallet_rounded,
-                  gradient: const [AppTheme.primary, AppTheme.primaryLight],
-                ),
-              ),
-              const SizedBox(width: 10),
-              // Net Profit - Featured Card
-              Expanded(
-                child: _buildFeaturedStatCard(
-                  title: _localizations.netProfit,
-                  value: '₹${_formatAmount(_filteredProfit)}',
-                  icon: Icons.trending_up_rounded,
-                  gradient: const [AppTheme.green, AppTheme.green300],
-                ),
-              ),
-            ],
+          _buildStatColumn(
+            '₹${_formatAmount(_filteredSales)}',
+            _localizations.totalSales,
+            brand,
           ),
-          const SizedBox(height: 10),
-          // Secondary Stats Row - Bills and Returns (based on filtered bills)
-          Row(
-            children: [
-              Expanded(
-                child: _buildMiniStatCard(
-                  title: _localizations.totalBills,
-                  value: '$_filteredBillsCount',
-                  icon: Icons.receipt_long_rounded,
-                  color: AppTheme.blue,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildMiniStatCard(
-                  title: _localizations.returns,
-                  value: '$_filteredReturnedCount',
-                  icon: Icons.assignment_return_rounded,
-                  color: AppTheme.orange,
-                ),
-              ),
-            ],
+          _statDivider(),
+          _buildStatColumn(
+            '₹${_formatAmount(_filteredProfit)}',
+            _localizations.netProfit,
+            brand,
+          ),
+          _statDivider(),
+          _buildStatColumn('$_filteredBillsCount', _localizations.bills, brand),
+          _statDivider(),
+          _buildStatColumn(
+            '$_filteredReturnedCount',
+            _localizations.returns,
+            brand,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statDivider() {
+    return Container(width: 1, height: 36, color: AppColors.border(context));
+  }
+
+  Widget _buildStatColumn(String value, String label, Color valueColor) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: valueColor,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: AppColors.mutedText(context),
+            ),
           ),
         ],
       ),
@@ -1058,137 +1029,6 @@ class _BillsListPageState extends State<BillsListPage>
     return filters.isEmpty ? _localizations.filtered : filters.join(' • ');
   }
 
-  Widget _buildFeaturedStatCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required List<Color> gradient,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: gradient,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: gradient[0].withValues(alpha: 0.35),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppTheme.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: AppTheme.white, size: 22),
-              ),
-              Icon(
-                Icons.trending_up_rounded,
-                color: AppTheme.white.withValues(alpha: 0.6),
-                size: 28,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              fontFamily: 'Literata',
-              fontSize: 26,
-              fontWeight: FontWeight.w900,
-              color: AppTheme.white,
-              letterSpacing: -0.5,
-            ),
-          ),
-          SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: AppColors.card(context),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMiniStatCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.15), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: color, size: 16),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: color,
-                  ),
-                ),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 9,
-                    color: AppTheme.grey600,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   String _formatAmount(double amount) {
     if (amount >= 100000) {
       return '${(amount / 100000).toStringAsFixed(1)}L';
@@ -1198,259 +1038,83 @@ class _BillsListPageState extends State<BillsListPage>
     return amount.toStringAsFixed(0);
   }
 
-  Widget _buildStatCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color, {
-    double? width,
-  }) {
-    return Container(
-      width: width,
-      constraints: const BoxConstraints(minHeight: 100),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppTheme.white, AppTheme.white.withValues(alpha: 0.95)],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.15), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.12),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-            spreadRadius: 2,
-          ),
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  color.withValues(alpha: 0.2),
-                  color.withValues(alpha: 0.08),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: color.withValues(alpha: 0.25),
-                width: 1,
-              ),
-            ),
-            child: Icon(icon, color: color, size: 18),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              color: color,
-              letterSpacing: -0.5,
-              height: 1.1,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: AppTheme.grey700,
-              letterSpacing: 0.2,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
+  bool get _hasActiveFilters =>
+      _startDate != null ||
+      _showReturnedOnly ||
+      _dateFilter != _BillDateFilter.none;
+
+  String _historySummary() {
+    final count = '$_filteredBillsCount ${_localizations.bills}';
+    final searching = _searchController.text.isNotEmpty;
+    if (!_hasActiveFilters && !searching) return count;
+    return '$count · ${_getFilterDescription()}';
   }
 
   Widget _buildSearchAndFilterSection() {
     final hasDateFilter = _startDate != null;
-    final hasActiveFilters =
-        hasDateFilter ||
-        _showReturnedOnly ||
-        _dateFilter != _BillDateFilter.none;
+    final brand = _brandColor(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       child: Column(
         children: [
-          // ── Enhanced Search bar with glassmorphism ──
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppTheme.white.withValues(alpha: 0.9),
-                      AppTheme.white.withValues(alpha: 0.8),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: AppTheme.white.withValues(alpha: 0.5),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.accentSoft(context, 0.08),
-                      blurRadius: 20,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+          Container(
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.inputFill(context),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border(context)),
+            ),
+            child: TextField(
+              controller: _searchController,
+              onChanged: _filterBills,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.primaryText(context),
+              ),
+              decoration: InputDecoration(
+                hintText: _localizations.searchBills,
+                hintStyle: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 14,
+                  color: AppColors.mutedText(context),
                 ),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: _filterBills,
-                  decoration: InputDecoration(
-                    hintText: _localizations.searchBills,
-                    hintStyle: TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 14,
-                      color: AppTheme.grey400,
-                    ),
-                    prefixIcon: Container(
-                      padding: const EdgeInsets.all(12),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: AppColors.headerGradient(context),
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.search_rounded,
-                          color: AppTheme.white,
-                          size: 16,
-                        ),
-                      ),
-                    ),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? GestureDetector(
-                            onTap: () {
-                              _searchController.clear();
-                              _filterBills('');
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.all(12),
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: AppTheme.grey300,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.close_rounded,
-                                color: AppTheme.white,
-                                size: 14,
-                              ),
-                            ),
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: AppTheme.transparent,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: AppColors.mutedText(context),
+                  size: 20,
                 ),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        onPressed: () {
+                          _searchController.clear();
+                          _filterBills('');
+                        },
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: AppColors.mutedText(context),
+                          size: 18,
+                        ),
+                      )
+                    : null,
+                filled: true,
+                fillColor: AppTheme.transparent,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
           ),
-          const SizedBox(height: 14),
-
-          // Filter section header
-          if (hasActiveFilters)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.filter_list_rounded,
-                    size: 14,
-                    color: AppTheme.grey600,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    _localizations.activeFilters,
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.grey600,
-                    ),
-                  ),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _dateFilter = _BillDateFilter.none;
-                        _showReturnedOnly = false;
-                        _startDate = null;
-                        _endDate = null;
-                      });
-                      _filterBills(_searchController.text);
-                    },
-                    child: Text(
-                      _localizations.clearFilters,
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.accent(context),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          // ── Filter chips row ──
+          const SizedBox(height: 12),
           SizedBox(
-            height: 40,
+            height: 36,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              clipBehavior: Clip.none,
               children: [
-                // Today filter chip
                 _buildFilterChip(
-                  icon: Icons.today_rounded,
                   label: _localizations.today,
                   isActive: _dateFilter == _BillDateFilter.today,
                   onTap: () => _setDateFilter(_BillDateFilter.today),
@@ -1459,9 +1123,7 @@ class _BillsListPageState extends State<BillsListPage>
                       : null,
                 ),
                 const SizedBox(width: 8),
-                // This Week filter chip
                 _buildFilterChip(
-                  icon: Icons.view_week_rounded,
                   label: _localizations.thisWeek,
                   isActive: _dateFilter == _BillDateFilter.thisWeek,
                   onTap: () => _setDateFilter(_BillDateFilter.thisWeek),
@@ -1470,9 +1132,7 @@ class _BillsListPageState extends State<BillsListPage>
                       : null,
                 ),
                 const SizedBox(width: 8),
-                // This Month filter chip
                 _buildFilterChip(
-                  icon: Icons.calendar_month_rounded,
                   label: _localizations.thisMonth,
                   isActive: _dateFilter == _BillDateFilter.thisMonth,
                   onTap: () => _setDateFilter(_BillDateFilter.thisMonth),
@@ -1481,9 +1141,7 @@ class _BillsListPageState extends State<BillsListPage>
                       : null,
                 ),
                 const SizedBox(width: 8),
-                // This Year filter chip
                 _buildFilterChip(
-                  icon: Icons.calendar_today_rounded,
                   label: _localizations.thisYear,
                   isActive: _dateFilter == _BillDateFilter.thisYear,
                   onTap: () => _setDateFilter(_BillDateFilter.thisYear),
@@ -1492,9 +1150,8 @@ class _BillsListPageState extends State<BillsListPage>
                       : null,
                 ),
                 const SizedBox(width: 8),
-                // Date range chip
                 _buildFilterChip(
-                  icon: Icons.date_range_rounded,
+                  icon: Icons.calendar_today_rounded,
                   label: hasDateFilter
                       ? '${DateFormat('dd MMM').format(_startDate!)} – ${DateFormat('dd MMM').format(_endDate!)}'
                       : _localizations.custom,
@@ -1503,7 +1160,6 @@ class _BillsListPageState extends State<BillsListPage>
                   onClear: hasDateFilter ? _clearDateFilter : null,
                 ),
                 const SizedBox(width: 8),
-                // Sales Return filter chip
                 _buildFilterChip(
                   icon: Icons.assignment_return_rounded,
                   label: _localizations.returns,
@@ -1512,7 +1168,6 @@ class _BillsListPageState extends State<BillsListPage>
                   onClear: _showReturnedOnly ? _toggleReturnFilter : null,
                 ),
                 const SizedBox(width: 8),
-                // Sort chips
                 _buildSortChip(
                   'newest',
                   _localizations.newest,
@@ -1540,84 +1195,103 @@ class _BillsListPageState extends State<BillsListPage>
             ),
           ),
           const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _historySummary(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: brand,
+                  ),
+                ),
+              ),
+              if (_hasActiveFilters) ...[
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _dateFilter = _BillDateFilter.none;
+                      _showReturnedOnly = false;
+                      _startDate = null;
+                      _endDate = null;
+                    });
+                    _filterBills(_searchController.text);
+                  },
+                  child: Text(
+                    _localizations.clearFilters,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: brand,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 12),
         ],
       ),
     );
   }
 
   Widget _buildFilterChip({
-    required IconData icon,
     required String label,
     required bool isActive,
     required VoidCallback onTap,
     VoidCallback? onClear,
+    IconData? icon,
   }) {
+    final brand = _brandColor(context);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.only(left: icon == null ? 14 : 10, right: 12),
+        alignment: Alignment.center,
         decoration: BoxDecoration(
-          gradient: isActive
-              ? LinearGradient(
-                  colors: AppColors.headerGradient(context),
-                )
-              : null,
-          color: isActive ? null : AppTheme.white,
-          borderRadius: BorderRadius.circular(24),
+          color: isActive ? brand : AppColors.chipFill(context),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isActive ? AppTheme.transparent : AppColors.border(context)!,
-            width: 1.5,
+            color: isActive ? brand : AppColors.border(context),
           ),
-          boxShadow: isActive
-              ? [
-                  BoxShadow(
-                    color: AppColors.accentSoft(context, 0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: AppTheme.black.withValues(alpha: 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 15,
-              color: isActive ? AppTheme.white : AppTheme.grey600,
-            ),
-            const SizedBox(width: 6),
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 14,
+                color: isActive ? AppTheme.white : AppColors.mutedText(context),
+              ),
+              const SizedBox(width: 6),
+            ],
             Text(
               label,
               style: TextStyle(
                 fontFamily: 'Literata',
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: isActive ? AppTheme.white : AppTheme.grey700,
+                color: isActive
+                    ? AppTheme.white
+                    : AppColors.secondaryText(context),
               ),
             ),
             if (onClear != null) ...[
               const SizedBox(width: 6),
               GestureDetector(
                 onTap: onClear,
-                child: Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    color: AppTheme.white.withValues(alpha: 0.25),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.close_rounded,
-                    size: 10,
-                    color: AppTheme.white,
-                  ),
+                child: const Icon(
+                  Icons.close_rounded,
+                  size: 14,
+                  color: AppTheme.white,
                 ),
               ),
             ],
@@ -1629,6 +1303,7 @@ class _BillsListPageState extends State<BillsListPage>
 
   Widget _buildSortChip(String value, String label, IconData icon) {
     final isActive = _sortOrder == value;
+    final brand = _brandColor(context);
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -1639,22 +1314,14 @@ class _BillsListPageState extends State<BillsListPage>
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12),
+        alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isActive
-              ? AppTheme.primary.withValues(alpha: 0.12)
-              : AppTheme.white,
+          color: AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isActive ? AppTheme.primary : AppTheme.grey300,
-            width: isActive ? 1.5 : 1,
+            color: isActive ? brand : AppColors.border(context),
+            width: isActive ? 1.4 : 1,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.black.withValues(alpha: 0.03),
-              blurRadius: 4,
-              offset: const Offset(0, 1),
-            ),
-          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -1662,7 +1329,7 @@ class _BillsListPageState extends State<BillsListPage>
             Icon(
               icon,
               size: 14,
-              color: isActive ? AppTheme.primary : AppTheme.grey,
+              color: isActive ? brand : AppColors.mutedText(context),
             ),
             const SizedBox(width: 4),
             Text(
@@ -1670,8 +1337,8 @@ class _BillsListPageState extends State<BillsListPage>
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 12,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                color: isActive ? AppTheme.primary : AppTheme.grey600,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                color: isActive ? brand : AppColors.secondaryText(context),
               ),
             ),
           ],
@@ -1689,7 +1356,7 @@ class _BillsListPageState extends State<BillsListPage>
             Icon(
               Icons.receipt_long_outlined,
               size: 64,
-              color: AppTheme.grey400,
+              color: AppColors.mutedText(context),
             ),
             const SizedBox(height: 16),
             Text(
@@ -1697,7 +1364,7 @@ class _BillsListPageState extends State<BillsListPage>
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 16,
-                color: AppTheme.grey600,
+                color: AppColors.secondaryText(context),
               ),
             ),
             if (_searchController.text.isNotEmpty || _startDate != null)
@@ -1710,7 +1377,7 @@ class _BillsListPageState extends State<BillsListPage>
                   _localizations.clearFilters,
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    color: AppColors.accent(context),
+                    color: _brandColor(context),
                   ),
                 ),
               ),
@@ -1734,491 +1401,255 @@ class _BillsListPageState extends State<BillsListPage>
     final isFullyReturned = bill.returnStatus;
     final hasPartialReturn = bill.hasAnyReturns && !bill.returnStatus;
     final hasAnyReturn = bill.hasAnyReturns;
-    final isToday = _isToday(bill.billDate);
+    final brand = _brandColor(context);
+    final accent = isFullyReturned
+        ? AppTheme.red
+        : hasPartialReturn
+        ? AppTheme.orange
+        : brand;
+    final customerName = (bill.customerName?.trim().isNotEmpty ?? false)
+        ? bill.customerName!.trim()
+        : _localizations.walkInCustomer;
+    final isNamed = bill.customerName?.trim().isNotEmpty ?? false;
+    final initial = customerName.characters.first.toUpperCase();
 
     return GestureDetector(
       onTap: () => _showBillDetails(bill),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isFullyReturned
-                ? [AppTheme.red.withValues(alpha: 0.03), AppTheme.white]
-                : hasPartialReturn
-                ? [AppTheme.orange.withValues(alpha: 0.03), AppTheme.white]
-                : [AppColors.card(context), AppColors.scaffold(context)],
-          ),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isFullyReturned
-                ? AppTheme.red.withValues(alpha: 0.4)
-                : hasPartialReturn
-                ? AppTheme.orange.withValues(alpha: 0.4)
-                : AppTheme.grey.withValues(alpha: 0.12),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isFullyReturned
-                  ? AppTheme.red.withValues(alpha: 0.12)
-                  : hasPartialReturn
-                  ? AppTheme.orange.withValues(alpha: 0.12)
-                  : AppTheme.black.withValues(alpha: 0.06),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-              spreadRadius: hasAnyReturn ? 2 : 0,
-            ),
-          ],
+          color: AppColors.card(context),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border(context)),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(17),
+          borderRadius: BorderRadius.circular(16),
           child: Stack(
             children: [
-              // Left accent bar
               Positioned(
                 left: 0,
                 top: 0,
                 bottom: 0,
-                child: Container(
-                  width: 4,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: isFullyReturned
-                          ? [AppTheme.red, AppTheme.toneRose]
-                          : hasPartialReturn
-                          ? [AppTheme.orange, AppTheme.orange300]
-                          : [AppTheme.primary, AppTheme.primaryLight],
-                    ),
-                  ),
-                ),
+                child: Container(width: 3, color: accent),
               ),
-              // Content
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
+                padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header row - bill number, badges, and date
                     Row(
                       children: [
-                        // Bill number badge
                         Flexible(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: isFullyReturned
-                                  ? LinearGradient(
-                                      colors: [
-                                        AppTheme.red.withValues(alpha: 0.2),
-                                        AppTheme.red.withValues(alpha: 0.1),
-                                      ],
-                                    )
-                                  : hasPartialReturn
-                                  ? LinearGradient(
-                                      colors: [
-                                        AppTheme.orange.withValues(alpha: 0.2),
-                                        AppTheme.orange.withValues(alpha: 0.1),
-                                      ],
-                                    )
-                                  : LinearGradient(
-                                      colors: [
-                                        AppTheme.primary.withValues(alpha: 0.15),
-                                        AppTheme.primary.withValues(alpha: 0.08),
-                                      ],
-                                    ),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: isFullyReturned
-                                    ? AppTheme.red.withValues(alpha: 0.3)
-                                    : hasPartialReturn
-                                    ? AppTheme.orange.withValues(alpha: 0.3)
-                                    : AppTheme.primary.withValues(alpha: 0.2),
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.receipt_outlined,
-                                  size: 12,
-                                  color: isFullyReturned
-                                      ? AppTheme.red700
-                                      : hasPartialReturn
-                                      ? AppTheme.orange700
-                                      : AppTheme.primary,
-                                ),
-                                const SizedBox(width: 4),
-                                Flexible(
-                                  child: Text(
-                                    bill.billNumber,
-                                    style: TextStyle(
-                                      fontFamily: 'Literata',
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: isFullyReturned
-                                          ? AppTheme.red800
-                                          : hasPartialReturn
-                                          ? AppTheme.orange800
-                                          : AppTheme.primary,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+                          child: Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  bill.billNumber,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.2,
+                                    color: accent,
                                   ),
                                 ),
-                                // Sync status icon
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 4),
-                                  child: Icon(
-                                    bill.isSynced
-                                        ? Icons.cloud_done_rounded
-                                        : Icons.cloud_upload_rounded,
-                                    size: 12,
-                                    color: bill.isSynced
-                                        ? AppTheme.green
-                                        : AppTheme.orange,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        if (hasAnyReturn) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: isFullyReturned
-                                    ? [AppTheme.red, AppTheme.error]
-                                    : [AppTheme.orange, AppTheme.deepOrange400],
                               ),
-                              borderRadius: BorderRadius.circular(6),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: isFullyReturned
-                                      ? AppTheme.red.withValues(alpha: 0.3)
-                                      : AppTheme.orange.withValues(alpha: 0.3),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.assignment_return_rounded,
-                                  size: 10,
-                                  color: AppTheme.white,
-                                ),
-                                const SizedBox(width: 3),
+                              const SizedBox(width: 4),
+                              Icon(
+                                bill.isSynced
+                                    ? Icons.check_circle_rounded
+                                    : Icons.cloud_upload_rounded,
+                                size: 14,
+                                color: bill.isSynced
+                                    ? AppTheme.green
+                                    : AppTheme.orange,
+                              ),
+                              if (hasAnyReturn) ...[
+                                const SizedBox(width: 6),
                                 Text(
                                   isFullyReturned
                                       ? _localizations.returnedLabel
                                       : _localizations.partialReturn,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'Literata',
-                                    fontSize: 8,
+                                    fontSize: 10,
                                     fontWeight: FontWeight.w700,
-                                    color: AppTheme.white,
+                                    color: isFullyReturned
+                                        ? AppTheme.red
+                                        : AppTheme.orange,
                                   ),
                                 ),
                               ],
-                            ),
+                            ],
                           ),
-                        ],
-                        if (isToday && !hasAnyReturn) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppTheme.blue.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              _localizations.today,
-                              style: const TextStyle(
-                                fontFamily: 'Literata',
-                                fontSize: 8,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.blue,
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                         const SizedBox(width: 8),
-                        // Date and Print
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.schedule_rounded,
-                              size: 11,
-                              color: AppTheme.grey,
-                            ),
-                            const SizedBox(width: 3),
-                            Text(
-                              dateFormat.format(bill.billDate),
-                              style: TextStyle(
-                                fontFamily: 'Literata',
-                                fontSize: 9,
-                                fontWeight: FontWeight.w500,
-                                color: AppTheme.grey600,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            // Print button
-                            _printingBillId == bill.id
-                                ? const SizedBox(
-                                    width: 24,
-                                    height: 24,
+                        Icon(
+                          Icons.schedule_rounded,
+                          size: 12,
+                          color: AppColors.mutedText(context),
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          dateFormat.format(bill.billDate),
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.mutedText(context),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _printingBillId == bill.id
+                            ? SizedBox(
+                                width: 34,
+                                height: 34,
+                                child: Center(
+                                  child: SizedBox(
+                                    width: 16,
+                                    height: 16,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
                                       valueColor: AlwaysStoppedAnimation<Color>(
-                                        AppTheme.primary,
-                                      ),
-                                    ),
-                                  )
-                                : GestureDetector(
-                                    onTap: () => _printBill(bill),
-                                    child: Container(
-                                      padding: EdgeInsets.all(6),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.chipFill(context),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Icon(
-                                        Icons.print_rounded,
-                                        size: 16,
-                                        color: AppTheme.grey600,
+                                        AppColors.action(context),
                                       ),
                                     ),
                                   ),
-                          ],
-                        ),
+                                ),
+                              )
+                            : GestureDetector(
+                                onTap: () => _printBill(bill),
+                                child: Container(
+                                  width: 34,
+                                  height: 34,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: AppColors.border(context),
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Icons.print_rounded,
+                                    size: 16,
+                                    color: AppColors.secondaryText(context),
+                                  ),
+                                ),
+                              ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    // Customer info
-                    if (bill.hasCustomerInfo) ...[
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.scaffold(context),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: AppTheme.grey.withValues(alpha: 0.1),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Icon(
-                                Icons.person_rounded,
-                                size: 14,
-                                color: AppColors.accent(context),
-                              ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.inputFill(context),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border(context)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: brand.withValues(alpha: 0.16),
+                              shape: BoxShape.circle,
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    bill.customerName ?? _localizations.unknown,
-                                    style: const TextStyle(
+                            child: isNamed
+                                ? Text(
+                                    initial,
+                                    style: TextStyle(
                                       fontFamily: 'Literata',
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
-                                      color: AppTheme.lightText,
+                                      color: brand,
                                     ),
-                                    overflow: TextOverflow.ellipsis,
+                                  )
+                                : Icon(
+                                    Icons.person_rounded,
+                                    size: 16,
+                                    color: brand,
                                   ),
-                                  if (bill.customerContact != null)
-                                    Text(
-                                      bill.customerContact!,
-                                      style: TextStyle(
-                                        fontFamily: 'Literata',
-                                        fontSize: 11,
-                                        color: AppTheme.grey600,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            if (bill.customerContact != null)
-                              Icon(
-                                Icons.phone_rounded,
-                                size: 14,
-                                color: AppTheme.grey400,
-                              ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                    ],
-                    // Footer row - Items count, discount and total
-                    Row(
-                      children: [
-                        // Items info
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.chipFill(context),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.shopping_bag_outlined,
-                                size: 12,
-                                color: AppTheme.grey600,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${bill.items.length} ${_localizations.itemsLabel}',
-                                style: TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppTheme.grey700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.chipFill(context),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.inventory_2_outlined,
-                                size: 12,
-                                color: AppTheme.grey600,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${bill.totalQuantity} ${_localizations.qtyLabel}',
-                                style: TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppTheme.grey700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Spacer(),
-                        // Discount badge
-                        if (bill.discountAmount > 0) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppTheme.green.withValues(alpha: 0.15),
-                                  AppTheme.green.withValues(alpha: 0.08),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: AppTheme.green.withValues(alpha: 0.2),
-                              ),
-                            ),
-                            child: Text(
-                              '-${bill.discountPercent.toStringAsFixed(0)}%',
-                              style: TextStyle(
-                                fontFamily: 'Literata',
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.green700,
-                              ),
-                            ),
                           ),
                           const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  customerName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primaryText(context),
+                                  ),
+                                ),
+                                if (bill.customerContact != null &&
+                                    bill.customerContact!.isNotEmpty)
+                                  Text(
+                                    bill.customerContact!,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontSize: 12,
+                                      color: AppColors.mutedText(context),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          if (bill.customerContact != null &&
+                              bill.customerContact!.isNotEmpty)
+                            Icon(
+                              Icons.phone_rounded,
+                              size: 16,
+                              color: AppColors.mutedText(context),
+                            ),
                         ],
-                        // Total amount
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: isFullyReturned
-                                  ? [
-                                      AppTheme.red.withValues(alpha: 0.15),
-                                      AppTheme.red.withValues(alpha: 0.08),
-                                    ]
-                                  : hasPartialReturn
-                                  ? [
-                                      AppTheme.orange.withValues(alpha: 0.15),
-                                      AppTheme.orange.withValues(alpha: 0.08),
-                                    ]
-                                  : [
-                                      AppTheme.primary.withValues(alpha: 0.12),
-                                      AppTheme.primary.withValues(alpha: 0.06),
-                                    ],
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: isFullyReturned
-                                  ? AppTheme.red.withValues(alpha: 0.2)
-                                  : hasPartialReturn
-                                  ? AppTheme.orange.withValues(alpha: 0.2)
-                                  : AppTheme.primary.withValues(alpha: 0.15),
-                            ),
-                          ),
-                          child: Text(
-                            '₹${bill.finalAmount.toStringAsFixed(2)}',
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        _buildBillMeta(
+                          Icons.shopping_bag_outlined,
+                          '${bill.items.length} ${_localizations.itemsLabel}',
+                        ),
+                        const SizedBox(width: 6),
+                        _buildBillMeta(
+                          Icons.inventory_2_outlined,
+                          '${bill.totalQuantity} ${_localizations.qtyLabel}',
+                        ),
+                        if (bill.discountAmount > 0) ...[
+                          const SizedBox(width: 6),
+                          Text(
+                            '-${bill.discountPercent.toStringAsFixed(0)}%',
                             style: TextStyle(
                               fontFamily: 'Literata',
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: isFullyReturned
-                                  ? AppTheme.red800
-                                  : hasPartialReturn
-                                  ? AppTheme.orange800
-                                  : AppTheme.primary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: brand,
                             ),
+                          ),
+                        ],
+                        const Spacer(),
+                        Text(
+                          '₹${bill.finalAmount.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: accent,
                           ),
                         ),
                       ],
@@ -2233,12 +1664,33 @@ class _BillsListPageState extends State<BillsListPage>
     );
   }
 
-  bool _isToday(DateTime date) {
-    final now = DateTime.now();
-    return date.year == now.year &&
-        date.month == now.month &&
-        date.day == now.day;
+  Widget _buildBillMeta(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppColors.chipFill(context),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: AppColors.mutedText(context)),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: AppColors.secondaryText(context),
+            ),
+          ),
+        ],
+      ),
+    );
   }
+
 }
 
 /// Actions that can be triggered from the bill details dialog
@@ -2388,7 +1840,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                           Expanded(
                             child: _buildInfoCard(
                               icon: Icons.calendar_today_rounded,
-                              iconColor: AppTheme.primary,
+                              iconColor: AppColors.action(context),
                               title: _localizations.date,
                               value: dateFormat.format(_bill.billDate),
                             ),
@@ -2397,7 +1849,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                           Expanded(
                             child: _buildInfoCard(
                               icon: Icons.person_rounded,
-                              iconColor: AppTheme.primary,
+                              iconColor: AppColors.action(context),
                               title: _localizations.customerName,
                               value:
                                   _bill.customerName ??
@@ -2807,7 +2259,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                                 fontWeight: FontWeight.w800,
                                 color: _isFullyReturned
                                     ? AppTheme.red
-                                    : AppTheme.primary,
+                                    : AppColors.action(context),
                               ),
                             ),
                           ],
@@ -3166,7 +2618,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
             Icon(
               icon,
               size: 20,
-              color: isPrimary ? AppTheme.white : AppTheme.primary,
+              color: isPrimary ? AppTheme.white : AppColors.action(context),
             ),
             const SizedBox(width: 10),
             Text(
@@ -3175,7 +2627,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                 fontFamily: 'Literata',
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: isPrimary ? AppTheme.white : AppTheme.primary,
+                color: isPrimary ? AppTheme.white : AppColors.action(context),
               ),
             ),
           ],
@@ -3285,7 +2737,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                     fontWeight: FontWeight.w600,
                     color: isFullReturn
                         ? AppTheme.grey400
-                        : AppTheme.primary,
+                        : AppColors.action(context),
                     decoration: isFullReturn
                         ? TextDecoration.lineThrough
                         : null,

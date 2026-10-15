@@ -23,15 +23,22 @@ class AppTheme {
   // Light
   static const Color lightScaffold = Color(0xFFF3F6F4);
 
-  // Dark — green charcoal, matching the billing and purchase screens.
-  static const Color darkScaffold = Color(0xFF101412);
-  static const Color darkSurface = Color(0xFF161C19);
-  static const Color darkCard = Color(0xFF1A211E);
-  static const Color darkElevated = Color(0xFF232B27);
-  static const Color darkBorder = Color(0xFF2E3833);
-  static const Color darkTextPrimary = Color(0xFFF4F7F5);
-  static const Color darkTextSecondary = Color(0xFFA8B2AC);
-  static const Color darkTextMuted = Color(0xFF7E8A84);
+  // Dark — sampled from the Add purchase screen.
+  // Page is near-black, cards sit one step above it, fields sink back to the page.
+  static const Color darkScaffold = Color(0xFF080C0C);
+  static const Color darkSurface = Color(0xFF101412);
+  static const Color darkCard = Color(0xFF131715);
+  static const Color darkElevated = Color(0xFF131715);
+  static const Color darkBorder = Color(0xFF2A3330);
+  static const Color darkTextPrimary = Color(0xFFF2F5F3);
+  static const Color darkTextSecondary = Color(0xFF87928C);
+  static const Color darkTextMuted = Color(0xFF6A756F);
+
+  /// Filled buttons and selected chips in dark theme.
+  static const Color darkAction = Color(0xFF3B6C4F);
+
+  /// Icons and outline rings in dark theme (the green plus buttons).
+  static const Color darkActionBright = Color(0xFF5CAF7F);
 
   // Shared palette. Every screen color is declared here.
   static const Color amber = Color(0xFFFFC107);
@@ -60,7 +67,7 @@ class AppTheme {
   static const Color cyan400 = Color(0xFF26C6DA);
   static const Color cyan600 = Color(0xFF00ACC1);
   static const Color cyan700 = Color(0xFF0097A7);
-  static const Color darkOutline = Color(0xFF3A4540);
+  static const Color darkOutline = Color(0xFF2A3330);
   static const Color deepOrange = Color(0xFFFF5722);
   static const Color deepOrange300 = Color(0xFFFF8A65);
   static const Color deepOrange400 = Color(0xFFFF7043);
@@ -266,7 +273,7 @@ class AppTheme {
     // Explicit neutral ColorScheme — avoids green-tinted surfaces from seed.
     const scheme = ColorScheme(
       brightness: Brightness.dark,
-      primary: primary,
+      primary: darkAction,
       onPrimary: AppTheme.white,
       secondary: toneBlue,
       onSecondary: AppTheme.white,
@@ -313,7 +320,7 @@ class AppTheme {
       canvasColor: scaffold,
       cardColor: card,
       dividerColor: divider,
-      primaryColor: primary,
+      primaryColor: isDark ? darkAction : primary,
       appBarTheme: AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -341,18 +348,18 @@ class AppTheme {
         ),
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: isDark ? darkElevated : card,
+        backgroundColor: isDark ? darkCard : card,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: isDark ? darkElevated : card,
-        modalBackgroundColor: isDark ? darkElevated : card,
+        backgroundColor: isDark ? darkCard : card,
+        modalBackgroundColor: isDark ? darkCard : card,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: isDark ? darkElevated : primary,
+        backgroundColor: isDark ? darkCard : primary,
         contentTextStyle: const TextStyle(
           fontFamily: 'Literata',
           color: AppTheme.white,
@@ -360,14 +367,14 @@ class AppTheme {
         behavior: SnackBarBehavior.floating,
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: primary,
+        backgroundColor: isDark ? darkAction : primary,
         foregroundColor: AppTheme.white,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
+          backgroundColor: isDark ? darkAction : primary,
           foregroundColor: AppTheme.white,
-          disabledBackgroundColor: isDark ? darkElevated : AppTheme.grey300,
+          disabledBackgroundColor: isDark ? darkCard : AppTheme.grey300,
           disabledForegroundColor: isDark
               ? darkTextMuted
               : AppTheme.grey600,
@@ -375,12 +382,12 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: primary,
+          backgroundColor: isDark ? darkAction : primary,
           foregroundColor: AppTheme.white,
         ),
       ),
       popupMenuTheme: PopupMenuThemeData(
-        color: isDark ? darkElevated : card,
+        color: isDark ? darkCard : card,
         textStyle: TextStyle(
           fontFamily: 'Literata',
           color: isDark ? darkTextPrimary : AppTheme.lightText,
@@ -396,7 +403,7 @@ class AppTheme {
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return primary;
+            return isDark ? darkAction : primary;
           }
           return isDark ? AppTheme.white24 : AppTheme.black12;
         }),
@@ -407,7 +414,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isDark ? darkElevated : AppTheme.white,
+        fillColor: isDark ? darkScaffold : AppTheme.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: divider),
@@ -418,20 +425,27 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: primary, width: 1.5),
+          borderSide: BorderSide(
+            color: isDark ? darkActionBright : primary,
+            width: 1.5,
+          ),
         ),
       ),
       dividerTheme: DividerThemeData(color: divider, thickness: 1),
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return primary;
+          if (states.contains(WidgetState.selected)) {
+            return isDark ? darkAction : primary;
+          }
           return null;
         }),
         checkColor: WidgetStateProperty.all(AppTheme.white),
       ),
       radioTheme: RadioThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return primary;
+          if (states.contains(WidgetState.selected)) {
+            return isDark ? darkAction : primary;
+          }
           return null;
         }),
       ),
@@ -495,11 +509,19 @@ class AppColors {
       : AppTheme.grey.withValues(alpha: 0.2);
 
   static Color inputFill(BuildContext context) =>
-      isDark(context) ? AppTheme.darkElevated : AppTheme.white;
+      isDark(context) ? AppTheme.darkScaffold : AppTheme.white;
 
   static Color chipFill(BuildContext context) => isDark(context)
-      ? AppTheme.darkElevated
+      ? AppTheme.darkScaffold
       : AppTheme.grey.withValues(alpha: 0.08);
+
+  /// Filled green. Light theme keeps [AppTheme.primary]; dark uses the purchase-screen green.
+  static Color action(BuildContext context) =>
+      isDark(context) ? AppTheme.darkAction : AppTheme.primary;
+
+  /// Outline rings and green icons. Brighter on dark so they read on the black page.
+  static Color actionBright(BuildContext context) =>
+      isDark(context) ? AppTheme.darkActionBright : AppTheme.primary;
 
   static Color glassFill(BuildContext context) => isDark(context)
       ? AppTheme.darkCard.withValues(alpha: 0.96)
@@ -529,7 +551,8 @@ class AppColors {
       : const [AppTheme.primary, AppTheme.primaryDark, AppTheme.headerLightEnd];
 
   /// Selected chips and the active tab use the theme green in both themes.
-  static Color selectedFill(BuildContext context) => AppTheme.primary;
+  static Color selectedFill(BuildContext context) =>
+      isDark(context) ? AppTheme.darkAction : AppTheme.primary;
 
   static Color selectedOnFill(BuildContext context) => AppTheme.white;
 
@@ -539,9 +562,8 @@ class AppColors {
 
   /// Soft accent wash behind icons/chips.
   static Color accentSoft(BuildContext context, [double alpha = 0.12]) =>
-      isDark(context)
-      ? AppTheme.primary.withValues(alpha: alpha)
-      : AppTheme.primary.withValues(alpha: alpha);
+      (isDark(context) ? AppTheme.darkActionBright : AppTheme.primary)
+          .withValues(alpha: alpha);
 
   /// On-gradient / on-colored-card text (always light for contrast).
   static Color onAccent(BuildContext context) => AppTheme.white;

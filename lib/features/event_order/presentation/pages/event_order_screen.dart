@@ -19,6 +19,7 @@ import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../product/offline/entities/product_entity.dart';
 import '../../../billing/presentation/widgets/barcode_scanner_sheet.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_tab_bar.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
@@ -527,10 +528,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           height: 32,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: AppTheme.primary.withValues(alpha: isDark ? 0.22 : 0.1),
+            color: AppColors.action(context).withValues(alpha: isDark ? 0.22 : 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: AppTheme.primary, size: 18),
+          child: Icon(icon, color: AppColors.action(context), size: 18),
         ),
         const SizedBox(width: 10),
         Flexible(
@@ -589,36 +590,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   }
 
   Widget _buildModeToggle() {
-    final isDark = AppColors.isDark(context);
-    return Container(
+    return AppTabBar(
+      controller: _tabController,
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      padding: const EdgeInsets.all(5),
-      decoration: _formCardDecoration(),
-      child: TabBar(
-        controller: _tabController,
-        indicator: BoxDecoration(
-          color: AppTheme.primary,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        indicatorSize: TabBarIndicatorSize.tab,
-        indicatorPadding: EdgeInsets.zero,
-        labelColor: AppTheme.white,
-        unselectedLabelColor: isDark
-            ? AppColors.mutedText(context)
-            : AppColors.secondaryText(context),
-        labelStyle: const TextStyle(
-          fontWeight: FontWeight.w700,
-          fontFamily: 'Literata',
-          fontSize: 13,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w500,
-          fontFamily: 'Literata',
-          fontSize: 13,
-        ),
-        dividerColor: AppTheme.transparent,
-        overlayColor: WidgetStateProperty.all(AppTheme.transparent),
-        tabs: [
+      tabs: [
           Tab(
             height: 44,
             child: Row(
@@ -649,8 +624,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               ],
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 
@@ -665,19 +639,19 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             : AppTheme.white,
         shape: CircleBorder(
           side: BorderSide(
-            color: AppTheme.primary.withValues(alpha: 0.85),
+            color: AppColors.action(context).withValues(alpha: 0.85),
             width: 1.4,
           ),
         ),
         child: InkWell(
           customBorder: const CircleBorder(),
           onTap: _showCustomerPickerSheet,
-          child: const SizedBox(
+          child: SizedBox(
             width: 40,
             height: 40,
             child: Icon(
               Icons.person_search_rounded,
-              color: AppTheme.primary,
+              color: AppColors.action(context),
               size: 20,
             ),
           ),
@@ -734,7 +708,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           dense: true,
                           leading: CircleAvatar(
                             radius: 16,
-                            backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
+                            backgroundColor: AppColors.action(context).withValues(alpha: 0.15),
                             child: Text(
                               customer.name.isNotEmpty
                                   ? customer.name[0].toUpperCase()
@@ -891,7 +865,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             return Theme(
               data: Theme.of(context).copyWith(
                 colorScheme: ColorScheme.light(
-                  primary: AppTheme.primary,
+                  primary: AppColors.action(context),
                   surface: AppColors.card(context),
                   onSurface: AppTheme.ink,
                 ),
@@ -957,7 +931,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             return Theme(
               data: Theme.of(context).copyWith(
                 colorScheme: ColorScheme.light(
-                  primary: AppTheme.primary,
+                  primary: AppColors.action(context),
                   surface: AppColors.card(context),
                   onSurface: AppTheme.ink,
                 ),
@@ -1028,17 +1002,17 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             : AppTheme.white,
         shape: CircleBorder(
           side: BorderSide(
-            color: AppTheme.primary.withValues(alpha: 0.85),
+            color: AppColors.action(context).withValues(alpha: 0.85),
             width: 1.4,
           ),
         ),
         child: InkWell(
           customBorder: const CircleBorder(),
           onTap: _showAddSubEventDialog,
-          child: const SizedBox(
+          child: SizedBox(
             width: 40,
             height: 40,
-            child: Icon(Icons.add, color: AppTheme.primary, size: 22),
+            child: Icon(Icons.add, color: AppColors.action(context), size: 22),
           ),
         ),
       ),
@@ -1152,8 +1126,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            AppTheme.primary.withValues(alpha: 0.3),
-                            AppTheme.primary.withValues(alpha: 0.08),
+                            AppColors.action(context).withValues(alpha: 0.3),
+                            AppColors.action(context).withValues(alpha: 0.08),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(1),
@@ -1452,11 +1426,11 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               ),
               Text(
                 '₹${_totalAmount.toStringAsFixed(0)}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: AppTheme.primary,
+                  color: AppColors.action(context),
                 ),
               ),
             ],
@@ -1595,7 +1569,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               ),
               const SizedBox(width: 10),
               Material(
-                color: AppTheme.primary,
+                color: AppColors.action(context),
                 borderRadius: BorderRadius.circular(14),
                 child: InkWell(
                   onTap: () {
@@ -1793,7 +1767,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                             fontFamily: 'Literata',
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: AppTheme.primary.withValues(alpha: 0.8),
+                            color: AppColors.action(context).withValues(alpha: 0.8),
                           ),
                         ),
                         const SizedBox(width: 3),
@@ -2241,14 +2215,14 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           _customFieldValues[column.id] = newValue;
         });
       },
-      activeThumbColor: AppTheme.primary,
+      activeThumbColor: AppColors.action(context),
       contentPadding: EdgeInsets.zero,
     );
   }
 
   Widget _buildSummaryBar() {
     final isDark = AppColors.isDark(context);
-    final dueColor = _remainingAmount > 0 ? AppTheme.toneAmber : AppTheme.primary;
+    final dueColor = _remainingAmount > 0 ? AppTheme.toneAmber : AppColors.action(context);
     return Container(
       color: AppColors.scaffold(context),
       child: SafeArea(
@@ -2271,7 +2245,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     label: 'Advance',
                     amount: _advanceAmount,
                     icon: Icons.account_balance_wallet_rounded,
-                    color: AppTheme.primary,
+                    color: AppColors.action(context),
                   ),
                   const SizedBox(width: 8),
                   _buildSummaryChip(
@@ -2286,11 +2260,11 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: AppTheme.primary,
+                  color: AppColors.action(context),
                   borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.primary.withValues(
+                      color: AppColors.action(context).withValues(
                         alpha: isDark ? 0.45 : 0.28,
                       ),
                       blurRadius: isDark ? 22 : 14,
@@ -2486,7 +2460,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppTheme.primary, width: 1.4),
+              borderSide: BorderSide(color: AppColors.action(context), width: 1.4),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
@@ -2654,7 +2628,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                               builder: (context, child) => Theme(
                                 data: Theme.of(context).copyWith(
                                   colorScheme: ColorScheme.light(
-                                    primary: AppTheme.primary,
+                                    primary: AppColors.action(context),
                                     surface: AppColors.card(context),
                                     onSurface: AppTheme.ink,
                                   ),
@@ -2709,7 +2683,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                               builder: (context, child) => Theme(
                                 data: Theme.of(context).copyWith(
                                   colorScheme: ColorScheme.light(
-                                    primary: AppTheme.primary,
+                                    primary: AppColors.action(context),
                                     surface: AppColors.card(context),
                                     onSurface: AppTheme.ink,
                                   ),
@@ -2892,7 +2866,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
+                  backgroundColor: AppColors.action(context),
                   foregroundColor: AppTheme.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -3082,7 +3056,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               fieldValues[column.id] = newValue;
             });
           },
-          activeThumbColor: AppTheme.primary,
+          activeThumbColor: AppColors.action(context),
           contentPadding: EdgeInsets.zero,
         );
     }
@@ -3384,7 +3358,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                             return ListTile(
                               dense: true,
                               selected: isSelected,
-                              selectedTileColor: AppTheme.primary.withValues(alpha: 0.1),
+                              selectedTileColor: AppColors.action(context).withValues(alpha: 0.1),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -3393,7 +3367,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                                 style: TextStyle(
                                   fontFamily: 'Literata',
                                   color: isSelected
-                                      ? AppTheme.primary
+                                      ? AppColors.action(context)
                                       : AppTheme.ink,
                                   fontWeight: isSelected
                                       ? FontWeight.w600
@@ -3588,7 +3562,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
+                  backgroundColor: AppColors.action(context),
                   foregroundColor: AppTheme.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -3907,7 +3881,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                                 child: Row(
                                   children: [
                                     CircleAvatar(
-                                      backgroundColor: AppTheme.primary,
+                                      backgroundColor: AppColors.action(context),
                                       child: Text(
                                         customer.name.isNotEmpty
                                             ? customer.name[0].toUpperCase()
@@ -4155,8 +4129,8 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        AppTheme.primary,
-                        AppTheme.primary.withValues(alpha: 0.8),
+                        AppColors.action(context),
+                        AppColors.action(context).withValues(alpha: 0.8),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(12),
@@ -4379,7 +4353,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isSelected
-                                ? AppTheme.primary
+                                ? AppColors.action(context)
                                 : AppColors.border(context)!,
                             width: isSelected ? 1.5 : 1,
                           ),
@@ -4651,7 +4625,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
+                  backgroundColor: AppColors.action(context),
                   foregroundColor: AppTheme.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(

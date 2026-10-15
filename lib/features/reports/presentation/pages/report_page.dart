@@ -27,7 +27,6 @@ import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 //   ✅ Loading overlay, empty states, snackbars
 // ──────────────────────────────────────────────────────────
 
-const _kGreen = AppTheme.primary;
 const _kGreenDark = AppTheme.primaryDark;
 
 class ReportPage extends StatefulWidget {
@@ -400,23 +399,23 @@ class _ReportPageState extends State<ReportPage>
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: _kGreen.withValues(alpha: 0.1),
+                  color: AppColors.action(context).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.event_note_rounded,
-                  color: _kGreen,
+                  color: AppColors.action(context),
                   size: 18,
                 ),
               ),
               const SizedBox(width: 10),
-              const Text(
+              Text(
                 'Date Range',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   fontFamily: 'Literata',
-                  color: _kGreen,
+                  color: AppColors.action(context),
                 ),
               ),
             ],
@@ -438,10 +437,10 @@ class _ReportPageState extends State<ReportPage>
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: selected ? _kGreen : AppColors.chipFill(context),
+                        color: selected ? AppColors.action(context) : AppColors.chipFill(context),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: selected ? _kGreen : AppTheme.grey300,
+                          color: selected ? AppColors.action(context) : AppTheme.grey300,
                         ),
                       ),
                       child: Row(
@@ -474,7 +473,7 @@ class _ReportPageState extends State<ReportPage>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: _kGreen.withValues(alpha: 0.06),
+              color: AppColors.action(context).withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -558,19 +557,20 @@ class _ReportPageState extends State<ReportPage>
   Widget _buildActiveChip(
     String label,
     IconData icon, {
-    Color color = _kGreen,
+    Color? color,
   }) {
+    final chipColor = color ?? AppColors.action(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: chipColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: chipColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: color),
+          Icon(icon, size: 12, color: chipColor),
           const SizedBox(width: 4),
           Text(
             label,
@@ -578,7 +578,7 @@ class _ReportPageState extends State<ReportPage>
               fontSize: 11,
               fontFamily: 'Literata',
               fontWeight: FontWeight.w600,
-              color: color,
+              color: chipColor,
             ),
           ),
         ],
@@ -602,24 +602,24 @@ class _ReportPageState extends State<ReportPage>
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: _kGreen.withValues(alpha: 0.1),
+                      color: AppColors.action(context).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.filter_alt_outlined,
-                      color: _kGreen,
+                      color: AppColors.action(context),
                       size: 18,
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Advanced Filters',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Literata',
-                        color: _kGreen,
+                        color: AppColors.action(context),
                       ),
                     ),
                   ),
@@ -630,7 +630,7 @@ class _ReportPageState extends State<ReportPage>
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: _kGreen,
+                        color: AppColors.action(context),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Text(
@@ -762,7 +762,7 @@ class _ReportPageState extends State<ReportPage>
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: _kGreen,
+                    foregroundColor: AppColors.action(context),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -783,7 +783,7 @@ class _ReportPageState extends State<ReportPage>
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _kGreen,
+                    backgroundColor: AppColors.action(context),
                     foregroundColor: AppTheme.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -818,7 +818,7 @@ class _ReportPageState extends State<ReportPage>
           ),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: _kGreen,
+          backgroundColor: AppColors.action(context),
           foregroundColor: AppTheme.white,
           disabledBackgroundColor: AppTheme.grey300,
           shape: RoundedRectangleBorder(
@@ -842,7 +842,7 @@ class _ReportPageState extends State<ReportPage>
           Container(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
             decoration: BoxDecoration(
-              color: _kGreen.withValues(alpha: 0.06),
+              color: AppColors.action(context).withValues(alpha: 0.06),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(16),
               ),
@@ -852,12 +852,12 @@ class _ReportPageState extends State<ReportPage>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: _kGreen.withValues(alpha: 0.12),
+                    color: AppColors.action(context).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.analytics_outlined,
-                    color: _kGreen,
+                    color: AppColors.action(context),
                     size: 20,
                   ),
                 ),
@@ -866,13 +866,13 @@ class _ReportPageState extends State<ReportPage>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Report Summary',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                           fontFamily: 'Literata',
-                          color: _kGreen,
+                          color: AppColors.action(context),
                         ),
                       ),
                       Text(
@@ -934,7 +934,7 @@ class _ReportPageState extends State<ReportPage>
                       icon: Icons.point_of_sale_rounded,
                       label: 'Total Sales',
                       value: _fmtAmt(r.totalSalesAmount),
-                      color: _kGreen,
+                      color: AppColors.action(context),
                     ),
                   ],
                 ),
@@ -1058,17 +1058,17 @@ class _ReportPageState extends State<ReportPage>
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: _kGreen.withValues(alpha: 0.1),
+                  color: AppColors.action(context).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.picture_as_pdf_rounded,
-                  color: _kGreen,
+                  color: AppColors.action(context),
                   size: 18,
                 ),
               ),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1078,7 +1078,7 @@ class _ReportPageState extends State<ReportPage>
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Literata',
-                        color: _kGreen,
+                        color: AppColors.action(context),
                       ),
                     ),
                     Text(
@@ -1126,7 +1126,7 @@ class _ReportPageState extends State<ReportPage>
             child: _buildActionBtn(
               icon: Icons.print_rounded,
               label: 'Print / Preview',
-              color: _kGreen,
+              color: AppColors.action(context),
               onTap: _printReport,
               filled: false,
             ),
@@ -1212,22 +1212,22 @@ class _ReportPageState extends State<ReportPage>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(
+              SizedBox(
                 width: 40,
                 height: 40,
                 child: CircularProgressIndicator(
                   strokeWidth: 3,
-                  valueColor: AlwaysStoppedAnimation(_kGreen),
+                  valueColor: AlwaysStoppedAnimation(AppColors.action(context)),
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Generating Report...',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   fontFamily: 'Literata',
-                  color: _kGreen,
+                  color: AppColors.action(context),
                 ),
               ),
               const SizedBox(height: 4),
@@ -1296,7 +1296,7 @@ class _ReportPageState extends State<ReportPage>
               style: TextStyle(
                 fontSize: 13,
                 fontFamily: 'Literata',
-                color: hasValue ? _kGreen : AppTheme.grey,
+                color: hasValue ? AppColors.action(context) : AppTheme.grey,
                 fontWeight: hasValue ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
@@ -1319,16 +1319,16 @@ class _ReportPageState extends State<ReportPage>
         duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: active ? _kGreen.withValues(alpha: 0.12) : AppColors.chipFill(context),
+          color: active ? AppColors.action(context).withValues(alpha: 0.12) : AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: active ? _kGreen.withValues(alpha: 0.4) : AppTheme.grey300,
+            color: active ? AppColors.action(context).withValues(alpha: 0.4) : AppTheme.grey300,
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: active ? _kGreen : AppTheme.grey600),
+            Icon(icon, size: 14, color: active ? AppColors.action(context) : AppTheme.grey600),
             const SizedBox(width: 6),
             Text(
               label,
@@ -1336,7 +1336,7 @@ class _ReportPageState extends State<ReportPage>
                 fontSize: 12,
                 fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                 fontFamily: 'Literata',
-                color: active ? _kGreen : AppTheme.grey700,
+                color: active ? AppColors.action(context) : AppTheme.grey700,
               ),
             ),
           ],
@@ -1373,7 +1373,7 @@ class _ReportPageState extends State<ReportPage>
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: _kGreen, width: 2),
+            borderSide: BorderSide(color: AppColors.action(context), width: 2),
           ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 10,
@@ -1439,14 +1439,14 @@ class _ReportPageState extends State<ReportPage>
                   children: [
                     Row(
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: Text(
                             'Select Product',
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'Literata',
-                              color: _kGreen,
+                              color: AppColors.action(context),
                             ),
                           ),
                         ),
@@ -1525,7 +1525,7 @@ class _ReportPageState extends State<ReportPage>
                             ),
                             leading: CircleAvatar(
                               backgroundColor: selected
-                                  ? _kGreen
+                                  ? AppColors.action(context)
                                   : AppColors.border(context),
                               radius: 18,
                               child: Text(
@@ -1548,7 +1548,7 @@ class _ReportPageState extends State<ReportPage>
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
-                                color: selected ? _kGreen : AppTheme.black87,
+                                color: selected ? AppColors.action(context) : AppTheme.black87,
                               ),
                             ),
                             subtitle: p.companyName.isNotEmpty
@@ -1562,7 +1562,7 @@ class _ReportPageState extends State<ReportPage>
                                   )
                                 : null,
                             trailing: selected
-                                ? const Icon(Icons.check_circle, color: _kGreen)
+                                ? Icon(Icons.check_circle, color: AppColors.action(context))
                                 : null,
                             onTap: () {
                               setState(() => _selectedProduct = p);
@@ -1606,14 +1606,14 @@ class _ReportPageState extends State<ReportPage>
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                 child: Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Select Supplier',
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w700,
                           fontFamily: 'Literata',
-                          color: _kGreen,
+                          color: AppColors.action(context),
                         ),
                       ),
                     ),
@@ -1639,8 +1639,8 @@ class _ReportPageState extends State<ReportPage>
               const Divider(height: 1),
               Expanded(
                 child: _isLoadingDropdowns
-                    ? const Center(
-                        child: CircularProgressIndicator(color: _kGreen),
+                    ? Center(
+                        child: CircularProgressIndicator(color: AppColors.action(context)),
                       )
                     : _suppliers.isEmpty
                     ? Center(
@@ -1677,7 +1677,7 @@ class _ReportPageState extends State<ReportPage>
                             ),
                             leading: CircleAvatar(
                               backgroundColor: selected
-                                  ? _kGreen
+                                  ? AppColors.action(context)
                                   : AppColors.border(context),
                               radius: 18,
                               child: Text(
@@ -1700,7 +1700,7 @@ class _ReportPageState extends State<ReportPage>
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
-                                color: selected ? _kGreen : AppTheme.black87,
+                                color: selected ? AppColors.action(context) : AppTheme.black87,
                               ),
                             ),
                             subtitle: Text(
@@ -1712,7 +1712,7 @@ class _ReportPageState extends State<ReportPage>
                               ),
                             ),
                             trailing: selected
-                                ? const Icon(Icons.check_circle, color: _kGreen)
+                                ? Icon(Icons.check_circle, color: AppColors.action(context))
                                 : null,
                             onTap: () {
                               setState(() => _selectedSupplier = s);

@@ -37,7 +37,7 @@ class QuotationProductsPanel extends StatefulWidget {
 }
 
 class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
-  static const _primary = AppTheme.primary;
+  Color get _primary => AppColors.action(context);
   final _uuid = const Uuid();
 
   final _indexNoController = TextEditingController();
@@ -436,7 +436,7 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (_isLoadingProducts)
-          const Padding(
+          Padding(
             padding: EdgeInsets.all(16),
             child: Center(
               child: CircularProgressIndicator(color: _primary),
@@ -529,7 +529,7 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
         ),
         const SizedBox(width: 10),
         Material(
-          color: AppTheme.primary,
+          color: AppColors.action(context),
           borderRadius: BorderRadius.circular(14),
           child: InkWell(
             onTap: _showBarcodeScanner,

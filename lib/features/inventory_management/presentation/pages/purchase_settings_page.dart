@@ -81,7 +81,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                     // Date Fields Section
                     _buildSectionCard(
                       icon: Icons.calendar_month_rounded,
-                      iconColor: AppTheme.primary,
+                      iconColor: AppColors.action(context),
                       title: 'Date Fields',
                       subtitle:
                           'Control date field visibility on purchase form',
@@ -244,8 +244,8 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            AppTheme.primary.withValues(alpha: 0.05),
-                            AppTheme.primary.withValues(alpha: 0.02),
+                            AppColors.action(context).withValues(alpha: 0.05),
+                            AppColors.action(context).withValues(alpha: 0.02),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(16),
@@ -258,7 +258,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                           Container(
                             padding: EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: AppTheme.primary.withValues(alpha: 0.1),
+                              color: AppColors.action(context).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
@@ -465,7 +465,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
             value: value,
             onChanged: onChanged,
             activeThumbColor: AppTheme.white,
-            activeTrackColor: AppTheme.primary,
+            activeTrackColor: AppColors.action(context),
             inactiveThumbColor: AppTheme.white,
             inactiveTrackColor: AppTheme.grey300,
             trackOutlineColor: WidgetStateProperty.all(AppTheme.transparent),
@@ -547,11 +547,11 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
             selected: isSelected,
             onSelected: (selected) =>
                 _handleUnitSelection(unit, selected, isDefault),
-            selectedColor: AppTheme.primary,
+            selectedColor: AppColors.action(context),
             checkmarkColor: AppTheme.white,
             backgroundColor: AppColors.chipFill(context),
             side: BorderSide(
-              color: isSelected ? AppTheme.primary : AppTheme.grey300,
+              color: isSelected ? AppColors.action(context) : AppTheme.grey300,
               width: isSelected ? 0 : 1,
             ),
             shape: RoundedRectangleBorder(
@@ -854,8 +854,8 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppTheme.primary,
-                    AppTheme.primary.withValues(alpha: 0.8),
+                    AppColors.action(context),
+                    AppColors.action(context).withValues(alpha: 0.8),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(12),
@@ -945,7 +945,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
               GlassyToast.show(context, '"$unitName" added successfully');
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
+              backgroundColor: AppColors.action(context),
               foregroundColor: AppTheme.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),

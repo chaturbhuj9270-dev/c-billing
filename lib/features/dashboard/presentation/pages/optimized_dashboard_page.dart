@@ -506,7 +506,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
+              backgroundColor: AppColors.action(context),
               foregroundColor: AppTheme.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -1535,7 +1535,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         colors: isDark
             ? AppColors.darkMetricGradient(0)
             : [
-                AppTheme.primary.withValues(alpha: 0.92),
+                AppColors.action(context).withValues(alpha: 0.92),
                 AppTheme.green800.withValues(alpha: 0.78),
               ],
       ),
@@ -2152,7 +2152,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              AppTheme.primary.withValues(alpha: 0.65),
+                              AppColors.action(context).withValues(alpha: 0.65),
                               AppTheme.paletteFF0D2B20.withValues(alpha: 0.75),
                             ],
                           ),

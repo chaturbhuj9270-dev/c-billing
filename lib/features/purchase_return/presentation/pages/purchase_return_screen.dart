@@ -10,6 +10,7 @@ import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../data/services/purchase_return_service.dart';
 import '../../domain/entities/purchase_return.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_tab_bar.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
@@ -406,17 +407,8 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
               ),
             ],
           ),
-          TabBar(
+          AppTabBar(
             controller: _tabController,
-            indicatorColor: AppTheme.primary,
-            indicatorWeight: 3,
-            labelColor: AppColors.primaryText(context),
-            unselectedLabelColor: AppColors.mutedText(context),
-            labelStyle: const TextStyle(
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
-            ),
             tabs: [
               Tab(text: _localizations.newReturn),
               Tab(text: _localizations.returnHistory),
@@ -520,7 +512,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                         fontFamily: 'Literata',
                         fontSize: 14,
                         color: _selectedSupplier != null
-                            ? AppTheme.primary
+                            ? AppColors.action(context)
                             : AppTheme.grey,
                         fontWeight: _selectedSupplier != null
                             ? FontWeight.w600
@@ -578,7 +570,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
       lastDate: DateTime.now(),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(primary: AppTheme.primary),
+          colorScheme: ColorScheme.light(primary: AppColors.action(context)),
         ),
         child: child!,
       ),
@@ -713,7 +705,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                             ),
                             leading: CircleAvatar(
                               backgroundColor: isSelected
-                                  ? AppTheme.primary
+                                  ? AppColors.action(context)
                                   : AppColors.border(context),
                               child: Text(
                                 (s['name'] as String).isNotEmpty
@@ -734,7 +726,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w600,
                                 color: isSelected
-                                    ? AppTheme.primary
+                                    ? AppColors.action(context)
                                     : AppTheme.black87,
                               ),
                             ),
@@ -1047,7 +1039,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                         fontFamily: 'Literata',
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: hasError ? AppTheme.red : AppTheme.primary,
+                        color: hasError ? AppTheme.red : AppColors.action(context),
                       ),
                       decoration: InputDecoration(
                         filled: true,
@@ -1412,8 +1404,8 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppTheme.primary.withValues(alpha: 0.08),
-            AppTheme.primary.withValues(alpha: 0.03),
+            AppColors.action(context).withValues(alpha: 0.08),
+            AppColors.action(context).withValues(alpha: 0.03),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -1507,7 +1499,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                 ? _showConfirmationDialog
                 : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
+              backgroundColor: AppColors.action(context),
               disabledBackgroundColor: AppTheme.grey300,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -1703,7 +1695,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(ctx, true),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
+                        backgroundColor: AppColors.action(context),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),

@@ -410,7 +410,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
                                 ? null
                                 : () => _saveCompany(ctx, setSheetState),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primary,
+                              backgroundColor: AppColors.action(context),
                               foregroundColor: AppTheme.white,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
@@ -770,7 +770,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
     Color? color,
   }) {
     return ListTile(
-      leading: Icon(icon, color: color ?? AppTheme.primary),
+      leading: Icon(icon, color: color ?? AppColors.action(context)),
       title: Text(
         label,
         style: TextStyle(

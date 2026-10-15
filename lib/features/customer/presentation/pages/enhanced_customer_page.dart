@@ -823,10 +823,10 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(28),
-                      color: AppTheme.primary,
+                      color: AppColors.action(context),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.primary.withValues(alpha: 0.28),
+                          color: AppColors.action(context).withValues(alpha: 0.28),
                           blurRadius: 18,
                           offset: const Offset(0, 6),
                         ),
@@ -1250,7 +1250,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                       child: ElevatedButton(
                         onPressed: _isSaving ? null : _saveCustomer,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primary,
+                          backgroundColor: AppColors.action(context),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -1401,7 +1401,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
         (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0.0;
     final isSynced = customer['isSynced'] as bool? ?? true;
 
-    const accentColor = AppTheme.primary;
+    final accentColor = AppColors.action(context);
     final initials = firstName.isNotEmpty ? firstName[0].toUpperCase() : 'C';
 
     return ClipRRect(
@@ -1691,7 +1691,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.isDark(context)
                   ? AppTheme.white.withValues(alpha: 0.1)
-                  : AppTheme.primary.withValues(alpha: 0.1),
+                  : AppColors.action(context).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -1699,7 +1699,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
               size: 18,
               color: AppColors.isDark(context)
                   ? AppTheme.white
-                  : AppTheme.primary,
+                  : AppColors.action(context),
             ),
           ),
           const SizedBox(width: 12),
@@ -1742,7 +1742,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
     bool isDestructive = false,
   }) {
     final isDark = AppColors.isDark(context);
-    final primaryFill = isDark ? AppTheme.white : AppTheme.primary;
+    final primaryFill = isDark ? AppTheme.white : AppColors.action(context);
     final onPrimary = isDark ? AppTheme.black : AppTheme.white;
     final destructiveFill = isDark
         ? AppTheme.red.withValues(alpha: 0.18)

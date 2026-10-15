@@ -408,9 +408,9 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
               child: CustomPaint(
-                foregroundPainter: const GlassBevelBorderPainter(
+                foregroundPainter: GlassBevelBorderPainter(
                   isDark: false,
-                  themeColor: AppTheme.primary,
+                  themeColor: AppColors.action(context),
                   radius: 28,
                   strokeWidth: 1.4,
                 ),
@@ -536,7 +536,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppTheme.headerDarkStart,
-                border: Border.all(color: AppTheme.primary, width: 1.6),
+                border: Border.all(color: AppColors.action(context), width: 1.6),
               ),
               child: Text(
                 initial,
@@ -627,7 +627,12 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         child: Row(
           children: [
-            _iconWell(item.icon, item.color),
+            _iconWell(
+              item.icon,
+              item.color == AppTheme.primary
+                  ? AppColors.action(context)
+                  : item.color,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -657,7 +662,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Row(
             children: [
-              _iconWell(Icons.fingerprint_rounded, AppTheme.primary),
+              _iconWell(Icons.fingerprint_rounded, AppColors.action(context)),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -675,7 +680,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                 value: _biometricLockEnabled,
                 onChanged: _toggleBiometricLock,
                 activeThumbColor: AppTheme.white,
-                activeTrackColor: AppTheme.primary,
+                activeTrackColor: AppColors.action(context),
                 inactiveThumbColor: AppColors.mutedText(context),
                 inactiveTrackColor: AppColors.chipFill(context),
               ),
@@ -1143,12 +1148,12 @@ class _SettingsDialogState extends State<_SettingsDialog> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: AppTheme.primary.withValues(alpha: 0.12),
+                            color: AppColors.action(context).withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.settings_rounded,
-                            color: AppTheme.primary,
+                            color: AppColors.action(context),
                             size: 24,
                           ),
                         ),
@@ -1181,13 +1186,13 @@ class _SettingsDialogState extends State<_SettingsDialog> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: AppTheme.primary.withValues(alpha: 0.12),
+                              color: AppColors.action(context).withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Icon(
                               Icons.fingerprint,
                               color: widget.canUseBiometrics
-                                  ? AppTheme.primary
+                                  ? AppColors.action(context)
                                   : AppColors.mutedText(context),
                               size: 24,
                             ),
@@ -1233,7 +1238,7 @@ class _SettingsDialogState extends State<_SettingsDialog> {
                                   }
                                 : null,
                             activeThumbColor: AppTheme.white,
-                            activeTrackColor: AppTheme.primary,
+                            activeTrackColor: AppColors.action(context),
                           ),
                         ],
                       ),
@@ -1244,8 +1249,8 @@ class _SettingsDialogState extends State<_SettingsDialog> {
                         onPressed: () => Navigator.of(context).pop(),
                         child: Text(
                           loc.close,
-                          style: const TextStyle(
-                            color: AppTheme.primary,
+                          style: TextStyle(
+                            color: AppColors.action(context),
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w600,
                           ),

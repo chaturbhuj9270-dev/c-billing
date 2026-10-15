@@ -480,7 +480,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                 Navigator.of(context).pop(true);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
+                backgroundColor: AppColors.action(context),
                 foregroundColor: AppTheme.white,
               ),
               child: const Text('Save'),
@@ -720,7 +720,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                   icon: Icon(Icons.refresh, size: 18),
                   label: Text('Change'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.primary,
+                    foregroundColor: AppColors.action(context),
                     side: BorderSide(color: AppColors.accent(context)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -861,7 +861,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                   icon: Icon(Icons.refresh, size: 18),
                   label: Text('Change'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.primary,
+                    foregroundColor: AppColors.action(context),
                     side: BorderSide(color: AppColors.accent(context)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -999,7 +999,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                   icon: Icon(Icons.refresh, size: 18),
                   label: Text('Change'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.primary,
+                    foregroundColor: AppColors.action(context),
                     side: BorderSide(color: AppColors.accent(context)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -1420,7 +1420,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _saveShopDetails,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
+                    backgroundColor: AppColors.action(context),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

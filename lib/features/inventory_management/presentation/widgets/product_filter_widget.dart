@@ -302,11 +302,11 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: hasSelection
-              ? AppTheme.primary.withValues(alpha: 0.1)
+              ? AppColors.action(context).withValues(alpha: 0.1)
               : AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: hasSelection ? AppTheme.primary : AppTheme.grey300,
+            color: hasSelection ? AppColors.action(context) : AppTheme.grey300,
             width: 1,
           ),
         ),
@@ -316,7 +316,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
             Icon(
               Icons.category_rounded,
               size: 16,
-              color: hasSelection ? AppTheme.primary : AppTheme.grey600,
+              color: hasSelection ? AppColors.action(context) : AppTheme.grey600,
             ),
             const SizedBox(width: 6),
             ConstrainedBox(
@@ -328,7 +328,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                   color: hasSelection
-                      ? AppTheme.primary
+                      ? AppColors.action(context)
                       : AppTheme.grey700,
                 ),
                 maxLines: 1,
@@ -339,7 +339,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
             Icon(
               Icons.arrow_drop_down_rounded,
               size: 18,
-              color: hasSelection ? AppTheme.primary : AppTheme.grey600,
+              color: hasSelection ? AppColors.action(context) : AppTheme.grey600,
             ),
           ],
         ),
@@ -387,7 +387,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                 leading: Icon(
                   Icons.all_inclusive_rounded,
                   color: widget.selectedCategory == null
-                      ? AppTheme.primary
+                      ? AppColors.action(context)
                       : AppTheme.grey600,
                 ),
                 title: Text(
@@ -398,7 +398,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                         ? FontWeight.w700
                         : FontWeight.w500,
                     color: widget.selectedCategory == null
-                        ? AppTheme.primary
+                        ? AppColors.action(context)
                         : AppTheme.grey800,
                   ),
                 ),
@@ -422,7 +422,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                       leading: Icon(
                         Icons.label_rounded,
                         color: isSelected
-                            ? AppTheme.primary
+                            ? AppColors.action(context)
                             : AppTheme.grey600,
                       ),
                       title: Text(
@@ -433,7 +433,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                               ? FontWeight.w700
                               : FontWeight.w500,
                           color: isSelected
-                              ? AppTheme.primary
+                              ? AppColors.action(context)
                               : AppTheme.grey800,
                         ),
                       ),

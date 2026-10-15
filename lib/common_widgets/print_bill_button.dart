@@ -125,14 +125,14 @@ class _PrintBillButtonState extends State<PrintBillButton> {
             onPressed: _isPrinting ? null : _handlePrint,
             style: ElevatedButton.styleFrom(
               backgroundColor:
-                  widget.backgroundColor ?? AppTheme.primary,
+                  widget.backgroundColor ?? AppColors.action(context),
               foregroundColor: widget.foregroundColor ?? AppTheme.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
               disabledBackgroundColor:
-                  (widget.backgroundColor ?? AppTheme.primary)
+                  (widget.backgroundColor ?? AppColors.action(context))
                       .withValues(alpha: 0.5),
             ),
             child: _isPrinting
@@ -211,17 +211,17 @@ class _PrintBillButtonState extends State<PrintBillButton> {
     return IconButton(
       onPressed: _isPrinting ? null : _handlePrint,
       icon: _isPrinting
-          ? const SizedBox(
+          ? SizedBox(
               width: 20,
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.action(context)),
               ),
             )
           : Icon(
               widget.icon ?? Icons.print,
-              color: widget.backgroundColor ?? AppTheme.primary,
+              color: widget.backgroundColor ?? AppColors.action(context),
             ),
       tooltip: widget.buttonText ?? 'Print Bill',
     );

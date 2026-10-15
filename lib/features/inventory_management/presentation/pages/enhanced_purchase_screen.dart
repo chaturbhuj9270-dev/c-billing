@@ -848,7 +848,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
+                  backgroundColor: AppColors.action(context),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -978,7 +978,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
   /// Build a read-only custom field display widget
   Widget _buildCustomFieldDisplay(CustomColumn column, dynamic value) {
-    final primaryColor = AppTheme.primary;
+    final primaryColor = AppColors.action(context);
     String displayValue = '';
     IconData icon = Icons.text_fields_rounded;
 
@@ -1421,10 +1421,10 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(28),
-                      color: AppTheme.primary,
+                      color: AppColors.action(context),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.primary.withValues(alpha: 0.28),
+                          color: AppColors.action(context).withValues(alpha: 0.28),
                           blurRadius: 18,
                           offset: const Offset(0, 6),
                         ),
@@ -2023,7 +2023,7 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
                           icon: Icon(Icons.edit_rounded, size: 18),
                           label: Text('Edit'),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: AppTheme.primary,
+                            foregroundColor: AppColors.action(context),
                             side: BorderSide(color: AppColors.accent(context)),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
@@ -2105,7 +2105,7 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
               fontFamily: 'Literata',
               fontWeight: highlight ? FontWeight.w800 : FontWeight.w600,
               fontSize: highlight ? 16 : 14,
-              color: highlight ? AppTheme.primary : AppTheme.grey800,
+              color: highlight ? AppColors.action(context) : AppTheme.grey800,
             ),
           ),
         ],

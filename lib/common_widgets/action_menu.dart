@@ -39,7 +39,7 @@ class ActionMenu extends StatelessWidget {
       entries.add(
         _MenuEntry(
           icon: Icons.open_in_full_rounded,
-          color: AppTheme.primary,
+          color: AppColors.action(context),
           label: 'Expand',
           onTap: onExpandTap!,
         ),
@@ -59,7 +59,7 @@ class ActionMenu extends StatelessWidget {
       entries.add(
         _MenuEntry(
           icon: Icons.settings_outlined,
-          color: AppTheme.primary,
+          color: AppColors.action(context),
           label: localizations.settings,
           onTap: onSettingsTap!,
         ),

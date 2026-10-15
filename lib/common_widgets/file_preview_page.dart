@@ -576,7 +576,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             ),
             style: TextButton.styleFrom(
               foregroundColor: _zoomLevel != 1.0
-                  ? AppTheme.primary
+                  ? AppColors.action(context)
                   : AppTheme.grey,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             ),
@@ -600,14 +600,14 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: isEnabled
-                ? AppTheme.primary.withValues(alpha: 0.1)
+                ? AppColors.action(context).withValues(alpha: 0.1)
                 : AppTheme.grey.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
             icon,
             size: 20,
-            color: isEnabled ? AppTheme.primary : AppTheme.grey,
+            color: isEnabled ? AppColors.action(context) : AppTheme.grey,
           ),
         ),
       ),
@@ -728,7 +728,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
+                backgroundColor: AppColors.action(context),
                 foregroundColor: AppTheme.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
@@ -801,7 +801,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               icon: const Icon(Icons.refresh_rounded, size: 18),
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
+                backgroundColor: AppColors.action(context),
                 foregroundColor: AppTheme.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
@@ -912,7 +912,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppTheme.primary.withValues(alpha: 0.1),
+                    AppColors.action(context).withValues(alpha: 0.1),
                     AppTheme.paletteFF2D6A4F.withValues(alpha: 0.1),
                   ],
                   begin: Alignment.topLeft,
@@ -938,8 +938,8 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                       value: _totalPages > 0 ? progress : null,
                       minHeight: 8,
                       backgroundColor: AppColors.border(context),
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppTheme.primary,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.action(context),
                       ),
                     ),
                   ),
@@ -1391,7 +1391,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                                             ? FontWeight.w600
                                             : FontWeight.normal,
                                         color: isHeader
-                                            ? AppTheme.primary
+                                            ? AppColors.action(context)
                                             : AppTheme.paletteFF333333,
                                       ),
                                       maxLines: 1,
@@ -1562,8 +1562,8 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     return ElevatedButton(
       onPressed: isLoading ? null : onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: isPrimary ? AppTheme.primary : AppTheme.white,
-        foregroundColor: isPrimary ? AppTheme.white : AppTheme.primary,
+        backgroundColor: isPrimary ? AppColors.action(context) : AppTheme.white,
+        foregroundColor: isPrimary ? AppTheme.white : AppColors.action(context),
         elevation: isPrimary ? 2 : 0,
         padding: EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(
@@ -1579,7 +1579,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               width: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: isPrimary ? AppTheme.white : AppTheme.primary,
+                color: isPrimary ? AppTheme.white : AppColors.action(context),
               ),
             )
           : Row(

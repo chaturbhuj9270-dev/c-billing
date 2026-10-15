@@ -153,7 +153,7 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: AppTheme.primary.withValues(alpha: 0.1),
+                            color: AppColors.action(context).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Center(
@@ -194,8 +194,8 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
                     Switch(
                       value: _isBiometricEnabled,
                       onChanged: _toggleBiometric,
-                      activeThumbColor: AppTheme.primary,
-                      activeTrackColor: AppTheme.primary.withValues(alpha: 0.3),
+                      activeThumbColor: AppColors.action(context),
+                      activeTrackColor: AppColors.action(context).withValues(alpha: 0.3),
                     ),
                   ],
                 ),

@@ -66,7 +66,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddColumnDialog(),
-        backgroundColor: AppTheme.primary,
+        backgroundColor: AppColors.action(context),
         icon: const Icon(Icons.add_rounded, color: AppTheme.white),
         label: const Text(
           'Add Column',
@@ -130,7 +130,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
           ElevatedButton.icon(
             onPressed: () => _showAddColumnDialog(),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
+              backgroundColor: AppColors.action(context),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -163,7 +163,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
           color: column.isActive
-              ? AppTheme.primary.withValues(alpha: 0.2)
+              ? AppColors.action(context).withValues(alpha: 0.2)
               : AppTheme.grey.withValues(alpha: 0.2),
           width: 1,
         ),
@@ -361,7 +361,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
       case CustomColumnType.decimal:
         return AppTheme.coral;
       case CustomColumnType.date:
-        return AppTheme.primary;
+        return AppColors.action(context);
       case CustomColumnType.dropdown:
         return AppTheme.purple;
       case CustomColumnType.boolean:
@@ -633,7 +633,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                         color: AppTheme.grey600,
                       ),
                     ),
-                    activeThumbColor: AppTheme.primary,
+                    activeThumbColor: AppColors.action(context),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ],
@@ -705,7 +705,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                             : 'Column added');
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
+                  backgroundColor: AppColors.action(context),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),

@@ -387,7 +387,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                             await _openPreviewScreen(selectedFormat);
                           },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primary,
+                      backgroundColor: AppColors.action(context),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -856,8 +856,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppTheme.primary.withValues(alpha: 0.06),
-                    AppTheme.primary.withValues(alpha: 0.02),
+                    AppColors.action(context).withValues(alpha: 0.06),
+                    AppColors.action(context).withValues(alpha: 0.02),
                   ],
                 ),
               ),
@@ -1105,7 +1105,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                                   ? AppTheme.red.withValues(alpha: 0.1)
                                   : isLowBatch
                                   ? AppTheme.orange.withValues(alpha: 0.1)
-                                  : AppTheme.primary.withValues(alpha: 0.08),
+                                  : AppColors.action(context).withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -1120,7 +1120,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                                     ? AppTheme.red
                                     : isLowBatch
                                     ? AppTheme.orange
-                                    : AppTheme.primary,
+                                    : AppColors.action(context),
                               ),
                             ),
                           ),
@@ -1417,7 +1417,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
             ),
           Expanded(
             child: _isLoading
-          ? Center(child: CircularProgressIndicator(color: AppTheme.primary))
+          ? Center(child: CircularProgressIndicator(color: AppColors.action(context)))
           : CustomScrollView(
               slivers: [
                 SliverToBoxAdapter(child: _buildPageHeader()),
@@ -1615,7 +1615,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           _filterChip(
             label: _localizations.all,
             count: total,
-            color: AppTheme.primary,
+            color: AppColors.action(context),
             selected: _stockFilter == 'all',
             onTap: () => _onStockFilterChanged('all'),
           ),
@@ -1623,7 +1623,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           _filterChip(
             label: _localizations.inStock,
             count: inStock,
-            color: AppTheme.primary,
+            color: AppColors.action(context),
             selected: _stockFilter == 'in_stock',
             onTap: () => _onStockFilterChanged('in_stock'),
           ),
@@ -1750,7 +1750,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: AppTheme.primary, width: 1.4),
+            borderSide: BorderSide(color: AppColors.action(context), width: 1.4),
           ),
         ),
       ),

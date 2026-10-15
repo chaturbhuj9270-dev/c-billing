@@ -254,7 +254,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                               borderRadius: BorderRadius.circular(22),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppTheme.primary.withValues(alpha: 0.28),
+                                  color: AppColors.action(context).withValues(alpha: 0.28),
                                   blurRadius: 36,
                                   spreadRadius: 4,
                                 ),
@@ -457,7 +457,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                       child: Text(
                                         _localizations.signIn,
                                         style: TextStyle(
-                                          color: AppTheme.primary,
+                                          color: AppColors.action(context),
                                           fontSize: 14,
                                           fontWeight: FontWeight.w600,
                                           fontFamily: 'Literata',
@@ -610,7 +610,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primary.withValues(alpha: 0.28),
+            color: AppColors.action(context).withValues(alpha: 0.28),
             blurRadius: 22,
             offset: const Offset(0, 8),
           ),
@@ -619,7 +619,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
       child: ElevatedButton(
         onPressed: _submit,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.primary,
+          backgroundColor: AppColors.action(context),
           foregroundColor: AppTheme.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(

@@ -5,6 +5,7 @@ import '../../../event_order/offline/controllers/event_order_offline_controller.
 import '../../../event_order/offline/entities/event_order_entity.dart';
 import '../../../event_order/domain/entities/event_order.dart';
 import 'package:intl/intl.dart';
+import 'package:c_billing/common_widgets/app_tab_bar.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
@@ -423,41 +424,10 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
   }
 
   Widget _buildTabBar() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16),
-      padding: EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: TabBar(
-        controller: _tabController,
-        labelColor: AppTheme.white,
-        unselectedLabelColor: AppTheme.primary,
-        indicator: BoxDecoration(
-          color: AppColors.accent(context),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        indicatorSize: TabBarIndicatorSize.tab,
-        dividerColor: AppTheme.transparent,
-        labelStyle: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          fontFamily: 'Literata',
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          fontFamily: 'Literata',
-        ),
-        tabs: [
+    return AppTabBar(
+      controller: _tabController,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      tabs: [
           Tab(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -478,8 +448,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
               ],
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 

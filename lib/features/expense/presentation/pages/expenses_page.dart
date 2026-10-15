@@ -263,8 +263,8 @@ class _ExpensesPageState extends State<ExpensesPage>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppTheme.primary,
-                  AppTheme.primary.withValues(alpha: 0.85),
+                  AppColors.action(context),
+                  AppColors.action(context).withValues(alpha: 0.85),
                 ],
               ),
               borderRadius: BorderRadius.circular(20),
@@ -397,12 +397,12 @@ class _ExpensesPageState extends State<ExpensesPage>
               padding: EdgeInsets.all(cardPadding),
               decoration: BoxDecoration(
                 color: _selectedCategory == category
-                    ? AppTheme.primary.withValues(alpha: 0.1)
+                    ? AppColors.action(context).withValues(alpha: 0.1)
                     : AppTheme.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: _selectedCategory == category
-                      ? AppTheme.primary
+                      ? AppColors.action(context)
                       : AppTheme.grey200,
                   width: _selectedCategory == category ? 2 : 1,
                 ),
@@ -724,7 +724,7 @@ class _ExpensesPageState extends State<ExpensesPage>
             ElevatedButton.icon(
               onPressed: _showAddExpenseSheet,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
+                backgroundColor: AppColors.action(context),
                 foregroundColor: AppTheme.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
@@ -753,7 +753,7 @@ class _ExpensesPageState extends State<ExpensesPage>
   Widget _buildAddExpenseFAB() {
     return FloatingActionButton.extended(
       onPressed: _showAddExpenseSheet,
-      backgroundColor: AppTheme.primary,
+      backgroundColor: AppColors.action(context),
       elevation: 4,
       icon: const Icon(Icons.add_rounded, color: AppTheme.white),
       label: const Text(
@@ -977,11 +977,11 @@ class _CategoryFilterChip extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primary.withValues(alpha: 0.1)
+              ? AppColors.action(context).withValues(alpha: 0.1)
               : AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? AppTheme.primary : AppTheme.grey200,
+            color: isSelected ? AppColors.action(context) : AppTheme.grey200,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -995,7 +995,7 @@ class _CategoryFilterChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: isSelected ? AppTheme.primary : AppTheme.grey600,
+                color: isSelected ? AppColors.action(context) : AppTheme.grey600,
                 fontFamily: 'Literata',
               ),
             ),
@@ -1349,12 +1349,12 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                             ),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? AppTheme.primary
+                                  ? AppColors.action(context)
                                   : AppColors.chipFill(context),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: isSelected
-                                    ? AppTheme.primary
+                                    ? AppColors.action(context)
                                     : AppTheme.grey300,
                               ),
                             ),
@@ -1435,7 +1435,7 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                             ),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? AppTheme.primary
+                                  ? AppColors.action(context)
                                   : AppColors.chipFill(context),
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -1505,7 +1505,7 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                         Switch(
                           value: _isRecurring,
                           onChanged: (v) => setState(() => _isRecurring = v),
-                          activeThumbColor: AppTheme.primary,
+                          activeThumbColor: AppColors.action(context),
                         ),
                       ],
                     ),
@@ -1518,7 +1518,7 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                       child: ElevatedButton(
                         onPressed: _saveExpense,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primary,
+                          backgroundColor: AppColors.action(context),
                           foregroundColor: AppTheme.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
@@ -1591,8 +1591,8 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppTheme.primary,
+            colorScheme: ColorScheme.light(
+              primary: AppColors.action(context),
               onPrimary: AppTheme.white,
             ),
           ),

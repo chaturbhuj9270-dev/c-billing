@@ -213,7 +213,7 @@ class BillItemsLineList extends StatelessWidget {
                                   fontFamily: 'Literata',
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: AppTheme.primary.withValues(alpha: 0.8),
+                                  color: AppColors.action(context).withValues(alpha: 0.8),
                                 ),
                               ),
                               const SizedBox(width: 3),
@@ -294,7 +294,7 @@ class BillItemsLineList extends StatelessWidget {
                             width: 28,
                             height: 30,
                             decoration: BoxDecoration(
-                              color: AppTheme.primary.withValues(alpha: 0.08),
+                              color: AppColors.action(context).withValues(alpha: 0.08),
                               borderRadius: BorderRadius.only(
                                 topLeft: Radius.circular(7),
                                 bottomLeft: Radius.circular(7),
@@ -365,7 +365,7 @@ class BillItemsLineList extends StatelessWidget {
                             height: 30,
                             decoration: BoxDecoration(
                               color: item.quantity < maxStock
-                                  ? AppTheme.primary.withValues(alpha: 0.08)
+                                  ? AppColors.action(context).withValues(alpha: 0.08)
                                   : AppColors.chipFill(context),
                               borderRadius: const BorderRadius.only(
                                 topRight: Radius.circular(7),
@@ -376,7 +376,7 @@ class BillItemsLineList extends StatelessWidget {
                               Icons.add,
                               size: 14,
                               color: item.quantity < maxStock
-                                  ? AppTheme.primary
+                                  ? AppColors.action(context)
                                   : AppTheme.grey400,
                             ),
                           ),
@@ -666,7 +666,7 @@ void showEditBillItemSellPriceDialog({
                     }
                   : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
+                backgroundColor: AppColors.action(context),
                 foregroundColor: AppTheme.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

@@ -73,7 +73,7 @@ class _PurchaseReportSettingsPageState
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
+              backgroundColor: AppColors.action(context),
             ),
             child: const Text(
               'Reset',
@@ -275,7 +275,7 @@ class _PurchaseReportSettingsPageState
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: column.isVisible
-              ? AppTheme.primary.withValues(alpha: 0.3)
+              ? AppColors.action(context).withValues(alpha: 0.3)
               : AppColors.border(context)!,
           width: column.isVisible ? 1.5 : 1,
         ),
@@ -296,14 +296,14 @@ class _PurchaseReportSettingsPageState
           height: 40,
           decoration: BoxDecoration(
             color: column.isVisible
-                ? AppTheme.primary.withValues(alpha: 0.1)
+                ? AppColors.action(context).withValues(alpha: 0.1)
                 : AppColors.chipFill(context),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
             _getColumnIcon(column.id),
             color: column.isVisible
-                ? AppTheme.primary
+                ? AppColors.action(context)
                 : AppTheme.grey400,
             size: 20,
           ),
@@ -328,8 +328,8 @@ class _PurchaseReportSettingsPageState
         trailing: Switch(
           value: column.isVisible,
           onChanged: (value) => _toggleColumn(column.id, value),
-          activeThumbColor: AppTheme.primary,
-          activeTrackColor: AppTheme.primary.withValues(alpha: 0.3),
+          activeThumbColor: AppColors.action(context),
+          activeTrackColor: AppColors.action(context).withValues(alpha: 0.3),
         ),
       ),
     );

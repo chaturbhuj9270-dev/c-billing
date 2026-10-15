@@ -219,8 +219,8 @@ class _CompanyCard extends StatelessWidget {
     final isActive = company['isActive'] as bool? ?? true;
     final isSynced = company['isSynced'] as bool? ?? true;
 
-    const accentColors = [
-      AppTheme.primary,
+    final accentColors = [
+      AppColors.action(context),
       AppTheme.primaryDark,
       AppTheme.paletteFF2C6F5E,
       AppTheme.paletteFF1A5E52,

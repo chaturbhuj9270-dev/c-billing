@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../../core/services/event_order_settings_service.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_tab_bar.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
@@ -55,7 +56,7 @@ class _EventOrderCustomColumnsPageState
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddColumnDialog(),
-        backgroundColor: AppTheme.primary,
+        backgroundColor: AppColors.action(context),
         icon: const Icon(Icons.add_rounded, color: AppTheme.white),
         label: const Text(
           'Add Column',
@@ -77,41 +78,9 @@ class _EventOrderCustomColumnsPageState
   }
 
   Widget _buildTabBar() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: TabBar(
-        controller: _tabController,
-        labelColor: AppTheme.white,
-        unselectedLabelColor: AppTheme.primary,
-        labelStyle: TextStyle(
-          fontFamily: 'Literata',
-          fontWeight: FontWeight.w600,
-          fontSize: 14,
-        ),
-        unselectedLabelStyle: TextStyle(
-          fontFamily: 'Literata',
-          fontWeight: FontWeight.w500,
-          fontSize: 14,
-        ),
-        indicator: BoxDecoration(
-          color: AppColors.accent(context),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        indicatorSize: TabBarIndicatorSize.tab,
-        dividerColor: AppTheme.transparent,
-        padding: const EdgeInsets.all(4),
-        tabs: const [
+    return AppTabBar(
+      controller: _tabController,
+      tabs: const [
           Tab(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -132,8 +101,7 @@ class _EventOrderCustomColumnsPageState
               ],
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 
@@ -220,7 +188,7 @@ class _EventOrderCustomColumnsPageState
           ElevatedButton.icon(
             onPressed: () => _showAddColumnDialog(preselectedTarget: target),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
+              backgroundColor: AppColors.action(context),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -253,7 +221,7 @@ class _EventOrderCustomColumnsPageState
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
           color: column.isActive
-              ? AppTheme.primary.withValues(alpha: 0.2)
+              ? AppColors.action(context).withValues(alpha: 0.2)
               : AppTheme.grey.withValues(alpha: 0.2),
           width: 1,
         ),
@@ -454,7 +422,7 @@ class _EventOrderCustomColumnsPageState
       case EventCustomColumnType.decimal:
         return AppTheme.coral;
       case EventCustomColumnType.date:
-        return AppTheme.primary;
+        return AppColors.action(context);
       case EventCustomColumnType.dropdown:
         return AppTheme.purple;
       case EventCustomColumnType.boolean:
@@ -793,7 +761,7 @@ class _EventOrderCustomColumnsPageState
                         color: AppTheme.grey600,
                       ),
                     ),
-                    activeThumbColor: AppTheme.primary,
+                    activeThumbColor: AppColors.action(context),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ],
@@ -866,7 +834,7 @@ class _EventOrderCustomColumnsPageState
                             : 'Column added');
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
+                  backgroundColor: AppColors.action(context),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),

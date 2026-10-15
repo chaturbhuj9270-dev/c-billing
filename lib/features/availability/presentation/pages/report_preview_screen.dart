@@ -293,8 +293,8 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.primary.withValues(alpha: 0.08),
-            AppTheme.primary.withValues(alpha: 0.04),
+            AppColors.action(context).withValues(alpha: 0.08),
+            AppColors.action(context).withValues(alpha: 0.04),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -311,12 +311,12 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                color: _allSelected ? AppTheme.primary : AppTheme.white,
+                color: _allSelected ? AppColors.action(context) : AppTheme.white,
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
                   color: _allSelected
-                      ? AppTheme.primary
-                      : AppTheme.primary.withValues(alpha: 0.3),
+                      ? AppColors.action(context)
+                      : AppColors.action(context).withValues(alpha: 0.3),
                   width: 2,
                 ),
               ),
@@ -488,14 +488,14 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
-                ? AppTheme.primary.withValues(alpha: 0.4)
+                ? AppColors.action(context).withValues(alpha: 0.4)
                 : AppTheme.grey.withValues(alpha: 0.15),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
               color: isSelected
-                  ? AppTheme.primary.withValues(alpha: 0.08)
+                  ? AppColors.action(context).withValues(alpha: 0.08)
                   : AppTheme.black.withValues(alpha: 0.03),
               blurRadius: isSelected ? 12 : 6,
               offset: const Offset(0, 3),
@@ -512,7 +512,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppTheme.primary.withValues(alpha: 0.04)
+                      ? AppColors.action(context).withValues(alpha: 0.04)
                       : AppTheme.grey.withValues(alpha: 0.02),
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(15),
@@ -526,12 +526,12 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                       height: 28,
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppTheme.primary
+                            ? AppColors.action(context)
                             : AppTheme.transparent,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: isSelected
-                              ? AppTheme.primary
+                              ? AppColors.action(context)
                               : AppTheme.grey.withValues(alpha: 0.3),
                           width: 2,
                         ),
@@ -691,7 +691,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                             _buildPriceChip(
                               'Value',
                               '₹${numberFormat.format(product.getStockValue())}',
-                              AppTheme.primary,
+                              AppColors.action(context),
                             ),
                         ]),
                       ),
@@ -1051,15 +1051,15 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                           ? LinearGradient(
                               colors: [AppTheme.grey400, AppTheme.grey],
                             )
-                          : const LinearGradient(
-                              colors: [AppTheme.paletteFF2E7D4A, AppTheme.primary],
+                          : LinearGradient(
+                              colors: [AppTheme.paletteFF2E7D4A, AppColors.action(context)],
                             ),
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: _isGenerating || _noneSelected
                           ? null
                           : [
                               BoxShadow(
-                                color: AppTheme.primary.withValues(alpha: 0.4),
+                                color: AppColors.action(context).withValues(alpha: 0.4),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),

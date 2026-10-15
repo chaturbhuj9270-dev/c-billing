@@ -244,12 +244,12 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: widget.selectedSupplierId != null
-              ? AppTheme.primary.withValues(alpha: 0.1)
+              ? AppColors.action(context).withValues(alpha: 0.1)
               : AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: widget.selectedSupplierId != null
-                ? AppTheme.primary
+                ? AppColors.action(context)
                 : AppTheme.grey300,
             width: 1,
           ),
@@ -261,7 +261,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
               Icons.person_outline_rounded,
               size: 16,
               color: widget.selectedSupplierId != null
-                  ? AppTheme.primary
+                  ? AppColors.action(context)
                   : AppTheme.grey600,
             ),
             const SizedBox(width: 6),
@@ -274,7 +274,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                   color: widget.selectedSupplierId != null
-                      ? AppTheme.primary
+                      ? AppColors.action(context)
                       : AppTheme.grey700,
                 ),
                 maxLines: 1,
@@ -286,7 +286,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
               Icons.arrow_drop_down_rounded,
               size: 20,
               color: widget.selectedSupplierId != null
-                  ? AppTheme.primary
+                  ? AppColors.action(context)
                   : AppTheme.grey600,
             ),
           ],
@@ -589,12 +589,12 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                     padding: EdgeInsets.all(12),
                                     decoration: BoxDecoration(
                                       color: isSelected
-                                          ? AppTheme.primary.withValues(alpha: 0.1)
+                                          ? AppColors.action(context).withValues(alpha: 0.1)
                                           : AppColors.scaffold(context),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: isSelected
-                                            ? AppTheme.primary
+                                            ? AppColors.action(context)
                                             : AppColors.border(context)!,
                                         width: isSelected ? 1.5 : 1,
                                       ),
@@ -606,7 +606,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                           height: 40,
                                           decoration: BoxDecoration(
                                             color: isSelected
-                                                ? AppTheme.primary
+                                                ? AppColors.action(context)
                                                 : AppColors.border(context),
                                             borderRadius: BorderRadius.circular(
                                               10,
@@ -638,7 +638,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                                       : FontWeight.w600,
                                                   fontSize: 14,
                                                   color: isSelected
-                                                      ? AppTheme.primary
+                                                      ? AppColors.action(context)
                                                       : AppTheme.grey800,
                                                 ),
                                               ),

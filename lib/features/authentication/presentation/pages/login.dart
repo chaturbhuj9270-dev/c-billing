@@ -271,12 +271,12 @@ class _LoginPageV2State extends State<LoginPageV2>
                     Expanded(
                       flex: 5,
                       child: Container(
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              AppTheme.primary,
+                              AppColors.action(context),
                               AppTheme.headerLightEnd,
                               AppTheme.primaryDark,
                             ],
@@ -685,7 +685,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                   child: Text(
                                     _localizations.signUp,
                                     style: TextStyle(
-                                      color: AppTheme.primary,
+                                      color: AppColors.action(context),
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -776,7 +776,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                 child: Text(
                   _localizations.forgotPasswordQuestion,
                   style: TextStyle(
-                    color: AppTheme.primary,
+                    color: AppColors.action(context),
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                     fontFamily: 'Literata',
@@ -887,7 +887,7 @@ class _LoginPageV2State extends State<LoginPageV2>
               child: Text(
                 _localizations.signUp,
                 style: TextStyle(
-                  color: AppTheme.primary,
+                  color: AppColors.action(context),
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
@@ -1024,7 +1024,7 @@ class _LoginPageV2State extends State<LoginPageV2>
   }
 
   Widget _buildSignInButton() {
-    const fill = AppTheme.primary;
+    final fill = AppColors.action(context);
     const label = AppTheme.white;
     const radius = BorderRadius.all(Radius.circular(28));
     return Container(

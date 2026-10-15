@@ -231,8 +231,8 @@ class _SupplierCard extends StatelessWidget {
     final isActive = supplier['isActive'] as bool? ?? true;
     final isSynced = supplier['isSynced'] as bool? ?? true;
 
-    const accentColors = [
-      AppTheme.primary,
+    final accentColors = [
+      AppColors.action(context),
       AppTheme.primaryDark,
       AppTheme.paletteFF2C6F5E,
       AppTheme.paletteFF1A5E52,

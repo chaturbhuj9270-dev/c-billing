@@ -370,7 +370,7 @@ class _CustomerCard extends StatelessWidget {
                               fontWeight: FontWeight.w700,
                               color: isSynced
                                   ? (isDark
-                                        ? AppTheme.primary
+                                        ? AppColors.action(context)
                                         : AppTheme.primaryLight)
                                   : AppTheme.toneAmber,
                             ),

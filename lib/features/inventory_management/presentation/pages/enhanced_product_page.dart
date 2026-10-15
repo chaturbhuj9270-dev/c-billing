@@ -387,7 +387,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppTheme.primary,
+        backgroundColor: AppColors.action(context),
         icon: const Icon(Icons.add_rounded, color: AppTheme.white),
         label: Text(
           _localizations.addProduct,
@@ -460,14 +460,14 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
               padding: EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
                 color: !_isGroupedView
-                    ? AppTheme.primary
+                    ? AppColors.action(context)
                     : AppColors.chipFill(context),
                 borderRadius: const BorderRadius.horizontal(
                   left: Radius.circular(10),
                 ),
                 border: Border.all(
                   color: !_isGroupedView
-                      ? AppTheme.primary
+                      ? AppColors.action(context)
                       : AppTheme.grey300,
                 ),
               ),
@@ -502,14 +502,14 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
               padding: EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
                 color: _isGroupedView
-                    ? AppTheme.primary
+                    ? AppColors.action(context)
                     : AppColors.chipFill(context),
                 borderRadius: const BorderRadius.horizontal(
                   right: Radius.circular(10),
                 ),
                 border: Border.all(
                   color: _isGroupedView
-                      ? AppTheme.primary
+                      ? AppColors.action(context)
                       : AppTheme.grey300,
                 ),
               ),
@@ -670,10 +670,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             radius: 22,
             backgroundColor: isLow
                 ? AppTheme.red.withValues(alpha: 0.15)
-                : AppTheme.primary.withValues(alpha: 0.15),
+                : AppColors.action(context).withValues(alpha: 0.15),
             child: Icon(
               Icons.inventory_2_rounded,
-              color: isLow ? AppTheme.red : AppTheme.primary,
+              color: isLow ? AppTheme.red : AppColors.action(context),
               size: 20,
             ),
           ),
@@ -930,8 +930,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               : isLowStock
                               ? [AppTheme.orange400, AppTheme.orange300]
                               : [
-                                  AppTheme.primary,
-                                  AppTheme.primary.withValues(alpha: 0.7),
+                                  AppColors.action(context),
+                                  AppColors.action(context).withValues(alpha: 0.7),
                                 ],
                         ),
                       ),
@@ -1095,7 +1095,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                                   ? AppTheme.red700
                                   : isLowStock
                                   ? AppTheme.orange700
-                                  : AppTheme.primary,
+                                  : AppColors.action(context),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -1167,7 +1167,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               icon: Icon(Icons.edit_rounded),
                               label: Text(_localizations.edit),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: AppTheme.primary,
+                                foregroundColor: AppColors.action(context),
                                 side: BorderSide(
                                   color: AppColors.accent(context),
                                 ),
@@ -1820,7 +1820,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               customFieldValues: customFieldValues,
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primary,
+                              backgroundColor: AppColors.action(context),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                             child: const Text(
@@ -2264,7 +2264,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               customFieldValues: customFieldValues,
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primary,
+                              backgroundColor: AppColors.action(context),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                             child: Text(
@@ -2426,7 +2426,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           border: Border.all(
-            color: hasValue ? AppTheme.primary : AppTheme.grey400,
+            color: hasValue ? AppColors.action(context) : AppTheme.grey400,
             width: hasValue ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -2435,7 +2435,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
           children: [
             Icon(
               icon,
-              color: hasValue ? AppTheme.primary : AppTheme.grey,
+              color: hasValue ? AppColors.action(context) : AppTheme.grey,
               size: 20,
             ),
             const SizedBox(width: 12),
@@ -2521,7 +2521,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             ),
             Switch(
               value: fieldValues[column.id] ?? false,
-              activeThumbColor: AppTheme.primary,
+              activeThumbColor: AppColors.action(context),
               onChanged: (value) {
                 setDialogState(() => fieldValues[column.id] = value);
               },

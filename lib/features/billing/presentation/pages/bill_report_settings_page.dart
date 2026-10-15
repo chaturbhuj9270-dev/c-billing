@@ -106,7 +106,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
+              backgroundColor: AppColors.action(context),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -232,8 +232,8 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.primary.withValues(alpha: 0.1),
-            AppTheme.primary.withValues(alpha: 0.05),
+            AppColors.action(context).withValues(alpha: 0.1),
+            AppColors.action(context).withValues(alpha: 0.05),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
@@ -331,7 +331,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: column.isVisible
-              ? AppTheme.primary.withValues(alpha: 0.3)
+              ? AppColors.action(context).withValues(alpha: 0.3)
               : AppColors.border(context)!,
           width: column.isVisible ? 1.5 : 1,
         ),
@@ -360,8 +360,8 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
             gradient: column.isVisible
                 ? LinearGradient(
                     colors: [
-                      AppTheme.primary.withValues(alpha: 0.15),
-                      AppTheme.primary.withValues(alpha: 0.08),
+                      AppColors.action(context).withValues(alpha: 0.15),
+                      AppColors.action(context).withValues(alpha: 0.08),
                     ],
                   )
                 : null,
@@ -371,7 +371,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
           child: Icon(
             _getColumnIcon(column.id),
             color: column.isVisible
-                ? AppTheme.primary
+                ? AppColors.action(context)
                 : AppTheme.grey400,
             size: 22,
           ),
@@ -399,7 +399,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
             value: column.isVisible,
             onChanged: (value) => _toggleColumn(column.id, value),
             activeThumbColor: AppTheme.white,
-            activeTrackColor: AppTheme.primary,
+            activeTrackColor: AppColors.action(context),
             inactiveThumbColor: AppTheme.white,
             inactiveTrackColor: AppTheme.grey300,
             trackOutlineColor: WidgetStateProperty.all(AppTheme.transparent),

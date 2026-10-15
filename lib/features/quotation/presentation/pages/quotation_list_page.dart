@@ -22,7 +22,7 @@ class QuotationListPage extends StatefulWidget {
 }
 
 class _QuotationListPageState extends State<QuotationListPage> {
-  static const _primary = AppTheme.primary;
+  Color get _primary => AppColors.action(context);
   late AppLocalizations _l10n;
   StreamSubscription<List<QuotationEntity>>? _subscription;
   List<QuotationEntity> _quotations = [];
@@ -142,7 +142,7 @@ class _QuotationListPageState extends State<QuotationListPage> {
             ],
           ),
           Expanded(child: _isLoading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(color: _primary),
             )
           : _quotations.isEmpty
@@ -198,7 +198,7 @@ class _QuotationListPageState extends State<QuotationListPage> {
                               Expanded(
                                 child: Text(
                                   domain.title,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'Literata',
                                     fontWeight: FontWeight.w700,
                                     fontSize: 16,
@@ -252,7 +252,7 @@ class _QuotationListPageState extends State<QuotationListPage> {
                               const Spacer(),
                               Text(
                                 '₹${domain.totalAmount.toStringAsFixed(0)}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontWeight: FontWeight.w800,
                                   fontSize: 16,
@@ -277,7 +277,7 @@ class _QuotationListPageState extends State<QuotationListPage> {
                         const SizedBox(width: 8),
                         _printingQuotationKey ==
                                 '${item.id}_${item.quotationNumber}'
-                            ? const Padding(
+                            ? Padding(
                                 padding: EdgeInsets.only(top: 4),
                                 child: SizedBox(
                                   width: 24,

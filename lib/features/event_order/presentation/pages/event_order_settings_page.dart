@@ -25,7 +25,7 @@ class EventOrderSettingsPage extends StatefulWidget {
 
 class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
   static const _prefsKey = 'event_order_show_event_mode';
-  static const _primaryColor = AppTheme.primary;
+  Color get _primaryColor => AppColors.action(context);
   static const _eventColor = AppTheme.purple;
   static const _salesColor = AppTheme.blue;
 
@@ -92,7 +92,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
           ),
           Expanded(
             child: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: _primaryColor))
+          ? Center(child: CircularProgressIndicator(color: _primaryColor))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -347,7 +347,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                               color: _primaryColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.view_column_rounded,
                               color: _primaryColor,
                               size: 22,

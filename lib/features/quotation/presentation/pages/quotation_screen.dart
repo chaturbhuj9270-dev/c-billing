@@ -26,7 +26,7 @@ class QuotationScreen extends StatefulWidget {
 }
 
 class _QuotationScreenState extends State<QuotationScreen> {
-  static const _primary = AppTheme.primary;
+  Color get _primary => AppColors.action(context);
   final _formKey = GlobalKey<FormState>();
   final _uuid = const Uuid();
 
@@ -378,7 +378,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
                             states,
                           ) {
                             if (states.contains(WidgetState.selected)) {
-                              return AppTheme.primary;
+                              return AppColors.action(context);
                             }
                             return isDark
                                 ? AppTheme.darkScaffold
@@ -621,7 +621,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
                             ),
                             Text(
                               '₹${_totalAmount.toStringAsFixed(0)}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w800,
                                 fontSize: 20,
@@ -667,11 +667,11 @@ class _QuotationScreenState extends State<QuotationScreen> {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: AppTheme.primary,
+          color: AppColors.action(context),
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.primary.withValues(alpha: isDark ? 0.45 : 0.28),
+              color: AppColors.action(context).withValues(alpha: isDark ? 0.45 : 0.28),
               blurRadius: isDark ? 22 : 14,
               offset: const Offset(0, 6),
             ),
@@ -727,17 +727,17 @@ class _QuotationScreenState extends State<QuotationScreen> {
       color: AppColors.isDark(context) ? AppTheme.darkElevated : AppTheme.white,
       shape: CircleBorder(
         side: BorderSide(
-          color: AppTheme.primary.withValues(alpha: 0.85),
+          color: AppColors.action(context).withValues(alpha: 0.85),
           width: 1.4,
         ),
       ),
       child: InkWell(
         customBorder: const CircleBorder(),
         onTap: onTap,
-        child: const SizedBox(
+        child: SizedBox(
           width: 40,
           height: 40,
-          child: Icon(Icons.add, color: AppTheme.primary, size: 22),
+          child: Icon(Icons.add, color: AppColors.action(context), size: 22),
         ),
       ),
     );
@@ -752,10 +752,10 @@ class _QuotationScreenState extends State<QuotationScreen> {
           height: 32,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: AppTheme.primary.withValues(alpha: isDark ? 0.22 : 0.1),
+            color: AppColors.action(context).withValues(alpha: isDark ? 0.22 : 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: AppTheme.primary, size: 18),
+          child: Icon(icon, color: AppColors.action(context), size: 18),
         ),
         const SizedBox(width: 10),
         Flexible(
@@ -864,7 +864,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppTheme.primary, width: 1.4),
+              borderSide: BorderSide(color: AppColors.action(context), width: 1.4),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,

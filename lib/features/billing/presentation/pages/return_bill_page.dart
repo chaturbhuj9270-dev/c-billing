@@ -671,13 +671,13 @@ class _ReturnBillPageState extends State<ReturnBillPage>
               child: ElevatedButton(
                 onPressed: _isSearching ? null : _searchBill,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
+                  backgroundColor: AppColors.action(context),
                   foregroundColor: AppTheme.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  disabledBackgroundColor: AppTheme.primary.withValues(alpha: 0.5),
+                  disabledBackgroundColor: AppColors.action(context).withValues(alpha: 0.5),
                 ),
                 child: _isSearching
                     ? const SizedBox(
@@ -1336,7 +1336,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: remainingQty > 0
-                                ? AppTheme.primary
+                                ? AppColors.action(context)
                                 : AppTheme.grey,
                           ),
                         ),
@@ -1353,7 +1353,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                   fontWeight: FontWeight.w700,
                   color: isFullyReturned
                       ? AppTheme.grey400
-                      : AppTheme.primary,
+                      : AppColors.action(context),
                 ),
               ),
             ],

@@ -378,7 +378,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     final isDark = AppColors.isDark(context);
     final titleColor = isDark ? AppTheme.white : AppTheme.headerDarkEnd;
     final muted = isDark ? AppTheme.paletteFF8E9892 : AppTheme.paletteFF5E6B64;
-    final themeColor = AppTheme.primary;
+    final themeColor = AppColors.action(context);
     final appTitle = _localizations.appName == 'C-BILLING'
         ? 'C-Billing'
         : _localizations.appName;

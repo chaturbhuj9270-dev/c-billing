@@ -139,7 +139,7 @@ class _GlassyToastWidgetState extends State<_GlassyToastWidget>
   Widget build(BuildContext context) {
     final isError = widget.isError;
     final isDark = widget.isDark;
-    final accentColor = isError ? AppTheme.red800 : AppTheme.primary;
+    final accentColor = isError ? AppTheme.red800 : AppColors.action(context);
     final accentColorLight = isError
         ? AppTheme.error
         : AppTheme.paletteFF2D6A4F;

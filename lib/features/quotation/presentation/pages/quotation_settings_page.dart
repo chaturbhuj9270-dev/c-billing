@@ -17,7 +17,7 @@ class QuotationSettingsPage extends StatefulWidget {
 }
 
 class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
-  static const _primary = AppTheme.primary;
+  Color get _primary => AppColors.action(context);
   static const _keyShowCustomerOnBill = 'bill_show_customer_details';
 
   late AppLocalizations _l10n;
@@ -69,7 +69,7 @@ class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
           ),
           Expanded(
             child: _isLoading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(color: _primary),
             )
           : ListView(

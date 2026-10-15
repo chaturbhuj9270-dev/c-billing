@@ -214,7 +214,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       child: CustomPaint(
                         foregroundPainter: GlassBevelBorderPainter(
                           isDark: false,
-                          themeColor: AppTheme.primary,
+                          themeColor: AppColors.action(context),
                           radius: 20,
                           strokeWidth: 1.4,
                         ),
@@ -294,7 +294,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                               child: ElevatedButton(
                                 onPressed: _loading ? null : _updatePassword,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.primary,
+                                  backgroundColor: AppColors.action(context),
                                   disabledBackgroundColor: AppTheme.grey400,
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 16,
@@ -354,7 +354,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                             Icon(
                               Icons.info_outline,
                               size: 18,
-                              color: AppTheme.primary.withValues(alpha: 0.7),
+                              color: AppColors.action(context).withValues(alpha: 0.7),
                             ),
                             const SizedBox(width: 8),
                             Text(
@@ -362,7 +362,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: AppTheme.primary.withValues(alpha: 0.8),
+                                color: AppColors.action(context).withValues(alpha: 0.8),
                                 fontFamily: 'Literata',
                               ),
                             ),
@@ -447,8 +447,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppTheme.primary,
+              borderSide: BorderSide(
+                color: AppColors.action(context),
                 width: 1.5,
               ),
             ),

@@ -80,8 +80,8 @@ List<QuickActionItem> buildQuickActionItems(
     QuickActionItem(
       icon: Icons.event_available_rounded,
       label: l10n.availability,
-      color: AppTheme.primary,
-      gradient: const [AppTheme.primaryLight, AppTheme.primary],
+      color: AppColors.action(context),
+      gradient: [AppTheme.primaryLight, AppColors.action(context)],
       onTap: () => open(const AvailabilityPage()),
     ),
     QuickActionItem(
@@ -360,7 +360,7 @@ class _GlobalQuickActionsFABState extends State<GlobalQuickActionsFAB>
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: AppTheme.primary,
+                  color: AppColors.action(context),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: AppTheme.white.withValues(alpha: 0.12),

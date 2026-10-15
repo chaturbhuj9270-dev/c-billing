@@ -210,7 +210,7 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            AppTheme.primary,
+                            AppColors.action(context),
                           ),
                         ),
                       )
@@ -321,12 +321,12 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
 
   Widget _buildDeviceList(ScrollController scrollController) {
     if (_isScanning && _devices.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.action(context)),
             ),
             SizedBox(height: 16),
             Text(
@@ -374,7 +374,7 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text('Scan Again'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
+                backgroundColor: AppColors.action(context),
                 foregroundColor: AppTheme.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -401,7 +401,7 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
             color: AppColors.card(context),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? AppTheme.primary : AppColors.border(context)!,
+              color: isSelected ? AppColors.action(context) : AppColors.border(context)!,
               width: isSelected ? 2 : 1,
             ),
             boxShadow: [
@@ -422,14 +422,14 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
               decoration: BoxDecoration(
                 color: device.isConnected
                     ? AppTheme.green50
-                    : AppTheme.primary.withValues(alpha: 0.1),
+                    : AppColors.action(context).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
                 Icons.print,
                 color: device.isConnected
                     ? AppTheme.green700
-                    : AppTheme.primary,
+                    : AppColors.action(context),
                 size: 22,
               ),
             ),
@@ -450,13 +450,13 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
               ),
             ),
             trailing: isConnecting
-                ? const SizedBox(
+                ? SizedBox(
                     width: 24,
                     height: 24,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        AppTheme.primary,
+                        AppColors.action(context),
                       ),
                     ),
                   )

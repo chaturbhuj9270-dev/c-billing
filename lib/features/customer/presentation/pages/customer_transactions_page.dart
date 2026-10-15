@@ -643,7 +643,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
   Widget _buildReceivePaymentFAB() {
     return FloatingActionButton.extended(
       onPressed: _showReceivePaymentSheet,
-      backgroundColor: AppTheme.primary,
+      backgroundColor: AppColors.action(context),
       elevation: 4,
       icon: const Icon(Icons.add_rounded, color: AppTheme.white),
       label: const Text(
@@ -1303,12 +1303,12 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppTheme.primary
+                            ? AppColors.action(context)
                             : AppColors.chipFill(context),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: isSelected
-                              ? AppTheme.primary
+                              ? AppColors.action(context)
                               : AppTheme.grey300,
                         ),
                       ),
@@ -1352,7 +1352,7 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
                 child: ElevatedButton(
                   onPressed: _savePayment,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
+                    backgroundColor: AppColors.action(context),
                     foregroundColor: AppTheme.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),

@@ -261,7 +261,7 @@ class _PaymentScreenState extends State<PaymentScreen>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                AppTheme.primary.withValues(alpha: 0.15),
+                AppColors.action(context).withValues(alpha: 0.15),
                 AppTheme.green800.withValues(alpha: 0.08),
               ],
             ),
@@ -509,7 +509,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      AppTheme.primary.withValues(alpha: 0.95),
+                      AppColors.action(context).withValues(alpha: 0.95),
                       AppTheme.green800.withValues(alpha: 0.88),
                     ],
                   ),
@@ -669,9 +669,9 @@ class _PaymentScreenState extends State<PaymentScreen>
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppTheme.primary.withValues(alpha: 0.05),
-                AppTheme.primary,
-                AppTheme.primary.withValues(alpha: 0.05),
+                AppColors.action(context).withValues(alpha: 0.05),
+                AppColors.action(context),
+                AppColors.action(context).withValues(alpha: 0.05),
               ],
             ),
           ),

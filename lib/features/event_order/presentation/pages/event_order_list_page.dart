@@ -66,7 +66,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   VoidCallback? _offlineControllerListener;
 
   // Primary colors - aligned with app theme (availability screen style)
-  static const _primaryColor = AppTheme.primary;
+  Color get _primaryColor => AppColors.action(context);
   static const _primaryDark = AppTheme.paletteFF2D6B5A;
   static const _eventColor = AppTheme.purple;
   static const _salesColor = AppTheme.blue;
@@ -499,7 +499,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(
+                      borderSide: BorderSide(
                         color: _primaryColor,
                         width: 1.5,
                       ),
@@ -535,7 +535,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.list_alt_rounded,
                           size: 14,
                           color: _primaryColor,
@@ -543,7 +543,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                         const SizedBox(width: 6),
                         Text(
                           '$itemCount orders',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             fontFamily: 'Literata',
@@ -601,7 +601,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     return BlocBuilder<EventOrderCubit, EventOrderState>(
       builder: (context, state) {
         if (state is EventOrderLoading) {
-          return const SliverFillRemaining(
+          return SliverFillRemaining(
             child: Center(
               child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(_primaryColor),
@@ -1609,7 +1609,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         child: AlertDialog(
           content: Row(
             children: [
-              const CircularProgressIndicator(color: _primaryColor),
+              CircularProgressIndicator(color: _primaryColor),
               const SizedBox(width: 20),
               const Expanded(
                 child: Text(
@@ -1945,7 +1945,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                       color: _primaryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.summarize_rounded,
                       color: _primaryColor,
                       size: 22,

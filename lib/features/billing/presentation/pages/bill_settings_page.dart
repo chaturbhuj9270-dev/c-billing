@@ -149,7 +149,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                             // Bill Type Section
                             _buildSectionCard(
                               icon: Icons.description_rounded,
-                              iconColor: AppTheme.primary,
+                              iconColor: AppColors.action(context),
                               title: _localizations.billType,
                               subtitle: 'Choose your default bill format',
                               children: [_buildBillTypeSelector()],
@@ -425,8 +425,8 @@ class _BillSettingsPageState extends State<BillSettingsPage>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.primary.withValues(alpha: 0.05),
-            AppTheme.primary.withValues(alpha: 0.02),
+            AppColors.action(context).withValues(alpha: 0.05),
+            AppColors.action(context).withValues(alpha: 0.02),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -497,15 +497,15 @@ class _BillSettingsPageState extends State<BillSettingsPage>
           gradient: isSelected
               ? LinearGradient(
                   colors: [
-                    AppTheme.primary.withValues(alpha: 0.1),
-                    AppTheme.primary.withValues(alpha: 0.05),
+                    AppColors.action(context).withValues(alpha: 0.1),
+                    AppColors.action(context).withValues(alpha: 0.05),
                   ],
                 )
               : null,
           color: isSelected ? null : AppColors.scaffold(context),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? AppTheme.primary : AppTheme.grey300,
+            color: isSelected ? AppColors.action(context) : AppTheme.grey300,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -515,7 +515,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: isSelected ? AppTheme.primary : AppColors.border(context),
+                color: isSelected ? AppColors.action(context) : AppColors.border(context),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -536,7 +536,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: isSelected
-                          ? AppTheme.primary
+                          ? AppColors.action(context)
                           : AppTheme.grey800,
                     ),
                   ),
@@ -559,11 +559,11 @@ class _BillSettingsPageState extends State<BillSettingsPage>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isSelected
-                    ? AppTheme.primary
+                    ? AppColors.action(context)
                     : AppTheme.transparent,
                 border: Border.all(
                   color: isSelected
-                      ? AppTheme.primary
+                      ? AppColors.action(context)
                       : AppTheme.grey400,
                   width: 2,
                 ),
@@ -736,7 +736,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
             value: value,
             onChanged: onChanged,
             activeThumbColor: AppTheme.white,
-            activeTrackColor: AppTheme.primary,
+            activeTrackColor: AppColors.action(context),
             inactiveThumbColor: AppTheme.white,
             inactiveTrackColor: AppTheme.grey300,
             trackOutlineColor: WidgetStateProperty.all(AppTheme.transparent),
@@ -866,15 +866,15 @@ class _BillSettingsPageState extends State<BillSettingsPage>
           gradient: isSelected
               ? LinearGradient(
                   colors: [
-                    AppTheme.primary.withValues(alpha: 0.1),
-                    AppTheme.primary.withValues(alpha: 0.05),
+                    AppColors.action(context).withValues(alpha: 0.1),
+                    AppColors.action(context).withValues(alpha: 0.05),
                   ],
                 )
               : null,
           color: isSelected ? null : AppColors.scaffold(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? AppTheme.primary : AppTheme.grey300,
+            color: isSelected ? AppColors.action(context) : AppTheme.grey300,
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
@@ -922,7 +922,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                 fontFamily: 'Literata',
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: isSelected ? AppTheme.primary : AppTheme.grey800,
+                color: isSelected ? AppColors.action(context) : AppTheme.grey800,
               ),
             ),
             const SizedBox(height: 4),

@@ -425,7 +425,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                 decoration: BoxDecoration(
                   border: Border.all(
                     color: _isProcessing
-                        ? AppTheme.primary
+                        ? AppColors.action(context)
                         : AppTheme.white.withValues(alpha: 0.8),
                     width: 2,
                   ),
@@ -453,15 +453,15 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                               gradient: LinearGradient(
                                 colors: [
                                   AppTheme.transparent,
-                                  AppTheme.primary,
+                                  AppColors.action(context),
                                   AppTheme.paletteFF2D6A4F,
-                                  AppTheme.primary,
+                                  AppColors.action(context),
                                   AppTheme.transparent,
                                 ],
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppTheme.primary.withValues(alpha: 0.5),
+                                  color: AppColors.action(context).withValues(alpha: 0.5),
                                   blurRadius: 8,
                                   spreadRadius: 2,
                                 ),
@@ -583,12 +583,12 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: isActive
-                    ? AppTheme.primary.withValues(alpha: 0.8)
+                    ? AppColors.action(context).withValues(alpha: 0.8)
                     : AppTheme.black.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isActive
-                      ? AppTheme.primary
+                      ? AppColors.action(context)
                       : AppTheme.white.withValues(alpha: 0.2),
                 ),
               ),
@@ -689,7 +689,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                AppTheme.primary,
+                                AppColors.action(context),
                                 AppTheme.paletteFF2D6A4F,
                               ],
                             ),
@@ -737,14 +737,14 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
               color: isRemoved
                   ? AppTheme.grey.withValues(alpha: 0.2)
                   : item.success
-                  ? AppTheme.primary.withValues(alpha: 0.2)
+                  ? AppColors.action(context).withValues(alpha: 0.2)
                   : AppTheme.red.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isRemoved
                     ? AppTheme.grey.withValues(alpha: 0.3)
                     : item.success
-                    ? AppTheme.primary.withValues(alpha: 0.5)
+                    ? AppColors.action(context).withValues(alpha: 0.5)
                     : AppTheme.red.withValues(alpha: 0.5),
               ),
             ),
@@ -763,7 +763,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                       color: isRemoved
                           ? AppTheme.grey
                           : item.success
-                          ? AppTheme.primary
+                          ? AppColors.action(context)
                           : AppTheme.red,
                       size: 16,
                     ),
@@ -929,7 +929,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        AppTheme.primary,
+                        AppColors.action(context),
                         AppTheme.paletteFF2D6A4F,
                       ],
                     ),

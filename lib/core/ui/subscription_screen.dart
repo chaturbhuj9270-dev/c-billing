@@ -308,7 +308,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppTheme.primary.withValues(alpha: 0.15),
+                  AppColors.action(context).withValues(alpha: 0.15),
                   AppTheme.green800.withValues(alpha: 0.08),
                 ],
               ),
@@ -437,9 +437,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        AppTheme.primary.withValues(alpha: 0.1),
-                        AppTheme.primary,
-                        AppTheme.primary.withValues(alpha: 0.1),
+                        AppColors.action(context).withValues(alpha: 0.1),
+                        AppColors.action(context),
+                        AppColors.action(context).withValues(alpha: 0.1),
                       ],
                     ),
                   ),
@@ -553,7 +553,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppTheme.primary.withValues(alpha: 0.9),
+                  AppColors.action(context).withValues(alpha: 0.9),
                   AppTheme.green800.withValues(alpha: 0.85),
                 ],
               ),
@@ -666,9 +666,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppTheme.primary.withValues(alpha: 0.05),
-                AppTheme.primary,
-                AppTheme.primary.withValues(alpha: 0.05),
+                AppColors.action(context).withValues(alpha: 0.05),
+                AppColors.action(context),
+                AppColors.action(context).withValues(alpha: 0.05),
               ],
             ),
           ),

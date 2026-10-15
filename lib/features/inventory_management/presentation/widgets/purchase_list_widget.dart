@@ -304,7 +304,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w500,
                             fontSize: 13,
-                            color: AppTheme.primary.withValues(alpha: 0.8),
+                            color: AppColors.action(context).withValues(alpha: 0.8),
                           ),
                         ),
                       ],
@@ -440,7 +440,7 @@ class PurchaseSummaryWidget extends StatelessWidget {
           _buildStatItem(
             context,
             icon: Icons.currency_rupee_rounded,
-            iconColor: AppTheme.primary,
+            iconColor: AppColors.action(context),
             label: localizations.totalValue,
             value: '₹${_compactAmount(totalAmount)}',
           ),

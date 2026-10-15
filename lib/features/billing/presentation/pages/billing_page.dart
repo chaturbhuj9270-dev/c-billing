@@ -774,7 +774,7 @@ class _BillingPageState extends State<BillingPage> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
+              backgroundColor: AppColors.action(context),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -1715,10 +1715,10 @@ class _BillingPageState extends State<BillingPage> {
                       final phone = _customerContactController.text.trim();
                       _showAddCustomerDialog(phone);
                     },
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.add, color: AppTheme.primary, size: 18),
+                        Icon(Icons.add, color: AppColors.action(context), size: 18),
                         SizedBox(width: 2),
                         Text(
                           'Add',
@@ -1726,7 +1726,7 @@ class _BillingPageState extends State<BillingPage> {
                             fontFamily: 'Literata',
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.primary,
+                            color: AppColors.action(context),
                           ),
                         ),
                       ],
@@ -1757,8 +1757,8 @@ class _BillingPageState extends State<BillingPage> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          AppTheme.primary.withValues(alpha: 0.08),
-                          AppTheme.primary.withValues(alpha: 0.03),
+                          AppColors.action(context).withValues(alpha: 0.08),
+                          AppColors.action(context).withValues(alpha: 0.03),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(12),
@@ -2582,8 +2582,8 @@ class _BillingPageState extends State<BillingPage> {
                 const SizedBox(width: 10),
                 Material(
                   color: AppColors.isDark(context)
-                      ? AppTheme.primary
-                      : AppTheme.primary,
+                      ? AppColors.action(context)
+                      : AppColors.action(context),
                   borderRadius: BorderRadius.circular(14),
                   child: InkWell(
                     onTap: _showBarcodeScannerSheet,
@@ -2800,11 +2800,11 @@ class _BillingPageState extends State<BillingPage> {
                                     children: [
                                       Text(
                                         '₹${item.sellingPrice.toStringAsFixed(0)} / ${item.displayUnit.isEmpty ? 'unit' : item.displayUnit}',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontFamily: 'Literata',
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
-                                          color: AppTheme.primary,
+                                          color: AppColors.action(context),
                                         ),
                                       ),
                                       const SizedBox(width: 4),
@@ -2949,7 +2949,7 @@ class _BillingPageState extends State<BillingPage> {
                               height: 36,
                               decoration: BoxDecoration(
                                 color: item.quantity < maxStock
-                                    ? AppTheme.primary
+                                    ? AppColors.action(context)
                                     : AppColors.chipFill(context),
                                 shape: BoxShape.circle,
                               ),
@@ -3075,16 +3075,16 @@ class _BillingPageState extends State<BillingPage> {
                     padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppTheme.primary
+                          ? AppColors.action(context)
                           : isAvailable
-                          ? AppTheme.primary.withValues(alpha: 0.08)
+                          ? AppColors.action(context).withValues(alpha: 0.08)
                           : AppColors.border(context),
                       borderRadius: BorderRadius.circular(6),
                       border: isSelected
                           ? null
                           : Border.all(
                               color: isAvailable
-                                  ? AppTheme.primary.withValues(alpha: 0.2)
+                                  ? AppColors.action(context).withValues(alpha: 0.2)
                                   : AppTheme.grey300,
                             ),
                     ),
@@ -3097,7 +3097,7 @@ class _BillingPageState extends State<BillingPage> {
                         color: isSelected
                             ? AppTheme.white
                             : isAvailable
-                            ? AppTheme.primary
+                            ? AppColors.action(context)
                             : AppTheme.grey,
                       ),
                     ),
@@ -3134,9 +3134,9 @@ class _BillingPageState extends State<BillingPage> {
                     color:
                         item.quantity == 1.0 &&
                             (item.sellUnit == 'kg' || item.sellUnit == 'ltr')
-                        ? AppTheme.primary
+                        ? AppColors.action(context)
                         : maxStock >= 1
-                        ? AppTheme.primary.withValues(alpha: 0.08)
+                        ? AppColors.action(context).withValues(alpha: 0.08)
                         : AppColors.border(context),
                     borderRadius: BorderRadius.circular(6),
                     border:
@@ -3145,7 +3145,7 @@ class _BillingPageState extends State<BillingPage> {
                         ? null
                         : Border.all(
                             color: maxStock >= 1
-                                ? AppTheme.primary.withValues(alpha: 0.2)
+                                ? AppColors.action(context).withValues(alpha: 0.2)
                                 : AppTheme.grey300,
                           ),
                   ),
@@ -3160,7 +3160,7 @@ class _BillingPageState extends State<BillingPage> {
                               (item.sellUnit == 'kg' || item.sellUnit == 'ltr')
                           ? AppTheme.white
                           : maxStock >= 1
-                          ? AppTheme.primary
+                          ? AppColors.action(context)
                           : AppTheme.grey,
                     ),
                   ),
@@ -3347,7 +3347,7 @@ class _BillingPageState extends State<BillingPage> {
                       }
                     : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
+                  backgroundColor: AppColors.action(context),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -3609,7 +3609,7 @@ class _BillingPageState extends State<BillingPage> {
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               decoration: BoxDecoration(
                                 color: selectedSellUnit == unit
-                                    ? AppTheme.primary
+                                    ? AppColors.action(context)
                                     : AppTheme.transparent,
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -3636,7 +3636,7 @@ class _BillingPageState extends State<BillingPage> {
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               decoration: BoxDecoration(
                                 color: selectedSellUnit == subUnit
-                                    ? AppTheme.primary
+                                    ? AppColors.action(context)
                                     : AppTheme.transparent,
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -3915,7 +3915,7 @@ class _BillingPageState extends State<BillingPage> {
                       }
                     : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
+                  backgroundColor: AppColors.action(context),
                   foregroundColor: AppTheme.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -4218,7 +4218,7 @@ class _BillingPageState extends State<BillingPage> {
                       }
                     : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
+                  backgroundColor: AppColors.action(context),
                   foregroundColor: AppTheme.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -4300,10 +4300,10 @@ class _BillingPageState extends State<BillingPage> {
                 if (_discountAmount > 0)
                   Text(
                     '-₹${_discountAmount.toStringAsFixed(2)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 14,
-                      color: AppTheme.primary,
+                      color: AppColors.action(context),
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -4448,7 +4448,7 @@ class _BillingPageState extends State<BillingPage> {
             _buildSummaryRow(
               '${_localizations.discountWithPercent} (${_discountPercent.toStringAsFixed(1)}%)',
               '-₹${_discountAmount.toStringAsFixed(2)}',
-              valueColor: AppTheme.primary,
+              valueColor: AppColors.action(context),
             ),
           ],
           // GST breakdown
@@ -4840,8 +4840,8 @@ class _BillingPageState extends State<BillingPage> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppTheme.primary.withValues(alpha: 0.1),
-                  AppTheme.primary.withValues(alpha: 0.05),
+                  AppColors.action(context).withValues(alpha: 0.1),
+                  AppColors.action(context).withValues(alpha: 0.05),
                 ],
               ),
               borderRadius: const BorderRadius.only(
@@ -5220,8 +5220,8 @@ class _BillingPageState extends State<BillingPage> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          AppTheme.primary.withValues(alpha: 0.08),
-                          AppTheme.primary.withValues(alpha: 0.04),
+                          AppColors.action(context).withValues(alpha: 0.08),
+                          AppColors.action(context).withValues(alpha: 0.04),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(16),
@@ -5330,10 +5330,10 @@ class _BillingPageState extends State<BillingPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primary : AppColors.chipFill(context),
+          color: isSelected ? AppColors.action(context) : AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? AppTheme.primary : AppTheme.grey300,
+            color: isSelected ? AppColors.action(context) : AppTheme.grey300,
           ),
         ),
         child: Text(
@@ -5392,7 +5392,7 @@ class _BillingPageState extends State<BillingPage> {
         height: 40,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primary : AppTheme.transparent,
+          color: isSelected ? AppColors.action(context) : AppTheme.transparent,
           shape: BoxShape.circle,
         ),
         child: Text(
@@ -5422,10 +5422,10 @@ class _BillingPageState extends State<BillingPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primary : AppTheme.transparent,
+          color: isSelected ? AppColors.action(context) : AppTheme.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppTheme.primary : AppColors.border(context),
+            color: isSelected ? AppColors.action(context) : AppColors.border(context),
           ),
         ),
         child: Text(
@@ -5788,8 +5788,8 @@ class _BillingPageState extends State<BillingPage> {
         icon: Icons.people_alt_rounded,
         value: '',
         label: _localizations.customers,
-        color: AppTheme.primary,
-        gradient: [AppTheme.primary, AppTheme.primaryDark],
+        color: AppColors.action(context),
+        gradient: [AppColors.action(context), AppTheme.primaryDark],
         onTap: () {
           _toggleQuickStats();
           Navigator.push(
@@ -5986,7 +5986,7 @@ class _BillingPageState extends State<BillingPage> {
           const SizedBox(width: 12),
           Material(
             color: canSave
-                ? AppTheme.primary
+                ? AppColors.action(context)
                 : (isDark ? AppTheme.paletteFF2A2A2A : AppTheme.paletteFFE4E4E4),
             borderRadius: BorderRadius.circular(24),
             child: InkWell(
@@ -6330,7 +6330,7 @@ class _CustomerPickerBottomSheetState
                                 style: TextStyle(fontFamily: 'Literata'),
                               ),
                               style: TextButton.styleFrom(
-                                foregroundColor: AppTheme.primary,
+                                foregroundColor: AppColors.action(context),
                               ),
                             ),
                           ],
@@ -6363,7 +6363,7 @@ class _CustomerPickerBottomSheetState
                                 child: Row(
                                   children: [
                                     CircleAvatar(
-                                      backgroundColor: AppTheme.primary,
+                                      backgroundColor: AppColors.action(context),
                                       child: Text(
                                         (customer['fullName'] as String)
                                                 .isNotEmpty

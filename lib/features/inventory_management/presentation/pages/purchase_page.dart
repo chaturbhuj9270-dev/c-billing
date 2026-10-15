@@ -459,7 +459,7 @@ class _PurchasePageState extends State<PurchasePage>
                         label: _localizations.selectSupplier,
                         value: sheetSelectedSupplier?['fullName'],
                         icon: Icons.person_outline,
-                        color: AppTheme.primary,
+                        color: AppColors.action(context),
                         onTap: () async {
                           final supplier = await _showInlineSupplierPicker(
                             context,
@@ -598,7 +598,7 @@ class _PurchasePageState extends State<PurchasePage>
                                       customFieldValues,
                                     ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primary,
+                                backgroundColor: AppColors.action(context),
                                 foregroundColor: AppTheme.white,
                                 disabledBackgroundColor: AppTheme.grey300,
                                 padding: const EdgeInsets.symmetric(
@@ -843,7 +843,7 @@ class _PurchasePageState extends State<PurchasePage>
     Map<String, dynamic> fieldValues,
     StateSetter setDialogState,
   ) {
-    final primaryColor = AppTheme.primary;
+    final primaryColor = AppColors.action(context);
 
     switch (column.type) {
       case CustomColumnType.text:
@@ -1352,8 +1352,8 @@ class _PurchasePageState extends State<PurchasePage>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            AppTheme.primary,
-                            AppTheme.primary.withValues(alpha: 0.8),
+                            AppColors.action(context),
+                            AppColors.action(context).withValues(alpha: 0.8),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(12),
@@ -1529,12 +1529,12 @@ class _PurchasePageState extends State<PurchasePage>
                                 padding: EdgeInsets.all(14),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? AppTheme.primary.withValues(alpha: 0.08)
+                                      ? AppColors.action(context).withValues(alpha: 0.08)
                                       : AppColors.scaffold(context),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
                                     color: isSelected
-                                        ? AppTheme.primary
+                                        ? AppColors.action(context)
                                         : AppColors.border(context)!,
                                     width: isSelected ? 1.5 : 1,
                                   ),
@@ -1545,7 +1545,7 @@ class _PurchasePageState extends State<PurchasePage>
                                       width: 48,
                                       height: 48,
                                       decoration: BoxDecoration(
-                                        color: AppTheme.primary.withValues(alpha: 0.1),
+                                        color: AppColors.action(context).withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Icon(
@@ -1857,12 +1857,12 @@ class _PurchasePageState extends State<PurchasePage>
                                 padding: EdgeInsets.all(14),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? AppTheme.primary.withValues(alpha: 0.08)
+                                      ? AppColors.action(context).withValues(alpha: 0.08)
                                       : AppColors.scaffold(context),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
                                     color: isSelected
-                                        ? AppTheme.primary
+                                        ? AppColors.action(context)
                                         : AppColors.border(context)!,
                                     width: isSelected ? 1.5 : 1,
                                   ),
@@ -1873,7 +1873,7 @@ class _PurchasePageState extends State<PurchasePage>
                                       width: 48,
                                       height: 48,
                                       decoration: BoxDecoration(
-                                        color: AppTheme.primary.withValues(alpha: 0.1),
+                                        color: AppColors.action(context).withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Center(
@@ -1884,8 +1884,8 @@ class _PurchasePageState extends State<PurchasePage>
                                                     .substring(0, 1)
                                                     .toUpperCase()
                                               : 'S',
-                                          style: const TextStyle(
-                                            color: AppTheme.primary,
+                                          style: TextStyle(
+                                            color: AppColors.action(context),
                                             fontWeight: FontWeight.w700,
                                             fontSize: 20,
                                           ),
@@ -1904,9 +1904,9 @@ class _PurchasePageState extends State<PurchasePage>
                                       ),
                                     ),
                                     if (isSelected)
-                                      const Icon(
+                                      Icon(
                                         Icons.check_circle,
-                                        color: AppTheme.primary,
+                                        color: AppColors.action(context),
                                         size: 22,
                                       ),
                                   ],
@@ -2536,7 +2536,7 @@ class _PurchasePageState extends State<PurchasePage>
                               ? null
                               : () => _saveNewSupplier(context),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primary,
+                            backgroundColor: AppColors.action(context),
                             foregroundColor: AppTheme.white,
                             disabledBackgroundColor: AppTheme.grey300,
                             padding: const EdgeInsets.symmetric(vertical: 14),
@@ -2872,7 +2872,7 @@ class _PurchasePageState extends State<PurchasePage>
                               ? null
                               : () => _saveNewCompany(context),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primary,
+                            backgroundColor: AppColors.action(context),
                             foregroundColor: AppTheme.white,
                             disabledBackgroundColor: AppTheme.grey300,
                             padding: const EdgeInsets.symmetric(vertical: 14),
@@ -3028,11 +3028,11 @@ class _PurchasePageState extends State<PurchasePage>
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: AppTheme.primary,
+          color: AppColors.action(context),
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.primary.withValues(alpha: isDark ? 0.45 : 0.28),
+              color: AppColors.action(context).withValues(alpha: isDark ? 0.45 : 0.28),
               blurRadius: isDark ? 22 : 14,
               offset: const Offset(0, 6),
             ),
@@ -3114,7 +3114,7 @@ class _PurchasePageState extends State<PurchasePage>
   BoxDecoration _formCardDecoration() {
     final isDark = AppColors.isDark(context);
     return BoxDecoration(
-      color: isDark ? AppTheme.darkElevated : AppTheme.white,
+      color: isDark ? AppColors.card(context) : AppTheme.white,
       borderRadius: BorderRadius.circular(24),
       border: Border.all(
         color: isDark ? AppTheme.darkBorder : AppTheme.grey200,
@@ -3131,10 +3131,10 @@ class _PurchasePageState extends State<PurchasePage>
           height: 32,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: AppTheme.primary.withValues(alpha: isDark ? 0.22 : 0.1),
+            color: AppColors.action(context).withValues(alpha: isDark ? 0.22 : 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: AppTheme.primary, size: 18),
+          child: Icon(icon, color: AppColors.action(context), size: 18),
         ),
         const SizedBox(width: 10),
         Text(
@@ -3223,7 +3223,7 @@ class _PurchasePageState extends State<PurchasePage>
           children: [
             Expanded(
               child: Material(
-                color: isDark ? AppTheme.darkScaffold : AppTheme.grey100,
+                color: isDark ? AppColors.inputFill(context) : AppTheme.grey100,
                 borderRadius: BorderRadius.circular(16),
                 child: InkWell(
                   onTap: onSelect,
@@ -3281,20 +3281,20 @@ class _PurchasePageState extends State<PurchasePage>
             ),
             const SizedBox(width: 10),
             Material(
-              color: isDark ? AppTheme.darkElevated : AppTheme.white,
+              color: isDark ? AppColors.card(context) : AppTheme.white,
               shape: CircleBorder(
                 side: BorderSide(
-                  color: AppTheme.primary.withValues(alpha: 0.85),
+                  color: AppColors.action(context).withValues(alpha: 0.85),
                   width: 1.4,
                 ),
               ),
               child: InkWell(
                 customBorder: const CircleBorder(),
                 onTap: onAdd,
-                child: const SizedBox(
+                child: SizedBox(
                   width: 48,
                   height: 48,
-                  child: Icon(Icons.add, color: AppTheme.primary, size: 22),
+                  child: Icon(Icons.add, color: AppColors.action(context), size: 22),
                 ),
               ),
             ),
@@ -3460,7 +3460,7 @@ class _PurchasePageState extends State<PurchasePage>
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.light(
-              primary: AppTheme.primary,
+              primary: AppColors.action(context),
               onPrimary: AppTheme.white,
               surface: AppColors.card(context),
               onSurface: AppTheme.black,
@@ -3538,7 +3538,7 @@ class _PurchasePageState extends State<PurchasePage>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppTheme.primary, width: 1.4),
+              borderSide: BorderSide(color: AppColors.action(context), width: 1.4),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
@@ -3593,7 +3593,7 @@ class _PurchasePageState extends State<PurchasePage>
                     ),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppTheme.primary
+                          ? AppColors.action(context)
                           : (AppColors.isDark(context)
                                 ? AppTheme.darkScaffold
                                 : AppTheme.grey100),
@@ -3677,7 +3677,7 @@ class _PurchasePageState extends State<PurchasePage>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppTheme.primary.withValues(alpha: 0.08),
+                  AppColors.action(context).withValues(alpha: 0.08),
                   AppTheme.green.withValues(alpha: 0.08),
                 ],
               ),

@@ -153,7 +153,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
           child: ElevatedButton(
             onPressed: _authenticateUser,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
+              backgroundColor: AppColors.action(context),
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -219,13 +219,13 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
             color: AppColors.accentSoft(context, 0.1),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: const Center(
+          child: Center(
             child: SizedBox(
               width: 40,
               height: 40,
               child: CircularProgressIndicator(
                 strokeWidth: 3,
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.action(context)),
               ),
             ),
           ),
@@ -350,7 +350,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
                   _authenticateUser();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
+                  backgroundColor: AppColors.action(context),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -443,7 +443,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
                   _authenticateUser();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
+                  backgroundColor: AppColors.action(context),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

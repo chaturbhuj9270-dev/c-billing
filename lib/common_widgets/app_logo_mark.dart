@@ -20,7 +20,7 @@ class AppLogoMark extends StatelessWidget {
   Widget build(BuildContext context) {
     final scale = logoSize / 120;
     final canvas = 280 * scale;
-    final ring = isDark ? AppTheme.primary : AppTheme.primary;
+    final ring = isDark ? AppColors.action(context) : AppColors.action(context);
     return SizedBox(
       width: canvas,
       height: canvas,
@@ -46,7 +46,7 @@ class AppLogoMark extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.primary.withValues(alpha: isDark ? 0.35 : 0.28),
+                  color: AppColors.action(context).withValues(alpha: isDark ? 0.35 : 0.28),
                   blurRadius: 28 * scale,
                   spreadRadius: 2 * scale,
                 ),

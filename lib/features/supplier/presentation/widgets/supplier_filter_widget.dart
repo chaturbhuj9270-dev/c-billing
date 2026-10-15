@@ -131,7 +131,7 @@ class SupplierFilterWidget extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.isDark(context)
                       ? AppTheme.white.withValues(alpha: 0.1)
-                      : AppTheme.primary.withValues(alpha: 0.1),
+                      : AppColors.action(context).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -141,7 +141,7 @@ class SupplierFilterWidget extends StatelessWidget {
                   size: 18,
                   color: AppColors.isDark(context)
                       ? AppTheme.white
-                      : AppTheme.primary,
+                      : AppColors.action(context),
                 ),
               ),
             ),

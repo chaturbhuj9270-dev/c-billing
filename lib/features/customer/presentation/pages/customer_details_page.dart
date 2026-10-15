@@ -277,7 +277,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
       floatingActionButton: _customer != null && _customer!.hasPendingBalance
           ? FloatingActionButton.extended(
               onPressed: _showReceivePaymentDialog,
-              backgroundColor: AppTheme.primary,
+              backgroundColor: AppColors.action(context),
               icon: const Icon(Icons.payments),
               label: const Text(
                 'Receive Payment',
@@ -312,7 +312,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
+                backgroundColor: AppColors.action(context).withValues(alpha: 0.1),
                 child: Text(
                   _customer!.firstName.isNotEmpty
                       ? _customer!.firstName[0].toUpperCase()
@@ -393,7 +393,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
         gradient: LinearGradient(
           colors: _customer!.hasPendingBalance
               ? [AppTheme.coral, AppTheme.paletteFFEE5A5A]
-              : [AppTheme.primary, AppTheme.primaryDark],
+              : [AppColors.action(context), AppTheme.primaryDark],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -403,7 +403,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
             color:
                 (_customer!.hasPendingBalance
                         ? AppTheme.coral
-                        : AppTheme.primary)
+                        : AppColors.action(context))
                     .withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
@@ -964,7 +964,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
       case OrderStatus.cancelled:
         return AppTheme.red;
       case OrderStatus.convertedToBill:
-        return AppTheme.primary;
+        return AppColors.action(context);
     }
   }
 }
@@ -1230,7 +1230,7 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
                     ),
                   ),
                   selected: isSelected,
-                  selectedColor: AppTheme.primary,
+                  selectedColor: AppColors.action(context),
                   onSelected: (_) =>
                       setState(() => _selectedPaymentMode = mode),
                 );
@@ -1309,7 +1309,7 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
                     ? _processPayment
                     : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
+                  backgroundColor: AppColors.action(context),
                   foregroundColor: AppTheme.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(

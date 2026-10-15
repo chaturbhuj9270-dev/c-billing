@@ -227,8 +227,8 @@ class _ProductCard extends StatelessWidget {
     final isLowStock = product.currentStock <= (product.minStockLevel ?? 5);
     final isOutOfStock = product.currentStock <= 0;
 
-    const accentColors = [
-      AppTheme.primary,
+    final accentColors = [
+      AppColors.action(context),
       AppTheme.primaryDark,
       AppTheme.paletteFF2C6F5E,
       AppTheme.paletteFF1A5E52,
@@ -460,7 +460,7 @@ class _ProductCard extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AppTheme.primary.withValues(alpha: 0.1),
+                              color: AppColors.action(context).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
