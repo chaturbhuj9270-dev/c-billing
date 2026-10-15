@@ -5,6 +5,7 @@ import '../../../../core/services/language_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import 'package:c_billing/common_widgets/glass_bevel_frame.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 class ChangePasswordPage extends StatefulWidget {
@@ -124,27 +125,17 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      appBar: AppBar(
-        backgroundColor: AppColors.appBar(context),
-        foregroundColor: AppTheme.white,
-        surfaceTintColor: AppTheme.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: AppTheme.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          _localizations.changePasswordTitle,
-          style: TextStyle(
-            color: AppTheme.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            fontFamily: 'Literata',
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: Container(
+      body: Column(
+        children: [
+          if (widget.showBackButton)
+            AppTopBar(title: _localizations.changePasswordTitle)
+          else
+            AppTopBar(
+              title: _localizations.changePasswordTitle,
+              showBack: false,
+            ),
+          Expanded(
+            child: Container(
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
@@ -390,6 +381,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             ),
           ),
         ),
+          ),
+          ),
+        ],
       ),
     );
   }

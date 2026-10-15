@@ -19,6 +19,7 @@ import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../product/offline/entities/product_entity.dart';
 import '../../../billing/presentation/widgets/barcode_scanner_sheet.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
@@ -449,12 +450,11 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       create: (_) => EventOrderCubit(),
       child: Scaffold(
         backgroundColor: AppColors.scaffold(context),
-        appBar: _buildAppBar(),
         body: Form(
           key: _formKey,
           child: Column(
             children: [
-              // Mode toggle tabs
+              _buildHeader(),
               _buildModeToggle(),
               // Form content
               Expanded(
@@ -507,205 +507,109 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    final titleText = _isEditing
-        ? (_orderType == OrderType.event
-              ? AppLocalizations.of(
-                  LanguageService.instance.currentLanguage,
-                ).editEvent
-              : AppLocalizations.of(
-                  LanguageService.instance.currentLanguage,
-                ).editOrder)
-        : (_orderType == OrderType.event
-              ? AppLocalizations.of(
-                  LanguageService.instance.currentLanguage,
-                ).newEvent
-              : AppLocalizations.of(
-                  LanguageService.instance.currentLanguage,
-                ).newOrder);
-    return PreferredSize(
-      preferredSize: Size.fromHeight(72),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.appBar(context),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.accentSoft(context, 0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Row(
-              children: [
-                // Back button
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppTheme.white.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppTheme.white.withValues(alpha: 0.25),
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.arrow_back_ios_new,
-                      color: AppTheme.white,
-                      size: 16,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                // Title & subtitle
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        titleText,
-                        style: const TextStyle(
-                          fontFamily: 'Literata',
-                          color: AppTheme.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _isEditing
-                            ? 'Modify your order details'
-                            : 'Fill in the details below',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          color: AppTheme.white.withValues(alpha: 0.7),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Action buttons
-                if (_isEditing && widget.existingOrder != null) ...[
-                  _buildAppBarAction(
-                    onTap: _isPdfLoading ? null : _shareOrder,
-                    icon: Icons.share_rounded,
-                    isLoading: _isPdfLoading,
-                  ),
-                  const SizedBox(width: 6),
-                  _buildAppBarAction(
-                    onTap: _isPdfLoading ? null : _printOrder,
-                    icon: Icons.print_rounded,
-                    color: AppTheme.amber300,
-                  ),
-                ],
-                if (_isLoading)
-                  Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          AppTheme.white.withValues(alpha: 0.9),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
+  BoxDecoration _formCardDecoration() {
+    final isDark = AppColors.isDark(context);
+    return BoxDecoration(
+      color: isDark ? AppTheme.darkElevated : AppTheme.white,
+      borderRadius: BorderRadius.circular(24),
+      border: Border.all(
+        color: isDark ? AppTheme.darkBorder : AppTheme.grey200,
       ),
     );
   }
 
-  Widget _buildAppBarAction({
-    required VoidCallback? onTap,
-    required IconData icon,
-    Color color = AppTheme.white,
-    bool isLoading = false,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: AppTheme.white.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.white.withValues(alpha: 0.2)),
+  Widget _sectionHeading(IconData icon, String title) {
+    final isDark = AppColors.isDark(context);
+    return Row(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppTheme.primary.withValues(alpha: isDark ? 0.22 : 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: AppTheme.primary, size: 18),
         ),
-        child: isLoading
-            ? SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.card(context),
-                ),
-              )
-            : Icon(icon, color: color, size: 18),
+        const SizedBox(width: 10),
+        Flexible(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'Literata',
+              color: AppColors.primaryText(context),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _fieldLabel(String label) {
+    return Text(
+      label,
+      style: TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        fontFamily: 'Literata',
+        color: AppColors.secondaryText(context),
       ),
+    );
+  }
+
+  Widget _buildHeader() {
+    final l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
+    final titleText = _isEditing
+        ? (_orderType == OrderType.event ? l10n.editEvent : l10n.editOrder)
+        : (_orderType == OrderType.event ? l10n.newEvent : l10n.newOrder);
+    return AppTopBar(
+      title: titleText,
+      subtitle: _isEditing
+          ? 'Modify your order details'
+          : 'Fill in the details below',
+      actions: [
+        if (_isEditing && widget.existingOrder != null) ...[
+          AppTopBar.action(
+            icon: Icons.share_rounded,
+            onTap: _isPdfLoading ? null : _shareOrder,
+            isLoading: _isPdfLoading,
+          ),
+          AppTopBar.action(
+            icon: Icons.print_rounded,
+            onTap: _isPdfLoading ? null : _printOrder,
+          ),
+        ],
+      ],
     );
   }
 
   Widget _buildModeToggle() {
+    final isDark = AppColors.isDark(context);
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      padding: EdgeInsets.all(5),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.accentSoft(context, 0.08),
-            blurRadius: 16,
-            offset: Offset(0, 4),
-          ),
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.03),
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
-        ],
-        border: Border.all(
-          color: AppColors.accentSoft(context, 0.06),
-        ),
-      ),
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      padding: const EdgeInsets.all(5),
+      decoration: _formCardDecoration(),
       child: TabBar(
         controller: _tabController,
         indicator: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: AppColors.headerGradient(context),
-          ),
+          color: AppTheme.primary,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.accentSoft(context, 0.35),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
-            ),
-          ],
         ),
+        indicatorSize: TabBarIndicatorSize.tab,
         indicatorPadding: EdgeInsets.zero,
         labelColor: AppTheme.white,
-        unselectedLabelColor: AppTheme.paletteFF5A6A72,
+        unselectedLabelColor: isDark
+            ? AppColors.mutedText(context)
+            : AppColors.secondaryText(context),
         labelStyle: const TextStyle(
           fontWeight: FontWeight.w700,
           fontFamily: 'Literata',
           fontSize: 13,
-          letterSpacing: 0.3,
         ),
         unselectedLabelStyle: const TextStyle(
           fontWeight: FontWeight.w500,
@@ -755,47 +659,26 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     return _buildSectionCard(
       title: l10n.customerDetails,
       icon: Icons.person_outline,
-      trailing: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: AppColors.headerGradient(context),
+      trailing: Material(
+        color: AppColors.isDark(context)
+            ? AppTheme.darkElevated
+            : AppTheme.white,
+        shape: CircleBorder(
+          side: BorderSide(
+            color: AppTheme.primary.withValues(alpha: 0.85),
+            width: 1.4,
           ),
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.accentSoft(context, 0.25),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
-        child: Material(
-          color: AppTheme.transparent,
-          child: InkWell(
-            onTap: _showCustomerPickerSheet,
-            borderRadius: BorderRadius.circular(10),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.person_search_rounded,
-                    size: 16,
-                    color: AppTheme.white,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    l10n.selectText,
-                    style: const TextStyle(
-                      fontFamily: 'Literata',
-                      color: AppTheme.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: _showCustomerPickerSheet,
+          child: const SizedBox(
+            width: 40,
+            height: 40,
+            child: Icon(
+              Icons.person_search_rounded,
+              color: AppTheme.primary,
+              size: 20,
             ),
           ),
         ),
@@ -866,9 +749,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           ),
                           title: Text(
                             customer.name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Literata',
-                              color: AppTheme.ink,
+                              color: AppColors.primaryText(context),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -1021,75 +904,45 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           setState(() => _eventDate = picked);
         }
       },
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.primary.withValues(alpha: 0.04),
-              AppColors.scaffold(context),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: AppColors.accentSoft(context, 0.12),
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: AppColors.headerGradient(context),
-                ),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                _orderType == OrderType.event
-                    ? Icons.calendar_today_rounded
-                    : Icons.local_shipping_rounded,
-                color: AppTheme.white,
-                size: 16,
-              ),
+      borderRadius: BorderRadius.circular(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _fieldLabel(l10n.dateRequired),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+            decoration: BoxDecoration(
+              color: AppColors.isDark(context)
+                  ? AppTheme.darkScaffold
+                  : AppTheme.grey100,
+              borderRadius: BorderRadius.circular(16),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.dateRequired,
+            child: Row(
+              children: [
+                Icon(
+                  Icons.calendar_today_outlined,
+                  size: 16,
+                  color: AppColors.mutedText(context),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    DateFormat('dd MMM yyyy').format(_eventDate),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontFamily: 'Literata',
-                      color: AppTheme.grey,
-                      fontSize: 10,
+                      color: AppColors.primaryText(context),
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    DateFormat('dd MMM yyyy').format(_eventDate),
-                    style: const TextStyle(
-                      fontFamily: 'Literata',
-                      color: AppTheme.ink,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: AppTheme.grey400,
-              size: 20,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1117,73 +970,49 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           setState(() => _eventTime = picked);
         }
       },
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.orange.withValues(alpha: 0.04),
-              AppColors.scaffold(context),
-            ],
+      borderRadius: BorderRadius.circular(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _fieldLabel(
+            AppLocalizations.of(
+              LanguageService.instance.currentLanguage,
+            ).timeRequired,
           ),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppTheme.orange.withValues(alpha: 0.12)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppTheme.orange700, AppTheme.orange],
-                ),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.access_time_rounded,
-                color: AppTheme.white,
-                size: 16,
-              ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+            decoration: BoxDecoration(
+              color: AppColors.isDark(context)
+                  ? AppTheme.darkScaffold
+                  : AppTheme.grey100,
+              borderRadius: BorderRadius.circular(16),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(
-                      LanguageService.instance.currentLanguage,
-                    ).timeRequired,
+            child: Row(
+              children: [
+                Icon(
+                  Icons.access_time_rounded,
+                  size: 16,
+                  color: AppColors.mutedText(context),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _eventTime.format(context),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontFamily: 'Literata',
-                      color: AppTheme.grey,
-                      fontSize: 10,
+                      color: AppColors.primaryText(context),
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    _eventTime.format(context),
-                    style: const TextStyle(
-                      fontFamily: 'Literata',
-                      color: AppTheme.ink,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: AppTheme.grey400,
-              size: 20,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1193,9 +1022,25 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     return _buildSectionCard(
       title: l10n.subEvents,
       icon: Icons.event_note,
-      trailing: IconButton(
-        icon: Icon(Icons.add_circle, color: AppColors.accent(context)),
-        onPressed: _showAddSubEventDialog,
+      trailing: Material(
+        color: AppColors.isDark(context)
+            ? AppTheme.darkElevated
+            : AppTheme.white,
+        shape: CircleBorder(
+          side: BorderSide(
+            color: AppTheme.primary.withValues(alpha: 0.85),
+            width: 1.4,
+          ),
+        ),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: _showAddSubEventDialog,
+          child: const SizedBox(
+            width: 40,
+            height: 40,
+            child: Icon(Icons.add, color: AppTheme.primary, size: 22),
+          ),
+        ),
       ),
       child: Column(
         children: [
@@ -1565,131 +1410,53 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     if (!hasSubEvents && !hasProducts) return SizedBox.shrink();
 
     return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppTheme.paletteFF1A2332, AppTheme.primary],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.accentSoft(context, 0.25),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(18),
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: _formCardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppTheme.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppTheme.white.withValues(alpha: 0.1),
-                  ),
-                ),
-                child: const Icon(
-                  Icons.receipt_long_rounded,
-                  color: AppTheme.white,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'Total Summary',
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.white,
-                  letterSpacing: 0.3,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          // Sub-events total
+          _sectionHeading(Icons.receipt_long_rounded, 'Total Summary'),
+          const SizedBox(height: 16),
           if (hasSubEvents) ...[
             _buildTotalRow(
               'Sub-Events (${_subEvents.length})',
               _subEventsTotal,
               Icons.celebration,
-              AppTheme.white.withValues(alpha: 0.7),
+              AppColors.secondaryText(context),
             ),
             const SizedBox(height: 10),
           ],
-          // Products total
           if (hasProducts) ...[
             _buildTotalRow(
               'Products (${_orderItems.length})',
               _productsTotal,
               Icons.shopping_bag,
-              AppTheme.white.withValues(alpha: 0.7),
+              AppColors.secondaryText(context),
             ),
             const SizedBox(height: 10),
           ],
-          // Divider
-          if (hasSubEvents && hasProducts) ...[
-            Container(
-              height: 1,
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppTheme.white.withValues(alpha: 0.0),
-                    AppTheme.white.withValues(alpha: 0.2),
-                    AppTheme.white.withValues(alpha: 0.0),
-                  ],
-                ),
-              ),
-            ),
-          ],
-          // Grand total
+          if (hasSubEvents && hasProducts)
+            Divider(height: 20, color: AppColors.border(context)),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Grand Total',
                 style: TextStyle(
                   fontFamily: 'Literata',
-                  fontSize: 17,
+                  fontSize: 16,
                   fontWeight: FontWeight.w800,
-                  color: AppTheme.white,
+                  color: AppColors.primaryText(context),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppTheme.white.withValues(alpha: 0.2),
-                      AppTheme.white.withValues(alpha: 0.1),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: AppTheme.white.withValues(alpha: 0.15),
-                  ),
-                ),
-                child: Text(
-                  '₹${_totalAmount.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.white,
-                    letterSpacing: 0.5,
-                  ),
+              Text(
+                '₹${_totalAmount.toStringAsFixed(0)}',
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.primary,
                 ),
               ),
             ],
@@ -1728,7 +1495,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             fontFamily: 'Literata',
             fontSize: 15,
             fontWeight: FontWeight.w700,
-            color: AppColors.card(context),
+            color: AppColors.primaryText(context),
           ),
         ),
       ],
@@ -1752,158 +1519,69 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     bool showStockInfo = false,
   }) {
     return Container(
-      margin: EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.grey.withValues(alpha: 0.08)),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.green.withValues(alpha: 0.06),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          ),
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          decoration: const BoxDecoration(
-            border: Border(
-              left: BorderSide(color: AppTheme.green600, width: 4),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: _formCardDecoration(),
+      child: Column(
+        children: [
+          _sectionHeading(icon, title),
+          const SizedBox(height: 4),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Quick add by code or search',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 12,
+                color: AppColors.mutedText(context),
+              ),
             ),
           ),
-          child: Column(
+          const SizedBox(height: 12),
+          Row(
             children: [
-              // Section Header with inline search
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      AppTheme.green600.withValues(alpha: 0.08),
-                      AppTheme.green600.withValues(alpha: 0.03),
-                      AppTheme.transparent,
-                    ],
-                  ),
-                  borderRadius: const BorderRadius.only(
-                    topRight: Radius.circular(20),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppTheme.primary,
-                            AppTheme.primary.withValues(alpha: 0.8),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.primary.withValues(alpha: 0.3),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Icon(icon, color: AppTheme.white, size: 18),
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                              color: AppColors.accent(context),
-                            ),
-                          ),
-                          Text(
-                            'Quick add by code or search',
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              fontSize: 11,
-                              color: AppTheme.grey600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Combined search bar: Product code + Search + Barcode
-              Padding(
-                padding: EdgeInsets.all(12),
+              Expanded(
                 child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
-                  ),
+                  height: 48,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: AppColors.scaffold(context),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: AppColors.accentSoft(context, 0.2),
-                    ),
+                    color: AppColors.inputFill(context),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border(context)),
                   ),
                   child: Row(
                     children: [
-                      // Flash icon for quick add
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [AppTheme.amber700, AppTheme.amber600],
-                          ),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Icon(
-                          Icons.flash_on_rounded,
-                          color: AppTheme.white,
-                          size: 14,
+                      GestureDetector(
+                        onTap: _showProductSelectionSheet,
+                        child: Icon(
+                          Icons.search_rounded,
+                          color: AppColors.mutedText(context),
+                          size: 20,
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      // Text input for product code
+                      const SizedBox(width: 8),
                       Expanded(
                         child: TextField(
                           controller: _productCodeController,
                           focusNode: _productCodeFocusNode,
-                          keyboardType: TextInputType.number,
+                          keyboardType: TextInputType.text,
                           textInputAction: TextInputAction.go,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
+                            color: AppColors.primaryText(context),
                           ),
                           decoration: InputDecoration(
-                            hintText: 'Enter product code',
+                            hintText: 'Product code or name',
                             hintStyle: TextStyle(
-                              color: AppTheme.grey,
+                              color: AppColors.mutedText(context),
                               fontWeight: FontWeight.w400,
-                              fontSize: 13,
+                              fontSize: 14,
                             ),
                             border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
                             isDense: true,
                             contentPadding: EdgeInsets.zero,
                           ),
@@ -1911,51 +1589,35 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           onSubmitted: (_) => _lookupProductByCode(),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      // Search icon - opens search product bottom sheet
-                      GestureDetector(
-                        onTap: _showProductSelectionSheet,
-                        child: Container(
-                          padding: EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Icon(
-                            Icons.search_rounded,
-                            color: AppColors.accent(context),
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Barcode scan icon
-                      GestureDetector(
-                        onTap: () {
-                          BarcodeScannerSheet.show(
-                            context,
-                            onProductScanned: _addScannedProductToOrder,
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: AppColors.headerGradient(context),
-                            ),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Icon(
-                            Icons.qr_code_scanner,
-                            color: AppTheme.white,
-                            size: 18,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
               ),
+              const SizedBox(width: 10),
+              Material(
+                color: AppTheme.primary,
+                borderRadius: BorderRadius.circular(14),
+                child: InkWell(
+                  onTap: () {
+                    BarcodeScannerSheet.show(
+                      context,
+                      onProductScanned: _addScannedProductToOrder,
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(14),
+                  child: const SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: Icon(
+                      Icons.qr_code_scanner_rounded,
+                      color: AppTheme.white,
+                      size: 22,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
               // Products list
               if (_orderItems.isEmpty)
                 Padding(
@@ -2057,8 +1719,6 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 ),
             ],
           ),
-        ),
-      ),
     );
   }
 
@@ -2112,11 +1772,11 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 children: [
                   Text(
                     item.productName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Literata',
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
-                      color: AppTheme.ink,
+                      color: AppColors.primaryText(context),
                       height: 1.2,
                     ),
                     maxLines: 1,
@@ -2587,117 +2247,67 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   }
 
   Widget _buildSummaryBar() {
+    final isDark = AppColors.isDark(context);
+    final dueColor = _remainingAmount > 0 ? AppTheme.toneAmber : AppTheme.primary;
     return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppTheme.paletteFF1A2332, AppTheme.primary, AppTheme.paletteFF1A3A30],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.accentSoft(context, 0.3),
-            blurRadius: 24,
-            offset: const Offset(0, -8),
-          ),
-        ],
-      ),
+      color: AppColors.scaffold(context),
       child: SafeArea(
+        top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Financial summary row
               Row(
                 children: [
-                  // Total
                   _buildSummaryChip(
                     label: 'Total',
                     amount: _totalAmount,
                     icon: Icons.receipt_long_rounded,
-                    color: AppTheme.white,
+                    color: AppColors.primaryText(context),
                   ),
-                  const SizedBox(width: 12),
-                  // Advance
+                  const SizedBox(width: 8),
                   _buildSummaryChip(
                     label: 'Advance',
                     amount: _advanceAmount,
                     icon: Icons.account_balance_wallet_rounded,
-                    color: AppTheme.green400,
+                    color: AppTheme.primary,
                   ),
-                  const SizedBox(width: 12),
-                  // Remaining
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: _remainingAmount > 0
-                            ? [
-                                AppTheme.orange.withValues(alpha: 0.2),
-                                AppTheme.orange.withValues(alpha: 0.1),
-                              ]
-                            : [
-                                AppTheme.green.withValues(alpha: 0.2),
-                                AppTheme.green.withValues(alpha: 0.1),
-                              ],
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: _remainingAmount > 0
-                            ? AppTheme.orange.withValues(alpha: 0.3)
-                            : AppTheme.green.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Due',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            color: AppTheme.white.withValues(alpha: 0.6),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Text(
-                          '₹${_remainingAmount.toStringAsFixed(0)}',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            color: _remainingAmount > 0
-                                ? AppTheme.orange300
-                                : AppTheme.green300,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ],
-                    ),
+                  const SizedBox(width: 8),
+                  _buildSummaryChip(
+                    label: 'Due',
+                    amount: _remainingAmount,
+                    icon: Icons.payments_outlined,
+                    color: dueColor,
                   ),
                 ],
               ),
-              SizedBox(height: 14),
-              // Save button - full width
-              SizedBox(
+              const SizedBox(height: 12),
+              Container(
                 width: double.infinity,
-                height: 50,
+                decoration: BoxDecoration(
+                  color: AppTheme.primary,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primary.withValues(
+                        alpha: isDark ? 0.45 : 0.28,
+                      ),
+                      blurRadius: isDark ? 22 : 14,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _saveOrder,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.card(context),
-                    foregroundColor: AppTheme.primary,
-                    disabledBackgroundColor: AppTheme.white.withValues(
-                      alpha: 0.5,
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    backgroundColor: AppTheme.transparent,
+                    shadowColor: AppTheme.transparent,
+                    disabledBackgroundColor: AppTheme.transparent,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(28),
                     ),
-                    elevation: 0,
                   ),
                   child: _isLoading
                       ? const SizedBox(
@@ -2706,18 +2316,17 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           child: CircularProgressIndicator(
                             strokeWidth: 2.5,
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              AppTheme.primary,
+                              AppTheme.white,
                             ),
                           ),
                         )
                       : Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
-                              _isEditing
-                                  ? Icons.check_circle_rounded
-                                  : Icons.save_rounded,
-                              size: 20,
+                            const Icon(
+                              Icons.check_circle_rounded,
+                              color: AppTheme.white,
+                              size: 22,
                             ),
                             const SizedBox(width: 10),
                             Text(
@@ -2725,8 +2334,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                               style: const TextStyle(
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w700,
-                                fontSize: 15,
-                                letterSpacing: 0.3,
+                                fontSize: 16,
+                                color: AppTheme.white,
                               ),
                             ),
                           ],
@@ -2746,32 +2355,32 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     required IconData icon,
     required Color color,
   }) {
+    final isDark = AppColors.isDark(context);
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: AppTheme.white.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppTheme.white.withValues(alpha: 0.1)),
+          color: isDark ? AppTheme.darkScaffold : AppTheme.grey100,
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(
-                  icon,
-                  color: AppTheme.white.withValues(alpha: 0.5),
-                  size: 12,
-                ),
+                Icon(icon, color: AppColors.mutedText(context), size: 12),
                 const SizedBox(width: 4),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    color: AppTheme.white.withValues(alpha: 0.6),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      color: AppColors.mutedText(context),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -2779,11 +2388,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             const SizedBox(height: 2),
             Text(
               '₹${amount.toStringAsFixed(0)}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontFamily: 'Literata',
                 color: color,
                 fontWeight: FontWeight.w800,
-                fontSize: 15,
+                fontSize: 14,
               ),
             ),
           ],
@@ -2800,98 +2411,24 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     Color accentColor = AppTheme.primary,
   }) {
     return Container(
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: accentColor.withValues(alpha: 0.06),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          ),
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border(left: BorderSide(color: accentColor, width: 4)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: _formCardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              // Header with gradient strip
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      accentColor.withValues(alpha: 0.06),
-                      accentColor.withValues(alpha: 0.02),
-                      AppTheme.transparent,
-                    ],
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            accentColor.withValues(alpha: 0.15),
-                            accentColor.withValues(alpha: 0.08),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: accentColor.withValues(alpha: 0.1),
-                        ),
-                      ),
-                      child: Icon(icon, color: accentColor, size: 20),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          color: AppTheme.ink,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                    ),
-                    if (trailing != null) trailing,
-                  ],
-                ),
-              ),
-              // Subtle divider
-              Container(
-                height: 0.5,
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                color: accentColor.withValues(alpha: 0.08),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
-                child: child,
-              ),
+              Expanded(child: _sectionHeading(icon, title)),
+              if (trailing != null) ...[
+                const SizedBox(width: 8),
+                trailing,
+              ],
             ],
           ),
-        ),
+          const SizedBox(height: 16),
+          child,
+        ],
       ),
     );
   }
@@ -2906,73 +2443,67 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     void Function(String)? onChanged,
     bool required = false,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.scaffold(context),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.paletteFFE8ECF0),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        maxLines: maxLines,
-        validator:
-            validator ??
-            (required
-                ? (value) => value == null || value.isEmpty ? 'Required' : null
-                : null),
-        onChanged: onChanged,
-        style: const TextStyle(
-          fontFamily: 'Literata',
-          color: AppTheme.ink,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(
+    final isDark = AppColors.isDark(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _fieldLabel(label),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          validator:
+              validator ??
+              (required
+                  ? (value) =>
+                        value == null || value.isEmpty ? 'Required' : null
+                  : null),
+          onChanged: onChanged,
+          style: TextStyle(
             fontFamily: 'Literata',
-            color: AppTheme.grey,
-            fontSize: 13,
+            color: AppColors.primaryText(context),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
           ),
-          floatingLabelStyle: TextStyle(
-            fontFamily: 'Literata',
-            color: AppColors.accent(context),
-            fontWeight: FontWeight.w600,
+          decoration: InputDecoration(
+            hintText: label,
+            hintStyle: TextStyle(
+              fontFamily: 'Literata',
+              color: AppColors.mutedText(context),
+              fontWeight: FontWeight.w500,
+            ),
+            prefixIcon: Icon(icon, color: AppColors.mutedText(context), size: 18),
+            filled: true,
+            fillColor: isDark ? AppTheme.darkScaffold : AppTheme.grey100,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppTheme.primary, width: 1.4),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppTheme.error, width: 1.4),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppTheme.error, width: 1.4),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
+            errorStyle: const TextStyle(color: AppTheme.error, fontSize: 11),
           ),
-          prefixIcon: Padding(
-            padding: const EdgeInsets.only(left: 12, right: 8),
-            child: Icon(icon, color: AppTheme.paletteFF9CA3AF, size: 20),
-          ),
-          prefixIconConstraints: const BoxConstraints(minWidth: 44),
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(color: AppTheme.error, width: 1.5),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(color: AppTheme.error, width: 1.5),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
-          ),
-          errorStyle: TextStyle(color: AppTheme.red600, fontSize: 11),
         ),
-      ),
+      ],
     );
   }
 

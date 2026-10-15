@@ -20,6 +20,7 @@ import 'customer_details_page.dart';
 import 'customer_finance_page.dart';
 import 'customer_transactions_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
@@ -796,72 +797,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   // ━━━ HEADER ━━━
 
   Widget _buildHeader() {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        MediaQuery.of(context).padding.top + 16,
-        20,
-        16,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.appBar(context),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.accentSoft(context, 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Row(
-          children: [
-            GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.arrow_back_rounded,
-                  color: AppTheme.white,
-                  size: 20,
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _localizations.manageCustomers,
-                    style: const TextStyle(
-                      color: AppTheme.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'Literata',
-                      height: 1.2,
-                    ),
-                  ),
-                  Text(
-                    '${_customers.length} ${_localizations.customers.toLowerCase()}',
-                    style: TextStyle(
-                      color: AppTheme.white.withValues(alpha: 0.7),
-                      fontSize: 11,
-                      fontFamily: 'Literata',
-                      height: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+    return AppTopBar(
+      title: _localizations.manageCustomers,
+      subtitle: '${_customers.length} ${_localizations.customers.toLowerCase()}',
     );
   }
 

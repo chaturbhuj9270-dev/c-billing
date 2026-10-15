@@ -1,9 +1,9 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/services/bill_report_settings_service.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Page for managing which columns appear in bill prints/reports
@@ -140,19 +140,21 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
           ? Center(
               child: CircularProgressIndicator(color: AppColors.accent(context)),
             )
-          : CustomScrollView(
-              slivers: [
-                // Sticky Header with Glass Effect
-                SliverPersistentHeader(
-                  pinned: true,
-                  delegate: _BillReportHeaderDelegate(
-                    minHeight: 100,
-                    maxHeight: 140,
-                    onBack: () => Navigator.pop(context),
-                    onReset: _resetToDefaults,
-                  ),
+          : Column(
+              children: [
+                AppTopBar(
+                  title: 'Bill Print Settings',
+                  subtitle: 'Choose columns to print on bills',
+                  actions: [
+                    AppTopBar.action(
+                      icon: Icons.restart_alt_rounded,
+                      onTap: _resetToDefaults,
+                    ),
+                  ],
                 ),
-
+                Expanded(
+                  child: CustomScrollView(
+              slivers: [
                 // Main Content
                 SliverToBoxAdapter(
                   child: FadeTransition(
@@ -198,6 +200,9 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
                       ),
                     ),
                   ),
+                ),
+              ],
+            ),
                 ),
               ],
             ),
@@ -515,171 +520,5 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
       default:
         return 'Custom column';
     }
-  }
-}
-
-/// Header delegate for bill report settings page
-class _BillReportHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final double minHeight;
-  final double maxHeight;
-  final VoidCallback onBack;
-  final VoidCallback onReset;
-
-  _BillReportHeaderDelegate({
-    required this.minHeight,
-    required this.maxHeight,
-    required this.onBack,
-    required this.onReset,
-  });
-
-  @override
-  double get minExtent => minHeight;
-
-  @override
-  double get maxExtent => maxHeight;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    final progress = shrinkOffset / (maxHeight - minHeight);
-    final isCollapsed = progress > 0.5;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.appBar(context),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.accentSoft(context, 0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
-        ),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      // Back Button
-                      GestureDetector(
-                        onTap: onBack,
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: AppTheme.white.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: AppTheme.white.withValues(alpha: 0.2),
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.arrow_back_ios_new_rounded,
-                            color: AppTheme.white,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      // Title
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Bill Print Settings',
-                              style: TextStyle(
-                                fontSize: isCollapsed ? 18 : 22,
-                                fontWeight: FontWeight.w800,
-                                fontFamily: 'Literata',
-                                color: AppTheme.white,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            if (!isCollapsed) ...[
-                              SizedBox(height: 4),
-                              Text(
-                                'Choose columns to print on bills',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontFamily: 'Literata',
-                                  color: AppColors.card(context),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      // Reset Button
-                      GestureDetector(
-                        onTap: onReset,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.white.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: AppTheme.white.withValues(alpha: 0.2),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.restart_alt_rounded,
-                                color: AppTheme.white,
-                                size: 16,
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                'Reset',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Literata',
-                                  color: AppColors.card(context),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  bool shouldRebuild(_BillReportHeaderDelegate oldDelegate) {
-    return maxHeight != oldDelegate.maxHeight ||
-        minHeight != oldDelegate.minHeight;
   }
 }

@@ -5,6 +5,7 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/language_service.dart';
 import '../../domain/entities/event_order.dart';
 import 'event_order_custom_columns_page.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Settings page for Event/Order list configuration
@@ -82,40 +83,15 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      appBar: AppBar(
-        backgroundColor: AppColors.appBar(context),
-        foregroundColor: AppTheme.white,
-        elevation: 0,
-        surfaceTintColor: AppTheme.transparent,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppTheme.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.arrow_back_ios_new,
-              color: AppTheme.white,
-              size: 18,
-            ),
+      body: Column(
+        children: [
+          AppTopBar(
+            title: AppLocalizations.of(
+              LanguageService.instance.currentLanguage,
+            ).settings,
           ),
-        ),
-        title: Text(
-          AppLocalizations.of(
-            LanguageService.instance.currentLanguage,
-          ).settings,
-          style: const TextStyle(
-            fontFamily: 'Literata',
-            fontWeight: FontWeight.w700,
-            fontSize: 20,
-            color: AppTheme.white,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: _isLoading
+          Expanded(
+            child: _isLoading
           ? const Center(child: CircularProgressIndicator(color: _primaryColor))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -419,6 +395,9 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                 ],
               ),
             ),
+          ),
+        ],
+      ),
     );
   }
 

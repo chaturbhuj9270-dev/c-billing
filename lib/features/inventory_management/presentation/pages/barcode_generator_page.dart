@@ -19,6 +19,7 @@ import '../../../product/offline/entities/product_entity.dart';
 import '../../offline/controllers/purchase_batch_offline_controller.dart';
 import '../../offline/entities/purchase_batch_entity.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
@@ -1389,127 +1390,40 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
   }
 
   Widget _buildHeader(bool isMobile) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        isMobile ? 12 : 16,
-        MediaQuery.of(context).padding.top + 12,
-        isMobile ? 12 : 16,
-        12,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.appBar(context),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Back button
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              padding: EdgeInsets.all(isMobile ? 8 : 10),
-              decoration: BoxDecoration(
-                color: AppTheme.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(isMobile ? 10 : 12),
-              ),
-              child: Icon(
-                Icons.arrow_back_ios_rounded,
-                size: isMobile ? 18 : 20,
-                color: AppTheme.white,
-              ),
+    return AppTopBar(
+      title: 'Barcode Generator',
+      subtitle: 'Generate & print barcodes for products and batches',
+      actions: [
+        if (!isMobile)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppTheme.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.white.withValues(alpha: 0.2)),
             ),
-          ),
-          SizedBox(width: isMobile ? 12 : 16),
-          // Title and subtitle
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(isMobile ? 6 : 8),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [_primaryColor, _accentColor],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(isMobile ? 8 : 10),
-                      ),
-                      child: Icon(
-                        Icons.qr_code_2_rounded,
-                        size: isMobile ? 18 : 22,
-                        color: AppTheme.white,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Barcode Generator',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontWeight: FontWeight.w800,
-                          fontSize: isMobile ? 16 : 22,
-                          color: AppTheme.white,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+                const Icon(
+                  Icons.inventory_2_outlined,
+                  size: 18,
+                  color: AppTheme.white,
                 ),
-                if (!isMobile) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    'Generate & print barcodes for products and batches',
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      fontWeight: FontWeight.w400,
-                      fontSize: 12,
-                      color: AppTheme.white.withValues(alpha: 0.7),
-                    ),
+                const SizedBox(width: 8),
+                Text(
+                  '${_products.length} Products',
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: AppTheme.white,
                   ),
-                ],
+                ),
               ],
             ),
           ),
-          // Quick Stats - only for tablet/desktop
-          if (!isMobile)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppTheme.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.inventory_2_outlined,
-                    size: 18,
-                    color: AppTheme.white,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${_products.length} Products',
-                    style: const TextStyle(
-                      fontFamily: 'Literata',
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: AppTheme.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
+      ],
     );
   }
 

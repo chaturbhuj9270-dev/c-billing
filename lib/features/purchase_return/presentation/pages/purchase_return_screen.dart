@@ -10,6 +10,7 @@ import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../data/services/purchase_return_service.dart';
 import '../../domain/entities/purchase_return.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
@@ -362,136 +363,72 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
     _sessionManager.resetSession();
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      appBar: _buildAppBar(),
-      body: TabBarView(
-        controller: _tabController,
-        children: [_buildNewReturnTab(), _buildHistoryTab()],
-      ),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar() {
-    return PreferredSize(
-      preferredSize: Size.fromHeight(110),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.appBar(context),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.accentSoft(context, 0.2),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: Column(
-            children: [
-              // Title row
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
+      body: Column(
+        children: [
+          AppTopBar(
+            title: _localizations.purchaseReturn,
+            subtitle: _localizations.returnStockToSupplier,
+            actions: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    Icon(
+                      _isPartialMode
+                          ? Icons.tune_rounded
+                          : Icons.all_inclusive_rounded,
+                      color: AppTheme.white,
+                      size: 14,
+                    ),
+                    const SizedBox(width: 6),
                     GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: const Icon(
-                        Icons.arrow_back_rounded,
-                        color: AppTheme.white,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _localizations.purchaseReturn,
-                            style: const TextStyle(
-                              color: AppTheme.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Literata',
-                            ),
-                          ),
-                          Text(
-                            _localizations.returnStockToSupplier,
-                            style: const TextStyle(
-                              color: AppTheme.white70,
-                              fontSize: 11,
-                              fontFamily: 'Literata',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Return mode toggle
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _isPartialMode
-                                ? Icons.tune_rounded
-                                : Icons.all_inclusive_rounded,
-                            color: AppTheme.white,
-                            size: 14,
-                          ),
-                          const SizedBox(width: 6),
-                          GestureDetector(
-                            onTap: () => setState(
-                              () => _isPartialMode = !_isPartialMode,
-                            ),
-                            child: Text(
-                              _isPartialMode
-                                  ? _localizations.partial
-                                  : _localizations.fullBatch,
-                              style: const TextStyle(
-                                color: AppTheme.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                fontFamily: 'Literata',
-                              ),
-                            ),
-                          ),
-                        ],
+                      onTap: () =>
+                          setState(() => _isPartialMode = !_isPartialMode),
+                      child: Text(
+                        _isPartialMode
+                            ? _localizations.partial
+                            : _localizations.fullBatch,
+                        style: const TextStyle(
+                          color: AppTheme.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Literata',
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              // Tab bar
-              TabBar(
-                controller: _tabController,
-                indicatorColor: AppTheme.white,
-                indicatorWeight: 3,
-                labelColor: AppTheme.white,
-                unselectedLabelColor: AppTheme.white54,
-                labelStyle: const TextStyle(
-                  fontFamily: 'Literata',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-                tabs: [
-                  Tab(text: _localizations.newReturn),
-                  Tab(text: _localizations.returnHistory),
-                ],
-              ),
             ],
           ),
-        ),
+          TabBar(
+            controller: _tabController,
+            indicatorColor: AppTheme.primary,
+            indicatorWeight: 3,
+            labelColor: AppColors.primaryText(context),
+            unselectedLabelColor: AppColors.mutedText(context),
+            labelStyle: const TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+            tabs: [
+              Tab(text: _localizations.newReturn),
+              Tab(text: _localizations.returnHistory),
+            ],
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [_buildNewReturnTab(), _buildHistoryTab()],
+            ),
+          ),
+        ],
       ),
     );
   }

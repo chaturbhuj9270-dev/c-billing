@@ -10,6 +10,7 @@ import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/common_widgets/file_preview_page.dart';
 import 'package:intl/intl.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 class ReportPreviewScreen extends StatefulWidget {
@@ -259,124 +260,31 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
   // ---------------------------------------------------------------------------
 
   Widget _buildHeader() {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        8,
-        MediaQuery.of(context).padding.top + 12,
-        16,
-        12,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.appBar(context),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: Offset(0, 2),
+    final isPdf = widget.selectedFormat == ReportFormat.pdf;
+    return AppTopBar(
+      title: _localizations.reportPreview,
+      subtitle: widget.reportTitle,
+      actions: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppTheme.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppTheme.white.withValues(alpha: 0.2)),
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Back button
-          IconButton(
-            onPressed: () => Navigator.of(context).pop(),
-            icon: Container(
-              padding: EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppTheme.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: AppTheme.white,
-                size: 18,
-              ),
+          child: Text(
+            isPdf ? 'PDF' : 'CSV',
+            style: const TextStyle(
+              color: AppTheme.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'Literata',
             ),
           ),
-          SizedBox(width: 4),
-          // Title
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _localizations.reportPreview,
-                  style: const TextStyle(
-                    color: AppTheme.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    fontFamily: 'Literata',
-                  ),
-                ),
-                SizedBox(height: 2),
-                Row(
-                  children: [
-                    Icon(
-                      widget.selectedFormat == ReportFormat.pdf
-                          ? Icons.picture_as_pdf_rounded
-                          : Icons.table_chart_rounded,
-                      size: 14,
-                      color: AppTheme.white.withValues(alpha: 0.7),
-                    ),
-                    SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        widget.reportTitle,
-                        style: TextStyle(
-                          color: AppTheme.white.withValues(alpha: 0.7),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          fontFamily: 'Literata',
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          // Format badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: widget.selectedFormat == ReportFormat.pdf
-                    ? [AppTheme.red600, AppTheme.red800]
-                    : [AppTheme.green600, AppTheme.green800],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color:
-                      (widget.selectedFormat == ReportFormat.pdf
-                              ? AppTheme.red
-                              : AppTheme.green)
-                          .withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Text(
-              widget.selectedFormat == ReportFormat.pdf ? 'PDF' : 'CSV',
-              style: const TextStyle(
-                color: AppTheme.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                fontFamily: 'Literata',
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Selection Bar
-  // ---------------------------------------------------------------------------
 
   Widget _buildSelectionBar() {
     return Container(

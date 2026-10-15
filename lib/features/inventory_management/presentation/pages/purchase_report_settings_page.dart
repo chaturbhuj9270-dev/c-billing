@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/services/purchase_report_settings_service.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Page for managing which columns appear in purchase reports
@@ -117,65 +118,15 @@ class _PurchaseReportSettingsPageState
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        MediaQuery.of(context).padding.top + 20,
-        20,
-        20,
-      ),
-      color: AppColors.appBar(context),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              padding: EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppTheme.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.arrow_back_ios_rounded,
-                size: 20,
-                color: AppTheme.white,
-              ),
-            ),
-          ),
-          SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Report Settings',
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontWeight: FontWeight.w800,
-                    fontSize: 22,
-                    color: AppTheme.white,
-                  ),
-                ),
-                Text(
-                  'Choose columns to show in report',
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontWeight: FontWeight.w400,
-                    fontSize: 12,
-                    color: AppTheme.white.withValues(alpha: 0.7),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          TextButton.icon(
-            onPressed: _resetToDefaults,
-            icon: const Icon(Icons.restart_alt_rounded, size: 18),
-            label: const Text('Reset'),
-            style: TextButton.styleFrom(foregroundColor: AppTheme.white),
-          ),
-        ],
-      ),
+    return AppTopBar(
+      title: 'Report Settings',
+      subtitle: 'Choose columns to show in report',
+      actions: [
+        AppTopBar.action(
+          icon: Icons.restart_alt_rounded,
+          onTap: _resetToDefaults,
+        ),
+      ],
     );
   }
 

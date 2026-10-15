@@ -12,6 +12,7 @@ import '../../domain/models/report_filter_model.dart';
 import '../../domain/models/report_result_model.dart';
 import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
@@ -331,10 +332,16 @@ class _ReportPageState extends State<ReportPage>
       backgroundColor: AppColors.scaffold(context),
       body: Stack(
         children: [
-          CustomScrollView(
-            slivers: [
-              _buildSliverAppBar(),
-              SliverPadding(
+          Column(
+            children: [
+              const AppTopBar(
+                title: 'Reports',
+                subtitle: 'Generate • Save • Share',
+              ),
+              Expanded(
+                child: CustomScrollView(
+                  slivers: [
+                    SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
@@ -358,6 +365,9 @@ class _ReportPageState extends State<ReportPage>
                       ),
                     ],
                   ]),
+                    ),
+                  ),
+                  ],
                 ),
               ),
             ],
@@ -366,63 +376,6 @@ class _ReportPageState extends State<ReportPage>
           if (_isGenerating) _buildLoadingOverlay(),
         ],
       ),
-    );
-  }
-
-  // ─── SLIVER APP BAR ───
-
-  SliverAppBar _buildSliverAppBar() {
-    return SliverAppBar(
-      expandedHeight: 100,
-      pinned: true,
-      leading: GestureDetector(
-        onTap: () => Navigator.pop(context),
-        child: const Icon(Icons.arrow_back_rounded, color: AppTheme.white),
-      ),
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          color: AppColors.appBar(context),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(56, 12, 20, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Reports',
-                    style: TextStyle(
-                      color: AppTheme.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      fontFamily: 'Literata',
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Generate • Save • Share',
-                    style: TextStyle(
-                      color: AppTheme.white.withValues(alpha: 0.7),
-                      fontSize: 12,
-                      fontFamily: 'Literata',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        titlePadding: const EdgeInsets.only(left: 56, bottom: 14),
-        title: const Text(
-          'Reports',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w800,
-            fontFamily: 'Literata',
-            color: AppTheme.white,
-          ),
-        ),
-      ),
-      backgroundColor: AppColors.appBar(context),
     );
   }
 

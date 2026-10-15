@@ -9,6 +9,7 @@ import '../services/play_billing_service.dart';
 import '../services/subscription_service.dart';
 import '../../features/dashboard/presentation/pages/optimized_dashboard_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Google Play Billing payment screen for yearly subscription (₹3999).
@@ -241,49 +242,9 @@ class _PaymentScreenState extends State<PaymentScreen>
   }
 
   Widget _buildAppBar() {
-    return Container(
-      color: AppColors.appBar(context),
-      padding: EdgeInsets.fromLTRB(
-        16,
-        MediaQuery.of(context).padding.top + 12,
-        16,
-        12,
-      ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: _isPaying ? null : () => Navigator.pop(context),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppTheme.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.white.withValues(alpha: 0.2)),
-              ),
-              child: const Icon(
-                Icons.arrow_back_ios_new,
-                size: 18,
-                color: AppTheme.white,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              _localizations.payment,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.white,
-                fontFamily: 'Literata',
-                letterSpacing: 1,
-              ),
-            ),
-          ),
-          const SizedBox(width: 40),
-        ],
-      ),
+    return AppTopBar(
+      title: _localizations.payment,
+      onBack: _isPaying ? () {} : () => Navigator.pop(context),
     );
   }
 

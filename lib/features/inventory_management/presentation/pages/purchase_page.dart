@@ -29,6 +29,7 @@ import '../../../../core/services/inventory_integration_service.dart';
 import 'purchase_settings_page.dart';
 import 'invoice_scanner_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
@@ -458,7 +459,7 @@ class _PurchasePageState extends State<PurchasePage>
                         label: _localizations.selectSupplier,
                         value: sheetSelectedSupplier?['fullName'],
                         icon: Icons.person_outline,
-                        color: AppTheme.coral,
+                        color: AppTheme.primary,
                         onTap: () async {
                           final supplier = await _showInlineSupplierPicker(
                             context,
@@ -1716,12 +1717,7 @@ class _PurchasePageState extends State<PurchasePage>
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppTheme.coral,
-                            AppTheme.coral.withValues(alpha: 0.8),
-                          ],
-                        ),
+                        color: AppTheme.headerDarkStart,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
@@ -1861,12 +1857,12 @@ class _PurchasePageState extends State<PurchasePage>
                                 padding: EdgeInsets.all(14),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? AppTheme.coral.withValues(alpha: 0.08)
+                                      ? AppTheme.primary.withValues(alpha: 0.08)
                                       : AppColors.scaffold(context),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
                                     color: isSelected
-                                        ? AppTheme.coral
+                                        ? AppTheme.primary
                                         : AppColors.border(context)!,
                                     width: isSelected ? 1.5 : 1,
                                   ),
@@ -1877,7 +1873,7 @@ class _PurchasePageState extends State<PurchasePage>
                                       width: 48,
                                       height: 48,
                                       decoration: BoxDecoration(
-                                        color: AppTheme.coral.withValues(alpha: 0.1),
+                                        color: AppTheme.primary.withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Center(
@@ -1889,7 +1885,7 @@ class _PurchasePageState extends State<PurchasePage>
                                                     .toUpperCase()
                                               : 'S',
                                           style: const TextStyle(
-                                            color: AppTheme.coral,
+                                            color: AppTheme.primary,
                                             fontWeight: FontWeight.w700,
                                             fontSize: 20,
                                           ),
@@ -1910,7 +1906,7 @@ class _PurchasePageState extends State<PurchasePage>
                                     if (isSelected)
                                       const Icon(
                                         Icons.check_circle,
-                                        color: AppTheme.coral,
+                                        color: AppTheme.primary,
                                         size: 22,
                                       ),
                                   ],
@@ -2413,12 +2409,7 @@ class _PurchasePageState extends State<PurchasePage>
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppTheme.coral,
-                              AppTheme.coral.withValues(alpha: 0.8),
-                            ],
-                          ),
+                          color: AppTheme.headerDarkStart,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
@@ -3092,93 +3083,31 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  Widget _headerCircle({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    final isDark = AppColors.isDark(context);
-    return Material(
-      color: isDark ? AppTheme.darkElevated : AppTheme.white,
-      elevation: isDark ? 0 : 1,
-      shadowColor: AppTheme.black.withValues(alpha: 0.08),
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: Icon(icon, size: 20, color: AppColors.primaryText(context)),
-        ),
-      ),
-    );
-  }
-
-  /// Flat header on the page surface, with scan and settings still available.
   Widget _buildHeader() {
-    return Container(
-      color: AppColors.scaffold(context),
-      padding: EdgeInsets.fromLTRB(
-        16,
-        MediaQuery.of(context).padding.top + 8,
-        16,
-        8,
-      ),
-      child: Row(
-        children: [
-          _headerCircle(
-            icon: Icons.chevron_left_rounded,
-            onTap: () => Navigator.pop(context),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _localizations.addPurchase,
-                  style: TextStyle(
-                    color: AppColors.primaryText(context),
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    fontFamily: 'Literata',
-                  ),
-                ),
-                Text(
-                  _localizations.recordNewInventoryPurchase,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: AppColors.mutedText(context),
-                    fontSize: 12,
-                    fontFamily: 'Literata',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          _headerCircle(
-            icon: Icons.qr_code_scanner_rounded,
-            onTap: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const InvoiceScannerPage()),
-              );
-              if (result == true && mounted) {
-                setState(() {});
-              }
-            },
-          ),
-          const SizedBox(width: 8),
-          _headerCircle(
-            icon: Icons.settings_rounded,
-            onTap: () => Navigator.push(
+    return AppTopBar(
+      title: _localizations.addPurchase,
+      subtitle: _localizations.recordNewInventoryPurchase,
+      actions: [
+        AppTopBar.action(
+          icon: Icons.qr_code_scanner_rounded,
+          onTap: () async {
+            final result = await Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const PurchaseSettingsPage()),
-            ),
+              MaterialPageRoute(builder: (_) => const InvoiceScannerPage()),
+            );
+            if (result == true && mounted) {
+              setState(() {});
+            }
+          },
+        ),
+        AppTopBar.action(
+          icon: Icons.settings_rounded,
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const PurchaseSettingsPage()),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

@@ -14,6 +14,7 @@ import '../widgets/supplier_summary_widget.dart';
 import '../widgets/supplier_filter_widget.dart';
 import '../widgets/supplier_list_widget.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
@@ -815,9 +816,20 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
 
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      appBar: widget.isEmbedded ? null : _buildAppBar(),
       floatingActionButton: _buildFAB(),
-      body: SlideTransition(
+      body: Column(
+        children: [
+          if (!widget.isEmbedded)
+            AppTopBar(
+              title: _localizations.mySuppliers,
+              subtitle: _localizations.manageYourVendors,
+              onBack: () {
+                _isNavigatingAway = true;
+                Navigator.of(context).pop();
+              },
+            ),
+          Expanded(
+            child: SlideTransition(
         position: _offsetAnimation,
         child: FadeTransition(
           opacity: _opacityAnimation,
@@ -868,73 +880,9 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
           ),
         ),
       ),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar() {
-    return PreferredSize(
-      preferredSize: Size.fromHeight(70),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.appBar(context),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.accentSoft(context, 0.2),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    _isNavigatingAway = true;
-                    Navigator.of(context).pop();
-                  },
-                  child: Icon(
-                    Icons.arrow_back_rounded,
-                    color: AppTheme.white,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        _localizations.mySuppliers,
-                        style: const TextStyle(
-                          color: AppTheme.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: 'Literata',
-                          height: 1.2,
-                        ),
-                      ),
-                      Text(
-                        _localizations.manageYourVendors,
-                        style: TextStyle(
-                          color: AppTheme.white.withValues(alpha: 0.7),
-                          fontSize: 11,
-                          fontFamily: 'Literata',
-                          height: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 

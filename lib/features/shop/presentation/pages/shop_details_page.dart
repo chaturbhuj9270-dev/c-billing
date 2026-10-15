@@ -11,6 +11,7 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../offline/controllers/shop_image_cache_controller.dart';
 import '../../data/repositories/shop_repository.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 class ShopDetailsPage extends StatefulWidget {
@@ -1082,26 +1083,11 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.chipFill(context),
-      appBar: AppBar(
-        backgroundColor: AppColors.appBar(context),
-        foregroundColor: AppTheme.white,
-        surfaceTintColor: AppTheme.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          _localizations.shopDetails,
-          style: const TextStyle(
-            color: AppTheme.white,
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            fontFamily: 'Literata',
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
+      body: Column(
+        children: [
+          AppTopBar(title: _localizations.shopDetails),
+          Expanded(
+            child: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Form(
           key: _formKey,
@@ -1465,6 +1451,9 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
             ],
           ),
         ),
+          ),
+          ),
+        ],
       ),
     );
   }

@@ -11,6 +11,7 @@ import '../../offline/controllers/quotation_offline_controller.dart';
 import '../../offline/entities/quotation_entity.dart';
 import 'quotation_screen.dart';
 import 'quotation_settings_page.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 class QuotationListPage extends StatefulWidget {
@@ -109,62 +110,6 @@ class _QuotationListPageState extends State<QuotationListPage> {
 
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      appBar: AppBar(
-        backgroundColor: AppColors.appBar(context),
-        foregroundColor: AppTheme.white,
-        surfaceTintColor: AppTheme.transparent,
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppTheme.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.arrow_back_ios_new,
-              color: AppTheme.white,
-              size: 18,
-            ),
-          ),
-        ),
-        title: Text(
-          _l10n.quotations,
-          style: const TextStyle(
-            fontFamily: 'Literata',
-            fontWeight: FontWeight.w800,
-            color: AppTheme.white,
-            fontSize: 20,
-          ),
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const QuotationSettingsPage(),
-                ),
-              );
-            },
-            tooltip: _l10n.quotationSettings,
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppTheme.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.settings_rounded,
-                color: AppTheme.white,
-                size: 20,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openQuotation(),
         backgroundColor: _primary,
@@ -178,7 +123,25 @@ class _QuotationListPageState extends State<QuotationListPage> {
           ),
         ),
       ),
-      body: _isLoading
+      body: Column(
+        children: [
+          AppTopBar(
+            title: _l10n.quotations,
+            actions: [
+              AppTopBar.action(
+                icon: Icons.settings_rounded,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const QuotationSettingsPage(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          Expanded(child: _isLoading
           ? const Center(
               child: CircularProgressIndicator(color: _primary),
             )
@@ -348,6 +311,9 @@ class _QuotationListPageState extends State<QuotationListPage> {
                 );
               },
             ),
+          ),
+        ],
+      ),
     );
   }
 }

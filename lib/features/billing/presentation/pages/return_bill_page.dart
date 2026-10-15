@@ -19,6 +19,7 @@ import 'package:c_billing/core/services/inventory_integration_service.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Return Bill Page for processing bill returns
@@ -523,8 +524,11 @@ class _ReturnBillPageState extends State<ReturnBillPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      appBar: _buildAppBar(),
-      body: FadeTransition(
+      body: Column(
+        children: [
+          _buildAppBar(),
+          Expanded(
+            child: FadeTransition(
         opacity: _opacityAnimation,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -551,143 +555,30 @@ class _ReturnBillPageState extends State<ReturnBillPage>
           ),
         ),
       ),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar() {
-    return PreferredSize(
-      preferredSize: Size.fromHeight(70),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.appBar(context),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.accentSoft(context, 0.2),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.pop(context, _hasReturnProcessed),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppTheme.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.arrow_back,
-                      color: AppTheme.white,
-                      size: 22,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _localizations.returnBill,
-                        style: const TextStyle(
-                          color: AppTheme.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: 'Literata',
-                          height: 1.2,
-                        ),
-                      ),
-                      Text(
-                        _localizations.processBillReturns,
-                        style: TextStyle(
-                          color: AppTheme.white.withValues(alpha: 0.7),
-                          fontSize: 11,
-                          fontFamily: 'Literata',
-                          height: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Share & Print buttons - only show when bill is loaded
-                if (_currentBill != null) ...[
-                  // Share button
-                  GestureDetector(
-                    onTap: _handleShareBill,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      margin: const EdgeInsets.only(right: 8),
-                      decoration: BoxDecoration(
-                        color: AppTheme.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.share_rounded,
-                        color: AppTheme.white,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                  // Print button
-                  GestureDetector(
-                    onTap: _isPrinting ? null : _handlePrintBill,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      margin: const EdgeInsets.only(right: 8),
-                      decoration: BoxDecoration(
-                        color: AppTheme.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: _isPrinting
-                          ? const Center(
-                              child: SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppTheme.white,
-                                  ),
-                                ),
-                              ),
-                            )
-                          : const Icon(
-                              Icons.print_rounded,
-                              color: AppTheme.white,
-                              size: 20,
-                            ),
-                    ),
-                  ),
-                ],
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppTheme.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    Icons.assignment_return,
-                    color: AppTheme.white,
-                    size: 20,
-                  ),
-                ),
-              ],
-            ),
+    );
+  }
+
+  Widget _buildAppBar() {
+    return AppTopBar(
+      title: _localizations.returnBill,
+      subtitle: _localizations.processBillReturns,
+      onBack: () => Navigator.pop(context, _hasReturnProcessed),
+      actions: [
+        if (_currentBill != null) ...[
+          AppTopBar.action(
+            icon: Icons.share_rounded,
+            onTap: _handleShareBill,
           ),
-        ),
-      ),
+          AppTopBar.action(
+            icon: Icons.print_rounded,
+            onTap: _isPrinting ? null : _handlePrintBill,
+            isLoading: _isPrinting,
+          ),
+        ],
+      ],
     );
   }
 

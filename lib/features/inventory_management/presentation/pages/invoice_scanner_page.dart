@@ -15,6 +15,7 @@ import '../../../product/offline/entities/product_entity.dart';
 import '../../data/services/purchase_sync_service.dart';
 import '../../data/services/purchase_batch_sync_service.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 class InvoiceScannerPage extends StatefulWidget {
@@ -381,19 +382,24 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
 
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      appBar: AppBar(
-        title: const Text('Scan Invoice'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => _showSettingsDialog(),
-            tooltip: 'API Settings',
+      body: Column(
+        children: [
+          AppTopBar(
+            title: 'Scan Invoice',
+            actions: [
+              AppTopBar.action(
+                icon: Icons.settings,
+                onTap: () => _showSettingsDialog(),
+              ),
+            ],
+          ),
+          Expanded(
+            child: _showApiKeyInput && !_scannerService.isConfigured
+          ? _buildApiKeySetup(theme, colorScheme)
+          : _buildMainContent(theme, colorScheme),
           ),
         ],
       ),
-      body: _showApiKeyInput && !_scannerService.isConfigured
-          ? _buildApiKeySetup(theme, colorScheme)
-          : _buildMainContent(theme, colorScheme),
       floatingActionButton:
           _scannedData != null && _scannedData!.items.isNotEmpty
           ? FloatingActionButton.extended(

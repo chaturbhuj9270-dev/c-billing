@@ -3,6 +3,7 @@ import '../../domain/repositories/customer_repository.dart';
 import '../../data/services/customer_sync_service.dart';
 import 'customer_add_edit_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Customer detail page for offline-first architecture
@@ -109,48 +110,35 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      appBar: AppBar(
-        backgroundColor: AppColors.appBar(context),
-        foregroundColor: AppTheme.white,
-        surfaceTintColor: AppTheme.transparent,
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.white),
-        ),
-        title: const Text(
-          'Customer Details',
-          style: TextStyle(
-            color: AppTheme.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: [
-          IconButton(
-            onPressed: _editCustomer,
-            icon: const Icon(Icons.edit_outlined, color: AppTheme.white70),
-          ),
-          if (_isDeleting)
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.white70),
-                ),
+      body: Column(
+        children: [
+          AppTopBar(
+            title: 'Customer Details',
+            actions: [
+              AppTopBar.action(
+                icon: Icons.edit_outlined,
+                onTap: _editCustomer,
               ),
-            )
-          else
-            IconButton(
-              onPressed: _deleteCustomer,
-              icon: Icon(Icons.delete_outline, color: AppTheme.error),
-            ),
-        ],
-      ),
-      body: SingleChildScrollView(
+              _isDeleting
+                  ? const Padding(
+                      padding: EdgeInsets.all(10),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppTheme.white,
+                        ),
+                      ),
+                    )
+                  : AppTopBar.action(
+                      icon: Icons.delete_outline,
+                      onTap: _deleteCustomer,
+                    ),
+            ],
+          ),
+          Expanded(
+            child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
@@ -230,6 +218,9 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
             ),
           ],
         ),
+      ),
+          ),
+        ],
       ),
     );
   }

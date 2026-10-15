@@ -53,6 +53,7 @@ import 'package:c_billing/features/billing/presentation/widgets/billing_add_item
 import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
 import 'package:c_billing/features/customer/domain/entities/customer_transaction.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
@@ -1492,11 +1493,67 @@ class _BillingPageState extends State<BillingPage> {
                 if (_showQuickStats) _buildQuickStatsPremiumPanel(),
               ],
             )
-          : CustomScrollView(
-              slivers: [
-                _buildSliverAppBar(),
-                SliverToBoxAdapter(child: _buildBillComposer()),
-                ...extras.map((widget) => SliverToBoxAdapter(child: widget)),
+          : Column(
+              children: [
+                AppTopBar(
+                  title: _localizations.createBill,
+                  subtitle: _localizations.createAndPrintInvoices,
+                  actions: [
+                    if (_billItems.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${_billItems.length}',
+                          style: const TextStyle(
+                            color: AppTheme.white,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Literata',
+                          ),
+                        ),
+                      ),
+                    AppTopBar.action(
+                      icon: Icons.settings_rounded,
+                      onTap: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const BillSettingsPage(),
+                          ),
+                        );
+                        if (result == true) {
+                          _loadBillSettings();
+                        }
+                      },
+                    ),
+                    AppTopBar.action(
+                      icon: Icons.tune_rounded,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const BillReportSettingsPage(),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      children: [_buildBillComposer(), ...extras],
+                    ),
+                  ),
+                ),
               ],
             ),
       bottomNavigationBar: _buildBottomBar(),
@@ -1568,35 +1625,6 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  Widget _buildSliverAppBar() {
-    return SliverPersistentHeader(
-      pinned: true,
-      delegate: _BillingHeaderDelegate(
-        minHeight: 100,
-        maxHeight: 140,
-        billItemsCount: _billItems.length,
-        localizations: _localizations,
-        onSettingsTap: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const BillSettingsPage()),
-          );
-          if (result == true) {
-            _loadBillSettings();
-          }
-        },
-        onReportSettingsTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const BillReportSettingsPage(),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   Widget _buildCustomerSection({bool nested = false}) {
     // Determine if customer is required (partial payment selected)
     final isCustomerRequired = !_isFullPayment;
@@ -1633,12 +1661,12 @@ class _BillingPageState extends State<BillingPage> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: AppTheme.paletteFF3A242C,
+                    color: AppTheme.headerDarkStart,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.person_rounded,
-                    color: AppTheme.toneRose,
+                    color: AppTheme.white,
                     size: 20,
                   ),
                 ),
@@ -2463,7 +2491,7 @@ class _BillingPageState extends State<BillingPage> {
                   ),
                   child: const Icon(
                     Icons.shopping_cart_outlined,
-                    color: AppTheme.primary,
+                    color: AppTheme.white,
                     size: 20,
                   ),
                 ),
@@ -4240,7 +4268,7 @@ class _BillingPageState extends State<BillingPage> {
                   ),
                   child: const Icon(
                     Icons.local_offer_outlined,
-                    color: AppTheme.primary,
+                    color: AppTheme.white,
                     size: 20,
                   ),
                 ),
@@ -5760,8 +5788,8 @@ class _BillingPageState extends State<BillingPage> {
         icon: Icons.people_alt_rounded,
         value: '',
         label: _localizations.customers,
-        color: AppTheme.cyan600,
-        gradient: [AppTheme.cyan600, AppTheme.cyan700],
+        color: AppTheme.primary,
+        gradient: [AppTheme.primary, AppTheme.primaryDark],
         onTap: () {
           _toggleQuickStats();
           Navigator.push(
@@ -6445,266 +6473,6 @@ class _QuickStatItem {
     required this.gradient,
     this.onTap,
   });
-}
-
-// Sticky Header Delegate for Billing Page
-class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final double minHeight;
-  final double maxHeight;
-  final int billItemsCount;
-  final AppLocalizations localizations;
-  final VoidCallback onSettingsTap;
-  final VoidCallback onReportSettingsTap;
-
-  _BillingHeaderDelegate({
-    required this.minHeight,
-    required this.maxHeight,
-    required this.billItemsCount,
-    required this.localizations,
-    required this.onSettingsTap,
-    required this.onReportSettingsTap,
-  });
-
-  @override
-  double get minExtent => minHeight;
-
-  @override
-  double get maxExtent => maxHeight;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    final progress = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
-    final isCollapsed = progress > 0.5;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.appBar(context),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.accentSoft(context, 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
-        ),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      // Receipt Icon
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: AppTheme.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: AppTheme.white.withValues(alpha: 0.2),
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.receipt_long_rounded,
-                          color: AppTheme.white,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      // Title
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              localizations.createBill,
-                              style: TextStyle(
-                                fontSize: isCollapsed ? 20 : 24,
-                                fontWeight: FontWeight.w800,
-                                fontFamily: 'Literata',
-                                color: AppTheme.white,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            if (!isCollapsed) ...[
-                              SizedBox(height: 4),
-                              Text(
-                                localizations.createAndPrintInvoices,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontFamily: 'Literata',
-                                  color: AppColors.card(context),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      // Items badge
-                      if (billItemsCount > 0)
-                        Container(
-                          margin: EdgeInsets.only(right: 12),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.card(context),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.shopping_cart_rounded,
-                                color: AppColors.accent(context),
-                                size: 16,
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                '$billItemsCount',
-                                style: TextStyle(
-                                  color: AppColors.accent(context),
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  fontFamily: 'Literata',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      // Settings Menu Button
-                      PopupMenuButton<String>(
-                        icon: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: AppTheme.white.withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppTheme.white.withValues(alpha: 0.2),
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.more_vert_rounded,
-                            color: AppTheme.white,
-                            size: 22,
-                          ),
-                        ),
-                        offset: const Offset(0, 50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        elevation: 12,
-                        color: AppColors.isDark(context)
-                            ? AppTheme.darkCard
-                            : AppColors.card(context),
-                        onSelected: (value) {
-                          if (value == 'settings') {
-                            onSettingsTap();
-                          } else if (value == 'report_settings') {
-                            onReportSettingsTap();
-                          }
-                        },
-                        itemBuilder: (context) => [
-                          PopupMenuItem<String>(
-                            value: 'settings',
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.primary.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Icon(
-                                    Icons.settings_rounded,
-                                    color: AppColors.accent(context),
-                                    size: 20,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  localizations.settings,
-                                  style: TextStyle(
-                                    fontFamily: 'Literata',
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                    color: AppColors.primaryText(context),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          PopupMenuItem<String>(
-                            value: 'report_settings',
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.blue.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(
-                                    Icons.view_column_rounded,
-                                    color: AppTheme.blue,
-                                    size: 20,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  localizations.printColumnSettings,
-                                  style: TextStyle(
-                                    fontFamily: 'Literata',
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                    color: AppColors.primaryText(context),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  bool shouldRebuild(_BillingHeaderDelegate oldDelegate) {
-    return maxHeight != oldDelegate.maxHeight ||
-        minHeight != oldDelegate.minHeight ||
-        billItemsCount != oldDelegate.billItemsCount;
-  }
 }
 
 /// Inline editable quantity field for bill items

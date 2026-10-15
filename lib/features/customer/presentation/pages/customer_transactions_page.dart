@@ -14,6 +14,7 @@ import '../../../event_order/offline/entities/event_order_entity.dart';
 import '../../../event_order/domain/entities/event_order.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
@@ -350,75 +351,25 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
     final initials = widget.customerName.isNotEmpty
         ? widget.customerName[0].toUpperCase()
         : 'C';
-    final topPadding = MediaQuery.of(context).padding.top;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.appBar(context),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.accentSoft(context, 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.only(top: topPadding),
-            child: SizedBox(
-              height: 56,
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppTheme.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        color: AppTheme.white,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  const Text(
-                    'Transactions',
-                    style: TextStyle(
-                      color: AppTheme.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Literata',
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: _loadTransactions,
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppTheme.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.refresh_rounded,
-                        color: AppTheme.white,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-              ),
+    return Column(
+      children: [
+        AppTopBar(
+          title: 'Transactions',
+          subtitle: widget.customerName,
+          actions: [
+            AppTopBar.action(
+              icon: Icons.refresh_rounded,
+              onTap: _loadTransactions,
             ),
+          ],
+        ),
+        Container(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          decoration: BoxDecoration(
+            color: AppColors.appBar(context),
+            borderRadius: BorderRadius.circular(20),
           ),
-          // Customer Info
-          Padding(
+          child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Container(
               padding: const EdgeInsets.all(14),
@@ -500,8 +451,8 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

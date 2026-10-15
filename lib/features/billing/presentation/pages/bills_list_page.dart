@@ -29,6 +29,7 @@ import 'package:c_billing/features/billing/data/services/bill_report_pdf_generat
 import 'package:c_billing/common_widgets/file_preview_page.dart';
 import 'package:c_billing/features/billing/presentation/pages/bill_report_settings_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Quick date filter options for bill history
@@ -816,164 +817,35 @@ class _BillsListPageState extends State<BillsListPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(70),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.appBar(context),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.accentSoft(context, 0.2),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+      body: Column(
+        children: [
+          AppTopBar(
+            title: _localizations.billsHistory,
+            subtitle: _localizations.viewAllTransactions,
+            actions: [
+              AppTopBar.action(
+                icon: Icons.description_rounded,
+                onTap: _generateBillReport,
+              ),
+              AppTopBar.action(
+                icon: Icons.refresh,
+                onTap: _loadBills,
+              ),
+              AppTopBar.action(
+                icon: Icons.settings_rounded,
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const BillReportSettingsPage(),
+                    ),
+                  );
+                },
               ),
             ],
           ),
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppTheme.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        color: AppTheme.white,
-                        size: 22,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _localizations.billsHistory,
-                          style: const TextStyle(
-                            color: AppTheme.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Literata',
-                            height: 1.2,
-                          ),
-                        ),
-                        Text(
-                          _localizations.viewAllTransactions,
-                          style: TextStyle(
-                            color: AppTheme.white.withValues(alpha: 0.7),
-                            fontSize: 11,
-                            fontFamily: 'Literata',
-                            height: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Report button
-                  GestureDetector(
-                    onTap: _generateBillReport,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppTheme.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.description_rounded,
-                        color: AppTheme.white,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Refresh button
-                  GestureDetector(
-                    onTap: _loadBills,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppTheme.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.refresh,
-                        color: AppTheme.white,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  // Settings menu
-                  PopupMenuButton<String>(
-                    icon: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppTheme.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        Icons.settings_rounded,
-                        color: AppTheme.white,
-                        size: 20,
-                      ),
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    onSelected: (value) async {
-                      if (value == 'report_settings') {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const BillReportSettingsPage(),
-                          ),
-                        );
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem<String>(
-                        value: 'report_settings',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.tune_rounded,
-                              color: AppTheme.grey700,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              _localizations.reportSettings,
-                              style: TextStyle(
-                                fontFamily: 'Literata',
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-      body: Stack(
+          Expanded(
+            child: Stack(
         children: [
           _isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -1042,6 +914,9 @@ class _BillsListPageState extends State<BillsListPage>
                 ),
               ),
             ),
+        ],
+            ),
+          ),
         ],
       ),
     );
@@ -2486,138 +2361,16 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
 
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      body: CustomScrollView(
+      body: Column(
+        children: [
+          AppTopBar(
+            title: _localizations.billDetails,
+            subtitle: _bill.billNumber,
+          ),
+          Expanded(
+            child: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // ══════════ Premium Header ══════════
-          SliverAppBar(
-            expandedHeight: 120,
-            pinned: true,
-            stretch: true,
-            backgroundColor: AppColors.appBar(context),
-            leading: Padding(
-              padding: const EdgeInsets.all(8),
-              child: GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppTheme.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: AppTheme.white,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ),
-            title: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.receipt_long_rounded,
-                    color: AppTheme.white,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _localizations.billDetails,
-                        style: const TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.white,
-                        ),
-                      ),
-                      Text(
-                        _bill.billNumber,
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 12,
-                          color: AppTheme.white.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.appBar(context),
-                ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 60, 16, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        if (_bill.hasAnyReturns)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _isFullyReturned
-                                  ? AppTheme.red.withValues(alpha: 0.2)
-                                  : AppTheme.orange.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: _isFullyReturned
-                                    ? AppTheme.red.withValues(alpha: 0.4)
-                                    : AppTheme.orange.withValues(alpha: 0.4),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.assignment_return_rounded,
-                                  size: 14,
-                                  color: _isFullyReturned
-                                      ? AppTheme.red200
-                                      : AppTheme.orange200,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  _isFullyReturned
-                                      ? _localizations.fullyReturned
-                                      : _localizations.partialReturn,
-                                  style: TextStyle(
-                                    fontFamily: 'Literata',
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: _isFullyReturned
-                                        ? AppTheme.red200
-                                        : AppTheme.orange200,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
           // ══════════ Content ══════════
           SliverToBoxAdapter(
             child: FadeTransition(
@@ -2644,7 +2397,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                           Expanded(
                             child: _buildInfoCard(
                               icon: Icons.person_rounded,
-                              iconColor: AppTheme.blue,
+                              iconColor: AppTheme.primary,
                               title: _localizations.customerName,
                               value:
                                   _bill.customerName ??
@@ -2701,6 +2454,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                   ),
                 ),
               ),
+            ),
+          ),
+        ],
             ),
           ),
         ],

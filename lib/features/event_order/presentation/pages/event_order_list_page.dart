@@ -21,6 +21,7 @@ import 'event_order_settings_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 /// Date filter options for event/order list
@@ -121,12 +122,18 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       child: Builder(
         builder: (context) => Scaffold(
           backgroundColor: AppColors.scaffold(context),
-          body: CustomScrollView(
-            slivers: [
+          body: Column(
+            children: [
               _buildPremiumAppBar(context),
-              SliverToBoxAdapter(child: _buildStatsSection()),
-              SliverToBoxAdapter(child: _buildSearchAndFilters()),
-              _buildOrdersSliver(),
+              Expanded(
+                child: CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(child: _buildStatsSection()),
+                    SliverToBoxAdapter(child: _buildSearchAndFilters()),
+                    _buildOrdersSliver(),
+                  ],
+                ),
+              ),
             ],
           ),
           floatingActionButton: _buildFAB(),
@@ -136,234 +143,73 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   }
 
   Widget _buildPremiumAppBar(BuildContext context) {
-    return SliverAppBar(
-      expandedHeight: 120,
-      floating: false,
-      pinned: true,
-      elevation: 0,
-      backgroundColor: AppColors.appBar(context),
-      surfaceTintColor: AppTheme.transparent,
-      leading: IconButton(
-        onPressed: () => Navigator.of(context).pop(),
-        icon: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppTheme.white.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: const Icon(
-            Icons.arrow_back_ios_new,
-            color: AppTheme.white,
-            size: 18,
-          ),
-        ),
-      ),
+    final l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
+    final title = _selectedType == OrderType.event
+        ? l10n.events
+        : _selectedType == OrderType.salesOrder
+        ? l10n.salesOrders
+        : l10n.eventsAndOrders;
+    final subtitle = _selectedType == OrderType.event
+        ? l10n.manageYourEvents
+        : _selectedType == OrderType.salesOrder
+        ? l10n.manageYourOrders
+        : l10n.manageYourEventsAndOrders;
+
+    return AppTopBar(
+      title: title,
+      subtitle: subtitle,
       actions: [
-        // Cloud sync indicator
         if (_unsyncedCount > 0)
-          Padding(
-            padding: const EdgeInsets.only(right: 4),
-            child: GestureDetector(
-              onTap: () {
-                EventOrderSyncService.instance.syncNow();
-                GlassyToast.show(
-                  context,
-                  AppLocalizations.of(
-                    LanguageService.instance.currentLanguage,
-                  ).syncing,
-                );
-              },
-              child: Chip(
-                backgroundColor: AppTheme.orange50,
-                avatar: Icon(
-                  Icons.cloud_upload_rounded,
-                  size: 16,
+          GestureDetector(
+            onTap: () {
+              EventOrderSyncService.instance.syncNow();
+              GlassyToast.show(context, l10n.syncing);
+            },
+            child: Chip(
+              backgroundColor: AppTheme.orange50,
+              avatar: const Icon(
+                Icons.cloud_upload_rounded,
+                size: 16,
+                color: AppTheme.orange700,
+              ),
+              label: Text(
+                '$_unsyncedCount',
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
                   color: AppTheme.orange700,
-                ),
-                label: Text(
-                  '$_unsyncedCount',
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                    color: AppTheme.orange700,
-                  ),
                 ),
               ),
             ),
           ),
-        // Report button
         BlocBuilder<EventOrderCubit, EventOrderState>(
           builder: (context, state) {
-            return IconButton(
-              onPressed: state is EventOrderLoaded && state.orders.isNotEmpty
-                  ? () => _showReportBottomSheet(context, state.orders)
+            final orders = state is EventOrderLoaded ? state.orders : null;
+            return AppTopBar.action(
+              icon: Icons.summarize_rounded,
+              onTap: orders != null && orders.isNotEmpty
+                  ? () => _showReportBottomSheet(context, orders)
                   : null,
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.summarize_rounded,
-                  color: state is EventOrderLoaded && state.orders.isNotEmpty
-                      ? AppTheme.white
-                      : AppTheme.white54,
-                  size: 20,
-                ),
-              ),
             );
           },
         ),
-        // Refresh button
         BlocBuilder<EventOrderCubit, EventOrderState>(
           builder: (context, state) {
-            return IconButton(
-              onPressed: () => context.read<EventOrderCubit>().loadEventOrders(
+            return AppTopBar.action(
+              icon: Icons.refresh_rounded,
+              onTap: () => context.read<EventOrderCubit>().loadEventOrders(
                 filterType: _selectedType,
                 searchQuery: _searchQuery,
               ),
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.refresh_rounded,
-                  color: AppTheme.white,
-                  size: 20,
-                ),
-              ),
             );
           },
         ),
-        // Settings button
-        IconButton(
-          onPressed: () => _openSettings(context),
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppTheme.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.settings_rounded,
-              color: AppTheme.white,
-              size: 20,
-            ),
-          ),
+        AppTopBar.action(
+          icon: Icons.settings_rounded,
+          onTap: () => _openSettings(context),
         ),
-        const SizedBox(width: 8),
       ],
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: BoxDecoration(
-            color: AppColors.appBar(context),
-          ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(60, 8, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: _selectedType == OrderType.salesOrder
-                                ? [
-                                    _salesColor,
-                                    _salesColor.withValues(alpha: 0.7),
-                                  ]
-                                : _selectedType == OrderType.event
-                                ? [
-                                    _eventColor,
-                                    _eventColor.withValues(alpha: 0.7),
-                                  ]
-                                : [_primaryColor, _primaryDark],
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color:
-                                  (_selectedType == OrderType.salesOrder
-                                          ? _salesColor
-                                          : _selectedType == OrderType.event
-                                          ? _eventColor
-                                          : _primaryColor)
-                                      .withValues(alpha: 0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          _selectedType == OrderType.salesOrder
-                              ? Icons.shopping_bag_rounded
-                              : Icons.celebration_rounded,
-                          color: AppTheme.white,
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _selectedType == OrderType.event
-                                  ? AppLocalizations.of(
-                                      LanguageService.instance.currentLanguage,
-                                    ).events
-                                  : _selectedType == OrderType.salesOrder
-                                  ? AppLocalizations.of(
-                                      LanguageService.instance.currentLanguage,
-                                    ).salesOrders
-                                  : AppLocalizations.of(
-                                      LanguageService.instance.currentLanguage,
-                                    ).eventsAndOrders,
-                              style: const TextStyle(
-                                fontFamily: 'Literata',
-                                fontSize: 22,
-                                fontWeight: FontWeight.w800,
-                                color: AppTheme.white,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _selectedType == OrderType.event
-                                  ? AppLocalizations.of(
-                                      LanguageService.instance.currentLanguage,
-                                    ).manageYourEvents
-                                  : _selectedType == OrderType.salesOrder
-                                  ? AppLocalizations.of(
-                                      LanguageService.instance.currentLanguage,
-                                    ).manageYourOrders
-                                  : AppLocalizations.of(
-                                      LanguageService.instance.currentLanguage,
-                                    ).manageYourEventsAndOrders,
-                              style: TextStyle(
-                                fontFamily: 'Literata',
-                                fontSize: 12,
-                                color: AppTheme.white.withValues(alpha: 0.7),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 

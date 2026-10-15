@@ -543,7 +543,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: AppTheme.primary,
+                  color: AppTheme.white,
                   fontFamily: 'Literata',
                   decoration: TextDecoration.none,
                 ),
@@ -585,14 +585,14 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                           height: 6,
                           decoration: const BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppTheme.primary,
+                            color: AppTheme.white,
                           ),
                         ),
                         const SizedBox(width: 5),
                         Text(
                           _localizations.online,
                           style: const TextStyle(
-                            color: AppTheme.primary,
+                            color: AppTheme.white,
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             fontFamily: 'Literata',

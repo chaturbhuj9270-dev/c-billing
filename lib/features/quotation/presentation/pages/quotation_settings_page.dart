@@ -5,6 +5,7 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/ui/glassy_toast.dart';
 import '../../data/services/quotation_format_settings.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Quotation print/PDF settings (format matches billing: POS vs normal).
@@ -60,37 +61,14 @@ class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
 
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      appBar: AppBar(
-        backgroundColor: AppColors.appBar(context),
-        foregroundColor: AppTheme.white,
-        surfaceTintColor: AppTheme.transparent,
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context, true),
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppTheme.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.arrow_back_ios_new,
-              color: AppTheme.white,
-              size: 18,
-            ),
+      body: Column(
+        children: [
+          AppTopBar(
+            title: _l10n.quotationSettings,
+            onBack: () => Navigator.pop(context, true),
           ),
-        ),
-        title: Text(
-          _l10n.quotationSettings,
-          style: const TextStyle(
-            fontFamily: 'Literata',
-            fontWeight: FontWeight.w800,
-            color: AppTheme.white,
-            fontSize: 20,
-          ),
-        ),
-      ),
-      body: _isLoading
+          Expanded(
+            child: _isLoading
           ? const Center(
               child: CircularProgressIndicator(color: _primary),
             )
@@ -162,6 +140,9 @@ class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
     );
   }
 

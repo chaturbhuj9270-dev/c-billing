@@ -7,6 +7,7 @@ import '../../offline/entities/expense_entity.dart';
 import '../../data/services/expense_sync_service.dart';
 import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
@@ -188,124 +189,63 @@ class _ExpensesPageState extends State<ExpensesPage>
   }
 
   Widget _buildHeader() {
-    final topPadding = MediaQuery.of(context).padding.top;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.appBar(context),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.accentSoft(context, 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.only(top: topPadding),
-            child: SizedBox(
-              height: 56,
-              child: Row(
-                children: [
-                  if (!widget.isEmbedded)
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          color: AppTheme.white,
-                          size: 18,
-                        ),
-                      ),
-                    ),
-                  if (widget.isEmbedded) const SizedBox(width: 16),
-                  const Text(
-                    'Expenses',
-                    style: TextStyle(
-                      color: AppTheme.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'Literata',
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () {
-                      ExpenseSyncService.instance.syncNow();
-                      _loadExpenses();
-                    },
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppTheme.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.sync_rounded,
-                        color: AppTheme.white,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-              ),
+    return Column(
+      children: [
+        AppTopBar(
+          title: 'Expenses',
+          showBack: !widget.isEmbedded,
+          actions: [
+            AppTopBar.action(
+              icon: Icons.sync_rounded,
+              onTap: () {
+                ExpenseSyncService.instance.syncNow();
+                _loadExpenses();
+              },
             ),
-          ),
-          // Search bar
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Container(
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppTheme.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: AppTheme.white.withValues(alpha: 0.2),
-                  width: 1,
-                ),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Container(
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.inputFill(context),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border(context)),
+            ),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) {
+                setState(() => _searchQuery = value);
+                _loadExpenses();
+              },
+              style: TextStyle(
+                color: AppColors.primaryText(context),
+                fontSize: 14,
+                fontFamily: 'Literata',
               ),
-              child: TextField(
-                controller: _searchController,
-                onChanged: (value) {
-                  setState(() => _searchQuery = value);
-                  _loadExpenses();
-                },
-                style: const TextStyle(
-                  color: AppTheme.white,
+              decoration: InputDecoration(
+                hintText: 'Search expenses...',
+                hintStyle: TextStyle(
+                  color: AppColors.mutedText(context),
                   fontSize: 14,
                   fontFamily: 'Literata',
                 ),
-                decoration: InputDecoration(
-                  hintText: 'Search expenses...',
-                  hintStyle: TextStyle(
-                    color: AppTheme.white.withValues(alpha: 0.6),
-                    fontSize: 14,
-                    fontFamily: 'Literata',
-                  ),
-                  prefixIcon: Icon(
-                    Icons.search_rounded,
-                    color: AppTheme.white.withValues(alpha: 0.6),
-                    size: 20,
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: AppColors.mutedText(context),
+                  size: 20,
+                ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
                 ),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

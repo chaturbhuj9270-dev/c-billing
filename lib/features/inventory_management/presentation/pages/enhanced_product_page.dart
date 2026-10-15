@@ -23,6 +23,7 @@ import '../widgets/product_list_widget.dart';
 import 'product_settings_page.dart';
 import 'barcode_generator_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
@@ -303,8 +304,12 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      appBar: widget.isEmbedded ? null : _buildAppBar(),
-      body: SafeArea(
+      body: Column(
+        children: [
+          if (!widget.isEmbedded) _buildAppBar(),
+          Expanded(
+            child: SafeArea(
+        top: widget.isEmbedded,
         child: SlideTransition(
           position: _offsetAnimation,
           child: FadeTransition(
@@ -377,6 +382,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             ),
           ),
         ),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppTheme.primary,
@@ -394,61 +402,43 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: AppColors.appBar(context),
-      foregroundColor: AppTheme.white,
-      surfaceTintColor: AppTheme.transparent,
-      elevation: 0,
-      title: Text(
-        _localizations.products,
-        style: const TextStyle(
-          fontFamily: 'Literata',
-          fontWeight: FontWeight.w700,
-          color: AppTheme.white,
-        ),
-      ),
+  Widget _buildAppBar() {
+    return AppTopBar(
+      title: _localizations.products,
       actions: [
-        // Sync indicator
         if (_unsyncedCount > 0)
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: GestureDetector(
-              onTap: () => ProductSyncService.instance.syncNow(),
-              child: Chip(
-                backgroundColor: AppTheme.orange50,
-                avatar: Icon(
-                  Icons.cloud_upload_rounded,
-                  size: 16,
+          GestureDetector(
+            onTap: () => ProductSyncService.instance.syncNow(),
+            child: Chip(
+              backgroundColor: AppTheme.orange50,
+              avatar: const Icon(
+                Icons.cloud_upload_rounded,
+                size: 16,
+                color: AppTheme.orange700,
+              ),
+              label: Text(
+                '$_unsyncedCount',
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
                   color: AppTheme.orange700,
-                ),
-                label: Text(
-                  '$_unsyncedCount',
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                    color: AppTheme.orange700,
-                  ),
                 ),
               ),
             ),
           ),
-        // Barcode Generator
-        IconButton(
-          icon: const Icon(Icons.qr_code_2_rounded, color: AppTheme.white),
-          tooltip: 'Generate Barcode',
-          onPressed: () {
+        AppTopBar.action(
+          icon: Icons.qr_code_2_rounded,
+          onTap: () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => BarcodeGeneratorPage()),
             );
           },
         ),
-        // Settings
-        IconButton(
-          icon: const Icon(Icons.settings_outlined, color: AppTheme.white),
-          onPressed: () {
+        AppTopBar.action(
+          icon: Icons.settings_outlined,
+          onTap: () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ProductSettingsPage()),

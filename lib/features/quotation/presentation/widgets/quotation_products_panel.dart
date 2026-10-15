@@ -443,7 +443,7 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
             ),
           )
         else ...[
-          _buildAddProductBar(l10n),
+          _buildAddProductBar(),
           const SizedBox(height: 12),
           if (_billItems.isEmpty)
             Padding(
@@ -472,92 +472,80 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
     );
   }
 
-  Widget _buildAddProductBar(AppLocalizations l10n) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.scaffold(context),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _primary.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
+  Widget _buildAddProductBar() {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppTheme.amber700, AppTheme.amber600],
-              ),
-              borderRadius: BorderRadius.circular(6),
+              color: AppColors.inputFill(context),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border(context)),
             ),
-            child: const Icon(
-              Icons.flash_on_rounded,
-              color: AppTheme.white,
-              size: 14,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: TextField(
-              controller: _indexNoController,
-              focusNode: _indexNoFocusNode,
-              keyboardType: TextInputType.number,
-              style: const TextStyle(
-                fontFamily: 'Literata',
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-              decoration: InputDecoration(
-                hintText: l10n.enterProductCode,
-                hintStyle: TextStyle(
-                  color: AppTheme.grey,
-                  fontWeight: FontWeight.w400,
-                  fontSize: 13,
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: _showAddItemsPopup,
+                  child: Icon(
+                    Icons.search_rounded,
+                    color: AppColors.mutedText(context),
+                    size: 20,
+                  ),
                 ),
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
-              ),
-              onChanged: (_) => _onIndexNoChanged(),
-              onSubmitted: (_) => _addProductByIndexNo(),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _indexNoController,
+                    focusNode: _indexNoFocusNode,
+                    keyboardType: TextInputType.text,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.primaryText(context),
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Product code or name',
+                      hintStyle: TextStyle(
+                        color: AppColors.mutedText(context),
+                        fontWeight: FontWeight.w400,
+                        fontSize: 14,
+                      ),
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    onChanged: (_) => _onIndexNoChanged(),
+                    onSubmitted: (_) => _addProductByIndexNo(),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: _showAddItemsPopup,
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: _primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Icon(
-                Icons.search_rounded,
-                color: _primary,
-                size: 18,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
+        ),
+        const SizedBox(width: 10),
+        Material(
+          color: AppTheme.primary,
+          borderRadius: BorderRadius.circular(14),
+          child: InkWell(
             onTap: _showBarcodeScanner,
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: AppColors.headerGradient(context),
-                ),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Icon(
-                Icons.barcode_reader,
+            borderRadius: BorderRadius.circular(14),
+            child: const SizedBox(
+              width: 48,
+              height: 48,
+              child: Icon(
+                Icons.qr_code_scanner_rounded,
                 color: AppTheme.white,
-                size: 18,
+                size: 22,
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

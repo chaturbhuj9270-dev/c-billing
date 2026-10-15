@@ -13,6 +13,7 @@ import 'package:c_billing/features/inventory_management/offline/controllers/purc
 import 'package:c_billing/features/inventory_management/offline/entities/purchase_batch_entity.dart';
 import 'package:c_billing/features/availability/presentation/pages/report_preview_screen.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
@@ -1401,7 +1402,21 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      body: _isLoading
+      body: Column(
+        children: [
+          if (!widget.isEmbedded)
+            AppTopBar(
+              title: _localizations.stockOverview,
+              subtitle: _localizations.availability,
+              actions: [
+                AppTopBar.action(
+                  icon: Icons.file_download_outlined,
+                  onTap: _showReportBottomSheet,
+                ),
+              ],
+            ),
+          Expanded(
+            child: _isLoading
           ? Center(child: CircularProgressIndicator(color: AppTheme.primary))
           : CustomScrollView(
               slivers: [
@@ -1411,6 +1426,9 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                 _buildProductsSliver(),
               ],
             ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1437,7 +1455,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                     _iconWell(
                       icon: Icons.inventory_2_outlined,
                       background: AppTheme.headerDarkStart,
-                      foreground: AppTheme.primary,
+                      foreground: AppTheme.white,
                     ),
                     const SizedBox(width: 12),
                     Expanded(

@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -138,26 +139,11 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      appBar: AppBar(
-        backgroundColor: AppColors.appBar(context),
-        foregroundColor: AppTheme.white,
-        surfaceTintColor: AppTheme.transparent,
-        elevation: 0,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: const Icon(Icons.arrow_back, color: AppTheme.white),
-        ),
-        title: Text(
-          _localizations.myProfile,
-          style: const TextStyle(
-            color: AppTheme.white,
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            fontFamily: 'Literata',
-          ),
-        ),
-      ),
-      body: _isLoading
+      body: Column(
+        children: [
+          AppTopBar(title: _localizations.myProfile),
+          Expanded(
+            child: _isLoading
           ? Center(
               child: CircularProgressIndicator(color: AppColors.accent(context)),
             )
@@ -340,6 +326,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
             ),
+          ),
+        ],
+      ),
     );
   }
 

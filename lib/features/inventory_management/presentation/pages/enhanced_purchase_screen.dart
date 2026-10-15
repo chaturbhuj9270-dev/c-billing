@@ -26,6 +26,7 @@ import 'purchase_report_settings_page.dart';
 import 'invoice_scanner_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 /// Lets the dashboard download button trigger the visible purchase report.
@@ -1647,194 +1648,105 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       position: _offsetAnimation,
       child: FadeTransition(
         opacity: _opacityAnimation,
-        child: Container(
-          padding: EdgeInsets.fromLTRB(
-            16,
-            MediaQuery.of(context).padding.top + 16,
-            16,
-            8,
-          ),
-          color: AppColors.appBar(context),
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.arrow_back_ios_rounded,
-                    size: 20,
-                    color: AppTheme.white,
-                  ),
-                ),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _localizations.purchaseHistory,
-                      style: const TextStyle(
-                        fontFamily: 'Literata',
-                        fontWeight: FontWeight.w800,
-                        fontSize: 22,
-                        color: AppTheme.white,
-                      ),
-                    ),
-                    Text(
-                      _localizations.trackPurchases,
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontWeight: FontWeight.w400,
-                        fontSize: 12,
-                        color: AppTheme.white.withValues(alpha: 0.7),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Scan Invoice button
-              Material(
-                color: AppTheme.transparent,
-                child: InkWell(
-                  onTap: () async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => InvoiceScannerPage()),
-                    );
-                    if (result == true && mounted) {
-                      setState(() {});
-                    }
-                  },
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    padding: EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppTheme.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.document_scanner_rounded,
-                      size: 22,
-                      color: AppTheme.white,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Report button
-              Material(
-                color: AppTheme.transparent,
-                child: InkWell(
-                  onTap: () {
-                    debugPrint(
-                      '[PurchaseReport] Report button InkWell tapped!',
-                    );
-                    _generatePurchaseReport();
-                  },
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    padding: EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.selectedFill(context),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.border(context)),
-                    ),
-                    child: Icon(
-                      Icons.description_rounded,
-                      size: 22,
-                      color: AppColors.selectedOnFill(context),
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(width: 8),
-              // Settings menu
-              PopupMenuButton<String>(
-                icon: Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.settings_rounded,
-                    size: 22,
-                    color: AppTheme.white,
-                  ),
-                ),
-                shape: RoundedRectangleBorder(
+        child: AppTopBar(
+          title: _localizations.purchaseHistory,
+          subtitle: _localizations.trackPurchases,
+          actions: [
+            AppTopBar.action(
+              icon: Icons.document_scanner_rounded,
+              onTap: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => InvoiceScannerPage()),
+                );
+                if (result == true && mounted) {
+                  setState(() {});
+                }
+              },
+            ),
+            AppTopBar.action(
+              icon: Icons.description_rounded,
+              onTap: _generatePurchaseReport,
+            ),
+            PopupMenuButton<String>(
+              icon: Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppTheme.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppTheme.white.withValues(alpha: 0.2),
+                  ),
                 ),
-                onSelected: (value) async {
-                  if (value == 'purchase_settings') {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const PurchaseSettingsPage(),
-                      ),
-                    );
-                    setState(() {});
-                  } else if (value == 'report_settings') {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            const PurchaseReportSettingsPage(),
-                      ),
-                    );
-                  }
-                },
-                itemBuilder: (context) => [
-                  PopupMenuItem<String>(
-                    value: 'purchase_settings',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.tune_rounded,
-                          color: AppTheme.grey700,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Purchase Settings',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem<String>(
-                    value: 'report_settings',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.view_column_rounded,
-                          color: AppTheme.grey700,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Report Settings',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                child: const Icon(
+                  Icons.settings_rounded,
+                  size: 22,
+                  color: AppTheme.white,
+                ),
               ),
-            ],
-          ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              onSelected: (value) async {
+                if (value == 'purchase_settings') {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PurchaseSettingsPage(),
+                    ),
+                  );
+                  setState(() {});
+                } else if (value == 'report_settings') {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PurchaseReportSettingsPage(),
+                    ),
+                  );
+                }
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem<String>(
+                  value: 'purchase_settings',
+                  child: Row(
+                    children: [
+                      Icon(Icons.tune_rounded, color: AppTheme.grey700, size: 20),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Purchase Settings',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'report_settings',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.view_column_rounded,
+                        color: AppTheme.grey700,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Report Settings',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

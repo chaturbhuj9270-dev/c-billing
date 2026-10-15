@@ -27,6 +27,7 @@ import '../widgets/shimmer_widgets.dart';
 import 'flyout_menu.dart';
 import '../../../settings/presentation/pages/logs_viewer_page.dart';
 import '../../../../common_widgets/action_menu.dart';
+import '../../../../common_widgets/app_top_bar.dart';
 import '../../../../common_widgets/glassy_bottom_nav_bar.dart';
 import '../../../../common_widgets/glass_bevel_frame.dart';
 import '../../../../common_widgets/range_calendar_sheet.dart';
@@ -531,117 +532,45 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   }
 
   Widget _buildCommonHeader() {
-    final isDark = AppColors.isDark(context);
-    final bar = AppColors.appBar(context);
-    const headerRadius = BorderRadius.vertical(bottom: Radius.circular(24));
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: headerRadius,
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: isDark ? 0.45 : 0.22),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: headerRadius,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-          child: CustomPaint(
-            foregroundPainter: GlassBevelBorderPainter(
-              isDark: isDark,
-              themeColor: Theme.of(context).primaryColor,
-              radius: 24,
-              borderRadius: headerRadius,
+    return AppTopBar(
+      title: _getPageTitle(),
+      subtitle: _getPageSubtitle(),
+      showBack: false,
+      onTitleTap: _openFlyoutMenu,
+      leading: GestureDetector(
+        onTap: _openFlyoutMenu,
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: AppTheme.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.white.withValues(alpha: 0.2),
             ),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color.lerp(AppTheme.white, bar, isDark ? 0.78 : 0.55)!,
-                    bar,
-                    Color.lerp(bar, AppTheme.black, isDark ? 0.34 : 0.2)!,
-                  ],
-                  stops: const [0.0, 0.46, 1.0],
-                ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.asset(
+              'assets/images/app_logo.png',
+              width: 28,
+              height: 28,
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) => const Icon(
+                Icons.business,
+                color: AppTheme.white,
+                size: 20,
               ),
-              child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: _openFlyoutMenu,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppTheme.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppTheme.white.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.asset(
-                      'assets/images/app_logo.png',
-                      width: 28,
-                      height: 28,
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, _, _) => const Icon(
-                        Icons.business,
-                        color: AppTheme.white,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: GestureDetector(
-                  onTap: _openFlyoutMenu,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _getPageTitle(),
-                        style: const TextStyle(
-                          color: AppTheme.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: 'Literata',
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                      Text(
-                        _getPageSubtitle(),
-                        style: TextStyle(
-                          color: AppTheme.white.withValues(alpha: 0.7),
-                          fontSize: 11,
-                          fontFamily: 'Literata',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              _buildHeaderActionButton(
-                icon: Icons.apps_rounded,
-                tooltip: 'Quick actions',
-                onTap: () => showQuickActionsSheet(context),
-              ),
-              const SizedBox(width: 8),
-              ActionMenu(
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        AppTopBar.action(
+          icon: Icons.apps_rounded,
+          onTap: () => showQuickActionsSheet(context),
+        ),
+        ActionMenu(
                 iconColor: AppTheme.white,
                 onExpandTap: (_selectedIndex == 2 ||
                         _selectedIndex == 3 ||
@@ -744,46 +673,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     ),
                   );
                 },
-              ),
-            ],
-          ),
         ),
-      ),
-              ),
-            ),
-          ),
-        ),
-    ),
-    );
-  }
-
-  /// Premium header action button with consistent glassmorphic styling
-  Widget _buildHeaderActionButton({
-    required IconData icon,
-    required String tooltip,
-    required VoidCallback onTap,
-  }) {
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: AppTheme.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          splashColor: AppTheme.white.withValues(alpha: 0.15),
-          highlightColor: AppTheme.white.withValues(alpha: 0.08),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppTheme.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.white.withValues(alpha: 0.2)),
-            ),
-            child: Icon(icon, color: AppTheme.white, size: 22),
-          ),
-        ),
-      ),
+      ],
     );
   }
 

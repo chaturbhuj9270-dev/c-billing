@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
@@ -7,6 +6,7 @@ import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_tax_settings.dart';
 import 'package:c_billing/features/billing/presentation/pages/bill_report_settings_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Bill settings page for configuring billing preferences
@@ -121,20 +121,22 @@ class _BillSettingsPageState extends State<BillSettingsPage>
             ? Center(
                 child: CircularProgressIndicator(color: AppColors.accent(context)),
               )
-            : CustomScrollView(
-                slivers: [
-                  // Sticky Header with Glass Effect
-                  SliverPersistentHeader(
-                    pinned: true,
-                    delegate: _BillSettingsHeaderDelegate(
-                      minHeight: 100,
-                      maxHeight: 140,
-                      title: _localizations.billSettings,
-                      subtitle: 'Customize your bill preferences',
-                      onBack: () => Navigator.pop(context, true),
-                    ),
+            : Column(
+                children: [
+                  AppTopBar(
+                    title: _localizations.billSettings,
+                    subtitle: 'Customize your bill preferences',
+                    onBack: () => Navigator.pop(context, true),
+                    actions: [
+                      AppTopBar.action(
+                        icon: Icons.check_rounded,
+                        onTap: () => Navigator.pop(context, true),
+                      ),
+                    ],
                   ),
-
+                  Expanded(
+                    child: CustomScrollView(
+                slivers: [
                   // Main Content
                   SliverToBoxAdapter(
                     child: FadeTransition(
@@ -406,6 +408,9 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                         ),
                       ),
                     ),
+                  ),
+                ],
+              ),
                   ),
                 ],
               ),
@@ -1077,168 +1082,5 @@ class _BillSettingsPageState extends State<BillSettingsPage>
         onChanged: onChanged,
       ),
     );
-  }
-}
-
-/// Header delegate for bill settings page
-class _BillSettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final double minHeight;
-  final double maxHeight;
-  final String title;
-  final String subtitle;
-  final VoidCallback onBack;
-
-  _BillSettingsHeaderDelegate({
-    required this.minHeight,
-    required this.maxHeight,
-    required this.title,
-    required this.subtitle,
-    required this.onBack,
-  });
-
-  @override
-  double get minExtent => minHeight;
-
-  @override
-  double get maxExtent => maxHeight;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    final progress = shrinkOffset / (maxHeight - minHeight);
-    final isCollapsed = progress > 0.5;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.appBar(context),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.accentSoft(context, 0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
-        ),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      // Back Button
-                      GestureDetector(
-                        onTap: onBack,
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: AppTheme.white.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: AppTheme.white.withValues(alpha: 0.2),
-                            ),
-                          ),
-                          child: Icon(
-                            Icons.arrow_back_ios_new_rounded,
-                            color: AppTheme.white,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      // Title
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              title,
-                              style: TextStyle(
-                                fontSize: isCollapsed ? 20 : 24,
-                                fontWeight: FontWeight.w800,
-                                fontFamily: 'Literata',
-                                color: AppTheme.white,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            if (!isCollapsed) ...[
-                              SizedBox(height: 4),
-                              Text(
-                                subtitle,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontFamily: 'Literata',
-                                  color: AppColors.card(context),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      // Done Button
-                      GestureDetector(
-                        onTap: onBack,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.card(context),
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.black.withValues(alpha: 0.1),
-                                blurRadius: 8,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Text(
-                            'Done',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Literata',
-                              color: AppColors.accent(context),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  bool shouldRebuild(_BillSettingsHeaderDelegate oldDelegate) {
-    return maxHeight != oldDelegate.maxHeight ||
-        minHeight != oldDelegate.minHeight ||
-        title != oldDelegate.title ||
-        subtitle != oldDelegate.subtitle;
   }
 }

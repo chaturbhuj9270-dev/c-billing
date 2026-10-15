@@ -8,6 +8,7 @@ import 'package:c_billing/core/services/app_logger.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 class LogsViewerPage extends StatefulWidget {
@@ -168,53 +169,37 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      appBar: AppBar(
-        title: Text(
-          _localizations.appLogs,
-          style: TextStyle(fontFamily: 'Literata', fontWeight: FontWeight.w700),
-        ),
-        backgroundColor: AppColors.appBar(context),
-        surfaceTintColor: AppTheme.transparent,
-        foregroundColor: AppTheme.white,
-        elevation: 0,
-        actions: [
-          // Auto-scroll toggle
-          IconButton(
-            icon: Icon(
-              _autoScroll
-                  ? Icons.arrow_downward
-                  : Icons.arrow_downward_outlined,
-            ),
-            tooltip: _autoScroll
-                ? _localizations.disableAutoScroll
-                : _localizations.enableAutoScroll,
-            onPressed: () {
-              setState(() {
-                _autoScroll = !_autoScroll;
-              });
-            },
-          ),
-          // Copy
-          IconButton(
-            icon: const Icon(Icons.copy),
-            tooltip: _localizations.copyLogs,
-            onPressed: _copyToClipboard,
-          ),
-          // Share
-          IconButton(
-            icon: const Icon(Icons.share),
-            tooltip: _localizations.shareLogs,
-            onPressed: _shareLogs,
-          ),
-          // Clear
-          IconButton(
-            icon: Icon(Icons.delete_outline),
-            tooltip: _localizations.clearLogs,
-            onPressed: _clearLogs,
-          ),
-        ],
-      ),
       body: Column(
+        children: [
+          AppTopBar(
+            title: _localizations.appLogs,
+            actions: [
+              AppTopBar.action(
+                icon: _autoScroll
+                    ? Icons.arrow_downward
+                    : Icons.arrow_downward_outlined,
+                onTap: () {
+                  setState(() {
+                    _autoScroll = !_autoScroll;
+                  });
+                },
+              ),
+              AppTopBar.action(
+                icon: Icons.copy,
+                onTap: _copyToClipboard,
+              ),
+              AppTopBar.action(
+                icon: Icons.share,
+                onTap: _shareLogs,
+              ),
+              AppTopBar.action(
+                icon: Icons.delete_outline,
+                onTap: _clearLogs,
+              ),
+            ],
+          ),
+          Expanded(
+            child: Column(
         children: [
           // Stats + Filter bar
           Container(
@@ -391,6 +376,9 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                       return _buildLogCard(log);
                     },
                   ),
+            ),
+          ],
+        ),
           ),
         ],
       ),

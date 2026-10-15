@@ -10,6 +10,7 @@ import 'package:c_billing/features/event_order/offline/controllers/event_order_o
 import 'package:c_billing/features/event_order/domain/entities/event_order.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
@@ -196,20 +197,11 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      appBar: AppBar(
-        title: Text(
-          _customer?.fullName ?? 'Customer Details',
-          style: TextStyle(
-            fontFamily: 'Literata',
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        backgroundColor: AppColors.appBar(context),
-        surfaceTintColor: AppTheme.transparent,
-        foregroundColor: AppTheme.white,
-        elevation: 0,
-      ),
-      body: _isLoading
+      body: Column(
+        children: [
+          AppTopBar(title: _customer?.fullName ?? 'Customer Details'),
+          Expanded(
+            child: _isLoading
           ? Center(
               child: CircularProgressIndicator(color: AppColors.accent(context)),
             )
@@ -279,6 +271,9 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                 ],
               ),
             ),
+          ),
+        ],
+      ),
       floatingActionButton: _customer != null && _customer!.hasPendingBalance
           ? FloatingActionButton.extended(
               onPressed: _showReceivePaymentDialog,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 class AppScaffold extends StatelessWidget {
@@ -11,8 +12,12 @@ class AppScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      appBar: AppBar(title: Text(title)),
-      body: body,
+      body: Column(
+        children: [
+          AppTopBar(title: title),
+          Expanded(child: body),
+        ],
+      ),
     );
   }
 }

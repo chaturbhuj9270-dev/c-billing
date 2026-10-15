@@ -7,6 +7,7 @@ import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:pdf/pdf.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 /// A reusable page for previewing PDF and CSV files with share and print functionality.
@@ -614,112 +615,14 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        8,
-        MediaQuery.of(context).padding.top + 12,
-        16,
-        12,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.appBar(context),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () {
-              widget.onClose?.call();
-              Navigator.of(context).pop();
-            },
-            icon: Container(
-              padding: EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppTheme.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.arrow_back,
-                color: AppTheme.white,
-                size: 20,
-              ),
-            ),
-          ),
-          SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.fileName,
-                  style: const TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.white,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (widget.subtitle != null)
-                  Text(
-                    widget.subtitle!,
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 12,
-                      color: AppTheme.white.withValues(alpha: 0.7),
-                    ),
-                  )
-                else
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: widget.fileType == FilePreviewType.pdf
-                              ? AppTheme.red.withValues(alpha: 0.1)
-                              : AppTheme.green.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          widget.fileType == FilePreviewType.pdf
-                              ? 'PDF'
-                              : 'CSV',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: widget.fileType == FilePreviewType.pdf
-                                ? AppTheme.red700
-                                : AppTheme.green700,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _getFileSizeString(),
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 11,
-                          color: AppTheme.white.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    final typeLabel = widget.fileType == FilePreviewType.pdf ? 'PDF' : 'CSV';
+    return AppTopBar(
+      title: widget.fileName,
+      subtitle: widget.subtitle ?? '$typeLabel · ${_getFileSizeString()}',
+      onBack: () {
+        widget.onClose?.call();
+        Navigator.of(context).pop();
+      },
     );
   }
 

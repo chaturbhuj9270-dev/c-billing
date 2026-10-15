@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../domain/repositories/customer_repository.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Add/Edit Customer Page for offline-first architecture
@@ -134,51 +135,31 @@ class _CustomerAddEditPageState extends State<CustomerAddEditPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      appBar: AppBar(
-        backgroundColor: AppColors.appBar(context),
-        foregroundColor: AppTheme.white,
-        surfaceTintColor: AppTheme.transparent,
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.white),
-        ),
-        title: Text(
-          _isEditing ? 'Edit Customer' : 'Add Customer',
-          style: const TextStyle(
-            color: AppTheme.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+      body: Column(
+        children: [
+          AppTopBar(
+            title: _isEditing ? 'Edit Customer' : 'Add Customer',
+            actions: [
+              _isLoading
+                  ? const Padding(
+                      padding: EdgeInsets.all(10),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppTheme.white,
+                        ),
+                      ),
+                    )
+                  : AppTopBar.action(
+                      icon: Icons.check_rounded,
+                      onTap: _saveCustomer,
+                    ),
+            ],
           ),
-        ),
-        actions: [
-          if (_isLoading)
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.white70),
-                ),
-              ),
-            )
-          else
-            TextButton(
-              onPressed: _saveCustomer,
-              child: const Text(
-                'Save',
-                style: TextStyle(
-                  color: AppTheme.paletteFF6C63FF,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-        ],
-      ),
-      body: Form(
+          Expanded(
+            child: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -255,6 +236,9 @@ class _CustomerAddEditPageState extends State<CustomerAddEditPage> {
             ),
           ],
         ),
+      ),
+          ),
+        ],
       ),
     );
   }

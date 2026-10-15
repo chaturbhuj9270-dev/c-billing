@@ -262,7 +262,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                             ),
                             child: const Icon(
                               Icons.receipt_long_rounded,
-                              color: AppTheme.primary,
+                              color: AppTheme.white,
                               size: 32,
                             ),
                           ),
