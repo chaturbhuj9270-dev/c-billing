@@ -301,9 +301,6 @@ class ProductSettingsService extends ChangeNotifier {
   
   /// Reorder columns
   Future<void> reorderColumns(int oldIndex, int newIndex) async {
-    if (oldIndex < newIndex) {
-      newIndex -= 1;
-    }
     final column = _customColumns.removeAt(oldIndex);
     _customColumns.insert(newIndex, column);
     await _saveColumns();

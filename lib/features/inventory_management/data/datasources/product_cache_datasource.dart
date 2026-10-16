@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../inventory_management/domain/entities/product.dart';
@@ -29,7 +30,7 @@ class ProductCacheDataSource {
       final List<dynamic> decoded = jsonDecode(jsonStr);
       return decoded.map((e) => Product.fromJson(e)).toList();
     } catch (e) {
-      print('[ERROR] Failed to deserialize cached products: $e');
+      debugPrint('[ERROR] Failed to deserialize cached products: $e');
       return null;
     }
   }

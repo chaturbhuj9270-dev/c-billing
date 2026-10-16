@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_item.dart';
@@ -126,7 +127,7 @@ class BillingService {
 
   /// Calculate total amount from bill items
   double calculateTotalAmount(List<BillItem> items) {
-    return items.fold(0.0, (sum, item) => sum + item.subtotal);
+    return items.fold(0.0, (total, item) => total + item.subtotal);
   }
 
   /// Validate stock availability for all items
@@ -395,7 +396,7 @@ class BillingService {
 
       return BillingResult.success(result);
     } catch (e) {
-      print('[ERROR] Failed to process bill: $e');
+      debugPrint('[ERROR] Failed to process bill: $e');
       return BillingResult.failure('Failed to process bill: ${e.toString()}');
     }
   }
@@ -466,11 +467,11 @@ class BillingService {
     final todaysBills = await getTodaysBills();
     final totalAmount = todaysBills.fold(
       0.0,
-      (sum, bill) => sum + bill.totalAmount,
+      (total, bill) => total + bill.totalAmount,
     );
     final totalItems = todaysBills.fold(
       0,
-      (sum, bill) => sum + bill.totalQuantity,
+      (total, bill) => total + bill.totalQuantity,
     );
 
     return {
@@ -508,7 +509,7 @@ class BillingService {
 
       return ReturnBillResult.success(billId, bill: bill);
     } catch (e) {
-      print('[ERROR] Failed to validate bill for return: $e');
+      debugPrint('[ERROR] Failed to validate bill for return: $e');
       return ReturnBillResult.failure(
         'Failed to validate bill: ${e.toString()}',
       );
@@ -552,7 +553,7 @@ class BillingService {
       final bill = returnable.first;
       return ReturnBillResult.success(bill.id, bill: bill);
     } catch (e) {
-      print('[ERROR] Failed to search bill for return: $e');
+      debugPrint('[ERROR] Failed to search bill for return: $e');
       return ReturnBillResult.failure('Failed to search bill: ${e.toString()}');
     }
   }
@@ -757,7 +758,7 @@ class BillingService {
         refundAmount: result['refundAmount'] as double,
       );
     } catch (e) {
-      print('[ERROR] Failed to process return: $e');
+      debugPrint('[ERROR] Failed to process return: $e');
       return ReturnBillResult.failure(
         'Failed to process return: ${e.toString()}',
       );

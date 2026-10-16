@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/shop.dart';
@@ -43,7 +44,7 @@ class ShopRepository {
       // Return default shop if not found
       return Shop.empty;
     } catch (e) {
-      print('[ERROR] Failed to fetch shop details: $e');
+      debugPrint('[ERROR] Failed to fetch shop details: $e');
       return Shop.empty;
     }
   }
@@ -66,7 +67,7 @@ class ShopRepository {
       _cachedShop = shop;
       return true;
     } catch (e) {
-      print('[ERROR] Failed to save shop details: $e');
+      debugPrint('[ERROR] Failed to save shop details: $e');
       return false;
     }
   }

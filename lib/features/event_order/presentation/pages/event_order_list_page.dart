@@ -1702,7 +1702,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       // Close loading dialog
       closeDialog();
 
-      if (!mounted) {
+      if (!mounted || !context.mounted) {
         debugPrint('[EventOrderList] Widget not mounted, returning');
         return;
       }
@@ -1737,7 +1737,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       // Reset PDF service state on error
       _pdfService.resetGeneratingState();
 
-      if (mounted) {
+      if (mounted && context.mounted) {
         GlassyToast.show(
           context,
           'Failed to generate invoice: ${e.toString()}',
@@ -1784,7 +1784,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     } catch (e) {
       debugPrint('[EventOrderList] Share error: $e');
       _pdfService.resetGeneratingState();
-      if (mounted) {
+      if (mounted && context.mounted) {
         GlassyToast.dismiss();
         GlassyToast.show(
           context,
@@ -1830,7 +1830,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     } catch (e) {
       debugPrint('[EventOrderList] Print error: $e');
       _pdfService.resetGeneratingState();
-      if (mounted) {
+      if (mounted && context.mounted) {
         GlassyToast.dismiss();
         GlassyToast.show(
           context,
@@ -2041,19 +2041,19 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                 children: [
                   _buildReportSummaryItem(
                     'Total Amount',
-                    'Rs. ${_formatAmount(filteredOrders.fold(0.0, (sum, o) => sum + o.totalAmount))}',
+                    'Rs. ${_formatAmount(filteredOrders.fold(0.0, (total, o) => total + o.totalAmount))}',
                     AppTheme.green,
                   ),
                   Container(height: 30, width: 1, color: AppTheme.grey300),
                   _buildReportSummaryItem(
                     'Advance',
-                    'Rs. ${_formatAmount(filteredOrders.fold(0.0, (sum, o) => sum + o.advanceAmount))}',
+                    'Rs. ${_formatAmount(filteredOrders.fold(0.0, (total, o) => total + o.advanceAmount))}',
                     AppTheme.blue,
                   ),
                   Container(height: 30, width: 1, color: AppTheme.grey300),
                   _buildReportSummaryItem(
                     'Due',
-                    'Rs. ${_formatAmount(filteredOrders.fold(0.0, (sum, o) => sum + o.remainingAmount))}',
+                    'Rs. ${_formatAmount(filteredOrders.fold(0.0, (total, o) => total + o.remainingAmount))}',
                     AppTheme.orange,
                   ),
                 ],

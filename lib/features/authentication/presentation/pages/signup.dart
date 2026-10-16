@@ -143,16 +143,17 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
     FirebaseAuth.instance
         .createUserWithEmailAndPassword(email: email, password: pw)
         .then((userCredential) async {
+          if (!mounted) return;
           final currentUser = userCredential.user;
           if (currentUser == null) {
             GlassyToast.show(context, _localizations.accountCreationFailed);
             return;
           }
 
-          print('[DEBUG] User account created: ${currentUser.uid}');
+          debugPrint('[DEBUG] User account created: ${currentUser.uid}');
 
           try {
-            print('[DEBUG] Writing user profile to Firestore...');
+            debugPrint('[DEBUG] Writing user profile to Firestore...');
             final doc = FirebaseFirestore.instance
                 .collection('users')
                 .doc(currentUser.uid);
@@ -168,14 +169,14 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
               'subscriptionDate': null,
               'subscriptionStatus': 'inactive',
             });
-            print(
+            debugPrint(
               '[DEBUG] Firestore write successful for UID: ${currentUser.uid}',
             );
 
             // Initialize session for new user
             final sessionManager = SessionManager();
             sessionManager.initializeSession(currentUser, () {
-              print(
+              debugPrint(
                 '[CRITICAL] Session expired - clearing data and logging out',
               );
               // Use LogoutService to ensure all local data is cleared on session expiry
@@ -184,21 +185,21 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                 LogoutService.instance.onSessionExpired(context);
               }
             });
-            print('[DEBUG] Session initialized with 2-hour timeout');
+            debugPrint('[DEBUG] Session initialized with 2-hour timeout');
 
             if (mounted) {
               GlassyToast.show(context, _localizations.accountCreated);
               Navigator.of(context).pop();
             }
           } catch (e) {
-            print('[ERROR] Account setup error: $e');
+            debugPrint('[ERROR] Account setup error: $e');
             if (mounted) {
               GlassyToast.show(context, 'Error: ${e.toString()}');
             }
           }
         })
         .catchError((e) {
-          print('[ERROR] Account creation failed: $e');
+          debugPrint('[ERROR] Account creation failed: $e');
           if (mounted) {
             final msg = e is FirebaseAuthException
                 ? e.message ?? 'Account creation failed'
@@ -640,37 +641,4 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildInputField({
-    required String label,
-    required TextEditingController controller,
-    TextInputType keyboardType = TextInputType.text,
-    required IconData icon,
-    bool obscureText = false,
-    Widget? suffix,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.scaffold(context),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.grey300, width: 1),
-      ),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        obscureText: obscureText,
-        decoration: InputDecoration(
-          hintText: label,
-          hintStyle: TextStyle(color: AppTheme.grey, fontSize: 14),
-          prefixIcon: Icon(icon, color: AppTheme.grey, size: 20),
-          suffixIcon: suffix,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
-          ),
-        ),
-        style: const TextStyle(color: AppTheme.black87, fontSize: 14),
-      ),
-    );
-  }
 }

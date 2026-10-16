@@ -40,6 +40,7 @@ class AddItemsBottomSheet extends StatefulWidget {
   final AppLocalizations localizations;
 
   const AddItemsBottomSheet({
+    super.key,
     required this.products,
     required this.allProducts,
     required this.billItems,
@@ -1363,6 +1364,7 @@ class BatchSelectionSheet extends StatefulWidget {
   final String? unit; // Base unit (kg, ltr, pcs)
 
   const BatchSelectionSheet({
+    super.key,
     required this.productName,
     this.productCode = 0,
     required this.batches,

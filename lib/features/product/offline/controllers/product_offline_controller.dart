@@ -644,7 +644,7 @@ class ProductOfflineController extends ChangeNotifier {
     final products = await getAllProducts();
     return products.fold<double>(
       0,
-      (sum, p) => sum + (p.purchasePrice * p.currentStock),
+      (total, p) => total + (p.purchasePrice * p.currentStock),
     );
   }
 

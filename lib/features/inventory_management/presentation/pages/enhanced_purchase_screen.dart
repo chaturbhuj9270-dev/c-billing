@@ -832,7 +832,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     // Trigger background sync
                     PurchaseBatchSyncService.instance.syncNow();
 
-                    if (mounted) {
+                    if (mounted && context.mounted) {
                       Navigator.pop(context);
                       GlassyToast.show(
                         context,
@@ -840,6 +840,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                       );
                     }
                   } catch (e) {
+                    if (!context.mounted) return;
                     GlassyToast.show(
                       context,
                       '${_localizations.errorUpdatingPurchase}: $e',
@@ -1287,7 +1288,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   // Trigger background sync
                   PurchaseBatchSyncService.instance.syncNow();
 
-                  if (mounted) {
+                  if (mounted && context.mounted) {
                     Navigator.pop(context);
                     GlassyToast.show(
                       context,
@@ -1295,6 +1296,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     );
                   }
                 } catch (e) {
+                  if (!context.mounted) return;
                   GlassyToast.show(
                     context,
                     '${_localizations.errorDeletingPurchase}: $e',

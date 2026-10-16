@@ -448,7 +448,7 @@ class BillOfflineController extends ChangeNotifier {
     }
 
     final bills = await query.findAll();
-    return bills.fold<double>(0.0, (sum, b) => sum + b.finalAmount);
+    return bills.fold<double>(0.0, (total, b) => total + b.finalAmount);
   }
 
   /// Get total pending amount
@@ -465,7 +465,7 @@ class BillOfflineController extends ChangeNotifier {
         )
         .findAll();
 
-    return bills.fold<double>(0.0, (sum, b) => sum + b.pendingAmount);
+    return bills.fold<double>(0.0, (total, b) => total + b.pendingAmount);
   }
 
   /// Get bills with pending payment (for dashboard)

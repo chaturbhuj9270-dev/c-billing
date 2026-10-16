@@ -120,14 +120,17 @@ class _EventOrderCustomColumnsPageState
         return ReorderableListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: columns.length,
-          onReorder: (oldIndex, newIndex) {
+          onReorderItem: (oldIndex, newIndex) {
+            // Restore the legacy drop index. onReorderItem already shifts it
+            // down when the item moves toward the end of the list.
+            final legacyNewIndex = newIndex >= oldIndex ? newIndex + 1 : newIndex;
             // Find the actual indices in the full list
             final allColumns = EventOrderSettingsService.instance.customColumns;
             final oldActual = allColumns.indexOf(columns[oldIndex]);
-            var newActual = newIndex > oldIndex
-                ? allColumns.indexOf(columns[newIndex - 1]) + 1
-                : allColumns.indexOf(columns[newIndex]);
-            if (newIndex == columns.length) {
+            var newActual = legacyNewIndex > oldIndex
+                ? allColumns.indexOf(columns[legacyNewIndex - 1]) + 1
+                : allColumns.indexOf(columns[legacyNewIndex]);
+            if (legacyNewIndex == columns.length) {
               newActual = allColumns.indexOf(columns.last) + 1;
             }
             EventOrderSettingsService.instance.reorderColumns(

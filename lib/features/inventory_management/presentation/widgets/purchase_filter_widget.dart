@@ -595,7 +595,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                       border: Border.all(
                                         color: isSelected
                                             ? AppColors.action(context)
-                                            : AppColors.border(context)!,
+                                            : AppColors.border(context),
                                         width: isSelected ? 1.5 : 1,
                                       ),
                                     ),

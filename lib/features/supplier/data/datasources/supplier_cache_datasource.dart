@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -38,7 +39,7 @@ class SupplierCacheDataSource {
       final List<dynamic> decoded = jsonDecode(jsonStr);
       return decoded.map((e) => Map<String, dynamic>.from(e)).toList();
     } catch (e) {
-      print('[ERROR] Failed to deserialize cached suppliers: $e');
+      debugPrint('[ERROR] Failed to deserialize cached suppliers: $e');
       return null;
     }
   }

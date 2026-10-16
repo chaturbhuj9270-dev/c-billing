@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/product.dart';
@@ -69,7 +70,7 @@ class FirebaseProductRepository implements ProductRepository {
         // If ordering fails (e.g., missing index), get without ordering
         if (e.toString().contains('index') ||
             e.toString().contains('FAILED_PRECONDITION')) {
-          print(
+          debugPrint(
             '[DEBUG] Composite index not found, getting products without ordering',
           );
           final snapshot = await _productsCollection.get();
@@ -105,7 +106,7 @@ class FirebaseProductRepository implements ProductRepository {
         // Fallback if index not available
         if (e.toString().contains('index') ||
             e.toString().contains('FAILED_PRECONDITION')) {
-          print(
+          debugPrint(
             '[DEBUG] Composite index not found, getting products without ordering',
           );
           final snapshot = await _productsCollection
@@ -172,7 +173,7 @@ class FirebaseProductRepository implements ProductRepository {
         // Fallback if index not available
         if (e.toString().contains('index') ||
             e.toString().contains('FAILED_PRECONDITION')) {
-          print(
+          debugPrint(
             '[DEBUG] Composite index not found, getting low stock products without ordering',
           );
           final snapshot = await _productsCollection

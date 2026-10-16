@@ -76,10 +76,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   // Real data for quick insights (using offline repository for consistency)
   final DashboardOfflineRepository _repository =
       DashboardOfflineRepository.instance;
-  List<Map<String, dynamic>> _upcomingPayments = [];
   List<Map<String, dynamic>> _topProducts = [];
   List<Map<String, dynamic>> _pendingPayments = [];
-  List<Map<String, dynamic>> _lastDues = [];
   List<Map<String, dynamic>> _lowStockItems = [];
   List<Map<String, dynamic>> _upcomingEvents = [];
   bool _isLoadingExpandableData = false;
@@ -155,28 +153,26 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       ]);
 
       // Debug logging for Quick Insights data
-      print('[Dashboard] Quick Insights Data Loaded:');
-      print('  - Upcoming Payments: ${results[0].length}');
-      print('  - Top Products: ${results[1].length}');
-      print('  - Pending Payments: ${results[2].length}');
-      print('  - Last Dues: ${results[3].length}');
-      print('  - Low Stock Items: ${results[4].length}');
-      print('  - Upcoming Events: ${results[5].length}');
+      debugPrint('[Dashboard] Quick Insights Data Loaded:');
+      debugPrint('  - Upcoming Payments: ${results[0].length}');
+      debugPrint('  - Top Products: ${results[1].length}');
+      debugPrint('  - Pending Payments: ${results[2].length}');
+      debugPrint('  - Last Dues: ${results[3].length}');
+      debugPrint('  - Low Stock Items: ${results[4].length}');
+      debugPrint('  - Upcoming Events: ${results[5].length}');
 
       if (mounted) {
         setState(() {
-          _upcomingPayments = results[0];
           _topProducts = results[1];
           _pendingPayments = results[2];
-          _lastDues = results[3];
           _lowStockItems = results[4];
           _upcomingEvents = results[5];
           _isLoadingExpandableData = false;
         });
       }
     } catch (e, stackTrace) {
-      print('[OptimizedDashboardPage] Error loading expandable data: $e');
-      print('[OptimizedDashboardPage] Stack trace: $stackTrace');
+      debugPrint('[OptimizedDashboardPage] Error loading expandable data: $e');
+      debugPrint('[OptimizedDashboardPage] Stack trace: $stackTrace');
       if (mounted) {
         setState(() => _isLoadingExpandableData = false);
       }
@@ -236,7 +232,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         _showExitConfirmationDialog(context);
       },
@@ -1859,67 +1855,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         ],
       ),
         ),
-    );
-  }
-
-  Widget _buildPaymentsCard() {
-    return Container(
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                _localizations.paymentStatus,
-                style: TextStyle(
-                  color: AppColors.primaryText(context),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Literata',
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppTheme.green.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  _localizations.comingSoon,
-                  style: const TextStyle(
-                    color: AppTheme.green,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'Literata',
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            _localizations.paymentTrackingMessage,
-            style: TextStyle(
-              color: AppColors.secondaryText(context),
-              fontSize: 12,
-              fontFamily: 'Literata',
-            ),
-          ),
-        ],
-      ),
     );
   }
 

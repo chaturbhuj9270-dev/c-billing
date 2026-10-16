@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/bill.dart';
@@ -74,7 +75,7 @@ class FirebaseBillRepository implements BillRepository {
         // Fallback if index not available
         if (e.toString().contains('index') ||
             e.toString().contains('FAILED_PRECONDITION')) {
-          print(
+          debugPrint(
             '[DEBUG] Composite index not found, getting bills without ordering',
           );
           final snapshot = await _billsCollection.get();

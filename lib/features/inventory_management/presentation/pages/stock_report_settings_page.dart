@@ -217,7 +217,7 @@ class _StockReportSettingsPageState extends State<StockReportSettingsPage> {
               decoration: BoxDecoration(
                 color: AppColors.card(context),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border(context)!),
+                border: Border.all(color: AppColors.border(context)),
               ),
               child: Row(
                 children: [
@@ -275,7 +275,7 @@ class _StockReportSettingsPageState extends State<StockReportSettingsPage> {
         border: Border.all(
           color: column.isVisible
               ? AppColors.action(context).withValues(alpha: 0.3)
-              : AppColors.border(context)!,
+              : AppColors.border(context),
           width: column.isVisible ? 1.5 : 1,
         ),
         boxShadow: column.isVisible

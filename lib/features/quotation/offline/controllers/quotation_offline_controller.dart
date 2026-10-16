@@ -41,15 +41,15 @@ class QuotationOfflineController extends ChangeNotifier {
   }) {
     var subtotal = 0.0;
     if (type == QuotationType.product) {
-      subtotal = items.fold(0.0, (sum, item) => sum + item.total);
+      subtotal = items.fold(0.0, (total, item) => total + item.total);
     } else if (type == QuotationType.event) {
       subtotal =
-          eventCharges + subEvents.fold(0.0, (sum, event) => sum + event.charges);
+          eventCharges + subEvents.fold(0.0, (total, event) => total + event.charges);
     } else {
       subtotal =
           eventCharges +
-          subEvents.fold(0.0, (sum, event) => sum + event.charges) +
-          items.fold(0.0, (sum, item) => sum + item.total);
+          subEvents.fold(0.0, (total, event) => total + event.charges) +
+          items.fold(0.0, (total, item) => total + item.total);
     }
 
     if (discountAmount > 0) {

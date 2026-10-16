@@ -441,8 +441,9 @@ class DashboardOfflineRepository {
       final custId = order.customerId;
       if (custId == null || custId.isEmpty) continue;
       if (order.status == OrderStatus.cancelled.index ||
-          order.status == OrderStatus.convertedToBill.index)
+          order.status == OrderStatus.convertedToBill.index) {
         continue;
+      }
       eventPendingMap[custId] =
           (eventPendingMap[custId] ?? 0.0) + order.remainingAmount;
     }
@@ -530,11 +531,11 @@ class DashboardOfflineRepository {
     final upcomingEvents = await EventOrderOfflineController.instance
         .getUpcomingEvents();
 
-    print(
+    debugPrint(
       '[Dashboard] Raw upcoming events from controller: ${upcomingEvents.length}',
     );
     for (var e in upcomingEvents) {
-      print(
+      debugPrint(
         '  - ${e.orderName}: ${e.customerName}, date: ${e.eventDate}, status: ${e.status}',
       );
     }

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import '../../../../core/services/product_settings_service.dart';
-import '../../../../core/localization/app_localizations.dart';
-import '../../../../core/services/language_service.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
@@ -15,16 +13,6 @@ class ProductSettingsPage extends StatefulWidget {
 }
 
 class _ProductSettingsPageState extends State<ProductSettingsPage> {
-  late AppLocalizations _localizations;
-
-  @override
-  void initState() {
-    super.initState();
-    _localizations = AppLocalizations.of(
-      LanguageService.instance.currentLanguage,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -47,7 +35,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                   return ReorderableListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: columns.length,
-                    onReorder: (oldIndex, newIndex) {
+                    onReorderItem: (oldIndex, newIndex) {
                       ProductSettingsService.instance.reorderColumns(
                         oldIndex,
                         newIndex,

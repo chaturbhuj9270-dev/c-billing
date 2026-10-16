@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -40,7 +41,7 @@ class SubscriptionService {
     try {
       final userId = _userId;
       if (userId == null) {
-        print(
+        debugPrint(
           '[SubscriptionService] No user logged in - returning true to let auth flow handle',
         );
         return true;
@@ -53,7 +54,7 @@ class SubscriptionService {
           .timeout(const Duration(seconds: 8));
 
       if (!userDoc.exists) {
-        print(
+        debugPrint(
           '[SubscriptionService] User document not found - subscription required',
         );
         return false;
@@ -61,13 +62,13 @@ class SubscriptionService {
 
       final data = userDoc.data();
       if (data == null) {
-        print('[SubscriptionService] User data is null - subscription required');
+        debugPrint('[SubscriptionService] User data is null - subscription required');
         return false;
       }
 
       final subDate = _parseSubscriptionDate(data['subscriptionDate']);
       if (subDate == null) {
-        print(
+        debugPrint(
           '[SubscriptionService] No valid subscription date - subscription required',
         );
         return false;
@@ -75,12 +76,12 @@ class SubscriptionService {
 
       final expiryDate = subDate.add(subscriptionDuration);
       final isValid = DateTime.now().isBefore(expiryDate);
-      print(
+      debugPrint(
         '[SubscriptionService] Subscription valid: $isValid (expires: $expiryDate)',
       );
       return isValid;
     } catch (e) {
-      print('[SubscriptionService] Error checking subscription: $e');
+      debugPrint('[SubscriptionService] Error checking subscription: $e');
       // Fail closed — do not unlock the app on network/read errors.
       return false;
     }
@@ -100,7 +101,7 @@ class SubscriptionService {
       if (subDate == null) return null;
       return subDate.add(subscriptionDuration);
     } catch (e) {
-      print('[SubscriptionService] Error getting expiry date: $e');
+      debugPrint('[SubscriptionService] Error getting expiry date: $e');
       return null;
     }
   }
@@ -134,7 +135,7 @@ class SubscriptionService {
     try {
       final userId = _userId;
       if (userId == null) {
-        print('[SubscriptionService] No user logged in');
+        debugPrint('[SubscriptionService] No user logged in');
         return false;
       }
 
@@ -144,10 +145,10 @@ class SubscriptionService {
         'subscriptionStatus': 'active',
       });
 
-      print('[SubscriptionService] Subscription activated successfully');
+      debugPrint('[SubscriptionService] Subscription activated successfully');
       return true;
     } catch (e) {
-      print('[SubscriptionService] Error activating subscription: $e');
+      debugPrint('[SubscriptionService] Error activating subscription: $e');
       return false;
     }
   }
@@ -159,11 +160,11 @@ class SubscriptionService {
         'subscriptionDate': null,
         'subscriptionStatus': 'inactive',
       }, SetOptions(merge: true));
-      print(
+      debugPrint(
         '[SubscriptionService] Initial inactive subscription set for user: $userId',
       );
     } catch (e) {
-      print('[SubscriptionService] Error setting initial subscription: $e');
+      debugPrint('[SubscriptionService] Error setting initial subscription: $e');
     }
   }
 
@@ -202,7 +203,7 @@ class SubscriptionService {
         'remainingDays': remainingDays,
       };
     } catch (e) {
-      print('[SubscriptionService] Error getting subscription status: $e');
+      debugPrint('[SubscriptionService] Error getting subscription status: $e');
       return {'isActive': false, 'message': 'Error checking subscription'};
     }
   }

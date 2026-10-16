@@ -68,7 +68,7 @@ class ErrorLoggingService {
 
     // Also print to console in debug mode
     if (kDebugMode) {
-      print('[ErrorLogging] Flutter Error: ${details.exceptionAsString()}');
+      debugPrint('[ErrorLogging] Flutter Error: ${details.exceptionAsString()}');
     }
   }
 
@@ -83,7 +83,7 @@ class ErrorLoggingService {
     _addLog(log);
 
     if (kDebugMode) {
-      print('[ErrorLogging] $errorType: $error');
+      debugPrint('[ErrorLogging] $errorType: $error');
     }
   }
 
@@ -98,7 +98,7 @@ class ErrorLoggingService {
     _addLog(log);
 
     if (kDebugMode) {
-      print('[ErrorLogging] UI Error: $message');
+      debugPrint('[ErrorLogging] UI Error: $message');
     }
   }
 
@@ -141,7 +141,7 @@ class ErrorLoggingService {
         text: 'Error logs from C-Billing app',
       );
     } catch (e) {
-      print('[ErrorLogging] Error sharing logs: $e');
+      debugPrint('[ErrorLogging] Error sharing logs: $e');
       // Fallback to sharing text directly
       final logsString = getLogsAsString();
       await Share.share(logsString, subject: 'C-Billing Error Logs');
@@ -164,7 +164,7 @@ class ErrorLoggingService {
       return true;
     };
 
-    print('[ErrorLogging] Error logging service initialized');
+    debugPrint('[ErrorLogging] Error logging service initialized');
   }
 
   /// Show a dialog to view and copy logs

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -25,7 +26,7 @@ class BiometricService {
           .timeout(const Duration(seconds: 3), onTimeout: () => false);
       return isDeviceSupported;
     } catch (e) {
-      print('[BiometricService] Error checking biometrics support: $e');
+      debugPrint('[BiometricService] Error checking biometrics support: $e');
       return false;
     }
   }
@@ -38,7 +39,7 @@ class BiometricService {
           .timeout(const Duration(seconds: 3), onTimeout: () => <BiometricType>[]);
       return availableBiometrics;
     } catch (e) {
-      print('[BiometricService] Error getting available biometrics: $e');
+      debugPrint('[BiometricService] Error getting available biometrics: $e');
       return [];
     }
   }
@@ -65,13 +66,13 @@ class BiometricService {
       // First check if biometrics are available
       final canAuth = await canUseBiometrics();
       if (!canAuth) {
-        print('[BiometricService] Biometrics not available on device');
+        debugPrint('[BiometricService] Biometrics not available on device');
         return false;
       }
 
       final availableBiometrics = await getAvailableBiometrics();
       if (availableBiometrics.isEmpty) {
-        print('[BiometricService] No biometrics enrolled on device');
+        debugPrint('[BiometricService] No biometrics enrolled on device');
         return false;
       }
 
@@ -83,10 +84,10 @@ class BiometricService {
           useErrorDialogs: useErrorDialogs,
         ),
       );
-      print('[BiometricService] Authentication result: $isAuthenticated');
+      debugPrint('[BiometricService] Authentication result: $isAuthenticated');
       return isAuthenticated;
     } catch (e) {
-      print('[BiometricService] Error during authentication: $e');
+      debugPrint('[BiometricService] Error during authentication: $e');
       rethrow; // Let the caller handle the exception
     }
   }
@@ -99,7 +100,7 @@ class BiometricService {
         value: 'true',
       );
     } catch (e) {
-      print('[BiometricService] Error enabling biometric auth: $e');
+      debugPrint('[BiometricService] Error enabling biometric auth: $e');
     }
   }
 
@@ -110,7 +111,7 @@ class BiometricService {
         key: 'biometric_enabled_$userId',
       );
     } catch (e) {
-      print('[BiometricService] Error disabling biometric auth: $e');
+      debugPrint('[BiometricService] Error disabling biometric auth: $e');
     }
   }
 
@@ -122,7 +123,7 @@ class BiometricService {
       );
       return value == 'true';
     } catch (e) {
-      print('[BiometricService] Error checking biometric auth status: $e');
+      debugPrint('[BiometricService] Error checking biometric auth status: $e');
       return false;
     }
   }
@@ -137,9 +138,9 @@ class BiometricService {
         key: _biometricLockEnabledKey,
         value: 'true',
       );
-      print('[BiometricService] Biometric lock enabled');
+      debugPrint('[BiometricService] Biometric lock enabled');
     } catch (e) {
-      print('[BiometricService] Error enabling biometric lock: $e');
+      debugPrint('[BiometricService] Error enabling biometric lock: $e');
     }
   }
 
@@ -150,9 +151,9 @@ class BiometricService {
         key: _biometricLockEnabledKey,
         value: 'false',
       );
-      print('[BiometricService] Biometric lock disabled');
+      debugPrint('[BiometricService] Biometric lock disabled');
     } catch (e) {
-      print('[BiometricService] Error disabling biometric lock: $e');
+      debugPrint('[BiometricService] Error disabling biometric lock: $e');
     }
   }
 
@@ -164,7 +165,7 @@ class BiometricService {
       );
       return value == 'true';
     } catch (e) {
-      print('[BiometricService] Error checking biometric lock status: $e');
+      debugPrint('[BiometricService] Error checking biometric lock status: $e');
       return false;
     }
   }
@@ -189,7 +190,7 @@ class BiometricService {
       }
       return 'unknown';
     } catch (e) {
-      print('[BiometricService] Error getting preferred biometric type: $e');
+      debugPrint('[BiometricService] Error getting preferred biometric type: $e');
       return 'unknown';
     }
   }

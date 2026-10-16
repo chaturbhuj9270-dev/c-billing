@@ -19,7 +19,7 @@ class SupplierFilterWidget extends StatelessWidget {
   final bool sortAscending;
   final VoidCallback onSortDirectionToggle;
 
-  SupplierFilterWidget({
+  const SupplierFilterWidget({
     super.key,
     required this.searchQuery,
     required this.onSearchChanged,

@@ -50,12 +50,11 @@ class PurchaseReportPdfGenerator {
 
       // Calculate totals
       int totalQty = 0, totalRemaining = 0;
-      double totalPurchaseAmt = 0, totalSellingVal = 0;
+      double totalPurchaseAmt = 0;
       for (final p in purchases) {
         totalQty += p.quantityPurchased;
         totalRemaining += p.quantityRemaining;
         totalPurchaseAmt += p.purchasePrice * p.quantityPurchased;
-        totalSellingVal += p.sellingPrice * p.quantityPurchased;
       }
       
       debugPrint('[PurchaseReport] Totals calculated');

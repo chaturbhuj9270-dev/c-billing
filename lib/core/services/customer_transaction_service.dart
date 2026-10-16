@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:c_billing/features/customer/domain/entities/customer.dart';
 import 'package:c_billing/features/customer/domain/entities/customer_transaction.dart';
@@ -145,7 +146,7 @@ class CustomerTransactionService {
 
       return result;
     } catch (e) {
-      print('[ERROR] Failed to receive payment: $e');
+      debugPrint('[ERROR] Failed to receive payment: $e');
       return TransactionResult.failure(e.toString());
     }
   }
@@ -228,7 +229,7 @@ class CustomerTransactionService {
 
       return result;
     } catch (e) {
-      print('[ERROR] Failed to record bill generated: $e');
+      debugPrint('[ERROR] Failed to record bill generated: $e');
       return TransactionResult.failure(e.toString());
     }
   }
@@ -316,7 +317,7 @@ class CustomerTransactionService {
 
       return result;
     } catch (e) {
-      print('[ERROR] Failed to record adjustment: $e');
+      debugPrint('[ERROR] Failed to record adjustment: $e');
       return TransactionResult.failure(e.toString());
     }
   }
@@ -404,7 +405,7 @@ class CustomerTransactionService {
 
       return result;
     } catch (e) {
-      print('[ERROR] Failed to record refund: $e');
+      debugPrint('[ERROR] Failed to record refund: $e');
       return TransactionResult.failure(e.toString());
     }
   }
@@ -426,7 +427,7 @@ class CustomerTransactionService {
         transactions: transactions,
       );
     } catch (e) {
-      print('[ERROR] Failed to get customer with transactions: $e');
+      debugPrint('[ERROR] Failed to get customer with transactions: $e');
       rethrow;
     }
   }
@@ -448,7 +449,7 @@ class CustomerTransactionService {
         customers: customersWithPending,
       );
     } catch (e) {
-      print('[ERROR] Failed to get pending balance summary: $e');
+      debugPrint('[ERROR] Failed to get pending balance summary: $e');
       rethrow;
     }
   }

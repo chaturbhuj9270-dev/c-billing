@@ -18,7 +18,7 @@ class CompanyFilterWidget extends StatelessWidget {
   final bool sortAscending;
   final VoidCallback onSortDirectionToggle;
 
-  CompanyFilterWidget({
+  const CompanyFilterWidget({
     super.key,
     required this.searchQuery,
     required this.onSearchChanged,

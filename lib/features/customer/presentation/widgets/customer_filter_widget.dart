@@ -135,7 +135,7 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
       decoration: BoxDecoration(
         color: AppColors.scaffold(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border(context)!, width: 1),
+        border: Border.all(color: AppColors.border(context), width: 1),
       ),
       child: TextField(
         controller: _searchController,

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 
 import '../../features/dashboard/data/repositories/dashboard_repository.dart';
@@ -120,7 +121,7 @@ class DashboardRefreshService {
           _eventOrderChangeController.add(null);
           break;
       }
-      print('[DashboardRefreshService] ${dataType.name} data changed - notifying listeners');
+      debugPrint('[DashboardRefreshService] ${dataType.name} data changed - notifying listeners');
     } else {
       // Notify all specific listeners when no specific type is given
       _customerChangeController.add(null);
@@ -132,7 +133,7 @@ class DashboardRefreshService {
       _purchaseReturnChangeController.add(null);
       _billSettingsChangeController.add(null);
       _eventOrderChangeController.add(null);
-      print('[DashboardRefreshService] All data changed - notifying all listeners');
+      debugPrint('[DashboardRefreshService] All data changed - notifying all listeners');
     }
   }
   

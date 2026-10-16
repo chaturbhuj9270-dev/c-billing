@@ -44,8 +44,8 @@ class CustomerSummaryWidget extends StatelessWidget {
     final filtered = _filteredCustomers;
     final totalPending = filtered.fold<double>(
       0,
-      (sum, c) =>
-          sum + ((c['currentPendingAmount'] as num?)?.toDouble() ?? 0.0),
+      (total, c) =>
+          total + ((c['currentPendingAmount'] as num?)?.toDouble() ?? 0.0),
     );
     final unsyncedCount = filtered.where((c) => c['isSynced'] != true).length;
 

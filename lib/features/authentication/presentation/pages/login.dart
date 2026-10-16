@@ -146,12 +146,13 @@ class _LoginPageV2State extends State<LoginPageV2>
     }
 
     setState(() => _loading = true);
-    print('[DEBUG] Attempting login with: $emailOrPhone');
+    debugPrint('[DEBUG] Attempting login with: $emailOrPhone');
 
     FirebaseAuth.instance
         .signInWithEmailAndPassword(email: emailOrPhone, password: password)
         .then((cred) {
-          print('[DEBUG] Login successful for user: ${cred.user?.uid}');
+          if (!mounted) return;
+          debugPrint('[DEBUG] Login successful for user: ${cred.user?.uid}');
 
           // Start sync services now that user is authenticated
           initializeSyncServices();
@@ -165,7 +166,7 @@ class _LoginPageV2State extends State<LoginPageV2>
           // Initialize session with 2-hour timeout
           final sessionManager = SessionManager();
           sessionManager.initializeSession(cred.user!, () {
-            print('[CRITICAL] Session expired - clearing data and logging out');
+            debugPrint('[CRITICAL] Session expired - clearing data and logging out');
             // Use LogoutService to ensure all local data is cleared on session expiry
             if (mounted) {
               GlassyToast.show(context, _localizations.sessionExpired);
@@ -182,21 +183,22 @@ class _LoginPageV2State extends State<LoginPageV2>
                 userId: cred.user!.uid,
               )
               .then((_) {
-                print('[DEBUG] User credentials saved for persistent login');
+                debugPrint('[DEBUG] User credentials saved for persistent login');
               })
               .catchError((e) {
-                print('[ERROR] Failed to save credentials: $e');
+                debugPrint('[ERROR] Failed to save credentials: $e');
               });
 
           setState(() => _loading = false);
           GlassyToast.show(context, _localizations.loginSuccessful);
-          print('[DEBUG] Session timeout set for 2 hours');
+          debugPrint('[DEBUG] Session timeout set for 2 hours');
 
           // Check subscription status before navigating
           _checkSubscriptionAndNavigate();
         })
         .catchError((e) {
-          print('[ERROR] Login failed: $e');
+          if (!mounted) return;
+          debugPrint('[ERROR] Login failed: $e');
           setState(() => _loading = false);
           final msg = e is FirebaseAuthException
               ? e.message ?? 'Auth error'
@@ -222,7 +224,7 @@ class _LoginPageV2State extends State<LoginPageV2>
         );
       }
     } catch (e) {
-      print('[ERROR] Error checking subscription: $e');
+      debugPrint('[ERROR] Error checking subscription: $e');
       // Fail closed — require subscription screen on errors
       if (mounted) {
         Navigator.of(context).pushReplacement(

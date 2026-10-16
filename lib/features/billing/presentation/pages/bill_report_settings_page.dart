@@ -332,7 +332,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
         border: Border.all(
           color: column.isVisible
               ? AppColors.action(context).withValues(alpha: 0.3)
-              : AppColors.border(context)!,
+              : AppColors.border(context),
           width: column.isVisible ? 1.5 : 1,
         ),
         boxShadow: column.isVisible

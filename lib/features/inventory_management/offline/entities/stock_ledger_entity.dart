@@ -1,3 +1,6 @@
+// Enum values are stored by name. Renaming them would change saved ledger records.
+// ignore_for_file: constant_identifier_names
+
 import 'package:isar_community/isar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 

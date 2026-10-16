@@ -253,21 +253,21 @@ class PrintBillData {
 
   /// Get total quantity of items (as double to support decimal quantities)
   double get totalQuantity =>
-      items.fold(0.0, (sum, item) => sum + item.quantity);
+      items.fold(0.0, (total, item) => total + item.quantity);
 
   /// Get total quantity as int (for backward compatibility)
   int get totalQuantityInt => totalQuantity.round();
 
   /// Total returned quantity across all items (as double)
   double get totalReturnedQuantity =>
-      items.fold(0.0, (sum, item) => sum + item.returnedQuantity);
+      items.fold(0.0, (total, item) => total + item.returnedQuantity);
 
   /// Total returned quantity as int (for backward compatibility)
   int get totalReturnedQuantityInt => totalReturnedQuantity.round();
 
   /// Total refund amount for all returned items
   double get totalReturnedAmount =>
-      items.fold(0.0, (sum, item) => sum + item.returnedAmount);
+      items.fold(0.0, (total, item) => total + item.returnedAmount);
 
   /// Whether any item in this bill has returns
   bool get hasAnyReturns => items.any((item) => item.hasReturns);

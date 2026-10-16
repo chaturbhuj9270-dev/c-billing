@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:flutter/services.dart';
 
 /// Shared palette from the billing / purchase screens.

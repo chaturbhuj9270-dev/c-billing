@@ -461,8 +461,9 @@ class DashboardIsarDataSource {
       final custId = order.customerId;
       if (custId == null || custId.isEmpty) continue;
       if (order.status == OrderStatus.cancelled.index ||
-          order.status == OrderStatus.convertedToBill.index)
+          order.status == OrderStatus.convertedToBill.index) {
         continue;
+      }
       eventPendingByCustomer[custId] =
           (eventPendingByCustomer[custId] ?? 0.0) + order.remainingAmount;
     }

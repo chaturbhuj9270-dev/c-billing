@@ -62,7 +62,7 @@ class GroupedProduct {
 
   /// Grand total stock across all sub-entries
   int get totalStock =>
-      subEntries.fold<int>(0, (sum, e) => sum + e.stockQuantity);
+      subEntries.fold<int>(0, (total, e) => total + e.stockQuantity);
 
   /// Number of distinct variants/batches
   int get variantCount => subEntries.length;
@@ -88,7 +88,7 @@ class GroupedProduct {
 
   /// Total stock value across all sub-entries (based on purchase price)
   double get totalStockValue => subEntries.fold<double>(
-      0.0, (sum, e) => sum + (e.stockQuantity * e.purchasePrice));
+      0.0, (total, e) => total + (e.stockQuantity * e.purchasePrice));
 
   /// Unique company names
   Set<String> get companies =>
@@ -119,7 +119,7 @@ class GroupedProduct {
 
   /// Total expired stock quantity
   int get expiredStockCount =>
-      subEntries.where((e) => e.isExpired).fold<int>(0, (sum, e) => sum + e.stockQuantity);
+      subEntries.where((e) => e.isExpired).fold<int>(0, (total, e) => total + e.stockQuantity);
 
   /// Count of batches expiring soon (within 30 days)
   int get expiringSoonBatchCount =>

@@ -533,9 +533,9 @@ class _ShimmerCardState extends State<_ShimmerCard>
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                     colors: [
-                      AppColors.border(context)!,
-                      AppColors.chipFill(context)!,
-                      AppColors.border(context)!,
+                      AppColors.border(context),
+                      AppColors.chipFill(context),
+                      AppColors.border(context),
                     ],
                     stops: [
                       (_animation.value - 0.3).clamp(0.0, 1.0),
@@ -575,7 +575,7 @@ class _ShimmerCardState extends State<_ShimmerCard>
           gradient: LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
-            colors: [AppColors.border(context)!, AppColors.chipFill(context)!, AppColors.border(context)!],
+            colors: [AppColors.border(context), AppColors.chipFill(context), AppColors.border(context)],
             stops: [
               (_animation.value - 0.3).clamp(0.0, 1.0),
               _animation.value.clamp(0.0, 1.0),

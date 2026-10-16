@@ -1,3 +1,7 @@
+// Enum values are stored by name. Renaming them would change saved stock records.
+// ignore_for_file: constant_identifier_names
+
+import 'package:flutter/foundation.dart';
 enum ReferenceType {
   PURCHASE,
   SALE,
@@ -57,8 +61,8 @@ class Stock {
             : DateTime.now(),
       );
     } catch (e) {
-      print('[ERROR] Failed to parse Stock from JSON: $json');
-      print('[ERROR] Error details: $e');
+      debugPrint('[ERROR] Failed to parse Stock from JSON: $json');
+      debugPrint('[ERROR] Error details: $e');
       // Return a default stock entry
       return Stock(
         id: json['id']?.toString() ?? '',

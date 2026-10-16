@@ -247,7 +247,7 @@ class FirebaseStockLedgerRepository implements StockLedgerRepository {
   @override
   Future<double> getTotalCOGS({DateTime? startDate, DateTime? endDate}) async {
     final entries = await _getSaleEntries(startDate: startDate, endDate: endDate);
-    return entries.fold<double>(0.0, (sum, e) => sum + e.totalCost);
+    return entries.fold<double>(0.0, (total, e) => total + e.totalCost);
   }
 
   @override
@@ -269,7 +269,7 @@ class FirebaseStockLedgerRepository implements StockLedgerRepository {
   @override
   Future<double> getTotalProfit({DateTime? startDate, DateTime? endDate}) async {
     final entries = await _getSaleAndReturnEntries(startDate: startDate, endDate: endDate);
-    return entries.fold<double>(0.0, (sum, e) => sum + e.profit);
+    return entries.fold<double>(0.0, (total, e) => total + e.profit);
   }
 
   @override
@@ -291,7 +291,7 @@ class FirebaseStockLedgerRepository implements StockLedgerRepository {
   @override
   Future<double> getTotalRevenue({DateTime? startDate, DateTime? endDate}) async {
     final entries = await _getSaleEntries(startDate: startDate, endDate: endDate);
-    return entries.fold<double>(0.0, (sum, e) => sum + e.totalRevenue);
+    return entries.fold<double>(0.0, (total, e) => total + e.totalRevenue);
   }
 
   @override
@@ -305,7 +305,7 @@ class FirebaseStockLedgerRepository implements StockLedgerRepository {
           !e.transactionDate.isAfter(endDate)).toList();
     }
     
-    return filtered.fold<double>(0.0, (sum, e) => sum + e.totalCost);
+    return filtered.fold<double>(0.0, (total, e) => total + e.totalCost);
   }
 
   @override

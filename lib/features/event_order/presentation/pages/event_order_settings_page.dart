@@ -200,7 +200,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                               Switch.adaptive(
                                 value: _showEventMode,
                                 onChanged: _onModeChanged,
-                                activeColor: _eventColor,
+                                activeThumbColor: _eventColor,
                                 inactiveThumbColor: _salesColor,
                                 inactiveTrackColor: _salesColor.withValues(
                                   alpha: 0.3,
@@ -415,7 +415,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
         color: isActive ? color.withValues(alpha: 0.1) : AppColors.scaffold(context),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isActive ? color.withValues(alpha: 0.3) : AppColors.border(context)!,
+          color: isActive ? color.withValues(alpha: 0.3) : AppColors.border(context),
           width: isActive ? 1.5 : 1,
         ),
       ),

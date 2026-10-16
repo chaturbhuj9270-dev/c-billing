@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'bill_item.dart';
 import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
 
@@ -165,8 +166,8 @@ class Bill {
         totalTaxAmount: ((json['totalTaxAmount'] ?? 0) as num).toDouble(),
       );
     } catch (e) {
-      print('[ERROR] Failed to parse Bill from JSON: $json');
-      print('[ERROR] Error details: $e');
+      debugPrint('[ERROR] Failed to parse Bill from JSON: $json');
+      debugPrint('[ERROR] Error details: $e');
       return Bill(
         id: json['id']?.toString() ?? '',
         customerId: null,
@@ -403,7 +404,7 @@ class Bill {
 
   /// Get total returned quantity across all items
   double get totalReturnedQuantity =>
-      items.fold(0.0, (sum, item) => sum + item.returnedQuantity);
+      items.fold(0.0, (total, item) => total + item.returnedQuantity);
 
   /// Get total returned quantity as int (for display)
   int get totalReturnedQuantityInt => totalReturnedQuantity.round();
@@ -411,7 +412,7 @@ class Bill {
   /// Get total refund amount based on returned quantities
   double get totalReturnedAmount => items.fold(
     0.0,
-    (sum, item) => sum + (item.sellingPrice * item.returnedQuantity),
+    (total, item) => total + (item.sellingPrice * item.returnedQuantity),
   );
 
   @override

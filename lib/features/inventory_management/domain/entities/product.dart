@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:c_billing/features/product/offline/entities/product_entity.dart';
 
 class Product {
@@ -91,8 +92,8 @@ class Product {
         unit: json['unit'] as String?,
       );
     } catch (e) {
-      print('[ERROR] Failed to parse Product from JSON: $json');
-      print('[ERROR] Error details: $e');
+      debugPrint('[ERROR] Failed to parse Product from JSON: $json');
+      debugPrint('[ERROR] Error details: $e');
       // Return a default product to prevent crashes
       return Product(
         id: json['id']?.toString() ?? '',

@@ -66,11 +66,11 @@ class EventOrderOfflineController extends ChangeNotifier {
     double totalAmount = 0.0;
     if (orderType == OrderType.event) {
       totalAmount =
-          subEvents.fold(0.0, (sum, e) => sum + e.charges) +
+          subEvents.fold(0.0, (total, e) => total + e.charges) +
           eventCharges +
-          items.fold(0.0, (sum, e) => sum + e.total);
+          items.fold(0.0, (total, e) => total + e.total);
     } else {
-      totalAmount = items.fold(0.0, (sum, e) => sum + e.total);
+      totalAmount = items.fold(0.0, (total, e) => total + e.total);
     }
 
     final remainingAmount = totalAmount - advanceAmount;
@@ -236,15 +236,15 @@ class EventOrderOfflineController extends ChangeNotifier {
         .syncStatusEqualTo(EventOrderSyncStatus.deleted)
         .findAll();
 
-    print('[EventOrderController] Total events in DB: ${allEvents.length}');
-    print('[EventOrderController] Today: $startOfToday');
+    debugPrint('[EventOrderController] Total events in DB: ${allEvents.length}');
+    debugPrint('[EventOrderController] Today: $startOfToday');
     for (var e in allEvents) {
       final eventDateOnly = DateTime(
         e.eventDate.year,
         e.eventDate.month,
         e.eventDate.day,
       );
-      print(
+      debugPrint(
         '[EventOrderController] Event: ${e.orderName}, date: ${e.eventDate}, dateOnly: $eventDateOnly, isUpcoming: ${!eventDateOnly.isBefore(startOfToday)}',
       );
     }
@@ -259,7 +259,7 @@ class EventOrderOfflineController extends ChangeNotifier {
       return !eventDateOnly.isBefore(startOfToday);
     }).toList()..sort((a, b) => a.eventDate.compareTo(b.eventDate));
 
-    print(
+    debugPrint(
       '[EventOrderController] Upcoming events filtered: ${upcomingEvents.length}',
     );
     return upcomingEvents;
@@ -348,13 +348,13 @@ class EventOrderOfflineController extends ChangeNotifier {
     // Recalculate totals
     if (existing.orderType == OrderType.event.index) {
       existing.totalAmount =
-          existing.subEvents.fold(0.0, (sum, e) => sum + e.charges) +
+          existing.subEvents.fold(0.0, (total, e) => total + e.charges) +
           existing.eventCharges +
-          existing.items.fold(0.0, (sum, e) => sum + e.total);
+          existing.items.fold(0.0, (total, e) => total + e.total);
     } else {
       existing.totalAmount = existing.items.fold(
         0.0,
-        (sum, e) => sum + e.total,
+        (total, e) => total + e.total,
       );
     }
     existing.remainingAmount = existing.totalAmount - existing.advanceAmount;

@@ -106,10 +106,10 @@ class _QuotationScreenState extends State<QuotationScreen> {
   }
 
   double get _subEventsTotal =>
-      _subEvents.fold(0.0, (sum, e) => sum + e.charges);
+      _subEvents.fold(0.0, (total, e) => total + e.charges);
 
   double get _productsTotal =>
-      _orderItems.fold(0.0, (sum, e) => sum + e.total);
+      _orderItems.fold(0.0, (total, e) => total + e.total);
 
   double get _eventCharges =>
       double.tryParse(_eventChargesController.text) ?? 0.0;

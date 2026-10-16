@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../offline/controllers/expense_offline_controller.dart';
@@ -622,7 +621,7 @@ class _ExpensesPageState extends State<ExpensesPage>
       itemBuilder: (context, index) {
         final dateKey = sortedDates[index];
         final expenses = groupedExpenses[dateKey]!;
-        final dayTotal = expenses.fold(0.0, (sum, e) => sum + e.amount);
+        final dayTotal = expenses.fold(0.0, (total, e) => total + e.amount);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1636,7 +1635,7 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
 class _ExpenseDetailsSheet extends StatelessWidget {
   final ExpenseEntity expense;
 
-  _ExpenseDetailsSheet({required this.expense});
+  const _ExpenseDetailsSheet({required this.expense});
 
   @override
   Widget build(BuildContext context) {

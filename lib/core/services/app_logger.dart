@@ -97,7 +97,7 @@ class AppLogger {
     
     // Also print to console
     if (kDebugMode) {
-      print(entry.toFormattedString());
+      debugPrint(entry.toFormattedString());
     }
   }
 

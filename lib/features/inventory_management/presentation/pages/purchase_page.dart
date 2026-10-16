@@ -218,8 +218,8 @@ class _PurchasePageState extends State<PurchasePage>
             _filteredProducts = products;
           });
           _cacheDataSource.saveProducts(products);
-          print('[Purchase] Product stream: ${products.length} products');
-        }, onError: (e) => print('[ERROR] Product stream error: $e'));
+          debugPrint('[Purchase] Product stream: ${products.length} products');
+        }, onError: (e) => debugPrint('[ERROR] Product stream error: $e'));
   }
 
   /// Setup real-time supplier stream from Isar
@@ -243,8 +243,8 @@ class _PurchasePageState extends State<PurchasePage>
             _filteredSuppliers = suppliers;
           });
           _cacheDataSource.saveSuppliers(suppliers);
-          print('[Purchase] Supplier stream: ${suppliers.length} suppliers');
-        }, onError: (e) => print('[ERROR] Supplier stream error: $e'));
+          debugPrint('[Purchase] Supplier stream: ${suppliers.length} suppliers');
+        }, onError: (e) => debugPrint('[ERROR] Supplier stream error: $e'));
   }
 
   /// Setup real-time company stream from Isar
@@ -266,8 +266,8 @@ class _PurchasePageState extends State<PurchasePage>
             _filteredCompanies = companies;
           });
           _cacheDataSource.saveCompanies(companies);
-          print('[Purchase] Company stream: ${companies.length} companies');
-        }, onError: (e) => print('[ERROR] Company stream error: $e'));
+          debugPrint('[Purchase] Company stream: ${companies.length} companies');
+        }, onError: (e) => debugPrint('[ERROR] Company stream error: $e'));
   }
 
   Future<void> _addNewProduct() async {
@@ -1535,7 +1535,7 @@ class _PurchasePageState extends State<PurchasePage>
                                   border: Border.all(
                                     color: isSelected
                                         ? AppColors.action(context)
-                                        : AppColors.border(context)!,
+                                        : AppColors.border(context),
                                     width: isSelected ? 1.5 : 1,
                                   ),
                                 ),
@@ -1863,7 +1863,7 @@ class _PurchasePageState extends State<PurchasePage>
                                   border: Border.all(
                                     color: isSelected
                                         ? AppColors.action(context)
-                                        : AppColors.border(context)!,
+                                        : AppColors.border(context),
                                     width: isSelected ? 1.5 : 1,
                                   ),
                                 ),
@@ -2111,7 +2111,7 @@ class _PurchasePageState extends State<PurchasePage>
                                   border: Border.all(
                                     color: isSelected
                                         ? AppTheme.paletteFF7B68EE
-                                        : AppColors.border(context)!,
+                                        : AppColors.border(context),
                                     width: isSelected ? 1.5 : 1,
                                   ),
                                 ),
@@ -2250,7 +2250,7 @@ class _PurchasePageState extends State<PurchasePage>
         );
       }
 
-      print(
+      debugPrint(
         '[DEBUG] Purchase fully processed: PurchaseEntity + PurchaseBatch + StockLedger + Product stock updated',
       );
 
@@ -2279,9 +2279,9 @@ class _PurchasePageState extends State<PurchasePage>
               .doc(productId)
               .update(updateData)
               .timeout(const Duration(seconds: 1));
-          print('[DEBUG] Updated product in Firestore');
+          debugPrint('[DEBUG] Updated product in Firestore');
         } catch (e) {
-          print('[DEBUG] Failed to update Firestore (will sync later): $e');
+          debugPrint('[DEBUG] Failed to update Firestore (will sync later): $e');
         }
       }
 
@@ -2320,7 +2320,7 @@ class _PurchasePageState extends State<PurchasePage>
         // Reload products to show updated stock — stream auto-handles this
       }
     } catch (e) {
-      print('[ERROR] Failed to process purchase: $e');
+      debugPrint('[ERROR] Failed to process purchase: $e');
       if (mounted) {
         GlassyToast.show(context, '${_localizations.error}: $e');
       }
@@ -3791,7 +3791,7 @@ class _PurchasePageState extends State<PurchasePage>
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.border(context)!),
+              borderSide: BorderSide(color: AppColors.border(context)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -3851,7 +3851,7 @@ class _PurchasePageState extends State<PurchasePage>
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: AppColors.border(context)!),
+                borderSide: BorderSide(color: AppColors.border(context)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),

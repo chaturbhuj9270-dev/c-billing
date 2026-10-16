@@ -531,7 +531,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
       decoration: BoxDecoration(
         color: AppColors.card(context),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border(context)!),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Row(
         children: [

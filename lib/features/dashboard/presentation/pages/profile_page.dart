@@ -75,7 +75,7 @@ class _ProfilePageState extends State<ProfilePage> {
         });
       }
     } catch (e) {
-      print('[ERROR] Error loading user profile: $e');
+      debugPrint('[ERROR] Error loading user profile: $e');
     } finally {
       setState(() => _isLoading = false);
     }
@@ -97,7 +97,7 @@ class _ProfilePageState extends State<ProfilePage> {
         });
       }
     } catch (e) {
-      print('[ERROR] Error picking image: $e');
+      debugPrint('[ERROR] Error picking image: $e');
       if (mounted) {
         GlassyToast.show(context, 'Failed to pick image');
       }
@@ -128,7 +128,7 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
       GlassyToast.show(context, _localizations.profileUpdatedSuccessfully);
     } catch (e) {
-      print('[ERROR] Error saving profile: $e');
+      debugPrint('[ERROR] Error saving profile: $e');
       GlassyToast.show(context, '${_localizations.errorSavingProfile}: $e');
     } finally {
       setState(() => _isSaving = false);

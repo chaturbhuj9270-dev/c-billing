@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/services/communication_service.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/services/dashboard_refresh_service.dart';
@@ -738,8 +739,12 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
                     icon: Icons.phone_rounded,
                     label: 'Call ${company['contact']}',
                     onTap: () {
+                      final phone = (company['contact'] ?? '').toString();
                       Navigator.pop(ctx);
-                      // TODO: Implement call action
+                      CommunicationService.instance.makeCall(
+                        phone,
+                        context: context,
+                      );
                     },
                   ),
                 _buildContextMenuItem(

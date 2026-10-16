@@ -144,9 +144,9 @@ class FifoBillingService {
       // Calculate totals (use rounded quantity for display total)
       final totalQuantity = items.fold(
         0,
-        (sum, item) => sum + item.quantityInt,
+        (total, item) => total + item.quantityInt,
       );
-      final totalAmount = items.fold(0.0, (sum, item) => sum + item.subtotal);
+      final totalAmount = items.fold(0.0, (total, item) => total + item.subtotal);
 
       // Apply discount
       double finalDiscount = discountAmount;

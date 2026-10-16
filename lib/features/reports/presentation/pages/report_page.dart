@@ -27,8 +27,6 @@ import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 //   ✅ Loading overlay, empty states, snackbars
 // ──────────────────────────────────────────────────────────
 
-const _kGreenDark = AppTheme.primaryDark;
-
 class ReportPage extends StatefulWidget {
   const ReportPage({super.key});
 

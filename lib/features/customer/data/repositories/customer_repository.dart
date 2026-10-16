@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:c_billing/features/customer/domain/entities/customer.dart';
@@ -77,7 +78,7 @@ class FirebaseCustomerRepository implements CustomerRepository {
       
       return customers;
     } catch (e) {
-      print('[ERROR] Failed to get all customers: $e');
+      debugPrint('[ERROR] Failed to get all customers: $e');
       rethrow;
     }
   }
@@ -92,7 +93,7 @@ class FirebaseCustomerRepository implements CustomerRepository {
       data['id'] = doc.id;
       return Customer.fromJson(data);
     } catch (e) {
-      print('[ERROR] Failed to get customer by ID: $e');
+      debugPrint('[ERROR] Failed to get customer by ID: $e');
       rethrow;
     }
   }
@@ -113,7 +114,7 @@ class FirebaseCustomerRepository implements CustomerRepository {
       data['id'] = doc.id;
       return Customer.fromJson(data);
     } catch (e) {
-      print('[ERROR] Failed to get customer by contact: $e');
+      debugPrint('[ERROR] Failed to get customer by contact: $e');
       rethrow;
     }
   }
@@ -134,7 +135,7 @@ class FirebaseCustomerRepository implements CustomerRepository {
       await docRef.set(customerData.toJson());
       return docRef.id;
     } catch (e) {
-      print('[ERROR] Failed to create customer: $e');
+      debugPrint('[ERROR] Failed to create customer: $e');
       rethrow;
     }
   }
@@ -148,7 +149,7 @@ class FirebaseCustomerRepository implements CustomerRepository {
           .doc(customer.id)
           .update(updatedCustomer.toJson());
     } catch (e) {
-      print('[ERROR] Failed to update customer: $e');
+      debugPrint('[ERROR] Failed to update customer: $e');
       rethrow;
     }
   }
@@ -162,7 +163,7 @@ class FirebaseCustomerRepository implements CustomerRepository {
         'updatedAt': DateTime.now().toIso8601String(),
       });
     } catch (e) {
-      print('[ERROR] Failed to delete customer: $e');
+      debugPrint('[ERROR] Failed to delete customer: $e');
       rethrow;
     }
   }
@@ -182,7 +183,7 @@ class FirebaseCustomerRepository implements CustomerRepository {
         'updatedAt': DateTime.now().toIso8601String(),
       });
     } catch (e) {
-      print('[ERROR] Failed to update pending balance: $e');
+      debugPrint('[ERROR] Failed to update pending balance: $e');
       rethrow;
     }
   }
@@ -200,7 +201,7 @@ class FirebaseCustomerRepository implements CustomerRepository {
             customer.contact.contains(lowerQuery);
       }).toList();
     } catch (e) {
-      print('[ERROR] Failed to search customers: $e');
+      debugPrint('[ERROR] Failed to search customers: $e');
       rethrow;
     }
   }
@@ -224,7 +225,7 @@ class FirebaseCustomerRepository implements CustomerRepository {
       
       return customers;
     } catch (e) {
-      print('[ERROR] Failed to get customers with pending balance: $e');
+      debugPrint('[ERROR] Failed to get customers with pending balance: $e');
       rethrow;
     }
   }

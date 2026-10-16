@@ -6,6 +6,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
@@ -115,7 +116,8 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   }
 
   void _updateTransformationMatrix() {
-    _transformationController.value = Matrix4.identity()..scale(_zoomLevel);
+    _transformationController.value = Matrix4.identity()
+      ..scaleByDouble(_zoomLevel, _zoomLevel, _zoomLevel, 1);
   }
 
   Future<void> _loadFile() async {
@@ -410,71 +412,51 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   }
 
   Future<Uint8List> _generateCsvPdfForPrint() async {
-    // Use pdf package to create a simple table from CSV
-    final pdf = await Printing.convertHtml(
-      format: PdfPageFormat.a4,
-      html: _generateHtmlFromCsv(),
+    final data = _csvData;
+    final doc = pw.Document();
+    doc.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (context) {
+          if (data == null || data.isEmpty) {
+            return pw.Text('No data');
+          }
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                widget.fileName,
+                style: pw.TextStyle(
+                  fontSize: 18,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.SizedBox(height: 6),
+              pw.Text(
+                widget.subtitle ?? DateTime.now().toString().split('.').first,
+                style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
+              ),
+              pw.SizedBox(height: 16),
+              pw.TableHelper.fromTextArray(
+                headers: data.first,
+                data: data.length > 1 ? data.sublist(1) : const <List<String>>[],
+                headerStyle: pw.TextStyle(
+                  color: PdfColors.white,
+                  fontWeight: pw.FontWeight.bold,
+                  fontSize: 10,
+                ),
+                headerDecoration: const pw.BoxDecoration(
+                  color: PdfColors.green800,
+                ),
+                cellStyle: const pw.TextStyle(fontSize: 9),
+                cellAlignment: pw.Alignment.centerLeft,
+              ),
+            ],
+          );
+        },
+      ),
     );
-    return pdf;
-  }
-
-  String _generateHtmlFromCsv() {
-    if (_csvData == null || _csvData!.isEmpty) return '<p>No data</p>';
-
-    final buffer = StringBuffer();
-    buffer.writeln('''
-<!DOCTYPE html>
-<html>
-<head>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    h1 { color: #1B4D3E; font-size: 18px; margin-bottom: 5px; }
-    h2 { color: #666; font-size: 12px; margin-bottom: 20px; font-weight: normal; }
-    table { width: 100%; border-collapse: collapse; font-size: 10px; }
-    th { background-color: #1B4D3E; color: white; padding: 8px; text-align: left; }
-    td { padding: 6px 8px; border-bottom: 1px solid #ddd; }
-    tr:nth-child(even) { background-color: #f9f9f9; }
-  </style>
-</head>
-<body>
-  <h1>${widget.fileName}</h1>
-  <h2>${widget.subtitle ?? DateTime.now().toString().split('.')[0]}</h2>
-  <table>
-''');
-
-    // Headers
-    if (_csvData!.isNotEmpty) {
-      buffer.writeln('<tr>');
-      for (final header in _csvData![0]) {
-        buffer.writeln('<th>${_escapeHtml(header)}</th>');
-      }
-      buffer.writeln('</tr>');
-    }
-
-    // Data rows
-    for (var i = 1; i < _csvData!.length; i++) {
-      buffer.writeln('<tr>');
-      for (final cell in _csvData![i]) {
-        buffer.writeln('<td>${_escapeHtml(cell)}</td>');
-      }
-      buffer.writeln('</tr>');
-    }
-
-    buffer.writeln('''
-  </table>
-</body>
-</html>
-''');
-    return buffer.toString();
-  }
-
-  String _escapeHtml(String text) {
-    return text
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
+    return doc.save();
   }
 
   void _showSnackBar(String message, {bool isError = false}) {

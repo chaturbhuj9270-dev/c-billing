@@ -48,11 +48,13 @@ class CommunicationService {
         await launchUrl(uri);
         return true;
       } else {
+        if (context != null && !context.mounted) return false;
         _showError(context, 'Could not open phone dialer');
         return false;
       }
     } catch (e) {
       debugPrint('[CommunicationService] Call error: $e');
+      if (context != null && !context.mounted) return false;
       _showError(context, 'Could not make call');
       return false;
     }
@@ -87,11 +89,13 @@ class CommunicationService {
         await launchUrl(uri);
         return true;
       } else {
+        if (context != null && !context.mounted) return false;
         _showError(context, 'Could not open messaging app');
         return false;
       }
     } catch (e) {
       debugPrint('[CommunicationService] SMS error: $e');
+      if (context != null && !context.mounted) return false;
       _showError(context, 'Could not send message');
       return false;
     }
@@ -144,10 +148,12 @@ class CommunicationService {
         return true;
       }
 
+      if (context != null && !context.mounted) return false;
       _showError(context, 'Could not open WhatsApp');
       return false;
     } catch (e) {
       debugPrint('[CommunicationService] WhatsApp error: $e');
+      if (context != null && !context.mounted) return false;
       _showError(context, 'Could not open WhatsApp');
       return false;
     }
@@ -259,7 +265,7 @@ class _ActionButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: label != null
@@ -366,7 +372,7 @@ class _CompactActionIcon extends StatelessWidget {
         height: containerSize,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: icon is IconData

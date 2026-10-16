@@ -79,11 +79,11 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       );
 
       await user.reauthenticateWithCredential(credential);
-      print('[DEBUG] Re-authentication successful');
+      debugPrint('[DEBUG] Re-authentication successful');
 
       // Update password
       await user.updatePassword(newPassword);
-      print('[DEBUG] Password updated successfully');
+      debugPrint('[DEBUG] Password updated successfully');
 
       setState(() => _loading = false);
 
@@ -114,7 +114,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       }
     } catch (e) {
       setState(() => _loading = false);
-      print('[ERROR] Password update failed: $e');
+      debugPrint('[ERROR] Password update failed: $e');
       if (mounted) {
         GlassyToast.show(context, 'Error: ${e.toString()}', isError: true);
       }

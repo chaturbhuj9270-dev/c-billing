@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:c_billing/features/customer/domain/entities/customer_transaction.dart';
@@ -79,7 +80,7 @@ class FirebaseCustomerTransactionRepository
         return CustomerTransaction.fromJson(data);
       }).toList();
     } catch (e) {
-      print('[ERROR] Failed to get transactions by customer ID: $e');
+      debugPrint('[ERROR] Failed to get transactions by customer ID: $e');
       rethrow;
     }
   }
@@ -94,7 +95,7 @@ class FirebaseCustomerTransactionRepository
       data['id'] = doc.id;
       return CustomerTransaction.fromJson(data);
     } catch (e) {
-      print('[ERROR] Failed to get transaction by ID: $e');
+      debugPrint('[ERROR] Failed to get transaction by ID: $e');
       rethrow;
     }
   }
@@ -115,7 +116,7 @@ class FirebaseCustomerTransactionRepository
         return CustomerTransaction.fromJson(data);
       }).toList();
     } catch (e) {
-      print('[ERROR] Failed to get transactions by bill ID: $e');
+      debugPrint('[ERROR] Failed to get transactions by bill ID: $e');
       rethrow;
     }
   }
@@ -133,7 +134,7 @@ class FirebaseCustomerTransactionRepository
       await docRef.set(transactionData.toJson());
       return docRef.id;
     } catch (e) {
-      print('[ERROR] Failed to create transaction: $e');
+      debugPrint('[ERROR] Failed to create transaction: $e');
       rethrow;
     }
   }
@@ -154,7 +155,7 @@ class FirebaseCustomerTransactionRepository
         return CustomerTransaction.fromJson(data);
       }).toList();
     } catch (e) {
-      print('[ERROR] Failed to get recent transactions: $e');
+      debugPrint('[ERROR] Failed to get recent transactions: $e');
       rethrow;
     }
   }
@@ -180,7 +181,7 @@ class FirebaseCustomerTransactionRepository
       }
       return total;
     } catch (e) {
-      print('[ERROR] Failed to get total received amount: $e');
+      debugPrint('[ERROR] Failed to get total received amount: $e');
       rethrow;
     }
   }
@@ -202,7 +203,7 @@ class FirebaseCustomerTransactionRepository
         return CustomerTransaction.fromJson(data);
       }).toList();
     } catch (e) {
-      print('[ERROR] Failed to get payments by customer ID: $e');
+      debugPrint('[ERROR] Failed to get payments by customer ID: $e');
       rethrow;
     }
   }

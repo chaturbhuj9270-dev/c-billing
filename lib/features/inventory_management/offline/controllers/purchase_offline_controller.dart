@@ -396,7 +396,7 @@ class PurchaseOfflineController extends ChangeNotifier {
     }
 
     final purchases = await query.findAll();
-    return purchases.fold<double>(0.0, (sum, p) => sum + p.totalAmount);
+    return purchases.fold<double>(0.0, (total, p) => total + p.totalAmount);
   }
 
   /// Clear all local purchases (use with caution)

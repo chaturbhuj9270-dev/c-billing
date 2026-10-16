@@ -261,7 +261,7 @@ class FifoInventoryService {
       }
 
       // Calculate total available stock
-      final totalAvailable = availableBatches.fold(0, (sum, b) => sum + b.quantityRemaining);
+      final totalAvailable = availableBatches.fold(0, (total, b) => total + b.quantityRemaining);
       
       if (totalAvailable < quantity) {
         return FifoSaleResult.failure(

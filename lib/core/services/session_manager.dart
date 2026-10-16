@@ -12,7 +12,7 @@ class SessionManager {
   SessionManager._internal();
 
   // 2 hours in milliseconds
-  static const Duration SESSION_TIMEOUT = Duration(hours: 2);
+  static const Duration sessionTimeout = Duration(hours: 2);
 
   User? _currentUser;
   Timer? _sessionTimer;
@@ -22,7 +22,7 @@ class SessionManager {
 
   /// Initialize session with a user and callback for expiration
   void initializeSession(User user, VoidCallback onSessionExpired) {
-    print('[DEBUG] Session initialized for user: ${user.uid}');
+    debugPrint('[DEBUG] Session initialized for user: ${user.uid}');
     _currentUser = user;
     _onSessionExpired = onSessionExpired;
     _resetSessionTimer();
@@ -31,7 +31,7 @@ class SessionManager {
   /// Reset the session timer (called on every user activity)
   void resetSession() {
     if (_currentUser != null) {
-      print('[DEBUG] Session reset for user: ${_currentUser!.uid}');
+      debugPrint('[DEBUG] Session reset for user: ${_currentUser!.uid}');
       _resetSessionTimer();
     }
   }
@@ -42,15 +42,15 @@ class SessionManager {
     _sessionTimer?.cancel();
 
     // Start new timer for 2 hours
-    _sessionTimer = Timer(SESSION_TIMEOUT, () {
-      print('[CRITICAL] Session expired for user: ${_currentUser?.uid}');
+    _sessionTimer = Timer(sessionTimeout, () {
+      debugPrint('[CRITICAL] Session expired for user: ${_currentUser?.uid}');
       _sessionExpired();
     });
   }
 
   /// Called when session expires
   void _sessionExpired() {
-    print('[CRITICAL] Session timeout triggered');
+    debugPrint('[CRITICAL] Session timeout triggered');
     _currentUser = null;
     _sessionTimer?.cancel();
     _onSessionExpired();
@@ -58,7 +58,7 @@ class SessionManager {
 
   /// Manually end the session (e.g., on logout)
   void endSession() {
-    print('[DEBUG] Session ended for user: ${_currentUser?.uid}');
+    debugPrint('[DEBUG] Session ended for user: ${_currentUser?.uid}');
     _currentUser = null;
     _sessionTimer?.cancel();
   }
@@ -66,16 +66,16 @@ class SessionManager {
   /// Check if user is still authenticated
   Future<bool> isSessionValid() async {
     if (_currentUser == null) {
-      print('[ERROR] No user in session');
+      debugPrint('[ERROR] No user in session');
       return false;
     }
 
     try {
       await _currentUser!.reload();
-      print('[DEBUG] Session valid for user: ${_currentUser!.uid}');
+      debugPrint('[DEBUG] Session valid for user: ${_currentUser!.uid}');
       return true;
     } catch (e) {
-      print('[ERROR] Session validation failed: $e');
+      debugPrint('[ERROR] Session validation failed: $e');
       return false;
     }
   }
@@ -86,6 +86,6 @@ class SessionManager {
       return null;
     }
     // This is approximate; for accurate tracking, consider storing the expiration time
-    return SESSION_TIMEOUT;
+    return sessionTimeout;
   }
 }

@@ -360,7 +360,7 @@ class CustomerOfflineController extends ChangeNotifier {
   /// Get total pending amount across all customers
   Future<double> getTotalPendingAmount() async {
     final customers = await getAllCustomers();
-    return customers.fold<double>(0, (sum, c) => sum + c.currentPendingAmount);
+    return customers.fold<double>(0, (total, c) => total + c.currentPendingAmount);
   }
 
   /// Get customers with pending balance (for dashboard)

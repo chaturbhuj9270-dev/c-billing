@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/dashboard_data.dart';
@@ -68,7 +69,7 @@ class DashboardRepository {
     // Check cache first (unless force refresh)
     final cacheKey = _getCacheKey(startDate, endDate);
     if (!forceRefresh && _isCacheValid(cacheKey)) {
-      print('[DashboardRepository] Returning cached data');
+      debugPrint('[DashboardRepository] Returning cached data');
       return _cachedData!;
     }
 
@@ -173,7 +174,7 @@ class DashboardRepository {
         : 0.0;
 
     stopwatch.stop();
-    print(
+    debugPrint(
       '[DashboardRepository] Data loaded in ${stopwatch.elapsedMilliseconds}ms',
     );
 
@@ -287,7 +288,7 @@ class DashboardRepository {
       // Apply limit after sorting
       return customers.take(limit).toList();
     } catch (e) {
-      print('[DashboardRepository] Error fetching pending customers: $e');
+      debugPrint('[DashboardRepository] Error fetching pending customers: $e');
       return [];
     }
   }
@@ -333,7 +334,7 @@ class DashboardRepository {
 
         return bills;
       } catch (e2) {
-        print('[DashboardRepository] Error fetching pending bills: $e2');
+        debugPrint('[DashboardRepository] Error fetching pending bills: $e2');
         return [];
       }
     }
@@ -397,7 +398,7 @@ class DashboardRepository {
 
       return sortedProducts.take(limit).toList();
     } catch (e) {
-      print('[DashboardRepository] Error fetching top products: $e');
+      debugPrint('[DashboardRepository] Error fetching top products: $e');
       return [];
     }
   }
@@ -448,7 +449,7 @@ class DashboardRepository {
 
         return products.take(limit).toList();
       } catch (e2) {
-        print('[DashboardRepository] Error fetching low stock products: $e2');
+        debugPrint('[DashboardRepository] Error fetching low stock products: $e2');
         return [];
       }
     }
@@ -500,7 +501,7 @@ class DashboardRepository {
 
         return pendingBills;
       } catch (e2) {
-        print('[DashboardRepository] Error fetching upcoming payments: $e2');
+        debugPrint('[DashboardRepository] Error fetching upcoming payments: $e2');
         return [];
       }
     }

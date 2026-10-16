@@ -5,7 +5,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:signature/signature.dart';
 import 'dart:io';
 import 'dart:convert';
-import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../offline/controllers/shop_image_cache_controller.dart';
@@ -41,8 +40,6 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
 
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
-  bool _isEditing = false;
-
   // QR Code state - now stores base64 image data
   String? _qrCodeBase64;
   File? _pickedQrImage;
@@ -55,21 +52,18 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
 
   // Signature state
   String? _signatureBase64;
-  File? _pickedSignatureImage;
   bool _isUploadingSignature = false;
 
   final _imagePicker = ImagePicker();
 
   final _auth = FirebaseAuth.instance;
   late final FirebaseFirestore _firestore;
-  late SessionManager _sessionManager;
   late AppLocalizations _localizations;
 
   @override
   void initState() {
     super.initState();
     _firestore = FirebaseFirestore.instance;
-    _sessionManager = SessionManager();
     _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
     _loadShopDetails();
   }
@@ -122,7 +116,6 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           if (firebaseQrCode != null && firebaseQrCode.isNotEmpty) {
             _qrCodeBase64 = firebaseQrCode;
           }
-          _isEditing = true;
         });
 
         // Sync Firebase images to local cache for future fast loading
@@ -134,7 +127,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         );
       }
     } catch (e) {
-      print('[ERROR] Failed to load shop details: $e');
+      debugPrint('[ERROR] Failed to load shop details: $e');
     }
   }
 
@@ -158,10 +151,10 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
             _qrCodeBase64 = cachedImages.qrCodeBase64;
           }
         });
-        print('[CACHE] Loaded shop images from local cache instantly');
+        debugPrint('[CACHE] Loaded shop images from local cache instantly');
       }
     } catch (e) {
-      print('[CACHE] Failed to load from cache: $e');
+      debugPrint('[CACHE] Failed to load from cache: $e');
       // Continue without cache - Firebase will be used
     }
   }
@@ -209,7 +202,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         GlassyToast.show(context, _localizations.shopDetailsSaved);
       }
     } catch (e) {
-      print('[ERROR] Failed to save shop details: $e');
+      debugPrint('[ERROR] Failed to save shop details: $e');
       if (mounted) {
         GlassyToast.show(context, 'Error: ${e.toString()}', isError: true);
       }
@@ -269,7 +262,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         GlassyToast.show(context, _localizations.qrCodeUploaded);
       }
     } catch (e) {
-      print('[ERROR] Failed to save QR code: $e');
+      debugPrint('[ERROR] Failed to save QR code: $e');
       setState(() => _isUploadingQr = false);
       if (mounted) {
         GlassyToast.show(context, '${_localizations.errorUploadingQrCode}: ${e.toString()}', isError: true);
@@ -308,7 +301,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         GlassyToast.show(context, _localizations.qrCodeRemoved);
       }
     } catch (e) {
-      print('[ERROR] Failed to remove QR code: $e');
+      debugPrint('[ERROR] Failed to remove QR code: $e');
       setState(() => _isUploadingQr = false);
     }
   }
@@ -368,7 +361,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         GlassyToast.show(context, _localizations.logoUploaded);
       }
     } catch (e) {
-      print('[ERROR] Failed to save logo: $e');
+      debugPrint('[ERROR] Failed to save logo: $e');
       setState(() => _isUploadingLogo = false);
       if (mounted) {
         GlassyToast.show(context, '${_localizations.errorUploadingLogo}: ${e.toString()}', isError: true);
@@ -407,7 +400,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         GlassyToast.show(context, _localizations.logoRemoved);
       }
     } catch (e) {
-      print('[ERROR] Failed to remove logo: $e');
+      debugPrint('[ERROR] Failed to remove logo: $e');
       setState(() => _isUploadingLogo = false);
     }
   }
@@ -540,7 +533,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         GlassyToast.show(context, _localizations.signatureUploaded);
       }
     } catch (e) {
-      print('[ERROR] Failed to save signature: $e');
+      debugPrint('[ERROR] Failed to save signature: $e');
       setState(() => _isUploadingSignature = false);
       if (mounted) {
         GlassyToast.show(context, '${_localizations.errorUploadingSignature}: ${e.toString()}', isError: true);
@@ -571,7 +564,6 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
 
       setState(() {
         _signatureBase64 = null;
-        _pickedSignatureImage = null;
         _isUploadingSignature = false;
       });
 
@@ -579,7 +571,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         GlassyToast.show(context, _localizations.signatureRemoved);
       }
     } catch (e) {
-      print('[ERROR] Failed to remove signature: $e');
+      debugPrint('[ERROR] Failed to remove signature: $e');
       setState(() => _isUploadingSignature = false);
     }
   }
@@ -1100,7 +1092,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                 decoration: BoxDecoration(
                   color: AppColors.card(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border(context)!),
+                  border: Border.all(color: AppColors.border(context)),
                   boxShadow: [
                     BoxShadow(
                       color: AppTheme.black.withValues(alpha: 0.03),
@@ -1151,7 +1143,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                 decoration: BoxDecoration(
                   color: AppColors.card(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border(context)!),
+                  border: Border.all(color: AppColors.border(context)),
                   boxShadow: [
                     BoxShadow(
                       color: AppTheme.black.withValues(alpha: 0.03),
@@ -1205,7 +1197,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                 decoration: BoxDecoration(
                   color: AppColors.card(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border(context)!),
+                  border: Border.all(color: AppColors.border(context)),
                   boxShadow: [
                     BoxShadow(
                       color: AppTheme.black.withValues(alpha: 0.03),
@@ -1241,7 +1233,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                 decoration: BoxDecoration(
                   color: AppColors.card(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border(context)!),
+                  border: Border.all(color: AppColors.border(context)),
                   boxShadow: [
                     BoxShadow(
                       color: AppTheme.black.withValues(alpha: 0.03),
@@ -1309,7 +1301,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                 decoration: BoxDecoration(
                   color: AppColors.card(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border(context)!),
+                  border: Border.all(color: AppColors.border(context)),
                   boxShadow: [
                     BoxShadow(
                       color: AppTheme.black.withValues(alpha: 0.03),
@@ -1356,7 +1348,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                 decoration: BoxDecoration(
                   color: AppColors.card(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border(context)!),
+                  border: Border.all(color: AppColors.border(context)),
                   boxShadow: [
                     BoxShadow(
                       color: AppTheme.black.withValues(alpha: 0.03),

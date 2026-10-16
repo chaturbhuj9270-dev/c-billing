@@ -260,7 +260,7 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.scaffold(context),
-        border: Border(bottom: BorderSide(color: AppColors.border(context)!)),
+        border: Border(bottom: BorderSide(color: AppColors.border(context))),
       ),
       child: Row(
         children: [
@@ -401,7 +401,7 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
             color: AppColors.card(context),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? AppColors.action(context) : AppColors.border(context)!,
+              color: isSelected ? AppColors.action(context) : AppColors.border(context),
               width: isSelected ? 2 : 1,
             ),
             boxShadow: [

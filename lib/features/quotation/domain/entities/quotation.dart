@@ -108,9 +108,9 @@ class Quotation {
   });
 
   double get subEventsTotal =>
-      subEvents.fold(0.0, (sum, event) => sum + event.charges);
+      subEvents.fold(0.0, (total, event) => total + event.charges);
 
-  double get productsTotal => items.fold(0.0, (sum, item) => sum + item.total);
+  double get productsTotal => items.fold(0.0, (total, item) => total + item.total);
 
   double get subtotalBeforeDiscount =>
       eventCharges + subEventsTotal + productsTotal;

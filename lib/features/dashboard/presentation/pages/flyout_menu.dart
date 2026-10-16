@@ -189,7 +189,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
         });
       }
     } catch (e) {
-      print('[ERROR] Failed to load biometric status: $e');
+      debugPrint('[ERROR] Failed to load biometric status: $e');
       // Default to not showing biometric option if there's an error
       if (mounted) {
         setState(() {
@@ -337,6 +337,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
         currentMode: ThemeService.instance.themeMode,
         onModeSelected: (mode) async {
           await ThemeService.instance.setThemeMode(mode);
+          if (!dialogContext.mounted) return;
           GlassyToast.show(
             dialogContext,
             'Theme set to ${ThemeService.instance.modeLabel}',
@@ -368,6 +369,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
         currentLanguage: _selectedLanguage,
         onLanguageSelected: (language) async {
           await LanguageService.instance.setLanguage(language);
+          if (!dialogContext.mounted) return;
           _selectedLanguage = language;
           _localizations = AppLocalizations(language);
           GlassyToast.show(

@@ -1254,7 +1254,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                       border: Border.all(
                         color: priceDiffers
                             ? AppTheme.amber300
-                            : AppColors.border(context)!,
+                            : AppColors.border(context),
                       ),
                     ),
                     child: Column(

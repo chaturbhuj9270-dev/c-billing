@@ -265,11 +265,11 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   }
 
   double get _subEventsTotal {
-    return _subEvents.fold(0.0, (sum, e) => sum + e.charges);
+    return _subEvents.fold(0.0, (total, e) => total + e.charges);
   }
 
   double get _productsTotal {
-    return _orderItems.fold(0.0, (sum, e) => sum + e.total);
+    return _orderItems.fold(0.0, (total, e) => total + e.total);
   }
 
   double get _eventCharges {
@@ -1910,121 +1910,6 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     );
   }
 
-  Widget _buildOrderItemCard(OrderItem item, int index) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: AppColors.scaffold(context),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.grey.withValues(alpha: 0.1)),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppTheme.green.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Icon(Icons.inventory, color: AppTheme.green),
-        ),
-        title: Text(
-          item.productName,
-          style: const TextStyle(
-            fontFamily: 'Literata',
-            color: AppTheme.ink,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${item.quantity} × ₹${item.rate.toStringAsFixed(0)}',
-              style: TextStyle(
-                fontFamily: 'Literata',
-                color: AppTheme.grey600,
-                fontSize: 12,
-              ),
-            ),
-            if (item.discountPercent > 0)
-              Text(
-                'Discount: ${item.discountPercent}%',
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  color: AppTheme.orange700,
-                  fontSize: 11,
-                ),
-              ),
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '₹${item.total.toStringAsFixed(0)}',
-              style: TextStyle(
-                fontFamily: 'Literata',
-                color: AppTheme.green,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-            PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, color: AppTheme.grey),
-              color: AppColors.card(context),
-              elevation: 8,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              onSelected: (value) {
-                if (value == 'edit') {
-                  _showEditProductDialog(item, index);
-                } else if (value == 'delete') {
-                  _deleteOrderItem(index);
-                }
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'edit',
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit, color: AppTheme.grey700, size: 18),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Edit',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          color: AppTheme.grey800,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, color: AppTheme.red, size: 18),
-                      SizedBox(width: 8),
-                      Text(
-                        'Delete',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          color: AppTheme.red,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildEventChargesSection() {
     return _buildSectionCard(
       title: 'Event Charges',
@@ -3114,10 +2999,6 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     );
   }
 
-  void _showAddProductDialog() {
-    _showProductSelectionSheet();
-  }
-
   void _showEditProductDialog(OrderItem item, int index) {
     _showProductDialog(item: item, editIndex: index);
   }
@@ -3867,7 +3748,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                             color: AppColors.card(context),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: AppColors.border(context)!,
+                              color: AppColors.border(context),
                               width: 1,
                             ),
                           ),
@@ -4354,7 +4235,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                           border: Border.all(
                             color: isSelected
                                 ? AppColors.action(context)
-                                : AppColors.border(context)!,
+                                : AppColors.border(context),
                             width: isSelected ? 1.5 : 1,
                           ),
                         ),

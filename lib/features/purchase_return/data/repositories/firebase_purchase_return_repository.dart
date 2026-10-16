@@ -132,6 +132,6 @@ class FirebasePurchaseReturnRepository {
     final returns = supplierId != null
         ? await getReturnsBySupplierId(supplierId)
         : await getAllReturns();
-    return returns.fold<double>(0.0, (sum, r) => sum + r.totalAmount);
+    return returns.fold<double>(0.0, (total, r) => total + r.totalAmount);
   }
 }

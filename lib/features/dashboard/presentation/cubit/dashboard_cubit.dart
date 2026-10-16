@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/repositories/dashboard_offline_repository.dart';
 import 'dashboard_state.dart';
@@ -45,7 +46,7 @@ class DashboardCubit extends Cubit<DashboardState> {
       );
 
       stopwatch.stop();
-      print(
+      debugPrint(
         '[DashboardCubit] Total load time: ${stopwatch.elapsedMicroseconds}μs (${stopwatch.elapsedMilliseconds}ms)',
       );
 
@@ -58,7 +59,7 @@ class DashboardCubit extends Cubit<DashboardState> {
         ),
       );
     } catch (e) {
-      print('[DashboardCubit] Error: $e');
+      debugPrint('[DashboardCubit] Error: $e');
       emit(
         DashboardError(
           message: e.toString(),

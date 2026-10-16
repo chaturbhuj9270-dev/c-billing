@@ -19,7 +19,6 @@ class PdfBillService {
   factory PdfBillService() => _instance;
   PdfBillService._internal();
 
-  static final bool _isGenerating = false;
   static final Set<String> _generatingBills = <String>{};
 
   /// POS (`pos`) or normal/tabular (`normal`) — uses quotation_type for quotations.
@@ -964,36 +963,6 @@ class PdfBillService {
     return '$finalResult Only';
   }
 
-  // ═══════════════════════════════════════════
-  // COMPACT HELPERS — for half-A4 normal bill
-  // ═══════════════════════════════════════════
-
-  /// Compact info row (label: value) for customer/invoice section
-  pw.Widget _buildCompactInfoRow(
-    String label,
-    String value, {
-    bool bold = false,
-  }) {
-    return pw.Row(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Text(
-          '$label: ',
-          style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
-        ),
-        pw.Expanded(
-          child: pw.Text(
-            value,
-            style: pw.TextStyle(
-              fontSize: 8,
-              fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   /// Compact table header cell
   pw.Widget _buildCompactHeaderCell(
     String text, {
@@ -1257,44 +1226,6 @@ class PdfBillService {
         ),
         ...itemRows,
       ],
-    );
-  }
-
-  /// Compact amount row for totals section
-  pw.Widget _buildCompactAmountRow(
-    String label,
-    double amount, {
-    pw.BorderSide? border,
-    bool bold = false,
-    String suffix = '',
-    PdfColor? color,
-  }) {
-    return pw.Container(
-      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: pw.BoxDecoration(
-        border: border != null ? pw.Border(bottom: border) : null,
-      ),
-      child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-        children: [
-          pw.Text(
-            '$label$suffix :',
-            style: pw.TextStyle(
-              fontSize: 8,
-              fontWeight: pw.FontWeight.bold,
-              color: color,
-            ),
-          ),
-          pw.Text(
-            amount.toStringAsFixed(2),
-            style: pw.TextStyle(
-              fontSize: 9,
-              fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
-              color: color,
-            ),
-          ),
-        ],
-      ),
     );
   }
 

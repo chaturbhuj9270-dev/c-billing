@@ -195,6 +195,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
       _scaleController.forward(from: 0);
 
       // Switch to barcode tab on mobile after selecting product
+      if (!mounted) return;
       if (MediaQuery.of(context).size.width < 600) {
         _tabController.animateTo(1);
       }

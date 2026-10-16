@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/dashboard_summary.dart';
@@ -41,10 +42,10 @@ class DashboardFirebaseDataSource {
     final (startDate, endDate) = params.getDateRange();
 
     // Debug: Log date range being queried
-    print(
+    debugPrint(
       '[DashboardFirebaseDataSource] Fetching data for filter: ${params.filter}',
     );
-    print('[DashboardFirebaseDataSource] Date range: $startDate to $endDate');
+    debugPrint('[DashboardFirebaseDataSource] Date range: $startDate to $endDate');
 
     // Use cache source unless forced to network
     // Note: AggregateSource only supports server, but regular queries support cache
@@ -80,10 +81,10 @@ class DashboardFirebaseDataSource {
       final productsSnapshot = results[8] as QuerySnapshot;
 
       // Debug: Log document counts
-      print(
+      debugPrint(
         '[DashboardFirebaseDataSource] Bills found: ${billsSnapshot.docs.length}',
       );
-      print(
+      debugPrint(
         '[DashboardFirebaseDataSource] Purchases found: ${purchasesSnapshot.docs.length}',
       );
 
@@ -96,19 +97,19 @@ class DashboardFirebaseDataSource {
       final netSales = salesMetrics.totalAmount - salesMetrics.totalReturns;
 
       // Debug: Log calculated metrics
-      print(
+      debugPrint(
         '[DashboardFirebaseDataSource] Gross Sales: ${salesMetrics.totalAmount}',
       );
-      print(
+      debugPrint(
         '[DashboardFirebaseDataSource] Returns: ${salesMetrics.totalReturns}',
       );
-      print(
+      debugPrint(
         '[DashboardFirebaseDataSource] Net Sales: $netSales',
       );
-      print(
+      debugPrint(
         '[DashboardFirebaseDataSource] Total Purchases: ${purchaseMetrics.totalAmount}',
       );
-      print(
+      debugPrint(
         '[DashboardFirebaseDataSource] Profit: ${salesMetrics.totalProfit}',
       );
 
@@ -119,7 +120,7 @@ class DashboardFirebaseDataSource {
           : 0.0;
 
       stopwatch.stop();
-      print(
+      debugPrint(
         '[DashboardFirebaseDataSource] Data loaded in ${stopwatch.elapsedMilliseconds}ms',
       );
 
@@ -148,7 +149,7 @@ class DashboardFirebaseDataSource {
         isFromCache: false,
       );
     } catch (e) {
-      print('[DashboardFirebaseDataSource] Error: $e');
+      debugPrint('[DashboardFirebaseDataSource] Error: $e');
       rethrow;
     }
   }
@@ -172,7 +173,7 @@ class DashboardFirebaseDataSource {
         yield await fetchDashboardData(params: params);
         await Future.delayed(const Duration(seconds: 30));
       } catch (e) {
-        print('[DashboardFirebaseDataSource] Stream error: $e');
+        debugPrint('[DashboardFirebaseDataSource] Stream error: $e');
         await Future.delayed(const Duration(seconds: 5));
       }
     }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 /// Represents a purchase batch for FIFO inventory management.
 /// Each purchase creates a separate batch even for the same product.
 /// 
@@ -141,8 +142,8 @@ class PurchaseBatch {
             : DateTime.now(),
       );
     } catch (e) {
-      print('[ERROR] Failed to parse PurchaseBatch from JSON: $json');
-      print('[ERROR] Error details: $e');
+      debugPrint('[ERROR] Failed to parse PurchaseBatch from JSON: $json');
+      debugPrint('[ERROR] Error details: $e');
       return PurchaseBatch(
         batchId: json['batchId']?.toString() ?? '',
         productId: json['productId']?.toString() ?? '',

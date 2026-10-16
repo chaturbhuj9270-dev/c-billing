@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/product.dart';
@@ -30,7 +31,7 @@ class PurchaseCacheDataSource {
       final List<dynamic> decoded = jsonDecode(jsonStr);
       return decoded.map((e) => Product.fromJson(e)).toList();
     } catch (e) {
-      print('[ERROR] Failed to deserialize cached products: $e');
+      debugPrint('[ERROR] Failed to deserialize cached products: $e');
       return null;
     }
   }
@@ -50,7 +51,7 @@ class PurchaseCacheDataSource {
       final List<dynamic> decoded = jsonDecode(jsonStr);
       return decoded.map((e) => Map<String, dynamic>.from(e)).toList();
     } catch (e) {
-      print('[ERROR] Failed to deserialize cached suppliers: $e');
+      debugPrint('[ERROR] Failed to deserialize cached suppliers: $e');
       return null;
     }
   }
@@ -70,7 +71,7 @@ class PurchaseCacheDataSource {
       final List<dynamic> decoded = jsonDecode(jsonStr);
       return decoded.map((e) => Map<String, dynamic>.from(e)).toList();
     } catch (e) {
-      print('[ERROR] Failed to deserialize cached companies: $e');
+      debugPrint('[ERROR] Failed to deserialize cached companies: $e');
       return null;
     }
   }

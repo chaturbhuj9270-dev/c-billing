@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:c_billing/features/billing/data/repositories/firebase_bill_repository.dart';
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
+import 'package:c_billing/features/billing/domain/entities/bill_item.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_product_repository.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_stock_repository.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
@@ -114,7 +115,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
 
   /// Get total quantity selected for return
   double get _totalReturnQuantity {
-    return _returnQuantities.values.fold(0.0, (sum, qty) => sum + qty);
+    return _returnQuantities.values.fold(0.0, (total, qty) => total + qty);
   }
 
   /// Get total refund amount based on selected quantities
@@ -1202,7 +1203,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     );
   }
 
-  Widget _buildItemRowWithQuantitySelector(item) {
+  Widget _buildItemRowWithQuantitySelector(BillItem item) {
     final double remainingQty = item.remainingQuantity;
     final double returnQty = _returnQuantities[item.id] ?? 0.0;
     final bool isFullyReturned = item.isFullyReturned;
@@ -1605,7 +1606,7 @@ class _ReturnConfirmationDialog extends StatelessWidget {
       AppLocalizations(LanguageService.instance.currentLanguage);
 
   double get _totalReturnQuantity {
-    return returnQuantities.values.fold(0.0, (sum, qty) => sum + qty);
+    return returnQuantities.values.fold(0.0, (total, qty) => total + qty);
   }
 
   List<MapEntry<String, double>> get _itemsToReturn {

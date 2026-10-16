@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/services/biometric_service.dart';
 import 'biometric_state.dart';
@@ -34,7 +35,7 @@ class BiometricCubit extends Cubit<BiometricState> {
         isBiometricEnabled: isBiometricEnabled,
       ));
     } catch (e) {
-      print('[BiometricCubit] Error checking biometric availability: $e');
+      debugPrint('[BiometricCubit] Error checking biometric availability: $e');
       emit(const BiometricNotAvailable());
     }
   }
@@ -60,7 +61,7 @@ class BiometricCubit extends Cubit<BiometricState> {
         return false;
       }
     } catch (e) {
-      print('[BiometricCubit] Authentication error: $e');
+      debugPrint('[BiometricCubit] Authentication error: $e');
       final errorMessage = e.toString();
       
       // Check for specific error types
@@ -85,7 +86,7 @@ class BiometricCubit extends Cubit<BiometricState> {
       await _biometricService.enableBiometricAuth(userId);
       await checkBiometricAvailability();
     } catch (e) {
-      print('[BiometricCubit] Error enabling biometric: $e');
+      debugPrint('[BiometricCubit] Error enabling biometric: $e');
     }
   }
 
@@ -95,7 +96,7 @@ class BiometricCubit extends Cubit<BiometricState> {
       await _biometricService.disableBiometricAuth(userId);
       await checkBiometricAvailability();
     } catch (e) {
-      print('[BiometricCubit] Error disabling biometric: $e');
+      debugPrint('[BiometricCubit] Error disabling biometric: $e');
     }
   }
 

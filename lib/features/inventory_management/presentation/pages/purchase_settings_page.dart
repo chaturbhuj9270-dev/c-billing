@@ -936,6 +936,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
               }
 
               await PurchaseSettingsService.instance.addCustomUnit(unitName);
+              if (!mounted || !context.mounted) return;
               setState(() {
                 _availableUnits = List.from(
                   PurchaseSettingsService.instance.availableUnits,
@@ -1070,6 +1071,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
               await PurchaseSettingsService.instance.setWarrantyOptions(
                 _warrantyOptions,
               );
+              if (!mounted || !context.mounted) return;
               Navigator.pop(context);
               GlassyToast.show(
                 context,

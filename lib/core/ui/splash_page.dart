@@ -148,16 +148,16 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         });
       }
 
-      print('[DEBUG] Splash page - checking for stored credentials');
+      debugPrint('[DEBUG] Splash page - checking for stored credentials');
 
       // Check if user has valid stored credentials
       if (_credentialsManager.isLoggedIn()) {
-        print('[DEBUG] Stored credentials found, attempting auto-login');
+        debugPrint('[DEBUG] Stored credentials found, attempting auto-login');
 
         // Check if Firebase user is already authenticated
         final currentUser = FirebaseAuth.instance.currentUser;
         if (currentUser != null) {
-          print(
+          debugPrint(
             '[DEBUG] Firebase user already authenticated: ${currentUser.uid}',
           );
           // Start sync services now that user is authenticated
@@ -172,12 +172,12 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         // Try to auto-login with stored credentials (with timeout)
         await _attemptAutoLogin();
       } else {
-        print('[DEBUG] No stored credentials found, going to login');
+        debugPrint('[DEBUG] No stored credentials found, going to login');
         // Proceed normally to login after splash duration
         _timer = Timer(widget.duration, _goToLogin);
       }
     } catch (e) {
-      print('[ERROR] Error during initialization: $e');
+      debugPrint('[ERROR] Error during initialization: $e');
       _timer = Timer(widget.duration, _goToLogin);
     }
   }
@@ -187,7 +187,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       final credentials = _credentialsManager.getStoredCredentials();
 
       if (credentials == null) {
-        print('[DEBUG] Stored credentials are invalid');
+        debugPrint('[DEBUG] Stored credentials are invalid');
         _timer = Timer(const Duration(seconds: 1), _goToLogin);
         return;
       }
@@ -195,7 +195,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       final email = credentials['email'] as String;
       final password = credentials['password'] as String;
 
-      print('[DEBUG] Attempting auto-login with email: ***');
+      debugPrint('[DEBUG] Attempting auto-login with email: ***');
 
       // Attempt Firebase login with stored credentials (with timeout)
       final userCredential = await FirebaseAuth.instance
@@ -203,26 +203,26 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
           .timeout(const Duration(seconds: 8));
 
       if (userCredential.user != null) {
-        print('[DEBUG] Auto-login successful for: ${userCredential.user!.uid}');
+        debugPrint('[DEBUG] Auto-login successful for: ${userCredential.user!.uid}');
         // Start sync services now that user is authenticated
         initializeSyncServices();
         // Reload settings in background - don't wait
         _reloadSettingsInBackground();
         _goToDashboard();
       } else {
-        print('[ERROR] Auto-login failed: user is null');
+        debugPrint('[ERROR] Auto-login failed: user is null');
         _goToLogin();
       }
     } on FirebaseAuthException catch (e) {
-      print('[ERROR] Auto-login failed: ${e.code} - ${e.message}');
+      debugPrint('[ERROR] Auto-login failed: ${e.code} - ${e.message}');
       // Clear invalid credentials
       await _credentialsManager.clearCredentials();
       _timer = Timer(const Duration(seconds: 1), _goToLogin);
     } on TimeoutException catch (_) {
-      print('[ERROR] Auto-login timed out - going to login');
+      debugPrint('[ERROR] Auto-login timed out - going to login');
       _timer = Timer(const Duration(milliseconds: 500), _goToLogin);
     } catch (e) {
-      print('[ERROR] Unexpected error during auto-login: $e');
+      debugPrint('[ERROR] Unexpected error during auto-login: $e');
       _timer = Timer(const Duration(seconds: 1), _goToLogin);
     }
   }
@@ -243,14 +243,14 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         await BillReportSettingsService.instance.reload();
         await StockReportSettingsService.instance.reload();
       } catch (e) {
-        print('[DEBUG] Background settings reload error (non-critical): $e');
+        debugPrint('[DEBUG] Background settings reload error (non-critical): $e');
       }
     });
   }
 
   void _goToDashboard() {
     if (mounted) {
-      print('[DEBUG] User logged in, checking biometric lock status');
+      debugPrint('[DEBUG] User logged in, checking biometric lock status');
       // Navigate immediately without waiting for splash animation
       _checkBiometricLockAndNavigate();
     }
@@ -261,7 +261,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       final biometricService = BiometricService.instance;
       final isLockEnabled = await biometricService.isBiometricLockEnabled();
 
-      print('[DEBUG] Biometric lock enabled: $isLockEnabled');
+      debugPrint('[DEBUG] Biometric lock enabled: $isLockEnabled');
 
       if (isLockEnabled && mounted) {
         // Show unlock button instead of auto-prompting
@@ -273,7 +273,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         _navigateToDashboard();
       }
     } catch (e) {
-      print('[ERROR] Error checking biometric lock: $e');
+      debugPrint('[ERROR] Error checking biometric lock: $e');
       // On error, go directly to dashboard
       _navigateToDashboard();
     }
@@ -289,10 +289,10 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       );
 
       if (isAuthenticated && mounted) {
-        print('[DEBUG] Fingerprint authentication successful');
+        debugPrint('[DEBUG] Fingerprint authentication successful');
         _navigateToDashboard();
       } else {
-        print('[DEBUG] Fingerprint authentication cancelled/failed');
+        debugPrint('[DEBUG] Fingerprint authentication cancelled/failed');
         // Stay on splash screen - user can tap unlock again
         if (mounted) {
           GlassyToast.show(
@@ -302,7 +302,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         }
       }
     } catch (e) {
-      print('[ERROR] Error during fingerprint authentication: $e');
+      debugPrint('[ERROR] Error during fingerprint authentication: $e');
       // Show error but stay on splash screen
       if (mounted) {
         GlassyToast.show(
@@ -319,13 +319,13 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
 
     // Check subscription status before navigating to dashboard
     try {
-      print('[DEBUG] Checking subscription status...');
+      debugPrint('[DEBUG] Checking subscription status...');
       final isSubscriptionValid = await _subscriptionService
           .isSubscriptionValid()
           .timeout(const Duration(seconds: 8), onTimeout: () => false);
 
       if (!isSubscriptionValid) {
-        print(
+        debugPrint(
           '[DEBUG] Subscription expired/missing, redirecting to subscription screen',
         );
         if (mounted) {
@@ -336,14 +336,14 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         return;
       }
 
-      print('[DEBUG] Subscription valid, navigating to dashboard');
+      debugPrint('[DEBUG] Subscription valid, navigating to dashboard');
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const OptimizedDashboardPage()),
         );
       }
     } catch (e) {
-      print('[ERROR] Error checking subscription: $e');
+      debugPrint('[ERROR] Error checking subscription: $e');
       // Fail closed — block access until subscription can be confirmed
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -356,10 +356,10 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   void _showUnlockBiometric() {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
-      print('[DEBUG] Unlock Now tapped, showing fingerprint dialog');
+      debugPrint('[DEBUG] Unlock Now tapped, showing fingerprint dialog');
       _showFingerprintDialog(currentUser.uid);
     } else {
-      print('[ERROR] No current user found');
+      debugPrint('[ERROR] No current user found');
       GlassyToast.show(context, 'Please log in first', isError: true);
     }
   }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/services/communication_service.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/services/dashboard_refresh_service.dart';
@@ -759,14 +760,19 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
                     _showEditSupplierSheet(supplier);
                   },
                 ),
-                _buildContextMenuItem(
-                  icon: Icons.phone_rounded,
-                  label: 'Call ${supplier['contact'] ?? ''}',
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    // TODO: Implement call action
-                  },
-                ),
+                if ((supplier['contact'] ?? '').toString().isNotEmpty)
+                  _buildContextMenuItem(
+                    icon: Icons.phone_rounded,
+                    label: 'Call ${supplier['contact']}',
+                    onTap: () {
+                      final phone = (supplier['contact'] ?? '').toString();
+                      Navigator.pop(ctx);
+                      CommunicationService.instance.makeCall(
+                        phone,
+                        context: context,
+                      );
+                    },
+                  ),
                 _buildContextMenuItem(
                   icon: Icons.delete_rounded,
                   label: 'Delete',

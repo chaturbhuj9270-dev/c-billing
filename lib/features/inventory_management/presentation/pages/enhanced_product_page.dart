@@ -777,7 +777,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 decoration: BoxDecoration(
                   color: isEven ? AppColors.card(context) : AppColors.scaffold(context),
                   border: Border(
-                    bottom: BorderSide(color: AppColors.border(context)!, width: 0.5),
+                    bottom: BorderSide(color: AppColors.border(context), width: 0.5),
                   ),
                 ),
                 child: Row(

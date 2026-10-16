@@ -600,7 +600,7 @@ void showEditBillItemSellPriceDialog({
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: AppColors.border(context)!),
+                    borderSide: BorderSide(color: AppColors.border(context)),
                   ),
                 ),
               ),

@@ -594,7 +594,7 @@ class _StatCard extends StatelessWidget {
   final String value;
   final Color color;
 
-  _StatCard({
+  const _StatCard({
     required this.icon,
     required this.label,
     required this.value,

@@ -56,7 +56,7 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
         });
       }
     } catch (e) {
-      print('[ERROR] Error loading biometric settings: $e');
+      debugPrint('[ERROR] Error loading biometric settings: $e');
     }
   }
 
@@ -99,7 +99,7 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
         }
       }
     } catch (e) {
-      print('[ERROR] Error toggling biometric: $e');
+      debugPrint('[ERROR] Error toggling biometric: $e');
       if (mounted) {
         GlassyToast.show(context, 'Error: $e');
       }

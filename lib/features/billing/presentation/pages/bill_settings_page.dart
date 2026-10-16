@@ -107,13 +107,11 @@ class _BillSettingsPageState extends State<BillSettingsPage>
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        Navigator.pop(
-          context,
-          true,
-        ); // Return true to indicate settings changed
-        return false;
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        Navigator.pop(context, true);
       },
       child: Scaffold(
         backgroundColor: AppColors.scaffold(context),
@@ -1007,7 +1005,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
               decoration: BoxDecoration(
                 color: AppColors.accentSoft(context, 0.05),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border(context)!),
+                border: Border.all(color: AppColors.border(context)),
               ),
               child: TextField(
                 controller: controller,
@@ -1056,7 +1054,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
       decoration: BoxDecoration(
         color: AppColors.scaffold(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border(context)!),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: TextField(
         controller: controller,

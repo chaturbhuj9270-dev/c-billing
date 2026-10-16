@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 /// Represents an individual item in a bill
 class BillItem {
   final String id;
@@ -104,8 +105,8 @@ class BillItem {
         sellUnit: json['sellUnit'] as String?,
       );
     } catch (e) {
-      print('[ERROR] Failed to parse BillItem from JSON: $json');
-      print('[ERROR] Error details: $e');
+      debugPrint('[ERROR] Failed to parse BillItem from JSON: $json');
+      debugPrint('[ERROR] Error details: $e');
       return BillItem(
         id: json['id']?.toString() ?? '',
         billId: json['billId']?.toString() ?? '',

@@ -207,6 +207,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
     }
 
     await _scannerService.setApiKey(apiKey);
+    if (!mounted) return;
     setState(() {
       _showApiKeyInput = false;
     });
@@ -1070,6 +1071,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
             TextButton(
               onPressed: () async {
                 await _scannerService.clearApiKey();
+                if (!context.mounted) return;
                 Navigator.of(context).pop();
                 setState(() {
                   _showApiKeyInput = true;
@@ -1087,6 +1089,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
           FilledButton(
             onPressed: () async {
               await _saveApiKey();
+              if (!context.mounted) return;
               Navigator.of(context).pop();
             },
             child: const Text('Save'),

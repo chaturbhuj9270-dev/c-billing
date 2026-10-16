@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 class Purchase {
   final String id;
   final String productId;
@@ -37,8 +38,8 @@ class Purchase {
             : DateTime.now(),
       );
     } catch (e) {
-      print('[ERROR] Failed to parse Purchase from JSON: $json');
-      print('[ERROR] Error details: $e');
+      debugPrint('[ERROR] Failed to parse Purchase from JSON: $json');
+      debugPrint('[ERROR] Error details: $e');
       // Return a default purchase entry
       return Purchase(
         id: json['id']?.toString() ?? '',

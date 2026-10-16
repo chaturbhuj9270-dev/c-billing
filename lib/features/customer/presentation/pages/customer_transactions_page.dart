@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -49,8 +48,6 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
   late AnimationController _animController;
   late CustomerTransactionService _transactionService;
 
-  List<CustomerTransactionEntity> _transactions = [];
-  List<EventOrderEntity> _eventOrders = [];
   List<_CombinedItem> _combinedItems = [];
   bool _isLoading = true;
   TransactionDateFilter _selectedFilter = TransactionDateFilter.all;
@@ -60,9 +57,6 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
   // Stats
   double _totalReceived = 0;
   double _currentPending = 0;
-  double _totalEventsAmount = 0;
-  double _totalAdvanceReceived = 0;
-
   @override
   void initState() {
     super.initState();
@@ -217,16 +211,6 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
         }
       }
 
-      // Calculate event totals
-      double totalEventsAmount = 0;
-      double totalAdvanceReceived = 0;
-      for (final order in eventOrders) {
-        if (order.status != OrderStatus.cancelled.index) {
-          totalEventsAmount += order.totalAmount;
-          totalAdvanceReceived += order.advanceAmount;
-        }
-      }
-
       // Build combined list
       final combined = <_CombinedItem>[];
 
@@ -307,12 +291,8 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
       }
 
       setState(() {
-        _transactions = transactions;
-        _eventOrders = eventOrders;
         _combinedItems = combined;
         _totalReceived = totalReceived;
-        _totalEventsAmount = totalEventsAmount;
-        _totalAdvanceReceived = totalAdvanceReceived;
         _isLoading = false;
       });
     } catch (e) {
@@ -773,7 +753,7 @@ class _SummaryCard extends StatelessWidget {
   final Color color;
   final Color iconBackground;
 
-  _SummaryCard({
+  const _SummaryCard({
     required this.icon,
     required this.label,
     required this.value,
@@ -1395,7 +1375,7 @@ class _EventOrderCard extends StatelessWidget {
   final EventOrderEntity eventOrder;
   final double runningBalance;
 
-  _EventOrderCard({
+  const _EventOrderCard({
     required this.eventOrder,
     required this.runningBalance,
   });
@@ -1625,13 +1605,12 @@ class _CombinedItem {
   final DateTime date;
   final CustomerTransactionEntity? transaction;
   final EventOrderEntity? eventOrder;
-  double runningBalance;
+  double runningBalance = 0;
 
   _CombinedItem({
     required this.type,
     required this.date,
     this.transaction,
     this.eventOrder,
-    this.runningBalance = 0,
   });
 }

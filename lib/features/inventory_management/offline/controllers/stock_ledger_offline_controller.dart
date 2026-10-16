@@ -293,7 +293,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     }
     
     final entries = await query.findAll();
-    return entries.fold<double>(0.0, (sum, e) => sum + e.totalCost);
+    return entries.fold<double>(0.0, (total, e) => total + e.totalCost);
   }
 
   /// Get COGS by product for a date range
@@ -338,7 +338,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     }
     
     final entries = await query.findAll();
-    return entries.fold<double>(0.0, (sum, e) => sum + e.profit);
+    return entries.fold<double>(0.0, (total, e) => total + e.profit);
   }
 
   /// Get profit by product for a date range
@@ -383,7 +383,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     }
     
     final entries = await query.findAll();
-    return entries.fold<double>(0.0, (sum, e) => sum + e.totalRevenue);
+    return entries.fold<double>(0.0, (total, e) => total + e.totalRevenue);
   }
 
   /// Get total purchase value for a date range
@@ -399,7 +399,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     }
     
     final entries = await query.findAll();
-    return entries.fold<double>(0.0, (sum, e) => sum + e.totalCost);
+    return entries.fold<double>(0.0, (total, e) => total + e.totalCost);
   }
 
   /// Get stock movement summary for a product

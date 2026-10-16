@@ -66,13 +66,13 @@ class EventOrderPdfService {
     // Calculate totals
     final subEventsTotal = order.subEvents.fold(
       0.0,
-      (sum, e) => sum + e.charges,
+      (total, e) => total + e.charges,
     );
     final mainEventCharges = order.eventCharges;
     final allEventsTotal = mainEventCharges + subEventsTotal;
     final productsTotal = order.items.fold(
       0.0,
-      (sum, item) => sum + item.total,
+      (total, item) => total + item.total,
     );
     final grandTotal = allEventsTotal + productsTotal;
     final balanceDue = grandTotal - order.advanceAmount;
@@ -922,7 +922,7 @@ class EventOrderPdfService {
   ) {
     final subEventsTotal = order.subEvents.fold(
       0.0,
-      (sum, e) => sum + e.charges,
+      (total, e) => total + e.charges,
     );
     final mainEventCharges = order.eventCharges;
     final allEventsTotal = mainEventCharges + subEventsTotal;
@@ -1083,7 +1083,7 @@ class EventOrderPdfService {
     pw.BorderSide borderSide,
     pw.BorderSide thinBorder,
   ) {
-    final productsTotal = items.fold(0.0, (sum, item) => sum + item.total);
+    final productsTotal = items.fold(0.0, (total, item) => total + item.total);
 
     return pw.Container(
       child: pw.Column(

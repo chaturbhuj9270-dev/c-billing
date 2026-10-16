@@ -113,7 +113,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
             }
           },
           onError: (e) {
-            print('[ERROR] Batch stream error: $e');
+            debugPrint('[ERROR] Batch stream error: $e');
           },
         );
   }
@@ -439,7 +439,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               : AppColors.scaffold(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? color : AppColors.border(context)!,
+            color: isSelected ? color : AppColors.border(context),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -898,7 +898,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               decoration: BoxDecoration(
                 color: AppColors.chipFill(context),
                 border: Border(
-                  bottom: BorderSide(color: AppColors.border(context)!),
+                  bottom: BorderSide(color: AppColors.border(context)),
                 ),
               ),
               child: Row(
@@ -1435,11 +1435,11 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   Widget _buildPageHeader() {
     final totalStock = _groupedProducts.fold<int>(
       0,
-      (sum, group) => sum + group.totalStock,
+      (total, group) => total + group.totalStock,
     );
     final totalValue = _groupedProducts.fold<double>(
       0,
-      (sum, group) => sum + group.totalStockValue,
+      (total, group) => total + group.totalStockValue,
     );
     final lowStock = _groupedProducts
         .where((group) => group.totalStock > 0 && group.totalStock <= 10)

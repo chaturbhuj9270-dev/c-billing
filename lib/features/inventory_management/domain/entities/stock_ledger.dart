@@ -1,3 +1,7 @@
+// Enum values are stored by name. Renaming them would change saved ledger records.
+// ignore_for_file: constant_identifier_names
+
+import 'package:flutter/foundation.dart';
 /// Type of ledger transaction
 enum LedgerType {
   /// Stock increased due to purchase
@@ -170,8 +174,8 @@ class StockLedger {
             : DateTime.now(),
       );
     } catch (e) {
-      print('[ERROR] Failed to parse StockLedger from JSON: $json');
-      print('[ERROR] Error details: $e');
+      debugPrint('[ERROR] Failed to parse StockLedger from JSON: $json');
+      debugPrint('[ERROR] Error details: $e');
       return StockLedger(
         ledgerId: json['ledgerId']?.toString() ?? '',
         productId: json['productId']?.toString() ?? '',

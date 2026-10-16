@@ -421,7 +421,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
   /// Get total available stock for a product
   Future<int> getTotalStockByProductId(String productId) async {
     final batches = await getBatchesByProductId(productId, onlyWithStock: true);
-    return batches.fold<int>(0, (sum, batch) => sum + batch.quantityRemaining);
+    return batches.fold<int>(0, (total, batch) => total + batch.quantityRemaining);
   }
 
   /// Get total available stock by product unique key
@@ -430,7 +430,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
       productUniqueKey,
       onlyWithStock: true,
     );
-    return batches.fold<int>(0, (sum, batch) => sum + batch.quantityRemaining);
+    return batches.fold<int>(0, (total, batch) => total + batch.quantityRemaining);
   }
 
   /// Get total stock value for a product
@@ -438,7 +438,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     final batches = await getBatchesByProductId(productId, onlyWithStock: true);
     return batches.fold<double>(
       0.0,
-      (sum, batch) => sum + (batch.quantityRemaining * batch.purchasePrice),
+      (total, batch) => total + (batch.quantityRemaining * batch.purchasePrice),
     );
   }
 
@@ -449,11 +449,11 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
 
     final totalValue = batches.fold<double>(
       0.0,
-      (sum, b) => sum + (b.quantityRemaining * b.purchasePrice),
+      (total, b) => total + (b.quantityRemaining * b.purchasePrice),
     );
     final totalQty = batches.fold<int>(
       0,
-      (sum, b) => sum + b.quantityRemaining,
+      (total, b) => total + b.quantityRemaining,
     );
 
     return totalQty > 0 ? totalValue / totalQty : 0.0;
@@ -850,7 +850,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
 
         var totalRemaining = orderedBatches.fold<int>(
           0,
-          (sum, batch) => sum + batch.quantityRemaining,
+          (total, batch) => total + batch.quantityRemaining,
         );
         final targetStock = math.max(0, product.currentStock);
 

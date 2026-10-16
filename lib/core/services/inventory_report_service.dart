@@ -188,10 +188,10 @@ class InventoryReportService {
 
   pw.Widget _buildPdfSummary(List<Product> products, ReportType reportType) {
     final totalProducts = products.length;
-    final totalStock = products.fold<int>(0, (sum, p) => sum + p.currentStock);
+    final totalStock = products.fold<int>(0, (total, p) => total + p.currentStock);
     final totalValue = products.fold<double>(
       0,
-      (sum, p) => sum + p.getStockValue(),
+      (total, p) => total + p.getStockValue(),
     );
 
     return pw.Container(
@@ -519,14 +519,6 @@ class InventoryReportService {
     await file.writeAsBytes(await pdf.save());
 
     return file;
-  }
-
-  // Legacy method - kept for backward compatibility but now uses dynamic table
-  pw.Widget _buildPdfTableWithOrderQty(
-    List<Product> products,
-    List<int?> orderQuantities,
-  ) {
-    return _buildDynamicPdfTable(products, orderQuantities);
   }
 
   /// Generate CSV report with order quantities

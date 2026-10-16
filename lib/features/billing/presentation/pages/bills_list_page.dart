@@ -5,7 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:c_billing/core/services/billing_service.dart';
 import 'package:c_billing/features/billing/data/repositories/firebase_bill_repository.dart';
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
@@ -307,62 +306,6 @@ class _BillsListPageState extends State<BillsListPage>
     }
   }
 
-  /// Show PDF preview for a bill using FilePreviewPage (alias for _printBill)
-  Future<void> _showBillPdfPreview(Bill bill) async {
-    await _printBill(bill);
-  }
-
-  Future<void> _shareBillAsPdf(Bill bill) async {
-    setState(() => _isProcessingPdf = true);
-    try {
-      final shop = await _shopRepository.getShopDetails().timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => Shop.empty,
-      );
-      final printData = _createPrintBillData(bill);
-      if (!mounted) return;
-
-      // Use PdfBillService.shareBillAsPdf which uses Share.shareXFiles (native share sheet)
-      await _pdfService.shareBillAsPdf(billData: printData, shopDetails: shop);
-    } catch (e) {
-      debugPrint('[BillsListPage] ERROR in _shareBillAsPdf: $e');
-      if (mounted) {
-        GlassyToast.show(context, '${_localizations.errorSharingBillGeneric}: $e', isError: true);
-      }
-    } finally {
-      if (mounted) setState(() => _isProcessingPdf = false);
-    }
-  }
-
-  Future<void> _saveBillAsPdf(Bill bill) async {
-    setState(() => _isProcessingPdf = true);
-    try {
-      final shop = await _shopRepository.getShopDetails().timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => Shop.empty,
-      );
-      final printData = _createPrintBillData(bill);
-      if (!mounted) return;
-
-      // Save to Documents/Bills/ directory
-      final file = await _pdfService.savePdfToFile(
-        billData: printData,
-        shopDetails: shop,
-      );
-
-      if (mounted) {
-        GlassyToast.show(context, '${_localizations.pdfSaved}: ${file.path.split('/').last}');
-      }
-    } catch (e) {
-      debugPrint('[BillsListPage] ERROR in _saveBillAsPdf: $e');
-      if (mounted) {
-        GlassyToast.show(context, '${_localizations.errorSavingPdfGeneric}: $e', isError: true);
-      }
-    } finally {
-      if (mounted) setState(() => _isProcessingPdf = false);
-    }
-  }
-
   // ── Generate & show bill report ──
   Future<void> _generateBillReport() async {
     debugPrint(
@@ -635,14 +578,14 @@ class _BillsListPageState extends State<BillsListPage>
   void _calculateFilteredStats() {
     _filteredSales = _filteredBills.fold(
       0.0,
-      (sum, bill) => sum + bill.finalAmount,
+      (total, bill) => total + bill.finalAmount,
     );
     _filteredProfit = _filteredBills
         .where((b) => !b.returnStatus)
         .fold(
           0.0,
-          (sum, bill) =>
-              sum +
+          (total, bill) =>
+              total +
               bill.items.fold(0.0, (s, item) => s + item.itemProfit) -
               bill.discountAmount,
         );
@@ -735,80 +678,6 @@ class _BillsListPageState extends State<BillsListPage>
 
     if (result.action == _BillDialogAction.billReturned) {
       _loadBills();
-    }
-  }
-
-  /// Share bill as PDF using pre-built PrintBillData (called from bill details dialog)
-  Future<void> _shareBillAsPdfWithData(PrintBillData printData) async {
-    setState(() => _isProcessingPdf = true);
-    try {
-      final shop = await _shopRepository.getShopDetails().timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => Shop.empty,
-      );
-      if (!mounted) return;
-
-      // Use PdfBillService.shareBillAsPdf which uses Share.shareXFiles (native share sheet)
-      await _pdfService.shareBillAsPdf(billData: printData, shopDetails: shop);
-    } catch (e) {
-      debugPrint('[BillsListPage] ERROR in _shareBillAsPdfWithData: $e');
-      if (mounted) {
-        GlassyToast.show(context, '${_localizations.errorSharingBillGeneric}: $e', isError: true);
-      }
-    } finally {
-      if (mounted) setState(() => _isProcessingPdf = false);
-    }
-  }
-
-  /// Save bill as PDF locally using pre-built PrintBillData (called from bill details dialog)
-  Future<void> _saveBillAsPdfWithData(PrintBillData printData) async {
-    setState(() => _isProcessingPdf = true);
-    try {
-      final shop = await _shopRepository.getShopDetails().timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => Shop.empty,
-      );
-      if (!mounted) return;
-
-      // Save to Documents directory
-      final file = await _pdfService.savePdfToFile(
-        billData: printData,
-        shopDetails: shop,
-      );
-
-      if (mounted) {
-        GlassyToast.show(context, '${_localizations.pdfSaved}: ${file.path.split('/').last}');
-      }
-    } catch (e) {
-      debugPrint('[BillsListPage] ERROR in _saveBillAsPdfWithData: $e');
-      if (mounted) {
-        GlassyToast.show(context, '${_localizations.errorSavingPdfGeneric}: $e', isError: true);
-      }
-    } finally {
-      if (mounted) setState(() => _isProcessingPdf = false);
-    }
-  }
-
-  /// Print bill using pre-built PrintBillData (called from bill details dialog)
-  Future<void> _printBillWithData(PrintBillData printData) async {
-    setState(() => _isProcessingPdf = true);
-    try {
-      final shop = await _shopRepository.getShopDetails().timeout(
-        Duration(seconds: 5),
-        onTimeout: () => Shop.empty,
-      );
-      if (!mounted) return;
-      await _pdfService.previewAndPrintPdf(
-        billData: printData,
-        shopDetails: shop,
-      );
-    } catch (e) {
-      debugPrint('[BillsListPage] ERROR in _printBillWithData: $e');
-      if (mounted) {
-        GlassyToast.show(context, '${_localizations.errorPrintingBill}: $e', isError: true);
-      }
-    } finally {
-      if (mounted) setState(() => _isProcessingPdf = false);
     }
   }
 
@@ -2520,6 +2389,8 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
 
       // Small delay to ensure state is updated
       await Future.delayed(const Duration(milliseconds: 100));
+
+      if (!mounted) return;
 
       debugPrint('[BillDetailsDialog] Navigating to FilePreviewPage...');
       await Navigator.push(

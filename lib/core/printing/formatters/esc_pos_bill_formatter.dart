@@ -626,45 +626,6 @@ class EscPosBillFormatter {
     return b;
   }
 
-  /// 4-column item row  (name | qty | rate | amount)
-  /// Column widths carefully tuned per paper size.
-  List<int> _itemRow(String name, String qty, String rate, String amt) {
-    final b = <int>[];
-
-    int nameW, qtyW, rateW, amtW;
-    if (paperSize == PosPaperSize.mm58) {
-      // 32 = 13 + 4 + 7 + 8
-      nameW = 13;
-      qtyW = 4;
-      rateW = 7;
-      amtW = 8;
-    } else {
-      // 48 = 21 + 5 + 10 + 12
-      nameW = 21;
-      qtyW = 5;
-      rateW = 10;
-      amtW = 12;
-    }
-
-    final n = name.length > nameW
-        ? name.substring(0, nameW)
-        : name.padRight(nameW);
-    final q = qty.padLeft(qtyW);
-    final r = rate.padLeft(rateW);
-    final a = amt.padLeft(amtW);
-
-    b.addAll(_enc('$n$q$r$a'));
-    b.addAll(EscPosCommands.lineFeed);
-
-    // Overflow name on next line (indented)
-    if (name.length > nameW) {
-      b.addAll(_enc('  ${name.substring(nameW)}'));
-      b.addAll(EscPosCommands.lineFeed);
-    }
-
-    return b;
-  }
-
   /// Format money — show decimals only when fractional
   String _fmt(double v) {
     if (v == v.roundToDouble()) return v.toStringAsFixed(0);
