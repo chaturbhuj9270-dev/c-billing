@@ -55,6 +55,7 @@ import 'package:c_billing/features/customer/domain/entities/customer_transaction
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bevel_frame.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 class BillingPage extends StatefulWidget {
@@ -1556,7 +1557,7 @@ class _BillingPageState extends State<BillingPage> {
                 ),
               ],
             ),
-      bottomNavigationBar: _buildBottomBar(),
+      bottomNavigationBar: _billItems.isEmpty ? null : _buildBottomBar(),
     );
   }
 
@@ -1567,7 +1568,7 @@ class _BillingPageState extends State<BillingPage> {
       if (_billItems.isNotEmpty && _taxSettings.hasAnyTaxEnabled)
         _buildGstModeSection(),
       if (_billItems.isNotEmpty) _buildPaymentSection(),
-      const SizedBox(height: 100),
+      if (_billItems.isNotEmpty) const SizedBox(height: 16),
     ];
   }
 
@@ -5367,7 +5368,7 @@ class _BillingPageState extends State<BillingPage> {
 
   Widget _buildBottomBar() {
     final isDark = AppColors.isDark(context);
-    final canSave = !_isSavingBill && _billItems.isNotEmpty;
+    final action = AppColors.action(context);
     return Container(
       padding: EdgeInsets.only(
         left: 20,
@@ -5379,7 +5380,14 @@ class _BillingPageState extends State<BillingPage> {
       ),
       decoration: BoxDecoration(
         color: AppColors.card(context),
-        border: Border(top: BorderSide(color: AppColors.border(context))),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: isDark ? 0.4 : 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, -6),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -5410,52 +5418,90 @@ class _BillingPageState extends State<BillingPage> {
             ),
           ),
           const SizedBox(width: 12),
-          Material(
-            color: canSave
-                ? AppColors.action(context)
-                : (isDark ? AppTheme.paletteFF2A2A2A : AppTheme.paletteFFE4E4E4),
-            borderRadius: BorderRadius.circular(24),
-            child: InkWell(
-              onTap: canSave ? _saveBill : null,
-              borderRadius: BorderRadius.circular(24),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 12,
+          DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: action.withValues(alpha: 0.34),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
                 ),
-                child: _isSavingBill
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          valueColor: AlwaysStoppedAnimation(AppTheme.white),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: CustomPaint(
+                foregroundPainter: GlassBevelBorderPainter(
+                  isDark: isDark,
+                  themeColor: AppTheme.primary,
+                  radius: 28,
+                  strokeWidth: 1.4,
+                ),
+                child: Material(
+                  color: AppTheme.transparent,
+                  child: InkWell(
+                    onTap: _isSavingBill ? null : _saveBill,
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Color.lerp(
+                              AppTheme.white,
+                              action,
+                              isDark ? 0.72 : 0.55,
+                            )!,
+                            action,
+                            Color.lerp(
+                              action,
+                              AppTheme.black,
+                              isDark ? 0.28 : 0.18,
+                            )!,
+                          ],
                         ),
-                      )
-                    : Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.check_circle_outline_rounded,
-                            size: 18,
-                            color: canSave
-                                ? AppTheme.white
-                                : AppColors.mutedText(context),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            _localizations.saveBill,
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: canSave
-                                  ? AppTheme.white
-                                  : AppColors.mutedText(context),
-                            ),
-                          ),
-                        ],
                       ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 22,
+                          vertical: 14,
+                        ),
+                        child: _isSavingBill
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor: AlwaysStoppedAnimation(
+                                    AppTheme.white,
+                                  ),
+                                ),
+                              )
+                            : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.print_rounded,
+                                    size: 18,
+                                    color: AppTheme.white,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _localizations.print,
+                                    style: const TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppTheme.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
