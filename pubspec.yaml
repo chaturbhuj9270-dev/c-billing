@@ -40,9 +40,11 @@ dependencies:
   url_launcher: ^6.3.2
   # Google Gemini AI for Invoice Scanning
   google_generative_ai: ^0.4.6
-  # Offline-First Database (community maintained with AGP support)
-  isar_community: ^3.3.2
-  isar_community_flutter_libs: ^3.3.2
+  # Offline-first SQLite database
+  drift: ^2.28.1
+  drift_flutter: ^0.2.7
+  sqlite3_flutter_libs: ^0.5.32
+  path: ^1.9.1
   # Network Connectivity
   connectivity_plus: ^6.1.4
   font_awesome_flutter: ^11.0.0
@@ -64,8 +66,7 @@ dev_dependencies:
 
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.3
-  # Isar Generator (community maintained)
-  isar_community_generator: ^3.3.2
+  drift_dev: ^2.28.1
   build_runner: ^2.4.13
 
 flutter_launcher_icons:

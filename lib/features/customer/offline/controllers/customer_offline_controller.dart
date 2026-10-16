@@ -1,8 +1,8 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:isar_community/isar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
-import '../../../../core/services/isar_service.dart';
+import '../../../../core/database/app_database.dart';
+import '../../../../core/database/local_store.dart';
+import '../../../../core/services/local_database.dart';
 import '../entities/customer_entity.dart';
 
 /// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
@@ -19,13 +19,13 @@ DateTime? _parseDateTime(dynamic value) {
 class CustomerOfflineController extends ChangeNotifier {
   static CustomerOfflineController? _instance;
 
-  Isar get _isar => IsarService.instance.isar;
+  final AppDatabase _db;
 
-  CustomerOfflineController._();
+  CustomerOfflineController._(this._db);
 
   /// Get the singleton instance
   static CustomerOfflineController get instance {
-    _instance ??= CustomerOfflineController._();
+    _instance ??= CustomerOfflineController._(LocalDatabase.instance.db);
     return _instance!;
   }
 
@@ -55,10 +55,8 @@ class CustomerOfflineController extends ChangeNotifier {
       createdAt: now,
     );
 
-    debugPrint('[CustomerOffline] Writing to Isar...');
-    await _isar.writeTxn(() async {
-      await _isar.customerEntitys.put(customer);
-    });
+    debugPrint('[CustomerOffline] Writing to local database...');
+    await _db.saveCustomer(customer);
     debugPrint('[CustomerOffline] Customer saved with ID: ${customer.id}');
 
     notifyListeners();
@@ -69,41 +67,47 @@ class CustomerOfflineController extends ChangeNotifier {
 
   /// Get all active (non-deleted) customers
   Future<List<CustomerEntity>> getAllCustomers() async {
-    return await _isar.customerEntitys
-        .filter()
-        .isDeletedEqualTo(false)
-        .sortByNameDesc()
-        .findAll();
+    final customers = (await _db.loadCustomers())
+        .where((customer) => customer.isDeleted == false)
+        .toList();
+    customers.sort((a, b) => b.name.compareTo(a.name));
+    return customers;
   }
 
   /// Watch all active customers (reactive stream for UI)
   Stream<List<CustomerEntity>> watchAllCustomers() {
-    return _isar.customerEntitys
-        .filter()
-        .isDeletedEqualTo(false)
-        .sortByNameDesc()
-        .watch(fireImmediately: true);
+    return _db.watchCustomers().map((rows) {
+      final customers = rows
+          .where((customer) => customer.isDeleted == false)
+          .toList();
+      customers.sort((a, b) => b.name.compareTo(a.name));
+      return customers;
+    });
   }
 
-  /// Get customer by local Isar ID
-  Future<CustomerEntity?> getCustomerById(Id id) async {
-    return await _isar.customerEntitys.get(id);
+  /// Get customer by local id
+  Future<CustomerEntity?> getCustomerById(int id) async {
+    for (final customer in await _db.loadCustomers()) {
+      if (customer.id == id) return customer;
+    }
+    return null;
   }
 
   /// Get customer by server ID
   Future<CustomerEntity?> getCustomerByServerId(String serverId) async {
-    return await _isar.customerEntitys
-        .filter()
-        .serverIdEqualTo(serverId)
-        .findFirst();
+    for (final customer in await _db.loadCustomers()) {
+      if (customer.serverId == serverId) return customer;
+    }
+    return null;
   }
 
   /// Get customer by mobile number
   Future<CustomerEntity?> getCustomerByMobile(String mobile) async {
-    return await _isar.customerEntitys
-        .filter()
-        .mobileEqualTo(mobile, caseSensitive: false)
-        .findFirst();
+    final needle = mobile.toLowerCase();
+    for (final customer in await _db.loadCustomers()) {
+      if (customer.mobile.toLowerCase() == needle) return customer;
+    }
+    return null;
   }
 
   /// Search customers by name or mobile
@@ -111,45 +115,41 @@ class CustomerOfflineController extends ChangeNotifier {
     if (query.isEmpty) return getAllCustomers();
 
     final lowerQuery = query.toLowerCase();
-    return await _isar.customerEntitys
-        .filter()
-        .isDeletedEqualTo(false)
-        .group(
-          (q) => q
-              .nameContains(lowerQuery, caseSensitive: false)
-              .or()
-              .mobileContains(lowerQuery),
-        )
-        .findAll();
+    return (await _db.loadCustomers()).where((customer) {
+      if (customer.isDeleted) return false;
+      return customer.name.toLowerCase().contains(lowerQuery) ||
+          customer.mobile.contains(lowerQuery);
+    }).toList();
   }
 
   /// Get all customers pending sync
   Future<List<CustomerEntity>> getUnsyncedCustomers() async {
-    return await _isar.customerEntitys
-        .filter()
-        .isSyncedEqualTo(false)
-        .findAll();
+    return (await _db.loadCustomers())
+        .where((customer) => customer.isSynced == false)
+        .toList();
   }
 
   /// Get count of unsynced records
   Future<int> getUnsyncedCount() async {
-    return await _isar.customerEntitys.filter().isSyncedEqualTo(false).count();
+    return (await _db.loadCustomers())
+        .where((customer) => customer.isSynced == false)
+        .length;
   }
 
   /// Get customers marked for deletion (need to delete on server)
   Future<List<CustomerEntity>> getDeletedCustomers() async {
-    return await _isar.customerEntitys
-        .filter()
-        .isDeletedEqualTo(true)
-        .isSyncedEqualTo(false)
-        .findAll();
+    return (await _db.loadCustomers())
+        .where(
+          (customer) => customer.isDeleted == true && customer.isSynced == false,
+        )
+        .toList();
   }
 
   // ==================== UPDATE ====================
 
   /// Update an existing customer
   Future<CustomerEntity?> updateCustomer({
-    required Id id,
+    required int id,
     String? name,
     String? mobile,
     String? address,
@@ -157,7 +157,7 @@ class CustomerOfflineController extends ChangeNotifier {
     double? currentPendingAmount,
     double? totalPurchases,
   }) async {
-    final existing = await _isar.customerEntitys.get(id);
+    final existing = await getCustomerById(id);
     if (existing == null) return null;
 
     final updated = existing.copyWith(
@@ -171,17 +171,15 @@ class CustomerOfflineController extends ChangeNotifier {
       updatedAt: DateTime.now(),
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.customerEntitys.put(updated);
-    });
+    await _db.saveCustomer(updated);
 
     notifyListeners();
     return updated;
   }
 
   /// Mark customer as synced (called after successful server sync)
-  Future<void> markAsSynced(Id id, {String? serverId}) async {
-    final existing = await _isar.customerEntitys.get(id);
+  Future<void> markAsSynced(int id, {String? serverId}) async {
+    final existing = await getCustomerById(id);
     if (existing == null) return;
 
     final updated = existing.copyWith(
@@ -189,19 +187,17 @@ class CustomerOfflineController extends ChangeNotifier {
       isSynced: true,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.customerEntitys.put(updated);
-    });
+    await _db.saveCustomer(updated);
   }
 
   /// Bulk mark as synced
-  Future<void> markAllAsSynced(List<Id> ids) async {
-    await _isar.writeTxn(() async {
+  Future<void> markAllAsSynced(List<int> ids) async {
+    await _db.transaction(() async {
       for (final id in ids) {
-        final existing = await _isar.customerEntitys.get(id);
+        final existing = await getCustomerById(id);
         if (existing != null) {
           final updated = existing.copyWith(isSynced: true);
-          await _isar.customerEntitys.put(updated);
+          await _db.saveCustomer(updated);
         }
       }
     });
@@ -211,15 +207,13 @@ class CustomerOfflineController extends ChangeNotifier {
   // ==================== DELETE ====================
 
   /// Soft delete a customer (marks for deletion, will be synced)
-  Future<void> deleteCustomer(Id id) async {
-    final existing = await _isar.customerEntitys.get(id);
+  Future<void> deleteCustomer(int id) async {
+    final existing = await getCustomerById(id);
     if (existing == null) return;
 
     // If never synced to server, we can hard delete
     if (existing.serverId == null) {
-      await _isar.writeTxn(() async {
-        await _isar.customerEntitys.delete(id);
-      });
+      await _db.deleteCustomerById(id);
     } else {
       // Soft delete - mark for server sync
       final updated = existing.copyWith(
@@ -228,35 +222,31 @@ class CustomerOfflineController extends ChangeNotifier {
         updatedAt: DateTime.now(),
       );
 
-      await _isar.writeTxn(() async {
-        await _isar.customerEntitys.put(updated);
-      });
+      await _db.saveCustomer(updated);
     }
 
     notifyListeners();
   }
 
   /// Hard delete after confirmed server deletion
-  Future<void> permanentlyDelete(Id id) async {
-    await _isar.writeTxn(() async {
-      await _isar.customerEntitys.delete(id);
-    });
+  Future<void> permanentlyDelete(int id) async {
+    await _db.deleteCustomerById(id);
     notifyListeners();
   }
 
   /// Clear all deleted records that have been synced
   Future<int> clearSyncedDeletedRecords() async {
-    final deleted = await _isar.customerEntitys
-        .filter()
-        .isDeletedEqualTo(true)
-        .isSyncedEqualTo(true)
-        .findAll();
+    final deleted = (await _db.loadCustomers())
+        .where(
+          (customer) => customer.isDeleted == true && customer.isSynced == true,
+        )
+        .toList();
 
     if (deleted.isEmpty) return 0;
 
-    await _isar.writeTxn(() async {
+    await _db.transaction(() async {
       for (final entity in deleted) {
-        await _isar.customerEntitys.delete(entity.id);
+        await _db.deleteCustomerById(entity.id);
       }
     });
 
@@ -270,16 +260,19 @@ class CustomerOfflineController extends ChangeNotifier {
   Future<void> importFromServer(
     List<Map<String, dynamic>> serverCustomers,
   ) async {
-    await _isar.writeTxn(() async {
+    await _db.transaction(() async {
       for (final customerData in serverCustomers) {
         final serverId = customerData['id'] as String?;
         if (serverId == null) continue;
 
-        // Check if exists locally by serverId
-        var existing = await _isar.customerEntitys
-            .filter()
-            .serverIdEqualTo(serverId)
-            .findFirst();
+        final all = await _db.loadCustomers();
+        CustomerEntity? existing;
+        for (final customer in all) {
+          if (customer.serverId == serverId) {
+            existing = customer;
+            break;
+          }
+        }
 
         // Fallback: check by mobile number (handles locally-created records without serverId yet)
         if (existing == null) {
@@ -287,15 +280,17 @@ class CustomerOfflineController extends ChangeNotifier {
               (customerData['mobile'] ?? customerData['contact'] ?? '')
                   .toString();
           if (mobile.isNotEmpty) {
-            existing = await _isar.customerEntitys
-                .filter()
-                .mobileEqualTo(mobile)
-                .findFirst();
+            for (final customer in all) {
+              if (customer.mobile == mobile) {
+                existing = customer;
+                break;
+              }
+            }
             // If found by mobile, update its serverId
             if (existing != null && existing.serverId == null) {
               existing.serverId = serverId;
               existing.isSynced = true;
-              await _isar.customerEntitys.put(existing);
+              await _db.saveCustomer(existing);
               continue; // Already linked, skip further update
             }
           }
@@ -309,14 +304,14 @@ class CustomerOfflineController extends ChangeNotifier {
                 serverUpdatedAt.isAfter(existing.updatedAt)) {
               final updated = CustomerEntity.fromCustomer(customerData);
               updated.id = existing.id; // Keep local ID
-              await _isar.customerEntitys.put(updated);
+              await _db.saveCustomer(updated);
             }
           }
           // If not synced, local changes take precedence
         } else {
           // Create new
           final newCustomer = CustomerEntity.fromCustomer(customerData);
-          await _isar.customerEntitys.put(newCustomer);
+          await _db.saveCustomer(newCustomer);
         }
       }
     });
@@ -326,18 +321,17 @@ class CustomerOfflineController extends ChangeNotifier {
 
   /// Get customers that need to be pushed to server
   Future<List<CustomerEntity>> getCustomersNeedingPush() async {
-    return await _isar.customerEntitys
-        .filter()
-        .isSyncedEqualTo(false)
-        .findAll();
+    return (await _db.loadCustomers())
+        .where((customer) => customer.isSynced == false)
+        .toList();
   }
 
   /// Update customer with server response (after successful create/update)
   Future<void> updateWithServerResponse(
-    Id localId,
+    int localId,
     Map<String, dynamic> serverResponse,
   ) async {
-    final existing = await _isar.customerEntitys.get(localId);
+    final existing = await getCustomerById(localId);
     if (existing == null) return;
 
     final updated = existing.copyWith(
@@ -345,32 +339,38 @@ class CustomerOfflineController extends ChangeNotifier {
       isSynced: true,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.customerEntitys.put(updated);
-    });
+    await _db.saveCustomer(updated);
   }
 
   // ==================== STATISTICS ====================
 
   /// Get total customer count
   Future<int> getTotalCount() async {
-    return await _isar.customerEntitys.filter().isDeletedEqualTo(false).count();
+    return (await _db.loadCustomers())
+        .where((customer) => customer.isDeleted == false)
+        .length;
   }
 
   /// Get total pending amount across all customers
   Future<double> getTotalPendingAmount() async {
     final customers = await getAllCustomers();
-    return customers.fold<double>(0, (total, c) => total + c.currentPendingAmount);
+    return customers.fold<double>(
+      0,
+      (total, c) => total + c.currentPendingAmount,
+    );
   }
 
   /// Get customers with pending balance (for dashboard)
   Future<List<CustomerEntity>> getCustomersWithPendingBalance() async {
-    final customers = await _isar.customerEntitys
-        .filter()
-        .isDeletedEqualTo(false)
-        .currentPendingAmountGreaterThan(0)
-        .sortByCurrentPendingAmountDesc()
-        .findAll();
+    final customers = (await _db.loadCustomers())
+        .where(
+          (customer) =>
+              customer.isDeleted == false && customer.currentPendingAmount > 0,
+        )
+        .toList();
+    customers.sort(
+      (a, b) => b.currentPendingAmount.compareTo(a.currentPendingAmount),
+    );
     return customers;
   }
 }

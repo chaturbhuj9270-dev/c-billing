@@ -103,8 +103,8 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
     PurchaseScreenActions.register(_generatePurchaseReport);
 
-    // Load data directly from Isar first
-    _loadPurchasesFromIsar();
+    // Load data directly from the local database first
+    _loadPurchasesFromLocal();
     _setupSupplierStream();
     _setupCrossPageRefresh();
 
@@ -139,17 +139,17 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     super.dispose();
   }
 
-  /// Load purchases directly from Isar database
-  Future<void> _loadPurchasesFromIsar() async {
+  /// Load purchases directly from the local database
+  Future<void> _loadPurchasesFromLocal() async {
     try {
       final controller = PurchaseBatchOfflineController.instance;
 
       var batches = await controller.getAllBatches(includeConsumed: true);
-      debugPrint('[EnhancedPurchase] Isar found ${batches.length} batches');
+      debugPrint('[EnhancedPurchase] Local cache found ${batches.length} batches');
 
       if (batches.isEmpty) {
         debugPrint(
-          '[EnhancedPurchase] Isar empty, requesting sync service to download...',
+          '[EnhancedPurchase] Local cache empty, requesting sync service to download...',
         );
         await PurchaseBatchSyncService.instance.forceFullSync();
         batches = await controller.getAllBatches(includeConsumed: true);
@@ -180,7 +180,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
       _setupPurchaseStream();
     } catch (e, stack) {
-      debugPrint('[EnhancedPurchase] Error loading from Isar: $e');
+      debugPrint('[EnhancedPurchase] Error loading from the local database: $e');
       debugPrint('[EnhancedPurchase] Stack: $stack');
       if (mounted) {
         setState(() => _isLoading = false);
@@ -188,7 +188,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     }
   }
 
-  /// Setup real-time purchase stream from Isar (for updates after initial load)
+  /// Setup real-time purchase stream from the local database (for updates after initial load)
   void _setupPurchaseStream() {
     _purchaseStreamSubscription?.cancel();
 
@@ -254,8 +254,8 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
         .onPurchaseChanged
         .listen((_) {
           if (mounted) {
-            // Reload from Isar when purchases change
-            _loadPurchasesFromIsar();
+            // Reload from the local database when purchases change
+            _loadPurchasesFromLocal();
           }
         });
   }
@@ -269,7 +269,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       ),
     );
     // Reload purchases after returning from add page
-    _loadPurchasesFromIsar();
+    _loadPurchasesFromLocal();
   }
 
   /// Show purchase details bottom sheet

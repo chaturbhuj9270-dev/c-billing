@@ -1,23 +1,21 @@
 import 'package:flutter/foundation.dart';
-import 'package:isar_community/isar.dart';
-import '../../../../core/services/isar_service.dart';
+import '../../../../core/database/app_database.dart';
+import '../../../../core/database/local_store.dart';
+import '../../../../core/services/local_database.dart';
 import '../entities/bill_entity.dart';
 
-/// Offline-first controller for Bill CRUD operations
-/// All operations go to local Isar first, then sync in background
+/// Offline-first controller for Bill CRUD operations.
+/// All operations go to the local database first, then sync in the background.
 class BillOfflineController extends ChangeNotifier {
   static BillOfflineController? _instance;
 
-  final Isar _isar;
+  final AppDatabase _db;
 
-  BillOfflineController._(this._isar);
+  BillOfflineController._(this._db);
 
   /// Get the singleton instance
   static BillOfflineController get instance {
-    if (_instance == null) {
-      final isar = IsarService.instance.isar;
-      _instance = BillOfflineController._(isar);
-    }
+    _instance ??= BillOfflineController._(LocalDatabase.instance.db);
     return _instance!;
   }
 
@@ -85,9 +83,7 @@ class BillOfflineController extends ChangeNotifier {
       syncStatus: BillSyncStatus.newRecord,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.billEntitys.put(bill);
-    });
+    await _db.saveBill(bill);
 
     debugPrint(
       '[BillOffline] Bill added: ${bill.id}, customer: ${bill.customerName}, status: NEW',
@@ -100,46 +96,48 @@ class BillOfflineController extends ChangeNotifier {
 
   /// Get all bills (excluding deleted)
   Future<List<BillEntity>> getAllBills() async {
-    return await _isar.billEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(BillSyncStatus.deleted)
-        .sortByCreatedAtDesc()
-        .findAll();
+    final bills = (await _db.loadBills())
+        .where((bill) => bill.syncStatus != BillSyncStatus.deleted)
+        .toList();
+    bills.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return bills;
   }
 
   /// Watch all bills for real-time updates (excluding deleted)
   Stream<List<BillEntity>> watchAllBills() {
-    return _isar.billEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(BillSyncStatus.deleted)
-        .sortByCreatedAtDesc()
-        .watch(fireImmediately: true);
+    return _db.watchBills().map((rows) {
+      final bills = rows
+          .where((bill) => bill.syncStatus != BillSyncStatus.deleted)
+          .toList();
+      bills.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return bills;
+    });
   }
 
-  /// Get bill by local Isar ID
-  Future<BillEntity?> getBillById(Id id) async {
-    return await _isar.billEntitys.get(id);
+  /// Get bill by local id
+  Future<BillEntity?> getBillById(int id) async {
+    for (final bill in await _db.loadBills()) {
+      if (bill.id == id) return bill;
+    }
+    return null;
   }
 
   /// Get bill by server ID
   Future<BillEntity?> getBillByServerId(String serverId) async {
-    return await _isar.billEntitys
-        .filter()
-        .serverIdEqualTo(serverId)
-        .findFirst();
+    for (final bill in await _db.loadBills()) {
+      if (bill.serverId == serverId) return bill;
+    }
+    return null;
   }
 
   /// Get bills by customer ID
   Future<List<BillEntity>> getBillsByCustomerId(String customerId) async {
-    return await _isar.billEntitys
-        .filter()
-        .customerIdEqualTo(customerId)
-        .not()
-        .syncStatusEqualTo(BillSyncStatus.deleted)
-        .sortByCreatedAtDesc()
-        .findAll();
+    final bills = (await _db.loadBills()).where((bill) {
+      return bill.customerId == customerId &&
+          bill.syncStatus != BillSyncStatus.deleted;
+    }).toList();
+    bills.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return bills;
   }
 
   /// Get bills by date range
@@ -147,13 +145,12 @@ class BillOfflineController extends ChangeNotifier {
     DateTime start,
     DateTime end,
   ) async {
-    return await _isar.billEntitys
-        .filter()
-        .billDateBetween(start, end)
-        .not()
-        .syncStatusEqualTo(BillSyncStatus.deleted)
-        .sortByCreatedAtDesc()
-        .findAll();
+    final bills = (await _db.loadBills()).where((bill) {
+      if (bill.syncStatus == BillSyncStatus.deleted) return false;
+      return !bill.billDate.isBefore(start) && !bill.billDate.isAfter(end);
+    }).toList();
+    bills.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return bills;
   }
 
   /// Get today's bills
@@ -166,44 +163,34 @@ class BillOfflineController extends ChangeNotifier {
 
   /// Get pending payment bills
   Future<List<BillEntity>> getPendingPaymentBills() async {
-    return await _isar.billEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(BillSyncStatus.deleted)
-        .group(
-          (q) => q
-              .paymentStatusEqualTo(BillPaymentStatus.pending)
-              .or()
-              .paymentStatusEqualTo(BillPaymentStatus.partiallyPaid),
-        )
-        .sortByCreatedAtDesc()
-        .findAll();
+    final bills = (await _db.loadBills()).where((bill) {
+      if (bill.syncStatus == BillSyncStatus.deleted) return false;
+      return bill.paymentStatus == BillPaymentStatus.pending ||
+          bill.paymentStatus == BillPaymentStatus.partiallyPaid;
+    }).toList();
+    bills.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return bills;
   }
 
   /// Search bills by customer name or contact
   Future<List<BillEntity>> searchBills(String query) async {
     if (query.isEmpty) return getAllBills();
 
-    final lowerQuery = query.toLowerCase();
-    return await _isar.billEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(BillSyncStatus.deleted)
-        .group(
-          (q) => q
-              .customerNameContains(lowerQuery, caseSensitive: false)
-              .or()
-              .customerContactContains(lowerQuery, caseSensitive: false),
-        )
-        .sortByCreatedAtDesc()
-        .findAll();
+    final needle = query.toLowerCase();
+    final bills = (await _db.loadBills()).where((bill) {
+      if (bill.syncStatus == BillSyncStatus.deleted) return false;
+      return (bill.customerName?.toLowerCase().contains(needle) ?? false) ||
+          (bill.customerContact?.toLowerCase().contains(needle) ?? false);
+    }).toList();
+    bills.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return bills;
   }
 
   // ==================== UPDATE ====================
 
   /// Update an existing bill
   Future<BillEntity?> updateBill({
-    required Id id,
+    required int id,
     String? customerId,
     String? customerName,
     String? customerContact,
@@ -221,7 +208,7 @@ class BillOfflineController extends ChangeNotifier {
     double? paidAmount,
     double? pendingAmount,
   }) async {
-    final existing = await _isar.billEntitys.get(id);
+    final existing = await getBillById(id);
     if (existing == null) {
       debugPrint('[BillOffline] Bill not found for update: $id');
       return null;
@@ -261,9 +248,7 @@ class BillOfflineController extends ChangeNotifier {
       syncStatus: newSyncStatus,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.billEntitys.put(updated);
-    });
+    await _db.saveBill(updated);
 
     debugPrint(
       '[BillOffline] Bill updated: $id, status: ${newSyncStatus.name}',
@@ -274,11 +259,11 @@ class BillOfflineController extends ChangeNotifier {
 
   /// Update payment for a bill
   Future<BillEntity?> updatePayment({
-    required Id id,
+    required int id,
     required double paidAmount,
     required BillPaymentStatus paymentStatus,
   }) async {
-    final existing = await _isar.billEntitys.get(id);
+    final existing = await getBillById(id);
     if (existing == null) return null;
 
     final pendingAmount = existing.finalAmount - paidAmount;
@@ -292,15 +277,15 @@ class BillOfflineController extends ChangeNotifier {
   }
 
   /// Mark bill as returned
-  Future<BillEntity?> markAsReturned(Id id) async {
+  Future<BillEntity?> markAsReturned(int id) async {
     return updateBill(id: id, returnStatus: true, returnDate: DateTime.now());
   }
 
   // ==================== DELETE ====================
 
   /// Soft delete a bill (marks for deletion, syncs then removes)
-  Future<bool> deleteBill(Id id) async {
-    final existing = await _isar.billEntitys.get(id);
+  Future<bool> deleteBill(int id) async {
+    final existing = await getBillById(id);
     if (existing == null) {
       debugPrint('[BillOffline] Bill not found for delete: $id');
       return false;
@@ -308,18 +293,14 @@ class BillOfflineController extends ChangeNotifier {
 
     if (existing.syncStatus == BillSyncStatus.newRecord) {
       // Never synced, just remove locally
-      await _isar.writeTxn(() async {
-        await _isar.billEntitys.delete(id);
-      });
+      await _db.deleteBillById(id);
       debugPrint(
         '[BillOffline] Bill permanently deleted (was never synced): $id',
       );
     } else {
       // Mark for deletion, will be synced then removed
       final deleted = existing.copyWith(syncStatus: BillSyncStatus.deleted);
-      await _isar.writeTxn(() async {
-        await _isar.billEntitys.put(deleted);
-      });
+      await _db.saveBill(deleted);
       debugPrint('[BillOffline] Bill marked for deletion: $id');
     }
 
@@ -331,11 +312,9 @@ class BillOfflineController extends ChangeNotifier {
 
   /// Get all bills that need to be synced
   Future<List<BillEntity>> getUnsyncedBills() async {
-    final bills = await _isar.billEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(BillSyncStatus.synced)
-        .findAll();
+    final bills = (await _db.loadBills())
+        .where((bill) => bill.syncStatus != BillSyncStatus.synced)
+        .toList();
     debugPrint(
       '[BillOffline] getUnsyncedBills: Found ${bills.length} unsynced bills',
     );
@@ -349,16 +328,14 @@ class BillOfflineController extends ChangeNotifier {
 
   /// Get count of unsynced bills
   Future<int> getUnsyncedCount() async {
-    return await _isar.billEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(BillSyncStatus.synced)
-        .count();
+    return (await _db.loadBills())
+        .where((bill) => bill.syncStatus != BillSyncStatus.synced)
+        .length;
   }
 
   /// Mark a bill as synced with server ID
-  Future<void> markAsSynced(Id localId, String serverId) async {
-    final existing = await _isar.billEntitys.get(localId);
+  Future<void> markAsSynced(int localId, String serverId) async {
+    final existing = await getBillById(localId);
     if (existing == null) return;
 
     final synced = existing.copyWith(
@@ -366,35 +343,34 @@ class BillOfflineController extends ChangeNotifier {
       syncStatus: BillSyncStatus.synced,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.billEntitys.put(synced);
-    });
+    await _db.saveBill(synced);
 
     debugPrint('[BillOffline] Bill marked as synced: $localId -> $serverId');
     notifyListeners();
   }
 
   /// Remove a bill after successful server deletion
-  Future<void> removeAfterServerDelete(Id id) async {
-    await _isar.writeTxn(() async {
-      await _isar.billEntitys.delete(id);
-    });
+  Future<void> removeAfterServerDelete(int id) async {
+    await _db.deleteBillById(id);
     debugPrint('[BillOffline] Bill removed after server delete: $id');
     notifyListeners();
   }
 
   /// Import bills from server (for initial sync or refresh)
   Future<void> importFromServer(List<Map<String, dynamic>> serverBills) async {
-    await _isar.writeTxn(() async {
+    await _db.transaction(() async {
       for (final billData in serverBills) {
         final serverId = billData['id'] as String?;
         if (serverId == null) continue;
 
         // Check if exists locally by serverId
-        final existing = await _isar.billEntitys
-            .filter()
-            .serverIdEqualTo(serverId)
-            .findFirst();
+        BillEntity? existing;
+        for (final bill in await _db.loadBills()) {
+          if (bill.serverId == serverId) {
+            existing = bill;
+            break;
+          }
+        }
 
         if (existing != null) {
           // Only update if not locally modified AND server is newer
@@ -406,13 +382,13 @@ class BillOfflineController extends ChangeNotifier {
                 serverUpdatedAt.isAfter(existing.updatedAt)) {
               final updated = BillEntity.fromServer(billData);
               updated.id = existing.id;
-              await _isar.billEntitys.put(updated);
+              await _db.saveBill(updated);
             }
           }
         } else {
           // Create new
           final newBill = BillEntity.fromServer(billData);
-          await _isar.billEntitys.put(newBill);
+          await _db.saveBill(newBill);
         }
       }
     });
@@ -427,72 +403,53 @@ class BillOfflineController extends ChangeNotifier {
 
   /// Get total bill count
   Future<int> getTotalCount() async {
-    return await _isar.billEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(BillSyncStatus.deleted)
-        .count();
+    return (await _db.loadBills())
+        .where((bill) => bill.syncStatus != BillSyncStatus.deleted)
+        .length;
   }
 
   /// Get total sales amount for a date range
   Future<double> getTotalSales({DateTime? startDate, DateTime? endDate}) async {
-    var query = _isar.billEntitys.filter().not().syncStatusEqualTo(
-      BillSyncStatus.deleted,
-    );
-
-    if (startDate != null) {
-      query = query.billDateGreaterThan(startDate);
-    }
-    if (endDate != null) {
-      query = query.billDateLessThan(endDate);
-    }
-
-    final bills = await query.findAll();
+    final bills = (await _db.loadBills()).where((bill) {
+      if (bill.syncStatus == BillSyncStatus.deleted) return false;
+      if (startDate != null && !bill.billDate.isAfter(startDate)) return false;
+      if (endDate != null && !bill.billDate.isBefore(endDate)) return false;
+      return true;
+    });
     return bills.fold<double>(0.0, (total, b) => total + b.finalAmount);
   }
 
   /// Get total pending amount
   Future<double> getTotalPendingAmount() async {
-    final bills = await _isar.billEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(BillSyncStatus.deleted)
-        .group(
-          (q) => q
-              .paymentStatusEqualTo(BillPaymentStatus.pending)
-              .or()
-              .paymentStatusEqualTo(BillPaymentStatus.partiallyPaid),
-        )
-        .findAll();
+    final bills = (await _db.loadBills()).where((bill) {
+      if (bill.syncStatus == BillSyncStatus.deleted) return false;
+      return bill.paymentStatus == BillPaymentStatus.pending ||
+          bill.paymentStatus == BillPaymentStatus.partiallyPaid;
+    });
 
     return bills.fold<double>(0.0, (total, b) => total + b.pendingAmount);
   }
 
   /// Get bills with pending payment (for dashboard)
   Future<List<BillEntity>> getPendingBills() async {
-    return await _isar.billEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(BillSyncStatus.deleted)
-        .pendingAmountGreaterThan(0)
-        .sortByPendingAmountDesc()
-        .findAll();
+    final bills = (await _db.loadBills()).where((bill) {
+      return bill.syncStatus != BillSyncStatus.deleted &&
+          bill.pendingAmount > 0;
+    }).toList();
+    bills.sort((a, b) => b.pendingAmount.compareTo(a.pendingAmount));
+    return bills;
   }
 
   /// Get bill count
   Future<int> getBillCount() async {
-    return await _isar.billEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(BillSyncStatus.deleted)
-        .count();
+    return (await _db.loadBills())
+        .where((bill) => bill.syncStatus != BillSyncStatus.deleted)
+        .length;
   }
 
   /// Clear all local bills (use with caution)
   Future<void> clearAll() async {
-    await _isar.writeTxn(() async {
-      await _isar.billEntitys.clear();
-    });
+    await _db.clearBills();
     debugPrint('[BillOffline] All bills cleared');
     notifyListeners();
   }

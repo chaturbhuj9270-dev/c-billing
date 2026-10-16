@@ -1,17 +1,13 @@
-import 'package:isar_community/isar.dart';
-import '../../../../core/services/isar_service.dart';
+import '../../../../core/database/local_store.dart';
+import '../../../../core/services/local_database.dart';
 import '../../../inventory_management/offline/entities/purchase_batch_entity.dart';
 import '../../../inventory_management/offline/entities/stock_ledger_entity.dart';
 import '../../../product/offline/entities/product_entity.dart';
 import '../../../supplier/offline/entities/supplier_entity.dart';
 import '../../domain/models/report_filter_model.dart';
 
-/// Repository for querying Isar with optimized, query-level filtering.
-/// Never loads full database into memory — uses Isar where + filter.
+/// Repository for report queries against the local database.
 class ReportRepository {
-  /// Lazy accessor — avoids crashing if Isar is still initializing.
-  Isar get _isar => IsarService.instance.isar;
-
   ReportRepository._();
 
   static ReportRepository? _instance;
@@ -20,204 +16,179 @@ class ReportRepository {
     return _instance!;
   }
 
-  // ─────────── PURCHASE BATCHES ───────────
-
-  /// Get purchase batches filtered by date range + optional product/supplier.
-  Future<List<PurchaseBatchEntity>> getBatches(ReportFilterModel filter) async {
-    var query = _isar.purchaseBatchEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(BatchSyncStatus.deleted)
-        .purchaseDateBetween(filter.startDate, filter.endDate);
-
-    if (filter.productId != null) {
-      query = query.productIdEqualTo(filter.productId!);
-    }
-    if (filter.supplierId != null) {
-      query = query.supplierIdEqualTo(filter.supplierId!);
-    }
-    if (filter.minPrice != null) {
-      query = query.purchasePriceGreaterThan(filter.minPrice! - 0.01);
-    }
-    if (filter.maxPrice != null) {
-      query = query.purchasePriceLessThan(filter.maxPrice! + 0.01);
-    }
-
-    return await query.findAll();
+  bool _inRange(DateTime value, DateTime start, DateTime end) {
+    return !value.isBefore(start) && !value.isAfter(end);
   }
 
-  /// Get ALL non-deleted batches (for current stock / expiry calculations).
+  Future<List<PurchaseBatchEntity>> getBatches(ReportFilterModel filter) async {
+    return (await LocalDatabase.instance.db.loadBatches()).where((batch) {
+      if (batch.syncStatus == BatchSyncStatus.deleted) return false;
+      if (!_inRange(batch.purchaseDate, filter.startDate, filter.endDate)) {
+        return false;
+      }
+      if (filter.productId != null && batch.productId != filter.productId) {
+        return false;
+      }
+      if (filter.supplierId != null && batch.supplierId != filter.supplierId) {
+        return false;
+      }
+      if (filter.minPrice != null &&
+          batch.purchasePrice <= filter.minPrice! - 0.01) {
+        return false;
+      }
+      if (filter.maxPrice != null &&
+          batch.purchasePrice >= filter.maxPrice! + 0.01) {
+        return false;
+      }
+      return true;
+    }).toList();
+  }
+
   Future<List<PurchaseBatchEntity>> getAllActiveBatches({
     String? productId,
     String? supplierId,
   }) async {
-    var query = _isar.purchaseBatchEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(BatchSyncStatus.deleted);
-
-    if (productId != null) {
-      query = query.productIdEqualTo(productId);
-    }
-    if (supplierId != null) {
-      query = query.supplierIdEqualTo(supplierId);
-    }
-
-    return await query.findAll();
+    return (await LocalDatabase.instance.db.loadBatches()).where((batch) {
+      if (batch.syncStatus == BatchSyncStatus.deleted) return false;
+      if (productId != null && batch.productId != productId) return false;
+      if (supplierId != null && batch.supplierId != supplierId) return false;
+      return true;
+    }).toList();
   }
 
-  /// Get expired batches (expiryDate < now, quantityRemaining > 0).
   Future<List<PurchaseBatchEntity>> getExpiredBatches() async {
     final now = DateTime.now();
-    return await _isar.purchaseBatchEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(BatchSyncStatus.deleted)
-        .expiryDateIsNotNull()
-        .expiryDateLessThan(now)
-        .quantityRemainingGreaterThan(0)
-        .findAll();
+    return (await LocalDatabase.instance.db.loadBatches()).where((batch) {
+      final expiry = batch.expiryDate;
+      return batch.syncStatus != BatchSyncStatus.deleted &&
+          expiry != null &&
+          expiry.isBefore(now) &&
+          batch.quantityRemaining > 0;
+    }).toList();
   }
 
-  /// Get batches expiring this week.
   Future<List<PurchaseBatchEntity>> getBatchesExpiringThisWeek() async {
     final now = DateTime.now();
     final weekEnd = now.add(Duration(days: 7 - now.weekday));
-    final endOfWeek = DateTime(weekEnd.year, weekEnd.month, weekEnd.day, 23, 59, 59);
-    return await _isar.purchaseBatchEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(BatchSyncStatus.deleted)
-        .expiryDateIsNotNull()
-        .expiryDateBetween(now, endOfWeek)
-        .quantityRemainingGreaterThan(0)
-        .findAll();
+    final endOfWeek = DateTime(
+      weekEnd.year,
+      weekEnd.month,
+      weekEnd.day,
+      23,
+      59,
+      59,
+    );
+    return (await LocalDatabase.instance.db.loadBatches()).where((batch) {
+      final expiry = batch.expiryDate;
+      return batch.syncStatus != BatchSyncStatus.deleted &&
+          expiry != null &&
+          _inRange(expiry, now, endOfWeek) &&
+          batch.quantityRemaining > 0;
+    }).toList();
   }
 
-  // ─────────── STOCK LEDGER ───────────
-
-  /// Get ledger entries filtered by date range, type, and optional product.
   Future<List<StockLedgerEntity>> getLedgerEntries(
     ReportFilterModel filter, {
     LedgerTransactionType? type,
   }) async {
-    var query = _isar.stockLedgerEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(LedgerSyncStatus.deleted)
-        .transactionDateBetween(filter.startDate, filter.endDate);
-
-    if (type != null) {
-      query = query.ledgerTypeEqualTo(type);
-    }
-    if (filter.productId != null) {
-      query = query.productIdEqualTo(filter.productId!);
-    }
-
-    return await query.findAll();
+    return (await LocalDatabase.instance.db.loadLedger()).where((entry) {
+      if (entry.syncStatus == LedgerSyncStatus.deleted) return false;
+      if (!_inRange(entry.transactionDate, filter.startDate, filter.endDate)) {
+        return false;
+      }
+      if (type != null && entry.ledgerType != type) return false;
+      if (filter.productId != null && entry.productId != filter.productId) {
+        return false;
+      }
+      return true;
+    }).toList();
   }
 
-  /// Get ledger entries by type for date range.
   Future<List<StockLedgerEntity>> getLedgerByType(
     LedgerTransactionType type,
     DateTime startDate,
     DateTime endDate, {
     String? productId,
   }) async {
-    var query = _isar.stockLedgerEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(LedgerSyncStatus.deleted)
-        .ledgerTypeEqualTo(type)
-        .transactionDateBetween(startDate, endDate);
-
-    if (productId != null) {
-      query = query.productIdEqualTo(productId);
-    }
-
-    return await query.findAll();
+    return (await LocalDatabase.instance.db.loadLedger()).where((entry) {
+      if (entry.syncStatus == LedgerSyncStatus.deleted) return false;
+      if (entry.ledgerType != type) return false;
+      if (!_inRange(entry.transactionDate, startDate, endDate)) return false;
+      if (productId != null && entry.productId != productId) return false;
+      return true;
+    }).toList();
   }
 
-  /// Get product IDs that have return entries (SALE_RETURN or PURCHASE_RETURN).
   Future<Set<String>> getReturnedProductIds(
-      DateTime startDate, DateTime endDate) async {
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
     final saleReturns = await getLedgerByType(
-        LedgerTransactionType.SALE_RETURN, startDate, endDate);
+      LedgerTransactionType.SALE_RETURN,
+      startDate,
+      endDate,
+    );
     final purchaseReturns = await getLedgerByType(
-        LedgerTransactionType.PURCHASE_RETURN, startDate, endDate);
+      LedgerTransactionType.PURCHASE_RETURN,
+      startDate,
+      endDate,
+    );
 
     final ids = <String>{};
-    for (final e in saleReturns) {
-      ids.add(e.productId);
+    for (final entry in saleReturns) {
+      ids.add(entry.productId);
     }
-    for (final e in purchaseReturns) {
-      ids.add(e.productId);
+    for (final entry in purchaseReturns) {
+      ids.add(entry.productId);
     }
     return ids;
   }
 
-  // ─────────── PRODUCTS ───────────
-
-  /// Get all active products, optionally filtered.
   Future<List<ProductEntity>> getProducts({
     String? productId,
     bool lowStockOnly = false,
     int lowStockThreshold = 5,
   }) async {
-    var query = _isar.productEntitys
-        .filter()
-        .isActiveEqualTo(true)
-        .not()
-        .syncStatusEqualTo(SyncStatus.deleted);
-
-    if (productId != null) {
-      query = query.serverIdEqualTo(productId);
-    }
-
-    final results = await query.findAll();
+    final results = (await LocalDatabase.instance.db.loadProducts()).where((
+      product,
+    ) {
+      if (!product.isActive || product.syncStatus == SyncStatus.deleted) {
+        return false;
+      }
+      if (productId != null && product.serverId != productId) return false;
+      return true;
+    }).toList();
 
     if (lowStockOnly) {
       return results
-          .where((p) => p.currentStock <= lowStockThreshold)
+          .where((product) => product.currentStock <= lowStockThreshold)
           .toList();
     }
-
     return results;
   }
 
-  /// Search products by name (for dropdown).
   Future<List<ProductEntity>> searchProducts(String query) async {
-    if (query.isEmpty) {
-      return await _isar.productEntitys
-          .filter()
-          .isActiveEqualTo(true)
-          .not()
-          .syncStatusEqualTo(SyncStatus.deleted)
-          .sortByName()
-          .limit(50)
-          .findAll();
-    }
-    return await _isar.productEntitys
-        .filter()
-        .isActiveEqualTo(true)
-        .not()
-        .syncStatusEqualTo(SyncStatus.deleted)
-        .nameContains(query, caseSensitive: false)
-        .sortByName()
-        .limit(50)
-        .findAll();
+    final active = (await LocalDatabase.instance.db.loadProducts()).where(
+      (product) =>
+          product.isActive && product.syncStatus != SyncStatus.deleted,
+    );
+    final needle = query.toLowerCase();
+    final matches = active.where((product) {
+      if (query.isEmpty) return true;
+      return product.name.toLowerCase().contains(needle);
+    }).toList()..sort((a, b) => a.name.compareTo(b.name));
+    return matches.take(50).toList();
   }
 
-  // ─────────── SUPPLIERS ───────────
-
-  /// Get all active suppliers (for dropdown).
   Future<List<SupplierEntity>> getSuppliers() async {
-    return await _isar.supplierEntitys
-        .filter()
-        .isActiveEqualTo(true)
-        .not()
-        .syncStatusEqualTo(SupplierSyncStatus.deleted)
-        .sortByFirstName()
-        .findAll();
+    final suppliers = (await LocalDatabase.instance.db.loadSuppliers())
+        .where(
+          (supplier) =>
+              supplier.isActive &&
+              supplier.syncStatus != SupplierSyncStatus.deleted,
+        )
+        .toList();
+    suppliers.sort((a, b) => a.firstName.compareTo(b.firstName));
+    return suppliers;
   }
 }

@@ -55,14 +55,14 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   bool _isEditing = false;
   String? _editingCustomerId;
   List<Map<String, dynamic>> _customers = [];
-  // Raw customer entities from Isar stream (used to recompute _customers)
+  // Raw customer entities from the local database stream (used to recompute _customers)
   List<CustomerEntity> _customerEntities = [];
   String _searchQuery = '';
   CustomerSortField _sortField = CustomerSortField.name;
   bool _sortAscending = true;
   bool _isNavigatingAway = false;
 
-  // Isar stream for real-time updates
+  // local stream for real-time updates
   StreamSubscription<List<CustomerEntity>>? _customerStreamSub;
   // Event order stream for pending amount calculation
   StreamSubscription<List<EventOrderEntity>>? _eventOrderStreamSub;
@@ -101,7 +101,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
     _checkUserAuthentication();
-    _setupIsarStream();
+    _setupLocalStream();
     _setupEventOrderStream();
     _fetchFromFirebase();
     _setupFirestoreStream();
@@ -144,9 +144,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     }
   }
 
-  // ━━━ DATA: Isar Stream (offline-first, real-time) ━━━
+  // ━━━ DATA: Local stream (offline-first, real-time) ━━━
 
-  void _setupIsarStream() {
+  void _setupLocalStream() {
     final offlineCtrl = CustomerOfflineController.instance;
     _customerStreamSub = offlineCtrl.watchAllCustomers().listen(
       (entities) {
@@ -154,11 +154,11 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
         _customerEntities = entities;
         _rebuildCustomerList();
         debugPrint(
-          '[EnhancedCustomer] Isar stream: ${entities.length} customers',
+          '[EnhancedCustomer] local stream: ${entities.length} customers',
         );
       },
       onError: (e) {
-        debugPrint('[EnhancedCustomer] Isar stream error: $e');
+        debugPrint('[EnhancedCustomer] local stream error: $e');
         if (mounted) setState(() => _isLoading = false);
       },
     );
@@ -233,7 +233,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     };
   }
 
-  // ━━━ DATA: Firebase fetch + import into Isar ━━━
+  // ━━━ DATA: Firebase fetch + import into the local database ━━━
 
   Future<void> _fetchFromFirebase() async {
     try {
@@ -284,7 +284,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
           })
           .toList();
 
-      // Import into Isar — the stream listener auto-updates the UI
+      // Import into the local database — the stream listener auto-updates the UI
       await CustomerOfflineController.instance.importFromServer(serverList);
 
       // Trigger background sync for any local-only records
@@ -370,7 +370,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                 })
                 .toList();
 
-            // Import into Isar — the stream listener auto-updates the UI
+            // Import into the local database — the stream listener auto-updates the UI
             await CustomerOfflineController.instance.importFromServer(
               serverList,
             );
@@ -472,7 +472,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
           _showSnackbar(_localizations.customerUpdatedSuccess, false);
         }
       } else {
-        // Create new -> Isar first (offline-first)
+        // Create new -> local database first (offline-first)
         await offlineCtrl.addCustomer(
           name: fullName,
           mobile: contact,
@@ -813,7 +813,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   void _openCustomerFinance(Map<String, dynamic> customer) {
     // Get the explicit serverId if available
     final serverId = customer['serverId'] as String?;
-    // Get the local integer Isar ID
+    // Get the local integer local id
     final localId = customer['localId']?.toString() ?? '';
 
     // Use serverId if available, otherwise use local ID
@@ -868,7 +868,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   void _openCustomerTransactions(Map<String, dynamic> customer) {
     // Get the explicit serverId if available
     final serverId = customer['serverId'] as String?;
-    // Get the local integer Isar ID
+    // Get the local integer local id
     final localId = customer['localId']?.toString() ?? '';
 
     // Use serverId if available, otherwise use local ID

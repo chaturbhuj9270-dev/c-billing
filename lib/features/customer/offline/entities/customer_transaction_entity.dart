@@ -1,6 +1,3 @@
-import 'package:isar_community/isar.dart';
-
-part 'customer_transaction_entity.g.dart';
 
 /// Type of transaction
 enum TransactionType {
@@ -32,26 +29,22 @@ enum TransactionSyncStatus {
   synced,
 }
 
-/// Isar Collection for Customer Transactions
+/// Local record for Customer Transactions
 /// Tracks all payment and billing transactions for a customer
-@collection
 class CustomerTransactionEntity {
-  /// Auto-generated Isar ID
-  Id id = Isar.autoIncrement;
+  /// Local row id
+  int id = 0;
 
   /// Server-side ID
-  @Index()
   String? serverId;
 
   /// Customer ID (indexed for fast lookup)
-  @Index()
   String customerId;
 
   /// Customer name (for display)
   String customerName;
 
   /// Transaction type
-  @Enumerated(EnumType.ordinal)
   TransactionType transactionType;
 
   /// Amount of transaction (positive for payment, negative for bill)
@@ -73,15 +66,12 @@ class CustomerTransactionEntity {
   String? paymentMethod;
 
   /// Transaction date
-  @Index()
   DateTime transactionDate;
 
   /// Sync status
-  @Enumerated(EnumType.ordinal)
   TransactionSyncStatus syncStatus;
 
   /// Created timestamp
-  @Index()
   DateTime createdAt;
 
   /// Updated timestamp

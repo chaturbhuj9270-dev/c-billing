@@ -1,10 +1,7 @@
 // Enum values are stored by name. Renaming them would change saved ledger records.
 // ignore_for_file: constant_identifier_names
 
-import 'package:isar_community/isar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
-
-part 'stock_ledger_entity.g.dart';
 
 /// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTime(dynamic value) {
@@ -54,19 +51,16 @@ enum LedgerSyncStatus {
   synced,
 }
 
-/// Isar Collection for Stock Ledger with offline-first support
+/// Local record for Stock Ledger with offline-first support
 /// Tracks all stock movements with batch reference for COGS calculation
-@collection
 class StockLedgerEntity {
-  /// Auto-generated Isar ID
-  Id id = Isar.autoIncrement;
+  /// Local row id
+  int id = 0;
 
   /// Server-side ledger ID (null for locally created, not yet synced records)
-  @Index()
   String? serverId;
 
   /// Product ID (indexed for fast lookup)
-  @Index()
   String productId;
 
   /// Product name for quick reference
@@ -79,23 +73,18 @@ class StockLedgerEntity {
   String modelName;
 
   /// Unique key combining productName + companyName + modelName
-  @Index()
   String productUniqueKey;
 
   /// Batch ID this transaction belongs to (for FIFO tracking)
-  @Index()
   String batchId;
 
-  /// Local batch ID (Isar ID of the batch)
+  /// Local batch ID (local id of the batch)
   int? localBatchId;
 
   /// Type of transaction
-  @Index()
-  @Enumerated(EnumType.ordinal)
   LedgerTransactionType ledgerType;
 
   /// Reference ID (e.g., Bill ID for sales, Purchase ID for purchases)
-  @Index()
   String referenceId;
 
   /// Reference type (BILL, PURCHASE, ADJUSTMENT, etc.)
@@ -126,19 +115,15 @@ class StockLedgerEntity {
   double balanceValue;
 
   /// Date of transaction (indexed for sorting and filtering)
-  @Index()
   DateTime transactionDate;
 
   /// Notes for this entry
   String? notes;
 
   /// Sync status for delta sync
-  @Index()
-  @Enumerated(EnumType.ordinal)
   LedgerSyncStatus syncStatus;
 
   /// Created timestamp
-  @Index()
   DateTime createdAt;
 
   StockLedgerEntity({
@@ -432,7 +417,7 @@ class StockLedgerEntity {
 
   /// Copy with modifications
   StockLedgerEntity copyWith({
-    Id? id,
+    int? id,
     String? serverId,
     String? productId,
     String? productName,

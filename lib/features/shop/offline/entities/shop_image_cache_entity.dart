@@ -1,16 +1,11 @@
-import 'package:isar_community/isar.dart';
 
-part 'shop_image_cache_entity.g.dart';
-
-/// Isar entity for caching shop images locally
+/// Local entity for caching shop images locally
 /// Stores base64 encoded images for fast loading without network calls
-@collection
 class ShopImageCacheEntity {
-  /// Auto-generated Isar ID
-  Id id = Isar.autoIncrement;
+  /// Local row id
+  int id = 0;
 
   /// User ID (Firebase UID) - indexed for quick lookup
-  @Index(unique: true)
   String userId;
 
   /// Shop logo as base64 encoded string

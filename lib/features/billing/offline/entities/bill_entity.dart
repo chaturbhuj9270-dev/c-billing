@@ -1,7 +1,4 @@
-import 'package:isar_community/isar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
-
-part 'bill_entity.g.dart';
 
 /// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTimeHelper(dynamic value) {
@@ -40,7 +37,6 @@ enum BillPaymentStatus {
 }
 
 /// Embedded entity for bill items (stored within BillEntity)
-@embedded
 class BillItemEmbedded {
   String? itemId;
   String? productId;
@@ -102,18 +98,15 @@ class BillItemEmbedded {
   }
 }
 
-/// Isar Collection for Bill with offline-first support
-@collection
+/// Local record for Bill with offline-first support
 class BillEntity {
-  /// Auto-generated Isar ID
-  Id id = Isar.autoIncrement;
+  /// Local row id
+  int id = 0;
 
   /// Server-side ID (null for locally created, not yet synced records)
-  @Index()
   String? serverId;
 
   /// Customer ID (indexed for filtering)
-  @Index()
   String? customerId;
 
   /// Customer name (for display purposes)
@@ -141,7 +134,6 @@ class BillEntity {
   double finalAmount;
 
   /// Bill date
-  @Index()
   DateTime billDate;
 
   /// Notes
@@ -154,7 +146,6 @@ class BillEntity {
   DateTime? returnDate;
 
   /// Payment status
-  @Enumerated(EnumType.ordinal)
   BillPaymentStatus paymentStatus;
 
   /// Amount already paid
@@ -195,12 +186,9 @@ class BillEntity {
   double totalTaxAmount;
 
   /// Sync status for delta sync
-  @Index()
-  @Enumerated(EnumType.ordinal)
   BillSyncStatus syncStatus;
 
   /// Created timestamp (indexed for sorting)
-  @Index()
   DateTime createdAt;
 
   /// Last update timestamp

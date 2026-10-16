@@ -1035,7 +1035,7 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
             : null,
       );
 
-      // Also update local Isar so dashboard refreshes
+      // Also update local so dashboard refreshes
       await CustomerTransactionOfflineController.instance.addPaymentTransaction(
         customerId: widget.customer.id,
         customerName: widget.customer.fullName,

@@ -1,7 +1,4 @@
-import 'package:isar_community/isar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
-
-part 'supplier_entity.g.dart';
 
 /// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTime(dynamic value) {
@@ -28,19 +25,16 @@ enum SupplierSyncStatus {
   synced,
 }
 
-/// Isar Collection for Supplier with offline-first support
+/// Local record for Supplier with offline-first support
 /// Optimized with proper indexes for high-performance queries
-@collection
 class SupplierEntity {
-  /// Auto-generated Isar ID
-  Id id = Isar.autoIncrement;
+  /// Local row id
+  int id = 0;
 
   /// Server-side ID (null for locally created, not yet synced records)
-  @Index()
   String? serverId;
 
   /// First name (indexed for fast search)
-  @Index(type: IndexType.value, caseSensitive: false)
   String firstName;
 
   /// Middle name
@@ -50,11 +44,9 @@ class SupplierEntity {
   String lastName;
 
   /// Supplier code (indexed for fast lookup)
-  @Index(caseSensitive: false)
   String supplierCode;
 
   /// Contact number (indexed for fast lookup)
-  @Index()
   String contact;
 
   /// Address
@@ -64,12 +56,9 @@ class SupplierEntity {
   bool isActive;
 
   /// Sync status for delta sync
-  @Index()
-  @Enumerated(EnumType.ordinal)
   SupplierSyncStatus syncStatus;
 
   /// Last update timestamp for conflict resolution
-  @Index()
   DateTime updatedAt;
 
   /// Created timestamp
@@ -182,7 +171,7 @@ class SupplierEntity {
 
   /// Copy with modifications
   SupplierEntity copyWith({
-    Id? id,
+    int? id,
     String? serverId,
     String? firstName,
     String? middleName,

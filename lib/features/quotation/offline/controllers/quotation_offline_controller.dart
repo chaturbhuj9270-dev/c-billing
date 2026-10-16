@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:isar_community/isar.dart';
-import '../../../../core/services/isar_service.dart';
+import '../../../../core/database/app_database.dart';
+import '../../../../core/database/local_store.dart';
+import '../../../../core/services/local_database.dart';
 import '../../../event_order/domain/entities/order_item.dart';
 import '../../../event_order/domain/entities/sub_event.dart';
 import '../../../event_order/offline/entities/event_order_entity.dart';
@@ -11,12 +12,12 @@ import '../entities/quotation_entity.dart';
 class QuotationOfflineController extends ChangeNotifier {
   static QuotationOfflineController? _instance;
 
-  final Isar _isar;
+  final AppDatabase _db;
 
-  QuotationOfflineController._(this._isar);
+  QuotationOfflineController._(this._db);
 
   static QuotationOfflineController get instance {
-    _instance ??= QuotationOfflineController._(IsarService.instance.isar);
+    _instance ??= QuotationOfflineController._(LocalDatabase.instance.db);
     return _instance!;
   }
 
@@ -24,7 +25,7 @@ class QuotationOfflineController extends ChangeNotifier {
   static void resetInstance() => _instance = null;
 
   Future<String> _nextQuotationNumber() async {
-    final count = await _isar.quotationEntitys.count();
+    final count = await _db.countQuotations();
     final now = DateTime.now();
     final datePart =
         '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
@@ -121,16 +122,14 @@ class QuotationOfflineController extends ChangeNotifier {
       syncStatus: QuotationSyncStatus.newRecord,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.quotationEntitys.put(entity);
-    });
+    await _db.saveQuotation(entity);
 
     notifyListeners();
     return entity;
   }
 
   Future<QuotationEntity?> updateQuotation({
-    required Id id,
+    required int id,
     QuotationType? quotationType,
     String? customerId,
     String? customerName,
@@ -150,7 +149,7 @@ class QuotationOfflineController extends ChangeNotifier {
     QuotationStatus? status,
     Map<String, dynamic>? customData,
   }) async {
-    final existing = await _isar.quotationEntitys.get(id);
+    final existing = await getQuotationById(id);
     if (existing == null) return null;
 
     final type = quotationType ?? QuotationType.values[existing.quotationType];
@@ -199,28 +198,22 @@ class QuotationOfflineController extends ChangeNotifier {
       existing.syncStatus = QuotationSyncStatus.updated;
     }
 
-    await _isar.writeTxn(() async {
-      await _isar.quotationEntitys.put(existing);
-    });
+    await _db.saveQuotation(existing);
 
     notifyListeners();
     return existing;
   }
 
-  Future<bool> deleteQuotation(Id id) async {
-    final existing = await _isar.quotationEntitys.get(id);
+  Future<bool> deleteQuotation(int id) async {
+    final existing = await getQuotationById(id);
     if (existing == null) return false;
 
     if (existing.syncStatus == QuotationSyncStatus.newRecord) {
-      await _isar.writeTxn(() async {
-        await _isar.quotationEntitys.delete(id);
-      });
+      await _db.deleteQuotationById(id);
     } else {
       existing.syncStatus = QuotationSyncStatus.deleted;
       existing.updatedAt = DateTime.now();
-      await _isar.writeTxn(() async {
-        await _isar.quotationEntitys.put(existing);
-      });
+      await _db.saveQuotation(existing);
     }
 
     notifyListeners();
@@ -228,32 +221,39 @@ class QuotationOfflineController extends ChangeNotifier {
   }
 
   Future<List<QuotationEntity>> getAllQuotations() async {
-    return _isar.quotationEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(QuotationSyncStatus.deleted)
-        .sortByCreatedAtDesc()
-        .findAll();
+    final quotations = (await _db.loadQuotations())
+        .where(
+          (quotation) => quotation.syncStatus != QuotationSyncStatus.deleted,
+        )
+        .toList();
+    quotations.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return quotations;
   }
 
   Stream<List<QuotationEntity>> watchAllQuotations() {
-    return _isar.quotationEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(QuotationSyncStatus.deleted)
-        .sortByCreatedAtDesc()
-        .watch(fireImmediately: true);
+    return _db.watchQuotations().map((rows) {
+      final quotations = rows
+          .where(
+            (quotation) => quotation.syncStatus != QuotationSyncStatus.deleted,
+          )
+          .toList();
+      quotations.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return quotations;
+    });
   }
 
-  Future<QuotationEntity?> getQuotationById(Id id) async {
-    return _isar.quotationEntitys.get(id);
+  Future<QuotationEntity?> getQuotationById(int id) async {
+    for (final quotation in await _db.loadQuotations()) {
+      if (quotation.id == id) return quotation;
+    }
+    return null;
   }
 
   Future<int> getTotalCount() async {
-    return _isar.quotationEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(QuotationSyncStatus.deleted)
-        .count();
+    return (await _db.loadQuotations())
+        .where(
+          (quotation) => quotation.syncStatus != QuotationSyncStatus.deleted,
+        )
+        .length;
   }
 }

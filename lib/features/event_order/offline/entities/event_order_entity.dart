@@ -1,10 +1,7 @@
 import 'dart:convert';
-import 'package:isar_community/isar.dart';
 import '../../domain/entities/event_order.dart';
 import '../../domain/entities/sub_event.dart';
 import '../../domain/entities/order_item.dart';
-
-part 'event_order_entity.g.dart';
 
 /// Sync status for delta sync logic
 enum EventOrderSyncStatus {
@@ -22,7 +19,6 @@ enum EventOrderSyncStatus {
 }
 
 /// Embedded entity for sub-events
-@embedded
 class SubEventEmbedded {
   String? id;
   String? name;
@@ -71,7 +67,6 @@ class SubEventEmbedded {
 }
 
 /// Embedded entity for order items
-@embedded
 class OrderItemEmbedded {
   String? id;
   String? productId;
@@ -148,21 +143,18 @@ class OrderItemEmbedded {
   }
 }
 
-/// Isar Collection for Event/Sales Order with offline-first support
-@collection
+/// Local record for Event/Sales Order with offline-first support
 class EventOrderEntity {
-  /// Auto-generated Isar ID
-  Id id = Isar.autoIncrement;
+  /// Local row id
+  int id = 0;
   
   /// Server-side ID
-  @Index()
   String? serverId;
   
   /// Order type (0 = event, 1 = salesOrder)
   int orderType;
   
   /// Customer ID
-  @Index()
   String? customerId;
   
   /// Customer name
@@ -175,14 +167,12 @@ class EventOrderEntity {
   String? customerAddress;
   
   /// Order name
-  @Index()
   String orderName;
   
   /// Description
   String? description;
   
   /// Event/Delivery date
-  @Index()
   DateTime eventDate;
   
   /// Event/Order location
@@ -210,7 +200,6 @@ class EventOrderEntity {
   String? notes;
   
   /// Status (0=pending, 1=confirmed, 2=inProgress, 3=delivered, 4=cancelled, 5=convertedToBill)
-  @Index()
   int status;
   
   /// Converted bill ID
@@ -220,14 +209,12 @@ class EventOrderEntity {
   String? customDataJson;
   
   /// Created timestamp
-  @Index()
   DateTime createdAt;
   
   /// Updated timestamp
   DateTime updatedAt;
   
   /// Sync status
-  @Enumerated(EnumType.ordinal)
   EventOrderSyncStatus syncStatus;
   
   EventOrderEntity({

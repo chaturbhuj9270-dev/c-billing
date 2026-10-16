@@ -1,7 +1,4 @@
-import 'package:isar_community/isar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
-
-part 'purchase_batch_entity.g.dart';
 
 /// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTime(dynamic value) {
@@ -27,26 +24,22 @@ enum BatchSyncStatus {
   synced,
 }
 
-/// Isar Collection for Purchase Batch with offline-first support
+/// Local record for Purchase Batch with offline-first support
 /// Implements FIFO inventory management where each purchase creates a unique batch
-@collection
 class PurchaseBatchEntity {
-  /// Auto-generated Isar ID
-  Id id = Isar.autoIncrement;
+  /// Local row id
+  int id = 0;
 
   /// Server-side batch ID (null for locally created, not yet synced records)
-  @Index()
   String? serverId;
 
   /// Product ID (indexed for fast lookup)
-  @Index()
   String productId;
 
   /// Product name for quick reference
   String productName;
 
   /// Company/Brand name
-  @Index()
   String companyName;
 
   /// Model name or variant
@@ -57,7 +50,6 @@ class PurchaseBatchEntity {
 
   /// Unique key combining productName + companyName + modelName (lowercase, trimmed)
   /// Used for identifying the same product across batches
-  @Index()
   String productUniqueKey;
 
   /// Purchase price per unit for this batch
@@ -73,11 +65,9 @@ class PurchaseBatchEntity {
   int quantityRemaining;
 
   /// Date when this batch was purchased (indexed for FIFO sorting)
-  @Index()
   DateTime purchaseDate;
 
   /// Supplier ID (optional, indexed)
-  @Index()
   String? supplierId;
 
   /// Supplier name (optional)
@@ -87,7 +77,6 @@ class PurchaseBatchEntity {
   String unit;
 
   /// Expiry date (optional, indexed for expiry tracking)
-  @Index()
   DateTime? expiryDate;
 
   /// Production/Manufacturing date (optional)
@@ -100,16 +89,12 @@ class PurchaseBatchEntity {
   String? notes;
 
   /// Whether this batch is fully consumed (quantityRemaining == 0)
-  @Index()
   bool isConsumed;
 
   /// Sync status for delta sync
-  @Index()
-  @Enumerated(EnumType.ordinal)
   BatchSyncStatus syncStatus;
 
   /// Created timestamp
-  @Index()
   DateTime createdAt;
 
   /// Last update timestamp
@@ -293,7 +278,7 @@ class PurchaseBatchEntity {
 
   /// Copy with modifications
   PurchaseBatchEntity copyWith({
-    Id? id,
+    int? id,
     String? serverId,
     String? productId,
     String? productName,

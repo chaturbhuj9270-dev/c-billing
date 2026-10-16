@@ -2,7 +2,7 @@ import '../../offline/entities/product_entity.dart';
 import '../../offline/controllers/product_offline_controller.dart';
 
 /// Product model for domain layer
-/// Clean separation from Isar entity
+/// Clean separation from the local database entity
 class Product {
   final int? localId;
   final String? serverId;
@@ -143,7 +143,7 @@ class Product {
 
 /// Repository for Product data operations
 /// Acts as the single source of truth for Product data
-/// Always reads from local Isar database (offline-first)
+/// Always reads from local database (offline-first)
 class ProductRepository {
   static ProductRepository? _instance;
   

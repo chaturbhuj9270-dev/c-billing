@@ -131,7 +131,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
     }
   }
 
-  /// Load images from local Isar cache for instant display
+  /// Load images from local cache for instant display
   Future<void> _loadImagesFromCache(String userId) async {
     try {
       final cachedImages = await ShopImageCacheController.instance

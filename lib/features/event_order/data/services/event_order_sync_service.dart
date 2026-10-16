@@ -46,7 +46,7 @@ class EventOrderSyncResult {
 }
 
 /// Service for background synchronization of Event Order data
-/// Handles bidirectional sync between local Isar and remote Firebase
+/// Handles bidirectional sync between local and remote Firebase
 class EventOrderSyncService extends ChangeNotifier {
   static EventOrderSyncService? _instance;
 
@@ -91,7 +91,7 @@ class EventOrderSyncService extends ChangeNotifier {
   bool get isSyncing => _status == EventOrderSyncStatusIndicator.syncing;
 
   /// Initialize the sync service
-  /// Call this after Isar is initialized
+  /// Call this after the local database is initialized
   void initialize() {
     debugPrint('[EventOrderSync] Initializing...');
 

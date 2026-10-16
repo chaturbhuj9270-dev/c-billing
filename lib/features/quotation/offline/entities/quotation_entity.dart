@@ -1,43 +1,33 @@
 import 'dart:convert';
-import 'package:isar_community/isar.dart';
 import '../../../event_order/offline/entities/event_order_entity.dart';
 import '../../domain/entities/quotation.dart';
 
-part 'quotation_entity.g.dart';
-
 enum QuotationSyncStatus { newRecord, updated, deleted, synced }
 
-@collection
 class QuotationEntity {
-  Id id = Isar.autoIncrement;
+  int id = 0;
 
-  @Index()
   String? serverId;
 
-  @Index()
   String quotationNumber;
 
   /// 0=product, 1=event, 2=hybrid
   int quotationType;
 
-  @Index()
   String? customerId;
 
   String customerName;
   String customerContact;
   String? customerAddress;
 
-  @Index()
   String title;
 
   String? description;
 
-  @Index()
   DateTime referenceDate;
 
   String? eventLocation;
 
-  @Index()
   DateTime validUntil;
 
   List<SubEventEmbedded> subEvents;
@@ -51,7 +41,6 @@ class QuotationEntity {
   String? notes;
 
   /// 0=draft, 1=sent, 2=accepted, 3=rejected, 4=expired, 5=converted
-  @Index()
   int status;
 
   String? convertedBillId;
@@ -59,12 +48,10 @@ class QuotationEntity {
 
   String? customDataJson;
 
-  @Index()
   DateTime createdAt;
 
   DateTime updatedAt;
 
-  @Enumerated(EnumType.ordinal)
   QuotationSyncStatus syncStatus;
 
   QuotationEntity({
@@ -174,7 +161,7 @@ class QuotationEntity {
     );
   }
 
-  static QuotationEntity fromDomain(Quotation quotation, {Id? localId}) {
+  static QuotationEntity fromDomain(Quotation quotation, {int? localId}) {
     return QuotationEntity(
       serverId: quotation.id.startsWith('local_') ? null : quotation.id,
       quotationNumber: quotation.quotationNumber,
@@ -205,6 +192,6 @@ class QuotationEntity {
           : null,
       createdAt: quotation.createdAt,
       updatedAt: quotation.updatedAt,
-    )..id = localId ?? Isar.autoIncrement;
+    )..id = localId ?? 0;
   }
 }

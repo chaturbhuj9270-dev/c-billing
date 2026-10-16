@@ -38,7 +38,7 @@ class _ReportPageState extends State<ReportPage>
     with SingleTickerProviderStateMixin {
   final _sessionManager = SessionManager();
 
-  // Lazy access — won't crash if Isar is still warming up
+  // Lazy access — won't crash if the local database is still warming up
   late final ReportService _reportService;
   late final ReportRepository _repo;
 

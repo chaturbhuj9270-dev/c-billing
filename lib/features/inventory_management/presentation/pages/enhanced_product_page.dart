@@ -58,7 +58,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
   List<GroupedProduct> _groupedProducts = [];
   List<PurchaseBatchEntity> _allBatches = [];
 
-  // Isar stream for real-time updates
+  // local stream for real-time updates
   StreamSubscription<List<ProductEntity>>? _productStreamSub;
   // Firestore stream for cross-device real-time sync
   StreamSubscription<QuerySnapshot>? _firestoreStreamSub;
@@ -97,7 +97,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
     _checkUserAuthentication();
-    _setupIsarStream();
+    _setupLocalStream();
     _setupBatchStream();
     _setupFirestoreStream();
     _setupCrossPageRefresh();
@@ -137,9 +137,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     }
   }
 
-  // ━━━ DATA: Isar Stream (offline-first, real-time) ━━━
+  // ━━━ DATA: Local stream (offline-first, real-time) ━━━
 
-  void _setupIsarStream() {
+  void _setupLocalStream() {
     final offlineCtrl = ProductOfflineController.instance;
     _productStreamSub = offlineCtrl.watchAllProducts().listen(
       (entities) {
@@ -151,11 +151,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         _updateUnsyncedCount();
         _rebuildGroupedProducts();
         debugPrint(
-          '[EnhancedProduct] Isar stream: ${entities.length} products',
+          '[EnhancedProduct] local stream: ${entities.length} products',
         );
       },
       onError: (e) {
-        debugPrint('[EnhancedProduct] Isar stream error: $e');
+        debugPrint('[EnhancedProduct] local stream error: $e');
         if (mounted) setState(() => _isLoading = false);
       },
     );
@@ -185,17 +185,17 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         .instance
         .onPurchaseChanged
         .listen((_) {
-          if (mounted) _reloadFromIsar();
+          if (mounted) _reloadFromLocal();
         });
     _productChangeSubscription = DashboardRefreshService
         .instance
         .onProductChanged
         .listen((_) {
-          if (mounted) _reloadFromIsar();
+          if (mounted) _reloadFromLocal();
         });
   }
 
-  Future<void> _reloadFromIsar() async {
+  Future<void> _reloadFromLocal() async {
     try {
       final entities = await ProductOfflineController.instance.getAllProducts();
       if (mounted) {
@@ -206,7 +206,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         _rebuildGroupedProducts();
       }
     } catch (e) {
-      debugPrint('[EnhancedProduct] Failed to reload from Isar: $e');
+      debugPrint('[EnhancedProduct] Failed to reload from the local database: $e');
     }
   }
 
@@ -262,7 +262,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
               return <String, dynamic>{...data, 'id': doc.id};
             }).toList();
 
-            // Import to Isar — the Isar stream listener auto-updates the UI
+            // Import to the local database — the local stream listener auto-updates the UI
             await ProductOfflineController.instance.importFromServer(
               serverProducts,
             );
@@ -291,7 +291,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
   // ━━━ REFRESH ━━━
 
   Future<void> _onRefresh() async {
-    await _reloadFromIsar();
+    await _reloadFromLocal();
     ProductSyncService.instance.syncNow();
   }
 

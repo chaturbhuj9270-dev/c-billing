@@ -573,7 +573,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     try {
       setState(() => _isLoading = true);
 
-      // Load products from offline-first Isar storage
+      // Load products from offline-first local storage
       final productEntities = await ProductOfflineController.instance
           .getAllProducts();
 

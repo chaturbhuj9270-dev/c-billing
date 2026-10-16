@@ -55,7 +55,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
   bool _sortAscending = true;
   bool _isNavigatingAway = false;
 
-  // Isar stream for real-time updates
+  // local stream for real-time updates
   StreamSubscription<List<CompanyEntity>>? _companyStreamSub;
   // Firestore stream for cross-device real-time sync
   StreamSubscription<QuerySnapshot>? _firestoreStreamSub;
@@ -92,7 +92,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
     _checkUserAuthentication();
-    _setupIsarStream();
+    _setupLocalStream();
     _fetchFromFirebase();
     _setupFirestoreStream();
 
@@ -133,9 +133,9 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
     }
   }
 
-  // ━━━ DATA: Isar Stream (offline-first, real-time) ━━━
+  // ━━━ DATA: Local stream (offline-first, real-time) ━━━
 
-  void _setupIsarStream() {
+  void _setupLocalStream() {
     final offlineCtrl = CompanyOfflineController.instance;
     _companyStreamSub = offlineCtrl.watchAllCompanies().listen(
       (entities) {
@@ -145,10 +145,10 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
           _companies = mapped;
           _isLoading = false;
         });
-        debugPrint('[EnhancedCompany] Isar stream: ${mapped.length} companies');
+        debugPrint('[EnhancedCompany] local stream: ${mapped.length} companies');
       },
       onError: (e) {
-        debugPrint('[EnhancedCompany] Isar stream error: $e');
+        debugPrint('[EnhancedCompany] local stream error: $e');
       },
     );
   }
@@ -190,7 +190,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
           .map((doc) => {...doc.data(), 'id': doc.id})
           .toList();
 
-      // Import to Isar
+      // Import to the local database
       await CompanyOfflineController.instance.importFromServer(freshCompanies);
 
       // Trigger background sync

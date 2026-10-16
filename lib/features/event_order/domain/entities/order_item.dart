@@ -130,7 +130,7 @@ class OrderItem {
     );
   }
   
-  /// Create from ProductEntity (Isar offline entity)
+  /// Create from ProductEntity (offline entity)
   factory OrderItem.fromProductEntity({
     required ProductEntity entity,
     required int quantity,

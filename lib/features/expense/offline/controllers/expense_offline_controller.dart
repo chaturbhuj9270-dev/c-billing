@@ -1,23 +1,21 @@
 import 'package:flutter/foundation.dart';
-import 'package:isar_community/isar.dart';
-import '../../../../core/services/isar_service.dart';
+import '../../../../core/database/app_database.dart';
+import '../../../../core/database/local_store.dart';
+import '../../../../core/services/local_database.dart';
 import '../entities/expense_entity.dart';
 
-/// Offline-first controller for Expense CRUD operations
-/// All operations go to local Isar first, then sync in background
+/// Offline-first controller for Expense CRUD operations.
+/// All operations go to the local database first, then sync in the background.
 class ExpenseOfflineController extends ChangeNotifier {
   static ExpenseOfflineController? _instance;
 
-  final Isar _isar;
+  final AppDatabase _db;
 
-  ExpenseOfflineController._(this._isar);
+  ExpenseOfflineController._(this._db);
 
   /// Get the singleton instance
   static ExpenseOfflineController get instance {
-    if (_instance == null) {
-      final isar = IsarService.instance.isar;
-      _instance = ExpenseOfflineController._(isar);
-    }
+    _instance ??= ExpenseOfflineController._(LocalDatabase.instance.db);
     return _instance!;
   }
 
@@ -57,9 +55,7 @@ class ExpenseOfflineController extends ChangeNotifier {
       notes: notes,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.expenseEntitys.put(expense);
-    });
+    await _db.saveExpense(expense);
 
     debugPrint('[ExpenseOffline] Expense saved with id: ${expense.id}');
     notifyListeners();
@@ -68,18 +64,14 @@ class ExpenseOfflineController extends ChangeNotifier {
 
   /// Import expense from server (for sync)
   Future<ExpenseEntity> importFromServer(ExpenseEntity expense) async {
-    await _isar.writeTxn(() async {
-      // Check if already exists by serverId
-      final existing = await _isar.expenseEntitys
-          .filter()
-          .serverIdEqualTo(expense.serverId)
-          .findFirst();
-
-      if (existing != null) {
-        expense.id = existing.id;
+    // Check if already exists by serverId
+    for (final row in await _db.loadExpenses()) {
+      if (row.serverId == expense.serverId) {
+        expense.id = row.id;
+        break;
       }
-      await _isar.expenseEntitys.put(expense);
-    });
+    }
+    await _db.saveExpense(expense);
 
     notifyListeners();
     return expense;
@@ -89,38 +81,39 @@ class ExpenseOfflineController extends ChangeNotifier {
 
   /// Get all active expenses (not deleted)
   Future<List<ExpenseEntity>> getAllExpenses() async {
-    return await _isar.expenseEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(ExpenseSyncStatus.deleted)
-        .sortByExpenseDateDesc()
-        .findAll();
+    final expenses = (await _db.loadExpenses())
+        .where((expense) => expense.syncStatus != ExpenseSyncStatus.deleted)
+        .toList();
+    expenses.sort((a, b) => b.expenseDate.compareTo(a.expenseDate));
+    return expenses;
   }
 
   /// Get expense by local ID
-  Future<ExpenseEntity?> getExpenseById(Id id) async {
-    return await _isar.expenseEntitys.get(id);
+  Future<ExpenseEntity?> getExpenseById(int id) async {
+    for (final expense in await _db.loadExpenses()) {
+      if (expense.id == id) return expense;
+    }
+    return null;
   }
 
   /// Get expense by server ID
   Future<ExpenseEntity?> getExpenseByServerId(String serverId) async {
-    return await _isar.expenseEntitys
-        .filter()
-        .serverIdEqualTo(serverId)
-        .findFirst();
+    for (final expense in await _db.loadExpenses()) {
+      if (expense.serverId == serverId) return expense;
+    }
+    return null;
   }
 
   /// Get expenses by category
   Future<List<ExpenseEntity>> getExpensesByCategory(
     ExpenseCategory category,
   ) async {
-    return await _isar.expenseEntitys
-        .filter()
-        .categoryEqualTo(category)
-        .not()
-        .syncStatusEqualTo(ExpenseSyncStatus.deleted)
-        .sortByExpenseDateDesc()
-        .findAll();
+    final expenses = (await _db.loadExpenses()).where((expense) {
+      return expense.category == category &&
+          expense.syncStatus != ExpenseSyncStatus.deleted;
+    }).toList();
+    expenses.sort((a, b) => b.expenseDate.compareTo(a.expenseDate));
+    return expenses;
   }
 
   /// Get expenses for this month
@@ -129,13 +122,7 @@ class ExpenseOfflineController extends ChangeNotifier {
     final startOfMonth = DateTime(now.year, now.month, 1);
     final endOfMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
 
-    return await _isar.expenseEntitys
-        .filter()
-        .expenseDateBetween(startOfMonth, endOfMonth)
-        .not()
-        .syncStatusEqualTo(ExpenseSyncStatus.deleted)
-        .sortByExpenseDateDesc()
-        .findAll();
+    return _expensesBetween(startOfMonth, endOfMonth);
   }
 
   /// Get expenses for this year
@@ -144,13 +131,7 @@ class ExpenseOfflineController extends ChangeNotifier {
     final startOfYear = DateTime(now.year, 1, 1);
     final endOfYear = DateTime(now.year, 12, 31, 23, 59, 59);
 
-    return await _isar.expenseEntitys
-        .filter()
-        .expenseDateBetween(startOfYear, endOfYear)
-        .not()
-        .syncStatusEqualTo(ExpenseSyncStatus.deleted)
-        .sortByExpenseDateDesc()
-        .findAll();
+    return _expensesBetween(startOfYear, endOfYear);
   }
 
   /// Get expenses for last year
@@ -159,13 +140,7 @@ class ExpenseOfflineController extends ChangeNotifier {
     final startOfLastYear = DateTime(now.year - 1, 1, 1);
     final endOfLastYear = DateTime(now.year - 1, 12, 31, 23, 59, 59);
 
-    return await _isar.expenseEntitys
-        .filter()
-        .expenseDateBetween(startOfLastYear, endOfLastYear)
-        .not()
-        .syncStatusEqualTo(ExpenseSyncStatus.deleted)
-        .sortByExpenseDateDesc()
-        .findAll();
+    return _expensesBetween(startOfLastYear, endOfLastYear);
   }
 
   /// Get expenses by date range
@@ -173,13 +148,7 @@ class ExpenseOfflineController extends ChangeNotifier {
     required DateTime startDate,
     required DateTime endDate,
   }) async {
-    return await _isar.expenseEntitys
-        .filter()
-        .expenseDateBetween(startDate, endDate)
-        .not()
-        .syncStatusEqualTo(ExpenseSyncStatus.deleted)
-        .sortByExpenseDateDesc()
-        .findAll();
+    return _expensesBetween(startDate, endDate);
   }
 
   /// Get expenses by category and date range
@@ -188,35 +157,34 @@ class ExpenseOfflineController extends ChangeNotifier {
     required DateTime startDate,
     required DateTime endDate,
   }) async {
-    return await _isar.expenseEntitys
-        .filter()
-        .categoryEqualTo(category)
-        .expenseDateBetween(startDate, endDate)
-        .not()
-        .syncStatusEqualTo(ExpenseSyncStatus.deleted)
-        .sortByExpenseDateDesc()
-        .findAll();
+    final expenses = (await _db.loadExpenses()).where((expense) {
+      if (expense.category != category) return false;
+      if (expense.syncStatus == ExpenseSyncStatus.deleted) return false;
+      return !expense.expenseDate.isBefore(startDate) &&
+          !expense.expenseDate.isAfter(endDate);
+    }).toList();
+    expenses.sort((a, b) => b.expenseDate.compareTo(a.expenseDate));
+    return expenses;
   }
 
   /// Get recent expenses (last N)
   Future<List<ExpenseEntity>> getRecentExpenses({int limit = 50}) async {
-    return await _isar.expenseEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(ExpenseSyncStatus.deleted)
-        .sortByExpenseDateDesc()
-        .limit(limit)
-        .findAll();
+    final expenses = (await _db.loadExpenses())
+        .where((expense) => expense.syncStatus != ExpenseSyncStatus.deleted)
+        .toList();
+    expenses.sort((a, b) => b.expenseDate.compareTo(a.expenseDate));
+    return expenses.take(limit).toList();
   }
 
   /// Watch all expenses (reactive stream)
   Stream<List<ExpenseEntity>> watchAllExpenses() {
-    return _isar.expenseEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(ExpenseSyncStatus.deleted)
-        .sortByExpenseDateDesc()
-        .watch(fireImmediately: true);
+    return _db.watchExpenses().map((rows) {
+      final expenses = rows
+          .where((expense) => expense.syncStatus != ExpenseSyncStatus.deleted)
+          .toList();
+      expenses.sort((a, b) => b.expenseDate.compareTo(a.expenseDate));
+      return expenses;
+    });
   }
 
   /// Get total expense amount for a period
@@ -225,19 +193,16 @@ class ExpenseOfflineController extends ChangeNotifier {
     DateTime? endDate,
     ExpenseCategory? category,
   }) async {
-    var query = _isar.expenseEntitys.filter().not().syncStatusEqualTo(
-      ExpenseSyncStatus.deleted,
-    );
+    final expenses = (await _db.loadExpenses()).where((expense) {
+      if (expense.syncStatus == ExpenseSyncStatus.deleted) return false;
+      if (category != null && expense.category != category) return false;
+      if (startDate != null && endDate != null) {
+        return !expense.expenseDate.isBefore(startDate) &&
+            !expense.expenseDate.isAfter(endDate);
+      }
+      return true;
+    });
 
-    if (category != null) {
-      query = query.categoryEqualTo(category);
-    }
-
-    if (startDate != null && endDate != null) {
-      query = query.expenseDateBetween(startDate, endDate);
-    }
-
-    final expenses = await query.findAll();
     double total = 0.0;
     for (final e in expenses) {
       total += e.amount;
@@ -247,11 +212,9 @@ class ExpenseOfflineController extends ChangeNotifier {
 
   /// Get expense count
   Future<int> getExpenseCount() async {
-    return await _isar.expenseEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(ExpenseSyncStatus.deleted)
-        .count();
+    return (await _db.loadExpenses())
+        .where((expense) => expense.syncStatus != ExpenseSyncStatus.deleted)
+        .length;
   }
 
   /// Get expenses grouped by category with totals
@@ -275,7 +238,7 @@ class ExpenseOfflineController extends ChangeNotifier {
 
   /// Update an existing expense
   Future<ExpenseEntity?> updateExpense({
-    required Id id,
+    required int id,
     String? title,
     String? description,
     ExpenseCategory? category,
@@ -287,7 +250,7 @@ class ExpenseOfflineController extends ChangeNotifier {
     DateTime? expenseDate,
     String? notes,
   }) async {
-    final existing = await _isar.expenseEntitys.get(id);
+    final existing = await getExpenseById(id);
     if (existing == null) {
       debugPrint('[ExpenseOffline] Expense not found: $id');
       return null;
@@ -325,9 +288,7 @@ class ExpenseOfflineController extends ChangeNotifier {
       updatedAt: DateTime.now(),
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.expenseEntitys.put(updated);
-    });
+    await _db.saveExpense(updated);
 
     debugPrint('[ExpenseOffline] Expense updated: $id');
     notifyListeners();
@@ -335,17 +296,15 @@ class ExpenseOfflineController extends ChangeNotifier {
   }
 
   /// Mark expense as synced (after successful server sync)
-  Future<void> markAsSynced(Id id, String serverId) async {
-    final expense = await _isar.expenseEntitys.get(id);
+  Future<void> markAsSynced(int id, String serverId) async {
+    final expense = await getExpenseById(id);
     if (expense == null) return;
 
     expense.serverId = serverId;
     expense.syncStatus = ExpenseSyncStatus.synced;
     expense.updatedAt = DateTime.now();
 
-    await _isar.writeTxn(() async {
-      await _isar.expenseEntitys.put(expense);
-    });
+    await _db.saveExpense(expense);
 
     notifyListeners();
   }
@@ -353,8 +312,8 @@ class ExpenseOfflineController extends ChangeNotifier {
   // ==================== DELETE ====================
 
   /// Soft delete an expense (marks for deletion)
-  Future<void> deleteExpense(Id id) async {
-    final expense = await _isar.expenseEntitys.get(id);
+  Future<void> deleteExpense(int id) async {
+    final expense = await getExpenseById(id);
     if (expense == null) {
       debugPrint('[ExpenseOffline] Expense not found for deletion: $id');
       return;
@@ -362,9 +321,7 @@ class ExpenseOfflineController extends ChangeNotifier {
 
     // If never synced (NEW), just hard delete
     if (expense.syncStatus == ExpenseSyncStatus.newRecord) {
-      await _isar.writeTxn(() async {
-        await _isar.expenseEntitys.delete(id);
-      });
+      await _db.deleteExpenseById(id);
       debugPrint(
         '[ExpenseOffline] Expense hard deleted (was never synced): $id',
       );
@@ -373,9 +330,7 @@ class ExpenseOfflineController extends ChangeNotifier {
       expense.syncStatus = ExpenseSyncStatus.deleted;
       expense.updatedAt = DateTime.now();
 
-      await _isar.writeTxn(() async {
-        await _isar.expenseEntitys.put(expense);
-      });
+      await _db.saveExpense(expense);
       debugPrint('[ExpenseOffline] Expense marked for deletion: $id');
     }
 
@@ -383,10 +338,8 @@ class ExpenseOfflineController extends ChangeNotifier {
   }
 
   /// Hard delete after server confirms deletion
-  Future<void> hardDelete(Id id) async {
-    await _isar.writeTxn(() async {
-      await _isar.expenseEntitys.delete(id);
-    });
+  Future<void> hardDelete(int id) async {
+    await _db.deleteExpenseById(id);
     notifyListeners();
   }
 
@@ -394,24 +347,33 @@ class ExpenseOfflineController extends ChangeNotifier {
 
   /// Get all expenses pending sync (NEW, UPDATED, or DELETED)
   Future<List<ExpenseEntity>> getPendingSyncExpenses() async {
-    return await _isar.expenseEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(ExpenseSyncStatus.synced)
-        .findAll();
+    return (await _db.loadExpenses())
+        .where((expense) => expense.syncStatus != ExpenseSyncStatus.synced)
+        .toList();
   }
 
   /// Get count of expenses pending sync
   Future<int> getPendingSyncCount() async {
-    return await _isar.expenseEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(ExpenseSyncStatus.synced)
-        .count();
+    return (await _db.loadExpenses())
+        .where((expense) => expense.syncStatus != ExpenseSyncStatus.synced)
+        .length;
   }
 
   /// Check if there are any pending syncs
   Future<bool> hasPendingSyncs() async {
     return (await getPendingSyncCount()) > 0;
+  }
+
+  Future<List<ExpenseEntity>> _expensesBetween(
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
+    final expenses = (await _db.loadExpenses()).where((expense) {
+      if (expense.syncStatus == ExpenseSyncStatus.deleted) return false;
+      return !expense.expenseDate.isBefore(startDate) &&
+          !expense.expenseDate.isAfter(endDate);
+    }).toList();
+    expenses.sort((a, b) => b.expenseDate.compareTo(a.expenseDate));
+    return expenses;
   }
 }

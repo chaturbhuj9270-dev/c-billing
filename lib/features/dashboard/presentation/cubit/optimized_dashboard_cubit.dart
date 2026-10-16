@@ -7,12 +7,12 @@ import '../../domain/repositories/dashboard_repository_interface.dart';
 import '../../data/repositories/dashboard_repository_impl.dart';
 import 'optimized_dashboard_state.dart';
 
-/// High-performance Dashboard Cubit with Isar-first reactive strategy
+/// High-performance Dashboard Cubit with offline-first reactive strategy
 ///
 /// Key features:
 /// 1. Synchronously loads cached data before any async operations (instant UI)
-/// 2. Fetches fresh data from local Isar DB (< 5ms)
-/// 3. Reactive: auto-refreshes when bills/purchases/batches change in Isar
+/// 2. Fetches fresh data from local DB (< 5ms)
+/// 3. Reactive: auto-refreshes when bills/purchases/batches change in the local database
 /// 4. DashboardRefreshService events trigger recalculation too
 /// 5. Debounced updates prevent excessive rebuilds
 class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
@@ -50,7 +50,7 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
   }
 
   /// Initialize the dashboard - call this after widget is built
-  /// Fetches fresh data from Isar and starts reactive subscription
+  /// Fetches fresh data from the local database and starts reactive subscription
   Future<void> initialize() async {
     if (_isInitialized) return;
     _isInitialized = true;
@@ -76,10 +76,10 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
         }
       }
 
-      // Fetch fresh data from Isar (instant)
+      // Fetch fresh data from the local database (instant)
       await _refreshData(showRefreshIndicator: state.hasData);
 
-      // Start reactive Isar watchers — auto-refresh on any data change
+      // Start reactive Local watchers — auto-refresh on any data change
       _subscribeToRealtimeUpdates();
 
       // Also subscribe to DashboardRefreshService for external refresh requests
@@ -122,7 +122,7 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
     }
   }
 
-  /// Force refresh from Isar (called by pull-to-refresh or DashboardRefreshService)
+  /// Force refresh from the local database (called by pull-to-refresh or DashboardRefreshService)
   /// Debounced to coalesce rapid successive data changes
   Completer<void>? _refreshCompleter;
 
@@ -184,7 +184,7 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
       emit(DashboardInitialState(params: newParams));
     }
 
-    // Fetch fresh data from Isar
+    // Fetch fresh data from the local database
     await _refreshData(showRefreshIndicator: true);
 
     // Re-subscribe with new params
@@ -228,7 +228,7 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
     _subscribeToRealtimeUpdates();
   }
 
-  /// Internal method to refresh data from Isar
+  /// Internal method to refresh data from the local database
   Future<void> _refreshData({required bool showRefreshIndicator}) async {
     try {
       final data = await _repository.getDashboardSummary(
@@ -249,8 +249,8 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
     }
   }
 
-  /// Subscribe to real-time Isar updates
-  /// Isar's watchLazy() fires whenever bills/purchases/batches change locally
+  /// Subscribe to real-time local database updates
+  /// table update watches fires whenever bills/purchases/batches change locally
   void _subscribeToRealtimeUpdates() {
     _realtimeSubscription?.cancel();
     _realtimeSubscription = _repository

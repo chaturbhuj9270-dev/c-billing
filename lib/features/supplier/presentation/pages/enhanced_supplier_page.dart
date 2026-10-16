@@ -56,7 +56,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
   bool _sortAscending = true;
   bool _isNavigatingAway = false;
 
-  // Isar stream for real-time updates
+  // local stream for real-time updates
   StreamSubscription<List<SupplierEntity>>? _supplierStreamSub;
   // Firestore stream for cross-device real-time sync
   StreamSubscription<QuerySnapshot>? _firestoreStreamSub;
@@ -93,7 +93,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
     _checkUserAuthentication();
-    _setupIsarStream();
+    _setupLocalStream();
     _fetchFromFirebase();
     _setupFirestoreStream();
 
@@ -135,9 +135,9 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
     }
   }
 
-  // ━━━ DATA: Isar Stream (offline-first, real-time) ━━━
+  // ━━━ DATA: Local stream (offline-first, real-time) ━━━
 
-  void _setupIsarStream() {
+  void _setupLocalStream() {
     final offlineCtrl = SupplierOfflineController.instance;
     _supplierStreamSub = offlineCtrl.watchAllSuppliers().listen(
       (entities) {
@@ -148,11 +148,11 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
           _isLoading = false;
         });
         debugPrint(
-          '[EnhancedSupplier] Isar stream: ${mapped.length} suppliers',
+          '[EnhancedSupplier] local stream: ${mapped.length} suppliers',
         );
       },
       onError: (e) {
-        debugPrint('[EnhancedSupplier] Isar stream error: $e');
+        debugPrint('[EnhancedSupplier] local stream error: $e');
       },
     );
   }
@@ -195,7 +195,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
           .map((doc) => {...doc.data(), 'id': doc.id})
           .toList();
 
-      // Import to Isar
+      // Import to the local database
       await SupplierOfflineController.instance.importFromServer(freshSuppliers);
 
       // Trigger background sync

@@ -13,7 +13,7 @@ class DashboardCubit extends Cubit<DashboardState> {
       super(const DashboardInitial());
 
   /// Load dashboard data with the current filter
-  /// Uses local Isar database for microsecond-level loading
+  /// Uses local database for microsecond-level loading
   Future<void> loadDashboard() async {
     final stopwatch = Stopwatch()..start();
 

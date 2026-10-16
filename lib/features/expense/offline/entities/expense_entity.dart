@@ -1,6 +1,3 @@
-import 'package:isar_community/isar.dart';
-
-part 'expense_entity.g.dart';
 
 /// Expense category enum for filtering
 enum ExpenseCategory {
@@ -44,14 +41,12 @@ enum ExpenseSyncStatus {
   synced,
 }
 
-/// Isar Collection for Expense with offline-first support
-@collection
+/// Local record for Expense with offline-first support
 class ExpenseEntity {
-  /// Auto-generated Isar ID
-  Id id = Isar.autoIncrement;
+  /// Local row id
+  int id = 0;
 
   /// Server-side ID (null for locally created, not yet synced records)
-  @Index()
   String? serverId;
 
   /// Expense title/name
@@ -61,8 +56,6 @@ class ExpenseEntity {
   String? description;
 
   /// Expense category (indexed for filtering)
-  @Index()
-  @Enumerated(EnumType.ordinal)
   ExpenseCategory category;
 
   /// Amount spent
@@ -81,19 +74,15 @@ class ExpenseEntity {
   bool isRecurring;
 
   /// Expense date (indexed for filtering)
-  @Index()
   DateTime expenseDate;
 
   /// Notes/remarks
   String? notes;
 
   /// Sync status for delta sync
-  @Index()
-  @Enumerated(EnumType.ordinal)
   ExpenseSyncStatus syncStatus;
 
   /// Created timestamp (indexed for sorting)
-  @Index()
   DateTime createdAt;
 
   /// Last update timestamp for conflict resolution

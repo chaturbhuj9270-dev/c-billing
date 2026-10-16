@@ -1,12 +1,12 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:isar_community/isar.dart';
-import '../../../../core/services/isar_service.dart';
+import '../../../../core/database/app_database.dart';
+import '../../../../core/database/local_store.dart';
+import '../../../../core/services/local_database.dart';
 import '../entities/supplier_entity.dart';
 
 /// Controller for handling offline-first Supplier CRUD operations
 /// All UI reads should go through this controller (never directly from API)
-/// 
+///
 /// Key features:
 /// - Immediate local saves (no network blocking)
 /// - Proper syncStatus management for delta sync
@@ -14,14 +14,14 @@ import '../entities/supplier_entity.dart';
 /// - Reactive streams for UI updates
 class SupplierOfflineController extends ChangeNotifier {
   static SupplierOfflineController? _instance;
-  
-  Isar get _isar => IsarService.instance.isar;
 
-  SupplierOfflineController._();
+  final AppDatabase _db;
+
+  SupplierOfflineController._(this._db);
 
   /// Get the singleton instance
   static SupplierOfflineController get instance {
-    _instance ??= SupplierOfflineController._();
+    _instance ??= SupplierOfflineController._(LocalDatabase.instance.db);
     return _instance!;
   }
 
@@ -29,15 +29,15 @@ class SupplierOfflineController extends ChangeNotifier {
 
   /// Check if a supplier code already exists (for uniqueness validation)
   /// Empty codes are allowed (not enforced as unique)
-  Future<bool> isSupplierCodeTaken(String code, {Id? excludeId}) async {
+  Future<bool> isSupplierCodeTaken(String code, {int? excludeId}) async {
     if (code.trim().isEmpty) return false; // Empty codes are allowed
-    
-    final existing = await _isar.supplierEntitys
-        .filter()
-        .supplierCodeEqualTo(code, caseSensitive: false)
-        .not()
-        .syncStatusEqualTo(SupplierSyncStatus.deleted)
-        .findAll();
+
+    final needle = code.toLowerCase();
+    final existing = (await _db.loadSuppliers()).where(
+      (supplier) =>
+          supplier.syncStatus != SupplierSyncStatus.deleted &&
+          supplier.supplierCode.toLowerCase() == needle,
+    );
     if (excludeId != null) {
       return existing.any((e) => e.id != excludeId);
     }
@@ -55,14 +55,16 @@ class SupplierOfflineController extends ChangeNotifier {
     String address = '',
     bool isActive = true,
   }) async {
-    debugPrint('[SupplierOffline] Adding supplier: $firstName $lastName (code: $supplierCode)');
-    
+    debugPrint(
+      '[SupplierOffline] Adding supplier: $firstName $lastName (code: $supplierCode)',
+    );
+
     // Validate uniqueness of supplier code
     final codeTaken = await isSupplierCodeTaken(supplierCode);
     if (codeTaken) {
       throw Exception('Supplier code "$supplierCode" already exists');
     }
-    
+
     final supplier = SupplierEntity.create(
       firstName: firstName,
       middleName: middleName,
@@ -74,10 +76,8 @@ class SupplierOfflineController extends ChangeNotifier {
       syncStatus: SupplierSyncStatus.newRecord, // Mark as NEW for sync
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.supplierEntitys.put(supplier);
-    });
-    
+    await _db.saveSupplier(supplier);
+
     debugPrint('[SupplierOffline] Supplier saved with ID: ${supplier.id}');
     notifyListeners();
     return supplier;
@@ -88,64 +88,65 @@ class SupplierOfflineController extends ChangeNotifier {
   /// Get all active (non-deleted) suppliers
   /// Uses indexed query for performance
   Future<List<SupplierEntity>> getAllSuppliers() async {
-    return await _isar.supplierEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(SupplierSyncStatus.deleted)
-        .sortByFirstName()
-        .findAll();
+    final suppliers = (await _db.loadSuppliers())
+        .where((supplier) => supplier.syncStatus != SupplierSyncStatus.deleted)
+        .toList();
+    suppliers.sort((a, b) => a.firstName.compareTo(b.firstName));
+    return suppliers;
   }
 
   /// Watch all active suppliers (reactive stream for UI)
   /// Fires immediately and on any changes
   Stream<List<SupplierEntity>> watchAllSuppliers() {
-    return _isar.supplierEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(SupplierSyncStatus.deleted)
-        .sortByFirstName()
-        .watch(fireImmediately: true);
+    return _db.watchSuppliers().map((rows) {
+      final suppliers = rows
+          .where((supplier) => supplier.syncStatus != SupplierSyncStatus.deleted)
+          .toList();
+      suppliers.sort((a, b) => a.firstName.compareTo(b.firstName));
+      return suppliers;
+    });
   }
 
-  /// Get supplier by local Isar ID
-  Future<SupplierEntity?> getSupplierById(Id id) async {
-    return await _isar.supplierEntitys.get(id);
+  /// Get supplier by local id
+  Future<SupplierEntity?> getSupplierById(int id) async {
+    for (final supplier in await _db.loadSuppliers()) {
+      if (supplier.id == id) return supplier;
+    }
+    return null;
   }
 
   /// Get supplier by server ID
   Future<SupplierEntity?> getSupplierByServerId(String serverId) async {
-    return await _isar.supplierEntitys
-        .filter()
-        .serverIdEqualTo(serverId)
-        .findFirst();
+    for (final supplier in await _db.loadSuppliers()) {
+      if (supplier.serverId == serverId) return supplier;
+    }
+    return null;
   }
 
   /// Get supplier by contact number (fast indexed lookup)
   Future<SupplierEntity?> getSupplierByContact(String contact) async {
-    return await _isar.supplierEntitys
-        .filter()
-        .contactEqualTo(contact)
-        .not()
-        .syncStatusEqualTo(SupplierSyncStatus.deleted)
-        .findFirst();
+    for (final supplier in await _db.loadSuppliers()) {
+      if (supplier.contact == contact &&
+          supplier.syncStatus != SupplierSyncStatus.deleted) {
+        return supplier;
+      }
+    }
+    return null;
   }
 
   /// Search suppliers by name
   Future<List<SupplierEntity>> searchByName(String query) async {
     if (query.isEmpty) return getAllSuppliers();
-    
-    return await _isar.supplierEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(SupplierSyncStatus.deleted)
-        .group((q) => q
-            .firstNameContains(query, caseSensitive: false)
-            .or()
-            .lastNameContains(query, caseSensitive: false)
-            .or()
-            .contactContains(query))
-        .sortByFirstName()
-        .findAll();
+
+    final needle = query.toLowerCase();
+    final suppliers = (await _db.loadSuppliers()).where((supplier) {
+      if (supplier.syncStatus == SupplierSyncStatus.deleted) return false;
+      return supplier.firstName.toLowerCase().contains(needle) ||
+          supplier.lastName.toLowerCase().contains(needle) ||
+          supplier.contact.contains(query);
+    }).toList();
+    suppliers.sort((a, b) => a.firstName.compareTo(b.firstName));
+    return suppliers;
   }
 
   // ==================== UPDATE ====================
@@ -154,7 +155,7 @@ class SupplierOfflineController extends ChangeNotifier {
   /// If syncStatus was SYNCED, changes to UPDATED
   /// If syncStatus was NEW, keeps as NEW (not yet on server)
   Future<SupplierEntity?> updateSupplier({
-    required Id id,
+    required int id,
     String? firstName,
     String? middleName,
     String? lastName,
@@ -163,7 +164,7 @@ class SupplierOfflineController extends ChangeNotifier {
     String? address,
     bool? isActive,
   }) async {
-    final existing = await _isar.supplierEntitys.get(id);
+    final existing = await getSupplierById(id);
     if (existing == null) {
       debugPrint('[SupplierOffline] Supplier not found: $id');
       return null;
@@ -206,11 +207,11 @@ class SupplierOfflineController extends ChangeNotifier {
       updatedAt: DateTime.now(),
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.supplierEntitys.put(updated);
-    });
+    await _db.saveSupplier(updated);
 
-    debugPrint('[SupplierOffline] Supplier updated: ${updated.id}, syncStatus: ${updated.syncStatus}');
+    debugPrint(
+      '[SupplierOffline] Supplier updated: ${updated.id}, syncStatus: ${updated.syncStatus}',
+    );
     notifyListeners();
     return updated;
   }
@@ -218,17 +219,14 @@ class SupplierOfflineController extends ChangeNotifier {
   // ==================== DELETE ====================
 
   /// Soft delete a supplier (marks for deletion, will be synced)
-  /// Does NOT remove from Isar until server confirms deletion
-  Future<void> deleteSupplier(Id id) async {
-    final existing = await _isar.supplierEntitys.get(id);
+  Future<void> deleteSupplier(int id) async {
+    final existing = await getSupplierById(id);
     if (existing == null) return;
 
     // If never synced to server (NEW), we can hard delete immediately
     if (existing.syncStatus == SupplierSyncStatus.newRecord) {
       debugPrint('[SupplierOffline] Hard deleting NEW supplier: $id');
-      await _isar.writeTxn(() async {
-        await _isar.supplierEntitys.delete(id);
-      });
+      await _db.deleteSupplierById(id);
     } else {
       // Soft delete - mark for server sync
       debugPrint('[SupplierOffline] Soft deleting supplier: $id');
@@ -237,19 +235,15 @@ class SupplierOfflineController extends ChangeNotifier {
         updatedAt: DateTime.now(),
       );
 
-      await _isar.writeTxn(() async {
-        await _isar.supplierEntitys.put(updated);
-      });
+      await _db.saveSupplier(updated);
     }
 
     notifyListeners();
   }
 
   /// Hard delete after confirmed server deletion
-  Future<void> permanentlyDelete(Id id) async {
-    await _isar.writeTxn(() async {
-      await _isar.supplierEntitys.delete(id);
-    });
+  Future<void> permanentlyDelete(int id) async {
+    await _db.deleteSupplierById(id);
     notifyListeners();
   }
 
@@ -258,49 +252,42 @@ class SupplierOfflineController extends ChangeNotifier {
   /// Get all suppliers that need to be synced (delta sync)
   /// Returns suppliers where syncStatus != SYNCED
   Future<List<SupplierEntity>> getSuppliersNeedingSync() async {
-    return await _isar.supplierEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(SupplierSyncStatus.synced)
-        .findAll();
+    return (await _db.loadSuppliers())
+        .where((supplier) => supplier.syncStatus != SupplierSyncStatus.synced)
+        .toList();
   }
 
   /// Get NEW suppliers (need to POST)
   Future<List<SupplierEntity>> getNewSuppliers() async {
-    return await _isar.supplierEntitys
-        .filter()
-        .syncStatusEqualTo(SupplierSyncStatus.newRecord)
-        .findAll();
+    return (await _db.loadSuppliers())
+        .where((supplier) => supplier.syncStatus == SupplierSyncStatus.newRecord)
+        .toList();
   }
 
   /// Get UPDATED suppliers (need to PUT)
   Future<List<SupplierEntity>> getUpdatedSuppliers() async {
-    return await _isar.supplierEntitys
-        .filter()
-        .syncStatusEqualTo(SupplierSyncStatus.updated)
-        .findAll();
+    return (await _db.loadSuppliers())
+        .where((supplier) => supplier.syncStatus == SupplierSyncStatus.updated)
+        .toList();
   }
 
   /// Get DELETED suppliers (need to DELETE on server)
   Future<List<SupplierEntity>> getDeletedSuppliers() async {
-    return await _isar.supplierEntitys
-        .filter()
-        .syncStatusEqualTo(SupplierSyncStatus.deleted)
-        .findAll();
+    return (await _db.loadSuppliers())
+        .where((supplier) => supplier.syncStatus == SupplierSyncStatus.deleted)
+        .toList();
   }
 
   /// Get count of unsynced suppliers
   Future<int> getUnsyncedCount() async {
-    return await _isar.supplierEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(SupplierSyncStatus.synced)
-        .count();
+    return (await _db.loadSuppliers())
+        .where((supplier) => supplier.syncStatus != SupplierSyncStatus.synced)
+        .length;
   }
 
   /// Mark supplier as synced (called after successful server sync)
-  Future<void> markAsSynced(Id id, {String? serverId}) async {
-    final existing = await _isar.supplierEntitys.get(id);
+  Future<void> markAsSynced(int id, {String? serverId}) async {
+    final existing = await getSupplierById(id);
     if (existing == null) return;
 
     final updated = existing.copyWith(
@@ -308,40 +295,45 @@ class SupplierOfflineController extends ChangeNotifier {
       syncStatus: SupplierSyncStatus.synced,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.supplierEntitys.put(updated);
-    });
+    await _db.saveSupplier(updated);
   }
 
   /// Import suppliers from server (for initial sync or refresh)
   /// Merges by serverId, only updates if server version is newer
-  Future<int> importFromServer(List<Map<String, dynamic>> serverSuppliers) async {
-    int imported = 0;
-    
-    await _isar.writeTxn(() async {
+  Future<int> importFromServer(
+    List<Map<String, dynamic>> serverSuppliers,
+  ) async {
+    var imported = 0;
+
+    await _db.transaction(() async {
       for (final supplierData in serverSuppliers) {
         final serverId = supplierData['id'] as String?;
         if (serverId == null) continue;
 
-        // Check if exists locally by serverId
-        var existing = await _isar.supplierEntitys
-            .filter()
-            .serverIdEqualTo(serverId)
-            .findFirst();
+        final all = await _db.loadSuppliers();
+        SupplierEntity? existing;
+        for (final supplier in all) {
+          if (supplier.serverId == serverId) {
+            existing = supplier;
+            break;
+          }
+        }
 
         // Fallback: check by contact (handles locally-created records without serverId yet)
         if (existing == null) {
           final contact = (supplierData['contact'] ?? '').toString();
           if (contact.isNotEmpty) {
-            existing = await _isar.supplierEntitys
-                .filter()
-                .contactEqualTo(contact)
-                .findFirst();
+            for (final supplier in all) {
+              if (supplier.contact == contact) {
+                existing = supplier;
+                break;
+              }
+            }
             if (existing != null && existing.serverId == null) {
               // Link local record with server ID and mark synced
               existing.serverId = serverId;
               existing.syncStatus = SupplierSyncStatus.synced;
-              await _isar.supplierEntitys.put(existing);
+              await _db.saveSupplier(existing);
               imported++;
               continue;
             }
@@ -349,14 +341,16 @@ class SupplierOfflineController extends ChangeNotifier {
           // Also check by supplierCode
           final supplierCode = (supplierData['supplierCode'] ?? '').toString();
           if (existing == null && supplierCode.isNotEmpty) {
-            existing = await _isar.supplierEntitys
-                .filter()
-                .supplierCodeEqualTo(supplierCode)
-                .findFirst();
+            for (final supplier in all) {
+              if (supplier.supplierCode == supplierCode) {
+                existing = supplier;
+                break;
+              }
+            }
             if (existing != null && existing.serverId == null) {
               existing.serverId = serverId;
               existing.syncStatus = SupplierSyncStatus.synced;
-              await _isar.supplierEntitys.put(existing);
+              await _db.saveSupplier(existing);
               imported++;
               continue;
             }
@@ -369,10 +363,11 @@ class SupplierOfflineController extends ChangeNotifier {
             final serverUpdatedAt = DateTime.tryParse(
               supplierData['updatedAt']?.toString() ?? '',
             );
-            if (serverUpdatedAt != null && serverUpdatedAt.isAfter(existing.updatedAt)) {
+            if (serverUpdatedAt != null &&
+                serverUpdatedAt.isAfter(existing.updatedAt)) {
               final updated = SupplierEntity.fromServer(supplierData);
               updated.id = existing.id; // Keep local ID
-              await _isar.supplierEntitys.put(updated);
+              await _db.saveSupplier(updated);
               imported++;
             }
           }
@@ -380,7 +375,7 @@ class SupplierOfflineController extends ChangeNotifier {
         } else {
           // Create new
           final newSupplier = SupplierEntity.fromServer(supplierData);
-          await _isar.supplierEntitys.put(newSupplier);
+          await _db.saveSupplier(newSupplier);
           imported++;
         }
       }
@@ -389,14 +384,17 @@ class SupplierOfflineController extends ChangeNotifier {
     if (imported > 0) {
       notifyListeners();
     }
-    
+
     debugPrint('[SupplierOffline] Imported $imported suppliers from server');
     return imported;
   }
 
   /// Update supplier with server response (after successful create)
-  Future<void> updateWithServerResponse(Id localId, Map<String, dynamic> serverResponse) async {
-    final existing = await _isar.supplierEntitys.get(localId);
+  Future<void> updateWithServerResponse(
+    int localId,
+    Map<String, dynamic> serverResponse,
+  ) async {
+    final existing = await getSupplierById(localId);
     if (existing == null) return;
 
     final updated = existing.copyWith(
@@ -404,17 +402,13 @@ class SupplierOfflineController extends ChangeNotifier {
       syncStatus: SupplierSyncStatus.synced,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.supplierEntitys.put(updated);
-    });
+    await _db.saveSupplier(updated);
   }
 
   /// Get total supplier count
   Future<int> getTotalCount() async {
-    return await _isar.supplierEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(SupplierSyncStatus.deleted)
-        .count();
+    return (await _db.loadSuppliers())
+        .where((supplier) => supplier.syncStatus != SupplierSyncStatus.deleted)
+        .length;
   }
 }

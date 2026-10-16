@@ -9,7 +9,7 @@ import '../../offline/controllers/event_order_offline_controller.dart';
 import 'event_order_state.dart';
 
 /// Cubit for managing Event/Sales Order operations
-/// Uses offline-first approach with local Isar database
+/// Uses offline-first approach with local database
 class EventOrderCubit extends Cubit<EventOrderState> {
   final EventOrderOfflineController _controller;
 

@@ -43,7 +43,7 @@ class Product {
     this.unit,
   });
 
-  // Factory constructor to create from ProductEntity (Isar offline entity)
+  // Factory constructor to create from ProductEntity (offline entity)
   factory Product.fromProductEntity(dynamic entity) {
     return Product(
       id: entity.serverId ?? 'local_${entity.id}',

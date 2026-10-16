@@ -175,7 +175,7 @@ class _BillsListPageState extends State<BillsListPage>
               return <String, dynamic>{...doc.data(), 'id': doc.id};
             }).toList();
 
-            // Import to Isar — the Isar stream listener auto-updates the UI
+            // Import to the local database — the local stream listener auto-updates the UI
             await BillOfflineController.instance.importFromServer(serverBills);
           },
           onError: (e) {
@@ -185,7 +185,7 @@ class _BillsListPageState extends State<BillsListPage>
   }
 
   Future<void> _setupInitialData() async {
-    // Load from Isar (offline-first) - data comes through stream subscription
+    // Load from the local database (offline-first) - data comes through stream subscription
     // Initial data is already loaded via watchAllBills() in initState
 
     // Trigger background sync to fetch latest from server

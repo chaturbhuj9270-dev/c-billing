@@ -1,23 +1,21 @@
 import 'package:flutter/foundation.dart';
-import 'package:isar_community/isar.dart';
-import '../../../../core/services/isar_service.dart';
+import '../../../../core/database/app_database.dart';
+import '../../../../core/database/local_store.dart';
+import '../../../../core/services/local_database.dart';
 import '../entities/stock_ledger_entity.dart';
 
 /// Offline-first controller for Stock Ledger CRUD operations
 /// Tracks all inventory movements for COGS calculation and audit trail
 class StockLedgerOfflineController extends ChangeNotifier {
   static StockLedgerOfflineController? _instance;
-  
-  final Isar _isar;
 
-  StockLedgerOfflineController._(this._isar);
+  final AppDatabase _db;
+
+  StockLedgerOfflineController._(this._db);
 
   /// Get the singleton instance
   static StockLedgerOfflineController get instance {
-    if (_instance == null) {
-      final isar = IsarService.instance.isar;
-      _instance = StockLedgerOfflineController._(isar);
-    }
+    _instance ??= StockLedgerOfflineController._(LocalDatabase.instance.db);
     return _instance!;
   }
 
@@ -59,11 +57,11 @@ class StockLedgerOfflineController extends ChangeNotifier {
       notes: notes,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.stockLedgerEntitys.put(entry);
-    });
+    await _db.saveLedger(entry);
 
-    debugPrint('[LedgerOffline] Purchase recorded: ${entry.id}, product: ${entry.productName}, qty: $quantity');
+    debugPrint(
+      '[LedgerOffline] Purchase recorded: ${entry.id}, product: ${entry.productName}, qty: $quantity',
+    );
     notifyListeners();
     return entry;
   }
@@ -100,11 +98,11 @@ class StockLedgerOfflineController extends ChangeNotifier {
       notes: notes,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.stockLedgerEntitys.put(entry);
-    });
+    await _db.saveLedger(entry);
 
-    debugPrint('[LedgerOffline] Sale recorded: ${entry.id}, product: ${entry.productName}, qty: $quantity, profit: ${entry.profit}');
+    debugPrint(
+      '[LedgerOffline] Sale recorded: ${entry.id}, product: ${entry.productName}, qty: $quantity, profit: ${entry.profit}',
+    );
     notifyListeners();
     return entry;
   }
@@ -141,20 +139,22 @@ class StockLedgerOfflineController extends ChangeNotifier {
       notes: notes,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.stockLedgerEntitys.put(entry);
-    });
+    await _db.saveLedger(entry);
 
-    debugPrint('[LedgerOffline] Sale return recorded: ${entry.id}, product: ${entry.productName}, qty: $quantity');
+    debugPrint(
+      '[LedgerOffline] Sale return recorded: ${entry.id}, product: ${entry.productName}, qty: $quantity',
+    );
     notifyListeners();
     return entry;
   }
 
   /// Record multiple ledger entries in a single transaction
-  Future<List<StockLedgerEntity>> recordMultipleEntries(List<StockLedgerEntity> entries) async {
-    await _isar.writeTxn(() async {
+  Future<List<StockLedgerEntity>> recordMultipleEntries(
+    List<StockLedgerEntity> entries,
+  ) async {
+    await _db.transaction(() async {
       for (final entry in entries) {
-        await _isar.stockLedgerEntitys.put(entry);
+        await _db.saveLedger(entry);
       }
     });
 
@@ -167,90 +167,93 @@ class StockLedgerOfflineController extends ChangeNotifier {
 
   /// Get all ledger entries (excluding deleted)
   Future<List<StockLedgerEntity>> getAllLedgerEntries() async {
-    return await _isar.stockLedgerEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(LedgerSyncStatus.deleted)
-        .sortByTransactionDateDesc()
-        .findAll();
+    final entries = (await _db.loadLedger())
+        .where((entry) => entry.syncStatus != LedgerSyncStatus.deleted)
+        .toList();
+    entries.sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
+    return entries;
   }
 
   /// Watch all ledger entries for real-time updates
   Stream<List<StockLedgerEntity>> watchAllLedgerEntries() {
-    return _isar.stockLedgerEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(LedgerSyncStatus.deleted)
-        .sortByTransactionDateDesc()
-        .watch(fireImmediately: true);
+    return _db.watchLedger().map((rows) {
+      final entries = rows
+          .where((entry) => entry.syncStatus != LedgerSyncStatus.deleted)
+          .toList();
+      entries.sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
+      return entries;
+    });
   }
 
-  /// Get ledger entry by local Isar ID
-  Future<StockLedgerEntity?> getLedgerById(Id id) async {
-    return await _isar.stockLedgerEntitys.get(id);
+  Future<StockLedgerEntity?> getLedgerById(int id) async {
+    for (final entry in await _db.loadLedger()) {
+      if (entry.id == id) return entry;
+    }
+    return null;
   }
 
   /// Get ledger entry by server ID
   Future<StockLedgerEntity?> getLedgerByServerId(String serverId) async {
-    return await _isar.stockLedgerEntitys
-        .filter()
-        .serverIdEqualTo(serverId)
-        .findFirst();
+    for (final entry in await _db.loadLedger()) {
+      if (entry.serverId == serverId) return entry;
+    }
+    return null;
   }
 
   /// Get ledger entries by product ID
   Future<List<StockLedgerEntity>> getLedgerByProductId(String productId) async {
-    return await _isar.stockLedgerEntitys
-        .filter()
-        .productIdEqualTo(productId)
-        .not()
-        .syncStatusEqualTo(LedgerSyncStatus.deleted)
-        .sortByTransactionDateDesc()
-        .findAll();
+    final entries = (await _db.loadLedger()).where((entry) {
+      return entry.productId == productId &&
+          entry.syncStatus != LedgerSyncStatus.deleted;
+    }).toList();
+    entries.sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
+    return entries;
   }
 
   /// Get ledger entries by product unique key
-  Future<List<StockLedgerEntity>> getLedgerByProductUniqueKey(String productUniqueKey) async {
-    return await _isar.stockLedgerEntitys
-        .filter()
-        .productUniqueKeyEqualTo(productUniqueKey)
-        .not()
-        .syncStatusEqualTo(LedgerSyncStatus.deleted)
-        .sortByTransactionDateDesc()
-        .findAll();
+  Future<List<StockLedgerEntity>> getLedgerByProductUniqueKey(
+    String productUniqueKey,
+  ) async {
+    final entries = (await _db.loadLedger()).where((entry) {
+      return entry.productUniqueKey == productUniqueKey &&
+          entry.syncStatus != LedgerSyncStatus.deleted;
+    }).toList();
+    entries.sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
+    return entries;
   }
 
   /// Get ledger entries by batch ID
   Future<List<StockLedgerEntity>> getLedgerByBatchId(String batchId) async {
-    return await _isar.stockLedgerEntitys
-        .filter()
-        .batchIdEqualTo(batchId)
-        .not()
-        .syncStatusEqualTo(LedgerSyncStatus.deleted)
-        .sortByTransactionDateDesc()
-        .findAll();
+    final entries = (await _db.loadLedger()).where((entry) {
+      return entry.batchId == batchId &&
+          entry.syncStatus != LedgerSyncStatus.deleted;
+    }).toList();
+    entries.sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
+    return entries;
   }
 
   /// Get ledger entries by reference ID (bill ID, purchase ID, etc.)
-  Future<List<StockLedgerEntity>> getLedgerByReferenceId(String referenceId) async {
-    return await _isar.stockLedgerEntitys
-        .filter()
-        .referenceIdEqualTo(referenceId)
-        .not()
-        .syncStatusEqualTo(LedgerSyncStatus.deleted)
-        .sortByTransactionDateDesc()
-        .findAll();
+  Future<List<StockLedgerEntity>> getLedgerByReferenceId(
+    String referenceId,
+  ) async {
+    final entries = (await _db.loadLedger()).where((entry) {
+      return entry.referenceId == referenceId &&
+          entry.syncStatus != LedgerSyncStatus.deleted;
+    }).toList();
+    entries.sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
+    return entries;
   }
 
   /// Get ledger entries by type
-  Future<List<StockLedgerEntity>> getLedgerByType(LedgerTransactionType type) async {
-    return await _isar.stockLedgerEntitys
-        .filter()
-        .ledgerTypeEqualTo(type)
-        .not()
-        .syncStatusEqualTo(LedgerSyncStatus.deleted)
-        .sortByTransactionDateDesc()
-        .findAll();
+  Future<List<StockLedgerEntity>> getLedgerByType(
+    LedgerTransactionType type,
+  ) async {
+    final entries = (await _db.loadLedger()).where((entry) {
+      return entry.ledgerType == type &&
+          entry.syncStatus != LedgerSyncStatus.deleted;
+    }).toList();
+    entries.sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
+    return entries;
   }
 
   /// Get ledger entries by date range
@@ -258,41 +261,40 @@ class StockLedgerOfflineController extends ChangeNotifier {
     DateTime startDate,
     DateTime endDate,
   ) async {
-    return await _isar.stockLedgerEntitys
-        .filter()
-        .transactionDateBetween(startDate, endDate)
-        .not()
-        .syncStatusEqualTo(LedgerSyncStatus.deleted)
-        .sortByTransactionDateDesc()
-        .findAll();
+    final entries = (await _db.loadLedger()).where((entry) {
+      if (entry.syncStatus == LedgerSyncStatus.deleted) return false;
+      return !entry.transactionDate.isBefore(startDate) &&
+          !entry.transactionDate.isAfter(endDate);
+    }).toList();
+    entries.sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
+    return entries;
   }
 
   /// Get recent ledger entries
-  Future<List<StockLedgerEntity>> getRecentLedgerEntries({int limit = 50}) async {
-    return await _isar.stockLedgerEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(LedgerSyncStatus.deleted)
-        .sortByTransactionDateDesc()
-        .limit(limit)
-        .findAll();
+  Future<List<StockLedgerEntity>> getRecentLedgerEntries({
+    int limit = 50,
+  }) async {
+    final entries = (await _db.loadLedger())
+        .where((entry) => entry.syncStatus != LedgerSyncStatus.deleted)
+        .toList();
+    entries.sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
+    return entries.take(limit).toList();
   }
 
   // ==================== QUERY / AGGREGATIONS ====================
 
   /// Get total COGS (Cost of Goods Sold) for a date range
   Future<double> getTotalCOGS({DateTime? startDate, DateTime? endDate}) async {
-    var query = _isar.stockLedgerEntitys
-        .filter()
-        .ledgerTypeEqualTo(LedgerTransactionType.SALE)
-        .not()
-        .syncStatusEqualTo(LedgerSyncStatus.deleted);
-    
-    if (startDate != null && endDate != null) {
-      query = query.transactionDateBetween(startDate, endDate);
-    }
-    
-    final entries = await query.findAll();
+    final entries = (await _db.loadLedger()).where((entry) {
+      if (entry.ledgerType != LedgerTransactionType.SALE) return false;
+      if (entry.syncStatus == LedgerSyncStatus.deleted) return false;
+      if (startDate != null && endDate != null) {
+        return !entry.transactionDate.isBefore(startDate) &&
+            !entry.transactionDate.isAfter(endDate);
+      }
+      return true;
+    });
+
     return entries.fold<double>(0.0, (total, e) => total + e.totalCost);
   }
 
@@ -301,43 +303,44 @@ class StockLedgerOfflineController extends ChangeNotifier {
     DateTime? startDate,
     DateTime? endDate,
   }) async {
-    var query = _isar.stockLedgerEntitys
-        .filter()
-        .ledgerTypeEqualTo(LedgerTransactionType.SALE)
-        .not()
-        .syncStatusEqualTo(LedgerSyncStatus.deleted);
-    
-    if (startDate != null && endDate != null) {
-      query = query.transactionDateBetween(startDate, endDate);
-    }
-    
-    final entries = await query.findAll();
+    final entries = (await _db.loadLedger()).where((entry) {
+      if (entry.ledgerType != LedgerTransactionType.SALE) return false;
+      if (entry.syncStatus == LedgerSyncStatus.deleted) return false;
+      if (startDate != null && endDate != null) {
+        return !entry.transactionDate.isBefore(startDate) &&
+            !entry.transactionDate.isAfter(endDate);
+      }
+      return true;
+    });
+
     final cogsMap = <String, double>{};
-    
+
     for (final entry in entries) {
       final current = cogsMap[entry.productId] ?? 0.0;
       cogsMap[entry.productId] = current + entry.totalCost;
     }
-    
+
     return cogsMap;
   }
 
   /// Get total profit for a date range
-  Future<double> getTotalProfit({DateTime? startDate, DateTime? endDate}) async {
-    var query = _isar.stockLedgerEntitys
-        .filter()
-        .group((q) => q
-            .ledgerTypeEqualTo(LedgerTransactionType.SALE)
-            .or()
-            .ledgerTypeEqualTo(LedgerTransactionType.SALE_RETURN))
-        .not()
-        .syncStatusEqualTo(LedgerSyncStatus.deleted);
-    
-    if (startDate != null && endDate != null) {
-      query = query.transactionDateBetween(startDate, endDate);
-    }
-    
-    final entries = await query.findAll();
+  Future<double> getTotalProfit({
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    final entries = (await _db.loadLedger()).where((entry) {
+      final isSaleOrReturn =
+          entry.ledgerType == LedgerTransactionType.SALE ||
+          entry.ledgerType == LedgerTransactionType.SALE_RETURN;
+      if (!isSaleOrReturn) return false;
+      if (entry.syncStatus == LedgerSyncStatus.deleted) return false;
+      if (startDate != null && endDate != null) {
+        return !entry.transactionDate.isBefore(startDate) &&
+            !entry.transactionDate.isAfter(endDate);
+      }
+      return true;
+    });
+
     return entries.fold<double>(0.0, (total, e) => total + e.profit);
   }
 
@@ -346,59 +349,62 @@ class StockLedgerOfflineController extends ChangeNotifier {
     DateTime? startDate,
     DateTime? endDate,
   }) async {
-    var query = _isar.stockLedgerEntitys
-        .filter()
-        .group((q) => q
-            .ledgerTypeEqualTo(LedgerTransactionType.SALE)
-            .or()
-            .ledgerTypeEqualTo(LedgerTransactionType.SALE_RETURN))
-        .not()
-        .syncStatusEqualTo(LedgerSyncStatus.deleted);
-    
-    if (startDate != null && endDate != null) {
-      query = query.transactionDateBetween(startDate, endDate);
-    }
-    
-    final entries = await query.findAll();
+    final entries = (await _db.loadLedger()).where((entry) {
+      final isSaleOrReturn =
+          entry.ledgerType == LedgerTransactionType.SALE ||
+          entry.ledgerType == LedgerTransactionType.SALE_RETURN;
+      if (!isSaleOrReturn) return false;
+      if (entry.syncStatus == LedgerSyncStatus.deleted) return false;
+      if (startDate != null && endDate != null) {
+        return !entry.transactionDate.isBefore(startDate) &&
+            !entry.transactionDate.isAfter(endDate);
+      }
+      return true;
+    });
+
     final profitMap = <String, double>{};
-    
+
     for (final entry in entries) {
       final current = profitMap[entry.productId] ?? 0.0;
       profitMap[entry.productId] = current + entry.profit;
     }
-    
+
     return profitMap;
   }
 
   /// Get total sales revenue for a date range
-  Future<double> getTotalRevenue({DateTime? startDate, DateTime? endDate}) async {
-    var query = _isar.stockLedgerEntitys
-        .filter()
-        .ledgerTypeEqualTo(LedgerTransactionType.SALE)
-        .not()
-        .syncStatusEqualTo(LedgerSyncStatus.deleted);
-    
-    if (startDate != null && endDate != null) {
-      query = query.transactionDateBetween(startDate, endDate);
-    }
-    
-    final entries = await query.findAll();
+  Future<double> getTotalRevenue({
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    final entries = (await _db.loadLedger()).where((entry) {
+      if (entry.ledgerType != LedgerTransactionType.SALE) return false;
+      if (entry.syncStatus == LedgerSyncStatus.deleted) return false;
+      if (startDate != null && endDate != null) {
+        return !entry.transactionDate.isBefore(startDate) &&
+            !entry.transactionDate.isAfter(endDate);
+      }
+      return true;
+    });
+
     return entries.fold<double>(0.0, (total, e) => total + e.totalRevenue);
   }
 
   /// Get total purchase value for a date range
-  Future<double> getTotalPurchaseValue({DateTime? startDate, DateTime? endDate}) async {
-    var query = _isar.stockLedgerEntitys
-        .filter()
-        .ledgerTypeEqualTo(LedgerTransactionType.PURCHASE)
-        .not()
-        .syncStatusEqualTo(LedgerSyncStatus.deleted);
-    
-    if (startDate != null && endDate != null) {
-      query = query.transactionDateBetween(startDate, endDate);
-    }
-    
-    final entries = await query.findAll();
+  Future<double> getTotalPurchaseValue({
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    final entries = (await _db.loadLedger()).where((entry) {
+      if (entry.ledgerType != LedgerTransactionType.PURCHASE) return false;
+      if (entry.syncStatus == LedgerSyncStatus.deleted) return false;
+      if (startDate != null && endDate != null) {
+        return !entry.transactionDate.isBefore(startDate) &&
+            !entry.transactionDate.isAfter(endDate);
+      }
+      return true;
+    });
+
     return entries.fold<double>(0.0, (total, e) => total + e.totalCost);
   }
 
@@ -409,20 +415,22 @@ class StockLedgerOfflineController extends ChangeNotifier {
     DateTime? endDate,
   }) async {
     final entries = await getLedgerByProductId(productId);
-    
+
     final filteredEntries = entries.where((e) {
-      if (startDate != null && e.transactionDate.isBefore(startDate)) return false;
+      if (startDate != null && e.transactionDate.isBefore(startDate)) {
+        return false;
+      }
       if (endDate != null && e.transactionDate.isAfter(endDate)) return false;
       return true;
     }).toList();
-    
+
     int totalIn = 0;
     int totalOut = 0;
     double totalPurchaseValue = 0.0;
     double totalSalesValue = 0.0;
     double totalCOGS = 0.0;
     double totalProfit = 0.0;
-    
+
     for (final entry in filteredEntries) {
       if (entry.isInbound) {
         totalIn += entry.quantity;
@@ -438,7 +446,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
         }
       }
     }
-    
+
     return {
       'productId': productId,
       'totalIn': totalIn,
@@ -456,16 +464,14 @@ class StockLedgerOfflineController extends ChangeNotifier {
 
   /// Get ledger entries that need to be synced
   Future<List<StockLedgerEntity>> getLedgerNeedingSync() async {
-    return await _isar.stockLedgerEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(LedgerSyncStatus.synced)
-        .findAll();
+    return (await _db.loadLedger())
+        .where((entry) => entry.syncStatus != LedgerSyncStatus.synced)
+        .toList();
   }
 
   /// Mark ledger entry as synced
-  Future<void> markAsSynced(Id id, String serverId) async {
-    final existing = await _isar.stockLedgerEntitys.get(id);
+  Future<void> markAsSynced(int id, String serverId) async {
+    final existing = await getLedgerById(id);
     if (existing == null) return;
 
     final updated = existing.copyWith(
@@ -473,46 +479,50 @@ class StockLedgerOfflineController extends ChangeNotifier {
       syncStatus: LedgerSyncStatus.synced,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.stockLedgerEntitys.put(updated);
-    });
-    
+    await _db.saveLedger(updated);
+
     debugPrint('[LedgerOffline] Entry marked as synced: $id -> $serverId');
   }
 
   /// Import ledger entries from server
-  Future<void> importFromServer(List<Map<String, dynamic>> serverEntries) async {
-    await _isar.writeTxn(() async {
+  Future<void> importFromServer(
+    List<Map<String, dynamic>> serverEntries,
+  ) async {
+    await _db.transaction(() async {
       for (final data in serverEntries) {
         final entity = StockLedgerEntity.fromServer(data);
-        
+
         // Check if entry already exists locally
-        final existing = await _isar.stockLedgerEntitys
-            .filter()
-            .serverIdEqualTo(entity.serverId)
-            .findFirst();
-        
+        final all = await _db.loadLedger();
+        StockLedgerEntity? existing;
+        for (final entry in all) {
+          if (entry.serverId == entity.serverId) {
+            existing = entry;
+            break;
+          }
+        }
+
         if (existing != null) {
           // Update existing if server version is newer
           if (entity.createdAt.isAfter(existing.createdAt)) {
             entity.id = existing.id;
-            await _isar.stockLedgerEntitys.put(entity);
+            await _db.saveLedger(entity);
           }
         } else {
-          await _isar.stockLedgerEntitys.put(entity);
+          await _db.saveLedger(entity);
         }
       }
     });
-    
-    debugPrint('[LedgerOffline] Imported ${serverEntries.length} ledger entries from server');
+
+    debugPrint(
+      '[LedgerOffline] Imported ${serverEntries.length} ledger entries from server',
+    );
     notifyListeners();
   }
 
   /// Clear all local ledger entries (for testing or logout)
   Future<void> clearAll() async {
-    await _isar.writeTxn(() async {
-      await _isar.stockLedgerEntitys.clear();
-    });
+    await _db.clearLedger();
     debugPrint('[LedgerOffline] All ledger entries cleared');
     notifyListeners();
   }

@@ -87,7 +87,7 @@ class Customer {
 
 /// Repository for Customer data operations
 /// Acts as the single source of truth for Customer data
-/// Always reads from local Isar database (offline-first)
+/// Always reads from local database (offline-first)
 class CustomerRepository {
   static CustomerRepository? _instance;
   

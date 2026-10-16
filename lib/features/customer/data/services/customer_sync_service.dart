@@ -36,7 +36,7 @@ class SyncResult {
 }
 
 /// Service for background synchronization of Customer data
-/// Handles bidirectional sync between local Isar and remote server
+/// Handles bidirectional sync between local and remote server
 class CustomerSyncService extends ChangeNotifier {
   static CustomerSyncService? _instance;
 
@@ -81,7 +81,7 @@ class CustomerSyncService extends ChangeNotifier {
   bool get isSyncing => _status == SyncStatus.syncing;
 
   /// Initialize the sync service
-  /// Call this after Isar is initialized
+  /// Call this after the local database is initialized
   void initialize() {
     debugPrint('[CustomerSync] Initializing...');
 

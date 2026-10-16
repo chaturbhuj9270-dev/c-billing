@@ -37,7 +37,7 @@ class CustomerTransactionSyncResult {
 }
 
 /// Service for background synchronization of Customer Transaction data
-/// Handles bidirectional sync between local Isar and Firebase Firestore
+/// Handles bidirectional sync between local and Firebase Firestore
 class CustomerTransactionSyncService extends ChangeNotifier {
   static CustomerTransactionSyncService? _instance;
 
@@ -87,7 +87,7 @@ class CustomerTransactionSyncService extends ChangeNotifier {
   bool get isSyncing => _status == CustomerTransactionSyncStatus.syncing;
 
   /// Initialize the sync service
-  /// Call this after Isar is initialized
+  /// Call this after the local database is initialized
   void initialize() {
     debugPrint('[CustomerTransactionSync] Initializing...');
 

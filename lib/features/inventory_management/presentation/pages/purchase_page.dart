@@ -53,7 +53,7 @@ class _PurchasePageState extends State<PurchasePage>
   late AppLocalizations _localizations;
   final _cacheDataSource = PurchaseCacheDataSource();
 
-  // Real-time Isar stream subscriptions
+  // Real-time local stream subscriptions
   StreamSubscription<List<ProductEntity>>? _productStreamSubscription;
   StreamSubscription<List<SupplierEntity>>? _supplierStreamSubscription;
   StreamSubscription<List<CompanyEntity>>? _companyStreamSubscription;
@@ -143,7 +143,7 @@ class _PurchasePageState extends State<PurchasePage>
       () => _animController.forward(),
     );
 
-    // Setup real-time Isar streams for instant UI updates
+    // Setup real-time local streams for instant UI updates
     _setupProductStream();
     _setupSupplierStream();
     _setupCompanyStream();
@@ -189,7 +189,7 @@ class _PurchasePageState extends State<PurchasePage>
     }
   }
 
-  /// Setup real-time product stream from Isar
+  /// Setup real-time product stream from the local database
   void _setupProductStream() {
     _productStreamSubscription = ProductOfflineController.instance
         .watchAllProducts()
@@ -222,7 +222,7 @@ class _PurchasePageState extends State<PurchasePage>
         }, onError: (e) => debugPrint('[ERROR] Product stream error: $e'));
   }
 
-  /// Setup real-time supplier stream from Isar
+  /// Setup real-time supplier stream from the local database
   void _setupSupplierStream() {
     _supplierStreamSubscription = SupplierOfflineController.instance
         .watchAllSuppliers()
@@ -247,7 +247,7 @@ class _PurchasePageState extends State<PurchasePage>
         }, onError: (e) => debugPrint('[ERROR] Supplier stream error: $e'));
   }
 
-  /// Setup real-time company stream from Isar
+  /// Setup real-time company stream from the local database
   void _setupCompanyStream() {
     _companyStreamSubscription = CompanyOfflineController.instance
         .watchAllCompanies()

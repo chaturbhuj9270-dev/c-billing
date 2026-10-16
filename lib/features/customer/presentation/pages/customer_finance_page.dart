@@ -13,7 +13,7 @@ import 'package:c_billing/core/theme/app_theme.dart';
 /// Shows all bills and events/orders for a specific customer
 class CustomerFinancePage extends StatefulWidget {
   final String customerId; // Server ID (Firebase document ID)
-  final String? customerLocalId; // Local Isar ID
+  final String? customerLocalId; // Local ID
   final String customerName;
   final String customerContact;
   final double currentPendingAmount;

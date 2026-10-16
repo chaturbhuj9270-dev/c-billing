@@ -1,48 +1,41 @@
 import 'dart:async';
+import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
-import 'package:isar_community/isar.dart';
-import '../../../../core/services/isar_service.dart';
+import '../../../../core/database/local_store.dart';
+import '../../../../core/services/local_database.dart';
 import '../../../billing/offline/controllers/bill_offline_controller.dart';
-import '../../../billing/offline/entities/bill_entity.dart';
 import '../../../customer/offline/controllers/customer_offline_controller.dart';
-import '../../../customer/offline/entities/customer_entity.dart';
 import '../../../inventory_management/offline/controllers/purchase_offline_controller.dart';
 import '../../../inventory_management/offline/controllers/purchase_batch_offline_controller.dart';
 import '../../../inventory_management/offline/entities/purchase_batch_entity.dart';
-import '../../../inventory_management/offline/entities/purchase_entity.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
-import '../../../product/offline/entities/product_entity.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
-import '../../../supplier/offline/entities/supplier_entity.dart';
 import '../../../company/offline/controllers/company_offline_controller.dart';
-import '../../../company/offline/entities/company_entity.dart';
 import '../../../event_order/offline/entities/event_order_entity.dart';
 import '../../../event_order/domain/entities/event_order.dart';
 import '../../../inventory_management/offline/entities/stock_ledger_entity.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/repositories/dashboard_repository_interface.dart';
 
-/// Ultra-fast Isar-based dashboard datasource
-/// All calculations are from local Isar DB — instant, offline-capable, and accurate.
+/// Ultra-fast local dashboard datasource
+/// All calculations are from local DB — instant, offline-capable, and accurate.
 ///
 /// Key fixes over the old Firebase datasource:
 /// 1. Returns are properly deducted from sales/profit
 /// 2. Stock value uses batch quantityRemaining × purchasePrice (not product-level)
 /// 3. Pending amounts are tracked
-/// 4. Reactive streams via Isar watchLazy()
-class DashboardIsarDataSource {
-  static DashboardIsarDataSource? _instance;
+/// 4. Reactive streams via table update watches
+class DashboardLocalDataSource {
+  static DashboardLocalDataSource? _instance;
 
-  Isar get _isar => IsarService.instance.isar;
+  DashboardLocalDataSource._();
 
-  DashboardIsarDataSource._();
-
-  static DashboardIsarDataSource get instance {
-    _instance ??= DashboardIsarDataSource._();
+  static DashboardLocalDataSource get instance {
+    _instance ??= DashboardLocalDataSource._();
     return _instance!;
   }
 
-  /// Fetch dashboard summary from local Isar DB
+  /// Fetch dashboard summary from local DB
   /// All calculations are local — typically completes in < 5ms
   Future<DashboardSummary> fetchDashboardSummary({
     required DashboardParams params,
@@ -52,7 +45,7 @@ class DashboardIsarDataSource {
 
     // Execute ALL local queries in parallel for maximum speed
     final results = await Future.wait([
-      // Counts — instant from Isar (0-5)
+      // Counts — instant from the local database (0-5)
       CustomerOfflineController.instance.getTotalCount(),
       ProductOfflineController.instance.getTotalCount(),
       SupplierOfflineController.instance.getTotalCount(),
@@ -106,7 +99,7 @@ class DashboardIsarDataSource {
 
     stopwatch.stop();
     debugPrint(
-      '[DashboardIsarDS] Data loaded in ${stopwatch.elapsedMicroseconds}μs '
+      '[DashboardLocal] Data loaded in ${stopwatch.elapsedMicroseconds}μs '
       '(${stopwatch.elapsedMilliseconds}ms) | '
       'GrossSales: ${salesData.grossSales.toStringAsFixed(0)}, '
       'Returns: ${salesData.totalReturns.toStringAsFixed(0)}, '
@@ -150,8 +143,8 @@ class DashboardIsarDataSource {
   }
 
   /// Create a reactive stream that emits new DashboardSummary whenever
-  /// bills, purchases, or batches change in the local Isar DB.
-  /// Uses Isar's watchLazy() + debounce to avoid excessive recalculations.
+  /// bills, purchases, or batches change in the local DB.
+  /// Uses table update watches + debounce to avoid excessive recalculations.
   ///
   /// Each stream manages its OWN debounce timer and subscriptions to prevent
   /// race conditions when multiple streams are active (e.g., filter changes).
@@ -172,10 +165,10 @@ class DashboardIsarDataSource {
             controller.add(initial);
           }
         } catch (e) {
-          debugPrint('[DashboardIsarDS] Error fetching initial data: $e');
+          debugPrint('[DashboardLocal] Error fetching initial data: $e');
         }
 
-        // Watch Isar collections for changes — uses local timer
+        // Watch local tables for changes — uses local timer
         void onCollectionChanged() {
           localDebounceTimer?.cancel();
           localDebounceTimer = Timer(
@@ -187,7 +180,7 @@ class DashboardIsarDataSource {
                   controller.add(updated);
                 }
               } catch (e) {
-                debugPrint('[DashboardIsarDS] Error in watch update: $e');
+                debugPrint('[DashboardLocal] Error in watch update: $e');
               }
             },
           );
@@ -195,48 +188,24 @@ class DashboardIsarDataSource {
 
         // Watch ALL relevant collections for complete real-time updates
         // Bills, purchases, and batches for financial data
-        localSubs.add(
-          _isar.billEntitys.watchLazy().listen((_) => onCollectionChanged()),
-        );
-        localSubs.add(
-          _isar.purchaseEntitys.watchLazy().listen(
-            (_) => onCollectionChanged(),
-          ),
-        );
-        localSubs.add(
-          _isar.purchaseBatchEntitys.watchLazy().listen(
-            (_) => onCollectionChanged(),
-          ),
-        );
-        // Customers, products, suppliers, companies for count stats
-        localSubs.add(
-          _isar.customerEntitys.watchLazy().listen(
-            (_) => onCollectionChanged(),
-          ),
-        );
-        localSubs.add(
-          _isar.productEntitys.watchLazy().listen((_) => onCollectionChanged()),
-        );
-        localSubs.add(
-          _isar.supplierEntitys.watchLazy().listen(
-            (_) => onCollectionChanged(),
-          ),
-        );
-        localSubs.add(
-          _isar.companyEntitys.watchLazy().listen((_) => onCollectionChanged()),
-        );
-        // Event orders for real-time event/order updates
-        localSubs.add(
-          _isar.eventOrderEntitys.watchLazy().listen(
-            (_) => onCollectionChanged(),
-          ),
-        );
-        // Stock ledger for purchase return updates
-        localSubs.add(
-          _isar.stockLedgerEntitys.watchLazy().listen(
-            (_) => onCollectionChanged(),
-          ),
-        );
+        final db = LocalDatabase.instance.db;
+        void watchTable(ResultSetImplementation<dynamic, dynamic> table) {
+          localSubs.add(
+            db
+                .tableUpdates(TableUpdateQuery.onTable(table))
+                .listen((_) => onCollectionChanged()),
+          );
+        }
+
+        watchTable(db.billRecords);
+        watchTable(db.purchaseRecords);
+        watchTable(db.purchaseBatchRecords);
+        watchTable(db.customerRecords);
+        watchTable(db.productRecords);
+        watchTable(db.supplierRecords);
+        watchTable(db.companyRecords);
+        watchTable(db.eventOrderRecords);
+        watchTable(db.stockLedgerRecords);
       },
       onCancel: () {
         localDebounceTimer?.cancel();
@@ -362,13 +331,14 @@ class DashboardIsarDataSource {
     final end = endDate ?? DateTime.now().add(const Duration(days: 1));
 
     // Query all PURCHASE_RETURN entries, then filter by date in-memory
-    // to avoid complex Isar filter chain issues
-    final allReturnEntries = await _isar.stockLedgerEntitys
-        .filter()
-        .ledgerTypeEqualTo(LedgerTransactionType.PURCHASE_RETURN)
-        .not()
-        .syncStatusEqualTo(LedgerSyncStatus.deleted)
-        .findAll();
+    // to avoid complex local database filter chain issues
+    final allReturnEntries = (await LocalDatabase.instance.db.loadLedger())
+        .where(
+          (entry) =>
+              entry.ledgerType == LedgerTransactionType.PURCHASE_RETURN &&
+              entry.syncStatus != LedgerSyncStatus.deleted,
+        )
+        .toList();
 
     double totalAmount = 0;
     int totalQty = 0;
@@ -388,7 +358,7 @@ class DashboardIsarDataSource {
     }
 
     debugPrint(
-      '[DashboardIsarDS] PurchaseReturns: ${allReturnEntries.length} total entries, '
+      '[DashboardLocal] PurchaseReturns: ${allReturnEntries.length} total entries, '
       '${returnIds.length} in period, amount: ${totalAmount.toStringAsFixed(0)}, qty: $totalQty',
     );
 
@@ -405,13 +375,14 @@ class DashboardIsarDataSource {
   /// Sum of (quantityRemaining × purchasePrice) for all unconsumed batches.
   /// This is the accurate FIFO-based stock valuation.
   Future<_StockResult> _getStockDataFromBatches() async {
-    // Query unconsumed batches directly from Isar
-    final batches = await _isar.purchaseBatchEntitys
-        .filter()
-        .isConsumedEqualTo(false)
-        .not()
-        .syncStatusEqualTo(BatchSyncStatus.deleted)
-        .findAll();
+    // Query unconsumed batches directly from the local database
+    final batches = (await LocalDatabase.instance.db.loadBatches())
+        .where(
+          (batch) =>
+              !batch.isConsumed &&
+              batch.syncStatus != BatchSyncStatus.deleted,
+        )
+        .toList();
 
     double stockValue = 0;
     int lowStockCount = 0;
@@ -444,17 +415,14 @@ class DashboardIsarDataSource {
   /// This mirrors enhanced_customer_page._entityToMap() logic exactly.
   Future<double> _getTotalPendingAmount() async {
     // 1. Get all customers
-    final customers = await _isar.customerEntitys
-        .filter()
-        .isDeletedEqualTo(false)
-        .findAll();
+    final customers = (await LocalDatabase.instance.db.loadCustomers())
+        .where((customer) => !customer.isDeleted)
+        .toList();
 
     // 2. Build event pending map per customer (same as enhanced_customer_page)
-    final allOrders = await _isar.eventOrderEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(EventOrderSyncStatus.deleted)
-        .findAll();
+    final allOrders = (await LocalDatabase.instance.db.loadEventOrders())
+        .where((order) => order.syncStatus != EventOrderSyncStatus.deleted)
+        .toList();
 
     final eventPendingByCustomer = <String, double>{};
     for (final order in allOrders) {
@@ -485,15 +453,13 @@ class DashboardIsarDataSource {
 
   // ==================== EVENT ORDER CALCULATION ====================
 
-  /// Get event/order statistics from Isar
+  /// Get event/order statistics from the local database
   /// Returns total count, upcoming events, pending orders, and financial totals
   Future<_EventOrderResult> _getEventOrderData() async {
     // Get all non-deleted event orders
-    final allOrders = await _isar.eventOrderEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(EventOrderSyncStatus.deleted)
-        .findAll();
+    final allOrders = (await LocalDatabase.instance.db.loadEventOrders())
+        .where((order) => order.syncStatus != EventOrderSyncStatus.deleted)
+        .toList();
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);

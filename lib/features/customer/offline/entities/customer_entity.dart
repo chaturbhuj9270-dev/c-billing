@@ -1,7 +1,4 @@
-import 'package:isar_community/isar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
-
-part 'customer_entity.g.dart';
 
 /// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTime(dynamic value) {
@@ -12,22 +9,19 @@ DateTime? _parseDateTime(dynamic value) {
   return null;
 }
 
-/// Isar Collection for Customer with offline-first support
+/// Local record for Customer with offline-first support
 /// Designed for high-performance CRUD operations with proper indexing
-@collection
 class CustomerEntity {
-  /// Auto-generated Isar ID
-  Id id = Isar.autoIncrement;
+  /// Local row id
+  int id = 0;
 
   /// Server-side ID (null for locally created, not yet synced records)
-  @Index()
   String? serverId;
 
   /// Customer name
   String name;
 
   /// Mobile number (indexed for fast lookup)
-  @Index(unique: true, caseSensitive: false)
   String mobile;
 
   /// Address (optional)
@@ -43,15 +37,12 @@ class CustomerEntity {
   double totalPurchases;
 
   /// Sync status - false means pending sync with server
-  @Index()
   bool isSynced;
 
   /// Soft delete flag - true means marked for deletion
-  @Index()
   bool isDeleted;
 
   /// Last update timestamp for conflict resolution
-  @Index()
   DateTime updatedAt;
 
   /// Created timestamp
@@ -197,7 +188,7 @@ class CustomerEntity {
 
   /// Copy with modifications
   CustomerEntity copyWith({
-    Id? id,
+    int? id,
     String? serverId,
     String? name,
     String? mobile,

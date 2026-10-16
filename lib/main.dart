@@ -12,7 +12,7 @@ import 'core/services/event_order_settings_service.dart';
 import 'core/services/purchase_report_settings_service.dart';
 import 'core/services/bill_report_settings_service.dart';
 import 'core/services/stock_report_settings_service.dart';
-import 'core/services/isar_service.dart';
+import 'core/services/local_database.dart';
 import 'core/services/error_logging_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/customer/data/services/customer_sync_service.dart';
@@ -58,7 +58,7 @@ Future<void> initializeServices() async {
     _safeInit(() => di.init(), 'DI'),
     _safeInit(() => CredentialsManager().init(), 'CredentialsManager'),
     _safeInit(() => LanguageService.instance.init(), 'LanguageService'),
-    _safeInit(() => IsarService.instance.initialize(), 'Isar'),
+    _safeInit(() => LocalDatabase.instance.initialize(), 'LocalDatabase'),
   ]);
 
   // These can run in background after basic services are ready

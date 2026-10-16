@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'isar_service.dart';
+import 'local_database.dart';
 import 'session_manager.dart';
 import 'credentials_manager.dart';
 
@@ -30,7 +30,7 @@ class LogoutService {
       await CredentialsManager().clearCredentials();
       debugPrint('[LogoutService] Credentials cleared');
 
-      // 3. Clear ALL local Isar data - THIS IS CRITICAL FOR SECURITY
+      // 3. Clear ALL local database data - THIS IS CRITICAL FOR SECURITY
       await _clearAllLocalData();
       debugPrint('[LogoutService] Local data cleared');
 
@@ -57,15 +57,15 @@ class LogoutService {
     }
   }
 
-  /// Clear all local Isar data
+  /// Clear all local database data
   Future<void> _clearAllLocalData() async {
     try {
-      if (IsarService.instance.isInitialized) {
-        await IsarService.instance.clearAllData();
-        debugPrint('[LogoutService] Isar data cleared successfully');
+      if (LocalDatabase.instance.isInitialized) {
+        await LocalDatabase.instance.clearAllData();
+        debugPrint('[LogoutService] Local data cleared successfully');
       }
     } catch (e) {
-      debugPrint('[LogoutService] Error clearing Isar data: $e');
+      debugPrint('[LogoutService] Error clearing local data: $e');
     }
   }
 

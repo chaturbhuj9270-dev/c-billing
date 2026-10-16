@@ -1,8 +1,8 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:isar_community/isar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
-import '../../../../core/services/isar_service.dart';
+import '../../../../core/database/app_database.dart';
+import '../../../../core/database/local_store.dart';
+import '../../../../core/services/local_database.dart';
 import '../entities/product_entity.dart';
 
 /// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
@@ -20,25 +20,32 @@ DateTime? _parseDateTime(dynamic value) {
 /// Key features:
 /// - Immediate local saves (no network blocking)
 /// - Proper syncStatus management for delta sync
-/// - High-performance indexed queries
 /// - Reactive streams for UI updates
 class ProductOfflineController extends ChangeNotifier {
   static ProductOfflineController? _instance;
 
-  Isar get _isar => IsarService.instance.isar;
+  AppDatabase get _db => LocalDatabase.instance.db;
 
   ProductOfflineController._();
 
-  /// Get the singleton instance
   static ProductOfflineController get instance {
     _instance ??= ProductOfflineController._();
     return _instance!;
   }
 
-  // ==================== CREATE ====================
+  List<ProductEntity> _byName(Iterable<ProductEntity> products) {
+    final list = products.toList();
+    list.sort((a, b) => a.name.compareTo(b.name));
+    return list;
+  }
 
-  /// Check if a product with the same name and company already exists
-  /// Returns the existing product if found, null otherwise
+  Future<ProductEntity?> _findById(int id) async {
+    for (final product in await _db.loadProducts()) {
+      if (product.id == id) return product;
+    }
+    return null;
+  }
+
   Future<ProductEntity?> findDuplicateProduct(
     String name,
     String companyName,
@@ -46,14 +53,8 @@ class ProductOfflineController extends ChangeNotifier {
     final normalizedName = name.trim().toLowerCase();
     final normalizedCompany = companyName.trim().toLowerCase();
 
-    // Search for product with matching name and company (case-insensitive)
-    final products = await _isar.productEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(SyncStatus.deleted)
-        .findAll();
-
-    for (final product in products) {
+    for (final product in await _db.loadProducts()) {
+      if (product.syncStatus == SyncStatus.deleted) continue;
       if (product.name.trim().toLowerCase() == normalizedName &&
           product.companyName.trim().toLowerCase() == normalizedCompany) {
         return product;
@@ -62,31 +63,22 @@ class ProductOfflineController extends ChangeNotifier {
     return null;
   }
 
-  /// Get the next available product code (indexNo).
-  /// Scans all non-deleted products and returns max(indexNo) + 1.
-  /// If no products exist, starts at 1.
   Future<int> _getNextIndexNo() async {
-    final allProducts = await _isar.productEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(SyncStatus.deleted)
-        .findAll();
+    final allProducts = (await _db.loadProducts())
+        .where((product) => product.syncStatus != SyncStatus.deleted)
+        .toList();
 
     if (allProducts.isEmpty) return 1;
 
-    int maxIndex = 0;
-    for (final p in allProducts) {
-      if (p.indexNo > maxIndex) {
-        maxIndex = p.indexNo;
+    var maxIndex = 0;
+    for (final product in allProducts) {
+      if (product.indexNo > maxIndex) {
+        maxIndex = product.indexNo;
       }
     }
     return maxIndex + 1;
   }
 
-  /// Add a new product locally (will be synced later)
-  /// Sets syncStatus = NEW, does NOT call API
-  /// Throws exception if product with same name+company already exists
-  /// Automatically generates indexNo (product code) if not provided or 0.
   Future<ProductEntity> addProduct({
     int indexNo = 0,
     required String name,
@@ -111,7 +103,6 @@ class ProductOfflineController extends ChangeNotifier {
   }) async {
     debugPrint('[ProductOffline] Adding product: $name');
 
-    // Check for duplicate product (same name + company)
     if (!skipDuplicateCheck) {
       final existingProduct = await findDuplicateProduct(name, companyName);
       if (existingProduct != null) {
@@ -124,7 +115,6 @@ class ProductOfflineController extends ChangeNotifier {
       }
     }
 
-    // Auto-generate product code if not provided
     final effectiveIndexNo = indexNo > 0 ? indexNo : await _getNextIndexNo();
     debugPrint('[ProductOffline] Assigned product code: $effectiveIndexNo');
 
@@ -139,7 +129,7 @@ class ProductOfflineController extends ChangeNotifier {
       currentStock: currentStock,
       unit: unit,
       isActive: isActive,
-      syncStatus: SyncStatus.newRecord, // Mark as NEW for sync
+      syncStatus: SyncStatus.newRecord,
       description: description,
       imageUrl: imageUrl,
       minStockLevel: minStockLevel,
@@ -151,130 +141,103 @@ class ProductOfflineController extends ChangeNotifier {
       customFieldsJson: customFieldsJson,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.productEntitys.put(product);
-    });
+    await _db.saveProduct(product);
 
     debugPrint('[ProductOffline] Product saved with ID: ${product.id}');
     notifyListeners();
     return product;
   }
 
-  // ==================== READ ====================
-
-  /// Get all active (non-deleted) products
-  /// Uses indexed query for performance
   Future<List<ProductEntity>> getAllProducts() async {
-    return await _isar.productEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(SyncStatus.deleted)
-        .sortByName()
-        .findAll();
+    return _byName(
+      (await _db.loadProducts()).where(
+        (product) => product.syncStatus != SyncStatus.deleted,
+      ),
+    );
   }
 
-  /// Watch all active products (reactive stream for UI)
-  /// Fires immediately and on any changes
   Stream<List<ProductEntity>> watchAllProducts() {
-    return _isar.productEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(SyncStatus.deleted)
-        .sortByName()
-        .watch(fireImmediately: true);
+    return _db.watchProducts().map(
+      (rows) => _byName(
+        rows.where((product) => product.syncStatus != SyncStatus.deleted),
+      ),
+    );
   }
 
-  /// Get product by local Isar ID
-  Future<ProductEntity?> getProductById(Id id) async {
-    return await _isar.productEntitys.get(id);
-  }
+  Future<ProductEntity?> getProductById(int id) => _findById(id);
 
-  /// Get product by server ID
   Future<ProductEntity?> getProductByServerId(String serverId) async {
-    return await _isar.productEntitys
-        .filter()
-        .serverIdEqualTo(serverId)
-        .findFirst();
+    for (final product in await _db.loadProducts()) {
+      if (product.serverId == serverId) return product;
+    }
+    return null;
   }
 
-  /// Get product by barcode (fast indexed lookup)
   Future<ProductEntity?> getProductByBarcode(String barcode) async {
-    return await _isar.productEntitys
-        .filter()
-        .barcodeEqualTo(barcode)
-        .not()
-        .syncStatusEqualTo(SyncStatus.deleted)
-        .findFirst();
+    for (final product in await _db.loadProducts()) {
+      if (product.barcode == barcode &&
+          product.syncStatus != SyncStatus.deleted) {
+        return product;
+      }
+    }
+    return null;
   }
 
-  /// Get product by index number
   Future<ProductEntity?> getProductByIndexNo(int indexNo) async {
-    return await _isar.productEntitys
-        .filter()
-        .indexNoEqualTo(indexNo)
-        .not()
-        .syncStatusEqualTo(SyncStatus.deleted)
-        .findFirst();
+    for (final product in await _db.loadProducts()) {
+      if (product.indexNo == indexNo &&
+          product.syncStatus != SyncStatus.deleted) {
+        return product;
+      }
+    }
+    return null;
   }
 
-  /// Search products by name (case-insensitive, indexed)
   Future<List<ProductEntity>> searchByName(String query) async {
     if (query.isEmpty) return getAllProducts();
-
-    return await _isar.productEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(SyncStatus.deleted)
-        .nameContains(query, caseSensitive: false)
-        .sortByName()
-        .findAll();
+    final needle = query.toLowerCase();
+    return _byName(
+      (await _db.loadProducts()).where(
+        (product) =>
+            product.syncStatus != SyncStatus.deleted &&
+            product.name.toLowerCase().contains(needle),
+      ),
+    );
   }
 
-  /// Search products by name or barcode
   Future<List<ProductEntity>> searchProducts(String query) async {
     if (query.isEmpty) return getAllProducts();
-
-    return await _isar.productEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(SyncStatus.deleted)
-        .group(
-          (q) => q
-              .nameContains(query, caseSensitive: false)
-              .or()
-              .barcodeContains(query),
-        )
-        .sortByName()
-        .findAll();
+    final needle = query.toLowerCase();
+    return _byName(
+      (await _db.loadProducts()).where((product) {
+        if (product.syncStatus == SyncStatus.deleted) return false;
+        final barcode = product.barcode ?? '';
+        return product.name.toLowerCase().contains(needle) ||
+            barcode.contains(query);
+      }),
+    );
   }
 
-  /// Get products by category
   Future<List<ProductEntity>> getProductsByCategory(String category) async {
-    return await _isar.productEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(SyncStatus.deleted)
-        .categoryEqualTo(category)
-        .sortByName()
-        .findAll();
+    return _byName(
+      (await _db.loadProducts()).where(
+        (product) =>
+            product.syncStatus != SyncStatus.deleted &&
+            product.category == category,
+      ),
+    );
   }
 
-  /// Get low stock products
   Future<List<ProductEntity>> getLowStockProducts() async {
     final products = await getAllProducts();
-    return products.where((p) {
-      if (p.minStockLevel == null) return false;
-      return p.currentStock <= p.minStockLevel!;
+    return products.where((product) {
+      if (product.minStockLevel == null) return false;
+      return product.currentStock <= product.minStockLevel!;
     }).toList();
   }
 
-  // ==================== UPDATE ====================
-
-  /// Update an existing product
-  /// If syncStatus was SYNCED, changes to UPDATED
-  /// If syncStatus was NEW, keeps as NEW (not yet on server)
   Future<ProductEntity?> updateProduct({
-    required Id id,
+    required int id,
     int? indexNo,
     String? name,
     String? companyName,
@@ -293,25 +256,18 @@ class ProductOfflineController extends ChangeNotifier {
     String? hsnCode,
     String? customFieldsJson,
   }) async {
-    final existing = await _isar.productEntitys.get(id);
+    final existing = await _findById(id);
     if (existing == null) {
       debugPrint('[ProductOffline] Product not found: $id');
       return null;
     }
 
-    // Determine new syncStatus:
-    // - If currently NEW → stay NEW (never synced)
-    // - If currently SYNCED → change to UPDATED
-    // - If currently UPDATED → stay UPDATED
-    // - If currently DELETED → this shouldn't happen, but keep DELETED
-    SyncStatus newSyncStatus;
+    final SyncStatus newSyncStatus;
     switch (existing.syncStatus) {
       case SyncStatus.newRecord:
         newSyncStatus = SyncStatus.newRecord;
         break;
       case SyncStatus.synced:
-        newSyncStatus = SyncStatus.updated;
-        break;
       case SyncStatus.updated:
         newSyncStatus = SyncStatus.updated;
         break;
@@ -342,9 +298,7 @@ class ProductOfflineController extends ChangeNotifier {
       updatedAt: DateTime.now(),
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.productEntitys.put(updated);
-    });
+    await _db.saveProduct(updated);
 
     debugPrint(
       '[ProductOffline] Product updated: ${updated.id}, syncStatus: ${updated.syncStatus}',
@@ -353,31 +307,23 @@ class ProductOfflineController extends ChangeNotifier {
     return updated;
   }
 
-  /// Update stock quantity only (common operation)
-  Future<ProductEntity?> updateStock(Id id, int newQuantity) async {
-    return await updateProduct(id: id, currentStock: newQuantity);
+  Future<ProductEntity?> updateStock(int id, int newQuantity) async {
+    return updateProduct(id: id, currentStock: newQuantity);
   }
 
-  /// Adjust stock (add/subtract)
-  Future<ProductEntity?> adjustStock(Id id, int adjustment) async {
-    final existing = await _isar.productEntitys.get(id);
+  Future<ProductEntity?> adjustStock(int id, int adjustment) async {
+    final existing = await _findById(id);
     if (existing == null) return null;
 
     final newQuantity = existing.currentStock + adjustment;
-    return await updateProduct(id: id, currentStock: newQuantity);
+    return updateProduct(id: id, currentStock: newQuantity);
   }
 
-  /// Decrement stock by product server ID (used when creating bills)
-  /// Reduces stock by the specified quantity
   Future<ProductEntity?> decrementStock(
     String productServerId,
     int quantity,
   ) async {
-    // First find the product by server ID
-    final existing = await _isar.productEntitys
-        .filter()
-        .serverIdEqualTo(productServerId)
-        .findFirst();
+    final existing = await getProductByServerId(productServerId);
 
     if (existing == null) {
       debugPrint(
@@ -392,20 +338,14 @@ class ProductOfflineController extends ChangeNotifier {
     debugPrint(
       '[ProductOffline] Decrementing stock for ${existing.name}: ${existing.currentStock} - $quantity = $newQuantity',
     );
-    return await updateProduct(id: existing.id, currentStock: newQuantity);
+    return updateProduct(id: existing.id, currentStock: newQuantity);
   }
 
-  /// Increment stock by product server ID (used when restocking or returns)
-  /// Increases stock by the specified quantity
   Future<ProductEntity?> incrementStock(
     String productServerId,
     int quantity,
   ) async {
-    // First find the product by server ID
-    final existing = await _isar.productEntitys
-        .filter()
-        .serverIdEqualTo(productServerId)
-        .findFirst();
+    final existing = await getProductByServerId(productServerId);
 
     if (existing == null) {
       debugPrint(
@@ -418,95 +358,63 @@ class ProductOfflineController extends ChangeNotifier {
     debugPrint(
       '[ProductOffline] Incrementing stock for ${existing.name}: ${existing.currentStock} + $quantity = $newQuantity',
     );
-    return await updateProduct(id: existing.id, currentStock: newQuantity);
+    return updateProduct(id: existing.id, currentStock: newQuantity);
   }
 
-  // ==================== DELETE ====================
-
-  /// Soft delete a product (marks for deletion, will be synced)
-  /// Does NOT remove from Isar until server confirms deletion
-  Future<void> deleteProduct(Id id) async {
-    final existing = await _isar.productEntitys.get(id);
+  Future<void> deleteProduct(int id) async {
+    final existing = await _findById(id);
     if (existing == null) return;
 
-    // If never synced to server (NEW), we can hard delete immediately
     if (existing.syncStatus == SyncStatus.newRecord) {
       debugPrint('[ProductOffline] Hard deleting NEW product: $id');
-      await _isar.writeTxn(() async {
-        await _isar.productEntitys.delete(id);
-      });
+      await _db.deleteProductById(id);
     } else {
-      // Soft delete - mark for server sync
       debugPrint('[ProductOffline] Soft deleting product: $id');
       final updated = existing.copyWith(
         syncStatus: SyncStatus.deleted,
         updatedAt: DateTime.now(),
       );
-
-      await _isar.writeTxn(() async {
-        await _isar.productEntitys.put(updated);
-      });
+      await _db.saveProduct(updated);
     }
 
     notifyListeners();
   }
 
-  /// Hard delete after confirmed server deletion
-  Future<void> permanentlyDelete(Id id) async {
-    await _isar.writeTxn(() async {
-      await _isar.productEntitys.delete(id);
-    });
+  Future<void> permanentlyDelete(int id) async {
+    await _db.deleteProductById(id);
     notifyListeners();
   }
 
-  // ==================== SYNC HELPERS ====================
-
-  /// Get all products that need to be synced (delta sync)
-  /// Returns products where syncStatus != SYNCED
   Future<List<ProductEntity>> getProductsNeedingSync() async {
-    return await _isar.productEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(SyncStatus.synced)
-        .findAll();
+    return (await _db.loadProducts())
+        .where((product) => product.syncStatus != SyncStatus.synced)
+        .toList();
   }
 
-  /// Get NEW products (need to POST)
   Future<List<ProductEntity>> getNewProducts() async {
-    return await _isar.productEntitys
-        .filter()
-        .syncStatusEqualTo(SyncStatus.newRecord)
-        .findAll();
+    return (await _db.loadProducts())
+        .where((product) => product.syncStatus == SyncStatus.newRecord)
+        .toList();
   }
 
-  /// Get UPDATED products (need to PUT)
   Future<List<ProductEntity>> getUpdatedProducts() async {
-    return await _isar.productEntitys
-        .filter()
-        .syncStatusEqualTo(SyncStatus.updated)
-        .findAll();
+    return (await _db.loadProducts())
+        .where((product) => product.syncStatus == SyncStatus.updated)
+        .toList();
   }
 
-  /// Get DELETED products (need to DELETE on server)
   Future<List<ProductEntity>> getDeletedProducts() async {
-    return await _isar.productEntitys
-        .filter()
-        .syncStatusEqualTo(SyncStatus.deleted)
-        .findAll();
+    return (await _db.loadProducts())
+        .where((product) => product.syncStatus == SyncStatus.deleted)
+        .toList();
   }
 
-  /// Get count of unsynced products
   Future<int> getUnsyncedCount() async {
-    return await _isar.productEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(SyncStatus.synced)
-        .count();
+    return (await getProductsNeedingSync()).length;
   }
 
-  /// Mark product as synced (called after successful server sync)
-  Future<void> markAsSynced(Id id, {String? serverId}) async {
-    final existing = await _isar.productEntitys.get(id);
+  Future<void> markAsSynced(int id, {String? serverId}) async {
+    final existing = await _findById(id);
     if (existing == null) return;
 
     final updated = existing.copyWith(
@@ -514,45 +422,45 @@ class ProductOfflineController extends ChangeNotifier {
       syncStatus: SyncStatus.synced,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.productEntitys.put(updated);
-    });
+    await _db.saveProduct(updated);
   }
 
-  /// Import products from server (for initial sync or refresh)
-  /// Merges by serverId, only updates if server version is newer
   Future<int> importFromServer(
     List<Map<String, dynamic>> serverProducts,
   ) async {
-    int imported = 0;
+    var imported = 0;
 
-    await _isar.writeTxn(() async {
+    await _db.transaction(() async {
       for (final productData in serverProducts) {
         final serverId = productData['id'] as String?;
         if (serverId == null) continue;
 
-        // Check if exists locally by serverId
-        var existing = await _isar.productEntitys
-            .filter()
-            .serverIdEqualTo(serverId)
-            .findFirst();
+        final all = await _db.loadProducts();
+        ProductEntity? existing;
+        for (final product in all) {
+          if (product.serverId == serverId) {
+            existing = product;
+            break;
+          }
+        }
 
-        // Fallback: check by name + companyName (handles locally-created records without serverId yet)
         if (existing == null) {
           final name = (productData['name'] ?? '').toString();
           final companyName = (productData['companyName'] ?? '').toString();
           if (name.isNotEmpty) {
-            existing = await _isar.productEntitys
-                .filter()
-                .nameEqualTo(name, caseSensitive: false)
-                .and()
-                .companyNameEqualTo(companyName, caseSensitive: false)
-                .findFirst();
+            final nameNeedle = name.toLowerCase();
+            final companyNeedle = companyName.toLowerCase();
+            for (final product in all) {
+              if (product.name.toLowerCase() == nameNeedle &&
+                  product.companyName.toLowerCase() == companyNeedle) {
+                existing = product;
+                break;
+              }
+            }
             if (existing != null && existing.serverId == null) {
-              // Link local record with server ID and mark synced
               existing.serverId = serverId;
               existing.syncStatus = SyncStatus.synced;
-              await _isar.productEntitys.put(existing);
+              await _db.saveProduct(existing);
               imported++;
               continue;
             }
@@ -560,22 +468,19 @@ class ProductOfflineController extends ChangeNotifier {
         }
 
         if (existing != null) {
-          // Only update if not locally modified AND server is newer
           if (existing.syncStatus == SyncStatus.synced) {
             final serverUpdatedAt = _parseDateTime(productData['updatedAt']);
             if (serverUpdatedAt != null &&
                 serverUpdatedAt.isAfter(existing.updatedAt)) {
               final updated = ProductEntity.fromServer(productData);
-              updated.id = existing.id; // Keep local ID
-              await _isar.productEntitys.put(updated);
+              updated.id = existing.id;
+              await _db.saveProduct(updated);
               imported++;
             }
           }
-          // If locally modified, don't overwrite - local changes take precedence
         } else {
-          // Create new
           final newProduct = ProductEntity.fromServer(productData);
-          await _isar.productEntitys.put(newProduct);
+          await _db.saveProduct(newProduct);
           imported++;
         }
       }
@@ -589,12 +494,11 @@ class ProductOfflineController extends ChangeNotifier {
     return imported;
   }
 
-  /// Update product with server response (after successful create)
   Future<void> updateWithServerResponse(
-    Id localId,
+    int localId,
     Map<String, dynamic> serverResponse,
   ) async {
-    final existing = await _isar.productEntitys.get(localId);
+    final existing = await _findById(localId);
     if (existing == null) return;
 
     final updated = existing.copyWith(
@@ -602,25 +506,16 @@ class ProductOfflineController extends ChangeNotifier {
       syncStatus: SyncStatus.synced,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.productEntitys.put(updated);
-    });
+    await _db.saveProduct(updated);
   }
 
-  /// Clear all synced deleted records (cleanup after successful server deletion)
   Future<int> clearDeletedRecords() async {
-    final deleted = await _isar.productEntitys
-        .filter()
-        .syncStatusEqualTo(SyncStatus.deleted)
-        .findAll();
-
+    final deleted = await getDeletedProducts();
     if (deleted.isEmpty) return 0;
 
-    // Only remove products that have been confirmed deleted on server
-    // For now, we'll just clear them after sync marks them
-    await _isar.writeTxn(() async {
+    await _db.transaction(() async {
       for (final entity in deleted) {
-        await _isar.productEntitys.delete(entity.id);
+        await _db.deleteProductById(entity.id);
       }
     });
 
@@ -628,32 +523,26 @@ class ProductOfflineController extends ChangeNotifier {
     return deleted.length;
   }
 
-  // ==================== STATISTICS ====================
-
-  /// Get total product count
   Future<int> getTotalCount() async {
-    return await _isar.productEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(SyncStatus.deleted)
-        .count();
+    return (await _db.loadProducts())
+        .where((product) => product.syncStatus != SyncStatus.deleted)
+        .length;
   }
 
-  /// Get total stock value
   Future<double> getTotalStockValue() async {
     final products = await getAllProducts();
     return products.fold<double>(
       0,
-      (total, p) => total + (p.purchasePrice * p.currentStock),
+      (total, product) =>
+          total + (product.purchasePrice * product.currentStock),
     );
   }
 
-  /// Get all unique categories
   Future<List<String>> getAllCategories() async {
     final products = await getAllProducts();
     final categories = products
-        .map((p) => p.category)
-        .where((c) => c.isNotEmpty)
+        .map((product) => product.category)
+        .where((category) => category.isNotEmpty)
         .toSet()
         .toList();
     categories.sort();

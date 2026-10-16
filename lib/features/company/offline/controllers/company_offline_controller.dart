@@ -1,53 +1,43 @@
 import 'package:flutter/foundation.dart';
-import 'package:isar_community/isar.dart';
-import '../../../../core/services/isar_service.dart';
+import '../../../../core/database/app_database.dart';
+import '../../../../core/database/local_store.dart';
+import '../../../../core/services/local_database.dart';
 import '../entities/company_entity.dart';
 
-/// Offline-first controller for Company CRUD operations
-/// All operations go to local Isar first, then sync in background
+/// Offline-first controller for Company CRUD operations.
+/// All operations go to the local database first, then sync in the background.
 class CompanyOfflineController extends ChangeNotifier {
   static CompanyOfflineController? _instance;
 
-  final Isar _isar;
+  final AppDatabase _db;
 
-  CompanyOfflineController._(this._isar);
+  CompanyOfflineController._(this._db);
 
-  /// Get the singleton instance
   static CompanyOfflineController get instance {
-    if (_instance == null) {
-      final isar = IsarService.instance.isar;
-      _instance = CompanyOfflineController._(isar);
-    }
+    _instance ??= CompanyOfflineController._(LocalDatabase.instance.db);
     return _instance!;
   }
 
-  /// Reset instance (for testing)
   @visibleForTesting
   static void resetInstance() {
     _instance = null;
   }
 
-  // ==================== CREATE ====================
+  Future<bool> isCompanyCodeTaken(String code, {int? excludeId}) async {
+    if (code.trim().isEmpty) return false;
 
-  /// Check if a company code already exists (for uniqueness validation)
-  /// Empty codes are allowed (not enforced as unique)
-  Future<bool> isCompanyCodeTaken(String code, {Id? excludeId}) async {
-    if (code.trim().isEmpty) return false; // Empty codes are allowed
-
-    final existing = await _isar.companyEntitys
-        .filter()
-        .companyCodeEqualTo(code, caseSensitive: false)
-        .not()
-        .syncStatusEqualTo(CompanySyncStatus.deleted)
-        .findAll();
+    final needle = code.toLowerCase();
+    final existing = (await _db.loadCompanies()).where(
+      (company) =>
+          company.syncStatus != CompanySyncStatus.deleted &&
+          company.companyCode.toLowerCase() == needle,
+    );
     if (excludeId != null) {
-      return existing.any((e) => e.id != excludeId);
+      return existing.any((company) => company.id != excludeId);
     }
     return existing.isNotEmpty;
   }
 
-  /// Add a new company locally
-  /// Sets syncStatus to NEW for background sync
   Future<CompanyEntity> addCompany({
     required String companyName,
     String companyCode = '',
@@ -55,7 +45,6 @@ class CompanyOfflineController extends ChangeNotifier {
     String contact = '',
     String address = '',
   }) async {
-    // Validate uniqueness of company code only if provided
     if (companyCode.isNotEmpty) {
       final codeTaken = await isCompanyCodeTaken(companyCode);
       if (codeTaken) {
@@ -72,85 +61,70 @@ class CompanyOfflineController extends ChangeNotifier {
       syncStatus: CompanySyncStatus.newRecord,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.companyEntitys.put(company);
-    });
+    await _db.saveCompany(company);
 
     debugPrint('[CompanyOffline] Company added: ${company.id}, status: NEW');
     notifyListeners();
     return company;
   }
 
-  // ==================== READ ====================
-
-  /// Get all companies (excluding deleted)
   Future<List<CompanyEntity>> getAllCompanies() async {
-    return await _isar.companyEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(CompanySyncStatus.deleted)
-        .sortByCompanyName()
-        .findAll();
+    final companies = (await _db.loadCompanies())
+        .where((company) => company.syncStatus != CompanySyncStatus.deleted)
+        .toList();
+    companies.sort((a, b) => a.companyName.compareTo(b.companyName));
+    return companies;
   }
 
-  /// Watch all companies for real-time updates (excluding deleted)
   Stream<List<CompanyEntity>> watchAllCompanies() {
-    return _isar.companyEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(CompanySyncStatus.deleted)
-        .sortByCompanyName()
-        .watch(fireImmediately: true);
+    return _db.watchCompanies().map((rows) {
+      final companies = rows
+          .where((company) => company.syncStatus != CompanySyncStatus.deleted)
+          .toList();
+      companies.sort((a, b) => a.companyName.compareTo(b.companyName));
+      return companies;
+    });
   }
 
-  /// Get company by local Isar ID
-  Future<CompanyEntity?> getCompanyById(Id id) async {
-    return await _isar.companyEntitys.get(id);
+  Future<CompanyEntity?> getCompanyById(int id) async {
+    for (final company in await _db.loadCompanies()) {
+      if (company.id == id) return company;
+    }
+    return null;
   }
 
-  /// Get company by server ID
   Future<CompanyEntity?> getCompanyByServerId(String serverId) async {
-    return await _isar.companyEntitys
-        .filter()
-        .serverIdEqualTo(serverId)
-        .findFirst();
+    for (final company in await _db.loadCompanies()) {
+      if (company.serverId == serverId) return company;
+    }
+    return null;
   }
 
-  /// Get company by contact number (fast indexed lookup)
   Future<CompanyEntity?> getCompanyByContact(String contact) async {
-    return await _isar.companyEntitys
-        .filter()
-        .contactEqualTo(contact)
-        .not()
-        .syncStatusEqualTo(CompanySyncStatus.deleted)
-        .findFirst();
+    for (final company in await _db.loadCompanies()) {
+      if (company.contact == contact &&
+          company.syncStatus != CompanySyncStatus.deleted) {
+        return company;
+      }
+    }
+    return null;
   }
 
-  /// Search companies by name
   Future<List<CompanyEntity>> searchByName(String query) async {
     if (query.isEmpty) return getAllCompanies();
 
-    return await _isar.companyEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(CompanySyncStatus.deleted)
-        .group(
-          (q) => q
-              .companyNameContains(query, caseSensitive: false)
-              .or()
-              .contactContains(query),
-        )
-        .sortByCompanyName()
-        .findAll();
+    final needle = query.toLowerCase();
+    final companies = (await _db.loadCompanies()).where((company) {
+      if (company.syncStatus == CompanySyncStatus.deleted) return false;
+      return company.companyName.toLowerCase().contains(needle) ||
+          company.contact.contains(query);
+    }).toList();
+    companies.sort((a, b) => a.companyName.compareTo(b.companyName));
+    return companies;
   }
 
-  // ==================== UPDATE ====================
-
-  /// Update an existing company
-  /// If syncStatus was SYNCED, changes to UPDATED
-  /// If syncStatus was NEW, keeps as NEW (not yet on server)
   Future<CompanyEntity?> updateCompany({
-    required Id id,
+    required int id,
     String? companyName,
     String? companyCode,
     String? gstCode,
@@ -158,13 +132,12 @@ class CompanyOfflineController extends ChangeNotifier {
     String? address,
     bool? isActive,
   }) async {
-    final existing = await _isar.companyEntitys.get(id);
+    final existing = await getCompanyById(id);
     if (existing == null) {
       debugPrint('[CompanyOffline] Company not found: $id');
       return null;
     }
 
-    // Validate uniqueness of company code if changed
     if (companyCode != null && companyCode != existing.companyCode) {
       final codeTaken = await isCompanyCodeTaken(companyCode, excludeId: id);
       if (codeTaken) {
@@ -172,15 +145,12 @@ class CompanyOfflineController extends ChangeNotifier {
       }
     }
 
-    // Determine new syncStatus
-    CompanySyncStatus newSyncStatus;
+    final CompanySyncStatus newSyncStatus;
     switch (existing.syncStatus) {
       case CompanySyncStatus.newRecord:
         newSyncStatus = CompanySyncStatus.newRecord;
         break;
       case CompanySyncStatus.synced:
-        newSyncStatus = CompanySyncStatus.updated;
-        break;
       case CompanySyncStatus.updated:
         newSyncStatus = CompanySyncStatus.updated;
         break;
@@ -200,9 +170,7 @@ class CompanyOfflineController extends ChangeNotifier {
       updatedAt: DateTime.now(),
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.companyEntitys.put(updated);
-    });
+    await _db.saveCompany(updated);
 
     debugPrint(
       '[CompanyOffline] Company updated: ${updated.id}, syncStatus: ${updated.syncStatus}',
@@ -211,72 +179,48 @@ class CompanyOfflineController extends ChangeNotifier {
     return updated;
   }
 
-  // ==================== DELETE ====================
-
-  /// Soft delete a company (mark for deletion, don't remove from DB)
-  /// This allows background sync to delete from server first
-  Future<void> deleteCompany(Id id) async {
-    final existing = await _isar.companyEntitys.get(id);
+  Future<void> deleteCompany(int id) async {
+    final existing = await getCompanyById(id);
     if (existing == null) {
       debugPrint('[CompanyOffline] Company not found for delete: $id');
       return;
     }
 
-    // If it's a NEW record (never synced), we can hard delete
     if (existing.syncStatus == CompanySyncStatus.newRecord) {
-      await _isar.writeTxn(() async {
-        await _isar.companyEntitys.delete(id);
-      });
+      await _db.deleteCompanyById(id);
       debugPrint(
         '[CompanyOffline] Company hard deleted (was never synced): $id',
       );
     } else {
-      // Mark for deletion - background sync will delete from server
       final deleted = existing.copyWith(
         syncStatus: CompanySyncStatus.deleted,
         updatedAt: DateTime.now(),
       );
-      await _isar.writeTxn(() async {
-        await _isar.companyEntitys.put(deleted);
-      });
+      await _db.saveCompany(deleted);
       debugPrint('[CompanyOffline] Company marked for deletion: $id');
     }
 
     notifyListeners();
   }
 
-  /// Hard delete after successful server deletion
-  Future<void> permanentlyDelete(Id id) async {
-    await _isar.writeTxn(() async {
-      await _isar.companyEntitys.delete(id);
-    });
+  Future<void> permanentlyDelete(int id) async {
+    await _db.deleteCompanyById(id);
     debugPrint('[CompanyOffline] Company permanently deleted: $id');
     notifyListeners();
   }
 
-  // ==================== SYNC HELPERS ====================
-
-  /// Get all companies that need to be synced to server
   Future<List<CompanyEntity>> getCompaniesNeedingSync() async {
-    return await _isar.companyEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(CompanySyncStatus.synced)
-        .findAll();
+    return (await _db.loadCompanies())
+        .where((company) => company.syncStatus != CompanySyncStatus.synced)
+        .toList();
   }
 
-  /// Get count of unsynced companies
   Future<int> getUnsyncedCount() async {
-    return await _isar.companyEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(CompanySyncStatus.synced)
-        .count();
+    return (await getCompaniesNeedingSync()).length;
   }
 
-  /// Mark a company as synced (after successful server sync)
-  Future<void> markAsSynced(Id id, String serverId) async {
-    final existing = await _isar.companyEntitys.get(id);
+  Future<void> markAsSynced(int id, String serverId) async {
+    final existing = await getCompanyById(id);
     if (existing == null) return;
 
     final synced = existing.copyWith(
@@ -284,26 +228,22 @@ class CompanyOfflineController extends ChangeNotifier {
       syncStatus: CompanySyncStatus.synced,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.companyEntitys.put(synced);
-    });
+    await _db.saveCompany(synced);
 
     debugPrint('[CompanyOffline] Company marked as synced: $id -> $serverId');
   }
 
-  /// Import companies from server (initial load or refresh)
-  /// Only updates if server data is newer
   Future<void> importFromServer(
     List<Map<String, dynamic>> serverCompanies,
   ) async {
     debugPrint(
       '[CompanyOffline] Starting import of ${serverCompanies.length} companies',
     );
-    int newCount = 0;
-    int updatedCount = 0;
-    int skippedCount = 0;
+    var newCount = 0;
+    var updatedCount = 0;
+    var skippedCount = 0;
 
-    await _isar.writeTxn(() async {
+    await _db.transaction(() async {
       for (final data in serverCompanies) {
         final serverId = data['id'] as String?;
         final companyName = (data['companyName'] ?? '').toString();
@@ -316,32 +256,39 @@ class CompanyOfflineController extends ChangeNotifier {
           continue;
         }
 
-        // Check if we already have this company by serverId
-        var existing = await _isar.companyEntitys
-            .filter()
-            .serverIdEqualTo(serverId)
-            .findFirst();
+        final all = await _db.loadCompanies();
+        CompanyEntity? existing;
+        for (final company in all) {
+          if (company.serverId == serverId) {
+            existing = company;
+            break;
+          }
+        }
 
-        // Fallback: check by companyName or companyCode (handles locally-created records without serverId yet)
         if (existing == null) {
           final companyCode = (data['companyCode'] ?? '').toString();
           if (companyCode.isNotEmpty) {
-            existing = await _isar.companyEntitys
-                .filter()
-                .companyCodeEqualTo(companyCode, caseSensitive: false)
-                .findFirst();
+            final needle = companyCode.toLowerCase();
+            for (final company in all) {
+              if (company.companyCode.toLowerCase() == needle) {
+                existing = company;
+                break;
+              }
+            }
           }
           if (existing == null && companyName.isNotEmpty) {
-            existing = await _isar.companyEntitys
-                .filter()
-                .companyNameEqualTo(companyName, caseSensitive: false)
-                .findFirst();
+            final needle = companyName.toLowerCase();
+            for (final company in all) {
+              if (company.companyName.toLowerCase() == needle) {
+                existing = company;
+                break;
+              }
+            }
           }
           if (existing != null && existing.serverId == null) {
-            // Link local record with server ID and mark synced
             existing.serverId = serverId;
             existing.syncStatus = CompanySyncStatus.synced;
-            await _isar.companyEntitys.put(existing);
+            await _db.saveCompany(existing);
             debugPrint(
               '[CompanyOffline] Linked local company: $companyName -> $serverId',
             );
@@ -350,21 +297,18 @@ class CompanyOfflineController extends ChangeNotifier {
         }
 
         if (existing == null) {
-          // New company from server
           final company = CompanyEntity.fromServer(data);
-          await _isar.companyEntitys.put(company);
+          await _db.saveCompany(company);
           newCount++;
           debugPrint(
             '[CompanyOffline] Added new company: $companyName ($serverId)',
           );
         } else if (existing.syncStatus == CompanySyncStatus.synced) {
-          // Only update if local is synced (no local changes)
           final updated = CompanyEntity.fromServer(data);
           updated.id = existing.id;
-          await _isar.companyEntitys.put(updated);
+          await _db.saveCompany(updated);
           updatedCount++;
         } else {
-          // Local has changes, don't overwrite
           skippedCount++;
           debugPrint('[CompanyOffline] Skipped (local changes): $companyName');
         }
@@ -375,31 +319,22 @@ class CompanyOfflineController extends ChangeNotifier {
       '[CompanyOffline] Import complete: $newCount new, $updatedCount updated, $skippedCount skipped',
     );
 
-    // Verify total count after import
-    final totalCount = await _isar.companyEntitys.count();
+    final totalCount = await _db.countCompanies();
     debugPrint(
-      '[CompanyOffline] Total companies in Isar after import: $totalCount',
+      '[CompanyOffline] Total companies in local database after import: $totalCount',
     );
 
     notifyListeners();
   }
 
-  // ==================== STATISTICS ====================
-
-  /// Get total company count
   Future<int> getTotalCount() async {
-    return await _isar.companyEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(CompanySyncStatus.deleted)
-        .count();
+    return (await _db.loadCompanies())
+        .where((company) => company.syncStatus != CompanySyncStatus.deleted)
+        .length;
   }
 
-  /// Clear all local companies (use with caution)
   Future<void> clearAll() async {
-    await _isar.writeTxn(() async {
-      await _isar.companyEntitys.clear();
-    });
+    await _db.clearCompanies();
     debugPrint('[CompanyOffline] All companies cleared');
     notifyListeners();
   }

@@ -1,7 +1,4 @@
-import 'package:isar_community/isar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
-
-part 'purchase_entity.g.dart';
 
 /// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTime(dynamic value) {
@@ -28,33 +25,28 @@ enum PurchaseSyncStatus {
   synced,
 }
 
-/// Isar Collection for Purchase with offline-first support
+/// Local record for Purchase with offline-first support
 /// Optimized with proper indexes for high-performance queries
-@collection
 class PurchaseEntity {
-  /// Auto-generated Isar ID
-  Id id = Isar.autoIncrement;
+  /// Local row id
+  int id = 0;
 
   /// Server-side ID (null for locally created, not yet synced records)
-  @Index()
   String? serverId;
 
   /// Product ID (indexed for fast lookup)
-  @Index()
   String productId;
 
   /// Product name (for display purposes)
   String productName;
 
   /// Supplier ID (indexed for filtering)
-  @Index()
   String? supplierId;
 
   /// Supplier name (for display purposes)
   String? supplierName;
 
   /// Company ID (indexed for filtering)
-  @Index()
   String? companyId;
 
   /// Company name (for display purposes)
@@ -88,12 +80,9 @@ class PurchaseEntity {
   String? notes;
 
   /// Sync status for delta sync
-  @Index()
-  @Enumerated(EnumType.ordinal)
   PurchaseSyncStatus syncStatus;
 
   /// Created timestamp (indexed for sorting)
-  @Index()
   DateTime createdAt;
 
   /// Last update timestamp for conflict resolution
@@ -243,7 +232,7 @@ class PurchaseEntity {
 
   /// Copy with modifications
   PurchaseEntity copyWith({
-    Id? id,
+    int? id,
     String? serverId,
     String? productId,
     String? productName,

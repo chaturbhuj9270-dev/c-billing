@@ -1,36 +1,41 @@
 import 'package:flutter/foundation.dart';
-import 'package:isar_community/isar.dart';
-import '../../../../core/services/isar_service.dart';
+import '../../../../core/database/app_database.dart';
+import '../../../../core/database/local_store.dart';
+import '../../../../core/services/local_database.dart';
 import '../entities/purchase_entity.dart';
 
-/// Offline-first controller for Purchase CRUD operations
-/// All operations go to local Isar first, then sync in background
+/// Offline-first controller for Purchase CRUD operations.
+/// All operations go to the local database first, then sync in the background.
 class PurchaseOfflineController extends ChangeNotifier {
   static PurchaseOfflineController? _instance;
-  
-  final Isar _isar;
 
-  PurchaseOfflineController._(this._isar);
+  final AppDatabase _db;
 
-  /// Get the singleton instance
+  PurchaseOfflineController._(this._db);
+
   static PurchaseOfflineController get instance {
-    if (_instance == null) {
-      final isar = IsarService.instance.isar;
-      _instance = PurchaseOfflineController._(isar);
-    }
+    _instance ??= PurchaseOfflineController._(LocalDatabase.instance.db);
     return _instance!;
   }
 
-  /// Reset instance (for testing)
   @visibleForTesting
   static void resetInstance() {
     _instance = null;
   }
 
-  // ==================== CREATE ====================
+  List<PurchaseEntity> _newestFirst(Iterable<PurchaseEntity> purchases) {
+    final list = purchases.toList();
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
+  }
 
-  /// Add a new purchase locally
-  /// Sets syncStatus to NEW for background sync
+  Future<PurchaseEntity?> _findById(int id) async {
+    for (final purchase in await _db.loadPurchases()) {
+      if (purchase.id == id) return purchase;
+    }
+    return null;
+  }
+
   Future<PurchaseEntity> addPurchase({
     required String productId,
     required String productName,
@@ -65,101 +70,80 @@ class PurchaseOfflineController extends ChangeNotifier {
       syncStatus: PurchaseSyncStatus.newRecord,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.purchaseEntitys.put(purchase);
-    });
+    await _db.savePurchase(purchase);
 
-    debugPrint('[PurchaseOffline] Purchase added: ${purchase.id}, product: ${purchase.productName}, status: NEW');
+    debugPrint(
+      '[PurchaseOffline] Purchase added: ${purchase.id}, product: ${purchase.productName}, status: NEW',
+    );
     notifyListeners();
     return purchase;
   }
 
-  // ==================== READ ====================
-
-  /// Get all purchases (excluding deleted)
   Future<List<PurchaseEntity>> getAllPurchases() async {
-    return await _isar.purchaseEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(PurchaseSyncStatus.deleted)
-        .sortByCreatedAtDesc()
-        .findAll();
+    return _newestFirst(
+      (await _db.loadPurchases()).where(
+        (purchase) => purchase.syncStatus != PurchaseSyncStatus.deleted,
+      ),
+    );
   }
 
-  /// Watch all purchases for real-time updates (excluding deleted)
   Stream<List<PurchaseEntity>> watchAllPurchases() {
-    return _isar.purchaseEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(PurchaseSyncStatus.deleted)
-        .sortByCreatedAtDesc()
-        .watch(fireImmediately: true);
+    return _db.watchPurchases().map(
+      (rows) => _newestFirst(
+        rows.where(
+          (purchase) => purchase.syncStatus != PurchaseSyncStatus.deleted,
+        ),
+      ),
+    );
   }
 
-  /// Get purchase by local Isar ID
-  Future<PurchaseEntity?> getPurchaseById(Id id) async {
-    return await _isar.purchaseEntitys.get(id);
-  }
+  Future<PurchaseEntity?> getPurchaseById(int id) => _findById(id);
 
-  /// Get purchase by server ID
   Future<PurchaseEntity?> getPurchaseByServerId(String serverId) async {
-    return await _isar.purchaseEntitys
-        .filter()
-        .serverIdEqualTo(serverId)
-        .findFirst();
+    for (final purchase in await _db.loadPurchases()) {
+      if (purchase.serverId == serverId) return purchase;
+    }
+    return null;
   }
 
-  /// Get purchases by product ID
   Future<List<PurchaseEntity>> getPurchasesByProductId(String productId) async {
-    return await _isar.purchaseEntitys
-        .filter()
-        .productIdEqualTo(productId)
-        .not()
-        .syncStatusEqualTo(PurchaseSyncStatus.deleted)
-        .sortByCreatedAtDesc()
-        .findAll();
+    return _newestFirst(
+      (await _db.loadPurchases()).where(
+        (purchase) =>
+            purchase.productId == productId &&
+            purchase.syncStatus != PurchaseSyncStatus.deleted,
+      ),
+    );
   }
 
-  /// Get purchases by supplier ID
-  Future<List<PurchaseEntity>> getPurchasesBySupplierId(String supplierId) async {
-    return await _isar.purchaseEntitys
-        .filter()
-        .supplierIdEqualTo(supplierId)
-        .not()
-        .syncStatusEqualTo(PurchaseSyncStatus.deleted)
-        .sortByCreatedAtDesc()
-        .findAll();
+  Future<List<PurchaseEntity>> getPurchasesBySupplierId(
+    String supplierId,
+  ) async {
+    return _newestFirst(
+      (await _db.loadPurchases()).where(
+        (purchase) =>
+            purchase.supplierId == supplierId &&
+            purchase.syncStatus != PurchaseSyncStatus.deleted,
+      ),
+    );
   }
 
-  /// Get purchases by company ID
   Future<List<PurchaseEntity>> getPurchasesByCompanyId(String companyId) async {
-    return await _isar.purchaseEntitys
-        .filter()
-        .companyIdEqualTo(companyId)
-        .not()
-        .syncStatusEqualTo(PurchaseSyncStatus.deleted)
-        .sortByCreatedAtDesc()
-        .findAll();
+    return _newestFirst(
+      (await _db.loadPurchases()).where(
+        (purchase) =>
+            purchase.companyId == companyId &&
+            purchase.syncStatus != PurchaseSyncStatus.deleted,
+      ),
+    );
   }
 
-  /// Get recent purchases (last N)
   Future<List<PurchaseEntity>> getRecentPurchases({int limit = 50}) async {
-    return await _isar.purchaseEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(PurchaseSyncStatus.deleted)
-        .sortByCreatedAtDesc()
-        .limit(limit)
-        .findAll();
+    return (await getAllPurchases()).take(limit).toList();
   }
 
-  // ==================== UPDATE ====================
-
-  /// Update an existing purchase
-  /// If syncStatus was SYNCED, changes to UPDATED
-  /// If syncStatus was NEW, keeps as NEW (not yet on server)
   Future<PurchaseEntity?> updatePurchase({
-    required Id id,
+    required int id,
     int? quantity,
     String? unit,
     double? purchasePrice,
@@ -169,21 +153,18 @@ class PurchaseOfflineController extends ChangeNotifier {
     int? warrantyMonths,
     String? notes,
   }) async {
-    final existing = await _isar.purchaseEntitys.get(id);
+    final existing = await _findById(id);
     if (existing == null) {
       debugPrint('[PurchaseOffline] Purchase not found: $id');
       return null;
     }
 
-    // Determine new syncStatus
-    PurchaseSyncStatus newSyncStatus;
+    final PurchaseSyncStatus newSyncStatus;
     switch (existing.syncStatus) {
       case PurchaseSyncStatus.newRecord:
         newSyncStatus = PurchaseSyncStatus.newRecord;
         break;
       case PurchaseSyncStatus.synced:
-        newSyncStatus = PurchaseSyncStatus.updated;
-        break;
       case PurchaseSyncStatus.updated:
         newSyncStatus = PurchaseSyncStatus.updated;
         break;
@@ -192,7 +173,6 @@ class PurchaseOfflineController extends ChangeNotifier {
         break;
     }
 
-    // Recalculate total if quantity or price changed
     final newQuantity = quantity ?? existing.quantity;
     final newPrice = purchasePrice ?? existing.purchasePrice;
     final newTotal = newQuantity * newPrice;
@@ -211,79 +191,57 @@ class PurchaseOfflineController extends ChangeNotifier {
       updatedAt: DateTime.now(),
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.purchaseEntitys.put(updated);
-    });
+    await _db.savePurchase(updated);
 
-    debugPrint('[PurchaseOffline] Purchase updated: ${updated.id}, syncStatus: ${updated.syncStatus}');
+    debugPrint(
+      '[PurchaseOffline] Purchase updated: ${updated.id}, syncStatus: ${updated.syncStatus}',
+    );
     notifyListeners();
     return updated;
   }
 
-  // ==================== DELETE ====================
-
-  /// Soft delete a purchase (mark for deletion, don't remove from DB)
-  /// This allows background sync to delete from server first
-  Future<void> deletePurchase(Id id) async {
-    final existing = await _isar.purchaseEntitys.get(id);
+  Future<void> deletePurchase(int id) async {
+    final existing = await _findById(id);
     if (existing == null) {
       debugPrint('[PurchaseOffline] Purchase not found for delete: $id');
       return;
     }
 
-    // If it's a NEW record (never synced), we can hard delete
     if (existing.syncStatus == PurchaseSyncStatus.newRecord) {
-      await _isar.writeTxn(() async {
-        await _isar.purchaseEntitys.delete(id);
-      });
-      debugPrint('[PurchaseOffline] Purchase hard deleted (was never synced): $id');
+      await _db.deletePurchaseById(id);
+      debugPrint(
+        '[PurchaseOffline] Purchase hard deleted (was never synced): $id',
+      );
     } else {
-      // Mark for deletion - background sync will delete from server
       final deleted = existing.copyWith(
         syncStatus: PurchaseSyncStatus.deleted,
         updatedAt: DateTime.now(),
       );
-      await _isar.writeTxn(() async {
-        await _isar.purchaseEntitys.put(deleted);
-      });
+      await _db.savePurchase(deleted);
       debugPrint('[PurchaseOffline] Purchase marked for deletion: $id');
     }
 
     notifyListeners();
   }
 
-  /// Hard delete after successful server deletion
-  Future<void> permanentlyDelete(Id id) async {
-    await _isar.writeTxn(() async {
-      await _isar.purchaseEntitys.delete(id);
-    });
+  Future<void> permanentlyDelete(int id) async {
+    await _db.deletePurchaseById(id);
     debugPrint('[PurchaseOffline] Purchase permanently deleted: $id');
     notifyListeners();
   }
 
-  // ==================== SYNC HELPERS ====================
-
-  /// Get all purchases that need to be synced to server
   Future<List<PurchaseEntity>> getPurchasesNeedingSync() async {
-    return await _isar.purchaseEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(PurchaseSyncStatus.synced)
-        .findAll();
+    return (await _db.loadPurchases())
+        .where((purchase) => purchase.syncStatus != PurchaseSyncStatus.synced)
+        .toList();
   }
 
-  /// Get count of unsynced purchases
   Future<int> getUnsyncedCount() async {
-    return await _isar.purchaseEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(PurchaseSyncStatus.synced)
-        .count();
+    return (await getPurchasesNeedingSync()).length;
   }
 
-  /// Mark a purchase as synced (after successful server sync)
-  Future<void> markAsSynced(Id id, String serverId) async {
-    final existing = await _isar.purchaseEntitys.get(id);
+  Future<void> markAsSynced(int id, String serverId) async {
+    final existing = await _findById(id);
     if (existing == null) return;
 
     final synced = existing.copyWith(
@@ -291,119 +249,109 @@ class PurchaseOfflineController extends ChangeNotifier {
       syncStatus: PurchaseSyncStatus.synced,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.purchaseEntitys.put(synced);
-    });
+    await _db.savePurchase(synced);
 
     debugPrint('[PurchaseOffline] Purchase marked as synced: $id -> $serverId');
   }
 
-  /// Import purchases from server (initial load or refresh)
-  /// Only updates if server data is newer
-  Future<void> importFromServer(List<Map<String, dynamic>> serverPurchases) async {
-    await _isar.writeTxn(() async {
+  Future<void> importFromServer(
+    List<Map<String, dynamic>> serverPurchases,
+  ) async {
+    await _db.transaction(() async {
       for (final data in serverPurchases) {
         final serverId = data['id'] as String?;
         if (serverId == null) continue;
 
-        // 1. Check if we already have this purchase by serverId
-        var existing = await _isar.purchaseEntitys
-            .filter()
-            .serverIdEqualTo(serverId)
-            .findFirst();
+        final all = await _db.loadPurchases();
+        PurchaseEntity? existing;
+        for (final purchase in all) {
+          if (purchase.serverId == serverId) {
+            existing = purchase;
+            break;
+          }
+        }
 
-        // 2. If not found by serverId, check by business key to prevent duplicates
         if (existing == null) {
           final productId = data['productId'] as String? ?? '';
           final quantity = (data['quantity'] as num?)?.toInt() ?? 0;
-          final purchasePrice = (data['purchasePrice'] as num?)?.toDouble() ?? 0.0;
-          
+          final purchasePrice =
+              (data['purchasePrice'] as num?)?.toDouble() ?? 0.0;
+
           if (productId.isNotEmpty) {
-            existing = await _isar.purchaseEntitys
-                .filter()
-                .productIdEqualTo(productId)
-                .quantityEqualTo(quantity)
-                .purchasePriceEqualTo(purchasePrice)
-                .findFirst();
-            
+            for (final purchase in all) {
+              if (purchase.productId == productId &&
+                  purchase.quantity == quantity &&
+                  purchase.purchasePrice == purchasePrice) {
+                existing = purchase;
+                break;
+              }
+            }
+
             if (existing != null && existing.serverId == null) {
-              // Link local record with server ID and mark synced
               existing.serverId = serverId;
               existing.syncStatus = PurchaseSyncStatus.synced;
-              await _isar.purchaseEntitys.put(existing);
+              await _db.savePurchase(existing);
               continue;
             }
           }
         }
 
         if (existing == null) {
-          // New purchase from server
           final purchase = PurchaseEntity.fromServer(data);
-          await _isar.purchaseEntitys.put(purchase);
+          await _db.savePurchase(purchase);
         } else if (existing.syncStatus == PurchaseSyncStatus.synced) {
-          // Only update if local is synced (no local changes)
           final updated = PurchaseEntity.fromServer(data);
           updated.id = existing.id;
-          await _isar.purchaseEntitys.put(updated);
+          await _db.savePurchase(updated);
         }
-        // If local has changes (NEW, UPDATED, DELETED), don't overwrite
       }
     });
 
-    debugPrint('[PurchaseOffline] Imported ${serverPurchases.length} purchases from server');
+    debugPrint(
+      '[PurchaseOffline] Imported ${serverPurchases.length} purchases from server',
+    );
     notifyListeners();
   }
 
-  // ==================== STATISTICS ====================
-
-  /// Get total purchase count
   Future<int> getTotalCount() async {
-    return await _isar.purchaseEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(PurchaseSyncStatus.deleted)
-        .count();
+    return (await _db.loadPurchases())
+        .where((purchase) => purchase.syncStatus != PurchaseSyncStatus.deleted)
+        .length;
   }
 
-  /// Get purchases by date range
   Future<List<PurchaseEntity>> getPurchasesByDateRange(
     DateTime startDate,
     DateTime endDate,
   ) async {
-    return await _isar.purchaseEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(PurchaseSyncStatus.deleted)
-        .createdAtBetween(startDate, endDate)
-        .findAll();
+    return (await _db.loadPurchases()).where((purchase) {
+      return purchase.syncStatus != PurchaseSyncStatus.deleted &&
+          !purchase.createdAt.isBefore(startDate) &&
+          !purchase.createdAt.isAfter(endDate);
+    }).toList();
   }
 
-  /// Get total purchase amount for a date range
   Future<double> getTotalPurchaseAmount({
     DateTime? startDate,
     DateTime? endDate,
   }) async {
-    var query = _isar.purchaseEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(PurchaseSyncStatus.deleted);
-
-    if (startDate != null) {
-      query = query.createdAtGreaterThan(startDate);
-    }
-    if (endDate != null) {
-      query = query.createdAtLessThan(endDate);
-    }
-
-    final purchases = await query.findAll();
-    return purchases.fold<double>(0.0, (total, p) => total + p.totalAmount);
+    final purchases = (await _db.loadPurchases()).where((purchase) {
+      if (purchase.syncStatus == PurchaseSyncStatus.deleted) return false;
+      if (startDate != null && !purchase.createdAt.isAfter(startDate)) {
+        return false;
+      }
+      if (endDate != null && !purchase.createdAt.isBefore(endDate)) {
+        return false;
+      }
+      return true;
+    });
+    return purchases.fold<double>(
+      0.0,
+      (total, purchase) => total + purchase.totalAmount,
+    );
   }
 
-  /// Clear all local purchases (use with caution)
   Future<void> clearAll() async {
-    await _isar.writeTxn(() async {
-      await _isar.purchaseEntitys.clear();
-    });
+    await _db.clearPurchases();
     debugPrint('[PurchaseOffline] All purchases cleared');
     notifyListeners();
   }

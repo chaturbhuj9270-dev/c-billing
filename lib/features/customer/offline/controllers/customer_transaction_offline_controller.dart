@@ -1,7 +1,7 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:isar_community/isar.dart';
-import '../../../../core/services/isar_service.dart';
+import '../../../../core/database/app_database.dart';
+import '../../../../core/database/local_store.dart';
+import '../../../../core/services/local_database.dart';
 import '../../../../core/services/dashboard_refresh_service.dart';
 import '../entities/customer_transaction_entity.dart';
 import '../entities/customer_entity.dart';
@@ -10,13 +10,15 @@ import '../entities/customer_entity.dart';
 class CustomerTransactionOfflineController extends ChangeNotifier {
   static CustomerTransactionOfflineController? _instance;
 
-  Isar get _isar => IsarService.instance.isar;
+  final AppDatabase _db;
 
-  CustomerTransactionOfflineController._();
+  CustomerTransactionOfflineController._(this._db);
 
   /// Get the singleton instance
   static CustomerTransactionOfflineController get instance {
-    _instance ??= CustomerTransactionOfflineController._();
+    _instance ??= CustomerTransactionOfflineController._(
+      LocalDatabase.instance.db,
+    );
     return _instance!;
   }
 
@@ -55,15 +57,15 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
       transactionDate: transactionDate,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.customerTransactionEntitys.put(transaction);
+    await _db.transaction(() async {
+      await _db.saveTransaction(transaction);
 
       // Update customer pending amount
       if (customer != null) {
         customer.currentPendingAmount = newPending;
         customer.updatedAt = DateTime.now();
         customer.isSynced = false;
-        await _isar.customerEntitys.put(customer);
+        await _db.saveCustomer(customer);
       }
     });
 
@@ -99,15 +101,15 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
       description: description,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.customerTransactionEntitys.put(transaction);
+    await _db.transaction(() async {
+      await _db.saveTransaction(transaction);
 
       // Update customer pending amount
       if (customer != null) {
         customer.currentPendingAmount = newPending;
         customer.updatedAt = DateTime.now();
         customer.isSynced = false;
-        await _isar.customerEntitys.put(customer);
+        await _db.saveCustomer(customer);
       }
     });
 
@@ -147,14 +149,14 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
       updatedAt: now,
     );
 
-    await _isar.writeTxn(() async {
-      await _isar.customerTransactionEntitys.put(transaction);
+    await _db.transaction(() async {
+      await _db.saveTransaction(transaction);
 
       if (customer != null) {
         customer.currentPendingAmount = newPending;
         customer.updatedAt = DateTime.now();
         customer.isSynced = false;
-        await _isar.customerEntitys.put(customer);
+        await _db.saveCustomer(customer);
       }
     });
 
@@ -169,13 +171,17 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
   Future<List<CustomerTransactionEntity>> getTransactionsByCustomerId(
     String customerId,
   ) async {
-    return await _isar.customerTransactionEntitys
-        .filter()
-        .customerIdEqualTo(customerId)
-        .not()
-        .syncStatusEqualTo(TransactionSyncStatus.deleted)
-        .sortByTransactionDateDesc()
-        .findAll();
+    final transactions = (await _db.loadTransactions())
+        .where(
+          (transaction) =>
+              transaction.customerId == customerId &&
+              transaction.syncStatus != TransactionSyncStatus.deleted,
+        )
+        .toList();
+    transactions.sort(
+      (a, b) => b.transactionDate.compareTo(a.transactionDate),
+    );
+    return transactions;
   }
 
   /// Get transactions for a customer within date range
@@ -184,14 +190,18 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     required DateTime startDate,
     required DateTime endDate,
   }) async {
-    return await _isar.customerTransactionEntitys
-        .filter()
-        .customerIdEqualTo(customerId)
-        .transactionDateBetween(startDate, endDate)
-        .not()
-        .syncStatusEqualTo(TransactionSyncStatus.deleted)
-        .sortByTransactionDateDesc()
-        .findAll();
+    final transactions = (await _db.loadTransactions()).where((transaction) {
+      if (transaction.customerId != customerId) return false;
+      if (transaction.syncStatus == TransactionSyncStatus.deleted) {
+        return false;
+      }
+      final date = transaction.transactionDate;
+      return !date.isBefore(startDate) && !date.isAfter(endDate);
+    }).toList();
+    transactions.sort(
+      (a, b) => b.transactionDate.compareTo(a.transactionDate),
+    );
+    return transactions;
   }
 
   /// Get transactions for this month
@@ -255,29 +265,37 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
   Stream<List<CustomerTransactionEntity>> watchTransactionsByCustomerId(
     String customerId,
   ) {
-    return _isar.customerTransactionEntitys
-        .filter()
-        .customerIdEqualTo(customerId)
-        .not()
-        .syncStatusEqualTo(TransactionSyncStatus.deleted)
-        .sortByTransactionDateDesc()
-        .watch(fireImmediately: true);
+    return _db.watchTransactions().map((rows) {
+      final transactions = rows
+          .where(
+            (transaction) =>
+                transaction.customerId == customerId &&
+                transaction.syncStatus != TransactionSyncStatus.deleted,
+          )
+          .toList();
+      transactions.sort(
+        (a, b) => b.transactionDate.compareTo(a.transactionDate),
+      );
+      return transactions;
+    });
   }
 
   /// Get transaction by ID
-  Future<CustomerTransactionEntity?> getTransactionById(Id id) async {
-    return await _isar.customerTransactionEntitys.get(id);
+  Future<CustomerTransactionEntity?> getTransactionById(int id) async {
+    for (final transaction in await _db.loadTransactions()) {
+      if (transaction.id == id) return transaction;
+    }
+    return null;
   }
 
   /// Get total payment received for a customer
   Future<double> getTotalPaymentsReceived(String customerId) async {
-    final transactions = await _isar.customerTransactionEntitys
-        .filter()
-        .customerIdEqualTo(customerId)
-        .transactionTypeEqualTo(TransactionType.payment)
-        .not()
-        .syncStatusEqualTo(TransactionSyncStatus.deleted)
-        .findAll();
+    final transactions = (await _db.loadTransactions()).where(
+      (transaction) =>
+          transaction.customerId == customerId &&
+          transaction.transactionType == TransactionType.payment &&
+          transaction.syncStatus != TransactionSyncStatus.deleted,
+    );
 
     double total = 0.0;
     for (final t in transactions) {
@@ -288,27 +306,26 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
 
   /// Get total pending count (for summary)
   Future<int> getTotalCount() async {
-    return await _isar.customerTransactionEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(TransactionSyncStatus.deleted)
-        .count();
+    return (await _db.loadTransactions())
+        .where(
+          (transaction) =>
+              transaction.syncStatus != TransactionSyncStatus.deleted,
+        )
+        .length;
   }
 
   // ==================== UPDATE ====================
 
   /// Update transaction description
-  Future<void> updateTransactionDescription(Id id, String description) async {
-    final transaction = await _isar.customerTransactionEntitys.get(id);
+  Future<void> updateTransactionDescription(int id, String description) async {
+    final transaction = await getTransactionById(id);
     if (transaction == null) return;
 
     transaction.description = description;
     transaction.updatedAt = DateTime.now();
     transaction.syncStatus = TransactionSyncStatus.updated;
 
-    await _isar.writeTxn(() async {
-      await _isar.customerTransactionEntitys.put(transaction);
-    });
+    await _db.saveTransaction(transaction);
 
     notifyListeners();
   }
@@ -316,17 +333,17 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
   // ==================== DELETE ====================
 
   /// Soft delete a transaction
-  Future<void> deleteTransaction(Id id) async {
-    final transaction = await _isar.customerTransactionEntitys.get(id);
+  Future<void> deleteTransaction(int id) async {
+    final transaction = await getTransactionById(id);
     if (transaction == null) return;
 
     // Reverse the effect on customer pending amount
     final customer = await _getCustomerByIdOrServerId(transaction.customerId);
 
-    await _isar.writeTxn(() async {
+    await _db.transaction(() async {
       transaction.syncStatus = TransactionSyncStatus.deleted;
       transaction.updatedAt = DateTime.now();
-      await _isar.customerTransactionEntitys.put(transaction);
+      await _db.saveTransaction(transaction);
 
       // Reverse the transaction effect
       if (customer != null) {
@@ -337,7 +354,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
         }
         customer.updatedAt = DateTime.now();
         customer.isSynced = false;
-        await _isar.customerEntitys.put(customer);
+        await _db.saveCustomer(customer);
       }
     });
 
@@ -349,43 +366,39 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
 
   Future<CustomerEntity?> _getCustomerByIdOrServerId(String customerId) async {
     // Try to find by serverId first
-    var customer = await _isar.customerEntitys
-        .filter()
-        .serverIdEqualTo(customerId)
-        .findFirst();
+    for (final customer in await _db.loadCustomers()) {
+      if (customer.serverId == customerId) return customer;
+    }
 
     // If not found, try by local ID
-    if (customer == null) {
-      final localId = int.tryParse(customerId);
-      if (localId != null) {
-        customer = await _isar.customerEntitys.get(localId);
+    final localId = int.tryParse(customerId);
+    if (localId != null) {
+      for (final customer in await _db.loadCustomers()) {
+        if (customer.id == localId) return customer;
       }
     }
 
-    return customer;
+    return null;
   }
 
   /// Get unsynced transactions count
   Future<int> getUnsyncedCount() async {
-    return await _isar.customerTransactionEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(TransactionSyncStatus.synced)
-        .count();
+    return (await _db.loadTransactions())
+        .where(
+          (transaction) => transaction.syncStatus != TransactionSyncStatus.synced,
+        )
+        .length;
   }
 
   // ==================== SYNC METHODS ====================
 
   /// Get transactions that need to be pushed to server
   Future<List<CustomerTransactionEntity>> getTransactionsNeedingPush() async {
-    return await _isar.customerTransactionEntitys
-        .filter()
-        .syncStatusEqualTo(TransactionSyncStatus.newRecord)
-        .or()
-        .syncStatusEqualTo(TransactionSyncStatus.updated)
-        .or()
-        .syncStatusEqualTo(TransactionSyncStatus.deleted)
-        .findAll();
+    return (await _db.loadTransactions()).where((transaction) {
+      return transaction.syncStatus == TransactionSyncStatus.newRecord ||
+          transaction.syncStatus == TransactionSyncStatus.updated ||
+          transaction.syncStatus == TransactionSyncStatus.deleted;
+    }).toList();
   }
 
   /// Import transactions from server
@@ -414,16 +427,19 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
       }
     }
 
-    await _isar.writeTxn(() async {
+    await _db.transaction(() async {
       for (final data in serverTransactions) {
         final serverId = data['id'] as String?;
         if (serverId == null) continue;
 
         // Check if we already have this transaction locally
-        final existingTransaction = await _isar.customerTransactionEntitys
-            .filter()
-            .serverIdEqualTo(serverId)
-            .findFirst();
+        CustomerTransactionEntity? existingTransaction;
+        for (final transaction in await _db.loadTransactions()) {
+          if (transaction.serverId == serverId) {
+            existingTransaction = transaction;
+            break;
+          }
+        }
 
         // Get customer name from our lookup map or from the data itself
         final customerId = data['customerId'] as String? ?? '';
@@ -441,12 +457,12 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
               existingTransaction.id,
               customerName,
             );
-            await _isar.customerTransactionEntitys.put(updated);
+            await _db.saveTransaction(updated);
           }
         } else {
           // New transaction from server
           final entity = _createEntityFromServerData(data, null, customerName);
-          await _isar.customerTransactionEntitys.put(entity);
+          await _db.saveTransaction(entity);
         }
       }
     });
@@ -458,7 +474,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
   /// Create entity from server data
   CustomerTransactionEntity _createEntityFromServerData(
     Map<String, dynamic> data,
-    Id? existingId,
+    int? existingId,
     String customerName,
   ) {
     // Map server transaction type to local enum
@@ -520,19 +536,17 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
 
   /// Update local transaction with server response after successful push
   Future<void> updateWithServerResponse(
-    Id localId,
+    int localId,
     Map<String, dynamic> serverResponse,
   ) async {
-    final transaction = await _isar.customerTransactionEntitys.get(localId);
+    final transaction = await getTransactionById(localId);
     if (transaction == null) return;
 
     transaction.serverId = serverResponse['id'] as String?;
     transaction.syncStatus = TransactionSyncStatus.synced;
     transaction.updatedAt = DateTime.now();
 
-    await _isar.writeTxn(() async {
-      await _isar.customerTransactionEntitys.put(transaction);
-    });
+    await _db.saveTransaction(transaction);
 
     debugPrint(
       '[TransactionOffline] Updated transaction $localId with server ID: ${transaction.serverId}',
@@ -540,39 +554,37 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
   }
 
   /// Mark a transaction as synced
-  Future<void> markAsSynced(Id id) async {
-    final transaction = await _isar.customerTransactionEntitys.get(id);
+  Future<void> markAsSynced(int id) async {
+    final transaction = await getTransactionById(id);
     if (transaction == null) return;
 
     transaction.syncStatus = TransactionSyncStatus.synced;
     transaction.updatedAt = DateTime.now();
 
-    await _isar.writeTxn(() async {
-      await _isar.customerTransactionEntitys.put(transaction);
-    });
+    await _db.saveTransaction(transaction);
   }
 
   /// Permanently delete a transaction (after server confirms deletion)
-  Future<void> permanentlyDelete(Id id) async {
-    await _isar.writeTxn(() async {
-      await _isar.customerTransactionEntitys.delete(id);
-    });
+  Future<void> permanentlyDelete(int id) async {
+    await _db.deleteTransactionById(id);
     debugPrint('[TransactionOffline] Permanently deleted transaction: $id');
   }
 
   /// Clear all synced deleted records
   Future<void> clearSyncedDeletedRecords() async {
-    final deletedRecords = await _isar.customerTransactionEntitys
-        .filter()
-        .syncStatusEqualTo(TransactionSyncStatus.deleted)
-        .serverIdIsNotNull()
-        .findAll();
+    final deletedRecords = (await _db.loadTransactions())
+        .where(
+          (record) =>
+              record.syncStatus == TransactionSyncStatus.deleted &&
+              record.serverId != null,
+        )
+        .toList();
 
     if (deletedRecords.isEmpty) return;
 
-    await _isar.writeTxn(() async {
+    await _db.transaction(() async {
       for (final record in deletedRecords) {
-        await _isar.customerTransactionEntitys.delete(record.id);
+        await _db.deleteTransactionById(record.id);
       }
     });
 

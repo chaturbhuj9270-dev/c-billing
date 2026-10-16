@@ -76,7 +76,7 @@ class _BillingPageState extends State<BillingPage> {
   late FirebaseCustomerRepository _customerRepository;
   late AppLocalizations _localizations;
 
-  // Real-time Isar stream subscriptions
+  // Real-time local stream subscriptions
   StreamSubscription<List<ProductEntity>>? _productStreamSubscription;
   StreamSubscription<List<CustomerEntity>>? _customerStreamSubscription;
   StreamSubscription<void>? _billSettingsSubscription;
@@ -184,7 +184,7 @@ class _BillingPageState extends State<BillingPage> {
     // Listen for customer phone number changes
     _customerContactController.addListener(_onPhoneNumberChanged);
 
-    // Setup real-time Isar streams for instant data updates
+    // Setup real-time local streams for instant data updates
     _setupProductStream();
     _setupCustomerStream();
 
@@ -244,7 +244,7 @@ class _BillingPageState extends State<BillingPage> {
     }
   }
 
-  /// Setup real-time product stream from Isar — auto-refreshes on any product/stock change
+  /// Setup real-time product stream from the local database — auto-refreshes on any product/stock change
   void _setupProductStream() {
     _productStreamSubscription = ProductOfflineController.instance
         .watchAllProducts()
@@ -256,7 +256,7 @@ class _BillingPageState extends State<BillingPage> {
     _loadProducts();
   }
 
-  /// Setup real-time customer stream from Isar — auto-refreshes on any customer change
+  /// Setup real-time customer stream from the local database — auto-refreshes on any customer change
   void _setupCustomerStream() {
     _customerStreamSubscription = CustomerOfflineController.instance
         .watchAllCustomers()
@@ -358,7 +358,7 @@ class _BillingPageState extends State<BillingPage> {
     setState(() => _isLoadingCustomers = true);
 
     try {
-      // Step 1: Load from local Isar DB first (instant)
+      // Step 1: Load from local DB first (instant)
       final localCustomers = await CustomerOfflineController.instance
           .getAllCustomers();
       if (localCustomers.isNotEmpty && mounted) {
@@ -383,7 +383,7 @@ class _BillingPageState extends State<BillingPage> {
           }).toList();
         });
         debugPrint(
-          '[Billing] Loaded ${localCustomers.length} customers from Isar',
+          '[Billing] Loaded ${localCustomers.length} customers from the local database',
         );
       }
 
@@ -801,7 +801,7 @@ class _BillingPageState extends State<BillingPage> {
     required String phoneNumber,
   }) async {
     try {
-      // Save to Isar via offline controller — syncs to Firestore in background
+      // Save to the local database via offline controller — syncs to Firestore in background
       final offlineCtrl = CustomerOfflineController.instance;
       final entity = await offlineCtrl.addCustomer(
         name: '$firstName $lastName'.trim(),

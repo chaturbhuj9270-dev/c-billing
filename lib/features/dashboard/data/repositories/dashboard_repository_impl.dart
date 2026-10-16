@@ -3,36 +3,36 @@ import 'package:flutter/foundation.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/repositories/dashboard_repository_interface.dart';
 import '../datasources/dashboard_cache_datasource.dart';
-import '../datasources/dashboard_isar_datasource.dart';
+import '../datasources/dashboard_local_datasource.dart';
 
-/// Repository implementation with Isar-first reactive strategy
+/// Repository implementation with offline-first reactive strategy
 ///
 /// Loading strategy:
 /// 1. Return cached data immediately if available (instant)
-/// 2. Fetch fresh data from LOCAL Isar DB (< 5ms)
+/// 2. Fetch fresh data from LOCAL local database (< 5ms)
 /// 3. Update cache and notify listeners
-/// 4. Reactive: Isar watchLazy() auto-triggers recalculation on any data change
+/// 4. Reactive: table update watches auto-triggers recalculation on any data change
 ///
 /// Key changes from old Firebase-based approach:
-/// - Primary datasource is now Isar (local, instant, offline-capable)
-/// - Reactive streams via Isar collection watchers (bills, purchases, batches)
+/// - Primary datasource is now local database (local, instant, offline-capable)
+/// - Reactive streams via the local database collection watchers (bills, purchases, batches)
 /// - DashboardRefreshService events also trigger recalculation
 /// - Firebase datasource is no longer used for dashboard (sync is separate concern)
 class DashboardRepositoryImpl implements DashboardRepositoryInterface {
   final DashboardCacheDataSource _cacheDataSource;
-  final DashboardIsarDataSource _isarDataSource;
+  final DashboardLocalDataSource _localDataSource;
 
   /// Stream controllers for each filter type (for manual refresh triggers)
   final Map<String, StreamController<DashboardSummary>> _controllers = {};
 
-  /// Active Isar watch subscriptions per filter
-  final Map<String, StreamSubscription<DashboardSummary>> _isarWatchSubs = {};
+  /// Active Local watch subscriptions per filter
+  final Map<String, StreamSubscription<DashboardSummary>> _localWatchSubs = {};
 
   DashboardRepositoryImpl({
     DashboardCacheDataSource? cacheDataSource,
-    DashboardIsarDataSource? isarDataSource,
+    DashboardLocalDataSource? localDataSource,
   }) : _cacheDataSource = cacheDataSource ?? DashboardCacheDataSource(),
-       _isarDataSource = isarDataSource ?? DashboardIsarDataSource.instance;
+       _localDataSource = localDataSource ?? DashboardLocalDataSource.instance;
 
   /// Initialize repository and cache
   Future<void> init() async {
@@ -51,10 +51,10 @@ class DashboardRepositoryImpl implements DashboardRepositoryInterface {
   }) async {
     final stopwatch = Stopwatch()..start();
 
-    // Fetch fresh data from local Isar DB (instant, < 5ms)
-    // Always go to Isar for live calculations — cache is only for pre-render
+    // Fetch fresh data from local DB (instant, < 5ms)
+    // Always go to the local database for live calculations — cache is only for pre-render
     try {
-      final freshData = await _isarDataSource.fetchDashboardSummary(
+      final freshData = await _localDataSource.fetchDashboardSummary(
         params: params,
       );
 
@@ -63,15 +63,15 @@ class DashboardRepositoryImpl implements DashboardRepositoryInterface {
 
       stopwatch.stop();
       debugPrint(
-        '[DashboardRepo] Isar data loaded in ${stopwatch.elapsedMilliseconds}ms',
+        '[DashboardRepo] Local data loaded in ${stopwatch.elapsedMilliseconds}ms',
       );
 
       return freshData;
     } catch (e) {
-      // If Isar fails somehow, try stale cache
+      // If local database fails somehow, try stale cache
       final staleCache = await _cacheDataSource.getCached(params);
       if (staleCache != null) {
-        debugPrint('[DashboardRepo] Isar failed, returning stale cache');
+        debugPrint('[DashboardRepo] Local load failed, returning stale cache');
         return staleCache;
       }
       rethrow;
@@ -96,9 +96,9 @@ class DashboardRepositoryImpl implements DashboardRepositoryInterface {
       yield cached;
     }
 
-    // 2. Fetch fresh data from Isar
+    // 2. Fetch fresh data from the local database
     try {
-      final freshData = await _isarDataSource.fetchDashboardSummary(
+      final freshData = await _localDataSource.fetchDashboardSummary(
         params: params,
       );
       await _cacheDataSource.saveToCache(params, freshData);
@@ -107,9 +107,9 @@ class DashboardRepositoryImpl implements DashboardRepositoryInterface {
       if (cached == null) rethrow;
     }
 
-    // 3. Start reactive Isar watcher
-    final isarStream = _isarDataSource.watchDashboardSummary(params: params);
-    _isarWatchSubs[cacheKey] = isarStream.listen(
+    // 3. Start reactive Local watcher
+    final localStream = _localDataSource.watchDashboardSummary(params: params);
+    _localWatchSubs[cacheKey] = localStream.listen(
       (summary) async {
         await _cacheDataSource.saveToCache(params, summary);
         final controller = _controllers[cacheKey];
@@ -118,7 +118,7 @@ class DashboardRepositoryImpl implements DashboardRepositoryInterface {
         }
       },
       onError: (e) {
-        debugPrint('[DashboardRepo] Isar watch error: $e');
+        debugPrint('[DashboardRepo] Local watch error: $e');
       },
     );
 
@@ -130,7 +130,7 @@ class DashboardRepositoryImpl implements DashboardRepositoryInterface {
 
   /// Clean up watcher and controller for a given cache key
   Future<void> _cleanupWatcher(String cacheKey) async {
-    final oldSub = _isarWatchSubs.remove(cacheKey);
+    final oldSub = _localWatchSubs.remove(cacheKey);
     await oldSub?.cancel();
 
     final oldController = _controllers.remove(cacheKey);
@@ -139,10 +139,10 @@ class DashboardRepositoryImpl implements DashboardRepositoryInterface {
     }
   }
 
-  /// Force refresh from Isar and push to stream listeners
+  /// Force refresh from the local database and push to stream listeners
   Future<void> refreshAndNotify(DashboardParams params) async {
     try {
-      final freshData = await _isarDataSource.fetchDashboardSummary(
+      final freshData = await _localDataSource.fetchDashboardSummary(
         params: params,
       );
       await _cacheDataSource.saveToCache(params, freshData);
@@ -166,18 +166,18 @@ class DashboardRepositoryImpl implements DashboardRepositoryInterface {
     await _cacheDataSource.preloadDefaultCache();
   }
 
-  /// Dispose all stream controllers and Isar watchers
+  /// Dispose all stream controllers and Local watchers
   void dispose() {
-    for (final sub in _isarWatchSubs.values) {
+    for (final sub in _localWatchSubs.values) {
       sub.cancel();
     }
-    _isarWatchSubs.clear();
+    _localWatchSubs.clear();
 
     for (final controller in _controllers.values) {
       controller.close();
     }
     _controllers.clear();
 
-    _isarDataSource.dispose();
+    _localDataSource.dispose();
   }
 }

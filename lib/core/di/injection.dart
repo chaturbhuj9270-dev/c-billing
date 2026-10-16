@@ -1,6 +1,6 @@
 import 'package:get_it/get_it.dart';
 import '../../features/dashboard/data/datasources/dashboard_cache_datasource.dart';
-import '../../features/dashboard/data/datasources/dashboard_isar_datasource.dart';
+import '../../features/dashboard/data/datasources/dashboard_local_datasource.dart';
 import '../../features/dashboard/data/repositories/dashboard_repository_impl.dart';
 import '../../features/dashboard/presentation/cubit/optimized_dashboard_cubit.dart';
 
@@ -17,15 +17,14 @@ Future<void> _initDashboard() async {
     () => DashboardCacheDataSource(),
   );
   
-  sl.registerLazySingleton<DashboardIsarDataSource>(
-    () => DashboardIsarDataSource.instance,
+  sl.registerLazySingleton<DashboardLocalDataSource>(
+    () => DashboardLocalDataSource.instance,
   );
 
-  // Repository (Isar-first, reactive)
   sl.registerLazySingleton<DashboardRepositoryImpl>(
     () => DashboardRepositoryImpl(
       cacheDataSource: sl<DashboardCacheDataSource>(),
-      isarDataSource: sl<DashboardIsarDataSource>(),
+      localDataSource: sl<DashboardLocalDataSource>(),
     ),
   );
 

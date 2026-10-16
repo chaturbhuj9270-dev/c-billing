@@ -1,7 +1,4 @@
-import 'package:isar_community/isar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
-
-part 'product_entity.g.dart';
 
 /// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTime(dynamic value) {
@@ -28,22 +25,19 @@ enum SyncStatus {
   synced,
 }
 
-/// Isar Collection for Product with offline-first support
+/// Local record for Product with offline-first support
 /// Optimized with proper indexes for high-performance queries
-@collection
 class ProductEntity {
-  /// Auto-generated Isar ID
-  Id id = Isar.autoIncrement;
+  /// Local row id
+  int id = 0;
 
   /// Server-side ID (null for locally created, not yet synced records)
-  @Index()
   String? serverId;
 
   /// Unique index number for quick lookup (e.g., 101, 102, 103)
   int indexNo;
 
   /// Product name (indexed for fast search)
-  @Index(type: IndexType.value, caseSensitive: false)
   String name;
 
   /// Company name
@@ -53,7 +47,6 @@ class ProductEntity {
   String category;
 
   /// Barcode (indexed for fast lookup)
-  @Index(unique: false)
   String? barcode;
 
   /// Purchase price
@@ -72,12 +65,9 @@ class ProductEntity {
   bool isActive;
 
   /// Sync status for delta sync
-  @Index()
-  @Enumerated(EnumType.ordinal)
   SyncStatus syncStatus;
 
   /// Last update timestamp for conflict resolution
-  @Index()
   DateTime updatedAt;
 
   /// Created timestamp
@@ -279,7 +269,7 @@ class ProductEntity {
 
   /// Copy with modifications (marks as updated if already synced)
   ProductEntity copyWith({
-    Id? id,
+    int? id,
     String? serverId,
     int? indexNo,
     String? name,

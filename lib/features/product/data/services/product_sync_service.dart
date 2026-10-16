@@ -94,7 +94,7 @@ class ProductSyncService extends ChangeNotifier {
   bool get isSyncing => _status == ProductSyncStatus.syncing;
 
   /// Initialize the sync service
-  /// Call this after Isar is initialized
+  /// Call this after the local database is initialized
   void initialize() {
     debugPrint('[ProductSync] Initializing...');
 
@@ -345,7 +345,7 @@ class ProductSyncService extends ChangeNotifier {
   }
 
   /// Pull changes from server
-  /// Merges into Isar using serverId, only updates changed records
+  /// Merges into the local database using serverId, only updates changed records
   Future<int> _pullServerChanges() async {
     try {
       // Get last sync time for incremental sync

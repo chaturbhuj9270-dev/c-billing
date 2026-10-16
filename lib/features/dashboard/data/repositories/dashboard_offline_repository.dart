@@ -11,8 +11,8 @@ import '../../../event_order/offline/controllers/event_order_offline_controller.
 import '../../../event_order/domain/entities/event_order.dart';
 
 /// Ultra-fast offline-first dashboard repository
-/// Uses Isar local database for microsecond-level data loading
-/// No network calls - all data is from local Isar database
+/// Uses local database local database for microsecond-level data loading
+/// No network calls - all data is from local database
 class DashboardOfflineRepository {
   static DashboardOfflineRepository? _instance;
 
@@ -23,7 +23,7 @@ class DashboardOfflineRepository {
     return _instance!;
   }
 
-  /// Fetch dashboard data from local Isar database
+  /// Fetch dashboard data from local database
   /// Returns data in microseconds since all queries are local
   Future<DashboardData> fetchDashboardData({
     DateTime? startDate,
@@ -33,7 +33,7 @@ class DashboardOfflineRepository {
 
     // Execute ALL local queries in parallel for maximum speed
     final results = await Future.wait([
-      // Counts - instant from Isar
+      // Counts - instant from the local database
       CustomerOfflineController.instance.getTotalCount(), // 0
       ProductOfflineController.instance.getTotalCount(), // 1
       SupplierOfflineController.instance.getTotalCount(), // 2
