@@ -1,0 +1,468 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../cubit/biometric_cubit.dart';
+import '../cubit/biometric_state.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
+
+/// Bottom sheet overlay for biometric authentication
+class BiometricAuthOverlay extends StatefulWidget {
+  final String userId;
+  final VoidCallback onSuccess;
+  final VoidCallback? onCancel;
+
+  const BiometricAuthOverlay({
+    super.key,
+    required this.userId,
+    required this.onSuccess,
+    this.onCancel,
+  });
+
+  @override
+  State<BiometricAuthOverlay> createState() => _BiometricAuthOverlayState();
+}
+
+class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
+  late BiometricCubit _biometricCubit;
+
+  @override
+  void initState() {
+    super.initState();
+    _biometricCubit = context.read<BiometricCubit>();
+    // Don't auto-authenticate - wait for user to tap button
+  }
+
+  Future<void> _authenticateUser() async {
+    final result = await _biometricCubit.authenticate(
+      reason: 'Verify your identity to continue',
+    );
+
+    if (result && mounted) {
+      // Immediately call onSuccess (which closes sheet and navigates)
+      // Don't wait for state to update to BiometricAuthenticated
+      widget.onSuccess();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<BiometricCubit, BiometricState>(
+      builder: (context, state) {
+        final isDark = AppColors.isDark(context);
+        return GlassSheetCard(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: 300,
+              maxHeight: MediaQuery.of(context).size.height * 0.7,
+            ),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: isDark
+                      ? const [
+                          AppTheme.darkElevated,
+                          AppTheme.darkCard,
+                        ]
+                      : [
+                          AppColors.card(context).withValues(alpha: 0.92),
+                          AppColors.card(context).withValues(alpha: 0.98),
+                        ],
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 4,
+                        margin: EdgeInsets.symmetric(horizontal: 0),
+                        decoration: BoxDecoration(
+                          color: AppColors.accentSoft(context, 0.3),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      if (state is BiometricAuthenticating) ...[
+                        _buildAuthenticatingContent(),
+                      ] else if (state is BiometricAuthFailed) ...[
+                        _buildErrorContent(state.message),
+                      ] else if (state is BiometricAuthCancelled) ...[
+                        _buildCancelledContent(),
+                      ] else ...[
+                        // Initial/Available state - show unlock prompt
+                        // Note: BiometricAuthenticated state never reaches here - navigation happens in _authenticateUser()
+                        _buildInitialContent(),
+                      ],
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInitialContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: AppColors.accentSoft(context, 0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Center(
+            child: Icon(Icons.fingerprint, color: AppColors.accent(context), size: 48),
+          ),
+        ),
+        SizedBox(height: 20),
+        Text(
+          'Biometric Authentication',
+          style: TextStyle(
+            color: AppColors.accent(context),
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'Literata',
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Use your fingerprint or face to unlock the app securely',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: AppColors.secondaryText(context),
+            fontSize: 14,
+            fontFamily: 'Literata',
+          ),
+        ),
+        const SizedBox(height: 32),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _authenticateUser,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.action(context),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 2,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.lock_open, color: AppTheme.white, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'Authenticate',
+                  style: TextStyle(
+                    color: AppTheme.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: () {
+              widget.onCancel?.call();
+              Navigator.pop(context);
+            },
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: AppColors.accent(context), width: 1.5),
+              padding: EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              'Skip',
+              style: TextStyle(
+                color: AppColors.accent(context),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAuthenticatingContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: AppColors.accentSoft(context, 0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Center(
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.action(context)),
+              ),
+            ),
+          ),
+        ),
+        SizedBox(height: 16),
+        Text(
+          'Authenticating',
+          style: TextStyle(
+            color: AppColors.accent(context),
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'Literata',
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Place your finger on the sensor or look at the camera',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: AppColors.secondaryText(context),
+            fontSize: 13,
+            fontFamily: 'Literata',
+          ),
+        ),
+        SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: () {
+              widget.onCancel?.call();
+              Navigator.pop(context);
+            },
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: AppColors.accent(context), width: 1.5),
+              padding: EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              'Skip',
+              style: TextStyle(
+                color: AppColors.accent(context),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildErrorContent(String message) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: AppTheme.coral.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const Center(
+            child: Icon(Icons.error, color: AppTheme.coral, size: 40),
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Authentication Failed',
+          style: TextStyle(
+            color: AppTheme.coral,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'Literata',
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: AppColors.secondaryText(context),
+            fontSize: 12,
+            fontFamily: 'Literata',
+          ),
+        ),
+        SizedBox(height: 20),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {
+                  widget.onCancel?.call();
+                  Navigator.pop(context);
+                },
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: AppColors.accent(context), width: 1.5),
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: AppColors.accent(context),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  _biometricCubit.reset();
+                  _authenticateUser();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.action(context),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'Try Again',
+                  style: TextStyle(
+                    color: AppTheme.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCancelledContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: AppTheme.orange.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const Center(
+            child: Icon(Icons.cancel, color: AppTheme.orange, size: 40),
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Authentication Cancelled',
+          style: TextStyle(
+            color: AppTheme.orange,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'Literata',
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'You cancelled the authentication process',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: AppColors.secondaryText(context),
+            fontSize: 13,
+            fontFamily: 'Literata',
+          ),
+        ),
+        SizedBox(height: 20),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {
+                  widget.onCancel?.call();
+                  Navigator.pop(context);
+                },
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: AppColors.accent(context), width: 1.5),
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: AppColors.accent(context),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  _biometricCubit.reset();
+                  _authenticateUser();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.action(context),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'Try Again',
+                  style: TextStyle(
+                    color: AppTheme.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}

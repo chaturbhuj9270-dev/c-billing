@@ -1,0 +1,538 @@
+import 'dart:io';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:intl/intl.dart';
+import 'package:c_billing/features/inventory_management/domain/entities/product.dart';
+import 'stock_report_settings_service.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
+
+/// Report type enumeration
+enum ReportType { outOfStock, lowStock, allProducts }
+
+/// Report format enumeration
+enum ReportFormat { pdf, csv }
+
+/// Service for generating inventory reports
+class InventoryReportService {
+  static final InventoryReportService _instance =
+      InventoryReportService._internal();
+  factory InventoryReportService() => _instance;
+  InventoryReportService._internal();
+
+  /// Filter products based on report type
+  List<Product> filterProducts(List<Product> products, ReportType reportType) {
+    switch (reportType) {
+      case ReportType.outOfStock:
+        return products.where((p) => p.currentStock == 0).toList();
+      case ReportType.lowStock:
+        return products
+            .where((p) => p.currentStock > 0 && p.currentStock <= 10)
+            .toList();
+      case ReportType.allProducts:
+        return products;
+    }
+  }
+
+  /// Get report type label
+  String getReportTypeLabel(ReportType type) {
+    switch (type) {
+      case ReportType.outOfStock:
+        return 'Out of Stock Products';
+      case ReportType.lowStock:
+        return 'Low Stock Products';
+      case ReportType.allProducts:
+        return 'All Products';
+    }
+  }
+
+  /// Get stock status label
+  String getStockStatus(int stock) {
+    if (stock == 0) {
+      return 'Out of Stock';
+    } else if (stock <= 10) {
+      return 'Low Stock';
+    } else {
+      return 'In Stock';
+    }
+  }
+
+  /// Generate PDF report
+  Future<File> generatePdfReport({
+    required List<Product> products,
+    required ReportType reportType,
+    String? shopName,
+    String? customTitle,
+    String? customSubtitle,
+  }) async {
+    final pdf = pw.Document();
+    final reportTitle = customTitle ?? getReportTypeLabel(reportType);
+    final reportSubtitle = customSubtitle;
+    final dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now());
+    final finalShopName = shopName ?? 'C-Billing Network';
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        header: (context) => _buildPdfHeader(
+          reportTitle,
+          dateStr,
+          finalShopName,
+          reportSubtitle,
+        ),
+        footer: (context) => _buildPdfFooter(context),
+        build: (context) => [
+          pw.SizedBox(height: 20),
+          _buildPdfSummary(products, reportType),
+          pw.SizedBox(height: 20),
+          _buildPdfTable(products),
+        ],
+      ),
+    );
+
+    // Save to file
+    final directory = await getApplicationDocumentsDirectory();
+    final fileName =
+        '${reportType.name}_report_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.pdf';
+    final file = File('${directory.path}/$fileName');
+    await file.writeAsBytes(await pdf.save());
+
+    return file;
+  }
+
+  pw.Widget _buildPdfHeader(
+    String reportTitle,
+    String dateStr,
+    String? shopName,
+    String? subtitle,
+  ) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                if (shopName != null && shopName.isNotEmpty)
+                  pw.Text(
+                    shopName,
+                    style: pw.TextStyle(
+                      fontSize: 22,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColor.fromInt(AppTheme.green800.toARGB32()),
+                    ),
+                  ),
+                pw.SizedBox(height: 4),
+                pw.Text(
+                  reportTitle,
+                  style: pw.TextStyle(
+                    fontSize: 18,
+                    fontWeight: pw.FontWeight.normal,
+                    color: PdfColor.fromInt(AppTheme.grey800.toARGB32()),
+                  ),
+                ),
+                if (subtitle != null && subtitle.isNotEmpty)
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.only(top: 4),
+                    child: pw.Text(
+                      subtitle,
+                      style: pw.TextStyle(
+                        fontSize: 11,
+                        color: PdfColor.fromInt(AppTheme.grey700.toARGB32()),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.end,
+              children: [
+                pw.Text(
+                  'Generated on:',
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    color: PdfColor.fromInt(AppTheme.grey600.toARGB32()),
+                  ),
+                ),
+                pw.Text(
+                  dateStr,
+                  style: pw.TextStyle(
+                    fontSize: 11,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        pw.SizedBox(height: 8),
+        pw.Divider(thickness: 1, color: PdfColor.fromInt(AppTheme.green800.toARGB32())),
+      ],
+    );
+  }
+
+  pw.Widget _buildPdfFooter(pw.Context context) {
+    return pw.Container(
+      alignment: pw.Alignment.centerRight,
+      margin: const pw.EdgeInsets.only(top: 8),
+      child: pw.Text(
+        'Page ${context.pageNumber} of ${context.pagesCount}',
+        style: pw.TextStyle(fontSize: 10, color: PdfColor.fromInt(AppTheme.grey600.toARGB32())),
+      ),
+    );
+  }
+
+  pw.Widget _buildPdfSummary(List<Product> products, ReportType reportType) {
+    final totalProducts = products.length;
+    final totalStock = products.fold<int>(0, (total, p) => total + p.currentStock);
+    final totalValue = products.fold<double>(
+      0,
+      (total, p) => total + p.getStockValue(),
+    );
+
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(12),
+      decoration: pw.BoxDecoration(
+        color: PdfColor.fromInt(AppTheme.grey100.toARGB32()),
+        borderRadius: pw.BorderRadius.circular(8),
+      ),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
+        children: [
+          _buildSummaryItem('Total Products', totalProducts.toString()),
+          _buildSummaryItem('Total Units', totalStock.toString()),
+          _buildSummaryItem(
+            'Total Value',
+            'Rs.${NumberFormat('#,##0.00').format(totalValue)}',
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildSummaryItem(String label, String value) {
+    return pw.Column(
+      children: [
+        pw.Text(
+          label,
+          style: pw.TextStyle(fontSize: 10, color: PdfColor.fromInt(AppTheme.grey700.toARGB32())),
+        ),
+        pw.SizedBox(height: 4),
+        pw.Text(
+          value,
+          style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _buildPdfTable(List<Product> products) {
+    return _buildDynamicPdfTable(products, null);
+  }
+
+  /// Build dynamic PDF table based on stock report settings
+  pw.Widget _buildDynamicPdfTable(List<Product> products, List<int?>? orderQuantities) {
+    final settings = StockReportSettingsService.instance;
+    
+    // Build headers and data based on visible columns
+    final headers = <String>[];
+    final columnIds = <String>[];
+    
+    // Column mapping
+    final columnConfig = {
+      'sr_no': '#',
+      'product_name': 'Product Name',
+      'category': 'Category',
+      'company': 'Company',
+      'hsn_code': 'HSN Code',
+      'purchase_price': 'Pur. Price',
+      'selling_price': 'Sell Price',
+      'stock': 'Stock',
+      'stock_value': 'Stock Value',
+      'status': 'Status',
+      'order_qty': 'Order Qty',
+      'supplier': 'Supplier',
+      'cgst': 'CGST %',
+      'sgst': 'SGST %',
+    };
+    
+    // Build headers based on visible columns
+    for (final entry in columnConfig.entries) {
+      if (settings.isColumnVisible(entry.key)) {
+        headers.add(entry.value);
+        columnIds.add(entry.key);
+      }
+    }
+    
+    // Fallback: if no columns selected, show minimum required
+    if (headers.isEmpty) {
+      headers.addAll(['#', 'Product Name', 'Stock', 'Status']);
+      columnIds.addAll(['sr_no', 'product_name', 'stock', 'status']);
+    }
+    
+    // Build data rows
+    final data = products.asMap().entries.map((entry) {
+      final i = entry.key;
+      final p = entry.value;
+      final orderQty = orderQuantities != null && i < orderQuantities.length 
+          ? orderQuantities[i] 
+          : null;
+      
+      return columnIds.map((colId) {
+        switch (colId) {
+          case 'sr_no':
+            return '${i + 1}';
+          case 'product_name':
+            return p.name.isEmpty ? '-' : p.name;
+          case 'category':
+            return p.category.isEmpty ? '-' : p.category;
+          case 'company':
+            return p.companyName.isEmpty ? '-' : p.companyName;
+          case 'hsn_code':
+            return p.hsnCode?.isNotEmpty == true ? p.hsnCode! : '-';
+          case 'purchase_price':
+            return _formatAmount(p.purchasePrice);
+          case 'selling_price':
+            return _formatAmount(p.salesPrice);
+          case 'stock':
+            return '${p.currentStock}';
+          case 'stock_value':
+            return _formatAmount(p.getStockValue());
+          case 'status':
+            return getStockStatus(p.currentStock);
+          case 'order_qty':
+            return orderQty != null ? '$orderQty' : '-';
+          case 'supplier':
+            return p.defaultSupplierName?.isNotEmpty == true ? p.defaultSupplierName! : '-';
+          case 'cgst':
+            return '${p.cgstPercent}%';
+          case 'sgst':
+            return '${p.sgstPercent}%';
+          default:
+            return '-';
+        }
+      }).toList();
+    }).toList();
+    
+    return pw.TableHelper.fromTextArray(
+      context: null,
+      headerStyle: pw.TextStyle(
+        fontWeight: pw.FontWeight.bold,
+        fontSize: 10,
+        color: PdfColor.fromInt(AppTheme.white.toARGB32()),
+      ),
+      headerDecoration: pw.BoxDecoration(color: PdfColor.fromInt(AppTheme.green800.toARGB32())),
+      cellStyle: const pw.TextStyle(fontSize: 9),
+      cellAlignment: pw.Alignment.centerLeft,
+      cellPadding: const pw.EdgeInsets.all(6),
+      headers: headers,
+      data: data,
+    );
+  }
+  
+  String _formatAmount(double amount) {
+    return NumberFormat('#,##0.00').format(amount);
+  }
+
+  /// Generate CSV report
+  Future<File> generateCsvReport({
+    required List<Product> products,
+    required ReportType reportType,
+    String? customTitle,
+  }) async {
+    return _generateDynamicCsvReport(
+      products: products,
+      reportType: reportType,
+      customTitle: customTitle,
+      orderQuantities: null,
+    );
+  }
+  
+  /// Internal method to generate CSV with dynamic columns based on settings
+  Future<File> _generateDynamicCsvReport({
+    required List<Product> products,
+    required ReportType reportType,
+    String? customTitle,
+    List<int?>? orderQuantities,
+  }) async {
+    final reportTitle = customTitle ?? getReportTypeLabel(reportType);
+    final dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now());
+    final settings = StockReportSettingsService.instance;
+
+    final buffer = StringBuffer();
+
+    // Header info
+    buffer.writeln('Report: $reportTitle');
+    buffer.writeln('Generated: $dateStr');
+    buffer.writeln('Total Products: ${products.length}');
+    buffer.writeln('');
+
+    // Column mapping
+    final columnConfig = {
+      'sr_no': 'S.No',
+      'product_name': 'Product Name',
+      'category': 'Category',
+      'company': 'Company',
+      'hsn_code': 'HSN Code',
+      'purchase_price': 'Purchase Price',
+      'selling_price': 'Selling Price',
+      'stock': 'Stock',
+      'stock_value': 'Stock Value',
+      'status': 'Status',
+      'order_qty': 'Order Qty',
+      'supplier': 'Supplier',
+      'cgst': 'CGST %',
+      'sgst': 'SGST %',
+    };
+    
+    // Build headers based on visible columns
+    final headers = <String>[];
+    final columnIds = <String>[];
+    
+    for (final entry in columnConfig.entries) {
+      if (settings.isColumnVisible(entry.key)) {
+        headers.add(entry.value);
+        columnIds.add(entry.key);
+      }
+    }
+    
+    // Fallback: if no columns selected, show minimum required
+    if (headers.isEmpty) {
+      headers.addAll(['S.No', 'Product Name', 'Stock', 'Status']);
+      columnIds.addAll(['sr_no', 'product_name', 'stock', 'status']);
+    }
+
+    // CSV headers
+    buffer.writeln(headers.join(','));
+
+    // Data rows
+    for (var i = 0; i < products.length; i++) {
+      final p = products[i];
+      final orderQty = orderQuantities != null && i < orderQuantities.length 
+          ? orderQuantities[i] 
+          : null;
+      
+      final rowData = columnIds.map((colId) {
+        switch (colId) {
+          case 'sr_no':
+            return '${i + 1}';
+          case 'product_name':
+            final name = p.name.isEmpty ? '-' : p.name.replaceAll('"', '""');
+            return '"$name"';
+          case 'category':
+            final cat = p.category.isEmpty ? '-' : p.category.replaceAll('"', '""');
+            return '"$cat"';
+          case 'company':
+            final comp = p.companyName.isEmpty ? '-' : p.companyName.replaceAll('"', '""');
+            return '"$comp"';
+          case 'hsn_code':
+            final hsn = p.hsnCode?.isNotEmpty == true ? p.hsnCode!.replaceAll('"', '""') : '-';
+            return '"$hsn"';
+          case 'purchase_price':
+            return _formatAmount(p.purchasePrice);
+          case 'selling_price':
+            return _formatAmount(p.salesPrice);
+          case 'stock':
+            return '${p.currentStock}';
+          case 'stock_value':
+            return _formatAmount(p.getStockValue());
+          case 'status':
+            return '"${getStockStatus(p.currentStock)}"';
+          case 'order_qty':
+            return orderQty != null ? '$orderQty' : '-';
+          case 'supplier':
+            final sup = p.defaultSupplierName?.isNotEmpty == true 
+                ? p.defaultSupplierName!.replaceAll('"', '""') 
+                : '-';
+            return '"$sup"';
+          case 'cgst':
+            return '${p.cgstPercent}%';
+          case 'sgst':
+            return '${p.sgstPercent}%';
+          default:
+            return '-';
+        }
+      }).toList();
+      
+      buffer.writeln(rowData.join(','));
+    }
+
+    // Save to file
+    final directory = await getApplicationDocumentsDirectory();
+    final fileName =
+        '${reportType.name}_report_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.csv';
+    final file = File('${directory.path}/$fileName');
+    await file.writeAsString(buffer.toString());
+
+    return file;
+  }
+
+  /// Share the generated report
+  Future<void> shareReport(File file) async {
+    await Share.shareXFiles([XFile(file.path)], subject: 'Inventory Report');
+  }
+
+  /// Generate PDF report with order quantities
+  Future<File> generatePdfReportWithOrderQty({
+    required List<Product> products,
+    required List<int?> orderQuantities,
+    required ReportType reportType,
+    String? shopName,
+    String? customTitle,
+    String? customSubtitle,
+  }) async {
+    final pdf = pw.Document();
+    final reportTitle = customTitle ?? getReportTypeLabel(reportType);
+    final reportSubtitle = customSubtitle;
+    final dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now());
+    final finalShopName = shopName ?? 'C-Billing Network';
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        header: (context) => _buildPdfHeader(
+          reportTitle,
+          dateStr,
+          finalShopName,
+          reportSubtitle,
+        ),
+        footer: (context) => _buildPdfFooter(context),
+        build: (context) => [
+          pw.SizedBox(height: 20),
+          _buildPdfSummary(products, reportType),
+          pw.SizedBox(height: 20),
+          _buildDynamicPdfTable(products, orderQuantities),
+        ],
+      ),
+    );
+
+    // Save to file
+    final directory = await getApplicationDocumentsDirectory();
+    final fileName =
+        '${reportType.name}_report_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.pdf';
+    final file = File('${directory.path}/$fileName');
+    await file.writeAsBytes(await pdf.save());
+
+    return file;
+  }
+
+  /// Generate CSV report with order quantities
+  Future<File> generateCsvReportWithOrderQty({
+    required List<Product> products,
+    required List<int?> orderQuantities,
+    required ReportType reportType,
+    String? customTitle,
+  }) async {
+    return _generateDynamicCsvReport(
+      products: products,
+      reportType: reportType,
+      customTitle: customTitle,
+      orderQuantities: orderQuantities,
+    );
+  }
+}

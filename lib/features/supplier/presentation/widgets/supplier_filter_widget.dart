@@ -1,0 +1,212 @@
+import 'package:flutter/material.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
+
+/// Sort field options for suppliers
+enum SupplierSortField {
+  name,
+  createdDate,
+  contact,
+  supplierCode,
+}
+
+/// Filter widget for suppliers
+/// Features: Search bar, Sort options, Sort direction toggle
+class SupplierFilterWidget extends StatelessWidget {
+  final String searchQuery;
+  final ValueChanged<String> onSearchChanged;
+  final SupplierSortField sortField;
+  final ValueChanged<SupplierSortField> onSortFieldChanged;
+  final bool sortAscending;
+  final VoidCallback onSortDirectionToggle;
+
+  const SupplierFilterWidget({
+    super.key,
+    required this.searchQuery,
+    required this.onSearchChanged,
+    required this.sortField,
+    required this.onSortFieldChanged,
+    required this.sortAscending,
+    required this.onSortDirectionToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Search bar
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.card(context),
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextField(
+            onChanged: onSearchChanged,
+            decoration: InputDecoration(
+              hintText: 'Search suppliers...',
+              hintStyle: TextStyle(
+                color: AppTheme.grey400,
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w400,
+              ),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: AppTheme.grey,
+              ),
+              suffixIcon: searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: Icon(
+                        Icons.clear_rounded,
+                        color: AppTheme.grey,
+                      ),
+                      onPressed: () => onSearchChanged(''),
+                    )
+                  : null,
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+            ),
+            style: const TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Sort options row
+        Row(
+          children: [
+            // Sort field chips
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildSortChip(
+                      context: context,
+                      label: 'Name',
+                      field: SupplierSortField.name,
+                      icon: Icons.sort_by_alpha_rounded,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildSortChip(
+                      context: context,
+                      label: 'Date',
+                      field: SupplierSortField.createdDate,
+                      icon: Icons.calendar_today_rounded,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildSortChip(
+                      context: context,
+                      label: 'Contact',
+                      field: SupplierSortField.contact,
+                      icon: Icons.phone_rounded,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildSortChip(
+                      context: context,
+                      label: 'Code',
+                      field: SupplierSortField.supplierCode,
+                      icon: Icons.qr_code_rounded,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Sort direction toggle
+            GestureDetector(
+              onTap: onSortDirectionToggle,
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.isDark(context)
+                      ? AppTheme.white.withValues(alpha: 0.1)
+                      : AppColors.action(context).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  sortAscending
+                      ? Icons.arrow_upward_rounded
+                      : Icons.arrow_downward_rounded,
+                  size: 18,
+                  color: AppColors.isDark(context)
+                      ? AppTheme.white
+                      : AppColors.action(context),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSortChip({
+    required BuildContext context,
+    required String label,
+    required SupplierSortField field,
+    required IconData icon,
+  }) {
+    final isSelected = sortField == field;
+    final selected = AppColors.selectedFill(context);
+    final onSelected = AppColors.selectedOnFill(context);
+    final unselected = AppColors.card(context);
+
+    return GestureDetector(
+      onTap: () => onSortFieldChanged(field),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? selected : unselected,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? selected : AppColors.border(context),
+            width: 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppTheme.black.withValues(
+                      alpha: AppColors.isDark(context) ? 0.35 : 0.15,
+                    ),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isSelected ? onSelected : AppColors.secondaryText(context),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                color: isSelected ? onSelected : AppColors.secondaryText(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

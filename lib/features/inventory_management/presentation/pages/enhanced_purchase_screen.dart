@@ -1,0 +1,2060 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:c_billing/core/services/language_service.dart';
+import 'package:c_billing/core/services/dashboard_refresh_service.dart';
+import 'package:c_billing/core/services/product_settings_service.dart';
+import 'package:c_billing/core/localization/app_localizations.dart';
+import 'package:c_billing/common_widgets/file_preview_page.dart';
+import '../../offline/entities/purchase_batch_entity.dart';
+import '../../offline/controllers/purchase_batch_offline_controller.dart';
+import '../../data/services/purchase_sync_service.dart';
+import '../../data/services/purchase_batch_sync_service.dart';
+import '../../data/services/purchase_report_pdf_generator.dart';
+import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
+import '../../../supplier/offline/entities/supplier_entity.dart';
+import '../../../product/offline/controllers/product_offline_controller.dart';
+import '../widgets/purchase_filter_widget.dart';
+import '../widgets/purchase_list_widget.dart';
+import 'purchase_page.dart';
+import 'purchase_settings_page.dart';
+import 'purchase_report_settings_page.dart';
+import 'invoice_scanner_page.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+import 'package:c_billing/common_widgets/glass_icon_fab.dart';
+
+/// Lets the dashboard download button trigger the visible purchase report.
+class PurchaseScreenActions {
+  static final List<VoidCallback> _downloads = [];
+
+  static void register(VoidCallback onDownload) => _downloads.add(onDownload);
+
+  static void unregister(VoidCallback onDownload) =>
+      _downloads.remove(onDownload);
+
+  static void download() {
+    if (_downloads.isEmpty) return;
+    _downloads.last();
+  }
+}
+
+/// Enhanced Purchase Screen with purchase list as default view
+/// Features: Modern UI, filters, FAB for adding purchases, real-time updates
+class EnhancedPurchaseScreen extends StatefulWidget {
+  final bool isEmbedded;
+
+  const EnhancedPurchaseScreen({super.key, this.isEmbedded = false});
+
+  @override
+  State<EnhancedPurchaseScreen> createState() => _EnhancedPurchaseScreenState();
+}
+
+class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
+    with SingleTickerProviderStateMixin {
+  late AppLocalizations _localizations;
+  late AnimationController _animController;
+  late Animation<Offset> _offsetAnimation;
+  late Animation<double> _opacityAnimation;
+
+  // Data
+  List<PurchaseBatchEntity> _purchases = [];
+  List<Map<String, dynamic>> _suppliers = [];
+  bool _isLoading = true;
+
+  // Filters
+  PurchaseDateFilter _dateFilter = PurchaseDateFilter.all;
+  String? _supplierFilter;
+  DateTime? _customStartDate;
+  DateTime? _customEndDate;
+
+  // Streams
+  StreamSubscription<List<PurchaseBatchEntity>>? _purchaseStreamSubscription;
+  StreamSubscription<List<SupplierEntity>>? _supplierStreamSubscription;
+  StreamSubscription<void>? _purchaseChangeSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _localizations = AppLocalizations.of(
+      LanguageService.instance.currentLanguage,
+    );
+    LanguageService.instance.addListener(_onLanguageChanged);
+
+    // Initialize animations
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _offsetAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.05),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
+    _opacityAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeIn));
+
+    PurchaseScreenActions.register(_generatePurchaseReport);
+
+    // Load data directly from Isar first
+    _loadPurchasesFromIsar();
+    _setupSupplierStream();
+    _setupCrossPageRefresh();
+
+    // Start animation
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) _animController.forward();
+    });
+
+    // Trigger background sync for both PurchaseEntity and PurchaseBatchEntity
+    PurchaseSyncService.instance.syncNow();
+    PurchaseBatchSyncService.instance.syncNow();
+  }
+
+  void _onLanguageChanged() {
+    if (mounted) {
+      setState(() {
+        _localizations = AppLocalizations.of(
+          LanguageService.instance.currentLanguage,
+        );
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    PurchaseScreenActions.unregister(_generatePurchaseReport);
+    LanguageService.instance.removeListener(_onLanguageChanged);
+    _animController.dispose();
+    _purchaseStreamSubscription?.cancel();
+    _supplierStreamSubscription?.cancel();
+    _purchaseChangeSubscription?.cancel();
+    super.dispose();
+  }
+
+  /// Load purchases directly from Isar database
+  Future<void> _loadPurchasesFromIsar() async {
+    try {
+      final controller = PurchaseBatchOfflineController.instance;
+
+      var batches = await controller.getAllBatches(includeConsumed: true);
+      debugPrint('[EnhancedPurchase] Isar found ${batches.length} batches');
+
+      if (batches.isEmpty) {
+        debugPrint(
+          '[EnhancedPurchase] Isar empty, requesting sync service to download...',
+        );
+        await PurchaseBatchSyncService.instance.forceFullSync();
+        batches = await controller.getAllBatches(includeConsumed: true);
+        debugPrint(
+          '[EnhancedPurchase] After batch sync: ${batches.length} batches',
+        );
+      }
+
+      if (batches.isEmpty) {
+        debugPrint(
+          '[EnhancedPurchase] Still empty, syncing legacy purchases and backfilling stock...',
+        );
+        await PurchaseSyncService.instance.forceFullSync();
+        final available = await controller.ensurePurchaseHistoryAvailable();
+        batches = await controller.getAllBatches(includeConsumed: true);
+        debugPrint(
+          '[EnhancedPurchase] After legacy migration/backfill: $available batches',
+        );
+      }
+
+      if (mounted) {
+        setState(() {
+          _purchases = batches
+            ..sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate));
+          _isLoading = false;
+        });
+      }
+
+      _setupPurchaseStream();
+    } catch (e, stack) {
+      debugPrint('[EnhancedPurchase] Error loading from Isar: $e');
+      debugPrint('[EnhancedPurchase] Stack: $stack');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  /// Setup real-time purchase stream from Isar (for updates after initial load)
+  void _setupPurchaseStream() {
+    _purchaseStreamSubscription?.cancel();
+
+    _purchaseStreamSubscription = PurchaseBatchOfflineController.instance
+        .watchAllBatches(includeConsumed: true)
+        .map(
+          (batches) =>
+              batches.toList()
+                ..sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate)),
+        )
+        .listen(
+          (purchases) {
+            debugPrint(
+              '[EnhancedPurchase] Stream update: ${purchases.length} purchases',
+            );
+            if (mounted) {
+              setState(() {
+                _purchases = purchases;
+              });
+            }
+          },
+          onError: (e) {
+            debugPrint('[EnhancedPurchase] Stream error: $e');
+          },
+        );
+  }
+
+  /// Setup supplier stream for filter dropdown
+  void _setupSupplierStream() {
+    // Load suppliers once instead of streaming to avoid rebuilds
+    _loadSuppliers();
+  }
+
+  /// Load suppliers once
+  Future<void> _loadSuppliers() async {
+    try {
+      final suppliers = await SupplierOfflineController.instance
+          .getAllSuppliers();
+      if (mounted) {
+        setState(() {
+          _suppliers = suppliers
+              .map(
+                (s) => {
+                  'id': s.serverId ?? s.id.toString(),
+                  'firstName': s.firstName,
+                  'lastName': s.lastName,
+                  'fullName': '${s.firstName} ${s.lastName}'.trim(),
+                  'contact': s.contact,
+                },
+              )
+              .toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('[EnhancedPurchase] Error loading suppliers: $e');
+    }
+  }
+
+  /// Listen for purchase changes from other screens
+  void _setupCrossPageRefresh() {
+    _purchaseChangeSubscription = DashboardRefreshService
+        .instance
+        .onPurchaseChanged
+        .listen((_) {
+          if (mounted) {
+            // Reload from Isar when purchases change
+            _loadPurchasesFromIsar();
+          }
+        });
+  }
+
+  /// Navigate to add purchase page
+  void _navigateToAddPurchase() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const PurchasePage(isEmbedded: false),
+      ),
+    );
+    // Reload purchases after returning from add page
+    _loadPurchasesFromIsar();
+  }
+
+  /// Show purchase details bottom sheet
+  void _showPurchaseDetails(PurchaseBatchEntity purchase) {
+    showAppBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.transparent,
+      builder: (context) => _PurchaseDetailsSheet(
+        purchase: purchase,
+        onEdit: () {
+          Navigator.pop(context);
+          _showEditPurchaseDialog(purchase);
+        },
+        onDelete: () async {
+          Navigator.pop(context);
+          _confirmDeletePurchase(purchase);
+        },
+      ),
+    );
+  }
+
+  /// Show purchase context menu on long press
+  void _showPurchaseContextMenu(PurchaseBatchEntity purchase) {
+    showAppBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.transparent,
+      builder: (context) => ClipRRect(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.card(context),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
+            ),
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppTheme.grey300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text(
+                      purchase.productName,
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: AppColors.accent(context),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  _buildContextMenuItem(
+                    icon: Icons.visibility_rounded,
+                    label: _localizations.viewDetails,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showPurchaseDetails(purchase);
+                    },
+                  ),
+                  _buildContextMenuItem(
+                    icon: Icons.edit_rounded,
+                    label: _localizations.edit,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showEditPurchaseDialog(purchase);
+                    },
+                  ),
+                  _buildContextMenuItem(
+                    icon: Icons.delete_outline_rounded,
+                    label: _localizations.delete,
+                    isDestructive: true,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _confirmDeletePurchase(purchase);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContextMenuItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    bool isDestructive = false,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 22,
+              color: isDestructive ? AppTheme.red : AppTheme.grey700,
+            ),
+            const SizedBox(width: 16),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w500,
+                fontSize: 15,
+                color: isDestructive ? AppTheme.red : AppTheme.grey800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Show edit purchase dialog
+  void _showEditPurchaseDialog(PurchaseBatchEntity purchase) {
+    final purchasePriceController = TextEditingController(
+      text: purchase.purchasePrice.toStringAsFixed(2),
+    );
+    final sellingPriceController = TextEditingController(
+      text: purchase.sellingPrice.toStringAsFixed(2),
+    );
+    final quantityController = TextEditingController(
+      text: purchase.quantityPurchased.toString(),
+    );
+    final unitController = TextEditingController(text: purchase.unit);
+    final notesController = TextEditingController(text: purchase.notes ?? '');
+    final warrantyController = TextEditingController(
+      text: (purchase.warrantyMonths ?? 0) > 0
+          ? purchase.warrantyMonths.toString()
+          : '',
+    );
+
+    DateTime? selectedPurchaseDate = purchase.purchaseDate;
+    DateTime? selectedExpiryDate = purchase.expiryDate;
+    DateTime? selectedProductionDate = purchase.productionDate;
+    String? selectedSupplierId = purchase.supplierId;
+    String? selectedSupplierName = purchase.supplierName;
+    final originalQty = purchase.quantityPurchased;
+    final consumed = originalQty - purchase.quantityRemaining;
+
+    // Load custom columns
+    final customColumns = ProductSettingsService.instance.activeCustomColumns;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: AlertDialog(
+            backgroundColor: AppColors.card(context),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(
+                color: AppTheme.white.withValues(alpha: 0.3),
+                width: 1.5,
+              ),
+            ),
+            title: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentSoft(context, 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.edit_rounded,
+                    color: AppColors.accent(context),
+                    size: 20,
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _localizations.editPurchase,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: AppColors.accent(context),
+                        ),
+                      ),
+                      Text(
+                        purchase.productName,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                          color: AppTheme.grey600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Purchase Price
+                  _buildEditField(
+                    controller: purchasePriceController,
+                    label: _localizations.purchasePrice,
+                    icon: Icons.currency_rupee_rounded,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Selling Price
+                  _buildEditField(
+                    controller: sellingPriceController,
+                    label: _localizations.salesPrice,
+                    icon: Icons.sell_rounded,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Quantity
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildEditField(
+                          controller: quantityController,
+                          label:
+                              '${_localizations.quantity} (min: $consumed sold)',
+                          icon: Icons.inventory_2_rounded,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildEditField(
+                          controller: unitController,
+                          label: _localizations.unit,
+                          icon: Icons.straighten_rounded,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Supplier selector
+                  InkWell(
+                    onTap: () async {
+                      final supplier = await _showSupplierPickerDialog(context);
+                      if (supplier != null) {
+                        setDialogState(() {
+                          selectedSupplierId = supplier['id'] as String?;
+                          selectedSupplierName =
+                              supplier['fullName'] as String?;
+                        });
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppTheme.grey300),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.person_rounded,
+                            size: 20,
+                            color: AppTheme.grey600,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              selectedSupplierName ??
+                                  _localizations.selectSupplier,
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 14,
+                                color: selectedSupplierName != null
+                                    ? AppTheme.black87
+                                    : AppTheme.grey,
+                              ),
+                            ),
+                          ),
+                          if (selectedSupplierName != null)
+                            GestureDetector(
+                              onTap: () {
+                                setDialogState(() {
+                                  selectedSupplierId = null;
+                                  selectedSupplierName = null;
+                                });
+                              },
+                              child: Icon(
+                                Icons.close,
+                                size: 18,
+                                color: AppTheme.grey,
+                              ),
+                            ),
+                          if (selectedSupplierName == null)
+                            Icon(
+                              Icons.arrow_drop_down,
+                              color: AppTheme.grey,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Purchase Date
+                  InkWell(
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: selectedPurchaseDate ?? DateTime.now(),
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now().add(const Duration(days: 1)),
+                      );
+                      if (date != null) {
+                        setDialogState(() => selectedPurchaseDate = date);
+                      }
+                    },
+                    child: _buildDateField(
+                      label: _localizations.purchaseDate,
+                      date: selectedPurchaseDate,
+                      icon: Icons.calendar_today_rounded,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Production Date & Expiry Date
+                  Row(
+                    children: [
+                      Expanded(
+                        child: InkWell(
+                          onTap: () async {
+                            final date = await showDatePicker(
+                              context: context,
+                              initialDate:
+                                  selectedProductionDate ?? DateTime.now(),
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime.now().add(
+                                const Duration(days: 1),
+                              ),
+                            );
+                            if (date != null) {
+                              setDialogState(
+                                () => selectedProductionDate = date,
+                              );
+                            }
+                          },
+                          child: _buildDateField(
+                            label: _localizations.mfgDate,
+                            date: selectedProductionDate,
+                            icon: Icons.factory_rounded,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () async {
+                            final date = await showDatePicker(
+                              context: context,
+                              initialDate:
+                                  selectedExpiryDate ??
+                                  DateTime.now().add(const Duration(days: 365)),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime(2035),
+                            );
+                            if (date != null) {
+                              setDialogState(() => selectedExpiryDate = date);
+                            }
+                          },
+                          child: _buildDateField(
+                            label: _localizations.expiry,
+                            date: selectedExpiryDate,
+                            icon: Icons.event_busy_rounded,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Warranty
+                  _buildEditField(
+                    controller: warrantyController,
+                    label: _localizations.warrantyMonths,
+                    icon: Icons.verified_user_rounded,
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Notes
+                  _buildEditField(
+                    controller: notesController,
+                    label: _localizations.notes,
+                    icon: Icons.notes_rounded,
+                    maxLines: 3,
+                  ),
+
+                  // Custom Fields Section (Read-only display)
+                  if (customColumns.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.tune_rounded,
+                            size: 16,
+                            color: AppTheme.grey600,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _localizations.customFields,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.grey600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    FutureBuilder<Map<String, dynamic>>(
+                      future: _loadProductCustomFields(purchase.productId),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Center(
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.accent(context),
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                        final fieldValues = snapshot.data ?? {};
+                        return Column(
+                          children: customColumns.map((column) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _buildCustomFieldDisplay(
+                                column,
+                                fieldValues[column.id],
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      },
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  _localizations.cancel,
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    color: AppTheme.grey,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  try {
+                    final newPurchasePrice =
+                        double.tryParse(purchasePriceController.text) ??
+                        purchase.purchasePrice;
+                    final newSellingPrice =
+                        double.tryParse(sellingPriceController.text) ??
+                        purchase.sellingPrice;
+                    var newQuantity =
+                        int.tryParse(quantityController.text) ??
+                        purchase.quantityPurchased;
+                    final newUnit = unitController.text.trim().isNotEmpty
+                        ? unitController.text.trim()
+                        : purchase.unit;
+                    final newNotes = notesController.text.trim().isNotEmpty
+                        ? notesController.text.trim()
+                        : null;
+                    final newWarranty = int.tryParse(warrantyController.text);
+
+                    // Validate: quantity cannot be less than already consumed
+                    if (newQuantity < consumed) {
+                      GlassyToast.show(
+                        context,
+                        'Quantity cannot be less than $consumed (already sold)',
+                        isError: true,
+                      );
+                      return;
+                    }
+
+                    // Calculate new remaining: newQuantity - consumed
+                    final newRemaining = newQuantity - consumed;
+
+                    final controller = PurchaseBatchOfflineController.instance;
+                    await controller.updateBatch(
+                      id: purchase.id,
+                      purchasePrice: newPurchasePrice,
+                      sellingPrice: newSellingPrice,
+                      quantityPurchased: newQuantity,
+                      quantityRemaining: newRemaining,
+                      unit: newUnit,
+                      notes: newNotes,
+                      supplierId: selectedSupplierId,
+                      supplierName: selectedSupplierName,
+                      purchaseDate: selectedPurchaseDate,
+                      expiryDate: selectedExpiryDate,
+                      productionDate: selectedProductionDate,
+                      warrantyMonths: newWarranty,
+                    );
+
+                    // Notify dashboard
+                    DashboardRefreshService.instance.notifyDataChanged(
+                      DataChangeType.purchase,
+                    );
+
+                    // Trigger background sync
+                    PurchaseBatchSyncService.instance.syncNow();
+
+                    if (mounted && context.mounted) {
+                      Navigator.pop(context);
+                      GlassyToast.show(
+                        context,
+                        _localizations.purchaseUpdatedSuccessfully,
+                      );
+                    }
+                  } catch (e) {
+                    if (!context.mounted) return;
+                    GlassyToast.show(
+                      context,
+                      '${_localizations.errorUpdatingPurchase}: $e',
+                      isError: true,
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.action(context),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  _localizations.update,
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    color: AppTheme.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Build a text field for the edit dialog
+  Widget _buildEditField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType? keyboardType,
+    int maxLines = 1,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      style: TextStyle(fontFamily: 'Literata', fontSize: 14),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(
+          fontFamily: 'Literata',
+          fontSize: 13,
+          color: AppTheme.grey600,
+        ),
+        prefixIcon: Icon(icon, size: 20, color: AppColors.accent(context)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppTheme.grey300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppTheme.grey300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.accent(context), width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 14,
+        ),
+        isDense: true,
+      ),
+    );
+  }
+
+  /// Build a date display field for the edit dialog
+  Widget _buildDateField({
+    required String label,
+    required DateTime? date,
+    required IconData icon,
+  }) {
+    final dateFormat = DateFormat('dd MMM yyyy');
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppTheme.grey300),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppColors.accent(context)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 10,
+                    color: AppTheme.grey600,
+                  ),
+                ),
+                Text(
+                  date != null
+                      ? dateFormat.format(date)
+                      : _localizations.notSet,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: date != null ? AppTheme.black87 : AppTheme.grey400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Load custom field values from the product
+  Future<Map<String, dynamic>> _loadProductCustomFields(
+    String productId,
+  ) async {
+    try {
+      final product = await ProductOfflineController.instance
+          .getProductByServerId(productId);
+      if (product != null &&
+          product.customFieldsJson != null &&
+          product.customFieldsJson!.isNotEmpty) {
+        return jsonDecode(product.customFieldsJson!) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('Error loading product custom fields: $e');
+    }
+    return {};
+  }
+
+  /// Build a read-only custom field display widget
+  Widget _buildCustomFieldDisplay(CustomColumn column, dynamic value) {
+    final primaryColor = AppColors.action(context);
+    String displayValue = '';
+    IconData icon = Icons.text_fields_rounded;
+
+    switch (column.type) {
+      case CustomColumnType.text:
+        displayValue = value?.toString() ?? '-';
+        icon = Icons.text_fields_rounded;
+        break;
+      case CustomColumnType.number:
+        displayValue = value?.toString() ?? '-';
+        icon = Icons.numbers_rounded;
+        break;
+      case CustomColumnType.decimal:
+        displayValue = value?.toString() ?? '-';
+        icon = Icons.percent_rounded;
+        break;
+      case CustomColumnType.date:
+        if (value != null && value.toString().isNotEmpty) {
+          try {
+            final date = DateTime.parse(value.toString());
+            displayValue = DateFormat('dd MMM yyyy').format(date);
+          } catch (_) {
+            displayValue = value.toString();
+          }
+        } else {
+          displayValue = '-';
+        }
+        icon = Icons.calendar_today_rounded;
+        break;
+      case CustomColumnType.dropdown:
+        displayValue = value?.toString() ?? '-';
+        icon = Icons.arrow_drop_down_circle_rounded;
+        break;
+      case CustomColumnType.boolean:
+        displayValue = value == true || value == 'true'
+            ? _localizations.yes
+            : _localizations.no;
+        icon = Icons.check_circle_outline_rounded;
+        break;
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppTheme.grey300),
+        borderRadius: BorderRadius.circular(12),
+        color: AppColors.scaffold(context),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: primaryColor),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  column.name,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 10,
+                    color: AppTheme.grey600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  displayValue,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: displayValue != '-'
+                        ? AppTheme.black87
+                        : AppTheme.grey400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Show supplier picker dialog
+  Future<Map<String, dynamic>?> _showSupplierPickerDialog(
+    BuildContext parentContext,
+  ) async {
+    return await showDialog<Map<String, dynamic>>(
+      context: parentContext,
+      builder: (context) {
+        var filtered = _suppliers.toList();
+        return StatefulBuilder(
+          builder: (context, setPickerState) => AlertDialog(
+            backgroundColor: AppColors.card(context),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Text(
+              _localizations.selectSupplier,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                color: AppColors.accent(context),
+                fontSize: 16,
+              ),
+            ),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 300,
+              child: Column(
+                children: [
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Search supplier...',
+                      hintStyle: const TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 13,
+                      ),
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      isDense: true,
+                    ),
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 13,
+                    ),
+                    onChanged: (q) {
+                      setPickerState(() {
+                        filtered = _suppliers
+                            .where(
+                              (s) => (s['fullName'] as String)
+                                  .toLowerCase()
+                                  .contains(q.toLowerCase()),
+                            )
+                            .toList();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: filtered.isEmpty
+                        ? Center(
+                            child: Text(
+                              _localizations.noSuppliersFound,
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                color: AppTheme.grey,
+                                fontSize: 13,
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: filtered.length,
+                            itemBuilder: (context, index) {
+                              final supplier = filtered[index];
+                              return ListTile(
+                                dense: true,
+                                title: Text(
+                                  supplier['fullName'] as String,
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                subtitle: supplier['contact'] != null
+                                    ? Text(
+                                        supplier['contact'] as String,
+                                        style: TextStyle(
+                                          fontFamily: 'Literata',
+                                          fontSize: 12,
+                                          color: AppTheme.grey,
+                                        ),
+                                      )
+                                    : null,
+                                onTap: () => Navigator.pop(context, supplier),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Confirm and delete a purchase batch
+  void _confirmDeletePurchase(PurchaseBatchEntity purchase) {
+    showDialog(
+      context: context,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: AlertDialog(
+          backgroundColor: AppColors.card(context),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            _localizations.deletePurchase,
+            style: const TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w700,
+              color: AppTheme.red,
+              fontSize: 16,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _localizations.confirmDeletePurchase,
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 14,
+                  color: AppTheme.grey700,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.red.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.red.withValues(alpha: 0.2)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      purchase.productName,
+                      style: const TextStyle(
+                        fontFamily: 'Literata',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Qty: ${purchase.quantityPurchased} ${purchase.unit} • ₹${purchase.purchasePrice.toStringAsFixed(2)}/unit',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 12,
+                        color: AppTheme.grey600,
+                      ),
+                    ),
+                    if (purchase.quantityRemaining <
+                        purchase.quantityPurchased) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        '⚠ ${purchase.quantityPurchased - purchase.quantityRemaining} units already sold from this batch',
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 11,
+                          color: AppTheme.orange,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'This action cannot be undone. Stock will be adjusted accordingly.',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 12,
+                  color: AppTheme.grey,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                _localizations.cancel,
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  color: AppTheme.grey,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  final controller = PurchaseBatchOfflineController.instance;
+                  await controller.deleteBatch(purchase.id);
+
+                  // Update product stock
+                  DashboardRefreshService.instance.notifyDataChanged(
+                    DataChangeType.purchase,
+                  );
+                  DashboardRefreshService.instance.notifyDataChanged(
+                    DataChangeType.product,
+                  );
+
+                  // Trigger background sync
+                  PurchaseBatchSyncService.instance.syncNow();
+
+                  if (mounted && context.mounted) {
+                    Navigator.pop(context);
+                    GlassyToast.show(
+                      context,
+                      _localizations.purchaseDeletedSuccessfully,
+                    );
+                  }
+                } catch (e) {
+                  if (!context.mounted) return;
+                  GlassyToast.show(
+                    context,
+                    '${_localizations.errorDeletingPurchase}: $e',
+                    isError: true,
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.red,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Delete',
+                style: TextStyle(fontFamily: 'Literata', color: AppTheme.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.scaffold(context),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: GlassIconFab(
+        tooltip: _localizations.addPurchase,
+        onPressed: _navigateToAddPurchase,
+      ),
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            if (!widget.isEmbedded) _buildHeader(),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: SlideTransition(
+                  position: _offsetAnimation,
+                  child: FadeTransition(
+                    opacity: _opacityAnimation,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 12),
+                        PurchaseSummaryWidget(
+                          purchases: _purchases,
+                          dateFilter: _dateFilter,
+                          supplierFilter: _supplierFilter,
+                          customStartDate: _customStartDate,
+                          customEndDate: _customEndDate,
+                        ),
+                        const SizedBox(height: 12),
+                        PurchaseFilterWidget(
+                          selectedDateFilter: _dateFilter,
+                          selectedSupplierId: _supplierFilter,
+                          suppliers: _suppliers,
+                          customStartDate: _customStartDate,
+                          customEndDate: _customEndDate,
+                          onDateFilterChanged: (filter) {
+                            setState(() => _dateFilter = filter);
+                          },
+                          onSupplierChanged: (supplierId) {
+                            setState(() => _supplierFilter = supplierId);
+                          },
+                          onCustomDateRangeSelected: (start, end) {
+                            setState(() {
+                              _customStartDate = start;
+                              _customEndDate = end;
+                            });
+                          },
+                          onReportTap: _generatePurchaseReport,
+                          allLabel: _localizations.all,
+                          todayLabel: _localizations.today,
+                          supplierLabel: _localizations.supplier,
+                        ),
+                        const SizedBox(height: 12),
+                        Expanded(
+                          child: PurchaseListWidget(
+                            purchases: _purchases,
+                            isLoading: _isLoading,
+                            dateFilter: _dateFilter,
+                            supplierFilter: _supplierFilter,
+                            customStartDate: _customStartDate,
+                            customEndDate: _customEndDate,
+                            onRefresh: () {
+                              PurchaseSyncService.instance.syncNow();
+                              PurchaseBatchSyncService.instance.syncNow();
+                            },
+                            onPurchaseTap: _showPurchaseDetails,
+                            onPurchaseLongPress: _showPurchaseContextMenu,
+                            emptyTitle: _localizations.noPurchasesFound,
+                            emptySubtitle: _localizations.trackPurchases,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Filtered purchases (same logic as PurchaseListWidget) ──
+  List<PurchaseBatchEntity> get _filteredPurchases {
+    var filtered = _purchases;
+
+    // Date filter
+    if (_dateFilter == PurchaseDateFilter.today) {
+      final today = DateTime.now();
+      filtered = filtered.where((p) {
+        return p.purchaseDate.year == today.year &&
+            p.purchaseDate.month == today.month &&
+            p.purchaseDate.day == today.day;
+      }).toList();
+    } else if (_dateFilter == PurchaseDateFilter.thisMonth) {
+      final now = DateTime.now();
+      filtered = filtered.where((p) {
+        return p.purchaseDate.year == now.year &&
+            p.purchaseDate.month == now.month;
+      }).toList();
+    } else if (_dateFilter == PurchaseDateFilter.thisYear) {
+      final now = DateTime.now();
+      filtered = filtered.where((p) {
+        return p.purchaseDate.year == now.year;
+      }).toList();
+    } else if (_dateFilter == PurchaseDateFilter.custom &&
+        _customStartDate != null) {
+      final start = DateTime(
+        _customStartDate!.year,
+        _customStartDate!.month,
+        _customStartDate!.day,
+      );
+      final end = _customEndDate != null
+          ? DateTime(
+              _customEndDate!.year,
+              _customEndDate!.month,
+              _customEndDate!.day,
+              23,
+              59,
+              59,
+            )
+          : DateTime(start.year, start.month, start.day, 23, 59, 59);
+      filtered = filtered.where((p) {
+        return p.purchaseDate.isAfter(
+              start.subtract(const Duration(seconds: 1)),
+            ) &&
+            p.purchaseDate.isBefore(end.add(const Duration(seconds: 1)));
+      }).toList();
+    }
+
+    // Supplier filter
+    if (_supplierFilter != null && _supplierFilter!.isNotEmpty) {
+      filtered = filtered
+          .where((p) => p.supplierId == _supplierFilter)
+          .toList();
+    }
+
+    return filtered;
+  }
+
+  String _buildFilterDescription() {
+    final parts = <String>[];
+    if (_dateFilter == PurchaseDateFilter.today) {
+      parts.add('Today');
+    } else if (_dateFilter == PurchaseDateFilter.thisMonth) {
+      parts.add('This Month');
+    } else if (_dateFilter == PurchaseDateFilter.thisYear) {
+      parts.add('This Year');
+    } else if (_dateFilter == PurchaseDateFilter.custom &&
+        _customStartDate != null) {
+      final dateFormat = DateFormat('dd MMM yyyy');
+      final start = dateFormat.format(_customStartDate!);
+      if (_customEndDate == null || _customStartDate == _customEndDate) {
+        parts.add(start);
+      } else {
+        final end = dateFormat.format(_customEndDate!);
+        parts.add('$start - $end');
+      }
+    } else {
+      parts.add('All Time');
+    }
+    if (_supplierFilter != null && _supplierFilter!.isNotEmpty) {
+      final supplierName = _suppliers
+          .where((s) => s['id'] == _supplierFilter)
+          .map((s) => s['name'] as String?)
+          .firstOrNull;
+      if (supplierName != null) {
+        parts.add('Supplier: $supplierName');
+      }
+    }
+    return parts.join(' | ');
+  }
+
+  // Flag to prevent concurrent report generation
+  bool _isGeneratingReport = false;
+
+  // ── Generate & show purchase report ──
+  Future<void> _generatePurchaseReport() async {
+    debugPrint(
+      '[PurchaseReport] Button tapped! _isGeneratingReport=$_isGeneratingReport',
+    );
+
+    // Prevent concurrent generation
+    if (_isGeneratingReport) {
+      debugPrint('[PurchaseReport] Already generating, skipping');
+      return;
+    }
+
+    final filtered = _filteredPurchases;
+    debugPrint('[PurchaseReport] Filtered purchases: ${filtered.length}');
+
+    if (filtered.isEmpty) {
+      debugPrint('[PurchaseReport] No data - showing snackbar');
+      if (mounted) {
+        GlassyToast.show(context, 'No purchase data to generate report');
+      }
+      return;
+    }
+
+    _isGeneratingReport = true;
+
+    // Show loading indicator
+    if (mounted) {
+      GlassyToast.show(context, 'Generating PDF report...');
+    }
+
+    try {
+      debugPrint(
+        '[PurchaseReport] Generating PDF for ${filtered.length} entries...',
+      );
+
+      final pdfBytes = await PurchaseReportPdfGenerator.generate(
+        purchases: filtered,
+        filterDescription: _buildFilterDescription(),
+      );
+
+      debugPrint('[PurchaseReport] PDF generated: ${pdfBytes.length} bytes');
+
+      // Save to temporary file for preview
+      final tempDir = await getTemporaryDirectory();
+      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final tempFile = File('${tempDir.path}/purchase_report_$timestamp.pdf');
+      await tempFile.writeAsBytes(pdfBytes);
+
+      // Dismiss loading snackbar
+      if (mounted) {
+        GlassyToast.dismiss();
+      }
+
+      if (!mounted) {
+        _isGeneratingReport = false;
+        return;
+      }
+
+      // Navigate to file preview page
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FilePreviewPage(
+            file: tempFile,
+            fileName: 'Purchase Report',
+            fileType: FilePreviewType.pdf,
+            subtitle:
+                '${filtered.length} entries • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
+          ),
+        ),
+      );
+
+      _isGeneratingReport = false;
+    } catch (e, stack) {
+      debugPrint('[PurchaseReport] Error: $e');
+      debugPrint('[PurchaseReport] Stack: $stack');
+      if (mounted) {
+        GlassyToast.dismiss();
+        GlassyToast.show(context, 'Failed to generate report: $e');
+      }
+    } finally {
+      _isGeneratingReport = false;
+    }
+  }
+
+  Widget _buildHeader() {
+    return SlideTransition(
+      position: _offsetAnimation,
+      child: FadeTransition(
+        opacity: _opacityAnimation,
+        child: AppTopBar(
+          title: _localizations.purchaseHistory,
+          subtitle: _localizations.trackPurchases,
+          actions: [
+            AppTopBar.action(
+              icon: Icons.document_scanner_rounded,
+              onTap: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => InvoiceScannerPage()),
+                );
+                if (result == true && mounted) {
+                  setState(() {});
+                }
+              },
+            ),
+            AppTopBar.action(
+              icon: Icons.description_rounded,
+              onTap: _generatePurchaseReport,
+            ),
+            PopupMenuButton<String>(
+              icon: Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppTheme.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppTheme.white.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.settings_rounded,
+                  size: 22,
+                  color: AppTheme.white,
+                ),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              onSelected: (value) async {
+                if (value == 'purchase_settings') {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PurchaseSettingsPage(),
+                    ),
+                  );
+                  setState(() {});
+                } else if (value == 'report_settings') {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PurchaseReportSettingsPage(),
+                    ),
+                  );
+                }
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem<String>(
+                  value: 'purchase_settings',
+                  child: Row(
+                    children: [
+                      Icon(Icons.tune_rounded, color: AppTheme.grey700, size: 20),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Purchase Settings',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'report_settings',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.view_column_rounded,
+                        color: AppTheme.grey700,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Report Settings',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Purchase details bottom sheet
+class _PurchaseDetailsSheet extends StatefulWidget {
+  final PurchaseBatchEntity purchase;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+
+  const _PurchaseDetailsSheet({
+    required this.purchase,
+    this.onEdit,
+    this.onDelete,
+  });
+
+  @override
+  State<_PurchaseDetailsSheet> createState() => _PurchaseDetailsSheetState();
+}
+
+class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
+  /// Calculate total amount for this batch
+  double get totalAmount =>
+      widget.purchase.purchasePrice * widget.purchase.quantityPurchased;
+
+  /// Load custom field values from the product
+  Future<Map<String, dynamic>> _loadProductCustomFields() async {
+    try {
+      final product = await ProductOfflineController.instance
+          .getProductByServerId(widget.purchase.productId);
+      if (product != null &&
+          product.customFieldsJson != null &&
+          product.customFieldsJson!.isNotEmpty) {
+        return jsonDecode(product.customFieldsJson!) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('Error loading product custom fields: $e');
+    }
+    return {};
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dateFormat = DateFormat('dd MMM yyyy');
+    final timeFormat = DateFormat('hh:mm a');
+    final customColumns = ProductSettingsService.instance.activeCustomColumns;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.card(context),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Handle
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppTheme.grey300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 20),
+
+                  // Header
+                  Row(
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: AppColors.accentSoft(context, 0.1),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(
+                          Icons.inventory_2_rounded,
+                          color: AppColors.accent(context),
+                          size: 28,
+                        ),
+                      ),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.purchase.productName,
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w800,
+                                fontSize: 18,
+                                color: AppColors.accent(context),
+                              ),
+                            ),
+                            if (widget.purchase.companyName.isNotEmpty)
+                              Text(
+                                widget.purchase.companyName,
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 14,
+                                  color: AppTheme.grey600,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Details grid
+                  _buildDetailRow(
+                    'Quantity',
+                    '${widget.purchase.quantityPurchased} ${widget.purchase.unit}',
+                  ),
+                  _buildDetailRow(
+                    'Purchase Price',
+                    '₹${widget.purchase.purchasePrice.toStringAsFixed(2)}/unit',
+                  ),
+                  _buildDetailRow(
+                    'Sales Price',
+                    '₹${widget.purchase.sellingPrice.toStringAsFixed(2)}/unit',
+                  ),
+                  _buildDetailRow(
+                    'Total Amount',
+                    '₹${totalAmount.toStringAsFixed(2)}',
+                    highlight: true,
+                  ),
+
+                  if (widget.purchase.supplierName != null &&
+                      widget.purchase.supplierName!.isNotEmpty)
+                    _buildDetailRow('Supplier', widget.purchase.supplierName!),
+
+                  _buildDetailRow(
+                    'Date',
+                    dateFormat.format(widget.purchase.purchaseDate),
+                  ),
+                  _buildDetailRow(
+                    'Time',
+                    timeFormat.format(widget.purchase.purchaseDate),
+                  ),
+
+                  if (widget.purchase.productionDate != null)
+                    _buildDetailRow(
+                      'Production Date',
+                      dateFormat.format(widget.purchase.productionDate!),
+                    ),
+
+                  if (widget.purchase.expiryDate != null)
+                    _buildDetailRow(
+                      'Expiry Date',
+                      dateFormat.format(widget.purchase.expiryDate!),
+                    ),
+
+                  if (widget.purchase.warrantyMonths != null &&
+                      widget.purchase.warrantyMonths! > 0)
+                    _buildDetailRow(
+                      'Warranty',
+                      '${widget.purchase.warrantyMonths} months',
+                    ),
+
+                  if (widget.purchase.notes != null &&
+                      widget.purchase.notes!.isNotEmpty) ...[
+                    SizedBox(height: 16),
+                    Text(
+                      'Notes',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: AppColors.accent(context),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.chipFill(context),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        widget.purchase.notes!,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w400,
+                          fontSize: 13,
+                          color: AppTheme.grey700,
+                        ),
+                      ),
+                    ),
+                  ],
+
+                  // Custom Fields Section
+                  if (customColumns.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.tune_rounded,
+                          size: 16,
+                          color: AppTheme.grey600,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Custom Fields',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.grey600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    FutureBuilder<Map<String, dynamic>>(
+                      future: _loadProductCustomFields(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Center(
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.accent(context),
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                        final fieldValues = snapshot.data ?? {};
+                        return Column(
+                          children: customColumns.map((column) {
+                            final value = fieldValues[column.id];
+                            String displayValue = _formatCustomFieldValue(
+                              column,
+                              value,
+                            );
+                            return _buildDetailRow(column.name, displayValue);
+                          }).toList(),
+                        );
+                      },
+                    ),
+                  ],
+
+                  SizedBox(height: 24),
+
+                  // Action buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: widget.onEdit,
+                          icon: Icon(Icons.edit_rounded, size: 18),
+                          label: Text('Edit'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.action(context),
+                            side: BorderSide(color: AppColors.accent(context)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: widget.onDelete,
+                          icon: const Icon(
+                            Icons.delete_outline_rounded,
+                            size: 18,
+                          ),
+                          label: const Text('Delete'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppTheme.red,
+                            side: const BorderSide(color: AppTheme.red),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Format custom field value for display
+  String _formatCustomFieldValue(CustomColumn column, dynamic value) {
+    if (value == null) return '-';
+
+    switch (column.type) {
+      case CustomColumnType.date:
+        if (value.toString().isNotEmpty) {
+          try {
+            final date = DateTime.parse(value.toString());
+            return DateFormat('dd MMM yyyy').format(date);
+          } catch (_) {
+            return value.toString();
+          }
+        }
+        return '-';
+      case CustomColumnType.boolean:
+        return value == true || value == 'true' ? 'Yes' : 'No';
+      default:
+        return value.toString().isEmpty ? '-' : value.toString();
+    }
+  }
+
+  Widget _buildDetailRow(String label, String value, {bool highlight = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
+              color: AppTheme.grey600,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: highlight ? FontWeight.w800 : FontWeight.w600,
+              fontSize: highlight ? 16 : 14,
+              color: highlight ? AppColors.action(context) : AppTheme.grey800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

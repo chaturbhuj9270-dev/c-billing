@@ -1,0 +1,1968 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
+import 'package:c_billing/core/localization/app_localizations.dart';
+import 'package:c_billing/core/services/language_service.dart';
+import '../../../../core/services/session_manager.dart';
+import '../../../../core/services/dashboard_refresh_service.dart';
+import '../../data/services/purchase_return_service.dart';
+import '../../domain/entities/purchase_return.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_tab_bar.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+
+// ──────────────────────────────────────────────────────────
+// A premium Purchase Return screen with:
+//  - Tab bar: New Return | Return History
+//  - Searchable supplier dropdown
+//  - Date picker
+//  - Product data table with real-time validation
+//  - Return mode toggle (Full Batch / Partial)
+//  - Batch breakdown bottom sheet
+//  - Analytics impact preview
+//  - Swipe-to-remove
+//  - Sticky "Process Return" button
+// ──────────────────────────────────────────────────────────
+
+class PurchaseReturnScreen extends StatefulWidget {
+  const PurchaseReturnScreen({super.key});
+
+  @override
+  State<PurchaseReturnScreen> createState() => _PurchaseReturnScreenState();
+}
+
+class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
+    with SingleTickerProviderStateMixin {
+  // ── Localization ──
+  late AppLocalizations _localizations;
+
+  // ── Tab ──
+  late TabController _tabController;
+
+  // ── Services ──
+  final _auth = FirebaseAuth.instance;
+  final _firestore = FirebaseFirestore.instance;
+  final _service = PurchaseReturnService.instance;
+  final _sessionManager = SessionManager();
+
+  // ── Supplier ──
+  List<Map<String, dynamic>> _suppliers = [];
+  Map<String, dynamic>? _selectedSupplier;
+  bool _isLoadingSuppliers = true;
+
+  // ── Date ──
+  DateTime _returnDate = DateTime.now();
+
+  // ── Products ──
+  List<ReturnableBatchInfo> _products = [];
+  bool _isLoadingProducts = false;
+  final Map<String, TextEditingController> _qtyControllers = {};
+  final Map<String, int> _returnQuantities = {};
+  final Map<String, bool> _qtyErrors = {};
+
+  // ── Search ──
+  final _supplierSearchCtrl = TextEditingController();
+  final _productSearchCtrl = TextEditingController();
+  Timer? _searchDebounce;
+
+  // ── Reason ──
+  final _reasonCtrl = TextEditingController();
+
+  // ── Return Mode ──
+  bool _isPartialMode = true; // true = Partial, false = Full Batch
+
+  // ── Processing ──
+  bool _isProcessing = false;
+
+  // ── History ──
+  List<PurchaseReturn> _returnHistory = [];
+  bool _isLoadingHistory = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (_tabController.index == 1 && _returnHistory.isEmpty) {
+        _loadReturnHistory();
+      }
+    });
+    _loadSuppliers();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _supplierSearchCtrl.dispose();
+    _productSearchCtrl.dispose();
+    _reasonCtrl.dispose();
+    _searchDebounce?.cancel();
+    for (final c in _qtyControllers.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  // ━━━━━━━━━━━━ DATA LOADING ━━━━━━━━━━━━
+
+  Future<void> _loadSuppliers() async {
+    try {
+      final uid = _auth.currentUser?.uid;
+      if (uid == null) return;
+      final snap = await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('suppliers')
+          .get();
+      final list = snap.docs.map((d) {
+        final data = d.data();
+        // Firebase stores firstName/middleName/lastName, not a single "name"
+        final firstName = (data['firstName'] ?? '').toString().trim();
+        final middleName = (data['middleName'] ?? '').toString().trim();
+        final lastName = (data['lastName'] ?? '').toString().trim();
+        final fullName = [
+          firstName,
+          middleName,
+          lastName,
+        ].where((s) => s.isNotEmpty).join(' ');
+        return <String, dynamic>{
+          'id': d.id,
+          'name': fullName.isNotEmpty
+              ? fullName
+              : (data['name'] ?? data['supplierName'] ?? 'Unknown'),
+          'contact': data['contact'] ?? data['mobile'] ?? '',
+          'address': data['address'] ?? '',
+          'companyName': data['companyName'] ?? '',
+        };
+      }).toList();
+      list.sort((a, b) => (a['name'] as String).compareTo(b['name'] as String));
+      if (mounted) {
+        setState(() {
+          _suppliers = list;
+          _isLoadingSuppliers = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('[PurchaseReturn] Load suppliers error: $e');
+      if (mounted) setState(() => _isLoadingSuppliers = false);
+    }
+  }
+
+  Future<void> _loadProductsForSupplier(String supplierId) async {
+    setState(() => _isLoadingProducts = true);
+    try {
+      final products = await _service.getReturnableProductsForSupplier(
+        supplierId,
+      );
+      // Clear old controllers
+      for (final c in _qtyControllers.values) {
+        c.dispose();
+      }
+      _qtyControllers.clear();
+      _returnQuantities.clear();
+      _qtyErrors.clear();
+
+      for (final p in products) {
+        _qtyControllers[p.productId] = TextEditingController(text: '0');
+        _returnQuantities[p.productId] = 0;
+        _qtyErrors[p.productId] = false;
+      }
+
+      if (mounted) {
+        setState(() {
+          _products = products;
+          _isLoadingProducts = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('[PurchaseReturn] Load products error: $e');
+      if (mounted) setState(() => _isLoadingProducts = false);
+    }
+  }
+
+  Future<void> _loadReturnHistory() async {
+    setState(() => _isLoadingHistory = true);
+    try {
+      final history = await _service.getReturnHistory();
+      if (mounted) {
+        setState(() {
+          _returnHistory = history;
+          _isLoadingHistory = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('[PurchaseReturn] Load history error: $e');
+      if (mounted) setState(() => _isLoadingHistory = false);
+    }
+  }
+
+  // ━━━━━━━━━━━━ ACTIONS ━━━━━━━━━━━━
+
+  void _onSupplierSelected(Map<String, dynamic> supplier) {
+    setState(() {
+      _selectedSupplier = supplier;
+    });
+    _loadProductsForSupplier(supplier['id'] as String);
+    Navigator.pop(context); // close bottom sheet
+  }
+
+  void _onQtyChanged(String productId, String value, int maxQty) {
+    final qty = int.tryParse(value) ?? 0;
+    setState(() {
+      _returnQuantities[productId] = qty;
+      _qtyErrors[productId] = qty < 0 || qty > maxQty;
+    });
+  }
+
+  void _setFullBatchQty(String productId, int maxQty) {
+    _qtyControllers[productId]?.text = maxQty.toString();
+    _onQtyChanged(productId, maxQty.toString(), maxQty);
+  }
+
+  List<ReturnableBatchInfo> get _filteredProducts {
+    final q = _productSearchCtrl.text.toLowerCase().trim();
+    if (q.isEmpty) return _products;
+    return _products.where((p) {
+      return p.productName.toLowerCase().contains(q) ||
+          p.companyName.toLowerCase().contains(q) ||
+          p.modelName.toLowerCase().contains(q);
+    }).toList();
+  }
+
+  int get _totalReturnQty => _returnQuantities.values.fold(0, (s, v) => s + v);
+  int get _totalItemsWithQty =>
+      _returnQuantities.values.where((v) => v > 0).length;
+  double get _totalReturnAmount {
+    double total = 0;
+    for (final p in _products) {
+      final qty = _returnQuantities[p.productId] ?? 0;
+      if (qty > 0) total += p.purchasePrice * qty;
+    }
+    return total;
+  }
+
+  bool get _hasErrors => _qtyErrors.values.any((v) => v);
+  bool get _canProcess =>
+      _selectedSupplier != null && _totalItemsWithQty > 0 && !_hasErrors;
+
+  // ━━━━━━━━━━━━ PROCESS ━━━━━━━━━━━━
+
+  Future<void> _showConfirmationDialog() async {
+    if (!_canProcess) {
+      _showSnackbar('Fix errors before processing', true);
+      return;
+    }
+
+    // Build items for preview
+    final items = <PurchaseReturnItem>[];
+    for (final p in _products) {
+      final qty = _returnQuantities[p.productId] ?? 0;
+      if (qty <= 0) continue;
+      items.add(
+        PurchaseReturnItem(
+          id: '',
+          productId: p.productId,
+          productName: p.productName,
+          companyName: p.companyName,
+          modelName: p.modelName,
+          batchId: p.batchId,
+          localBatchId: p.localBatchId,
+          quantity: qty,
+          rate: p.purchasePrice,
+          amount: p.purchasePrice * qty,
+        ),
+      );
+    }
+
+    // Get impact preview
+    final impact = await _service.previewReturnImpact(items);
+
+    if (!mounted) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => _buildConfirmationDialog(ctx, items, impact),
+    );
+
+    if (confirmed == true) {
+      _processReturn(items);
+    }
+  }
+
+  Future<void> _processReturn(List<PurchaseReturnItem> items) async {
+    setState(() => _isProcessing = true);
+    try {
+      final result = await _service.processReturn(
+        supplierId: _selectedSupplier!['id'] as String,
+        supplierName: _selectedSupplier!['name'] as String,
+        returnDate: _returnDate,
+        reason: _reasonCtrl.text.trim(),
+        items: items,
+      );
+
+      if (result.success) {
+        _showSnackbar(_localizations.returnProcessedSuccessfully, false);
+        _resetForm();
+        // Notify dashboard to refresh data
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.purchaseReturn,
+        );
+        // Refresh history
+        _loadReturnHistory();
+      } else {
+        _showSnackbar(result.errorMessage ?? 'Failed', true);
+      }
+    } catch (e) {
+      _showSnackbar('Error: $e', true);
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
+
+  void _resetForm() {
+    setState(() {
+      _selectedSupplier = null;
+      _products = [];
+      for (final c in _qtyControllers.values) {
+        c.dispose();
+      }
+      _qtyControllers.clear();
+      _returnQuantities.clear();
+      _qtyErrors.clear();
+      _reasonCtrl.clear();
+      _productSearchCtrl.clear();
+      _returnDate = DateTime.now();
+    });
+  }
+
+  void _removeProduct(String productId) {
+    setState(() {
+      _products.removeWhere((p) => p.productId == productId);
+      _qtyControllers[productId]?.dispose();
+      _qtyControllers.remove(productId);
+      _returnQuantities.remove(productId);
+      _qtyErrors.remove(productId);
+    });
+  }
+
+  void _showSnackbar(String msg, bool isError) {
+    if (!mounted) return;
+    GlassyToast.show(context, msg);
+  }
+
+  // ━━━━━━━━━━━━ BUILD ━━━━━━━━━━━━
+
+  @override
+  Widget build(BuildContext context) {
+    _localizations = AppLocalizations.of(
+      LanguageService.instance.currentLanguage,
+    );
+    _sessionManager.resetSession();
+    return Scaffold(
+      backgroundColor: AppColors.scaffold(context),
+      body: Column(
+        children: [
+          AppTopBar(
+            title: _localizations.purchaseReturn,
+            subtitle: _localizations.returnStockToSupplier,
+            actions: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _isPartialMode
+                          ? Icons.tune_rounded
+                          : Icons.all_inclusive_rounded,
+                      color: AppTheme.white,
+                      size: 14,
+                    ),
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: () =>
+                          setState(() => _isPartialMode = !_isPartialMode),
+                      child: Text(
+                        _isPartialMode
+                            ? _localizations.partial
+                            : _localizations.fullBatch,
+                        style: const TextStyle(
+                          color: AppTheme.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Literata',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          AppTabBar(
+            controller: _tabController,
+            tabs: [
+              Tab(text: _localizations.newReturn),
+              Tab(text: _localizations.returnHistory),
+            ],
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [_buildNewReturnTab(), _buildHistoryTab()],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─────────── NEW RETURN TAB ───────────
+
+  Widget _buildNewReturnTab() {
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 180),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTopSection(),
+              const SizedBox(height: 16),
+              if (_selectedSupplier != null) ...[
+                _buildProductSearch(),
+                const SizedBox(height: 12),
+                _buildProductTable(),
+                const SizedBox(height: 16),
+                _buildReasonField(),
+                SizedBox(height: 16),
+                _buildSummaryCard(),
+              ],
+            ],
+          ),
+        ),
+        // Sticky bottom button
+        if (_selectedSupplier != null)
+          Positioned(bottom: 0, left: 0, right: 0, child: _buildStickyButton()),
+      ],
+    );
+  }
+
+  // ─── TOP SECTION: Supplier + Date ───
+
+  Widget _buildTopSection() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Return Details',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'Literata',
+              color: AppColors.accent(context),
+            ),
+          ),
+          const SizedBox(height: 14),
+          // Supplier selector
+          GestureDetector(
+            onTap: _showSupplierPicker,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.scaffold(context),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.grey300),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.local_shipping_outlined,
+                    color: AppTheme.grey600,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _selectedSupplier != null
+                          ? _selectedSupplier!['name'] as String
+                          : '${_localizations.selectSupplier} *',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 14,
+                        color: _selectedSupplier != null
+                            ? AppColors.action(context)
+                            : AppTheme.grey,
+                        fontWeight: _selectedSupplier != null
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                  Icon(Icons.keyboard_arrow_down, color: AppTheme.grey600),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Date picker
+          GestureDetector(
+            onTap: _pickDate,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.scaffold(context),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.grey300),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today_outlined,
+                    color: AppTheme.grey600,
+                    size: 18,
+                  ),
+                  SizedBox(width: 10),
+                  Text(
+                    DateFormat('dd MMM yyyy').format(_returnDate),
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 14,
+                      color: AppColors.accent(context),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _returnDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: ColorScheme.light(primary: AppColors.action(context)),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) setState(() => _returnDate = picked);
+  }
+
+  // ─── SUPPLIER PICKER BOTTOM SHEET ───
+
+  void _showSupplierPicker() {
+    _supplierSearchCtrl.clear();
+    showAppBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.transparent,
+      builder: (_) => _buildSupplierPickerSheet(),
+    );
+  }
+
+  Widget _buildSupplierPickerSheet() {
+    return StatefulBuilder(
+      builder: (ctx, setSheetState) {
+        final q = _supplierSearchCtrl.text.toLowerCase().trim();
+        final filtered = q.isEmpty
+            ? _suppliers
+            : _suppliers
+                  .where(
+                    (s) =>
+                        (s['name'] as String).toLowerCase().contains(q) ||
+                        (s['contact'] as String).toLowerCase().contains(q),
+                  )
+                  .toList();
+
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.7,
+          decoration: BoxDecoration(
+            color: AppColors.card(context),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              // Handle
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppTheme.grey300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              // Title + search
+              Padding(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _localizations.selectSupplier,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Literata',
+                        color: AppColors.accent(context),
+                      ),
+                    ),
+                    SizedBox(height: 12),
+                    Container(
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppColors.scaffold(context),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppTheme.grey300),
+                      ),
+                      child: TextField(
+                        controller: _supplierSearchCtrl,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 14,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: _localizations.searchSupplier,
+                          hintStyle: TextStyle(color: AppTheme.grey400),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: AppTheme.grey600,
+                            size: 20,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                          ),
+                        ),
+                        onChanged: (_) => setSheetState(() {}),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // List
+              Expanded(
+                child: _isLoadingSuppliers
+                    ? Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.accent(context),
+                        ),
+                      )
+                    : filtered.isEmpty
+                    ? Center(
+                        child: Text(
+                          _localizations.noSuppliersFound,
+                          style: TextStyle(
+                            color: AppTheme.grey,
+                            fontFamily: 'Literata',
+                          ),
+                        ),
+                      )
+                    : ListView.separated(
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, _) =>
+                            Divider(height: 1, color: AppColors.border(context)),
+                        itemBuilder: (_, i) {
+                          final s = filtered[i];
+                          final isSelected =
+                              _selectedSupplier?['id'] == s['id'];
+                          return ListTile(
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 4,
+                            ),
+                            leading: CircleAvatar(
+                              backgroundColor: isSelected
+                                  ? AppColors.action(context)
+                                  : AppColors.border(context),
+                              child: Text(
+                                (s['name'] as String).isNotEmpty
+                                    ? (s['name'] as String)[0].toUpperCase()
+                                    : 'S',
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? AppTheme.white
+                                      : AppTheme.grey700,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Literata',
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              s['name'] as String,
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w600,
+                                color: isSelected
+                                    ? AppColors.action(context)
+                                    : AppTheme.black87,
+                              ),
+                            ),
+                            subtitle: Text(
+                              s['contact'] as String,
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 12,
+                                color: AppTheme.grey600,
+                              ),
+                            ),
+                            trailing: isSelected
+                                ? Icon(
+                                    Icons.check_circle,
+                                    color: AppColors.accent(context),
+                                  )
+                                : null,
+                            onTap: () => _onSupplierSelected(s),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // ─── PRODUCT SEARCH ───
+
+  Widget _buildProductSearch() {
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.grey300),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: _productSearchCtrl,
+        style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+        decoration: InputDecoration(
+          hintText: _localizations.searchProducts,
+          hintStyle: TextStyle(color: AppTheme.grey400),
+          prefixIcon: Icon(Icons.search, color: AppTheme.grey600, size: 20),
+          suffixIcon: _productSearchCtrl.text.isNotEmpty
+              ? GestureDetector(
+                  onTap: () {
+                    _productSearchCtrl.clear();
+                    setState(() {});
+                  },
+                  child: Icon(Icons.close, color: AppTheme.grey600, size: 18),
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+        onChanged: (_) => setState(() {}),
+      ),
+    );
+  }
+
+  // ─── PRODUCT TABLE ───
+
+  Widget _buildProductTable() {
+    if (_isLoadingProducts) {
+      return Padding(
+        padding: EdgeInsets.all(40),
+        child: Center(
+          child: CircularProgressIndicator(color: AppColors.accent(context)),
+        ),
+      );
+    }
+
+    final filtered = _filteredProducts;
+
+    if (filtered.isEmpty) {
+      return Container(
+        padding: EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: AppColors.card(context),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(
+                Icons.inventory_2_outlined,
+                size: 48,
+                color: AppTheme.grey300,
+              ),
+              SizedBox(height: 12),
+              Text(
+                _products.isEmpty
+                    ? _localizations.noReturnableProducts
+                    : _localizations.noProductsMatchSearch,
+                style: TextStyle(
+                  color: AppTheme.grey,
+                  fontFamily: 'Literata',
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Padding(
+            padding: EdgeInsets.fromLTRB(16, 14, 16, 8),
+            child: Row(
+              children: [
+                Text(
+                  _localizations.productsLabel,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Literata',
+                    color: AppColors.accent(context),
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${filtered.length} ${_localizations.itemsLabel}',
+                  style: TextStyle(
+                    color: AppTheme.grey,
+                    fontSize: 12,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1),
+          // Product rows
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: filtered.length,
+            separatorBuilder: (_, _) =>
+                Divider(height: 1, color: AppColors.chipFill(context)),
+            itemBuilder: (_, i) => _buildProductRow(filtered[i]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductRow(ReturnableBatchInfo product) {
+    final qty = _returnQuantities[product.productId] ?? 0;
+    final hasError = _qtyErrors[product.productId] ?? false;
+    final amount = product.purchasePrice * qty;
+    final ctrl = _qtyControllers[product.productId];
+
+    return Dismissible(
+      key: Key(product.productId),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        color: AppTheme.red50,
+        child: Icon(Icons.delete_outline, color: AppTheme.error),
+      ),
+      onDismissed: (_) => _removeProduct(product.productId),
+      child: GestureDetector(
+        onTap: () => _showBatchBreakdown(product),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Product name + company
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          product.productName,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            fontFamily: 'Literata',
+                            color: AppColors.accent(context),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (product.companyName.isNotEmpty)
+                          Text(
+                            product.companyName,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.grey600,
+                              fontFamily: 'Literata',
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  // Batch info icon
+                  GestureDetector(
+                    onTap: () => _showBatchBreakdown(product),
+                    child: Container(
+                      padding: EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: AppColors.accentSoft(context, 0.08),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Icon(
+                        Icons.layers_outlined,
+                        size: 16,
+                        color: AppColors.accent(context),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              // Stats row
+              Row(
+                children: [
+                  // Available
+                  _buildMiniTag(
+                    'Avail: ${product.quantityRemaining}',
+                    AppTheme.blue50,
+                    AppTheme.blue700,
+                  ),
+                  const SizedBox(width: 8),
+                  // Purchase rate
+                  _buildMiniTag(
+                    '₹${product.purchasePrice.toStringAsFixed(0)}/unit',
+                    AppTheme.green50,
+                    AppTheme.green700,
+                  ),
+                  Spacer(),
+                  // Amount
+                  if (qty > 0)
+                    Text(
+                      '₹${amount.toStringAsFixed(0)}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        fontFamily: 'Literata',
+                        color: AppColors.accent(context),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              // Quantity input row
+              Row(
+                children: [
+                  const Text(
+                    'Return Qty:',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontFamily: 'Literata',
+                      color: AppTheme.grey,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  // Minus button
+                  _buildQtyButton(Icons.remove, () {
+                    if (qty > 0) {
+                      ctrl?.text = (qty - 1).toString();
+                      _onQtyChanged(
+                        product.productId,
+                        ctrl?.text ?? '0',
+                        product.quantityRemaining,
+                      );
+                    }
+                  }),
+                  SizedBox(width: 6),
+                  // Qty input
+                  SizedBox(
+                    width: 60,
+                    height: 36,
+                    child: TextField(
+                      controller: ctrl,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: hasError ? AppTheme.red : AppColors.action(context),
+                      ),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: hasError ? AppTheme.red50 : AppColors.scaffold(context),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: hasError ? AppTheme.red : AppTheme.grey300,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: hasError ? AppTheme.red : AppTheme.grey300,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.zero,
+                        isDense: true,
+                      ),
+                      onChanged: (v) => _onQtyChanged(
+                        product.productId,
+                        v,
+                        product.quantityRemaining,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  // Plus button
+                  _buildQtyButton(Icons.add, () {
+                    if (qty < product.quantityRemaining) {
+                      ctrl?.text = (qty + 1).toString();
+                      _onQtyChanged(
+                        product.productId,
+                        ctrl?.text ?? '0',
+                        product.quantityRemaining,
+                      );
+                    }
+                  }),
+                  const SizedBox(width: 10),
+                  // Full batch button (non-partial mode)
+                  if (!_isPartialMode)
+                    GestureDetector(
+                      onTap: () => _setFullBatchQty(
+                        product.productId,
+                        product.quantityRemaining,
+                      ),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.accentSoft(context, 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'All',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Literata',
+                            color: AppColors.accent(context),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              // Error message
+              if (hasError)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    'Max qty: ${product.quantityRemaining}',
+                    style: const TextStyle(
+                      color: AppTheme.red,
+                      fontSize: 11,
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMiniTag(String text, Color bg, Color fg) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          fontFamily: 'Literata',
+          color: fg,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQtyButton(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: AppColors.chipFill(context),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppTheme.grey300),
+        ),
+        child: Icon(icon, size: 16, color: AppColors.accent(context)),
+      ),
+    );
+  }
+
+  // ─── BATCH BREAKDOWN BOTTOM SHEET ───
+
+  void _showBatchBreakdown(ReturnableBatchInfo product) async {
+    final batches = await _service.getBatchBreakdownForProduct(
+      product.productId,
+      _selectedSupplier!['id'] as String,
+    );
+
+    if (!mounted) return;
+
+    showAppBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.transparent,
+      builder: (_) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.card(context),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.grey300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          product.productName,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Literata',
+                            color: AppColors.accent(context),
+                          ),
+                        ),
+                        Text(
+                          '${batches.length} batches available',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.grey600,
+                            fontFamily: 'Literata',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                padding: const EdgeInsets.all(16),
+                itemCount: batches.length,
+                separatorBuilder: (_, _) => SizedBox(height: 10),
+                itemBuilder: (_, i) {
+                  final b = batches[i];
+                  // Risk indicator: compare purchase price
+                  final priceDiffers = product.purchasePrice != b.purchasePrice;
+                  return Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: priceDiffers ? AppTheme.amber50 : AppColors.scaffold(context),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: priceDiffers
+                            ? AppTheme.amber300
+                            : AppColors.border(context),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'Batch #${i + 1}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                fontFamily: 'Literata',
+                                color: AppColors.accent(context),
+                              ),
+                            ),
+                            if (priceDiffers) ...[
+                              const SizedBox(width: 6),
+                              Icon(
+                                Icons.warning_amber_rounded,
+                                size: 16,
+                                color: AppTheme.amber700,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Price differs',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: AppTheme.amber800,
+                                  fontFamily: 'Literata',
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                            const Spacer(),
+                            Text(
+                              DateFormat('dd MMM yy').format(b.purchaseDate),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.grey600,
+                                fontFamily: 'Literata',
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            _buildMiniTag(
+                              'Qty: ${b.quantityRemaining}',
+                              AppTheme.blue50,
+                              AppTheme.blue700,
+                            ),
+                            const SizedBox(width: 8),
+                            _buildMiniTag(
+                              '₹${b.purchasePrice.toStringAsFixed(0)}',
+                              AppTheme.green50,
+                              AppTheme.green700,
+                            ),
+                            const SizedBox(width: 8),
+                            _buildMiniTag(
+                              'Sell: ₹${b.sellingPrice.toStringAsFixed(0)}',
+                              AppTheme.purple50,
+                              AppTheme.purple700,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─── REASON FIELD ───
+
+  Widget _buildReasonField() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Return Reason',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'Literata',
+              color: AppColors.accent(context),
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _reasonCtrl,
+            maxLines: 3,
+            style: TextStyle(fontFamily: 'Literata', fontSize: 14),
+            decoration: InputDecoration(
+              hintText: 'Enter reason for return (optional)',
+              hintStyle: TextStyle(color: AppTheme.grey400),
+              filled: true,
+              fillColor: AppColors.scaffold(context),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: AppTheme.grey300),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: AppTheme.grey300),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: AppColors.accent(context),
+                  width: 2,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── SUMMARY CARD ───
+
+  Widget _buildSummaryCard() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.action(context).withValues(alpha: 0.08),
+            AppColors.action(context).withValues(alpha: 0.03),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.accentSoft(context, 0.15),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Return Summary',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'Literata',
+              color: AppColors.accent(context),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _buildSummaryStat(
+                'Items',
+                '$_totalItemsWithQty',
+                Icons.inventory_outlined,
+              ),
+              _buildSummaryStat('Total Qty', '$_totalReturnQty', Icons.numbers),
+              _buildSummaryStat(
+                'Amount',
+                '₹${_totalReturnAmount.toStringAsFixed(0)}',
+                Icons.currency_rupee,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryStat(String label, String value, IconData icon) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, size: 20, color: AppColors.accent(context)),
+          SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'Literata',
+              color: AppColors.accent(context),
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: AppTheme.grey600,
+              fontFamily: 'Literata',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── STICKY BUTTON ───
+
+  Widget _buildStickyButton() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton(
+            onPressed: _canProcess && !_isProcessing
+                ? _showConfirmationDialog
+                : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.action(context),
+              disabledBackgroundColor: AppTheme.grey300,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              elevation: 0,
+            ),
+            child: _isProcessing
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation(AppTheme.white),
+                    ),
+                  )
+                : const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.keyboard_return_rounded,
+                        color: AppTheme.white,
+                        size: 20,
+                      ),
+                      SizedBox(width: 10),
+                      Text(
+                        'Process Return',
+                        style: TextStyle(
+                          color: AppTheme.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Literata',
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─── CONFIRMATION DIALOG ───
+
+  Widget _buildConfirmationDialog(
+    BuildContext ctx,
+    List<PurchaseReturnItem> items,
+    ReturnImpactPreview impact,
+  ) {
+    return Dialog(
+      backgroundColor: AppColors.card(context),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        constraints: BoxConstraints(maxWidth: 400),
+        padding: EdgeInsets.all(20),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.accentSoft(context, 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.fact_check_outlined,
+                      color: AppColors.accent(context),
+                      size: 24,
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Confirm Purchase Return',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Literata',
+                        color: AppColors.accent(context),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Items list
+              ...items.map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.productName,
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${item.quantity} × ₹${item.rate.toStringAsFixed(0)}',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 12,
+                          color: AppTheme.grey600,
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      Text(
+                        '₹${item.amount.toStringAsFixed(0)}',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.accent(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Divider(),
+              // Impact preview
+              Text(
+                'Impact Preview',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Literata',
+                  color: AppColors.accent(context),
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildImpactRow(
+                'Supplier Credit',
+                '₹${impact.supplierCreditAdjustment.toStringAsFixed(0)}',
+                AppTheme.blue700,
+              ),
+              _buildImpactRow(
+                'Inventory Value',
+                '${impact.inventoryValueChange >= 0 ? '+' : ''}₹${impact.inventoryValueChange.toStringAsFixed(0)}',
+                impact.inventoryValueChange >= 0
+                    ? AppTheme.green700
+                    : AppTheme.red700,
+              ),
+              // Stock after return
+              if (impact.stockAfterReturn.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                ...impact.stockAfterReturn.entries.map((e) {
+                  final productName = items
+                      .firstWhere(
+                        (i) => i.productId == e.key,
+                        orElse: () => items.first,
+                      )
+                      .productName;
+                  return _buildImpactRow(
+                    productName,
+                    'Stock: ${e.value}',
+                    AppTheme.grey700,
+                  );
+                }),
+              ],
+              const SizedBox(height: 16),
+              // Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.accent(context),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.action(context),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Confirm Return',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImpactRow(String label, String value, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 12,
+              color: AppTheme.grey600,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─────────── HISTORY TAB ───────────
+
+  Widget _buildHistoryTab() {
+    if (_isLoadingHistory) {
+      return Center(
+        child: CircularProgressIndicator(color: AppColors.accent(context)),
+      );
+    }
+    if (_returnHistory.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.accentSoft(context, 0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                Icons.history,
+                size: 48,
+                color: AppColors.accentSoft(context, 0.3),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _localizations.noReturnsYet,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Literata',
+                color: AppTheme.grey700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _localizations.processFirstReturn,
+              style: TextStyle(
+                fontSize: 13,
+                fontFamily: 'Literata',
+                color: AppTheme.grey,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadReturnHistory,
+      color: AppColors.accent(context),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _returnHistory.length,
+        itemBuilder: (_, i) => _buildHistoryCard(_returnHistory[i]),
+      ),
+    );
+  }
+
+  Widget _buildHistoryCard(PurchaseReturn ret) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.accentSoft(context, 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.keyboard_return_rounded,
+                  color: AppColors.accent(context),
+                  size: 18,
+                ),
+              ),
+              SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      ret.supplierName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        fontFamily: 'Literata',
+                        color: AppColors.accent(context),
+                      ),
+                    ),
+                    Text(
+                      DateFormat('dd MMM yyyy').format(ret.returnDate),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppTheme.grey600,
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '₹${ret.totalAmount.toStringAsFixed(0)}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      fontFamily: 'Literata',
+                      color: AppColors.accent(context),
+                    ),
+                  ),
+                  _buildMiniTag(
+                    '${ret.totalItems} items',
+                    AppTheme.blue50,
+                    AppTheme.blue700,
+                  ),
+                ],
+              ),
+            ],
+          ),
+          if (ret.reason.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.scaffold(context),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.comment_outlined,
+                    size: 14,
+                    color: AppTheme.grey,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      ret.reason,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontFamily: 'Literata',
+                        color: AppTheme.grey700,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          // Items list
+          if (ret.items.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            ...ret.items
+                .take(3)
+                .map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      children: [
+                        Text(
+                          '• ${item.productName}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontFamily: 'Literata',
+                            color: AppTheme.grey700,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '${item.quantity} × ₹${item.rate.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontFamily: 'Literata',
+                            color: AppTheme.grey600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            if (ret.items.length > 3)
+              Text(
+                '+${ret.items.length - 3} more items',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontFamily: 'Literata',
+                  color: AppTheme.grey,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}

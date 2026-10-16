@@ -1,0 +1,416 @@
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import '../../../../core/services/language_service.dart';
+import '../../../../core/localization/app_localizations.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
+
+class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  final _auth = FirebaseAuth.instance;
+  final _firestore = FirebaseFirestore.instance;
+  final _imagePicker = ImagePicker();
+
+  late User? _currentUser;
+  late TextEditingController _nameController;
+  late TextEditingController _emailController;
+  late TextEditingController _phoneController;
+  late TextEditingController _addressController;
+
+  File? _pickedImage;
+  String? _profileImageUrl;
+  bool _isLoading = false;
+  bool _isSaving = false;
+  late AppLocalizations _localizations;
+
+  @override
+  void initState() {
+    super.initState();
+    _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
+    _currentUser = _auth.currentUser;
+    _nameController = TextEditingController(
+      text: _currentUser?.displayName ?? '',
+    );
+    _emailController = TextEditingController(text: _currentUser?.email ?? '');
+    _phoneController = TextEditingController();
+    _addressController = TextEditingController();
+    _profileImageUrl = _currentUser?.photoURL;
+    _loadUserProfile();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadUserProfile() async {
+    if (_currentUser == null) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .get();
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        setState(() {
+          _phoneController.text = data['phone'] ?? '';
+          _addressController.text = data['address'] ?? '';
+          _profileImageUrl = data['profileImageUrl'] ?? _currentUser?.photoURL;
+        });
+      }
+    } catch (e) {
+      debugPrint('[ERROR] Error loading user profile: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+        maxWidth: 500,
+        maxHeight: 500,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _pickedImage = File(pickedFile.path);
+          _profileImageUrl = pickedFile.path;
+        });
+      }
+    } catch (e) {
+      debugPrint('[ERROR] Error picking image: $e');
+      if (mounted) {
+        GlassyToast.show(context, 'Failed to pick image');
+      }
+    }
+  }
+
+  Future<void> _saveProfile() async {
+    if (_nameController.text.isEmpty) {
+      GlassyToast.show(context, _localizations.pleaseEnterName);
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      // Update Firebase Auth display name
+      await _currentUser?.updateDisplayName(_nameController.text);
+
+      // Update Firestore user profile
+      await _firestore.collection('users').doc(_currentUser!.uid).set({
+        'displayName': _nameController.text,
+        'email': _emailController.text,
+        'phone': _phoneController.text,
+        'address': _addressController.text,
+        'profileImageUrl': _profileImageUrl,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      if (!mounted) return;
+      GlassyToast.show(context, _localizations.profileUpdatedSuccessfully);
+    } catch (e) {
+      debugPrint('[ERROR] Error saving profile: $e');
+      GlassyToast.show(context, '${_localizations.errorSavingProfile}: $e');
+    } finally {
+      setState(() => _isSaving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.scaffold(context),
+      body: Column(
+        children: [
+          AppTopBar(title: _localizations.myProfile),
+          Expanded(
+            child: _isLoading
+          ? Center(
+              child: CircularProgressIndicator(color: AppColors.accent(context)),
+            )
+          : SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Profile Image Section
+                    Stack(
+                      children: [
+                        Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppTheme.green,
+                              width: 4,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.black.withValues(alpha: 0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: ClipOval(
+                            child: _pickedImage != null
+                                ? Image.file(_pickedImage!, fit: BoxFit.cover)
+                                : _profileImageUrl != null &&
+                                      _profileImageUrl!.isNotEmpty
+                                ? Image.network(
+                                    _profileImageUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: AppColors.chipFill(context),
+                                        child: Center(
+                                          child: Text(
+                                            _nameController.text.isNotEmpty
+                                                ? _nameController.text[0]
+                                                      .toUpperCase()
+                                                : 'U',
+                                            style: TextStyle(
+                                              fontSize: 48,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.accent(context),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : Container(
+                                    color: AppColors.chipFill(context),
+                                    child: Center(
+                                      child: Text(
+                                        _nameController.text.isNotEmpty
+                                            ? _nameController.text[0]
+                                                  .toUpperCase()
+                                            : 'U',
+                                        style: TextStyle(
+                                          fontSize: 48,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.accent(context),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        // Edit Image Button
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: GestureDetector(
+                            onTap: _pickImage,
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.accent(context),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppTheme.black.withValues(alpha: 0.2),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                Icons.camera_alt,
+                                color: AppTheme.white,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    // Form Section
+                    _buildFormField(
+                      controller: _nameController,
+                      label: _localizations.fullName,
+                      hint: _localizations.enterFullName,
+                      icon: Icons.person_outline,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildFormField(
+                      controller: _emailController,
+                      label: _localizations.emailAddress,
+                      hint: _localizations.yourEmail,
+                      icon: Icons.email_outlined,
+                      readOnly: true,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildFormField(
+                      controller: _phoneController,
+                      label: _localizations.phoneNumber,
+                      hint: _localizations.enterPhoneNumberProfile,
+                      icon: Icons.phone_outlined,
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildFormField(
+                      controller: _addressController,
+                      label: _localizations.address,
+                      hint: _localizations.enterAddress,
+                      icon: Icons.location_on_outlined,
+                    ),
+                    SizedBox(height: 32),
+                    // Save Button
+                    GestureDetector(
+                      onTap: _isSaving ? null : _saveProfile,
+                      child: Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: AppColors.accent(context),
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.action(context).withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: _isSaving
+                            ? const SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppTheme.white,
+                                    ),
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              )
+                            : Text(
+                                _localizations.saveChanges,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: AppTheme.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Literata',
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFormField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    bool readOnly = false,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: AppColors.accent(context),
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Literata',
+          ),
+        ),
+        SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.black.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: controller,
+            readOnly: readOnly,
+            keyboardType: keyboardType,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: AppColors.inputFill(context),
+              prefixIcon: Icon(icon, color: AppColors.accent(context), size: 20),
+              hintText: hint,
+              hintStyle: TextStyle(
+                color: AppTheme.grey400,
+                fontSize: 14,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: AppTheme.grey200,
+                  width: 1,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(
+                  color: AppTheme.grey200,
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(
+                  color: AppColors.accent(context),
+                  width: 2,
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+            ),
+            style: const TextStyle(
+              color: AppTheme.grey900,
+              fontSize: 14,
+              fontFamily: 'Literata',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

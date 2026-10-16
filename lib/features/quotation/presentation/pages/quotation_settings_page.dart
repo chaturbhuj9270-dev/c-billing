@@ -1,0 +1,276 @@
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/services/language_service.dart';
+import '../../../../core/ui/glassy_toast.dart';
+import '../../data/services/quotation_format_settings.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
+
+/// Quotation print/PDF settings (format matches billing: POS vs normal).
+class QuotationSettingsPage extends StatefulWidget {
+  const QuotationSettingsPage({super.key});
+
+  @override
+  State<QuotationSettingsPage> createState() => _QuotationSettingsPageState();
+}
+
+class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
+  Color get _primary => AppColors.action(context);
+  static const _keyShowCustomerOnBill = 'bill_show_customer_details';
+
+  late AppLocalizations _l10n;
+  String _quotationType = 'pos';
+  bool _showCustomerDetails = true;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _quotationType =
+          prefs.getString(QuotationFormatSettings.keyQuotationType) ?? 'pos';
+      _showCustomerDetails = prefs.getBool(_keyShowCustomerOnBill) ?? true;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _saveSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      QuotationFormatSettings.keyQuotationType,
+      _quotationType,
+    );
+    await prefs.setBool(_keyShowCustomerOnBill, _showCustomerDetails);
+
+    if (mounted) {
+      GlassyToast.show(context, _l10n.settingsSaved);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
+
+    return Scaffold(
+      backgroundColor: AppColors.scaffold(context),
+      body: Column(
+        children: [
+          AppTopBar(
+            title: _l10n.quotationSettings,
+            onBack: () => Navigator.pop(context, true),
+          ),
+          Expanded(
+            child: _isLoading
+          ? Center(
+              child: CircularProgressIndicator(color: _primary),
+            )
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+              children: [
+                _sectionCard(
+                  icon: Icons.description_rounded,
+                  title: _l10n.quotationFormat,
+                  subtitle: _l10n.chooseQuotationFormat,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _formatOption(
+                            title: _l10n.posPrinter,
+                            subtitle: _l10n.thermalReceipt,
+                            icon: Icons.print_rounded,
+                            value: 'pos',
+                            isSelected: _quotationType == 'pos',
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _formatOption(
+                            title: _l10n.normalBill,
+                            subtitle: _l10n.pdfFormat,
+                            icon: Icons.picture_as_pdf_rounded,
+                            value: 'normal',
+                            isSelected: _quotationType == 'normal',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                _sectionCard(
+                  icon: Icons.print_rounded,
+                  title: _l10n.printSettings,
+                  subtitle: _l10n.customizePrintedQuotation,
+                  children: [
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        _l10n.showCustomerDetailsOnBill,
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      subtitle: Text(
+                        _l10n.displayCustomerOnQuotation,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 12,
+                          color: AppTheme.grey600,
+                        ),
+                      ),
+                      value: _showCustomerDetails,
+                      activeThumbColor: _primary,
+                      onChanged: (value) async {
+                        setState(() => _showCustomerDetails = value);
+                        await _saveSettings();
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required List<Widget> children,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.grey.withValues(alpha: 0.1)),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: _primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: _primary, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontFamily: 'Literata',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: AppTheme.ink,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 12,
+                        color: AppTheme.grey600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _formatOption({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required String value,
+    required bool isSelected,
+  }) {
+    return GestureDetector(
+      onTap: () async {
+        setState(() => _quotationType = value);
+        await _saveSettings();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? LinearGradient(
+                  colors: [
+                    _primary.withValues(alpha: 0.1),
+                    _primary.withValues(alpha: 0.05),
+                  ],
+                )
+              : null,
+          color: isSelected ? null : AppColors.scaffold(context),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? _primary : AppTheme.grey300,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: isSelected ? _primary : AppTheme.grey, size: 28),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                color: isSelected ? _primary : AppTheme.grey800,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 11,
+                color: AppTheme.grey600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Clients must not self-activate subscription fields.
+    // Cloud Functions (Admin SDK) bypass these rules after Cashfree PAID.
+    function subscriptionFieldsUnchanged() {
+      return !request.resource.data
+        .diff(resource.data)
+        .affectedKeys()
+        .hasAny([
+          'subscriptionDate',
+          'lastSubscriptionUpdate',
+          'lastSubscriptionOrderId',
+          'subscriptionStatus',
+          'subscriptionProvider'
+        ]);
+    }
+
+    function creatingInactiveSubscription() {
+      return (!('subscriptionDate' in request.resource.data)
+          || request.resource.data.subscriptionDate == null)
+        && (!('subscriptionStatus' in request.resource.data)
+          || request.resource.data.subscriptionStatus == 'inactive');
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && creatingInactiveSubscription();
+      allow update: if isOwner(userId) && subscriptionFieldsUnchanged();
+      allow delete: if isOwner(userId);
+
+      match /subscription_payments/{paymentId} {
+        allow read: if isOwner(userId);
+        allow write: if false; // Admin SDK / Cloud Functions only
+      }
+
+      match /customers/{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /suppliers/{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /companies/{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /products/{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /stock/{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /purchases/{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /bills/{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /invoices/{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /profile/{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
