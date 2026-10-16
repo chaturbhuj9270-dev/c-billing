@@ -23,6 +23,7 @@ import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+import 'package:c_billing/common_widgets/glass_icon_fab.dart';
 
 class EnhancedCustomerPage extends StatefulWidget {
   final bool isEmbedded;
@@ -705,8 +706,11 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: _buildAddCustomerBar(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: GlassIconFab(
+        tooltip: _localizations.addCustomer,
+        onPressed: _showAddCustomerSheet,
+      ),
       body: SafeArea(
         top: false,
         child: Column(
@@ -801,73 +805,6 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     return AppTopBar(
       title: _localizations.manageCustomers,
       subtitle: '${_customers.length} ${_localizations.customers.toLowerCase()}',
-    );
-  }
-
-  // ━━━ FAB ━━━
-
-  Widget _buildAddCustomerBar() {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(12, 0, 12, widget.isEmbedded ? 8 : 0),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final width = constraints.maxWidth.isFinite
-              ? constraints.maxWidth
-              : MediaQuery.sizeOf(context).width - 24;
-          return SizedBox(
-            width: width,
-            height: 54,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(28),
-                      color: AppColors.action(context),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.action(context).withValues(alpha: 0.28),
-                          blurRadius: 18,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Material(
-                      color: AppTheme.transparent,
-                      borderRadius: BorderRadius.circular(28),
-                      child: InkWell(
-                        onTap: _showAddCustomerSheet,
-                        borderRadius: BorderRadius.circular(28),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.add,
-                              color: AppTheme.white,
-                              size: 22,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              _localizations.addCustomer,
-                              style: const TextStyle(
-                                fontFamily: 'Literata',
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: AppTheme.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
     );
   }
 

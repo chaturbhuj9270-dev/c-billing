@@ -2976,7 +2976,7 @@ class _PurchasePageState extends State<PurchasePage>
                       pinned: true,
                       delegate: _StickyHeaderDelegate(
                         child: _buildHeader(),
-                        height: 64 + MediaQuery.of(context).padding.top,
+                        height: MediaQuery.paddingOf(context).top + 74,
                       ),
                     ),
                   // Main Form Content

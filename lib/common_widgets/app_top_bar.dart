@@ -137,6 +137,7 @@ class AppTopBar extends StatelessWidget {
                                   style: const TextStyle(
                                     color: AppTheme.white,
                                     fontSize: 18,
+                                    height: 1.15,
                                     fontWeight: FontWeight.w700,
                                     fontFamily: 'Literata',
                                     letterSpacing: -0.3,
@@ -152,6 +153,7 @@ class AppTopBar extends StatelessWidget {
                                         alpha: 0.7,
                                       ),
                                       fontSize: 11,
+                                      height: 1.2,
                                       fontFamily: 'Literata',
                                     ),
                                   ),

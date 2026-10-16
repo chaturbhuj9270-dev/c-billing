@@ -28,6 +28,7 @@ import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+import 'package:c_billing/common_widgets/glass_icon_fab.dart';
 
 /// Lets the dashboard download button trigger the visible purchase report.
 class PurchaseScreenActions {
@@ -1325,8 +1326,11 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: _buildNewPurchaseBar(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: GlassIconFab(
+        tooltip: _localizations.addPurchase,
+        onPressed: _navigateToAddPurchase,
+      ),
       body: SafeArea(
         top: false,
         child: Column(
@@ -1401,67 +1405,6 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildNewPurchaseBar() {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(12, 0, 12, widget.isEmbedded ? 8 : 0),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final width = constraints.maxWidth.isFinite
-              ? constraints.maxWidth
-              : MediaQuery.sizeOf(context).width - 24;
-          return SizedBox(
-            width: width,
-            height: 54,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(28),
-                      color: AppColors.action(context),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.action(context).withValues(alpha: 0.28),
-                          blurRadius: 18,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Material(
-                      color: AppTheme.transparent,
-                      borderRadius: BorderRadius.circular(28),
-                      child: InkWell(
-                        onTap: _navigateToAddPurchase,
-                        borderRadius: BorderRadius.circular(28),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.add, color: AppTheme.white, size: 22),
-                            SizedBox(width: 6),
-                            Text(
-                              'New purchase',
-                              style: TextStyle(
-                                fontFamily: 'Literata',
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: AppTheme.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
       ),
     );
   }
