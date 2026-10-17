@@ -148,36 +148,36 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         });
       }
 
-      debugPrint('[DEBUG] Splash page - checking for stored credentials');
+      debugPrint('[DEBUG] Splash page - checking for remembered login');
 
-      // Check if user has valid stored credentials
-      if (_credentialsManager.isLoggedIn()) {
-        debugPrint('[DEBUG] Stored credentials found, attempting auto-login');
+      if (await _credentialsManager.isRemembered()) {
+        debugPrint('[DEBUG] Remembered login found, attempting auto-login');
 
-        // Check if Firebase user is already authenticated
         final currentUser = FirebaseAuth.instance.currentUser;
         if (currentUser != null) {
           debugPrint(
             '[DEBUG] Firebase user already authenticated: ${currentUser.uid}',
           );
-          // Start sync services now that user is authenticated.
           try {
             initializeSyncServices();
           } catch (e) {
             debugPrint('[ERROR] Sync services failed to start: $e');
           }
-          // Reload settings in background - don't wait
           _reloadSettingsInBackground();
-          // Go directly to dashboard immediately
           _goToDashboard();
           return;
         }
 
-        // Try to auto-login with stored credentials (with timeout)
         await _attemptAutoLogin();
       } else {
-        debugPrint('[DEBUG] No stored credentials found, going to login');
-        // Proceed normally to login after splash duration
+        debugPrint('[DEBUG] Remember me is off, going to login');
+        try {
+          if (FirebaseAuth.instance.currentUser != null) {
+            await FirebaseAuth.instance.signOut();
+          }
+        } catch (e) {
+          debugPrint('[ERROR] Sign out before login failed: $e');
+        }
         _timer = Timer(widget.duration, _goToLogin);
       }
     } catch (e) {
@@ -188,7 +188,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
 
   Future<void> _attemptAutoLogin() async {
     try {
-      final credentials = _credentialsManager.getStoredCredentials();
+      final credentials = await _credentialsManager.getStoredCredentials();
 
       if (credentials == null) {
         debugPrint('[DEBUG] Stored credentials are invalid');

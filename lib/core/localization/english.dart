@@ -706,6 +706,7 @@ class EnglishLocalization {
   static const String enterEmailPhone = 'Enter email/phone and password';
   static const String password = 'Password';
   static const String forgotPasswordQuestion = 'Forgot password?';
+  static const String rememberMe = 'Remember me';
   static const String signIn = 'Sign In';
   static const String continueWithGoogle = 'Continue with Google';
   static const String signUp = 'Sign up';

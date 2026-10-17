@@ -1,146 +1,170 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Stores remembered login credentials in platform secure storage.
+///
+/// Android uses encrypted storage, Apple platforms use the Keychain, desktop
+/// uses the OS secret store, and web uses encrypted browser storage.
+/// SharedPreferences is only read once to move any older saved password out
+/// of plain storage, then those keys are deleted.
 class CredentialsManager {
   static final CredentialsManager _instance = CredentialsManager._internal();
 
-  factory CredentialsManager() {
-    return _instance;
-  }
+  factory CredentialsManager() => _instance;
 
   CredentialsManager._internal();
 
-  late SharedPreferences _prefs;
+  static const FlutterSecureStorage _storage = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock_this_device,
+    ),
+    mOptions: MacOsOptions(
+      accessibility: KeychainAccessibility.first_unlock_this_device,
+    ),
+    webOptions: WebOptions(
+      dbName: 'c_billing_secure',
+      publicKey: 'c_billing_credentials',
+    ),
+  );
+
+  static const String _emailKey = 'secure_user_email';
+  static const String _passwordKey = 'secure_user_password';
+  static const String _userIdKey = 'secure_user_id';
+  static const String _rememberKey = 'secure_remember_me';
+  static const String _timestampKey = 'secure_login_timestamp';
+
+  static const List<String> _legacyKeys = [
+    'user_email',
+    'user_password',
+    'user_id',
+    'is_logged_in',
+    'login_timestamp',
+  ];
+
   bool _initialized = false;
 
-  // Preference keys
-  static const String _emailKey = 'user_email';
-  static const String _passwordKey = 'user_password';
-  static const String _userIdKey = 'user_id';
-  static const String _isLoggedInKey = 'is_logged_in';
-  static const String _loginTimestampKey = 'login_timestamp';
-
-  /// Initialize SharedPreferences
+  /// Prepare storage and move any legacy plain-text credentials across.
   Future<void> init() async {
-    if (!_initialized) {
-      _prefs = await SharedPreferences.getInstance();
-      _initialized = true;
-      debugPrint('[DEBUG] CredentialsManager initialized');
-    }
+    if (_initialized) return;
+    await _migrateLegacyPreferences();
+    _initialized = true;
+    debugPrint('[DEBUG] CredentialsManager initialized');
   }
 
-  /// Save credentials after successful login
+  /// Save credentials after the user signs in with Remember me checked.
   Future<void> saveCredentials({
     required String email,
     required String password,
     required String userId,
   }) async {
+    await _writeCredentials(email: email, password: password, userId: userId);
+    debugPrint('[DEBUG] Remembered login saved in secure storage');
+  }
+
+  /// Replace the stored password after a successful password change.
+  Future<void> updateStoredPassword(String password) async {
+    if (!await isRemembered()) return;
+    await _storage.write(key: _passwordKey, value: password);
+    await _storage.write(
+      key: _timestampKey,
+      value: DateTime.now().millisecondsSinceEpoch.toString(),
+    );
+    debugPrint('[DEBUG] Remembered password updated in secure storage');
+  }
+
+  Future<String?> getEmail() => _storage.read(key: _emailKey);
+
+  /// True when the user chose Remember me and credentials are still stored.
+  Future<bool> isRemembered() async {
     try {
-      await _prefs.setString(_emailKey, email);
-      await _prefs.setString(_passwordKey, password);
-      await _prefs.setString(_userIdKey, userId);
-      await _prefs.setBool(_isLoggedInKey, true);
-      await _prefs.setInt(_loginTimestampKey, DateTime.now().millisecondsSinceEpoch);
-      debugPrint('[DEBUG] Credentials saved for email: $email');
+      return await _storage.read(key: _rememberKey) == 'true';
     } catch (e) {
-      debugPrint('[ERROR] Failed to save credentials: $e');
-      rethrow;
+      debugPrint('[ERROR] Could not read remembered login: $e');
+      return false;
     }
   }
 
-  /// Get saved email
-  String? getEmail() {
-    final email = _prefs.getString(_emailKey);
-    debugPrint('[DEBUG] Retrieved email from preferences: ${email != null ? "***" : "null"}');
-    return email;
+  /// Credentials for automatic sign-in. Null when Remember me is off.
+  Future<Map<String, String>?> getStoredCredentials() async {
+    try {
+      if (!await isRemembered()) return null;
+      final email = await _storage.read(key: _emailKey);
+      final password = await _storage.read(key: _passwordKey);
+      if (email == null ||
+          password == null ||
+          email.isEmpty ||
+          password.isEmpty) {
+        return null;
+      }
+      final userId = await _storage.read(key: _userIdKey) ?? '';
+      return {'email': email, 'password': password, 'userId': userId};
+    } catch (e) {
+      debugPrint('[ERROR] Could not read stored credentials: $e');
+      return null;
+    }
   }
 
-  /// Get saved password
-  String? getPassword() {
-    final password = _prefs.getString(_passwordKey);
-    debugPrint('[DEBUG] Retrieved password from preferences: ${password != null ? "***" : "null"}');
-    return password;
-  }
-
-  /// Get saved user ID
-  String? getUserId() {
-    final userId = _prefs.getString(_userIdKey);
-    debugPrint('[DEBUG] Retrieved userId: $userId');
-    return userId;
-  }
-
-  /// Check if user is logged in (stored credentials exist)
-  bool isLoggedIn() {
-    final loggedIn = _prefs.getBool(_isLoggedInKey) ?? false;
-    debugPrint('[DEBUG] isLoggedIn check: $loggedIn');
-    return loggedIn;
-  }
-
-  /// Get login timestamp
-  int? getLoginTimestamp() {
-    return _prefs.getInt(_loginTimestampKey);
-  }
-
-  /// Clear all credentials (logout)
+  /// Remove remembered credentials. Used on logout and when Remember me is off.
   Future<void> clearCredentials() async {
     try {
-      await _prefs.remove(_emailKey);
-      await _prefs.remove(_passwordKey);
-      await _prefs.remove(_userIdKey);
-      await _prefs.remove(_isLoggedInKey);
-      await _prefs.remove(_loginTimestampKey);
-      debugPrint('[DEBUG] Credentials cleared (user logged out)');
+      await _storage.delete(key: _emailKey);
+      await _storage.delete(key: _passwordKey);
+      await _storage.delete(key: _userIdKey);
+      await _storage.delete(key: _rememberKey);
+      await _storage.delete(key: _timestampKey);
+      debugPrint('[DEBUG] Remembered login cleared');
     } catch (e) {
-      debugPrint('[ERROR] Failed to clear credentials: $e');
+      debugPrint('[ERROR] Failed to clear remembered login: $e');
       rethrow;
     }
   }
 
-  /// Get all stored credentials (for auto-login)
-  Map<String, dynamic>? getStoredCredentials() {
-    if (!isLoggedIn()) {
-      debugPrint('[DEBUG] No stored credentials available');
-      return null;
-    }
-
-    final email = getEmail();
-    final password = getPassword();
-    final userId = getUserId();
-
-    if (email == null || password == null) {
-      debugPrint('[ERROR] Stored credentials incomplete');
-      return null;
-    }
-
-    debugPrint('[DEBUG] Retrieved stored credentials for auto-login');
-    return {
-      'email': email,
-      'password': password,
-      'userId': userId,
-      'timestamp': getLoginTimestamp(),
-    };
+  Future<void> _writeCredentials({
+    required String email,
+    required String password,
+    required String userId,
+  }) async {
+    await _storage.write(key: _emailKey, value: email);
+    await _storage.write(key: _passwordKey, value: password);
+    await _storage.write(key: _userIdKey, value: userId);
+    await _storage.write(key: _rememberKey, value: 'true');
+    await _storage.write(
+      key: _timestampKey,
+      value: DateTime.now().millisecondsSinceEpoch.toString(),
+    );
   }
 
-  /// Validate if stored credentials are still valid
-  /// Returns true if credentials exist and session is within 2-hour window
-  bool areStoredCredentialsValid() {
-    if (!isLoggedIn()) {
-      debugPrint('[DEBUG] No stored credentials to validate');
-      return false;
+  /// One-time move from SharedPreferences, then delete the plain-text copies.
+  Future<void> _migrateLegacyPreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hasLegacy = _legacyKeys.any(prefs.containsKey);
+      if (!hasLegacy) return;
+
+      final alreadyRemembered = await _storage.read(key: _rememberKey) == 'true';
+      if (!alreadyRemembered && (prefs.getBool('is_logged_in') ?? false)) {
+        final email = prefs.getString('user_email');
+        final password = prefs.getString('user_password');
+        if (email != null &&
+            password != null &&
+            email.isNotEmpty &&
+            password.isNotEmpty) {
+          await _writeCredentials(
+            email: email,
+            password: password,
+            userId: prefs.getString('user_id') ?? '',
+          );
+          debugPrint('[DEBUG] Moved legacy login into secure storage');
+        }
+      }
+
+      for (final key in _legacyKeys) {
+        await prefs.remove(key);
+      }
+    } catch (e) {
+      debugPrint('[ERROR] Legacy credential migration failed: $e');
     }
-
-    final timestamp = getLoginTimestamp();
-    if (timestamp == null) {
-      debugPrint('[DEBUG] No login timestamp found');
-      return false;
-    }
-
-    // Check if session expired (2 hours = 7200000 milliseconds)
-    final now = DateTime.now().millisecondsSinceEpoch;
-    const sessionDuration = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
-
-    final isValid = (now - timestamp) < sessionDuration;
-    debugPrint('[DEBUG] Stored credentials valid: $isValid (age: ${(now - timestamp) / 1000 / 60} minutes)');
-    return isValid;
   }
 }

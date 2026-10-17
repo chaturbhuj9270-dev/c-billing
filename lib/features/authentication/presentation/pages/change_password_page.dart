@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:ui';
+import '../../../../core/services/credentials_manager.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import 'package:c_billing/common_widgets/glass_bevel_frame.dart';
@@ -91,6 +92,11 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       // Update password
       await user.updatePassword(newPassword);
       debugPrint('[DEBUG] Password updated successfully');
+      try {
+        await CredentialsManager().updateStoredPassword(newPassword);
+      } catch (e) {
+        debugPrint('[ERROR] Could not update remembered password: $e');
+      }
 
       setState(() => _loading = false);
 

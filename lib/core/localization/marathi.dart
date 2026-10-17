@@ -711,6 +711,7 @@ class MarathiLocalization {
   static const String enterEmailPhone = 'ईमेल/फोन आणि पासवर्ड प्रविष्ट करा';
   static const String password = 'पासवर्ड';
   static const String forgotPasswordQuestion = 'पासवर्ड विसरलात?';
+  static const String rememberMe = 'मला लक्षात ठेवा';
   static const String signIn = 'साइन इन';
   static const String continueWithGoogle = 'Google ने सुरू ठेवा';
   static const String signUp = 'साइन अप';

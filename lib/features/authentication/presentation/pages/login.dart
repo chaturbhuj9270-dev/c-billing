@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -33,6 +34,7 @@ class _LoginPageV2State extends State<LoginPageV2>
   final _passwordController = TextEditingController();
   bool _obscure = true;
   bool _loading = false;
+  bool _rememberMe = false;
   late AppLocalizations _localizations;
   late final AnimationController _animController;
   late final AnimationController _staggerController;
@@ -135,6 +137,30 @@ class _LoginPageV2State extends State<LoginPageV2>
     );
     _pulseController.repeat(reverse: true);
     _ringController.repeat();
+    _loadRememberedLogin();
+  }
+
+  Future<void> _loadRememberedLogin() async {
+    final manager = CredentialsManager();
+    await manager.init();
+    if (!await manager.isRemembered()) return;
+    final email = await manager.getEmail();
+    if (!mounted || email == null || email.isEmpty) return;
+    setState(() {
+      _rememberMe = true;
+      _emailOrPhoneController.text = email;
+    });
+  }
+
+  Future<void> _applyAuthPersistence() async {
+    if (!kIsWeb) return;
+    try {
+      await FirebaseAuth.instance.setPersistence(
+        _rememberMe ? Persistence.LOCAL : Persistence.NONE,
+      );
+    } catch (e) {
+      debugPrint('[DEBUG] Auth persistence not applied: $e');
+    }
   }
 
   void _submit() {
@@ -146,11 +172,14 @@ class _LoginPageV2State extends State<LoginPageV2>
     }
 
     setState(() => _loading = true);
-    debugPrint('[DEBUG] Attempting login with: $emailOrPhone');
+    debugPrint('[DEBUG] Attempting login');
 
-    FirebaseAuth.instance
-        .signInWithEmailAndPassword(email: emailOrPhone, password: password)
-        .then((cred) {
+    _applyAuthPersistence().then((_) {
+      return FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailOrPhone,
+        password: password,
+      );
+    }).then((cred) async {
           if (!mounted) return;
           debugPrint('[DEBUG] Login successful for user: ${cred.user?.uid}');
 
@@ -179,21 +208,22 @@ class _LoginPageV2State extends State<LoginPageV2>
             }
           });
 
-          // Save credentials for persistent login
           final credentialsManager = CredentialsManager();
-          credentialsManager
-              .saveCredentials(
+          try {
+            if (_rememberMe) {
+              await credentialsManager.saveCredentials(
                 email: emailOrPhone,
                 password: password,
                 userId: cred.user!.uid,
-              )
-              .then((_) {
-                debugPrint('[DEBUG] User credentials saved for persistent login');
-              })
-              .catchError((e) {
-                debugPrint('[ERROR] Failed to save credentials: $e');
-              });
+              );
+            } else {
+              await credentialsManager.clearCredentials();
+            }
+          } catch (e) {
+            debugPrint('[ERROR] Failed to update remembered login: $e');
+          }
 
+          if (!mounted) return;
           setState(() => _loading = false);
           GlassyToast.show(context, _localizations.loginSuccessful);
           debugPrint('[DEBUG] Session timeout set for 2 hours');
@@ -494,44 +524,102 @@ class _LoginPageV2State extends State<LoginPageV2>
                                             ),
                                           ),
                                           const SizedBox(height: 12),
-                                          // Forgot password with animation
                                           SlideTransition(
                                             position: _fieldAnimations[2],
                                             child: FadeTransition(
                                               opacity: _fieldFadeAnimations[2],
-                                              child: Align(
-                                                alignment:
-                                                    Alignment.centerRight,
-                                                child: TextButton(
-                                                  onPressed: () {
-                                                    Navigator.of(context).push(
-                                                      MaterialPageRoute(
-                                                        builder: (_) =>
-                                                            const ChangePasswordPage(),
+                                              child: Row(
+                                                children: [
+                                                  SizedBox(
+                                                    width: 24,
+                                                    height: 24,
+                                                    child: Checkbox(
+                                                      value: _rememberMe,
+                                                      onChanged: _loading
+                                                          ? null
+                                                          : (value) {
+                                                              setState(() {
+                                                                _rememberMe =
+                                                                    value ??
+                                                                    false;
+                                                              });
+                                                            },
+                                                      activeColor:
+                                                          AppColors.action(
+                                                            context,
+                                                          ),
+                                                      checkColor:
+                                                          AppTheme.white,
+                                                      side: BorderSide(
+                                                        color: AppColors.border(
+                                                          context,
+                                                        ),
                                                       ),
-                                                    );
-                                                  },
-                                                  style: TextButton.styleFrom(
-                                                    padding: EdgeInsets.zero,
-                                                    minimumSize: Size.zero,
-                                                    tapTargetSize:
-                                                        MaterialTapTargetSize
-                                                            .shrinkWrap,
-                                                  ),
-                                                  child: Text(
-                                                    _localizations
-                                                        .forgotPasswordQuestion,
-                                                    style: TextStyle(
-                                                      color: AppColors.accent(
-                                                        context,
-                                                      ),
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 13,
-                                                      fontFamily: 'Literata',
+                                                      materialTapTargetSize:
+                                                          MaterialTapTargetSize
+                                                              .shrinkWrap,
+                                                      visualDensity:
+                                                          VisualDensity.compact,
                                                     ),
                                                   ),
-                                                ),
+                                                  const SizedBox(width: 8),
+                                                  GestureDetector(
+                                                    onTap: _loading
+                                                        ? null
+                                                        : () {
+                                                            setState(() {
+                                                              _rememberMe =
+                                                                  !_rememberMe;
+                                                            });
+                                                          },
+                                                    child: Text(
+                                                      _localizations.rememberMe,
+                                                      style: TextStyle(
+                                                        color:
+                                                            AppColors.secondaryText(
+                                                              context,
+                                                            ),
+                                                        fontSize: 13,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        fontFamily: 'Literata',
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const Spacer(),
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(
+                                                        context,
+                                                      ).push(
+                                                        MaterialPageRoute(
+                                                          builder: (_) =>
+                                                              const ChangePasswordPage(),
+                                                        ),
+                                                      );
+                                                    },
+                                                    style: TextButton.styleFrom(
+                                                      padding: EdgeInsets.zero,
+                                                      minimumSize: Size.zero,
+                                                      tapTargetSize:
+                                                          MaterialTapTargetSize
+                                                              .shrinkWrap,
+                                                    ),
+                                                    child: Text(
+                                                      _localizations
+                                                          .forgotPasswordQuestion,
+                                                      style: TextStyle(
+                                                        color: AppColors.accent(
+                                                          context,
+                                                        ),
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        fontSize: 13,
+                                                        fontFamily: 'Literata',
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                           ),

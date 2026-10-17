@@ -708,6 +708,7 @@ class HindiLocalization {
   static const String enterEmailPhone = 'ईमेल/फोन और पासवर्ड दर्ज करें';
   static const String password = 'पासवर्ड';
   static const String forgotPasswordQuestion = 'पासवर्ड भूल गए?';
+  static const String rememberMe = 'मुझे याद रखें';
   static const String signIn = 'साइन इन';
   static const String continueWithGoogle = 'Google से जारी रखें';
   static const String signUp = 'साइन अप';

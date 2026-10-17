@@ -6233,6 +6233,17 @@ class AppLocalizations {
     }
   }
 
+  String get rememberMe {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.rememberMe;
+      case 'Marathi':
+        return MarathiLocalization.rememberMe;
+      default:
+        return EnglishLocalization.rememberMe;
+    }
+  }
+
   String get signIn {
     switch (languageCode) {
       case 'Hindi':
