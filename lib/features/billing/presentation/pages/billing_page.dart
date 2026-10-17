@@ -1507,13 +1507,13 @@ class _BillingPageState extends State<BillingPage> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.white.withValues(alpha: 0.15),
+                          color: AppTopBar.chipFill(context),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           '${_billItems.length}',
-                          style: const TextStyle(
-                            color: AppTheme.white,
+                          style: TextStyle(
+                            color: AppTopBar.onBar(context),
                             fontWeight: FontWeight.w700,
                             fontFamily: 'Literata',
                           ),

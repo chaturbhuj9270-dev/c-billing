@@ -13,7 +13,14 @@ class ChangePasswordPage extends StatefulWidget {
   /// If false, navigates to login after success (for flyout flow)
   final bool showBackButton;
 
-  const ChangePasswordPage({super.key, this.showBackButton = true});
+  /// Shown inside the web shell. Skips the top bar and does not pop the shell.
+  final bool isEmbedded;
+
+  const ChangePasswordPage({
+    super.key,
+    this.showBackButton = true,
+    this.isEmbedded = false,
+  });
 
   @override
   State<ChangePasswordPage> createState() => _ChangePasswordPageState();
@@ -91,7 +98,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         GlassyToast.show(context, _localizations.passwordUpdated);
 
         // Go back to previous screen
-        Navigator.of(context).pop();
+        if (!widget.isEmbedded) Navigator.of(context).pop();
       }
     } on FirebaseAuthException catch (e) {
       setState(() => _loading = false);
@@ -127,9 +134,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       backgroundColor: AppColors.scaffold(context),
       body: Column(
         children: [
-          if (widget.showBackButton)
+          if (!widget.isEmbedded && widget.showBackButton)
             AppTopBar(title: _localizations.changePasswordTitle)
-          else
+          else if (!widget.isEmbedded)
             AppTopBar(
               title: _localizations.changePasswordTitle,
               showBack: false,

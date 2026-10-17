@@ -10,7 +10,9 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  final bool isEmbedded;
+
+  const ProfilePage({super.key, this.isEmbedded = false});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -141,7 +143,8 @@ class _ProfilePageState extends State<ProfilePage> {
       backgroundColor: AppColors.scaffold(context),
       body: Column(
         children: [
-          AppTopBar(title: _localizations.myProfile),
+          if (!widget.isEmbedded)
+            AppTopBar(title: _localizations.myProfile),
           Expanded(
             child: _isLoading
           ? Center(

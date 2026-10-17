@@ -1619,16 +1619,14 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                 height: 40,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: AppTheme.white.withValues(alpha: 0.15),
+                  color: AppTopBar.chipFill(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppTheme.white.withValues(alpha: 0.2),
-                  ),
+                  border: Border.all(color: AppTopBar.chipBorder(context)),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.settings_rounded,
                   size: 22,
-                  color: AppTheme.white,
+                  color: AppTopBar.onBar(context),
                 ),
               ),
               shape: RoundedRectangleBorder(

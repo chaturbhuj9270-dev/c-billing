@@ -15,7 +15,9 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 class QuotationListPage extends StatefulWidget {
-  const QuotationListPage({super.key});
+  final bool isEmbedded;
+
+  const QuotationListPage({super.key, this.isEmbedded = false});
 
   @override
   State<QuotationListPage> createState() => _QuotationListPageState();
@@ -125,6 +127,7 @@ class _QuotationListPageState extends State<QuotationListPage> {
       ),
       body: Column(
         children: [
+          if (!widget.isEmbedded)
           AppTopBar(
             title: _l10n.quotations,
             actions: [

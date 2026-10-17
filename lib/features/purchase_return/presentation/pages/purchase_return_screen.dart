@@ -29,7 +29,9 @@ import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 // ──────────────────────────────────────────────────────────
 
 class PurchaseReturnScreen extends StatefulWidget {
-  const PurchaseReturnScreen({super.key});
+  final bool isEmbedded;
+
+  const PurchaseReturnScreen({super.key, this.isEmbedded = false});
 
   @override
   State<PurchaseReturnScreen> createState() => _PurchaseReturnScreenState();
@@ -366,6 +368,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
       backgroundColor: AppColors.scaffold(context),
       body: Column(
         children: [
+          if (!widget.isEmbedded)
           AppTopBar(
             title: _localizations.purchaseReturn,
             subtitle: _localizations.returnStockToSupplier,
@@ -373,7 +376,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.white.withValues(alpha: 0.15),
+                  color: AppTopBar.chipFill(context),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -383,7 +386,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                       _isPartialMode
                           ? Icons.tune_rounded
                           : Icons.all_inclusive_rounded,
-                      color: AppTheme.white,
+                      color: AppTopBar.onBar(context),
                       size: 14,
                     ),
                     const SizedBox(width: 6),
@@ -394,8 +397,8 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                         _isPartialMode
                             ? _localizations.partial
                             : _localizations.fullBatch,
-                        style: const TextStyle(
-                          color: AppTheme.white,
+                        style: TextStyle(
+                          color: AppTopBar.onBar(context),
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           fontFamily: 'Literata',

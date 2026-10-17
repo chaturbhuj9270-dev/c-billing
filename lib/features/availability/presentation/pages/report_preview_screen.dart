@@ -268,14 +268,14 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: AppTheme.white.withValues(alpha: 0.15),
+            color: AppTopBar.chipFill(context),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppTheme.white.withValues(alpha: 0.2)),
+            border: Border.all(color: AppTopBar.chipBorder(context)),
           ),
           child: Text(
             isPdf ? 'PDF' : 'CSV',
-            style: const TextStyle(
-              color: AppTheme.white,
+            style: TextStyle(
+              color: AppTopBar.onBar(context),
               fontSize: 11,
               fontWeight: FontWeight.w700,
               fontFamily: 'Literata',

@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
@@ -31,39 +32,67 @@ class AppTopBar extends StatelessWidget {
     required VoidCallback? onTap,
     bool isLoading = false,
   }) {
-    return Material(
-      color: AppTheme.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        splashColor: AppTheme.white.withValues(alpha: 0.15),
-        highlightColor: AppTheme.white.withValues(alpha: 0.08),
-        child: Container(
-          width: 40,
-          height: 40,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: AppTheme.white.withValues(alpha: 0.15),
+    return Builder(
+      builder: (context) {
+        final onWeb = kIsWeb;
+        final iconColor = onWeb
+            ? AppColors.primaryText(context)
+            : AppTheme.white;
+        return Material(
+          color: AppTheme.transparent,
+          child: InkWell(
+            onTap: onTap,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.white.withValues(alpha: 0.2)),
+            splashColor: AppTheme.white.withValues(alpha: 0.15),
+            highlightColor: AppTheme.white.withValues(alpha: 0.08),
+            child: Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: onWeb
+                    ? AppColors.card(context)
+                    : AppTheme.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: onWeb
+                      ? AppColors.border(context)
+                      : AppTheme.white.withValues(alpha: 0.2),
+                ),
+              ),
+              child: isLoading
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: iconColor,
+                      ),
+                    )
+                  : Icon(icon, color: iconColor, size: 22),
+            ),
           ),
-          child: isLoading
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AppTheme.white,
-                  ),
-                )
-              : Icon(icon, color: AppTheme.white, size: 22),
-        ),
-      ),
+        );
+      },
     );
   }
 
+  /// Foreground used by chips that sit in the page heading.
+  static Color onBar(BuildContext context) =>
+      kIsWeb ? AppColors.primaryText(context) : AppTheme.white;
+
+  /// Chip fill used by badges that sit in the page heading.
+  static Color chipFill(BuildContext context) => kIsWeb
+      ? AppColors.accentSoft(context, 0.12)
+      : AppTheme.white.withValues(alpha: 0.15);
+
+  static Color chipBorder(BuildContext context) => kIsWeb
+      ? AppColors.border(context)
+      : AppTheme.white.withValues(alpha: 0.2);
+
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb) return _buildWebHeading(context);
     final isDark = AppColors.isDark(context);
     final bar = AppColors.appBar(context);
     const headerRadius = BorderRadius.vertical(bottom: Radius.circular(24));
@@ -173,6 +202,73 @@ class AppTopBar extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Page title row for web. It sits in the page, with no bar, shadow, or fill.
+  Widget _buildWebHeading(BuildContext context) {
+    final leadingWidget = leading ??
+        (showBack
+            ? AppTopBar.action(
+                icon: Icons.arrow_back_rounded,
+                onTap: onBack ?? () => Navigator.maybePop(context),
+              )
+            : null);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 20, 20, 8),
+      child: Row(
+        children: [
+          if (leadingWidget != null) ...[
+            leadingWidget,
+            const SizedBox(width: 12),
+          ],
+          Expanded(
+            child: GestureDetector(
+              onTap: onTitleTap,
+              behavior: HitTestBehavior.opaque,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppColors.primaryText(context),
+                      fontSize: 22,
+                      height: 1.15,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Literata',
+                      letterSpacing: -0.4,
+                    ),
+                  ),
+                  if (subtitle != null && subtitle!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        subtitle!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.mutedText(context),
+                          fontSize: 13,
+                          height: 1.2,
+                          fontFamily: 'Literata',
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          for (var i = 0; i < actions.length; i++) ...[
+            if (i > 0) const SizedBox(width: 8),
+            actions[i],
+          ],
+        ],
       ),
     );
   }

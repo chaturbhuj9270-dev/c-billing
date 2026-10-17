@@ -14,7 +14,9 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 class ShopDetailsPage extends StatefulWidget {
-  const ShopDetailsPage({super.key});
+  final bool isEmbedded;
+
+  const ShopDetailsPage({super.key, this.isEmbedded = false});
 
   @override
   State<ShopDetailsPage> createState() => _ShopDetailsPageState();
@@ -1077,7 +1079,8 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       backgroundColor: AppColors.chipFill(context),
       body: Column(
         children: [
-          AppTopBar(title: _localizations.shopDetails),
+          if (!widget.isEmbedded)
+            AppTopBar(title: _localizations.shopDetails),
           Expanded(
             child: SingleChildScrollView(
         padding: EdgeInsets.all(16),

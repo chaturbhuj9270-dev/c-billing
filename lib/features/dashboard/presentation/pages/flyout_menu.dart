@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,6 +12,7 @@ import '../../../../features/authentication/presentation/pages/change_password_p
 import '../../../../core/services/theme_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'profile_page.dart';
+import 'web_shell.dart';
 import '../../../supplier/presentation/pages/enhanced_supplier_page.dart';
 import '../../../customer/presentation/pages/enhanced_customer_page.dart';
 import '../../../company/presentation/pages/enhanced_company_page.dart';
@@ -239,46 +241,73 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
 
       switch (pageName) {
         case 'Home':
+          if (kIsWeb) afterClose((_) => WebShell.open(WebShell.dashboard));
           break;
         case 'Invoices':
-          afterClose(
-            (ctx) => GlassyToast.show(ctx, 'Invoices page coming soon'),
-          );
+          if (kIsWeb) {
+            afterClose((_) => WebShell.open(WebShell.invoices));
+          } else {
+            afterClose(
+              (ctx) => GlassyToast.show(ctx, 'Invoices page coming soon'),
+            );
+          }
           break;
         case 'Clients':
-          afterClose(
-            (ctx) => Navigator.of(ctx).push(
-              MaterialPageRoute(builder: (_) => const EnhancedCustomerPage()),
-            ),
-          );
+          afterClose((ctx) {
+            if (kIsWeb) {
+              WebShell.open(WebShell.customers);
+            } else {
+              Navigator.of(ctx).push(
+                MaterialPageRoute(builder: (_) => const EnhancedCustomerPage()),
+              );
+            }
+          });
           break;
         case 'Suppliers':
-          afterClose(
-            (ctx) => Navigator.of(ctx).push(
-              MaterialPageRoute(builder: (_) => const EnhancedSupplierPage()),
-            ),
-          );
+          afterClose((ctx) {
+            if (kIsWeb) {
+              WebShell.open(WebShell.suppliers);
+            } else {
+              Navigator.of(ctx).push(
+                MaterialPageRoute(builder: (_) => const EnhancedSupplierPage()),
+              );
+            }
+          });
           break;
         case 'Companies':
-          afterClose(
-            (ctx) => Navigator.of(ctx).push(
-              MaterialPageRoute(builder: (_) => const EnhancedCompanyPage()),
-            ),
-          );
+          afterClose((ctx) {
+            if (kIsWeb) {
+              WebShell.open(WebShell.companies);
+            } else {
+              Navigator.of(ctx).push(
+                MaterialPageRoute(builder: (_) => const EnhancedCompanyPage()),
+              );
+            }
+          });
           break;
         case 'Purchases':
-          afterClose(
-            (ctx) => Navigator.of(ctx).push(
-              MaterialPageRoute(builder: (_) => const EnhancedPurchaseScreen()),
-            ),
-          );
+          afterClose((ctx) {
+            if (kIsWeb) {
+              WebShell.open(WebShell.purchase);
+            } else {
+              Navigator.of(ctx).push(
+                MaterialPageRoute(
+                  builder: (_) => const EnhancedPurchaseScreen(),
+                ),
+              );
+            }
+          });
           break;
         case 'Inventory':
-          afterClose(
-            (ctx) => Navigator.of(ctx).push(
-              MaterialPageRoute(builder: (_) => const EnhancedProductPage()),
-            ),
-          );
+          afterClose((ctx) {
+            if (kIsWeb) {
+              WebShell.open(WebShell.products);
+            } else {
+              Navigator.of(ctx).push(
+                MaterialPageRoute(builder: (_) => const EnhancedProductPage()),
+              );
+            }
+          });
           break;
         case 'Reports':
           afterClose(
@@ -286,36 +315,52 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           );
           break;
         case 'Profile':
-          afterClose(
-            (ctx) => Navigator.of(
-              ctx,
-            ).push(MaterialPageRoute(builder: (_) => const ProfilePage())),
-          );
+          afterClose((ctx) {
+            if (kIsWeb) {
+              WebShell.open(WebShell.profile);
+            } else {
+              Navigator.of(ctx).push(
+                MaterialPageRoute(builder: (_) => const ProfilePage()),
+              );
+            }
+          });
           break;
         case 'ShopDetails':
-          afterClose(
-            (ctx) => Navigator.of(
-              ctx,
-            ).push(MaterialPageRoute(builder: (_) => const ShopDetailsPage())),
-          );
+          afterClose((ctx) {
+            if (kIsWeb) {
+              WebShell.open(WebShell.shop);
+            } else {
+              Navigator.of(ctx).push(
+                MaterialPageRoute(builder: (_) => const ShopDetailsPage()),
+              );
+            }
+          });
           break;
         case 'Expenses':
-          afterClose(
-            (ctx) => Navigator.of(
-              ctx,
-            ).push(MaterialPageRoute(builder: (_) => const ExpensesPage())),
-          );
+          afterClose((ctx) {
+            if (kIsWeb) {
+              WebShell.open(WebShell.expenses);
+            } else {
+              Navigator.of(ctx).push(
+                MaterialPageRoute(builder: (_) => const ExpensesPage()),
+              );
+            }
+          });
           break;
         case 'ChangePassword':
-          afterClose(
-            (ctx) => Navigator.of(ctx).push(
-              MaterialPageRoute(
-                builder: (_) => const _SelectedTheme(
-                  child: ChangePasswordPage(),
+          afterClose((ctx) {
+            if (kIsWeb) {
+              WebShell.open(WebShell.password);
+            } else {
+              Navigator.of(ctx).push(
+                MaterialPageRoute(
+                  builder: (_) => const _SelectedTheme(
+                    child: ChangePasswordPage(),
+                  ),
                 ),
-              ),
-            ),
-          );
+              );
+            }
+          });
           break;
         case 'Language':
           afterClose(_showLanguageDialog);

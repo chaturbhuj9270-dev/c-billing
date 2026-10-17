@@ -33,6 +33,11 @@ import '../cubit/optimized_dashboard_cubit.dart';
 import '../cubit/optimized_dashboard_state.dart';
 import '../widgets/shimmer_widgets.dart';
 import 'flyout_menu.dart';
+import 'profile_page.dart';
+import 'web_shell.dart';
+import '../../../authentication/presentation/pages/change_password_page.dart';
+import '../../../expense/presentation/pages/expenses_page.dart';
+import '../../../shop/presentation/pages/shop_details_page.dart';
 import '../../../settings/presentation/pages/logs_viewer_page.dart';
 import '../../../../common_widgets/action_menu.dart';
 import '../../../../common_widgets/app_top_bar.dart';
@@ -121,6 +126,13 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     );
     _fadeController.forward();
 
+    if (kIsWeb) {
+      WebShell.register((index) {
+        if (!mounted) return;
+        setState(() => _selectedIndex = index);
+      });
+    }
+
     // Load expandable section data
     _loadExpandableSectionData();
   }
@@ -189,6 +201,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
   @override
   void dispose() {
+    if (kIsWeb) WebShell.register(null);
     _refreshSubscription?.cancel();
     LanguageService.instance.removeListener(_onLanguageChanged);
     _fadeController.dispose();
@@ -236,6 +249,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   @override
   Widget build(BuildContext context) {
     _resetSessionTimer();
+    if (kIsWeb) return _buildWebShell();
     final isWide = MediaQuery.of(context).size.width >= 800;
 
     return PopScope(
@@ -272,26 +286,272 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     );
   }
 
+  Widget _buildWebShell() {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _showExitConfirmationDialog(context);
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.scaffold(context),
+        body: Row(
+          children: [
+            _buildDesktopSideNav(),
+            Expanded(child: _buildWebContent()),
+          ],
+        ),
+      ),
+    );
+  }
+
+  final List<Widget?> _webPanes = List<Widget?>.filled(WebShell.count, null);
+
+  Widget _buildWebContent() {
+    _webPanes[_selectedIndex] ??= _createWebPane(_selectedIndex);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildWebScreenTitle(),
+        Expanded(
+          child: IndexedStack(
+            index: _selectedIndex,
+            children: [
+              for (var i = 0; i < WebShell.count; i++)
+                _webPanes[i] ?? const SizedBox.shrink(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWebScreenTitle() {
+    final subtitle = _webScreenSubtitle();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(28, 22, 28, 8),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.accentSoft(context, 0.14),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              _webScreenIcon(),
+              color: AppColors.action(context),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _webScreenTitle(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
+                    fontSize: 22,
+                    height: 1.15,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Literata',
+                    letterSpacing: -0.4,
+                  ),
+                ),
+                if (subtitle.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.mutedText(context),
+                        fontSize: 13,
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _webScreenTitle() {
+    switch (_selectedIndex) {
+      case WebShell.dashboard:
+        return _localizations.dashboard;
+      case WebShell.customers:
+        return _localizations.customers;
+      case WebShell.billing:
+        return _localizations.billing;
+      case WebShell.availability:
+        return _localizations.availability;
+      case WebShell.purchase:
+        return _localizations.purchase;
+      case WebShell.invoices:
+        return _localizations.invoices;
+      case WebShell.products:
+        return _localizations.products;
+      case WebShell.suppliers:
+        return _localizations.suppliers;
+      case WebShell.companies:
+        return _localizations.companies;
+      case WebShell.purchaseReturn:
+        return _localizations.purchaseReturn;
+      case WebShell.events:
+        return _localizations.events;
+      case WebShell.quotations:
+        return _localizations.quotations;
+      case WebShell.barcode:
+        return _localizations.barcode;
+      case WebShell.expenses:
+        return 'Expenses';
+      case WebShell.shop:
+        return _localizations.shopDetails;
+      case WebShell.profile:
+        return _localizations.myProfile;
+      case WebShell.password:
+        return _localizations.changePasswordTitle;
+      default:
+        return 'Billing';
+    }
+  }
+
+  String _webScreenSubtitle() {
+    switch (_selectedIndex) {
+      case WebShell.dashboard:
+        return _localizations.businessOverview;
+      case WebShell.customers:
+        return _localizations.manageCustomers;
+      case WebShell.billing:
+        return _localizations.generateInvoice;
+      case WebShell.availability:
+        return _localizations.stockAvailability;
+      case WebShell.purchase:
+        return _localizations.trackPurchases;
+      case WebShell.events:
+        return _localizations.manageYourEvents;
+      default:
+        return '';
+    }
+  }
+
+  IconData _webScreenIcon() {
+    switch (_selectedIndex) {
+      case WebShell.dashboard:
+        return Icons.dashboard_rounded;
+      case WebShell.customers:
+        return Icons.people_rounded;
+      case WebShell.billing:
+        return Icons.receipt_long_rounded;
+      case WebShell.availability:
+        return Icons.event_available_rounded;
+      case WebShell.purchase:
+        return Icons.shopping_cart_rounded;
+      case WebShell.invoices:
+        return Icons.receipt_long_outlined;
+      case WebShell.products:
+        return Icons.inventory_2_rounded;
+      case WebShell.suppliers:
+        return Icons.local_shipping_rounded;
+      case WebShell.companies:
+        return Icons.business_rounded;
+      case WebShell.purchaseReturn:
+        return Icons.keyboard_return_rounded;
+      case WebShell.events:
+        return Icons.auto_awesome_rounded;
+      case WebShell.quotations:
+        return Icons.description_outlined;
+      case WebShell.barcode:
+        return Icons.qr_code_scanner_rounded;
+      case WebShell.expenses:
+        return Icons.account_balance_wallet_outlined;
+      case WebShell.shop:
+        return Icons.storefront_outlined;
+      case WebShell.profile:
+        return Icons.person_rounded;
+      case WebShell.password:
+        return Icons.key_rounded;
+      default:
+        return Icons.dashboard_rounded;
+    }
+  }
+
+  Widget _createWebPane(int index) {
+    switch (index) {
+      case WebShell.dashboard:
+        return _dashboardPane();
+      case WebShell.customers:
+        return const EnhancedCustomerPage(isEmbedded: true);
+      case WebShell.billing:
+        return const BillingPage(isEmbedded: true);
+      case WebShell.availability:
+        return AvailabilityPage(isEmbedded: true);
+      case WebShell.purchase:
+        return EnhancedPurchaseScreen(isEmbedded: true);
+      case WebShell.invoices:
+        return const BillsListPage(isEmbedded: true);
+      case WebShell.products:
+        return const EnhancedProductPage(isEmbedded: true);
+      case WebShell.suppliers:
+        return const EnhancedSupplierPage(isEmbedded: true);
+      case WebShell.companies:
+        return const EnhancedCompanyPage(isEmbedded: true);
+      case WebShell.purchaseReturn:
+        return const PurchaseReturnScreen(isEmbedded: true);
+      case WebShell.events:
+        return const EventOrderListPage(isEmbedded: true);
+      case WebShell.quotations:
+        return const QuotationListPage(isEmbedded: true);
+      case WebShell.barcode:
+        return const BarcodeGeneratorPage(isEmbedded: true);
+      case WebShell.expenses:
+        return const ExpensesPage(isEmbedded: true);
+      case WebShell.shop:
+        return const ShopDetailsPage(isEmbedded: true);
+      case WebShell.profile:
+        return const ProfilePage(isEmbedded: true);
+      case WebShell.password:
+        return const ChangePasswordPage(isEmbedded: true);
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _dashboardPane() {
+    return BlocBuilder<OptimizedDashboardCubit, OptimizedDashboardState>(
+      builder: (context, state) {
+        return FadeTransition(
+          opacity: _fadeAnimation,
+          child: RefreshIndicator(
+            onRefresh: () async {
+              await context.read<OptimizedDashboardCubit>().refresh();
+              await _loadExpandableSectionData();
+            },
+            color: AppColors.accent(context),
+            child: _buildContent(state),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildTabContent() {
     return IndexedStack(
       index: _selectedIndex,
       children: [
         // Dashboard tab (index 0)
-        BlocBuilder<OptimizedDashboardCubit, OptimizedDashboardState>(
-          builder: (context, state) {
-            return FadeTransition(
-              opacity: _fadeAnimation,
-              child: RefreshIndicator(
-                onRefresh: () async {
-                  await context.read<OptimizedDashboardCubit>().refresh();
-                  await _loadExpandableSectionData();
-                },
-                color: AppColors.accent(context),
-                child: _buildContent(state),
-              ),
-            );
-          },
-        ),
+        _dashboardPane(),
         // Customers tab (index 1)
         const EnhancedCustomerPage(isEmbedded: true),
         // Billing tab (primary - center - index 2)
@@ -308,20 +568,25 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   Widget _buildDesktopSideNav() {
     final isExpanded = MediaQuery.of(context).size.width >= 1100;
     return Container(
-      width: isExpanded ? 220 : 72,
+      width: isExpanded ? (kIsWeb ? 236 : 220) : 72,
       decoration: BoxDecoration(
         color: AppColors.card(context),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.06),
-            blurRadius: 10,
-            offset: const Offset(2, 0),
-          ),
-        ],
+        border: kIsWeb
+            ? Border(right: BorderSide(color: AppColors.border(context)))
+            : null,
+        boxShadow: kIsWeb
+            ? null
+            : [
+                BoxShadow(
+                  color: AppTheme.black.withValues(alpha: 0.06),
+                  blurRadius: 10,
+                  offset: const Offset(2, 0),
+                ),
+              ],
       ),
       child: Column(
         children: [
-          const SizedBox(height: 8),
+          if (kIsWeb) _buildWebBrand(isExpanded) else const SizedBox(height: 8),
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
@@ -360,6 +625,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               ],
             ),
           ),
+          if (kIsWeb) ..._webPageTools(isExpanded),
           _buildSideNavItem(
             -1,
             Icons.menu_rounded,
@@ -551,165 +817,164 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     }
   }
 
-  IconData _pageIcon() {
-    switch (_selectedIndex) {
-      case 0:
-        return Icons.dashboard_rounded;
-      case 1:
-        return Icons.people_rounded;
-      case 2:
-        return Icons.receipt_long_rounded;
-      case 3:
-        return Icons.event_available_rounded;
-      case 4:
-        return Icons.shopping_cart_rounded;
-      default:
-        return Icons.dashboard_rounded;
-    }
-  }
+  List<Widget> _webPageTools(bool isExpanded) {
+    final tools = <Widget>[];
 
-  List<Widget> _webQuickNavItems(bool isExpanded) {
-    void open(Widget page) {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+    void add(IconData icon, String label, VoidCallback onTap) {
+      tools.add(
+        _buildSideNavItem(-1, icon, label, isExpanded, onTap: onTap),
+      );
     }
 
+    if (_selectedIndex == WebShell.billing ||
+        _selectedIndex == WebShell.availability ||
+        _selectedIndex == WebShell.purchase) {
+      add(Icons.file_download_outlined, 'Download', () {
+        if (_selectedIndex == WebShell.billing) {
+          _navigateToPage(WebShell.invoices);
+        } else if (_selectedIndex == WebShell.availability) {
+          AvailabilityScreenActions.download();
+        } else {
+          PurchaseScreenActions.download();
+        }
+      });
+    }
+    if (_selectedIndex == WebShell.billing ||
+        _selectedIndex == WebShell.purchase) {
+      add(Icons.settings_outlined, _localizations.settings, () async {
+        if (_selectedIndex == WebShell.billing) {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const BillSettingsPage()),
+          );
+          if (result == true && mounted) setState(() {});
+        } else {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const PurchaseSettingsPage()),
+          );
+          if (mounted) setState(() {});
+        }
+      });
+    }
+    if (_selectedIndex == WebShell.billing ||
+        _selectedIndex == WebShell.availability ||
+        _selectedIndex == WebShell.purchase) {
+      add(Icons.view_column_rounded, _localizations.reportSettings, () async {
+        if (_selectedIndex == WebShell.billing) {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const BillReportSettingsPage()),
+          );
+        } else if (_selectedIndex == WebShell.availability) {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const StockReportSettingsPage()),
+          );
+        } else {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const PurchaseReportSettingsPage(),
+            ),
+          );
+        }
+      });
+    }
+    add(Icons.bug_report_outlined, _localizations.reportIssue, () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const LogsViewerPage()),
+      );
+    });
+
+    if (tools.isEmpty) return const [];
     return [
-      _buildSideNavItem(
-        -1,
-        Icons.receipt_long_outlined,
-        _localizations.invoices,
-        isExpanded,
-        onTap: () => open(const BillsListPage()),
-      ),
-      _buildSideNavItem(
-        -1,
-        Icons.inventory_2_rounded,
-        _localizations.products,
-        isExpanded,
-        onTap: () => open(const EnhancedProductPage()),
-      ),
-      _buildSideNavItem(
-        -1,
-        Icons.local_shipping_rounded,
-        _localizations.suppliers,
-        isExpanded,
-        onTap: () => open(const EnhancedSupplierPage()),
-      ),
-      _buildSideNavItem(
-        -1,
-        Icons.business_rounded,
-        _localizations.companies,
-        isExpanded,
-        onTap: () => open(const EnhancedCompanyPage()),
-      ),
-      _buildSideNavItem(
-        -1,
-        Icons.keyboard_return_rounded,
-        _localizations.purchaseReturnShort,
-        isExpanded,
-        onTap: () => open(const PurchaseReturnScreen()),
-      ),
-      _buildSideNavItem(
-        -1,
-        Icons.auto_awesome_rounded,
-        _localizations.events,
-        isExpanded,
-        onTap: () => open(const EventOrderListPage()),
-      ),
-      _buildSideNavItem(
-        -1,
-        Icons.description_outlined,
-        _localizations.quotations,
-        isExpanded,
-        onTap: () => open(const QuotationListPage()),
-      ),
-      _buildSideNavItem(
-        -1,
-        Icons.qr_code_scanner_rounded,
-        _localizations.barcode,
-        isExpanded,
-        onTap: () => open(const BarcodeGeneratorPage()),
-      ),
+      Divider(height: 16, color: AppColors.border(context)),
+      ...tools,
     ];
   }
 
-  Widget _buildWebHeader() {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        border: Border(
-          bottom: BorderSide(color: AppColors.border(context)),
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 16, 14),
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: _openFlyoutMenu,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.accentSoft(context, 0.14),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    _pageIcon(),
-                    color: AppColors.action(context),
-                    size: 20,
-                  ),
-                ),
+  Widget _buildWebBrand(bool isExpanded) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(isExpanded ? 16 : 0, 18, 12, 8),
+      child: Row(
+        mainAxisAlignment: isExpanded
+            ? MainAxisAlignment.start
+            : MainAxisAlignment.center,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.asset(
+              'assets/images/app_logo.png',
+              width: 36,
+              height: 36,
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) => Icon(
+                Icons.storefront_rounded,
+                color: AppColors.action(context),
+                size: 28,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: GestureDetector(
-                  onTap: _openFlyoutMenu,
-                  behavior: HitTestBehavior.opaque,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _getPageTitle(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: AppColors.primaryText(context),
-                          fontSize: 16,
-                          height: 1.15,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: 'Literata',
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                      Text(
-                        _getPageSubtitle(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: AppColors.mutedText(context),
-                          fontSize: 12,
-                          height: 1.2,
-                          fontFamily: 'Literata',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              _buildHeaderMenu(outlined: true),
-            ],
+            ),
           ),
-        ),
+          if (isExpanded) ...[
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Billing',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: AppColors.primaryText(context),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Literata',
+                  letterSpacing: -0.3,
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
 
+  List<Widget> _webQuickNavItems(bool isExpanded) {
+    Widget item(int index, IconData icon, String label) {
+      return _buildSideNavItem(
+        index,
+        icon,
+        label,
+        isExpanded,
+        onTap: () => _navigateToPage(index),
+      );
+    }
+
+    return [
+      item(WebShell.invoices, Icons.receipt_long_outlined, _localizations.invoices),
+      item(WebShell.products, Icons.inventory_2_rounded, _localizations.products),
+      item(WebShell.suppliers, Icons.local_shipping_rounded, _localizations.suppliers),
+      item(WebShell.companies, Icons.business_rounded, _localizations.companies),
+      item(
+        WebShell.purchaseReturn,
+        Icons.keyboard_return_rounded,
+        _localizations.purchaseReturnShort,
+      ),
+      item(WebShell.events, Icons.auto_awesome_rounded, _localizations.events),
+      item(
+        WebShell.quotations,
+        Icons.description_outlined,
+        _localizations.quotations,
+      ),
+      item(
+        WebShell.barcode,
+        Icons.qr_code_scanner_rounded,
+        _localizations.barcode,
+      ),
+    ];
+  }
+
   Widget _buildCommonHeader() {
-    if (kIsWeb) return _buildWebHeader();
     return AppTopBar(
       title: _getPageTitle(),
       subtitle: _getPageSubtitle(),

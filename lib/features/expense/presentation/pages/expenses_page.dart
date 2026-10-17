@@ -190,6 +190,7 @@ class _ExpensesPageState extends State<ExpensesPage>
   Widget _buildHeader() {
     return Column(
       children: [
+        if (!widget.isEmbedded)
         AppTopBar(
           title: 'Expenses',
           showBack: !widget.isEmbedded,

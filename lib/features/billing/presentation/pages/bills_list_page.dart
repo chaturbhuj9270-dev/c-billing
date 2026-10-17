@@ -34,7 +34,9 @@ import 'package:c_billing/core/theme/app_theme.dart';
 enum _BillDateFilter { none, today, thisWeek, thisMonth, thisYear, custom }
 
 class BillsListPage extends StatefulWidget {
-  const BillsListPage({super.key});
+  final bool isEmbedded;
+
+  const BillsListPage({super.key, this.isEmbedded = false});
 
   @override
   State<BillsListPage> createState() => _BillsListPageState();
@@ -687,6 +689,7 @@ class _BillsListPageState extends State<BillsListPage>
       backgroundColor: AppColors.scaffold(context),
       body: Column(
         children: [
+          if (!widget.isEmbedded)
           AppTopBar(
             title: _localizations.billsHistory,
             subtitle: _localizations.viewAllTransactions,

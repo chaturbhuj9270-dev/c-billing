@@ -40,8 +40,13 @@ enum DateFilter {
 /// Event Orders List Page - Premium UI Design
 class EventOrderListPage extends StatefulWidget {
   final OrderType? filterType;
+  final bool isEmbedded;
 
-  const EventOrderListPage({super.key, this.filterType});
+  const EventOrderListPage({
+    super.key,
+    this.filterType,
+    this.isEmbedded = false,
+  });
 
   @override
   State<EventOrderListPage> createState() => _EventOrderListPageState();
@@ -124,7 +129,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           backgroundColor: AppColors.scaffold(context),
           body: Column(
             children: [
-              _buildPremiumAppBar(context),
+              if (!widget.isEmbedded) _buildPremiumAppBar(context),
               Expanded(
                 child: CustomScrollView(
                   slivers: [
@@ -239,96 +244,91 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               .length;
         }
 
+        final l10n = AppLocalizations.of(
+          LanguageService.instance.currentLanguage,
+        );
+        final expand = widget.isEmbedded;
+        final cards = [
+          _buildStatCard(
+            expand: expand,
+            title: l10n.all,
+            value: totalOrders,
+            icon: Icons.all_inbox_rounded,
+            gradient: [_primaryColor, _primaryDark],
+            isActive: _selectedType == null,
+            onTap: () => _onTypeFilterChanged(context, null),
+          ),
+          _buildStatCard(
+            expand: expand,
+            title: l10n.events,
+            value: eventCount,
+            icon: Icons.celebration_rounded,
+            gradient: [_eventColor, AppTheme.purple300],
+            isActive: _selectedType == OrderType.event,
+            onTap: () => _onTypeFilterChanged(context, OrderType.event),
+          ),
+          _buildStatCard(
+            expand: expand,
+            title: l10n.sales,
+            value: salesCount,
+            icon: Icons.shopping_bag_rounded,
+            gradient: [_salesColor, AppTheme.blue300],
+            isActive: _selectedType == OrderType.salesOrder,
+            onTap: () => _onTypeFilterChanged(context, OrderType.salesOrder),
+          ),
+          _buildStatCard(
+            expand: expand,
+            title: l10n.pending,
+            value: pendingCount,
+            icon: Icons.schedule_rounded,
+            gradient: [AppTheme.orange, AppTheme.orangeAccent],
+            isActive: _selectedStatus == OrderStatus.pending,
+            onTap: () => _onStatusFilterChanged(context, OrderStatus.pending),
+          ),
+          _buildStatCard(
+            expand: expand,
+            title: l10n.confirmed,
+            value: confirmedCount,
+            icon: Icons.check_circle_rounded,
+            gradient: [AppTheme.green, AppTheme.lightGreen],
+            isActive: _selectedStatus == OrderStatus.confirmed,
+            onTap: () =>
+                _onStatusFilterChanged(context, OrderStatus.confirmed),
+          ),
+        ];
+
+        if (widget.isEmbedded) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(24, 4, 24, 4),
+            child: Row(
+              children: [
+                for (var i = 0; i < cards.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 12),
+                  Expanded(child: cards[i]),
+                ],
+              ],
+            ),
+          );
+        }
+
         return Container(
-          margin: EdgeInsets.fromLTRB(16, 8, 16, 8),
-          padding: EdgeInsets.all(16),
+          margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: AppColors.card(context),
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.black.withValues(alpha: 0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            border: Border.all(color: AppColors.border(context)),
           ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minWidth: constraints.maxWidth),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildStatCard(
-                        title: AppLocalizations.of(
-                          LanguageService.instance.currentLanguage,
-                        ).all,
-                        value: totalOrders,
-                        icon: Icons.all_inbox_rounded,
-                        gradient: [_primaryColor, _primaryDark],
-                        isActive: _selectedType == null,
-                        onTap: () => _onTypeFilterChanged(context, null),
-                      ),
-                      const SizedBox(width: 10),
-                      _buildStatCard(
-                        title: AppLocalizations.of(
-                          LanguageService.instance.currentLanguage,
-                        ).events,
-                        value: eventCount,
-                        icon: Icons.celebration_rounded,
-                        gradient: [_eventColor, AppTheme.purple300],
-                        isActive: _selectedType == OrderType.event,
-                        onTap: () =>
-                            _onTypeFilterChanged(context, OrderType.event),
-                      ),
-                      const SizedBox(width: 10),
-                      _buildStatCard(
-                        title: AppLocalizations.of(
-                          LanguageService.instance.currentLanguage,
-                        ).sales,
-                        value: salesCount,
-                        icon: Icons.shopping_bag_rounded,
-                        gradient: [_salesColor, AppTheme.blue300],
-                        isActive: _selectedType == OrderType.salesOrder,
-                        onTap: () =>
-                            _onTypeFilterChanged(context, OrderType.salesOrder),
-                      ),
-                      const SizedBox(width: 10),
-                      _buildStatCard(
-                        title: AppLocalizations.of(
-                          LanguageService.instance.currentLanguage,
-                        ).pending,
-                        value: pendingCount,
-                        icon: Icons.schedule_rounded,
-                        gradient: [AppTheme.orange, AppTheme.orangeAccent],
-                        isActive: _selectedStatus == OrderStatus.pending,
-                        onTap: () => _onStatusFilterChanged(
-                          context,
-                          OrderStatus.pending,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      _buildStatCard(
-                        title: AppLocalizations.of(
-                          LanguageService.instance.currentLanguage,
-                        ).confirmed,
-                        value: confirmedCount,
-                        icon: Icons.check_circle_rounded,
-                        gradient: [AppTheme.green, AppTheme.lightGreen],
-                        isActive: _selectedStatus == OrderStatus.confirmed,
-                        onTap: () => _onStatusFilterChanged(
-                          context,
-                          OrderStatus.confirmed,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (var i = 0; i < cards.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 10),
+                  cards[i],
+                ],
+              ],
+            ),
           ),
         );
       },
@@ -342,13 +342,17 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     required List<Color> gradient,
     required bool isActive,
     required VoidCallback onTap,
+    bool expand = false,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        width: 76,
-        padding: EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        width: expand ? double.infinity : 76,
+        padding: EdgeInsets.symmetric(
+          vertical: expand ? 16 : 14,
+          horizontal: 8,
+        ),
         decoration: BoxDecoration(
           gradient: isActive
               ? LinearGradient(
@@ -357,13 +361,11 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   colors: gradient,
                 )
               : null,
-          color: isActive ? null : AppColors.scaffold(context),
+          color: isActive ? null : AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isActive
-                ? AppTheme.transparent
-                : gradient[0].withValues(alpha: 0.2),
-            width: 1.5,
+            color: isActive ? AppTheme.transparent : AppColors.border(context),
+            width: 1,
           ),
           boxShadow: isActive
               ? [
@@ -385,7 +387,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
                 fontFamily: 'Literata',
-                color: isActive ? AppTheme.white : gradient[0],
+                color: isActive ? AppTheme.white : AppColors.primaryText(context),
               ),
             ),
             const SizedBox(height: 4),
@@ -395,7 +397,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                 fontSize: 9,
                 color: isActive
                     ? AppTheme.white.withValues(alpha: 0.85)
-                    : AppTheme.grey600,
+                    : AppColors.secondaryText(context),
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
               ),
@@ -411,23 +413,16 @@ class _EventOrderListPageState extends State<EventOrderListPage>
 
   Widget _buildSearchAndFilters() {
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 8, 16, 12),
+      padding: EdgeInsets.fromLTRB(
+        widget.isEmbedded ? 24 : 16,
+        8,
+        widget.isEmbedded ? 24 : 16,
+        12,
+      ),
       child: Column(
         children: [
           // Search bar
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.card(context),
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.black.withValues(alpha: 0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: BlocBuilder<EventOrderCubit, EventOrderState>(
+          BlocBuilder<EventOrderCubit, EventOrderState>(
               builder: (context, state) {
                 return TextField(
                   controller: _searchController,
@@ -439,13 +434,17 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                       searchQuery: value,
                     );
                   },
-                  style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 14,
+                    color: AppColors.primaryText(context),
+                  ),
                   decoration: InputDecoration(
                     hintText: AppLocalizations.of(
                       LanguageService.instance.currentLanguage,
                     ).searchEventsOrOrders,
                     hintStyle: TextStyle(
-                      color: AppTheme.grey400,
+                      color: AppColors.mutedText(context),
                       fontFamily: 'Literata',
                     ),
                     prefixIcon: Container(
@@ -454,7 +453,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                         Icons.search_rounded,
                         color: _searchQuery.isNotEmpty
                             ? _primaryColor
-                            : AppTheme.grey400,
+                            : AppColors.mutedText(context),
                       ),
                     ),
                     suffixIcon: _searchQuery.isNotEmpty
@@ -468,7 +467,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                               child: Icon(
                                 Icons.close,
                                 size: 16,
-                                color: AppTheme.grey,
+                                color: AppColors.mutedText(context),
                               ),
                             ),
                             onPressed: () {
@@ -493,9 +492,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: AppTheme.grey.withValues(alpha: 0.1),
-                      ),
+                      borderSide: BorderSide(color: AppColors.border(context)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -508,7 +505,6 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                 );
               },
             ),
-          ),
           const SizedBox(height: 12),
           // Date filter chips
           _buildDateFilterChips(),
@@ -623,7 +619,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           }
 
           return SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+            padding: EdgeInsets.fromLTRB(
+              widget.isEmbedded ? 24 : 16,
+              0,
+              widget.isEmbedded ? 24 : 16,
+              100,
+            ),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) => _buildOrderCard(context, orders[index]),
@@ -672,11 +673,11 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                 : AppLocalizations.of(
                     LanguageService.instance.currentLanguage,
                   ).noOrdersFound,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               fontFamily: 'Literata',
-              color: AppTheme.ink,
+              color: AppColors.primaryText(context),
             ),
           ),
           const SizedBox(height: 8),
@@ -687,7 +688,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             style: TextStyle(
               fontSize: 13,
               fontFamily: 'Literata',
-              color: AppTheme.grey,
+              color: AppColors.mutedText(context),
             ),
           ),
           const SizedBox(height: 80),
@@ -773,9 +774,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: order.status == OrderStatus.pending
-              ? AppTheme.orange.withValues(alpha: 0.2)
-              : AppTheme.transparent,
-          width: 1.5,
+              ? AppTheme.orange.withValues(alpha: 0.35)
+              : AppColors.border(context),
         ),
         boxShadow: [
           BoxShadow(
@@ -1161,7 +1161,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             fontSize: 10,
             fontWeight: FontWeight.w500,
             fontFamily: 'Literata',
-            color: AppTheme.grey,
+            color: AppColors.mutedText(context),
           ),
         ),
         const SizedBox(height: 4),
@@ -1306,12 +1306,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? _primaryColor : AppTheme.white,
+          color: isSelected ? _primaryColor : AppColors.card(context),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
                 ? _primaryColor
-                : AppTheme.grey.withValues(alpha: 0.2),
+                : AppColors.border(context),
           ),
           boxShadow: isSelected
               ? [
@@ -1329,7 +1329,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             Icon(
               icon,
               size: 14,
-              color: isSelected ? AppTheme.white : AppTheme.grey600,
+              color: isSelected
+                  ? AppTheme.white
+                  : AppColors.secondaryText(context),
             ),
             const SizedBox(width: 6),
             Text(
@@ -1338,7 +1340,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 fontFamily: 'Literata',
-                color: isSelected ? AppTheme.white : AppTheme.grey700,
+                color: isSelected
+                    ? AppTheme.white
+                    : AppColors.primaryText(context),
               ),
             ),
           ],
