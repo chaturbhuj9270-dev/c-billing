@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
@@ -11,6 +12,13 @@ import '../../../inventory_management/presentation/pages/purchase_report_setting
 import '../../../inventory_management/presentation/pages/stock_report_settings_page.dart';
 import '../../../billing/presentation/pages/billing_page.dart';
 import '../../../billing/presentation/pages/bills_list_page.dart';
+import '../../../company/presentation/pages/enhanced_company_page.dart';
+import '../../../event_order/presentation/pages/event_order_list_page.dart';
+import '../../../inventory_management/presentation/pages/barcode_generator_page.dart';
+import '../../../inventory_management/presentation/pages/enhanced_product_page.dart';
+import '../../../purchase_return/presentation/pages/purchase_return_screen.dart';
+import '../../../quotation/presentation/pages/quotation_list_page.dart';
+import '../../../supplier/presentation/pages/enhanced_supplier_page.dart';
 import '../../../billing/presentation/pages/bill_settings_page.dart';
 import '../../../billing/presentation/pages/bill_report_settings_page.dart';
 import '../../../availability/presentation/pages/availability_page.dart';
@@ -314,38 +322,44 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       child: Column(
         children: [
           const SizedBox(height: 8),
-          _buildSideNavItem(
-            0,
-            Icons.dashboard_rounded,
-            _localizations.dashboard,
-            isExpanded,
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                _buildSideNavItem(
+                  0,
+                  Icons.dashboard_rounded,
+                  _localizations.dashboard,
+                  isExpanded,
+                ),
+                _buildSideNavItem(
+                  1,
+                  Icons.people_rounded,
+                  _localizations.customers,
+                  isExpanded,
+                ),
+                _buildSideNavItem(
+                  2,
+                  Icons.receipt_long_rounded,
+                  _localizations.billing,
+                  isExpanded,
+                ),
+                _buildSideNavItem(
+                  3,
+                  Icons.event_available_rounded,
+                  _localizations.availability,
+                  isExpanded,
+                ),
+                _buildSideNavItem(
+                  4,
+                  Icons.shopping_cart_rounded,
+                  _localizations.purchase,
+                  isExpanded,
+                ),
+                if (kIsWeb) ..._webQuickNavItems(isExpanded),
+              ],
+            ),
           ),
-          _buildSideNavItem(
-            1,
-            Icons.people_rounded,
-            _localizations.customers,
-            isExpanded,
-          ),
-          _buildSideNavItem(
-            2,
-            Icons.receipt_long_rounded,
-            _localizations.billing,
-            isExpanded,
-          ),
-          _buildSideNavItem(
-            3,
-            Icons.event_available_rounded,
-            _localizations.availability,
-            isExpanded,
-          ),
-          _buildSideNavItem(
-            4,
-            Icons.shopping_cart_rounded,
-            _localizations.purchase,
-            isExpanded,
-          ),
-          const Spacer(),
-          // Flyout menu trigger at bottom
           _buildSideNavItem(
             -1,
             Icons.menu_rounded,
@@ -381,16 +395,20 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               vertical: 12,
             ),
             decoration: BoxDecoration(
-              gradient: isSelected
+              gradient: isSelected && !kIsWeb
                   ? LinearGradient(
                       colors: AppColors.headerGradient(context),
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     )
                   : null,
-              color: isSelected ? null : AppTheme.transparent,
+              color: isSelected && kIsWeb
+                  ? (AppColors.isDark(context)
+                        ? AppColors.accentSoft(context, 0.22)
+                        : AppTheme.paletteFFD7EDE3)
+                  : AppTheme.transparent,
               borderRadius: BorderRadius.circular(12),
-              boxShadow: isSelected
+              boxShadow: isSelected && !kIsWeb
                   ? [
                       BoxShadow(
                         color: AppColors.accentSoft(context, 0.25),
@@ -406,7 +424,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                       Icon(
                         icon,
                         color: isSelected
-                            ? AppTheme.white
+                            ? (kIsWeb
+                                  ? AppColors.action(context)
+                                  : AppTheme.white)
                             : AppColors.secondaryText(context),
                         size: 22,
                       ),
@@ -418,7 +438,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: isSelected
-                                ? AppTheme.white
+                                ? (kIsWeb
+                                      ? AppColors.action(context)
+                                      : AppTheme.white)
                                 : AppColors.secondaryText(context),
                             fontSize: 13,
                             fontWeight: isSelected
@@ -436,7 +458,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                       child: Icon(
                         icon,
                         color: isSelected
-                            ? AppTheme.white
+                            ? (kIsWeb
+                                  ? AppColors.action(context)
+                                  : AppTheme.white)
                             : AppColors.secondaryText(context),
                         size: 24,
                       ),
@@ -527,7 +551,165 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     }
   }
 
+  IconData _pageIcon() {
+    switch (_selectedIndex) {
+      case 0:
+        return Icons.dashboard_rounded;
+      case 1:
+        return Icons.people_rounded;
+      case 2:
+        return Icons.receipt_long_rounded;
+      case 3:
+        return Icons.event_available_rounded;
+      case 4:
+        return Icons.shopping_cart_rounded;
+      default:
+        return Icons.dashboard_rounded;
+    }
+  }
+
+  List<Widget> _webQuickNavItems(bool isExpanded) {
+    void open(Widget page) {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+    }
+
+    return [
+      _buildSideNavItem(
+        -1,
+        Icons.receipt_long_outlined,
+        _localizations.invoices,
+        isExpanded,
+        onTap: () => open(const BillsListPage()),
+      ),
+      _buildSideNavItem(
+        -1,
+        Icons.inventory_2_rounded,
+        _localizations.products,
+        isExpanded,
+        onTap: () => open(const EnhancedProductPage()),
+      ),
+      _buildSideNavItem(
+        -1,
+        Icons.local_shipping_rounded,
+        _localizations.suppliers,
+        isExpanded,
+        onTap: () => open(const EnhancedSupplierPage()),
+      ),
+      _buildSideNavItem(
+        -1,
+        Icons.business_rounded,
+        _localizations.companies,
+        isExpanded,
+        onTap: () => open(const EnhancedCompanyPage()),
+      ),
+      _buildSideNavItem(
+        -1,
+        Icons.keyboard_return_rounded,
+        _localizations.purchaseReturnShort,
+        isExpanded,
+        onTap: () => open(const PurchaseReturnScreen()),
+      ),
+      _buildSideNavItem(
+        -1,
+        Icons.auto_awesome_rounded,
+        _localizations.events,
+        isExpanded,
+        onTap: () => open(const EventOrderListPage()),
+      ),
+      _buildSideNavItem(
+        -1,
+        Icons.description_outlined,
+        _localizations.quotations,
+        isExpanded,
+        onTap: () => open(const QuotationListPage()),
+      ),
+      _buildSideNavItem(
+        -1,
+        Icons.qr_code_scanner_rounded,
+        _localizations.barcode,
+        isExpanded,
+        onTap: () => open(const BarcodeGeneratorPage()),
+      ),
+    ];
+  }
+
+  Widget _buildWebHeader() {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        border: Border(
+          bottom: BorderSide(color: AppColors.border(context)),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 16, 14),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: _openFlyoutMenu,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.accentSoft(context, 0.14),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    _pageIcon(),
+                    color: AppColors.action(context),
+                    size: 20,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: GestureDetector(
+                  onTap: _openFlyoutMenu,
+                  behavior: HitTestBehavior.opaque,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _getPageTitle(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.primaryText(context),
+                          fontSize: 16,
+                          height: 1.15,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Literata',
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      Text(
+                        _getPageSubtitle(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.mutedText(context),
+                          fontSize: 12,
+                          height: 1.2,
+                          fontFamily: 'Literata',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              _buildHeaderMenu(outlined: true),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCommonHeader() {
+    if (kIsWeb) return _buildWebHeader();
     return AppTopBar(
       title: _getPageTitle(),
       subtitle: _getPageSubtitle(),
@@ -566,111 +748,110 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           icon: Icons.apps_rounded,
           onTap: () => showQuickActionsSheet(context),
         ),
-        ActionMenu(
-                iconColor: AppTheme.white,
-                onExpandTap: (_selectedIndex == 2 ||
-                        _selectedIndex == 3 ||
-                        _selectedIndex == 4)
-                    ? () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) {
-                              if (_selectedIndex == 2) {
-                                return const BillingPage();
-                              }
-                              if (_selectedIndex == 3) {
-                                return const AvailabilityPage();
-                              }
-                              return const EnhancedPurchaseScreen();
-                            },
-                          ),
-                        );
-                      }
-                    : null,
-                onDownloadTap: (_selectedIndex == 2 ||
-                        _selectedIndex == 3 ||
-                        _selectedIndex == 4)
-                    ? () {
-                        if (_selectedIndex == 2) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const BillsListPage(),
-                            ),
-                          );
-                        } else if (_selectedIndex == 3) {
-                          AvailabilityScreenActions.download();
-                        } else {
-                          PurchaseScreenActions.download();
-                        }
-                      }
-                    : null,
-                onSettingsTap: (_selectedIndex == 2 || _selectedIndex == 4)
-                    ? () async {
-                        if (_selectedIndex == 2) {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const BillSettingsPage(),
-                            ),
-                          );
-                          if (result == true && mounted) setState(() {});
-                        } else {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const PurchaseSettingsPage(),
-                            ),
-                          );
-                          if (mounted) setState(() {});
-                        }
-                      }
-                    : null,
-                onReportSettingsTap:
-                    (_selectedIndex == 2 ||
-                        _selectedIndex == 3 ||
-                        _selectedIndex == 4)
-                    ? () async {
-                        if (_selectedIndex == 2) {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const BillReportSettingsPage(),
-                            ),
-                          );
-                        } else if (_selectedIndex == 3) {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const StockReportSettingsPage(),
-                            ),
-                          );
-                        } else {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const PurchaseReportSettingsPage(),
-                            ),
-                          );
-                        }
-                      }
-                    : null,
-                onLanguageTap: _showLanguageDialog,
-                onBugReportTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const LogsViewerPage(),
-                    ),
-                  );
-                },
-        ),
+        _buildHeaderMenu(),
       ],
+    );
+  }
+
+  Widget _buildHeaderMenu({bool outlined = false}) {
+    return ActionMenu(
+      outlined: outlined,
+      iconColor: AppTheme.white,
+      onExpandTap: (_selectedIndex == 2 ||
+              _selectedIndex == 3 ||
+              _selectedIndex == 4)
+          ? () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) {
+                    if (_selectedIndex == 2) {
+                      return const BillingPage();
+                    }
+                    if (_selectedIndex == 3) {
+                      return const AvailabilityPage();
+                    }
+                    return const EnhancedPurchaseScreen();
+                  },
+                ),
+              );
+            }
+          : null,
+      onDownloadTap: (_selectedIndex == 2 ||
+              _selectedIndex == 3 ||
+              _selectedIndex == 4)
+          ? () {
+              if (_selectedIndex == 2) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const BillsListPage(),
+                  ),
+                );
+              } else if (_selectedIndex == 3) {
+                AvailabilityScreenActions.download();
+              } else {
+                PurchaseScreenActions.download();
+              }
+            }
+          : null,
+      onSettingsTap: (_selectedIndex == 2 || _selectedIndex == 4)
+          ? () async {
+              if (_selectedIndex == 2) {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const BillSettingsPage(),
+                  ),
+                );
+                if (result == true && mounted) setState(() {});
+              } else {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PurchaseSettingsPage(),
+                  ),
+                );
+                if (mounted) setState(() {});
+              }
+            }
+          : null,
+      onReportSettingsTap:
+          (_selectedIndex == 2 || _selectedIndex == 3 || _selectedIndex == 4)
+          ? () async {
+              if (_selectedIndex == 2) {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const BillReportSettingsPage(),
+                  ),
+                );
+              } else if (_selectedIndex == 3) {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const StockReportSettingsPage(),
+                  ),
+                );
+              } else {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PurchaseReportSettingsPage(),
+                  ),
+                );
+              }
+            }
+          : null,
+      onLanguageTap: _showLanguageDialog,
+      onBugReportTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const LogsViewerPage(),
+          ),
+        );
+      },
     );
   }
 
@@ -800,6 +981,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   }
 
   Widget _buildContent(OptimizedDashboardState state) {
+    if (kIsWeb) return _buildWebDashboard(state);
+
     // Show shimmer only when we have absolutely no data
     if (!state.hasData && state is DashboardInitialState) {
       return const DashboardShimmerLoading();
@@ -994,6 +1177,576 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildWebDashboard(OptimizedDashboardState state) {
+    if (!state.hasData && state is DashboardInitialState) {
+      return const DashboardShimmerLoading();
+    }
+
+    final data = state.data ?? DashboardSummary.empty;
+    final isRefreshing = state.isRefreshing;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 980;
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildWebFilterRow(state),
+              const SizedBox(height: 22),
+              Text(
+                _localizations.salesProfitAnalysis,
+                style: TextStyle(
+                  color: AppColors.primaryText(context),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Literata',
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildWebMetrics(data, isRefreshing, wide),
+              const SizedBox(height: 16),
+              if (wide)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: _buildWebProfitCard(data),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 6,
+                      child: _buildWebStockCard(data),
+                    ),
+                  ],
+                )
+              else ...[
+                _buildWebProfitCard(data),
+                const SizedBox(height: 16),
+                _buildWebStockCard(data),
+              ],
+              if (state is DashboardErrorState) ...[
+                const SizedBox(height: 16),
+                _buildErrorBanner(state),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildWebFilterRow(OptimizedDashboardState state) {
+    final filters = <(DashboardFilter, String)>[
+      (DashboardFilter.today, _localizations.today),
+      (DashboardFilter.thisWeek, _localizations.thisWeek),
+      (DashboardFilter.thisMonth, _localizations.thisMonth),
+      (DashboardFilter.thisYear, _localizations.thisYear),
+      (DashboardFilter.custom, _localizations.custom),
+      (DashboardFilter.all, _localizations.allTime),
+    ];
+
+    return Row(
+      children: [
+        Flexible(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: AppColors.card(context),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.border(context)),
+              ),
+              child: Row(
+                children: [
+                  for (final filter in filters)
+                    _buildWebFilterChip(filter.$1, filter.$2, state),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Text(
+          _getFilterLabel(state.params),
+          style: TextStyle(
+            color: AppColors.secondaryText(context),
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            fontFamily: 'Literata',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWebFilterChip(
+    DashboardFilter filter,
+    String label,
+    OptimizedDashboardState state,
+  ) {
+    final isSelected = state.params.filter == filter;
+    return GestureDetector(
+      onTap: () async {
+        if (filter == DashboardFilter.custom) {
+          await _showCustomDateRangePicker();
+        } else {
+          context.read<OptimizedDashboardCubit>().changeFilter(filter);
+        }
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.action(context) : AppTheme.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected
+                ? AppTheme.white
+                : AppColors.secondaryText(context),
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            fontFamily: 'Literata',
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatWebAmount(double amount) {
+    final formatted = NumberFormat.decimalPattern(
+      'en_IN',
+    ).format(amount.round());
+    return amount < 0 ? '-₹${formatted.replaceFirst('-', '')}' : '₹$formatted';
+  }
+
+  Widget _buildWebMetrics(
+    DashboardSummary data,
+    bool isRefreshing,
+    bool wide,
+  ) {
+    final cards = [
+      _buildWebMetricCard(
+        title: _localizations.totalSales,
+        amount: _formatWebAmount(data.totalSales),
+        subtitle:
+            '${data.totalBillsCount} ${_localizations.bills.toLowerCase()} · ${data.totalItemsSold} ${_localizations.items.toLowerCase()}',
+        icon: Icons.show_chart_rounded,
+        iconColor: AppTheme.blue600,
+        iconFill: AppTheme.blue50,
+        isRefreshing: isRefreshing,
+      ),
+      _buildWebMetricCard(
+        title: _localizations.totalPurchase,
+        amount: _formatWebAmount(
+          data.totalPurchases - data.totalPurchaseReturns,
+        ),
+        subtitle:
+            '${data.purchaseOrders} ${_localizations.orders.toLowerCase()} · ${data.purchaseQty} ${_localizations.qty.toLowerCase()}',
+        icon: Icons.shopping_bag_outlined,
+        iconColor: AppTheme.orange700,
+        iconFill: AppTheme.orange50,
+        isRefreshing: isRefreshing,
+      ),
+      _buildWebMetricCard(
+        title: _localizations.returns,
+        amount: _formatWebAmount(data.totalReturns + data.totalPurchaseReturns),
+        subtitle:
+            '${data.totalReturnedItems} ${_localizations.itemsReturned}',
+        icon: Icons.undo_rounded,
+        iconColor: AppTheme.toneRose,
+        iconFill: AppTheme.red100,
+        isRefreshing: isRefreshing,
+      ),
+      _buildWebMetricCard(
+        title: _localizations.netSales,
+        amount: _formatWebAmount(data.netSales),
+        subtitle: _localizations.afterReturnsDeducted,
+        icon: Icons.account_balance_wallet_outlined,
+        iconColor: AppTheme.green700,
+        iconFill: AppTheme.green50,
+        isRefreshing: isRefreshing,
+      ),
+    ];
+
+    if (wide) {
+      return Row(
+        children: [
+          for (var i = 0; i < cards.length; i++) ...[
+            if (i > 0) const SizedBox(width: 14),
+            Expanded(child: cards[i]),
+          ],
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: cards[0]),
+            const SizedBox(width: 14),
+            Expanded(child: cards[1]),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Expanded(child: cards[2]),
+            const SizedBox(width: 14),
+            Expanded(child: cards[3]),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWebMetricCard({
+    required String title,
+    required String amount,
+    required String subtitle,
+    required IconData icon,
+    required Color iconColor,
+    required Color iconFill,
+    required bool isRefreshing,
+  }) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 14, 16),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border(context)),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.secondaryText(context),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ),
+              Container(
+                width: 32,
+                height: 32,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: iconFill,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: iconColor, size: 16),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: isRefreshing ? 0.55 : 1,
+            child: Text(
+              amount,
+              style: TextStyle(
+                color: AppColors.primaryText(context),
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                fontFamily: 'Literata',
+                letterSpacing: -0.4,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: AppColors.mutedText(context),
+              fontSize: 12,
+              fontFamily: 'Literata',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebProfitCard(DashboardSummary data) {
+    final percent = data.profitPercentage.clamp(0, 100).toDouble();
+    return Container(
+      padding: const EdgeInsets.fromLTRB(22, 20, 20, 20),
+      decoration: BoxDecoration(
+        color: AppColors.action(context),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.white.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        data.profit >= 0
+                            ? Icons.trending_up_rounded
+                            : Icons.trending_down_rounded,
+                        color: AppTheme.white,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        data.profit >= 0
+                            ? _localizations.netProfit
+                            : _localizations.loss,
+                        style: const TextStyle(
+                          color: AppTheme.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Literata',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  _formatWebAmount(data.profit.abs()),
+                  style: const TextStyle(
+                    color: AppTheme.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Literata',
+                    letterSpacing: -0.6,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${data.profitPercentage.toStringAsFixed(1)}% ${_localizations.profitMargin.toLowerCase()}',
+                  style: TextStyle(
+                    color: AppTheme.white.withValues(alpha: 0.78),
+                    fontSize: 13,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            width: 92,
+            height: 92,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: 92,
+                  height: 92,
+                  child: CircularProgressIndicator(
+                    value: percent / 100,
+                    strokeWidth: 7,
+                    strokeCap: StrokeCap.round,
+                    backgroundColor: AppTheme.white.withValues(alpha: 0.2),
+                    color: AppTheme.paletteFFD7F6E8,
+                  ),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${data.profitPercentage.toStringAsFixed(1)}%',
+                      style: const TextStyle(
+                        color: AppTheme.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                    Text(
+                      _localizations.margin,
+                      style: TextStyle(
+                        color: AppTheme.white.withValues(alpha: 0.8),
+                        fontSize: 10,
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebStockCard(DashboardSummary data) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border(context)),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _localizations.stockAndPayments,
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ),
+              if (data.lowStockCount > 0)
+                GestureDetector(
+                  onTap: () => _showQuickInsightDetail(
+                    _localizations.lowStockItems,
+                    _lowStockItems,
+                    'lowstock',
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.orange50,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.warning_amber_rounded,
+                          color: AppTheme.orange700,
+                          size: 14,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${data.lowStockCount} ${_localizations.lowStock.toLowerCase()}',
+                          style: const TextStyle(
+                            color: AppTheme.orange700,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Literata',
+                          ),
+                        ),
+                        const Icon(
+                          Icons.chevron_right_rounded,
+                          color: AppTheme.orange700,
+                          size: 16,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildWebStockStat(
+                  _localizations.stockValue,
+                  _formatWebAmount(data.stockValue),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildWebStockStat(
+                  _localizations.pendingAmount,
+                  _formatWebAmount(data.totalPendingAmount),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebStockStat(String label, String amount) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.isDark(context)
+            ? AppColors.scaffold(context)
+            : AppTheme.paletteFFF4F7F4,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: AppColors.mutedText(context),
+              fontSize: 12,
+              fontFamily: 'Literata',
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            amount,
+            style: TextStyle(
+              color: AppColors.primaryText(context),
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              fontFamily: 'Literata',
+              letterSpacing: -0.3,
+            ),
+          ),
+        ],
       ),
     );
   }

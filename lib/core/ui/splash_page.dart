@@ -160,8 +160,12 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
           debugPrint(
             '[DEBUG] Firebase user already authenticated: ${currentUser.uid}',
           );
-          // Start sync services now that user is authenticated
-          initializeSyncServices();
+          // Start sync services now that user is authenticated.
+          try {
+            initializeSyncServices();
+          } catch (e) {
+            debugPrint('[ERROR] Sync services failed to start: $e');
+          }
           // Reload settings in background - don't wait
           _reloadSettingsInBackground();
           // Go directly to dashboard immediately
@@ -204,8 +208,11 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
 
       if (userCredential.user != null) {
         debugPrint('[DEBUG] Auto-login successful for: ${userCredential.user!.uid}');
-        // Start sync services now that user is authenticated
-        initializeSyncServices();
+        try {
+          initializeSyncServices();
+        } catch (e) {
+          debugPrint('[ERROR] Sync services failed to start: $e');
+        }
         // Reload settings in background - don't wait
         _reloadSettingsInBackground();
         _goToDashboard();

@@ -154,8 +154,13 @@ class _LoginPageV2State extends State<LoginPageV2>
           if (!mounted) return;
           debugPrint('[DEBUG] Login successful for user: ${cred.user?.uid}');
 
-          // Start sync services now that user is authenticated
-          initializeSyncServices();
+          // Start sync services now that user is authenticated.
+          // A local-database problem must not cancel a successful sign-in.
+          try {
+            initializeSyncServices();
+          } catch (e) {
+            debugPrint('[ERROR] Sync services failed to start: $e');
+          }
 
           // Reload product settings to fetch custom columns for this user
           ProductSettingsService.instance.reload();

@@ -16,6 +16,9 @@ class ActionMenu extends StatelessWidget {
   final Color iconColor;
   final double iconSize;
 
+  /// Flat outlined button used by the web navbar. Phone and desktop keep the glass button.
+  final bool outlined;
+
   const ActionMenu({
     super.key,
     this.onSettingsTap,
@@ -26,6 +29,7 @@ class ActionMenu extends StatelessWidget {
     this.onDownloadTap,
     this.iconColor = AppTheme.white,
     this.iconSize = 22,
+    this.outlined = false,
   });
 
   @override
@@ -96,17 +100,31 @@ class ActionMenu extends StatelessWidget {
       );
     }
 
+    final buttonIconColor = outlined
+        ? AppColors.primaryText(context)
+        : iconColor;
+
     return PopupMenuButton<int>(
       padding: EdgeInsets.zero,
       icon: Container(
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: AppTheme.white.withValues(alpha: 0.15),
+          color: outlined
+              ? AppColors.card(context)
+              : AppTheme.white.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.white.withValues(alpha: 0.2)),
+          border: Border.all(
+            color: outlined
+                ? AppColors.border(context)
+                : AppTheme.white.withValues(alpha: 0.2),
+          ),
         ),
-        child: Icon(Icons.more_vert_rounded, color: iconColor, size: iconSize),
+        child: Icon(
+          Icons.more_vert_rounded,
+          color: buttonIconColor,
+          size: iconSize,
+        ),
       ),
       offset: const Offset(0, 48),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
