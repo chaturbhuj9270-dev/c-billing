@@ -21,7 +21,8 @@ class CredentialsManager {
       accessibility: KeychainAccessibility.first_unlock_this_device,
     ),
     mOptions: MacOsOptions(
-      accessibility: KeychainAccessibility.first_unlock_this_device,
+      accessibility: KeychainAccessibility.unlocked,
+      useDataProtectionKeyChain: false,
     ),
     webOptions: WebOptions(
       dbName: 'c_billing_secure',

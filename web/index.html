@@ -46,10 +46,25 @@
       align-items: center;
       justify-content: center;
       text-align: center;
+      padding: 48px 28px 22px;
       background:
         radial-gradient(circle at 50% 38%, #D7F6E8 0%, #EEF6F2 42%, #F2F5F3 100%);
       font-family: Georgia, "Times New Roman", serif;
       color: #10241C;
+    }
+
+    #splash .stage {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #splash .foot {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     @media (prefers-color-scheme: dark) {
@@ -128,6 +143,52 @@
       animation: splash-fade 0.55s ease-out 0.85s both;
     }
 
+    #splash .track {
+      width: 168px;
+      height: 4px;
+      border-radius: 4px;
+      background: #D7E0DB;
+      overflow: hidden;
+      animation: splash-fade 0.55s ease-out 0.95s both;
+    }
+
+    #splash .track span {
+      display: block;
+      width: 42%;
+      height: 100%;
+      border-radius: 4px;
+      background: #1B4D3E;
+      animation: splash-load 1.6s ease-in-out 0.95s infinite;
+    }
+
+    #splash .status {
+      margin: 12px 0 0;
+      color: #5E6B64;
+      font-size: 13px;
+      font-weight: 500;
+      animation: splash-fade 0.55s ease-out 1s both;
+    }
+
+    #splash .badge {
+      margin-top: 28px;
+      padding: 8px 18px;
+      border-radius: 24px;
+      border: 1px solid #D3DDD7;
+      color: #5E6B64;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.3px;
+      animation: splash-fade 0.55s ease-out 1.05s both;
+    }
+
+    #splash .version {
+      margin: 16px 0 0;
+      color: #5E6B64;
+      font-size: 13px;
+      font-weight: 600;
+      animation: splash-fade 0.55s ease-out 1.1s both;
+    }
+
     @keyframes splash-ripple {
       0% { transform: scale(1); opacity: 1; }
       100% { transform: scale(2.28); opacity: 0; }
@@ -158,6 +219,11 @@
       to { opacity: 1; }
     }
 
+    @keyframes splash-load {
+      0%, 100% { width: 28%; }
+      50% { width: 62%; }
+    }
+
     @media (prefers-color-scheme: dark) {
       #splash .tagline {
         color: #8E9892;
@@ -174,6 +240,24 @@
       #splash .line {
         background: #5CAF7F;
       }
+
+      #splash .track {
+        background: #2A3330;
+      }
+
+      #splash .track span {
+        background: #5CAF7F;
+      }
+
+      #splash .status,
+      #splash .badge,
+      #splash .version {
+        color: #8E9892;
+      }
+
+      #splash .badge {
+        border-color: #2A3330;
+      }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -182,7 +266,11 @@
       #splash img,
       #splash h1,
       #splash .line,
-      #splash .tagline {
+      #splash .tagline,
+      #splash .track,
+      #splash .status,
+      #splash .badge,
+      #splash .version {
         animation: none;
       }
     }
@@ -196,17 +284,25 @@
 </head>
 <body>
   <div id="splash">
-    <div class="mark">
-      <span class="ring r1"></span>
-      <span class="ring r2"></span>
-      <span class="ring r3"></span>
-      <div class="logo">
-        <img src="splash_logo.png" alt="">
+    <div class="stage">
+      <div class="mark">
+        <span class="ring r1"></span>
+        <span class="ring r2"></span>
+        <span class="ring r3"></span>
+        <div class="logo">
+          <img src="splash_logo.png" alt="">
+        </div>
       </div>
+      <h1>C-Billing</h1>
+      <div class="line"></div>
+      <p class="tagline">THE BACKBONE FOR<br>YOUR BUSINESS</p>
     </div>
-    <h1>C-Billing</h1>
-    <div class="line"></div>
-    <p class="tagline">THE BACKBONE FOR<br>YOUR BUSINESS</p>
+    <div class="foot">
+      <div class="track"><span></span></div>
+      <p class="status">Getting things ready..</p>
+      <div class="badge">PREMIUM FINANCIAL SOLUTIONS</div>
+      <p class="version">Version 1.0.0</p>
+    </div>
   </div>
   <script src="flutter_bootstrap.js" async=""></script>
 

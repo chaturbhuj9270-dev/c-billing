@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -521,38 +522,54 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.location_on_outlined,
-                              size: 14,
-                              color: themeColor,
+                        if (kIsWeb ||
+                            defaultTargetPlatform == TargetPlatform.windows)
+                          Text(
+                            'Version 1.0.0',
+                            style: TextStyle(
+                              color: muted,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Literata',
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Newasa',
-                              style: TextStyle(
+                          )
+                        else
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.location_on_outlined,
+                                size: 14,
                                 color: themeColor,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                fontFamily: 'Literata',
                               ),
-                            ),
-                            const SizedBox(width: 16),
-                            Icon(Icons.phone_outlined, size: 14, color: themeColor),
-                            const SizedBox(width: 4),
-                            Text(
-                              '+91 99706 62978',
-                              style: TextStyle(
+                              const SizedBox(width: 4),
+                              Text(
+                                'Newasa',
+                                style: TextStyle(
+                                  color: themeColor,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Literata',
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Icon(
+                                Icons.phone_outlined,
+                                size: 14,
                                 color: themeColor,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                fontFamily: 'Literata',
                               ),
-                            ),
-                          ],
-                        ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '+91 99706 62978',
+                                style: TextStyle(
+                                  color: themeColor,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Literata',
+                                ),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
                   ),
