@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
@@ -90,8 +91,10 @@ class CustomerSummaryWidget extends StatelessWidget {
           _buildStatItem(
             icon: Icons.account_balance_wallet_rounded,
             label: pendingLabel,
-            value: '₹${totalPending.toStringAsFixed(0)}',
-            valueColor: totalPending > 0 ? AppTheme.amber300 : null,
+            value: totalPending.round() == 0
+                ? 'No pending'
+                : '₹${totalPending.toStringAsFixed(0)}',
+            valueColor: totalPending.round() != 0 ? AppTheme.amber300 : null,
           ),
           _buildDivider(),
           Expanded(
@@ -119,94 +122,20 @@ class CustomerSummaryWidget extends StatelessWidget {
     required int unsyncedCount,
   }) {
     final synced = unsyncedCount == 0;
-    return Row(
-      children: [
-        Expanded(
-          child: _wideCard(
-            context,
-            icon: Icons.people_outline_rounded,
-            value: '$count',
-            label: customersLabel,
-          ),
+    return DesktopStatBar(
+      stats: [
+        DesktopStat(value: '$count', label: customersLabel),
+        DesktopStat(
+          value: totalPending.round() == 0
+              ? 'No pending'
+              : '₹${totalPending.toStringAsFixed(0)}',
+          label: pendingLabel,
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _wideCard(
-            context,
-            icon: Icons.account_balance_wallet_outlined,
-            value: '₹${totalPending.toStringAsFixed(0)}',
-            label: pendingLabel,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _wideCard(
-            context,
-            icon: synced ? Icons.cloud_done_outlined : Icons.cloud_off_outlined,
-            value: synced ? allSyncedLabel : '$unsyncedCount',
-            label: synced ? 'Cloud sync' : unsyncedLabel,
-          ),
+        DesktopStat(
+          value: synced ? allSyncedLabel : '$unsyncedCount',
+          label: synced ? 'Cloud sync' : unsyncedLabel,
         ),
       ],
-    );
-  }
-
-  Widget _wideCard(
-    BuildContext context, {
-    required IconData icon,
-    required String value,
-    required String label,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border(context)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: AppColors.accentSoft(context, 0.14),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 18, color: AppColors.action(context)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                    color: AppColors.primaryText(context),
-                  ),
-                ),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 12,
-                    color: AppColors.mutedText(context),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 
 /// Summary widget for supplier statistics
 /// Displays: Total suppliers, Active suppliers, Synced status
@@ -36,6 +38,19 @@ class SupplierSummaryWidget extends StatelessWidget {
     final filtered = _filteredSuppliers;
     final activeCount = filtered.where((s) => s['isActive'] != false).length;
     final unsyncedCount = filtered.where((s) => s['isSynced'] != true).length;
+
+    if (DesktopCanvas.isDesktopPlatform) {
+      return DesktopStatBar(
+        stats: [
+          DesktopStat(value: '${filtered.length}', label: 'Suppliers'),
+          DesktopStat(value: '$activeCount', label: 'Active'),
+          DesktopStat(
+            value: unsyncedCount > 0 ? '$unsyncedCount' : 'All Synced',
+            label: unsyncedCount > 0 ? 'Unsynced' : 'Cloud sync',
+          ),
+        ],
+      );
+    }
 
     final header = AppColors.headerGradient(context);
     return Container(

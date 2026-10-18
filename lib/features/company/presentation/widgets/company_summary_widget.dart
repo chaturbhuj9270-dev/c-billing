@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 
 /// Summary widget for company statistics
 /// Displays: Total companies, Active companies, Synced status
@@ -32,6 +34,19 @@ class CompanySummaryWidget extends StatelessWidget {
     final filtered = _filteredCompanies;
     final activeCount = filtered.where((c) => c['isActive'] != false).length;
     final unsyncedCount = filtered.where((c) => c['isSynced'] != true).length;
+
+    if (DesktopCanvas.isDesktopPlatform) {
+      return DesktopStatBar(
+        stats: [
+          DesktopStat(value: '${filtered.length}', label: 'Companies'),
+          DesktopStat(value: '$activeCount', label: 'Active'),
+          DesktopStat(
+            value: unsyncedCount > 0 ? '$unsyncedCount' : 'All Synced',
+            label: unsyncedCount > 0 ? 'Unsynced' : 'Cloud sync',
+          ),
+        ],
+      );
+    }
 
     final header = AppColors.headerGradient(context);
     return Container(

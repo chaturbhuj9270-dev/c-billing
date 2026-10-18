@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../product/offline/entities/product_entity.dart';
+import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 
 /// Summary widget for product statistics
 /// Displays: Total products, Total stock, Out of stock, Sync status
@@ -36,6 +38,20 @@ class ProductSummaryWidget extends StatelessWidget {
     final unsyncedCount = filtered
         .where((p) => p.syncStatus != SyncStatus.synced)
         .length;
+
+    if (DesktopCanvas.isDesktopPlatform) {
+      return DesktopStatBar(
+        stats: [
+          DesktopStat(value: '${filtered.length}', label: 'Products'),
+          DesktopStat(value: '$totalStock', label: 'Total Stock'),
+          DesktopStat(value: '$outOfStock', label: 'Out of Stock'),
+          DesktopStat(
+            value: unsyncedCount > 0 ? '$unsyncedCount' : 'Synced',
+            label: unsyncedCount > 0 ? 'Pending' : 'Cloud sync',
+          ),
+        ],
+      );
+    }
 
     final header = AppColors.headerGradient(context);
     return Container(

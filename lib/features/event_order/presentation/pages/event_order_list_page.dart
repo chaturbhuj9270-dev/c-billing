@@ -25,6 +25,7 @@ import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
 /// Lets the desktop shell header open a new event order.
@@ -333,6 +334,49 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                 _onStatusFilterChanged(context, OrderStatus.confirmed),
           ),
         ];
+
+        if (widget.isEmbedded && DesktopCanvas.isDesktopPlatform) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(24, 4, 24, 4),
+            child: DesktopStatBar(
+              stats: [
+                DesktopStat(
+                  value: '$totalOrders',
+                  label: l10n.all,
+                  selected: _selectedType == null,
+                  onTap: () => _onTypeFilterChanged(context, null),
+                ),
+                DesktopStat(
+                  value: '$eventCount',
+                  label: l10n.events,
+                  selected: _selectedType == OrderType.event,
+                  onTap: () => _onTypeFilterChanged(context, OrderType.event),
+                ),
+                DesktopStat(
+                  value: '$salesCount',
+                  label: l10n.sales,
+                  selected: _selectedType == OrderType.salesOrder,
+                  onTap: () =>
+                      _onTypeFilterChanged(context, OrderType.salesOrder),
+                ),
+                DesktopStat(
+                  value: '$pendingCount',
+                  label: l10n.pending,
+                  selected: _selectedStatus == OrderStatus.pending,
+                  onTap: () =>
+                      _onStatusFilterChanged(context, OrderStatus.pending),
+                ),
+                DesktopStat(
+                  value: '$confirmedCount',
+                  label: l10n.confirmed,
+                  selected: _selectedStatus == OrderStatus.confirmed,
+                  onTap: () =>
+                      _onStatusFilterChanged(context, OrderStatus.confirmed),
+                ),
+              ],
+            ),
+          );
+        }
 
         if (widget.isEmbedded) {
           return Padding(

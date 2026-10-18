@@ -10,7 +10,9 @@ import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../data/services/purchase_return_service.dart';
 import '../../domain/entities/purchase_return.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
 import 'package:c_billing/common_widgets/app_tab_bar.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
@@ -1406,6 +1408,19 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
   // ─── SUMMARY CARD ───
 
   Widget _buildSummaryCard() {
+    if (DesktopCanvas.isDesktopPlatform) {
+      return DesktopStatBar(
+        stats: [
+          DesktopStat(value: '$_totalItemsWithQty', label: 'Items'),
+          DesktopStat(value: '$_totalReturnQty', label: 'Total Qty'),
+          DesktopStat(
+            value: '₹${_totalReturnAmount.toStringAsFixed(0)}',
+            label: 'Amount',
+          ),
+        ],
+      );
+    }
+
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(

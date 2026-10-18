@@ -12,6 +12,8 @@ import 'package:c_billing/features/inventory_management/domain/entities/grouped_
 import 'package:c_billing/features/inventory_management/offline/controllers/purchase_batch_offline_controller.dart';
 import 'package:c_billing/features/inventory_management/offline/entities/purchase_batch_entity.dart';
 import 'package:c_billing/features/availability/presentation/pages/report_preview_screen.dart';
+import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
@@ -1439,6 +1441,29 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     final lowStock = _groupedProducts
         .where((group) => group.totalStock > 0 && group.totalStock <= 10)
         .length;
+
+    if (DesktopCanvas.isDesktopPlatform) {
+      return Padding(
+        padding: EdgeInsets.fromLTRB(16, widget.isEmbedded ? 8 : 16, 16, 4),
+        child: DesktopStatBar(
+          stats: [
+            DesktopStat(
+              value: '${_groupedProducts.length}',
+              label: _localizations.products,
+            ),
+            DesktopStat(
+              value: '₹${_formatCompactNumber(totalValue)}',
+              label: _localizations.stockValue,
+            ),
+            DesktopStat(
+              value: '${_allBatches.length}',
+              label: _localizations.batch,
+            ),
+            DesktopStat(value: '$lowStock', label: _localizations.lowStock),
+          ],
+        ),
+      );
+    }
 
     return Padding(
       padding: EdgeInsets.fromLTRB(16, widget.isEmbedded ? 8 : 16, 16, 4),

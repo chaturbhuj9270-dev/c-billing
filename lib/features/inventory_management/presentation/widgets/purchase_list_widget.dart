@@ -4,7 +4,9 @@ import 'package:c_billing/core/services/language_service.dart';
 import '../../offline/entities/purchase_batch_entity.dart';
 import 'purchase_card_widget.dart';
 import 'purchase_filter_widget.dart';
+import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 
 /// Main list widget for displaying purchase history
 /// Features: Shimmer loading, empty state, smooth scrolling, real-time updates
@@ -404,6 +406,19 @@ class PurchaseSummaryWidget extends StatelessWidget {
       0,
       (total, p) => total + p.quantityPurchased,
     );
+
+    if (DesktopCanvas.isDesktopPlatform) {
+      return DesktopStatBar(
+        stats: [
+          DesktopStat(value: '${filtered.length}', label: localizations.purchases),
+          DesktopStat(value: '$totalQuantity', label: localizations.totalQty),
+          DesktopStat(
+            value: '₹${_compactAmount(totalAmount)}',
+            label: localizations.totalValue,
+          ),
+        ],
+      );
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),

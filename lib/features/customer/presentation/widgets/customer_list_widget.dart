@@ -255,6 +255,7 @@ class CustomerListWidget extends StatelessWidget {
     final contact = (customer['contact'] ?? '').toString();
     final address = (customer['address'] ?? '').toString();
     final pending = (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0;
+    final hasPending = pending.round() != 0;
     final synced = customer['isSynced'] == true;
     final cell = TextStyle(
       fontFamily: 'Literata',
@@ -324,20 +325,20 @@ class CustomerListWidget extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: pending > 0
+                    color: hasPending
                         ? AppTheme.toneRose.withValues(alpha: 0.12)
                         : AppColors.accentSoft(context, 0.14),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    pending > 0
+                    hasPending
                         ? '₹${pending.toStringAsFixed(0)}'
                         : 'No pending',
                     style: TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: pending > 0
+                      color: hasPending
                           ? AppTheme.toneRose
                           : AppColors.action(context),
                     ),
@@ -373,35 +374,39 @@ class CustomerListWidget extends StatelessWidget {
             ),
             Expanded(
               flex: 2,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  if (contact.isNotEmpty)
-                    CommunicationActionIcons(
-                      phoneNumber: contact,
-                      iconSize: 15,
-                      containerSize: 30,
-                      spacing: 6,
-                    ),
-                  if (onFinanceTap != null) ...[
-                    const SizedBox(width: 6),
-                    _roundAction(
-                      context,
-                      icon: Icons.account_balance_wallet_outlined,
-                      color: AppColors.action(context),
-                      onTap: () => onFinanceTap!(customer),
-                    ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerRight,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (contact.isNotEmpty)
+                      CommunicationActionIcons(
+                        phoneNumber: contact,
+                        iconSize: 15,
+                        containerSize: 30,
+                        spacing: 6,
+                      ),
+                    if (onFinanceTap != null) ...[
+                      const SizedBox(width: 6),
+                      _roundAction(
+                        context,
+                        icon: Icons.account_balance_wallet_outlined,
+                        color: AppColors.action(context),
+                        onTap: () => onFinanceTap!(customer),
+                      ),
+                    ],
+                    if (onTransactionsTap != null) ...[
+                      const SizedBox(width: 6),
+                      _roundAction(
+                        context,
+                        icon: Icons.swap_horiz_rounded,
+                        color: AppTheme.toneAmber,
+                        onTap: () => onTransactionsTap!(customer),
+                      ),
+                    ],
                   ],
-                  if (onTransactionsTap != null) ...[
-                    const SizedBox(width: 6),
-                    _roundAction(
-                      context,
-                      icon: Icons.swap_horiz_rounded,
-                      color: AppTheme.toneAmber,
-                      onTap: () => onTransactionsTap!(customer),
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
           ],
@@ -616,7 +621,7 @@ class _CustomerCard extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          if (pendingAmount > 0)
+                          if (pendingAmount.round() != 0)
                             Text(
                               '₹${pendingAmount.toStringAsFixed(0)}',
                               style: TextStyle(

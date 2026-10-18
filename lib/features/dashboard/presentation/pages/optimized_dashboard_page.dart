@@ -1655,22 +1655,25 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
     return Row(
       children: [
-        Flexible(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: AppColors.card(context),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.border(context)),
-              ),
-              child: Row(
-                children: [
-                  for (final filter in filters)
-                    _buildWebFilterChip(filter.$1, filter.$2, state),
-                ],
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: AppColors.card(context),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border(context)),
+                ),
+                child: Row(
+                  children: [
+                    for (final filter in filters)
+                      _buildWebFilterChip(filter.$1, filter.$2, state),
+                  ],
+                ),
               ),
             ),
           ),
@@ -1678,9 +1681,10 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         const SizedBox(width: 16),
         Text(
           _getFilterLabel(state.params),
+          textAlign: TextAlign.end,
           style: TextStyle(
-            color: AppColors.secondaryText(context),
-            fontSize: 13,
+            color: AppColors.mutedText(context),
+            fontSize: 14,
             fontWeight: FontWeight.w500,
             fontFamily: 'Literata',
           ),

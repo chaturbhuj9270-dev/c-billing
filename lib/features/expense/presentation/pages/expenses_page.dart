@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../offline/controllers/expense_offline_controller.dart';
 import '../../offline/entities/expense_entity.dart';
 import '../../data/services/expense_sync_service.dart';
+import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
 import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
@@ -262,6 +263,30 @@ class _ExpensesPageState extends State<ExpensesPage>
   }
 
   Widget _buildSummarySection() {
+    if (DesktopCanvas.isDesktopPlatform) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: Column(
+          children: [
+            DesktopStatBar(
+              stats: [
+                DesktopStat(
+                  value: '₹${_formatAmount(_totalExpenses)}',
+                  label: 'Total Expenses',
+                ),
+                DesktopStat(
+                  value: '${_expenses.length}',
+                  label: 'Transactions',
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildCategoryBreakdown(),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(

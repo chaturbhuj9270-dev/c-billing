@@ -1631,24 +1631,35 @@ class _BillingPageState extends State<BillingPage> {
         children: [
           Expanded(
             flex: 3,
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                children: [
-                  if (_showCustomerOnBill || _generateBillViaContact)
-                    _buildCustomerSection(),
-                  _buildAddItemsSection(),
-                  if (_billItems.isEmpty)
-                    _buildEmptyBillState()
-                  else ...[
-                    _buildBillItemsSection(),
-                    _buildDiscountSection(),
-                    if (_taxSettings.hasAnyTaxEnabled) _buildGstModeSection(),
-                  ],
-                  const SizedBox(height: 12),
-                ],
-              ),
-            ),
+            child: _billItems.isEmpty
+                ? Column(
+                    children: [
+                      if (_showCustomerOnBill || _generateBillViaContact)
+                        _buildCustomerSection(),
+                      _buildAddItemsSection(),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+                          child: _buildDesktopEmptyBill(),
+                        ),
+                      ),
+                    ],
+                  )
+                : SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      children: [
+                        if (_showCustomerOnBill || _generateBillViaContact)
+                          _buildCustomerSection(),
+                        _buildAddItemsSection(),
+                        _buildBillItemsSection(),
+                        _buildDiscountSection(),
+                        if (_taxSettings.hasAnyTaxEnabled)
+                          _buildGstModeSection(),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
+                  ),
           ),
           const SizedBox(width: 16),
           SizedBox(
@@ -1818,7 +1829,7 @@ class _BillingPageState extends State<BillingPage> {
             ),
             icon: const Icon(Icons.check_rounded, size: 18),
             label: Text(
-              _localizations.saveBill,
+              _localizations.printBill,
               style: const TextStyle(
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w700,
@@ -1892,11 +1903,79 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
+  Widget _buildDesktopEmptyBill() {
+    final muted = AppColors.mutedText(context);
+    final dark = AppColors.isDark(context);
+    return CustomPaint(
+      painter: _DashedRRectPainter(
+        muted.withValues(alpha: dark ? 0.55 : 0.4),
+        radius: 20,
+      ),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppColors.card(context),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border(context)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.black.withValues(alpha: dark ? 0.28 : 0.06),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.receipt_long_outlined,
+                  color: muted,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Your bill is empty',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  color: AppColors.primaryText(context),
+                ),
+              ),
+              const SizedBox(height: 6),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 260),
+                child: Text(
+                  'Scan a barcode or type a product code to add the first item.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 13,
+                    height: 1.4,
+                    color: muted,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildEmptyBillState() {
     final muted = AppColors.mutedText(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           CustomPaint(
             painter: _DashedRRectPainter(muted.withValues(alpha: 0.55)),
@@ -2401,12 +2480,6 @@ class _BillingPageState extends State<BillingPage> {
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.search_rounded,
-                  color: AppColors.mutedText(context),
-                  size: 20,
-                ),
-                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     _localizations.searchExistingCustomer,
@@ -2416,6 +2489,12 @@ class _BillingPageState extends State<BillingPage> {
                       fontSize: 14,
                     ),
                   ),
+                ),
+                const SizedBox(width: 10),
+                Icon(
+                  Icons.search_rounded,
+                  color: AppColors.mutedText(context),
+                  size: 20,
                 ),
               ],
             ),
@@ -2851,15 +2930,6 @@ class _BillingPageState extends State<BillingPage> {
                     ),
                     child: Row(
                       children: [
-                        GestureDetector(
-                          onTap: _showAddItemsPopup,
-                          child: Icon(
-                            Icons.search_rounded,
-                            color: AppColors.mutedText(context),
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
                         Expanded(
                           child: TextField(
                             controller: _indexNoController,
@@ -2886,6 +2956,15 @@ class _BillingPageState extends State<BillingPage> {
                             ),
                             onChanged: (_) => _onPageIndexNoChanged(),
                             onSubmitted: (_) => _addProductByIndexNoOnPage(),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: _showAddItemsPopup,
+                          child: Icon(
+                            Icons.search_rounded,
+                            color: AppColors.mutedText(context),
+                            size: 20,
                           ),
                         ),
                       ],
@@ -5757,8 +5836,9 @@ class _BillingPageState extends State<BillingPage> {
 
 class _DashedRRectPainter extends CustomPainter {
   final Color color;
+  final double radius;
 
-  const _DashedRRectPainter(this.color);
+  const _DashedRRectPainter(this.color, {this.radius = 18});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -5766,9 +5846,18 @@ class _DashedRRectPainter extends CustomPainter {
       ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.4;
+    final inset = paint.strokeWidth / 2;
     final path = Path()
       ..addRRect(
-        RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(18)),
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(
+            inset,
+            inset,
+            size.width - paint.strokeWidth,
+            size.height - paint.strokeWidth,
+          ),
+          Radius.circular(radius),
+        ),
       );
     const dash = 5.0;
     const gap = 4.0;
@@ -5784,7 +5873,7 @@ class _DashedRRectPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _DashedRRectPainter oldDelegate) =>
-      oldDelegate.color != color;
+      oldDelegate.color != color || oldDelegate.radius != radius;
 }
 
 class _CustomerPickerBottomSheet extends StatefulWidget {

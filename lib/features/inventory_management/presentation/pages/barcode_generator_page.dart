@@ -1825,14 +1825,16 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
           ),
           // Barcode Display
           Expanded(
-            child: _selectedProduct == null
-                ? _buildSelectProductPrompt()
-                : _generatedBarcode.isEmpty
-                ? _buildGenerateBarcodePrompt()
-                : ScaleTransition(
-                    scale: _scaleAnimation,
-                    child: _buildBarcodeDisplay(),
-                  ),
+            child: _fitPreview(
+              _selectedProduct == null
+                  ? _buildSelectProductPrompt()
+                  : _generatedBarcode.isEmpty
+                  ? _buildGenerateBarcodePrompt()
+                  : ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: _buildBarcodeDisplay(),
+                    ),
+            ),
           ),
           // Action Buttons
           if (_generatedBarcode.isNotEmpty)
@@ -1860,10 +1862,29 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     );
   }
 
+  /// Scales a preview down when the pane is shorter than its content,
+  /// so the yellow overflow strip never appears.
+  Widget _fitPreview(Widget child) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : 360.0;
+        return FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.center,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildSelectProductPrompt() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             padding: const EdgeInsets.all(28),
@@ -1897,14 +1918,12 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             ),
           ),
         ],
-      ),
-    );
+      );
   }
 
   Widget _buildGenerateBarcodePrompt() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             padding: const EdgeInsets.all(28),
@@ -1964,19 +1983,17 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             ),
           ),
         ],
-      ),
-    );
+      );
   }
 
   Widget _buildBarcodeDisplay() {
     // Build top line info: Product Name | Rs.Price | Batch
     final topLineInfo = _buildPreviewTopLine();
 
-    return Container(
-      padding: EdgeInsets.all(16),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             // Barcode Label Card
             Container(
@@ -2069,8 +2086,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 
   /// Build preview top line: Product Name | Rs.Price | Batch
@@ -2541,14 +2557,18 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                 size: 20,
                 color: isPrimary ? AppTheme.white : _primaryColor,
               ),
-              const SizedBox(width: 10),
-              Text(
-                label,
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  color: isPrimary ? AppTheme.white : _primaryColor,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: isPrimary ? AppTheme.white : _primaryColor,
+                  ),
                 ),
               ),
             ],
@@ -2577,14 +2597,18 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.visibility_rounded, size: 20, color: AppTheme.white),
-            const SizedBox(width: 10),
-            Text(
-              isMobile ? 'Preview' : 'Preview & Print',
-              style: const TextStyle(
-                fontFamily: 'Literata',
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-                color: AppTheme.white,
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                isMobile ? 'Preview' : 'Preview & Print',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: AppTheme.white,
+                ),
               ),
             ),
           ],

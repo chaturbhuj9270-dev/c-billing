@@ -1,46 +1,52 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Full-screen range calendar matching the light and dark reference.
+/// Centered glassy popup for choosing a custom date range.
 Future<DateTimeRange?> showAppRangeCalendar({
   required BuildContext context,
   required DateTime firstDate,
   required DateTime lastDate,
   DateTimeRange? initialDateRange,
 }) {
-  return Navigator.of(context).push<DateTimeRange>(
-    PageRouteBuilder<DateTimeRange>(
-      fullscreenDialog: true,
-      transitionDuration: const Duration(milliseconds: 220),
-      reverseTransitionDuration: const Duration(milliseconds: 180),
-      pageBuilder: (context, animation, secondaryAnimation) {
-        return AppRangeCalendarPage(
-          firstDate: firstDate,
-          lastDate: lastDate,
-          initialDateRange: initialDateRange,
-        );
-      },
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        final curved = CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOutCubic,
-          reverseCurve: Curves.easeInCubic,
-        );
-        return FadeTransition(
-          opacity: curved,
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.03),
-              end: Offset.zero,
-            ).animate(curved),
+  return showGeneralDialog<DateTimeRange>(
+    context: context,
+    useRootNavigator: true,
+    barrierDismissible: true,
+    barrierLabel: 'Close',
+    barrierColor: AppTheme.black.withValues(alpha: 0.28),
+    transitionDuration: const Duration(milliseconds: 280),
+    pageBuilder: (context, animation, secondaryAnimation) {
+      return AppRangeCalendarPage(
+        firstDate: firstDate,
+        lastDate: lastDate,
+        initialDateRange: initialDateRange,
+      );
+    },
+    transitionBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+      return FadeTransition(
+        opacity: curved,
+        child: Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.0012)
+            ..rotateX((1 - curved.value) * 0.42),
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.86, end: 1).animate(curved),
             child: child,
           ),
-        );
-      },
-    ),
+        ),
+      );
+    },
   );
 }
 
@@ -322,12 +328,23 @@ class _AppRangeCalendarPageState extends State<AppRangeCalendarPage> {
     final line = isDark ? AppTheme.paletteFF242826 : AppTheme.paletteFFE3E8E4;
     final canApply = _start != null && _end != null;
 
+    final media = MediaQuery.sizeOf(context);
+    final wide = media.width >= 720;
+    final cardWidth = wide ? 640.0 : media.width - 28;
+    final cardHeight = (media.height * (wide ? 0.82 : 0.86)).clamp(460.0, 760.0);
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-      child: Scaffold(
-        backgroundColor: background,
-        body: SafeArea(
-          child: Column(
+      child: Center(
+        child: Material(
+          color: AppTheme.transparent,
+          child: SizedBox(
+            width: cardWidth,
+            height: cardHeight,
+            child: _GlassCalendarCard(
+              isDark: isDark,
+              background: background,
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
@@ -376,7 +393,7 @@ class _AppRangeCalendarPageState extends State<AppRangeCalendarPage> {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    fontSize: 30,
+                    fontSize: 26,
                     height: 1.15,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.4,
@@ -553,6 +570,80 @@ class _AppRangeCalendarPageState extends State<AppRangeCalendarPage> {
                 ),
               ),
             ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GlassCalendarCard extends StatelessWidget {
+  final bool isDark;
+  final Color background;
+  final Widget child;
+
+  const _GlassCalendarCard({
+    required this.isDark,
+    required this.background,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: isDark ? 0.55 : 0.22),
+            blurRadius: 48,
+            offset: const Offset(0, 28),
+          ),
+          BoxShadow(
+            color: AppTheme.paletteFF1B7A4A.withValues(alpha: isDark ? 0.18 : 0.12),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: AppColors.glassFill(context),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: AppColors.glassBorder(context),
+                width: 1.2,
+              ),
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 92,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          AppTheme.white.withValues(alpha: isDark ? 0.10 : 0.55),
+                          AppTheme.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                ColoredBox(color: background.withValues(alpha: isDark ? 0.55 : 0.35), child: child),
+              ],
+            ),
           ),
         ),
       ),
