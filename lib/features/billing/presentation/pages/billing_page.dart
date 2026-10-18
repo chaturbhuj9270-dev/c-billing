@@ -59,7 +59,8 @@ import 'package:c_billing/features/customer/domain/entities/customer_transaction
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
-import 'package:c_billing/common_widgets/glass_bevel_frame.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
+import 'package:c_billing/common_widgets/app_pill_button.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 class BillingPage extends StatefulWidget {
@@ -1529,9 +1530,18 @@ class _BillingPageState extends State<BillingPage> {
     GlassyToast.show(context, message, isError: isError);
   }
 
+  bool get _desktopBill =>
+      widget.isEmbedded && DesktopCanvas.wide(context);
+
   @override
   Widget build(BuildContext context) {
     final extras = _billExtras();
+    if (_desktopBill) {
+      return Scaffold(
+        backgroundColor: AppColors.scaffold(context),
+        body: _buildDesktopBill(),
+      );
+    }
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
       body: _isLoading
@@ -1614,6 +1624,250 @@ class _BillingPageState extends State<BillingPage> {
               ],
             ),
       bottomNavigationBar: _billItems.isEmpty ? null : _buildBottomBar(),
+    );
+  }
+
+  Widget _buildDesktopBill() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            flex: 3,
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                children: [
+                  if (_showCustomerOnBill || _generateBillViaContact)
+                    _buildCustomerSection(),
+                  _buildAddItemsSection(),
+                  if (_billItems.isEmpty)
+                    _buildEmptyBillState()
+                  else ...[
+                    _buildBillItemsSection(),
+                    _buildDiscountSection(),
+                    if (_taxSettings.hasAnyTaxEnabled) _buildGstModeSection(),
+                  ],
+                  const SizedBox(height: 12),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          SizedBox(
+            width: 320,
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                children: [
+                  _buildDesktopSummaryCard(),
+                  if (_billItems.isNotEmpty && !_isFullPayment)
+                    _buildPaymentSection(),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopSummaryCard() {
+    final action = AppColors.action(context);
+    final muted = AppColors.mutedText(context);
+    final base = _totalAmount - _discountAmount;
+    final taxed = _gstMode == GstMode.excludeGst && _taxBreakdown != null
+        ? base + _taxBreakdown!.totalTaxAmount
+        : base;
+    final roundOff = _finalAmount - taxed;
+    Widget line(String label, String value, {Color? valueColor}) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 13,
+                  color: muted,
+                ),
+              ),
+            ),
+            Text(
+              value,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: valueColor ?? AppColors.primaryText(context),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Bill summary',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: AppColors.primaryText(context),
+            ),
+          ),
+          const SizedBox(height: 10),
+          line('Items', '${_billItems.length}'),
+          line('Subtotal', '₹${_totalAmount.toStringAsFixed(2)}'),
+          if (_discountAmount > 0)
+            line(
+              _isPercentageDiscount
+                  ? 'Discount (${_discountValue.toStringAsFixed(0)}%)'
+                  : 'Discount',
+              '-₹${_discountAmount.toStringAsFixed(2)}',
+              valueColor: AppTheme.toneRose,
+            ),
+          if (roundOff.abs() >= 0.01)
+            line('Round off', '₹${roundOff.toStringAsFixed(2)}'),
+          Divider(height: 20, color: AppColors.border(context)),
+          Row(
+            children: [
+              Text(
+                'Total',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 14,
+                  color: muted,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '₹${_finalAmount.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primaryText(context),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Text(
+                _localizations.payment,
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryText(context),
+                ),
+              ),
+              const Spacer(),
+              _summaryPayChip(
+                label: _localizations.full,
+                selected: _isFullPayment,
+                onTap: () {
+                  setState(() {
+                    _isFullPayment = true;
+                    _receivedAmount = _finalAmount;
+                    _receivedAmountController.text = _finalAmount
+                        .toStringAsFixed(2);
+                  });
+                },
+              ),
+              const SizedBox(width: 8),
+              _summaryPayChip(
+                label: _localizations.partialPayment,
+                selected: !_isFullPayment,
+                onTap: () {
+                  setState(() {
+                    _isFullPayment = false;
+                    _receivedAmount = 0;
+                    _receivedAmountController.clear();
+                  });
+                  if (_selectedCustomer == null &&
+                      _customerNameController.text.trim().isEmpty &&
+                      !_generateBillViaContact) {
+                    _showCustomerPicker();
+                  }
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          FilledButton.icon(
+            onPressed: _isSavingBill || _billItems.isEmpty ? null : _saveBill,
+            style: FilledButton.styleFrom(
+              backgroundColor: action,
+              foregroundColor: AppTheme.white,
+              disabledBackgroundColor: action.withValues(alpha: 0.4),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            icon: const Icon(Icons.check_rounded, size: 18),
+            label: Text(
+              _localizations.saveBill,
+              style: const TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryPayChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    final dark = AppColors.isDark(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected
+              ? (dark ? AppTheme.darkAction : AppTheme.paletteFFD7EDE3)
+              : AppColors.chipFill(context),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected
+                ? AppTheme.transparent
+                : AppColors.border(context),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: selected
+                ? (dark ? AppTheme.white : AppColors.action(context))
+                : AppColors.secondaryText(context),
+          ),
+        ),
+      ),
     );
   }
 
@@ -5430,7 +5684,6 @@ class _BillingPageState extends State<BillingPage> {
 
   Widget _buildBottomBar() {
     final isDark = AppColors.isDark(context);
-    final action = AppColors.action(context);
     return Container(
       padding: EdgeInsets.only(
         left: 20,
@@ -5480,92 +5733,11 @@ class _BillingPageState extends State<BillingPage> {
             ),
           ),
           const SizedBox(width: 12),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: action.withValues(alpha: 0.34),
-                  blurRadius: 14,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
-              child: CustomPaint(
-                foregroundPainter: GlassBevelBorderPainter(
-                  isDark: isDark,
-                  themeColor: AppTheme.primary,
-                  radius: 28,
-                  strokeWidth: 1.4,
-                ),
-                child: Material(
-                  color: AppTheme.transparent,
-                  child: InkWell(
-                    onTap: _isSavingBill ? null : _saveBill,
-                    child: Ink(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Color.lerp(
-                              AppTheme.white,
-                              action,
-                              isDark ? 0.72 : 0.55,
-                            )!,
-                            action,
-                            Color.lerp(
-                              action,
-                              AppTheme.black,
-                              isDark ? 0.28 : 0.18,
-                            )!,
-                          ],
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 22,
-                          vertical: 14,
-                        ),
-                        child: _isSavingBill
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  valueColor: AlwaysStoppedAnimation(
-                                    AppTheme.white,
-                                  ),
-                                ),
-                              )
-                            : Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.print_rounded,
-                                    size: 18,
-                                    color: AppTheme.white,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    _localizations.print,
-                                    style: const TextStyle(
-                                      fontFamily: 'Literata',
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppTheme.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          AppPillButton(
+            label: _localizations.print,
+            icon: Icons.print_rounded,
+            loading: _isSavingBill,
+            onPressed: _isSavingBill ? null : _saveBill,
           ),
         ],
       ),
@@ -5692,9 +5864,9 @@ class _CustomerPickerBottomSheetState
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.6,
-      maxChildSize: 0.9,
-      minChildSize: 0.4,
+      initialChildSize: drawerSheetSize(0.6),
+      maxChildSize: drawerSheetSize(0.9),
+      minChildSize: drawerSheetSize(0.4),
       builder: (_, controller) => Container(
         decoration: BoxDecoration(
           color: AppColors.card(context),

@@ -7,6 +7,7 @@ import '../../data/services/expense_sync_service.dart';
 import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/common_widgets/app_pill_button.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
@@ -1512,28 +1513,11 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                     const SizedBox(height: 24),
 
                     // Save Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 54,
-                      child: ElevatedButton(
-                        onPressed: _saveExpense,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.action(context),
-                          foregroundColor: AppTheme.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: Text(
-                          isEditing ? 'Update Expense' : 'Add Expense',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                      ),
+                    AppPillButton(
+                      label: isEditing ? 'Update Expense' : 'Add Expense',
+                      icon: Icons.check_rounded,
+                      expanded: true,
+                      onPressed: _saveExpense,
                     ),
                   ],
                 ),

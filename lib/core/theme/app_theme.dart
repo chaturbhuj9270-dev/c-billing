@@ -377,12 +377,32 @@ class AppTheme {
           disabledForegroundColor: isDark
               ? darkTextMuted
               : AppTheme.grey600,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+          textStyle: const TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: isDark ? darkAction : primary,
           foregroundColor: AppTheme.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+          textStyle: const TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ),
       popupMenuTheme: PopupMenuThemeData(

@@ -16,6 +16,7 @@ import '../widgets/supplier_filter_widget.dart';
 import '../widgets/supplier_list_widget.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/common_widgets/app_pill_button.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
@@ -313,23 +314,41 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
   Widget _buildSupplierFormSheet(BuildContext ctx) {
     return StatefulBuilder(
       builder: (context, setSheetState) {
-        return Container(
-          decoration: BoxDecoration(
+        return dockDrawerAction(
+          context: context,
+          phoneDecoration: BoxDecoration(
             color: AppColors.card(context),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(24),
-              topRight: Radius.circular(24),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          action: DrawerBottomBar(
+            leading: _isEditing
+                ? TextButton(
+                    onPressed: _isSaving
+                        ? null
+                        : () => _deleteSupplier(ctx, setSheetState),
+                    child: const Text(
+                      'Delete',
+                      style: TextStyle(
+                        color: AppTheme.red,
+                        fontFamily: 'Literata',
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  )
+                : null,
+            action: AppPillButton(
+              label: _isEditing
+                  ? _localizations.update
+                  : _localizations.addSupplier,
+              icon: Icons.check_rounded,
+              loading: _isSaving,
+              expanded: !_isEditing,
+              onPressed: _isSaving
+                  ? null
+                  : () => _saveSupplier(ctx, setSheetState),
             ),
           ),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 16,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-              ),
-              child: Form(
+          body: Form(
                 key: _formKey,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -419,79 +438,8 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
                       maxLines: 3,
                       isRequired: true,
                     ),
-                    const SizedBox(height: 24),
-                    // Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _isSaving
-                                ? null
-                                : () => _saveSupplier(ctx, setSheetState),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.action(context),
-                              foregroundColor: AppTheme.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: _isSaving
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation(
-                                        AppTheme.white,
-                                      ),
-                                    ),
-                                  )
-                                : Text(
-                                    _isEditing
-                                        ? _localizations.update
-                                        : _localizations.addSupplier,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontFamily: 'Literata',
-                                    ),
-                                  ),
-                          ),
-                        ),
-                        if (_isEditing) ...[
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: _isSaving
-                                  ? null
-                                  : () => _deleteSupplier(ctx, setSheetState),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppTheme.red,
-                                side: const BorderSide(color: AppTheme.red),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Text(
-                                'Delete',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontFamily: 'Literata',
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
                   ],
                 ),
-              ),
-            ),
           ),
         );
       },

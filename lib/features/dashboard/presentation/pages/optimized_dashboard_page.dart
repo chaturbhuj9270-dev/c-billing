@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
@@ -32,6 +31,8 @@ import '../../data/repositories/dashboard_offline_repository.dart';
 import '../cubit/optimized_dashboard_cubit.dart';
 import '../cubit/optimized_dashboard_state.dart';
 import '../widgets/shimmer_widgets.dart';
+import 'package:c_billing/common_widgets/app_pill_button.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 import 'flyout_menu.dart';
 import 'profile_page.dart';
 import 'web_shell.dart';
@@ -127,7 +128,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     );
     _fadeController.forward();
 
-    if (kIsWeb) {
+    if (DesktopCanvas.isDesktopPlatform) {
       WebShell.register((index) {
         if (!mounted) return;
         setState(() => _selectedIndex = index);
@@ -210,7 +211,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
   @override
   void dispose() {
-    if (kIsWeb) WebShell.register(null);
+    if (DesktopCanvas.isDesktopPlatform) WebShell.register(null);
     _refreshSubscription?.cancel();
     LanguageService.instance.removeListener(_onLanguageChanged);
     _fadeController.dispose();
@@ -258,7 +259,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   @override
   Widget build(BuildContext context) {
     _resetSessionTimer();
-    if (kIsWeb) return _buildWebShell();
+    if (DesktopCanvas.isDesktopPlatform) return _buildWebShell();
     final isWide = MediaQuery.of(context).size.width >= 800;
 
     return PopScope(
@@ -333,6 +334,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     _webPanes[_selectedIndex] ??= _createWebPane(_selectedIndex);
     final stack = IndexedStack(
       index: _selectedIndex,
+      sizing: StackFit.expand,
       children: [
         for (var i = 0; i < WebShell.count; i++)
           _webPanes[i] ?? const SizedBox.shrink(),
@@ -343,32 +345,43 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       children: [
         if (!_webChildOpen) _buildWebScreenTitle(),
         Expanded(
-          child: WebShellScope(
-            stack: stack,
-            child: Theme(
-              data: Theme.of(context).copyWith(
-                pageTransitionsTheme: const PageTransitionsTheme(
-                  builders: {
-                    TargetPlatform.android: InstantPageTransitionsBuilder(),
-                    TargetPlatform.iOS: InstantPageTransitionsBuilder(),
-                    TargetPlatform.macOS: InstantPageTransitionsBuilder(),
-                    TargetPlatform.linux: InstantPageTransitionsBuilder(),
-                    TargetPlatform.windows: InstantPageTransitionsBuilder(),
-                    TargetPlatform.fuchsia: InstantPageTransitionsBuilder(),
-                  },
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              stack,
+              // Pushed pages sit above the section. The root route stays
+              // transparent so the section underneath remains visible.
+              IgnorePointer(
+                ignoring: !_webChildOpen,
+                child: Theme(
+                  data: Theme.of(context).copyWith(
+                    pageTransitionsTheme: const PageTransitionsTheme(
+                      builders: {
+                        TargetPlatform.android: InstantPageTransitionsBuilder(),
+                        TargetPlatform.iOS: InstantPageTransitionsBuilder(),
+                        TargetPlatform.macOS: InstantPageTransitionsBuilder(),
+                        TargetPlatform.linux: InstantPageTransitionsBuilder(),
+                        TargetPlatform.windows: InstantPageTransitionsBuilder(),
+                        TargetPlatform.fuchsia: InstantPageTransitionsBuilder(),
+                      },
+                    ),
+                  ),
+                  child: Navigator(
+                    key: WebShell.navigatorKey,
+                    observers: [_webRouteObserver],
+                    onGenerateRoute: (settings) {
+                      return PageRouteBuilder<void>(
+                        settings: settings,
+                        opaque: false,
+                        pageBuilder: (_, _, _) => const SizedBox.shrink(),
+                        transitionDuration: Duration.zero,
+                        reverseTransitionDuration: Duration.zero,
+                      );
+                    },
+                  ),
                 ),
               ),
-              child: Navigator(
-                key: WebShell.navigatorKey,
-                observers: [_webRouteObserver],
-                onGenerateRoute: (settings) {
-                  return MaterialPageRoute(
-                    settings: settings,
-                    builder: (_) => const WebShellPages(),
-                  );
-                },
-              ),
-            ),
+            ],
           ),
         ),
       ],
@@ -430,6 +443,12 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               ],
             ),
           ),
+          if (_selectedIndex == WebShell.customers)
+            AppPillButton(
+              label: _localizations.addCustomer,
+              icon: Icons.add,
+              onPressed: () => CustomerScreenActions.add?.call(),
+            ),
         ],
       ),
     );
@@ -616,15 +635,16 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   /// Desktop/tablet side navigation rail
   Widget _buildDesktopSideNav() {
     final isExpanded = MediaQuery.of(context).size.width >= 1100;
-    final darkWeb = kIsWeb && AppColors.isDark(context);
+    final shell = DesktopCanvas.isDesktopPlatform;
+    final darkWeb = shell && AppColors.isDark(context);
     return Container(
-      width: isExpanded ? (kIsWeb ? 236 : 220) : 72,
+      width: isExpanded ? (shell ? 236 : 220) : 72,
       decoration: BoxDecoration(
         color: darkWeb ? AppTheme.darkSurface : AppColors.card(context),
-        border: kIsWeb
+        border: shell
             ? Border(right: BorderSide(color: AppColors.border(context)))
             : null,
-        boxShadow: kIsWeb
+        boxShadow: shell
             ? null
             : [
                 BoxShadow(
@@ -636,12 +656,12 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       ),
       child: Column(
         children: [
-          if (kIsWeb) _buildWebBrand(isExpanded) else const SizedBox(height: 8),
+          if (shell) _buildWebBrand(isExpanded) else const SizedBox(height: 8),
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                if (darkWeb) _webNavSection('MAIN', isExpanded),
+                if (shell) _webNavSection('MAIN', isExpanded),
                 _buildSideNavItem(
                   0,
                   Icons.dashboard_rounded,
@@ -672,13 +692,13 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   _localizations.purchase,
                   isExpanded,
                 ),
-                if (darkWeb) _webNavSection('MANAGE', isExpanded),
-                if (kIsWeb) ..._webQuickNavItems(isExpanded),
+                if (shell) _webNavSection('MANAGE', isExpanded),
+                if (shell) ..._webQuickNavItems(isExpanded),
               ],
             ),
           ),
-          if (darkWeb) _webNavSection('SYSTEM', isExpanded),
-          if (kIsWeb) ..._webPageTools(isExpanded, showDivider: !darkWeb),
+          if (shell) _webNavSection('SYSTEM', isExpanded),
+          if (shell) ..._webPageTools(isExpanded, showDivider: !darkWeb),
           _buildSideNavItem(
             -1,
             Icons.menu_rounded,
@@ -717,10 +737,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     VoidCallback? onTap,
   }) {
     final isSelected = index >= 0 && _selectedIndex == index;
-    final darkWeb = kIsWeb && AppColors.isDark(context);
+    final shell = DesktopCanvas.isDesktopPlatform;
+    final darkWeb = shell && AppColors.isDark(context);
     final selectedColor = darkWeb
         ? AppTheme.white
-        : (kIsWeb ? AppColors.action(context) : AppTheme.white);
+        : (shell ? AppColors.action(context) : AppTheme.white);
     final idleColor = AppColors.secondaryText(context);
     final item = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -736,7 +757,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               vertical: darkWeb ? 10 : 12,
             ),
             decoration: BoxDecoration(
-              gradient: isSelected && !kIsWeb
+              gradient: isSelected && !shell
                   ? LinearGradient(
                       colors: AppColors.headerGradient(context),
                       begin: Alignment.topLeft,
@@ -747,11 +768,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   ? AppTheme.transparent
                   : darkWeb
                   ? AppTheme.darkAction
-                  : kIsWeb
+                  : shell
                   ? AppTheme.paletteFFD7EDE3
                   : null,
               borderRadius: BorderRadius.circular(12),
-              boxShadow: isSelected && !kIsWeb
+              boxShadow: isSelected && !shell
                   ? [
                       BoxShadow(
                         color: AppColors.accentSoft(context, 0.25),
@@ -1327,7 +1348,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   }
 
   Widget _buildContent(OptimizedDashboardState state) {
-    if (kIsWeb) return _buildWebDashboard(state);
+    if (DesktopCanvas.isDesktopPlatform) return _buildWebDashboard(state);
 
     // Show shimmer only when we have absolutely no data
     if (!state.hasData && state is DashboardInitialState) {
@@ -2989,7 +3010,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
   void _navigateToPage(int index) {
     _resetSessionTimer();
-    if (kIsWeb) WebShell.popToRoot();
+    if (DesktopCanvas.isDesktopPlatform) WebShell.popToRoot();
     setState(() => _selectedIndex = index);
   }
 

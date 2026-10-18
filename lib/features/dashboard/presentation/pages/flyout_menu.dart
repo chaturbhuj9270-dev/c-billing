@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -241,72 +240,55 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
 
       switch (pageName) {
         case 'Home':
-          if (kIsWeb) afterClose((_) => WebShell.open(WebShell.dashboard));
+          afterClose((_) => WebShell.open(WebShell.dashboard));
           break;
         case 'Invoices':
-          if (kIsWeb) {
-            afterClose((_) => WebShell.open(WebShell.invoices));
-          } else {
-            afterClose(
-              (ctx) => GlassyToast.show(ctx, 'Invoices page coming soon'),
-            );
-          }
+          afterClose((ctx) {
+            if (!WebShell.open(WebShell.invoices)) {
+              GlassyToast.show(ctx, 'Invoices page coming soon');
+            }
+          });
           break;
         case 'Clients':
           afterClose((ctx) {
-            if (kIsWeb) {
-              WebShell.open(WebShell.customers);
-            } else {
-              Navigator.of(ctx).push(
-                MaterialPageRoute(builder: (_) => const EnhancedCustomerPage()),
-              );
-            }
+            if (WebShell.open(WebShell.customers)) return;
+            Navigator.of(ctx).push(
+              MaterialPageRoute(builder: (_) => const EnhancedCustomerPage()),
+            );
           });
           break;
         case 'Suppliers':
           afterClose((ctx) {
-            if (kIsWeb) {
-              WebShell.open(WebShell.suppliers);
-            } else {
-              Navigator.of(ctx).push(
-                MaterialPageRoute(builder: (_) => const EnhancedSupplierPage()),
-              );
-            }
+            if (WebShell.open(WebShell.suppliers)) return;
+            Navigator.of(ctx).push(
+              MaterialPageRoute(builder: (_) => const EnhancedSupplierPage()),
+            );
           });
           break;
         case 'Companies':
           afterClose((ctx) {
-            if (kIsWeb) {
-              WebShell.open(WebShell.companies);
-            } else {
-              Navigator.of(ctx).push(
-                MaterialPageRoute(builder: (_) => const EnhancedCompanyPage()),
-              );
-            }
+            if (WebShell.open(WebShell.companies)) return;
+            Navigator.of(ctx).push(
+              MaterialPageRoute(builder: (_) => const EnhancedCompanyPage()),
+            );
           });
           break;
         case 'Purchases':
           afterClose((ctx) {
-            if (kIsWeb) {
-              WebShell.open(WebShell.purchase);
-            } else {
-              Navigator.of(ctx).push(
-                MaterialPageRoute(
-                  builder: (_) => const EnhancedPurchaseScreen(),
-                ),
-              );
-            }
+            if (WebShell.open(WebShell.purchase)) return;
+            Navigator.of(ctx).push(
+              MaterialPageRoute(
+                builder: (_) => const EnhancedPurchaseScreen(),
+              ),
+            );
           });
           break;
         case 'Inventory':
           afterClose((ctx) {
-            if (kIsWeb) {
-              WebShell.open(WebShell.products);
-            } else {
-              Navigator.of(ctx).push(
-                MaterialPageRoute(builder: (_) => const EnhancedProductPage()),
-              );
-            }
+            if (WebShell.open(WebShell.products)) return;
+            Navigator.of(ctx).push(
+              MaterialPageRoute(builder: (_) => const EnhancedProductPage()),
+            );
           });
           break;
         case 'Reports':
@@ -316,50 +298,38 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           break;
         case 'Profile':
           afterClose((ctx) {
-            if (kIsWeb) {
-              WebShell.open(WebShell.profile);
-            } else {
-              Navigator.of(ctx).push(
-                MaterialPageRoute(builder: (_) => const ProfilePage()),
-              );
-            }
+            if (WebShell.open(WebShell.profile)) return;
+            Navigator.of(ctx).push(
+              MaterialPageRoute(builder: (_) => const ProfilePage()),
+            );
           });
           break;
         case 'ShopDetails':
           afterClose((ctx) {
-            if (kIsWeb) {
-              WebShell.open(WebShell.shop);
-            } else {
-              Navigator.of(ctx).push(
-                MaterialPageRoute(builder: (_) => const ShopDetailsPage()),
-              );
-            }
+            if (WebShell.open(WebShell.shop)) return;
+            Navigator.of(ctx).push(
+              MaterialPageRoute(builder: (_) => const ShopDetailsPage()),
+            );
           });
           break;
         case 'Expenses':
           afterClose((ctx) {
-            if (kIsWeb) {
-              WebShell.open(WebShell.expenses);
-            } else {
-              Navigator.of(ctx).push(
-                MaterialPageRoute(builder: (_) => const ExpensesPage()),
-              );
-            }
+            if (WebShell.open(WebShell.expenses)) return;
+            Navigator.of(ctx).push(
+              MaterialPageRoute(builder: (_) => const ExpensesPage()),
+            );
           });
           break;
         case 'ChangePassword':
           afterClose((ctx) {
-            if (kIsWeb) {
-              WebShell.open(WebShell.password);
-            } else {
-              Navigator.of(ctx).push(
-                MaterialPageRoute(
-                  builder: (_) => const _SelectedTheme(
-                    child: ChangePasswordPage(),
-                  ),
+            if (WebShell.open(WebShell.password)) return;
+            Navigator.of(ctx).push(
+              MaterialPageRoute(
+                builder: (_) => const _SelectedTheme(
+                  child: ChangePasswordPage(),
                 ),
-              );
-            }
+              ),
+            );
           });
           break;
         case 'Language':

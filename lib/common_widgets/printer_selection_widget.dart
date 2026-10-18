@@ -117,9 +117,9 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
+        initialChildSize: drawerSheetSize(0.6),
+        minChildSize: drawerSheetSize(0.4),
+        maxChildSize: drawerSheetSize(0.9),
         expand: false,
         builder: (context, scrollController) {
           return Column(

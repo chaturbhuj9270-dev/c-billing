@@ -24,6 +24,7 @@ import 'product_settings_page.dart';
 import 'barcode_generator_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/common_widgets/app_pill_button.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
@@ -1845,10 +1846,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Expanded(
-                          flex: 2,
-                          child: ElevatedButton(
-                            onPressed: () => _saveNewProduct(
+                        AppPillButton(
+                          label: 'Save',
+                          icon: Icons.check_rounded,
+                          onPressed: () => _saveNewProduct(
                               nameController: nameController,
                               categoryController: categoryController,
                               purchasePriceController: purchasePriceController,
@@ -1864,19 +1865,6 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               customTextControllers: customTextControllers,
                               customFieldValues: customFieldValues,
                             ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.action(context),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                            ),
-                            child: const Text(
-                              'Save',
-                              style: TextStyle(
-                                fontFamily: 'Literata',
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.white,
-                              ),
-                            ),
-                          ),
                         ),
                       ],
                     ),
@@ -2354,36 +2342,23 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Expanded(
-                          flex: 2,
-                          child: ElevatedButton(
-                            onPressed: () => _updateProduct(
-                              product: product,
-                              nameController: nameController,
-                              companyController: companyController,
-                              categoryController: categoryController,
-                              purchasePriceController: purchasePriceController,
-                              salesPriceController: salesPriceController,
-                              cgstController: cgstController,
-                              sgstController: sgstController,
-                              hsnController: hsnController,
-                              applyGst: applyGst,
-                              customColumns: customColumns,
-                              customTextControllers: customTextControllers,
-                              customFieldValues: customFieldValues,
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.action(context),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                            ),
-                            child: Text(
-                              _localizations.update,
-                              style: const TextStyle(
-                                fontFamily: 'Literata',
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.white,
-                              ),
-                            ),
+                        AppPillButton(
+                          label: _localizations.update,
+                          icon: Icons.check_rounded,
+                          onPressed: () => _updateProduct(
+                            product: product,
+                            nameController: nameController,
+                            companyController: companyController,
+                            categoryController: categoryController,
+                            purchasePriceController: purchasePriceController,
+                            salesPriceController: salesPriceController,
+                            cgstController: cgstController,
+                            sgstController: sgstController,
+                            hsnController: hsnController,
+                            applyGst: applyGst,
+                            customColumns: customColumns,
+                            customTextControllers: customTextControllers,
+                            customFieldValues: customFieldValues,
                           ),
                         ),
                       ],

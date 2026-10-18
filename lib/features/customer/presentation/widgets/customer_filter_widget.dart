@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 
 /// Sort options for customer list
 enum CustomerSortField { name, createdDate, pendingAmount }
@@ -66,6 +67,36 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
 
   @override
   Widget build(BuildContext context) {
+    if (DesktopCanvas.wide(context)) {
+      return Row(
+        children: [
+          Expanded(flex: 3, child: _buildSearchBar()),
+          const SizedBox(width: 12),
+          _sortChip(
+            label: widget.sortByNameLabel,
+            selected: widget.sortField == CustomerSortField.name,
+            onTap: () => widget.onSortFieldChanged(CustomerSortField.name),
+            icon: Icons.sort_by_alpha_rounded,
+          ),
+          const SizedBox(width: 8),
+          _sortChip(
+            label: widget.sortByPendingLabel,
+            selected: widget.sortField == CustomerSortField.pendingAmount,
+            onTap: () =>
+                widget.onSortFieldChanged(CustomerSortField.pendingAmount),
+            icon: Icons.account_balance_wallet_outlined,
+          ),
+          const SizedBox(width: 8),
+          _sortChip(
+            label: widget.sortByDateLabel,
+            selected: widget.sortField == CustomerSortField.createdDate,
+            onTap: () =>
+                widget.onSortFieldChanged(CustomerSortField.createdDate),
+            icon: Icons.calendar_today_rounded,
+          ),
+        ],
+      );
+    }
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -203,6 +234,52 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
               size: 20,
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sortChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+    required IconData icon,
+  }) {
+    final dark = AppColors.isDark(context);
+    final fill = selected
+        ? (dark ? AppTheme.darkAction : AppTheme.paletteFFD7EDE3)
+        : AppColors.card(context);
+    final ink = selected
+        ? (dark ? AppTheme.white : AppColors.action(context))
+        : AppColors.secondaryText(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: fill,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected
+                ? AppTheme.paletteFFD7EDE3
+                : AppColors.border(context),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: ink),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: ink,
+              ),
+            ),
+          ],
         ),
       ),
     );

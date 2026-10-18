@@ -8,6 +8,8 @@ import '../../domain/entities/bill_item.dart';
 import '../../../inventory_management/domain/entities/product.dart';
 import '../../../inventory_management/offline/entities/purchase_batch_entity.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
+import 'package:c_billing/common_widgets/app_pill_button.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 /// Bottom sheet widget for adding multiple items to the bill
@@ -802,30 +804,35 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final side = DesktopCanvas.isDesktopPlatform;
     return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      maxChildSize: 0.95,
-      minChildSize: 0.5,
+      initialChildSize: drawerSheetSize(0.85),
+      maxChildSize: drawerSheetSize(0.95),
+      minChildSize: drawerSheetSize(0.5),
       builder: (_, controller) => Container(
         decoration: BoxDecoration(
           color: AppColors.card(context),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: side
+              ? BorderRadius.zero
+              : const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           children: [
-            // Handle bar
-            const SizedBox(height: 12),
-            Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.mutedText(context).withValues(alpha: 0.45),
-                borderRadius: BorderRadius.circular(4),
+            if (!side) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.mutedText(context).withValues(alpha: 0.45),
+                  borderRadius: BorderRadius.circular(4),
+                ),
               ),
-            ),
+            ] else
+              const SizedBox(height: 8),
             // Header
             Padding(
-              padding: EdgeInsets.all(20),
+              padding: EdgeInsets.fromLTRB(20, side ? 16 : 20, side ? 52 : 20, 12),
               child: Row(
                 children: [
                   Container(
@@ -867,7 +874,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                       ],
                     ),
                   ),
-                  if (_totalItems > 0)
+                  if (_totalItems > 0 && !side)
                     Container(
                       padding: EdgeInsets.symmetric(
                         horizontal: 14,
@@ -1148,8 +1155,31 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                       ),
                                     ),
                                     SizedBox(width: 8),
-                                    // Action area
-                                    if (isAdded)
+                                    if (side)
+                                      Container(
+                                        width: 28,
+                                        height: 28,
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: isAdded
+                                              ? AppColors.accentSoft(context, 0.18)
+                                              : AppTheme.transparent,
+                                          shape: BoxShape.circle,
+                                          border: isAdded
+                                              ? null
+                                              : Border.all(
+                                                  color: AppColors.border(context),
+                                                ),
+                                        ),
+                                        child: Icon(
+                                          isAdded ? Icons.check : Icons.add,
+                                          size: 16,
+                                          color: isAdded
+                                              ? AppColors.action(context)
+                                              : AppColors.secondaryText(context),
+                                        ),
+                                      )
+                                    else if (isAdded)
                                       Container(
                                         padding: EdgeInsets.symmetric(
                                           horizontal: 10,
@@ -1216,49 +1246,21 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                       },
                     ),
             ),
-            // Done button
-            Container(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 16,
-                bottom: MediaQuery.of(context).padding.bottom + 16,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.card(context),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.action(context),
-                    foregroundColor: AppTheme.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    _totalItems > 0
-                        ? '${widget.localizations.done} ($_totalItems ${widget.localizations.items.toLowerCase()})'
-                        : widget.localizations.done,
-                    style: const TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.white,
-                    ),
-                  ),
+            DrawerBottomBar(
+              leading: Text(
+                '$_totalItems ${widget.localizations.items.toLowerCase()}',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 13,
+                  color: AppColors.mutedText(context),
                 ),
+              ),
+              action: AppPillButton(
+                label: _totalItems > 0
+                    ? 'Add $_totalItems'
+                    : widget.localizations.done,
+                icon: Icons.check_rounded,
+                onPressed: () => Navigator.pop(context),
               ),
             ),
           ],
@@ -1776,9 +1778,9 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
         : null;
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.72,
-      maxChildSize: 0.92,
-      minChildSize: 0.45,
+      initialChildSize: drawerSheetSize(0.72),
+      maxChildSize: drawerSheetSize(0.92),
+      minChildSize: drawerSheetSize(0.45),
       builder: (_, controller) => Container(
         decoration: BoxDecoration(
           color: AppColors.isDark(context)
@@ -2327,38 +2329,19 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
             ),
           ],
           const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: canAdd
-                  ? () {
-                      widget.onBatchSelected(
-                        batch,
-                        existingQty + baseQty,
-                        _selectedSellUnit,
-                      );
-                    }
-                  : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.action(context),
-                foregroundColor: AppTheme.white,
-                disabledBackgroundColor: AppColors.chipFill(context),
-                disabledForegroundColor: AppColors.mutedText(context),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              child: Text(
-                '${widget.localizations.addToBill} · ₹${_money(lineTotal)}',
-                style: const TextStyle(
-                  fontFamily: 'Literata',
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                ),
-              ),
-            ),
+          AppPillButton(
+            label: '${widget.localizations.addToBill} · ₹${_money(lineTotal)}',
+            icon: Icons.add,
+            expanded: true,
+            onPressed: canAdd
+                ? () {
+                    widget.onBatchSelected(
+                      batch,
+                      existingQty + baseQty,
+                      _selectedSellUnit,
+                    );
+                  }
+                : null,
           ),
         ],
       ),

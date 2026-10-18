@@ -3611,9 +3611,9 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.6,
-      maxChildSize: 0.9,
-      minChildSize: 0.4,
+      initialChildSize: drawerSheetSize(0.6),
+      maxChildSize: drawerSheetSize(0.9),
+      minChildSize: drawerSheetSize(0.4),
       builder: (_, controller) => Container(
         decoration: BoxDecoration(
           color: AppColors.card(context),

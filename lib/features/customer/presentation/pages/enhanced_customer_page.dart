@@ -23,7 +23,14 @@ import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+import 'package:c_billing/common_widgets/app_pill_button.dart';
 import 'package:c_billing/common_widgets/glass_icon_fab.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
+
+/// Lets the desktop shell header open the add-customer sheet.
+class CustomerScreenActions {
+  static VoidCallback? add;
+}
 
 class EnhancedCustomerPage extends StatefulWidget {
   final bool isEmbedded;
@@ -100,6 +107,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       end: 1.0,
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
+    CustomerScreenActions.add = _showAddCustomerSheet;
     _checkUserAuthentication();
     _setupLocalStream();
     _setupEventOrderStream();
@@ -114,6 +122,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
   @override
   void dispose() {
+    CustomerScreenActions.add = null;
     _isNavigatingAway = true;
     _animController.dispose();
     _customerStreamSub?.cancel();
@@ -710,10 +719,12 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: GlassIconFab(
-        tooltip: _localizations.addCustomer,
-        onPressed: _showAddCustomerSheet,
-      ),
+      floatingActionButton: DesktopCanvas.wide(context)
+          ? null
+          : GlassIconFab(
+              tooltip: _localizations.addCustomer,
+              onPressed: _showAddCustomerSheet,
+            ),
       body: SafeArea(
         top: false,
         child: Column(
@@ -1092,20 +1103,25 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   }
 
   Widget _buildFormSheet() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    final action = DrawerBottomBar(
+      action: AppPillButton(
+        label: _isEditing
+            ? _localizations.update
+            : _localizations.addCustomer,
+        icon: Icons.check_rounded,
+        loading: _isSaving,
+        expanded: !_isEditing,
+        onPressed: _isSaving ? null : _saveCustomer,
       ),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: Form(
+    );
+    return dockDrawerAction(
+      context: context,
+      action: action,
+      phoneDecoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      body: Form(
             key: _formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1184,78 +1200,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                   maxLines: 3,
                   isRequired: true,
                 ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _isSaving ? null : _saveCustomer,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.action(context),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: _isSaving
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation(
-                                    AppTheme.white,
-                                  ),
-                                ),
-                              )
-                            : Text(
-                                _isEditing
-                                    ? _localizations.update
-                                    : _localizations.addCustomer,
-                                style: const TextStyle(
-                                  color: AppTheme.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  fontFamily: 'Literata',
-                                ),
-                              ),
-                      ),
-                    ),
-                    if (_isEditing) ...[
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _isSaving
-                              ? null
-                              : () {
-                                  _clearForm();
-                                  Navigator.pop(context);
-                                },
-                          style: OutlinedButton.styleFrom(
-                            padding: EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: Text(
-                            _localizations.cancel,
-                            style: TextStyle(
-                              color: AppColors.accent(context),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Literata',
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
               ],
             ),
           ),
-        ),
-      ),
     );
   }
 

@@ -157,7 +157,6 @@ class DashboardShimmerLoading extends StatelessWidget {
           ShimmerWidget.rectangular(width: 140, height: 18, radius: 6),
           const SizedBox(height: 16),
           Container(
-            height: 160,
             decoration: BoxDecoration(
               color: AppColors.card(context),
               borderRadius: BorderRadius.circular(16),
@@ -165,6 +164,7 @@ class DashboardShimmerLoading extends StatelessWidget {
             ),
             padding: const EdgeInsets.all(16),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: List.generate(
                 4,
                 (i) => Padding(

@@ -3,7 +3,12 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
+import '../core/ui/desktop_canvas.dart';
 import 'glass_bevel_frame.dart';
+
+/// Side drawers fill the panel. Phone sheets keep their shorter height.
+double drawerSheetSize(double mobile) =>
+    DesktopCanvas.isDesktopPlatform ? 1 : mobile;
 
 const BorderRadius _sheetRadius = BorderRadius.vertical(
   top: Radius.circular(28),
@@ -105,6 +110,14 @@ Future<T?> showAppBottomSheet<T>({
   bool showClose = false,
   VoidCallback? onClose,
 }) {
+  if (DesktopCanvas.isDesktopPlatform) {
+    return _showDesktopSideDrawer<T>(
+      context: context,
+      builder: builder,
+      isDismissible: isDismissible,
+      useRootNavigator: useRootNavigator,
+    );
+  }
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: isScrollControlled,
@@ -121,5 +134,93 @@ Future<T?> showAppBottomSheet<T>({
       onClose: onClose,
       child: builder(sheetContext),
     ),
+  );
+}
+
+/// Floating panel on the right. The page behind stays visible and dimmed.
+Future<T?> _showDesktopSideDrawer<T>({
+  required BuildContext context,
+  required WidgetBuilder builder,
+  required bool isDismissible,
+  required bool useRootNavigator,
+}) {
+  return showGeneralDialog<T>(
+    context: context,
+    useRootNavigator: useRootNavigator,
+    barrierDismissible: isDismissible,
+    barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+    barrierColor: AppTheme.transparent,
+    transitionDuration: const Duration(milliseconds: 260),
+    pageBuilder: (dialogContext, animation, secondaryAnimation) {
+      final media = MediaQuery.of(dialogContext);
+      final panelWidth = (media.size.width * 0.34).clamp(360.0, 440.0);
+      final width = panelWidth > media.size.width - 24
+          ? media.size.width - 24
+          : panelWidth;
+      final height =
+          media.size.height -
+          media.padding.vertical -
+          media.viewInsets.bottom -
+          24;
+      return Padding(
+        padding: EdgeInsets.only(
+          top: media.padding.top + 12,
+          right: 12,
+          bottom: media.padding.bottom + media.viewInsets.bottom + 12,
+        ),
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: Material(
+            color: AppColors.card(dialogContext),
+            elevation: 8,
+            shadowColor: AppTheme.black.withValues(alpha: 0.08),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(color: AppColors.border(dialogContext)),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: SizedBox(
+              width: width,
+              height: height < 240 ? 240 : height,
+              child: Stack(
+                children: [
+                  builder(dialogContext),
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: IconButton(
+                      onPressed: isDismissible
+                          ? () => Navigator.of(dialogContext).maybePop()
+                          : null,
+                      style: IconButton.styleFrom(
+                        backgroundColor: AppColors.scaffold(dialogContext),
+                        foregroundColor: AppColors.secondaryText(dialogContext),
+                        fixedSize: const Size(32, 32),
+                        minimumSize: const Size(32, 32),
+                        padding: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      icon: const Icon(Icons.close, size: 18),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    },
+    transitionBuilder: (context, animation, secondaryAnimation, child) {
+      final slide = Tween<Offset>(
+        begin: const Offset(0.12, 0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
+      return FadeTransition(
+        opacity: animation,
+        child: SlideTransition(position: slide, child: child),
+      );
+    },
   );
 }

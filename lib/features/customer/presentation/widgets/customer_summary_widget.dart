@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 
 /// Summary widget for customer statistics
 /// Displays: Total customers, Pending amount, Synced status
@@ -49,6 +50,15 @@ class CustomerSummaryWidget extends StatelessWidget {
     );
     final unsyncedCount = filtered.where((c) => c['isSynced'] != true).length;
 
+    if (DesktopCanvas.wide(context)) {
+      return _buildWideCards(
+        context,
+        count: filtered.length,
+        totalPending: totalPending,
+        unsyncedCount: unsyncedCount,
+      );
+    }
+
     final header = AppColors.headerGradient(context);
     return Container(
       padding: const EdgeInsets.all(16),
@@ -95,6 +105,104 @@ class CustomerSummaryWidget extends StatelessWidget {
                   ? AppTheme.orange300
                   : AppTheme.green300,
               isExpanded: true,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWideCards(
+    BuildContext context, {
+    required int count,
+    required double totalPending,
+    required int unsyncedCount,
+  }) {
+    final synced = unsyncedCount == 0;
+    return Row(
+      children: [
+        Expanded(
+          child: _wideCard(
+            context,
+            icon: Icons.people_outline_rounded,
+            value: '$count',
+            label: customersLabel,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _wideCard(
+            context,
+            icon: Icons.account_balance_wallet_outlined,
+            value: '₹${totalPending.toStringAsFixed(0)}',
+            label: pendingLabel,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _wideCard(
+            context,
+            icon: synced ? Icons.cloud_done_outlined : Icons.cloud_off_outlined,
+            value: synced ? allSyncedLabel : '$unsyncedCount',
+            label: synced ? 'Cloud sync' : unsyncedLabel,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _wideCard(
+    BuildContext context, {
+    required IconData icon,
+    required String value,
+    required String label,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.accentSoft(context, 0.14),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 18, color: AppColors.action(context)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    color: AppColors.primaryText(context),
+                  ),
+                ),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 12,
+                    color: AppColors.mutedText(context),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

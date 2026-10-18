@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/services/communication_service.dart';
 import 'customer_filter_widget.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 
 /// Enhanced list widget for displaying customers
 /// Features: Shimmer loading, Enhanced cards, Empty states
@@ -119,6 +120,18 @@ class CustomerListWidget extends StatelessWidget {
 
     final filtered = _filteredAndSortedCustomers;
 
+    if (DesktopCanvas.wide(context)) {
+      if (filtered.isEmpty) {
+        return _buildEmptyState(
+          context: context,
+          icon: Icons.search_off_rounded,
+          title: noResultsTitle,
+          subtitle: noResultsSubtitle,
+        );
+      }
+      return _buildDesktopTable(context, filtered);
+    }
+
     // Empty state - no search results
     if (filtered.isEmpty) {
       return _buildEmptyState(
@@ -156,6 +169,264 @@ class CustomerListWidget extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildDesktopTable(
+    BuildContext context,
+    List<Map<String, dynamic>> filtered,
+  ) {
+    final headerStyle = TextStyle(
+      fontFamily: 'Literata',
+      fontSize: 11,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.6,
+      color: AppColors.mutedText(context),
+    );
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+            child: Row(
+              children: [
+                Expanded(flex: 3, child: Text('CUSTOMER', style: headerStyle)),
+                Expanded(flex: 2, child: Text('PHONE', style: headerStyle)),
+                Expanded(flex: 2, child: Text('LOCATION', style: headerStyle)),
+                Expanded(flex: 2, child: Text('PENDING', style: headerStyle)),
+                Expanded(flex: 2, child: Text('SYNC', style: headerStyle)),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'ACTIONS',
+                    textAlign: TextAlign.right,
+                    style: headerStyle,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: AppColors.border(context)),
+          Expanded(
+            child: RefreshIndicator(
+              color: AppColors.accent(context),
+              onRefresh: onRefresh,
+              child: ListView.separated(
+                physics: const AlwaysScrollableScrollPhysics(),
+                itemCount: filtered.length,
+                separatorBuilder: (_, _) =>
+                    Divider(height: 1, color: AppColors.border(context)),
+                itemBuilder: (context, index) {
+                  return _desktopRow(context, filtered[index]);
+                },
+              ),
+            ),
+          ),
+          Divider(height: 1, color: AppColors.border(context)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Showing ${filtered.length} of ${customers.length} customers',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 12,
+                  color: AppColors.mutedText(context),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _desktopRow(BuildContext context, Map<String, dynamic> customer) {
+    final firstName = (customer['firstName'] ?? '').toString();
+    final lastName = (customer['lastName'] ?? '').toString();
+    final fullName = '$firstName $lastName'.trim();
+    final contact = (customer['contact'] ?? '').toString();
+    final address = (customer['address'] ?? '').toString();
+    final pending = (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0;
+    final synced = customer['isSynced'] == true;
+    final cell = TextStyle(
+      fontFamily: 'Literata',
+      fontSize: 13,
+      color: AppColors.secondaryText(context),
+    );
+    return InkWell(
+      onTap: () => onCustomerTap(customer),
+      onLongPress: onCustomerLongPress == null
+          ? null
+          : () => onCustomerLongPress!(customer),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 14,
+                    backgroundColor: AppColors.accentSoft(context, 0.16),
+                    child: Text(
+                      (fullName.isEmpty ? '?' : fullName[0]).toUpperCase(),
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.action(context),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      fullName.isEmpty ? '—' : fullName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryText(context),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(contact.isEmpty ? '—' : contact, style: cell),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                address.isEmpty || address == 'N/A' ? '—' : address,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: cell,
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: pending > 0
+                        ? AppTheme.toneRose.withValues(alpha: 0.12)
+                        : AppColors.accentSoft(context, 0.14),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    pending > 0
+                        ? '₹${pending.toStringAsFixed(0)}'
+                        : 'No pending',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: pending > 0
+                          ? AppTheme.toneRose
+                          : AppColors.action(context),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: synced
+                        ? AppColors.accentSoft(context, 0.14)
+                        : AppTheme.toneAmber.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    synced ? 'Synced' : pendingLabel,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: synced
+                          ? AppColors.action(context)
+                          : AppTheme.toneAmber,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (contact.isNotEmpty)
+                    CommunicationActionIcons(
+                      phoneNumber: contact,
+                      iconSize: 15,
+                      containerSize: 30,
+                      spacing: 6,
+                    ),
+                  if (onFinanceTap != null) ...[
+                    const SizedBox(width: 6),
+                    _roundAction(
+                      context,
+                      icon: Icons.account_balance_wallet_outlined,
+                      color: AppColors.action(context),
+                      onTap: () => onFinanceTap!(customer),
+                    ),
+                  ],
+                  if (onTransactionsTap != null) ...[
+                    const SizedBox(width: 6),
+                    _roundAction(
+                      context,
+                      icon: Icons.swap_horiz_rounded,
+                      color: AppTheme.toneAmber,
+                      onTap: () => onTransactionsTap!(customer),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _roundAction(
+    BuildContext context, {
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 30,
+        height: 30,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.14),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, size: 15, color: color),
       ),
     );
   }

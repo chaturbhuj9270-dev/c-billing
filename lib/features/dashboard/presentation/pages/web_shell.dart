@@ -54,28 +54,6 @@ class WebShell {
   }
 }
 
-/// Shows the current web section inside the shell navigator.
-class WebShellScope extends InheritedWidget {
-  final Widget stack;
-
-  const WebShellScope({super.key, required this.stack, required super.child});
-
-  static Widget stackOf(BuildContext context) {
-    final scope = context.dependOnInheritedWidgetOfExactType<WebShellScope>();
-    return scope?.stack ?? const SizedBox.shrink();
-  }
-
-  @override
-  bool updateShouldNotify(WebShellScope oldWidget) => stack != oldWidget.stack;
-}
-
-class WebShellPages extends StatelessWidget {
-  const WebShellPages({super.key});
-
-  @override
-  Widget build(BuildContext context) => WebShellScope.stackOf(context);
-}
-
 class WebShellRouteObserver extends NavigatorObserver {
   WebShellRouteObserver(this.onChanged);
 
