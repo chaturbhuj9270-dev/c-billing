@@ -4,6 +4,7 @@ import '../../data/services/customer_sync_service.dart';
 import 'customer_add_edit_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Customer detail page for offline-first architecture
@@ -30,10 +31,9 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
   }
 
   Future<void> _editCustomer() async {
-    final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (context) => CustomerAddEditPage(customer: _customer),
-      ),
+    final result = await showAppPage<bool>(
+      context,
+      CustomerAddEditPage(customer: _customer),
     );
 
     if (result == true && mounted) {

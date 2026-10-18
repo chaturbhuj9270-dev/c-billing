@@ -19,6 +19,12 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/app_pill_button.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
+
+/// Lets the desktop shell header open the add-supplier sheet.
+class SupplierScreenActions {
+  static VoidCallback? add;
+}
 
 class EnhancedSupplierPage extends StatefulWidget {
   final bool isEmbedded;
@@ -93,8 +99,10 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
       end: 1.0,
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
+    SupplierScreenActions.add = _showAddSupplierSheet;
     _checkUserAuthentication();
     _setupLocalStream();
+    _loadLocalSuppliers();
     _fetchFromFirebase();
     _setupFirestoreStream();
 
@@ -106,6 +114,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
 
   @override
   void dispose() {
+    SupplierScreenActions.add = null;
     _isNavigatingAway = true;
     _animController.dispose();
     _supplierStreamSub?.cancel();
@@ -141,6 +150,21 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
 
   // ━━━ DATA: Local stream (offline-first, real-time) ━━━
 
+  Future<void> _loadLocalSuppliers() async {
+    try {
+      final entities = await SupplierOfflineController.instance
+          .getAllSuppliers();
+      if (!mounted || _isNavigatingAway) return;
+      setState(() {
+        _suppliers = entities.map(_entityToMap).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('[EnhancedSupplier] local load error: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   void _setupLocalStream() {
     final offlineCtrl = SupplierOfflineController.instance;
     _supplierStreamSub = offlineCtrl.watchAllSuppliers().listen(
@@ -157,6 +181,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
       },
       onError: (e) {
         debugPrint('[EnhancedSupplier] local stream error: $e');
+        if (mounted) setState(() => _isLoading = false);
       },
     );
   }
@@ -354,18 +379,19 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Drag handle
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: AppTheme.grey300,
-                          borderRadius: BorderRadius.circular(2),
+                    if (!DesktopCanvas.isDesktopPlatform)
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: AppTheme.grey300,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
                         ),
                       ),
-                    ),
-                    SizedBox(height: 16),
+                    if (!DesktopCanvas.isDesktopPlatform)
+                      const SizedBox(height: 16),
                     // Header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -381,13 +407,14 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
                             fontFamily: 'Literata',
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.close_rounded),
-                          onPressed: () {
-                            _clearForm();
-                            Navigator.pop(ctx);
-                          },
-                        ),
+                        if (!DesktopCanvas.isDesktopPlatform)
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded),
+                            onPressed: () {
+                              _clearForm();
+                              Navigator.pop(ctx);
+                            },
+                          ),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -773,7 +800,10 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
 
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      floatingActionButton: _buildFAB(),
+      floatingActionButton:
+          widget.isEmbedded && DesktopCanvas.isDesktopPlatform
+          ? null
+          : _buildFAB(),
       body: Column(
         children: [
           if (!widget.isEmbedded)

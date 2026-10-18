@@ -10,6 +10,12 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/app_pill_button.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
+
+/// Lets the desktop shell header open the add-expense sheet.
+class ExpenseScreenActions {
+  static VoidCallback? add;
+}
 
 /// Date filter options for expenses
 enum ExpenseDateFilter { all, thisMonth, thisYear, lastYear, custom }
@@ -64,6 +70,7 @@ class _ExpensesPageState extends State<ExpensesPage>
       end: 1.0,
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
+    ExpenseScreenActions.add = _showAddExpenseSheet;
     _initSyncService();
     _loadExpenses();
     _animController.forward();
@@ -76,6 +83,7 @@ class _ExpensesPageState extends State<ExpensesPage>
 
   @override
   void dispose() {
+    ExpenseScreenActions.add = null;
     _animController.dispose();
     _searchController.dispose();
     _expenseSubscription?.cancel();
@@ -184,7 +192,10 @@ class _ExpensesPageState extends State<ExpensesPage>
           ),
         ],
       ),
-      floatingActionButton: _buildAddExpenseFAB(),
+      floatingActionButton:
+          widget.isEmbedded && DesktopCanvas.isDesktopPlatform
+          ? null
+          : _buildAddExpenseFAB(),
     );
   }
 
@@ -1244,18 +1255,18 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppTheme.grey300,
-                borderRadius: BorderRadius.circular(2),
+          if (!DesktopCanvas.isDesktopPlatform)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.grey300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
-          ),
           // Header
           Padding(
             padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
@@ -1270,11 +1281,13 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                     fontFamily: 'Literata',
                   ),
                 ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: Icon(Icons.close_rounded),
-                ),
+                if (!DesktopCanvas.isDesktopPlatform) ...[
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
               ],
             ),
           ),

@@ -111,6 +111,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     _checkUserAuthentication();
     _setupLocalStream();
     _setupEventOrderStream();
+    _loadLocalCustomers();
     _fetchFromFirebase();
     _setupFirestoreStream();
 
@@ -157,6 +158,19 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   }
 
   // ━━━ DATA: Local stream (offline-first, real-time) ━━━
+
+  Future<void> _loadLocalCustomers() async {
+    try {
+      final entities = await CustomerOfflineController.instance
+          .getAllCustomers();
+      if (!mounted || _isNavigatingAway) return;
+      _customerEntities = entities;
+      _rebuildCustomerList();
+    } catch (e) {
+      debugPrint('[EnhancedCustomer] local load error: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   void _setupLocalStream() {
     final offlineCtrl = CustomerOfflineController.instance;
@@ -695,11 +709,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
   void _navigateToCustomerDetails(Map<String, dynamic> customer) {
     _isNavigatingAway = true;
-    Navigator.push(
+    showAppPage(
       context,
-      MaterialPageRoute(
-        builder: (_) => CustomerDetailsPage(customerId: customer['id']),
-      ),
+      CustomerDetailsPage(customerId: customer['id']),
     ).then((_) {
       _isNavigatingAway = false;
       _fetchFromFirebase();
@@ -719,7 +731,8 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: DesktopCanvas.wide(context)
+      floatingActionButton:
+          widget.isEmbedded && DesktopCanvas.isDesktopPlatform
           ? null
           : GlassIconFab(
               tooltip: _localizations.addCustomer,
@@ -846,33 +859,14 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     final pendingAmount =
         (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0.0;
 
-    Navigator.push(
+    showAppPage(
       context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            CustomerFinancePage(
-              customerId: customerId,
-              customerLocalId: localId,
-              customerName: fullName.isNotEmpty ? fullName : 'Customer',
-              customerContact: contact,
-              currentPendingAmount: pendingAmount,
-            ),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return SlideTransition(
-            position:
-                Tween<Offset>(
-                  begin: const Offset(1.0, 0.0),
-                  end: Offset.zero,
-                ).animate(
-                  CurvedAnimation(
-                    parent: animation,
-                    curve: Curves.easeOutCubic,
-                  ),
-                ),
-            child: child,
-          );
-        },
-        transitionDuration: const Duration(milliseconds: 300),
+      CustomerFinancePage(
+        customerId: customerId,
+        customerLocalId: localId,
+        customerName: fullName.isNotEmpty ? fullName : 'Customer',
+        customerContact: contact,
+        currentPendingAmount: pendingAmount,
       ),
     );
   }
@@ -901,33 +895,14 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     final pendingAmount =
         (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0.0;
 
-    Navigator.push(
+    showAppPage(
       context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            CustomerTransactionsPage(
-              customerId: customerId,
-              customerLocalId: localId,
-              customerName: fullName.isNotEmpty ? fullName : 'Customer',
-              customerContact: contact,
-              currentPendingAmount: pendingAmount,
-            ),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return SlideTransition(
-            position:
-                Tween<Offset>(
-                  begin: const Offset(1.0, 0.0),
-                  end: Offset.zero,
-                ).animate(
-                  CurvedAnimation(
-                    parent: animation,
-                    curve: Curves.easeOutCubic,
-                  ),
-                ),
-            child: child,
-          );
-        },
-        transitionDuration: const Duration(milliseconds: 300),
+      CustomerTransactionsPage(
+        customerId: customerId,
+        customerLocalId: localId,
+        customerName: fullName.isNotEmpty ? fullName : 'Customer',
+        customerContact: contact,
+        currentPendingAmount: pendingAmount,
       ),
     );
   }
@@ -1127,18 +1102,18 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Handle
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppTheme.grey300,
-                      borderRadius: BorderRadius.circular(2),
+                if (!DesktopCanvas.isDesktopPlatform)
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppTheme.grey300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: 16),
+                if (!DesktopCanvas.isDesktopPlatform) const SizedBox(height: 16),
                 // Title
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1154,13 +1129,14 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                         fontFamily: 'Literata',
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () {
-                        _clearForm();
-                        Navigator.pop(context);
-                      },
-                    ),
+                    if (!DesktopCanvas.isDesktopPlatform)
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () {
+                          _clearForm();
+                          Navigator.pop(context);
+                        },
+                      ),
                   ],
                 ),
                 const SizedBox(height: 20),

@@ -143,6 +143,7 @@ Future<T?> _showDesktopSideDrawer<T>({
   required WidgetBuilder builder,
   required bool isDismissible,
   required bool useRootNavigator,
+  bool wide = false,
 }) {
   return showGeneralDialog<T>(
     context: context,
@@ -153,7 +154,10 @@ Future<T?> _showDesktopSideDrawer<T>({
     transitionDuration: const Duration(milliseconds: 260),
     pageBuilder: (dialogContext, animation, secondaryAnimation) {
       final media = MediaQuery.of(dialogContext);
-      final panelWidth = (media.size.width * 0.34).clamp(360.0, 440.0);
+      final fraction = wide ? 0.5 : 0.34;
+      final minWidth = wide ? 520.0 : 360.0;
+      final maxWidth = wide ? 760.0 : 440.0;
+      final panelWidth = (media.size.width * fraction).clamp(minWidth, maxWidth);
       final width = panelWidth > media.size.width - 24
           ? media.size.width - 24
           : panelWidth;
@@ -166,7 +170,7 @@ Future<T?> _showDesktopSideDrawer<T>({
         padding: EdgeInsets.only(
           top: media.padding.top + 12,
           right: 12,
-          bottom: media.padding.bottom + media.viewInsets.bottom + 12,
+          bottom: media.padding.bottom + media.viewInsets.bottom + 16,
         ),
         child: Align(
           alignment: Alignment.centerRight,
@@ -182,29 +186,23 @@ Future<T?> _showDesktopSideDrawer<T>({
             child: SizedBox(
               width: width,
               height: height < 240 ? 240 : height,
-              child: Stack(
+              child: Column(
                 children: [
-                  builder(dialogContext),
-                  Positioned(
-                    top: 10,
-                    right: 10,
+                  Align(
+                    alignment: Alignment.centerRight,
                     child: IconButton(
                       onPressed: isDismissible
                           ? () => Navigator.of(dialogContext).maybePop()
                           : null,
-                      style: IconButton.styleFrom(
-                        backgroundColor: AppColors.scaffold(dialogContext),
-                        foregroundColor: AppColors.secondaryText(dialogContext),
-                        fixedSize: const Size(32, 32),
-                        minimumSize: const Size(32, 32),
-                        padding: EdgeInsets.zero,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                      tooltip: 'Close',
+                      icon: Icon(
+                        Icons.close_rounded,
+                        size: 20,
+                        color: AppColors.secondaryText(dialogContext),
                       ),
-                      icon: const Icon(Icons.close, size: 18),
                     ),
                   ),
+                  Expanded(child: builder(dialogContext)),
                 ],
               ),
             ),
@@ -222,5 +220,22 @@ Future<T?> _showDesktopSideDrawer<T>({
         child: SlideTransition(position: slide, child: child),
       );
     },
+  );
+}
+
+/// Opens a full page. Phones push a route. Web, Windows, and macOS use the
+/// same right-hand drawer as the customer sheet, without a top navigation bar.
+Future<T?> showAppPage<T>(BuildContext context, Widget page) {
+  if (!DesktopCanvas.isDesktopPlatform) {
+    return Navigator.of(context).push<T>(
+      MaterialPageRoute<T>(builder: (_) => page),
+    );
+  }
+  return _showDesktopSideDrawer<T>(
+    context: context,
+    builder: (_) => page,
+    isDismissible: true,
+    useRootNavigator: true,
+    wide: true,
   );
 }

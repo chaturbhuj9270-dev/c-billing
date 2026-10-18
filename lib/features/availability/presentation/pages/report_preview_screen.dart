@@ -12,7 +12,9 @@ import 'package:c_billing/common_widgets/file_preview_page.dart';
 import 'package:intl/intl.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 
 class ReportPreviewScreen extends StatefulWidget {
   final List<ReportItem> reportItems;
@@ -43,9 +45,12 @@ class ReportPreviewScreen extends StatefulWidget {
       reportType: reportType,
       selectedFormat: selectedFormat,
       reportTitle: reportTitle,
-      presentedAsDialog: kIsWeb,
+      presentedAsDialog: DesktopCanvas.isDesktopPlatform,
     );
-    if (!kIsWeb) {
+    if (!kIsWeb && DesktopCanvas.isDesktopPlatform) {
+      return showAppPage(context, page);
+    }
+    if (!DesktopCanvas.isDesktopPlatform) {
       return Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => page),
       );

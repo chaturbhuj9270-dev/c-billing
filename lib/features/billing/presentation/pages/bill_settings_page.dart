@@ -7,6 +7,7 @@ import 'package:c_billing/features/billing/domain/entities/bill_tax_settings.dar
 import 'package:c_billing/features/billing/presentation/pages/bill_report_settings_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Bill settings page for configuring billing preferences
@@ -208,12 +209,9 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                                   subtitle:
                                       'Choose columns to show on printed bills',
                                   onTap: () async {
-                                    await Navigator.push(
+                                    await showAppPage(
                                       context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const BillReportSettingsPage(),
-                                      ),
+                                      const BillReportSettingsPage(),
                                     );
                                   },
                                 ),

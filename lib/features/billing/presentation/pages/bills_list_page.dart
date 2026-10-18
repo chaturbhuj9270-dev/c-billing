@@ -14,6 +14,7 @@ import 'package:c_billing/features/inventory_management/data/repositories/fireba
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_stock_repository.dart';
 import 'package:c_billing/features/billing/data/datasources/bill_cache_datasource.dart';
 import 'package:c_billing/features/billing/presentation/pages/return_bill_page.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/printing/printing.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
 import 'package:c_billing/features/shop/domain/entities/shop.dart';
@@ -710,11 +711,9 @@ class _BillsListPageState extends State<BillsListPage>
     if (result.action == _BillDialogAction.billReturned) {
       _loadBills();
     } else if (result.action == _BillDialogAction.openReturn) {
-      final returned = await Navigator.push<bool>(
+      final returned = await showAppPage<bool>(
         context,
-        MaterialPageRoute(
-          builder: (_) => ReturnBillPage(initialBill: bill),
-        ),
+        ReturnBillPage(initialBill: bill),
       );
       if (returned == true && mounted) _loadBills();
     }
@@ -738,11 +737,9 @@ class _BillsListPageState extends State<BillsListPage>
               AppTopBar.action(
                 icon: Icons.settings_rounded,
                 onTap: () async {
-                  await Navigator.push(
+                  await showAppPage(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const BillReportSettingsPage(),
-                    ),
+                    const BillReportSettingsPage(),
                   );
                 },
               ),
@@ -762,11 +759,9 @@ class _BillsListPageState extends State<BillsListPage>
                   AppTopBar.action(
                     icon: Icons.settings_rounded,
                     onTap: () async {
-                      await Navigator.push(
+                      await showAppPage(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => const BillReportSettingsPage(),
-                        ),
+                        const BillReportSettingsPage(),
                       );
                     },
                   ),
@@ -1694,11 +1689,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
       );
       return;
     }
-    final result = await Navigator.push<bool>(
+    final result = await showAppPage<bool>(
       context,
-      MaterialPageRoute(
-        builder: (context) => ReturnBillPage(initialBill: _bill),
-      ),
+      ReturnBillPage(initialBill: _bill),
     );
 
     if (result == true && mounted) {

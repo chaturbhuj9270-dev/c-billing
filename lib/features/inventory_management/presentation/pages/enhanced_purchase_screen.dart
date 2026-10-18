@@ -30,10 +30,12 @@ import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/common_widgets/glass_icon_fab.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 
 /// Lets the dashboard download button trigger the visible purchase report.
 class PurchaseScreenActions {
   static final List<VoidCallback> _downloads = [];
+  static VoidCallback? add;
 
   static void register(VoidCallback onDownload) => _downloads.add(onDownload);
 
@@ -103,6 +105,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeIn));
 
     PurchaseScreenActions.register(_generatePurchaseReport);
+    PurchaseScreenActions.add = _navigateToAddPurchase;
 
     // Load data directly from the local database first
     _loadPurchasesFromLocal();
@@ -131,6 +134,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
   @override
   void dispose() {
+    PurchaseScreenActions.add = null;
     PurchaseScreenActions.unregister(_generatePurchaseReport);
     LanguageService.instance.removeListener(_onLanguageChanged);
     _animController.dispose();
@@ -263,11 +267,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
   /// Navigate to add purchase page
   void _navigateToAddPurchase() async {
-    await Navigator.push(
+    await showAppPage(
       context,
-      MaterialPageRoute(
-        builder: (context) => const PurchasePage(isEmbedded: false),
-      ),
+      const PurchasePage(isEmbedded: false),
     );
     // Reload purchases after returning from add page
     _loadPurchasesFromLocal();
@@ -1328,7 +1330,10 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: GlassIconFab(
+      floatingActionButton:
+          widget.isEmbedded && DesktopCanvas.isDesktopPlatform
+          ? null
+          : GlassIconFab(
         tooltip: _localizations.addPurchase,
         onPressed: _navigateToAddPurchase,
       ),
@@ -1611,9 +1616,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
             AppTopBar.action(
               icon: Icons.document_scanner_rounded,
               onTap: () async {
-                final result = await Navigator.push(
+                final result = await showAppPage(
                   context,
-                  MaterialPageRoute(builder: (_) => InvoiceScannerPage()),
+                  InvoiceScannerPage(),
                 );
                 if (result == true && mounted) {
                   setState(() {});
@@ -1645,19 +1650,15 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
               ),
               onSelected: (value) async {
                 if (value == 'purchase_settings') {
-                  await Navigator.push(
+                  await showAppPage(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const PurchaseSettingsPage(),
-                    ),
+                    const PurchaseSettingsPage(),
                   );
                   setState(() {});
                 } else if (value == 'report_settings') {
-                  await Navigator.push(
+                  await showAppPage(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const PurchaseReportSettingsPage(),
-                    ),
+                    const PurchaseReportSettingsPage(),
                   );
                 }
               },

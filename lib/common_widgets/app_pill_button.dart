@@ -33,9 +33,9 @@ class AppPillButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: action.withValues(alpha: enabled ? 0.34 : 0.12),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
+            color: action.withValues(alpha: enabled ? 0.28 : 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -119,7 +119,7 @@ class DrawerBottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
         color: AppColors.card(context),
         border: Border(top: BorderSide(color: AppColors.border(context))),
@@ -127,6 +127,7 @@ class DrawerBottomBar extends StatelessWidget {
       child: leading == null
           ? action
           : Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(child: leading!),
                 const SizedBox(width: 12),

@@ -12,7 +12,14 @@ import '../../offline/entities/quotation_entity.dart';
 import 'quotation_screen.dart';
 import 'quotation_settings_page.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
+
+/// Lets the desktop shell header open a new quotation.
+class QuotationScreenActions {
+  static VoidCallback? add;
+}
 
 class QuotationListPage extends StatefulWidget {
   final bool isEmbedded;
@@ -35,6 +42,7 @@ class _QuotationListPageState extends State<QuotationListPage> {
   void initState() {
     super.initState();
     _l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
+    QuotationScreenActions.add = () => _openQuotation();
     _subscription = QuotationOfflineController.instance
         .watchAllQuotations()
         .listen((items) {
@@ -48,6 +56,7 @@ class _QuotationListPageState extends State<QuotationListPage> {
 
   @override
   void dispose() {
+    QuotationScreenActions.add = null;
     _subscription?.cancel();
     super.dispose();
   }
@@ -69,11 +78,9 @@ class _QuotationListPageState extends State<QuotationListPage> {
   }
 
   Future<void> _openQuotation({QuotationEntity? entity}) async {
-    final result = await Navigator.push<bool>(
+    final result = await showAppPage<bool>(
       context,
-      MaterialPageRoute(
-        builder: (_) => QuotationScreen(existing: entity?.toDomain()),
-      ),
+      QuotationScreen(existing: entity?.toDomain()),
     );
     if (result == true && mounted) {
       GlassyToast.show(
@@ -112,7 +119,10 @@ class _QuotationListPageState extends State<QuotationListPage> {
 
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton:
+          widget.isEmbedded && DesktopCanvas.isDesktopPlatform
+          ? null
+          : FloatingActionButton.extended(
         onPressed: () => _openQuotation(),
         backgroundColor: _primary,
         icon: const Icon(Icons.add_rounded, color: AppTheme.white),
@@ -134,12 +144,7 @@ class _QuotationListPageState extends State<QuotationListPage> {
               AppTopBar.action(
                 icon: Icons.settings_rounded,
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const QuotationSettingsPage(),
-                    ),
-                  );
+                  showAppPage(context, const QuotationSettingsPage());
                 },
               ),
             ],
@@ -152,12 +157,7 @@ class _QuotationListPageState extends State<QuotationListPage> {
                 child: AppTopBar.action(
                   icon: Icons.settings_rounded,
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const QuotationSettingsPage(),
-                      ),
-                    );
+                    showAppPage(context, const QuotationSettingsPage());
                   },
                 ),
               ),

@@ -32,6 +32,7 @@ import '../cubit/optimized_dashboard_cubit.dart';
 import '../cubit/optimized_dashboard_state.dart';
 import '../widgets/shimmer_widgets.dart';
 import 'package:c_billing/common_widgets/app_pill_button.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 import 'flyout_menu.dart';
 import 'profile_page.dart';
@@ -332,12 +333,20 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
   Widget _buildWebContent() {
     _webPanes[_selectedIndex] ??= _createWebPane(_selectedIndex);
-    final stack = IndexedStack(
-      index: _selectedIndex,
-      sizing: StackFit.expand,
+    // Only the selected page is laid out. IndexedStack still lays out every
+    // visited page, so one page's layout error freezes every other screen on
+    // its last frame (the loading shimmer).
+    final stack = Stack(
+      fit: StackFit.expand,
       children: [
         for (var i = 0; i < WebShell.count; i++)
-          _webPanes[i] ?? const SizedBox.shrink(),
+          Offstage(
+            offstage: i != _selectedIndex,
+            child: TickerMode(
+              enabled: i == _selectedIndex,
+              child: _webPanes[i] ?? const SizedBox.shrink(),
+            ),
+          ),
       ],
     );
     return Column(
@@ -351,8 +360,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               stack,
               // Pushed pages sit above the section. The root route stays
               // transparent so the section underneath remains visible.
-              IgnorePointer(
-                ignoring: !_webChildOpen,
+              Offstage(
+                offstage: !_webChildOpen,
                 child: Theme(
                   data: Theme.of(context).copyWith(
                     pageTransitionsTheme: const PageTransitionsTheme(
@@ -390,6 +399,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
   Widget _buildWebScreenTitle() {
     final subtitle = _webScreenSubtitle();
+    final headerAction = _webHeaderAction();
     return Padding(
       padding: const EdgeInsets.fromLTRB(28, 22, 28, 8),
       child: Row(
@@ -443,15 +453,65 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               ],
             ),
           ),
-          if (_selectedIndex == WebShell.customers)
-            AppPillButton(
-              label: _localizations.addCustomer,
-              icon: Icons.add,
-              onPressed: () => CustomerScreenActions.add?.call(),
-            ),
+          ?headerAction,
         ],
       ),
     );
+  }
+
+  Widget? _webHeaderAction() {
+    switch (_selectedIndex) {
+      case WebShell.customers:
+        return AppPillButton(
+          label: _localizations.addCustomer,
+          icon: Icons.add,
+          onPressed: () => CustomerScreenActions.add?.call(),
+        );
+      case WebShell.purchase:
+        return AppPillButton(
+          label: _localizations.addPurchase,
+          icon: Icons.add,
+          onPressed: () => PurchaseScreenActions.add?.call(),
+        );
+      case WebShell.products:
+        return AppPillButton(
+          label: _localizations.addProduct,
+          icon: Icons.add,
+          onPressed: () => ProductScreenActions.add?.call(),
+        );
+      case WebShell.suppliers:
+        return AppPillButton(
+          label: _localizations.addSupplier,
+          icon: Icons.add,
+          onPressed: () => SupplierScreenActions.add?.call(),
+        );
+      case WebShell.companies:
+        return AppPillButton(
+          label: _localizations.addCompany,
+          icon: Icons.add,
+          onPressed: () => CompanyScreenActions.add?.call(),
+        );
+      case WebShell.events:
+        return AppPillButton(
+          label: _localizations.newOrder,
+          icon: Icons.add,
+          onPressed: () => EventOrderScreenActions.add?.call(),
+        );
+      case WebShell.quotations:
+        return AppPillButton(
+          label: _localizations.newQuotation,
+          icon: Icons.add,
+          onPressed: () => QuotationScreenActions.add?.call(),
+        );
+      case WebShell.expenses:
+        return AppPillButton(
+          label: 'Add Expense',
+          icon: Icons.add,
+          onPressed: () => ExpenseScreenActions.add?.call(),
+        );
+      default:
+        return null;
+    }
   }
 
   String _webScreenTitle() {
@@ -1128,20 +1188,12 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               _selectedIndex == 3 ||
               _selectedIndex == 4)
           ? () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) {
-                    if (_selectedIndex == 2) {
-                      return const BillingPage();
-                    }
-                    if (_selectedIndex == 3) {
-                      return const AvailabilityPage();
-                    }
-                    return const EnhancedPurchaseScreen();
-                  },
-                ),
-              );
+              final Widget page = _selectedIndex == 2
+                  ? const BillingPage()
+                  : _selectedIndex == 3
+                  ? const AvailabilityPage()
+                  : const EnhancedPurchaseScreen();
+              showAppPage(context, page);
             }
           : null,
       onDownloadTap: (_selectedIndex == 2 ||
@@ -1149,12 +1201,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               _selectedIndex == 4)
           ? () {
               if (_selectedIndex == 2) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const BillsListPage(),
-                  ),
-                );
+                showAppPage(context, const BillsListPage());
               } else if (_selectedIndex == 3) {
                 AvailabilityScreenActions.download();
               } else {
@@ -1165,19 +1212,15 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       onSettingsTap: (_selectedIndex == 2 || _selectedIndex == 4)
           ? () async {
               if (_selectedIndex == 2) {
-                final result = await Navigator.push(
+                final result = await showAppPage(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const BillSettingsPage(),
-                  ),
+                  const BillSettingsPage(),
                 );
                 if (result == true && mounted) setState(() {});
               } else {
-                await Navigator.push(
+                await showAppPage(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const PurchaseSettingsPage(),
-                  ),
+                  const PurchaseSettingsPage(),
                 );
                 if (mounted) setState(() {});
               }
@@ -1187,37 +1230,26 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           (_selectedIndex == 2 || _selectedIndex == 3 || _selectedIndex == 4)
           ? () async {
               if (_selectedIndex == 2) {
-                await Navigator.push(
+                await showAppPage(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const BillReportSettingsPage(),
-                  ),
+                  const BillReportSettingsPage(),
                 );
               } else if (_selectedIndex == 3) {
-                await Navigator.push(
+                await showAppPage(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const StockReportSettingsPage(),
-                  ),
+                  const StockReportSettingsPage(),
                 );
               } else {
-                await Navigator.push(
+                await showAppPage(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const PurchaseReportSettingsPage(),
-                  ),
+                  const PurchaseReportSettingsPage(),
                 );
               }
             }
           : null,
       onLanguageTap: _showLanguageDialog,
       onBugReportTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const LogsViewerPage(),
-          ),
-        );
+        showAppPage(context, const LogsViewerPage());
       },
     );
   }

@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
-import 'package:drift_flutter/drift_flutter.dart';
+
+import 'database_executor.dart';
 
 part 'app_database.g.dart';
 
@@ -360,20 +361,10 @@ class CustomerTransactionRecords extends Table {
   ],
 )
 class AppDatabase extends _$AppDatabase {
-  AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
+  AppDatabase([QueryExecutor? executor]) : super(executor ?? openAppDatabase());
 
   @override
   int get schemaVersion => 1;
-
-  static QueryExecutor _open() {
-    return driftDatabase(
-      name: 'c_billing_db',
-      web: DriftWebOptions(
-        sqlite3Wasm: Uri.parse('sqlite3.wasm'),
-        driftWorker: Uri.parse('drift_worker.js'),
-      ),
-    );
-  }
 
   Future<void> clearAll() async {
     await transaction(() async {

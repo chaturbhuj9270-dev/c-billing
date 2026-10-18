@@ -12,6 +12,7 @@ import '../../../../core/services/theme_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'profile_page.dart';
 import 'web_shell.dart';
+import '../../../../common_widgets/glass_bottom_sheet.dart';
 import '../../../supplier/presentation/pages/enhanced_supplier_page.dart';
 import '../../../customer/presentation/pages/enhanced_customer_page.dart';
 import '../../../company/presentation/pages/enhanced_company_page.dart';
@@ -252,43 +253,31 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
         case 'Clients':
           afterClose((ctx) {
             if (WebShell.open(WebShell.customers)) return;
-            Navigator.of(ctx).push(
-              MaterialPageRoute(builder: (_) => const EnhancedCustomerPage()),
-            );
+            showAppPage(ctx, const EnhancedCustomerPage());
           });
           break;
         case 'Suppliers':
           afterClose((ctx) {
             if (WebShell.open(WebShell.suppliers)) return;
-            Navigator.of(ctx).push(
-              MaterialPageRoute(builder: (_) => const EnhancedSupplierPage()),
-            );
+            showAppPage(ctx, const EnhancedSupplierPage());
           });
           break;
         case 'Companies':
           afterClose((ctx) {
             if (WebShell.open(WebShell.companies)) return;
-            Navigator.of(ctx).push(
-              MaterialPageRoute(builder: (_) => const EnhancedCompanyPage()),
-            );
+            showAppPage(ctx, const EnhancedCompanyPage());
           });
           break;
         case 'Purchases':
           afterClose((ctx) {
             if (WebShell.open(WebShell.purchase)) return;
-            Navigator.of(ctx).push(
-              MaterialPageRoute(
-                builder: (_) => const EnhancedPurchaseScreen(),
-              ),
-            );
+            showAppPage(ctx, const EnhancedPurchaseScreen());
           });
           break;
         case 'Inventory':
           afterClose((ctx) {
             if (WebShell.open(WebShell.products)) return;
-            Navigator.of(ctx).push(
-              MaterialPageRoute(builder: (_) => const EnhancedProductPage()),
-            );
+            showAppPage(ctx, const EnhancedProductPage());
           });
           break;
         case 'Reports':
@@ -299,36 +288,27 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
         case 'Profile':
           afterClose((ctx) {
             if (WebShell.open(WebShell.profile)) return;
-            Navigator.of(ctx).push(
-              MaterialPageRoute(builder: (_) => const ProfilePage()),
-            );
+            showAppPage(ctx, const ProfilePage());
           });
           break;
         case 'ShopDetails':
           afterClose((ctx) {
             if (WebShell.open(WebShell.shop)) return;
-            Navigator.of(ctx).push(
-              MaterialPageRoute(builder: (_) => const ShopDetailsPage()),
-            );
+            showAppPage(ctx, const ShopDetailsPage());
           });
           break;
         case 'Expenses':
           afterClose((ctx) {
             if (WebShell.open(WebShell.expenses)) return;
-            Navigator.of(ctx).push(
-              MaterialPageRoute(builder: (_) => const ExpensesPage()),
-            );
+            showAppPage(ctx, const ExpensesPage());
           });
           break;
         case 'ChangePassword':
           afterClose((ctx) {
             if (WebShell.open(WebShell.password)) return;
-            Navigator.of(ctx).push(
-              MaterialPageRoute(
-                builder: (_) => const _SelectedTheme(
-                  child: ChangePasswordPage(),
-                ),
-              ),
+            showAppPage(
+              ctx,
+              const _SelectedTheme(child: ChangePasswordPage()),
             );
           });
           break;

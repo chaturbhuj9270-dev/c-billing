@@ -25,6 +25,12 @@ import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
+
+/// Lets the desktop shell header open a new event order.
+class EventOrderScreenActions {
+  static VoidCallback? add;
+}
 
 /// Date filter options for event/order list
 enum DateFilter {
@@ -82,6 +88,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   void initState() {
     super.initState();
     _selectedType = widget.filterType;
+    EventOrderScreenActions.add = () => _navigateToCreate(context);
     _initSyncService();
   }
 
@@ -111,6 +118,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
 
   @override
   void dispose() {
+    EventOrderScreenActions.add = null;
     _searchController.dispose();
     if (_offlineControllerListener != null) {
       EventOrderOfflineController.instance.removeListener(
@@ -149,7 +157,10 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               ),
             ],
           ),
-          floatingActionButton: _buildFAB(),
+          floatingActionButton:
+              widget.isEmbedded && DesktopCanvas.isDesktopPlatform
+              ? null
+              : _buildFAB(),
         ),
       ),
     );
@@ -1537,14 +1548,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
 
   void _navigateToCreate(BuildContext context) async {
     final cubit = context.read<EventOrderCubit>();
-    final result = await Navigator.push(
+    final result = await showAppPage(
       context,
-      MaterialPageRoute(
-        builder: (_) => BlocProvider.value(
-          value: cubit,
-          child: EventOrderScreen(
-            initialMode: _selectedType ?? OrderType.event,
-          ),
+      BlocProvider.value(
+        value: cubit,
+        child: EventOrderScreen(
+          initialMode: _selectedType ?? OrderType.event,
         ),
       ),
     );
@@ -1555,13 +1564,11 @@ class _EventOrderListPageState extends State<EventOrderListPage>
 
   void _navigateToEdit(BuildContext context, EventOrder order) async {
     final cubit = context.read<EventOrderCubit>();
-    final result = await Navigator.push(
+    final result = await showAppPage(
       context,
-      MaterialPageRoute(
-        builder: (_) => BlocProvider.value(
-          value: cubit,
-          child: EventOrderScreen(existingOrder: order),
-        ),
+      BlocProvider.value(
+        value: cubit,
+        child: EventOrderScreen(existingOrder: order),
       ),
     );
     if (result == true) {
@@ -1573,10 +1580,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   void _openSettings(BuildContext context) async {
     // Capture cubit reference before navigation
     final cubit = context.read<EventOrderCubit>();
-    await Navigator.push(
+    await showAppPage(
       context,
-      MaterialPageRoute(
-        builder: (_) => EventOrderSettingsPage(
+      EventOrderSettingsPage(
           currentType: _selectedType,
           onTypeChanged: (newType) {
             setState(() {
@@ -1587,7 +1593,6 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               searchQuery: _searchQuery,
             );
           },
-        ),
       ),
     );
   }

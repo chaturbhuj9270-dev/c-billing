@@ -30,8 +30,10 @@ import 'purchase_settings_page.dart';
 import 'invoice_scanner_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/common_widgets/app_pill_button.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 
 class PurchasePage extends StatefulWidget {
   final bool isEmbedded;
@@ -3015,6 +3017,7 @@ class _PurchasePageState extends State<PurchasePage>
       backgroundColor: AppColors.scaffold(context),
       body: SafeArea(
         top: false,
+        bottom: !DesktopCanvas.isDesktopPlatform,
         child: Column(
           children: [
             // Scrollable content
@@ -3028,7 +3031,9 @@ class _PurchasePageState extends State<PurchasePage>
                       pinned: true,
                       delegate: _StickyHeaderDelegate(
                         child: _buildHeader(),
-                        height: MediaQuery.paddingOf(context).top + 74,
+                        height: DesktopCanvas.isDesktopPlatform
+                            ? 56
+                            : MediaQuery.paddingOf(context).top + 74,
                       ),
                     ),
                   // Main Form Content
@@ -3073,6 +3078,18 @@ class _PurchasePageState extends State<PurchasePage>
 
   /// Sticky bottom submit button
   Widget _buildStickyBottomButton() {
+    if (DesktopCanvas.isDesktopPlatform) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: AppPillButton(
+          label: _localizations.recordPurchase,
+          icon: Icons.check_circle_rounded,
+          expanded: true,
+          loading: _isLoading,
+          onPressed: _isLoading ? null : _processPurchase,
+        ),
+      );
+    }
     final isDark = AppColors.isDark(context);
     return Container(
       color: AppColors.scaffold(context),
@@ -3143,9 +3160,9 @@ class _PurchasePageState extends State<PurchasePage>
         AppTopBar.action(
           icon: Icons.qr_code_scanner_rounded,
           onTap: () async {
-            final result = await Navigator.push(
+            final result = await showAppPage(
               context,
-              MaterialPageRoute(builder: (_) => const InvoiceScannerPage()),
+              const InvoiceScannerPage(),
             );
             if (result == true && mounted) {
               setState(() {});
@@ -3154,9 +3171,9 @@ class _PurchasePageState extends State<PurchasePage>
         ),
         AppTopBar.action(
           icon: Icons.settings_rounded,
-          onTap: () => Navigator.push(
+          onTap: () => showAppPage(
             context,
-            MaterialPageRoute(builder: (_) => const PurchaseSettingsPage()),
+            const PurchaseSettingsPage(),
           ),
         ),
       ],
@@ -3934,7 +3951,11 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return child;
+    return SizedBox(
+      height: height,
+      width: double.infinity,
+      child: child,
+    );
   }
 
   @override

@@ -6,6 +6,7 @@ import '../../../../core/services/language_service.dart';
 import '../../domain/entities/event_order.dart';
 import 'event_order_custom_columns_page.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Settings page for Event/Order list configuration
@@ -318,11 +319,9 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                   // Custom columns navigation card
                   InkWell(
                     onTap: () {
-                      Navigator.push(
+                      showAppPage(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => const EventOrderCustomColumnsPage(),
-                        ),
+                        const EventOrderCustomColumnsPage(),
                       );
                     },
                     borderRadius: BorderRadius.circular(16),

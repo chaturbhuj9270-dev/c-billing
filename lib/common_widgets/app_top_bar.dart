@@ -1,9 +1,9 @@
 import 'dart:ui';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
+import '../core/ui/desktop_canvas.dart';
 import 'glass_bevel_frame.dart';
 
 /// Top bar used on the availability tab and every other screen.
@@ -34,8 +34,8 @@ class AppTopBar extends StatelessWidget {
   }) {
     return Builder(
       builder: (context) {
-        final onWeb = kIsWeb;
-        final iconColor = onWeb
+        final onDesktop = DesktopCanvas.isDesktopPlatform;
+        final iconColor = onDesktop
             ? AppColors.primaryText(context)
             : AppTheme.white;
         return Material(
@@ -50,12 +50,12 @@ class AppTopBar extends StatelessWidget {
               height: 40,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: onWeb
+                color: onDesktop
                     ? AppColors.card(context)
                     : AppTheme.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: onWeb
+                  color: onDesktop
                       ? AppColors.border(context)
                       : AppTheme.white.withValues(alpha: 0.2),
                 ),
@@ -79,20 +79,38 @@ class AppTopBar extends StatelessWidget {
 
   /// Foreground used by chips that sit in the page heading.
   static Color onBar(BuildContext context) =>
-      kIsWeb ? AppColors.primaryText(context) : AppTheme.white;
+      DesktopCanvas.isDesktopPlatform
+      ? AppColors.primaryText(context)
+      : AppTheme.white;
 
   /// Chip fill used by badges that sit in the page heading.
-  static Color chipFill(BuildContext context) => kIsWeb
+  static Color chipFill(BuildContext context) =>
+      DesktopCanvas.isDesktopPlatform
       ? AppColors.accentSoft(context, 0.12)
       : AppTheme.white.withValues(alpha: 0.15);
 
-  static Color chipBorder(BuildContext context) => kIsWeb
+  static Color chipBorder(BuildContext context) =>
+      DesktopCanvas.isDesktopPlatform
       ? AppColors.border(context)
       : AppTheme.white.withValues(alpha: 0.2);
 
   @override
   Widget build(BuildContext context) {
-    if (kIsWeb) return _buildWebHeading(context);
+    if (DesktopCanvas.isDesktopPlatform) {
+      if (actions.isEmpty) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            for (var i = 0; i < actions.length; i++) ...[
+              if (i > 0) const SizedBox(width: 8),
+              actions[i],
+            ],
+          ],
+        ),
+      );
+    }
     final isDark = AppColors.isDark(context);
     final bar = AppColors.appBar(context);
     const headerRadius = BorderRadius.vertical(bottom: Radius.circular(24));
@@ -202,73 +220,6 @@ class AppTopBar extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  /// Page title row for web. It sits in the page, with no bar, shadow, or fill.
-  Widget _buildWebHeading(BuildContext context) {
-    final leadingWidget = leading ??
-        (showBack
-            ? AppTopBar.action(
-                icon: Icons.arrow_back_rounded,
-                onTap: onBack ?? () => Navigator.maybePop(context),
-              )
-            : null);
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 20, 20, 8),
-      child: Row(
-        children: [
-          if (leadingWidget != null) ...[
-            leadingWidget,
-            const SizedBox(width: 12),
-          ],
-          Expanded(
-            child: GestureDetector(
-              onTap: onTitleTap,
-              behavior: HitTestBehavior.opaque,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: AppColors.primaryText(context),
-                      fontSize: 22,
-                      height: 1.15,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'Literata',
-                      letterSpacing: -0.4,
-                    ),
-                  ),
-                  if (subtitle != null && subtitle!.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        subtitle!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: AppColors.mutedText(context),
-                          fontSize: 13,
-                          height: 1.2,
-                          fontFamily: 'Literata',
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-          for (var i = 0; i < actions.length; i++) ...[
-            if (i > 0) const SizedBox(width: 8),
-            actions[i],
-          ],
-        ],
       ),
     );
   }

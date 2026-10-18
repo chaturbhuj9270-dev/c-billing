@@ -9,8 +9,10 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/common_widgets/web_pdf_view.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 
 /// A reusable page for previewing PDF and CSV files with share and print functionality.
 ///
@@ -75,9 +77,12 @@ class FilePreviewPage extends StatefulWidget {
       subtitle: subtitle,
       onClose: onClose,
       customerPhone: customerPhone,
-      presentedAsDialog: kIsWeb,
+      presentedAsDialog: DesktopCanvas.isDesktopPlatform,
     );
-    if (!kIsWeb) {
+    if (!kIsWeb && DesktopCanvas.isDesktopPlatform) {
+      return showAppPage(context, page);
+    }
+    if (!DesktopCanvas.isDesktopPlatform) {
       return Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => page),
       );

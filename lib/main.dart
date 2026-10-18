@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 
@@ -42,6 +44,19 @@ Future<void> main() async {
     ).timeout(const Duration(seconds: 15));
   } catch (e) {
     debugPrint('Firebase init error: $e');
+  }
+
+  // Firestore's on-disk cache aborts the Mac process if that database is
+  // locked or unreadable. This app keeps its own offline database, so the
+  // Mac build uses memory only. This must run before any other Firestore call.
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS) {
+    try {
+      FirebaseFirestore.instance.settings = const Settings(
+        persistenceEnabled: false,
+      );
+    } catch (e) {
+      debugPrint('Firestore settings error: $e');
+    }
   }
 
   // Theme preference before first frame so the correct mode is used immediately.

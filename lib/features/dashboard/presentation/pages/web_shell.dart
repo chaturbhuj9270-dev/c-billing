@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../common_widgets/glass_bottom_sheet.dart';
+
 /// Switches the web app's content pane without pushing a new route.
 class WebShell {
   static const int dashboard = 0;
@@ -46,11 +48,11 @@ class WebShell {
     navigator.popUntil((route) => route.isFirst);
   }
 
-  /// Open [page] in the web content area. The sidebar stays put.
+  /// Open [page] in the right-hand drawer. The sidebar stays put.
   static Future<T?> push<T>(Widget page) {
-    final navigator = navigatorKey.currentState;
-    if (navigator == null) return Future<T?>.value();
-    return navigator.push<T>(MaterialPageRoute<T>(builder: (_) => page));
+    final context = navigatorKey.currentContext;
+    if (context == null) return Future<T?>.value();
+    return showAppPage<T>(context, page);
   }
 }
 

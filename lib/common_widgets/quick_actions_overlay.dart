@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 import '../features/dashboard/presentation/pages/web_shell.dart';
 import 'glass_bottom_sheet.dart';
 import '../core/localization/app_localizations.dart';
@@ -60,8 +60,8 @@ List<QuickActionItem> buildQuickActionItems(
 
   void open(Widget page, int shellIndex) {
     beforeNavigate?.call();
-    if (kIsWeb && WebShell.open(shellIndex)) return;
-    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+    if (DesktopCanvas.isDesktopPlatform && WebShell.open(shellIndex)) return;
+    showAppPage(context, page);
   }
 
   return [

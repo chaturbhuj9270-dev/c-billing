@@ -52,6 +52,7 @@ import 'package:c_billing/common_widgets/file_preview_page.dart';
 import 'package:c_billing/features/inventory_management/presentation/pages/barcode_generator_page.dart';
 import 'package:c_billing/features/customer/presentation/pages/enhanced_customer_page.dart';
 import 'package:c_billing/features/quotation/presentation/pages/quotation_list_page.dart';
+import 'package:c_billing/features/dashboard/presentation/pages/web_shell.dart';
 import 'package:c_billing/features/billing/presentation/widgets/barcode_scanner_sheet.dart';
 import 'package:c_billing/features/billing/presentation/widgets/billing_add_items_widgets.dart';
 import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
@@ -1588,11 +1589,9 @@ class _BillingPageState extends State<BillingPage> {
                     AppTopBar.action(
                       icon: Icons.settings_rounded,
                       onTap: () async {
-                        final result = await Navigator.push(
+                        final result = await showAppPage<bool>(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => const BillSettingsPage(),
-                          ),
+                          const BillSettingsPage(),
                         );
                         if (result == true) {
                           _loadBillSettings();
@@ -1602,12 +1601,9 @@ class _BillingPageState extends State<BillingPage> {
                     AppTopBar.action(
                       icon: Icons.tune_rounded,
                       onTap: () {
-                        Navigator.push(
+                        showAppPage(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const BillReportSettingsPage(),
-                          ),
+                          const BillReportSettingsPage(),
                         );
                       },
                     ),
@@ -5412,6 +5408,14 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
+  void _openSection(Widget page, int index) {
+    if (WebShell.open(index)) {
+      _loadQuickStats();
+      return;
+    }
+    showAppPage(context, page).then((_) => _loadQuickStats());
+  }
+
   /// Premium compact 4-column stats grid (icon + name only)
   Widget _buildQuickStatsGrid() {
     final stats = [
@@ -5423,10 +5427,7 @@ class _BillingPageState extends State<BillingPage> {
         gradient: [AppTheme.paletteFF667EEA, AppTheme.paletteFF764BA2],
         onTap: () {
           _toggleQuickStats();
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const BillsListPage()),
-          ).then((_) => _loadQuickStats());
+          _openSection(const BillsListPage(), WebShell.invoices);
         },
       ),
       _QuickStatItem(
@@ -5437,10 +5438,7 @@ class _BillingPageState extends State<BillingPage> {
         gradient: [AppTheme.paletteFFF093FB, AppTheme.paletteFFF5576C],
         onTap: () {
           _toggleQuickStats();
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const EnhancedProductPage()),
-          ).then((_) => _loadQuickStats());
+          _openSection(const EnhancedProductPage(), WebShell.products);
         },
       ),
       _QuickStatItem(
@@ -5451,10 +5449,7 @@ class _BillingPageState extends State<BillingPage> {
         gradient: [AppTheme.coral, AppTheme.paletteFFEE5A24],
         onTap: () {
           _toggleQuickStats();
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const EnhancedSupplierPage()),
-          ).then((_) => _loadQuickStats());
+          _openSection(const EnhancedSupplierPage(), WebShell.suppliers);
         },
       ),
       _QuickStatItem(
@@ -5465,10 +5460,7 @@ class _BillingPageState extends State<BillingPage> {
         gradient: [AppTheme.purple, AppTheme.purple700],
         onTap: () {
           _toggleQuickStats();
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const EnhancedCompanyPage()),
-          ).then((_) => _loadQuickStats());
+          _openSection(const EnhancedCompanyPage(), WebShell.companies);
         },
       ),
       _QuickStatItem(
@@ -5479,10 +5471,10 @@ class _BillingPageState extends State<BillingPage> {
         gradient: [AppTheme.orange900, AppTheme.amber800],
         onTap: () {
           _toggleQuickStats();
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const PurchaseReturnScreen()),
-          ).then((_) => _loadQuickStats());
+          _openSection(
+            const PurchaseReturnScreen(),
+            WebShell.purchaseReturn,
+          );
         },
       ),
       _QuickStatItem(
@@ -5493,10 +5485,7 @@ class _BillingPageState extends State<BillingPage> {
         gradient: [AppTheme.paletteFF6C63FF, AppTheme.paletteFF8B5CF6],
         onTap: () {
           _toggleQuickStats();
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const EventOrderListPage()),
-          ).then((_) => _loadQuickStats());
+          _openSection(const EventOrderListPage(), WebShell.events);
         },
       ),
       _QuickStatItem(
@@ -5507,10 +5496,7 @@ class _BillingPageState extends State<BillingPage> {
         gradient: [AppTheme.blue800, AppTheme.blue400],
         onTap: () {
           _toggleQuickStats();
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const QuotationListPage()),
-          ).then((_) => _loadQuickStats());
+          _openSection(const QuotationListPage(), WebShell.quotations);
         },
       ),
       _QuickStatItem(
@@ -5521,10 +5507,7 @@ class _BillingPageState extends State<BillingPage> {
         gradient: [AppTheme.teal600, AppTheme.teal900],
         onTap: () {
           _toggleQuickStats();
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const BarcodeGeneratorPage()),
-          ).then((_) => _loadQuickStats());
+          _openSection(const BarcodeGeneratorPage(), WebShell.barcode);
         },
       ),
       _QuickStatItem(
@@ -5535,10 +5518,7 @@ class _BillingPageState extends State<BillingPage> {
         gradient: [AppColors.action(context), AppTheme.primaryDark],
         onTap: () {
           _toggleQuickStats();
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const EnhancedCustomerPage()),
-          ).then((_) => _loadQuickStats());
+          _openSection(const EnhancedCustomerPage(), WebShell.customers);
         },
       ),
     ];

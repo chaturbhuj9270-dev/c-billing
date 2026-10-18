@@ -19,6 +19,12 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/app_pill_button.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
+
+/// Lets the desktop shell header open the add-company sheet.
+class CompanyScreenActions {
+  static VoidCallback? add;
+}
 
 class EnhancedCompanyPage extends StatefulWidget {
   final bool isEmbedded;
@@ -92,8 +98,10 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
       end: 1.0,
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
+    CompanyScreenActions.add = _showAddCompanySheet;
     _checkUserAuthentication();
     _setupLocalStream();
+    _loadLocalCompanies();
     _fetchFromFirebase();
     _setupFirestoreStream();
 
@@ -105,6 +113,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
 
   @override
   void dispose() {
+    CompanyScreenActions.add = null;
     _isNavigatingAway = true;
     _animController.dispose();
     _companyStreamSub?.cancel();
@@ -139,6 +148,21 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
 
   // ━━━ DATA: Local stream (offline-first, real-time) ━━━
 
+  Future<void> _loadLocalCompanies() async {
+    try {
+      final entities = await CompanyOfflineController.instance
+          .getAllCompanies();
+      if (!mounted || _isNavigatingAway) return;
+      setState(() {
+        _companies = entities.map(_entityToMap).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('[EnhancedCompany] local load error: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   void _setupLocalStream() {
     final offlineCtrl = CompanyOfflineController.instance;
     _companyStreamSub = offlineCtrl.watchAllCompanies().listen(
@@ -153,6 +177,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
       },
       onError: (e) {
         debugPrint('[EnhancedCompany] local stream error: $e');
+        if (mounted) setState(() => _isLoading = false);
       },
     );
   }
@@ -347,18 +372,19 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Drag handle
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: AppTheme.grey300,
-                          borderRadius: BorderRadius.circular(2),
+                    if (!DesktopCanvas.isDesktopPlatform)
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: AppTheme.grey300,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
                         ),
                       ),
-                    ),
-                    SizedBox(height: 16),
+                    if (!DesktopCanvas.isDesktopPlatform)
+                      const SizedBox(height: 16),
                     // Header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -374,7 +400,8 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
                             fontFamily: 'Literata',
                           ),
                         ),
-                        IconButton(
+                        if (!DesktopCanvas.isDesktopPlatform)
+                          IconButton(
                           icon: const Icon(Icons.close_rounded),
                           onPressed: () {
                             _clearForm();
@@ -747,7 +774,10 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
 
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      floatingActionButton: _buildFAB(),
+      floatingActionButton:
+          widget.isEmbedded && DesktopCanvas.isDesktopPlatform
+          ? null
+          : _buildFAB(),
       body: Column(
         children: [
           if (!widget.isEmbedded)

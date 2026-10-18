@@ -27,6 +27,12 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/app_pill_button.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
+
+/// Lets the desktop shell header open the add-product sheet.
+class ProductScreenActions {
+  static VoidCallback? add;
+}
 
 class EnhancedProductPage extends StatefulWidget {
   final bool isEmbedded;
@@ -97,8 +103,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       end: 1.0,
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
+    ProductScreenActions.add = _showAddProductSheet;
     _checkUserAuthentication();
     _setupLocalStream();
+    _loadLocalProducts();
     _setupBatchStream();
     _setupFirestoreStream();
     _setupCrossPageRefresh();
@@ -111,6 +119,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
   @override
   void dispose() {
+    ProductScreenActions.add = null;
     _isNavigatingAway = true;
     _animController.dispose();
     _productStreamSub?.cancel();
@@ -142,6 +151,22 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
   }
 
   // ━━━ DATA: Local stream (offline-first, real-time) ━━━
+
+  Future<void> _loadLocalProducts() async {
+    try {
+      final entities = await ProductOfflineController.instance.getAllProducts();
+      if (!mounted || _isNavigatingAway) return;
+      setState(() {
+        _products = entities.where((e) => e.isActive).toList();
+        _isLoading = false;
+      });
+      _updateUnsyncedCount();
+      _rebuildGroupedProducts();
+    } catch (e) {
+      debugPrint('[EnhancedProduct] local load error: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   void _setupLocalStream() {
     final offlineCtrl = ProductOfflineController.instance;
@@ -320,24 +345,14 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                   AppTopBar.action(
                     icon: Icons.qr_code_2_rounded,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => BarcodeGeneratorPage(),
-                        ),
-                      );
+                      showAppPage(context, BarcodeGeneratorPage());
                     },
                   ),
                   const SizedBox(width: 8),
                   AppTopBar.action(
                     icon: Icons.settings_outlined,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ProductSettingsPage(),
-                        ),
-                      );
+                      showAppPage(context, const ProductSettingsPage());
                     },
                   ),
                 ],
@@ -422,7 +437,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: widget.isEmbedded && DesktopCanvas.isDesktopPlatform
+          ? null
+          : FloatingActionButton.extended(
         backgroundColor: AppColors.action(context),
         icon: const Icon(Icons.add_rounded, color: AppTheme.white),
         label: Text(
@@ -466,19 +483,13 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         AppTopBar.action(
           icon: Icons.qr_code_2_rounded,
           onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => BarcodeGeneratorPage()),
-            );
+            showAppPage(context, BarcodeGeneratorPage());
           },
         ),
         AppTopBar.action(
           icon: Icons.settings_outlined,
           onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ProductSettingsPage()),
-            );
+            showAppPage(context, const ProductSettingsPage());
           },
         ),
       ],
@@ -1616,17 +1627,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: Container(
-            height: MediaQuery.of(context).size.height * 0.85,
-            decoration: BoxDecoration(
-              color: AppColors.card(context),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            child: Column(
-              children: [
-                // Handle bar
+        builder: (context, setDialogState) {
+          final desktop = DesktopCanvas.isDesktopPlatform;
+          final sheet = Column(
+            children: [
+              if (!desktop)
                 Center(
                   child: Container(
                     margin: const EdgeInsets.only(top: 12),
@@ -1638,11 +1643,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     ),
                   ),
                 ),
-                // Header
-                Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Row(
-                    children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(16, desktop ? 20 : 16, 16, 16),
+                child: Row(
+                  children: [
                       Text(
                         _localizations.addNewProduct,
                         style: TextStyle(
@@ -1652,14 +1656,16 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           color: AppColors.accent(context),
                         ),
                       ),
-                      const Spacer(),
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: Icon(
-                          Icons.close_rounded,
-                          color: AppTheme.grey600,
+                      if (!desktop) ...[
+                        const Spacer(),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(
+                            Icons.close_rounded,
+                            color: AppTheme.grey600,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
@@ -1815,66 +1821,106 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     ),
                   ),
                 ),
-                // Actions
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.card(context),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, -2),
-                      ),
-                    ],
-                  ),
-                  child: SafeArea(
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.pop(context),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppTheme.grey700,
-                              side: BorderSide(color: AppTheme.grey300),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                            ),
-                            child: Text(
-                              _localizations.cancel,
-                              style: const TextStyle(fontFamily: 'Literata'),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        AppPillButton(
-                          label: 'Save',
-                          icon: Icons.check_rounded,
-                          onPressed: () => _saveNewProduct(
-                              nameController: nameController,
-                              categoryController: categoryController,
-                              purchasePriceController: purchasePriceController,
-                              salesPriceController: salesPriceController,
-                              initialStockController: initialStockController,
-                              cgstController: cgstController,
-                              sgstController: sgstController,
-                              hsnController: hsnController,
-                              applyGst: applyGst,
-                              selectedCompany: dialogSelectedCompany,
-                              selectedSupplier: dialogSelectedSupplier,
-                              customColumns: customColumns,
-                              customTextControllers: customTextControllers,
-                              customFieldValues: customFieldValues,
-                            ),
-                        ),
-                      ],
+                _sheetFooter(
+                  context,
+                  desktop: desktop,
+                  primary: AppPillButton(
+                    label: 'Save',
+                    icon: Icons.check_rounded,
+                    expanded: desktop,
+                    onPressed: () => _saveNewProduct(
+                      nameController: nameController,
+                      categoryController: categoryController,
+                      purchasePriceController: purchasePriceController,
+                      salesPriceController: salesPriceController,
+                      initialStockController: initialStockController,
+                      cgstController: cgstController,
+                      sgstController: sgstController,
+                      hsnController: hsnController,
+                      applyGst: applyGst,
+                      selectedCompany: dialogSelectedCompany,
+                      selectedSupplier: dialogSelectedSupplier,
+                      customColumns: customColumns,
+                      customTextControllers: customTextControllers,
+                      customFieldValues: customFieldValues,
                     ),
                   ),
                 ),
               ],
-            ),
-          ),
+            );
+          return desktop
+              ? sheet
+              : BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                  child: Container(
+                    height: MediaQuery.of(context).size.height * 0.85,
+                    decoration: BoxDecoration(
+                      color: AppColors.card(context),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(24),
+                      ),
+                    ),
+                    child: sheet,
+                  ),
+                );
+        },
+      ),
+    );
+  }
+
+  Widget _sheetFooter(
+    BuildContext context, {
+    required bool desktop,
+    required Widget primary,
+  }) {
+    final cancel = OutlinedButton(
+      onPressed: () => Navigator.pop(context),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: desktop
+            ? AppColors.primaryText(context)
+            : AppTheme.grey700,
+        side: BorderSide(
+          color: desktop ? AppColors.border(context) : AppTheme.grey300,
+        ),
+        minimumSize: const Size.fromHeight(48),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(desktop ? 28 : 12),
+        ),
+        textStyle: const TextStyle(
+          fontFamily: 'Literata',
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
         ),
       ),
+      child: Text(_localizations.cancel),
+    );
+    final row = Row(
+      children: [
+        Expanded(child: cancel),
+        const SizedBox(width: 12),
+        if (desktop) Expanded(child: primary) else primary,
+      ],
+    );
+    if (desktop) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: primary,
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(child: row),
     );
   }
 
@@ -2106,17 +2152,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: Container(
-            height: MediaQuery.of(context).size.height * 0.85,
-            decoration: BoxDecoration(
-              color: AppColors.card(context),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            child: Column(
-              children: [
-                // Handle bar
+        builder: (context, setDialogState) {
+          final desktop = DesktopCanvas.isDesktopPlatform;
+          final sheet = Column(
+            children: [
+              if (!desktop)
                 Center(
                   child: Container(
                     margin: const EdgeInsets.only(top: 12),
@@ -2128,11 +2168,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     ),
                   ),
                 ),
-                // Header
-                Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Row(
-                    children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(16, desktop ? 20 : 16, 16, 16),
+                child: Row(
+                  children: [
                       Text(
                         _localizations.editProduct,
                         style: TextStyle(
@@ -2142,14 +2181,16 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           color: AppColors.accent(context),
                         ),
                       ),
-                      const Spacer(),
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: Icon(
-                          Icons.close_rounded,
-                          color: AppTheme.grey600,
+                      if (!desktop) ...[
+                        const Spacer(),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(
+                            Icons.close_rounded,
+                            color: AppTheme.grey600,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
@@ -2311,64 +2352,48 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     ),
                   ),
                 ),
-                // Actions
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.card(context),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, -2),
-                      ),
-                    ],
-                  ),
-                  child: SafeArea(
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.pop(context),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppTheme.grey700,
-                              side: BorderSide(color: AppTheme.grey300),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                            ),
-                            child: Text(
-                              _localizations.cancel,
-                              style: const TextStyle(fontFamily: 'Literata'),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        AppPillButton(
-                          label: _localizations.update,
-                          icon: Icons.check_rounded,
-                          onPressed: () => _updateProduct(
-                            product: product,
-                            nameController: nameController,
-                            companyController: companyController,
-                            categoryController: categoryController,
-                            purchasePriceController: purchasePriceController,
-                            salesPriceController: salesPriceController,
-                            cgstController: cgstController,
-                            sgstController: sgstController,
-                            hsnController: hsnController,
-                            applyGst: applyGst,
-                            customColumns: customColumns,
-                            customTextControllers: customTextControllers,
-                            customFieldValues: customFieldValues,
-                          ),
-                        ),
-                      ],
+                _sheetFooter(
+                  context,
+                  desktop: desktop,
+                  primary: AppPillButton(
+                    label: _localizations.update,
+                    icon: Icons.check_rounded,
+                    expanded: desktop,
+                    onPressed: () => _updateProduct(
+                      product: product,
+                      nameController: nameController,
+                      companyController: companyController,
+                      categoryController: categoryController,
+                      purchasePriceController: purchasePriceController,
+                      salesPriceController: salesPriceController,
+                      cgstController: cgstController,
+                      sgstController: sgstController,
+                      hsnController: hsnController,
+                      applyGst: applyGst,
+                      customColumns: customColumns,
+                      customTextControllers: customTextControllers,
+                      customFieldValues: customFieldValues,
                     ),
                   ),
                 ),
               ],
-            ),
-          ),
-        ),
+            );
+          return desktop
+              ? sheet
+              : BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                  child: Container(
+                    height: MediaQuery.of(context).size.height * 0.85,
+                    decoration: BoxDecoration(
+                      color: AppColors.card(context),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(24),
+                      ),
+                    ),
+                    child: sheet,
+                  ),
+                );
+        },
       ),
     );
   }
