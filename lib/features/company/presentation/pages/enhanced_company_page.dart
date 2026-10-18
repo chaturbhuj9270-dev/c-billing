@@ -129,7 +129,10 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
 
   void _checkUserAuthentication() {
     if (_auth.currentUser == null) {
-      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+      Navigator.of(
+        context,
+        rootNavigator: true,
+      ).pushNamedAndRemoveUntil('/login', (route) => false);
     }
   }
 

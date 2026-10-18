@@ -40,7 +40,10 @@ class LogoutService {
 
       // 5. Navigate to login screen
       if (context.mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+        Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+          '/',
+          (route) => false,
+        );
       }
 
       debugPrint('[LogoutService] Logout complete');
@@ -52,7 +55,10 @@ class LogoutService {
       } catch (_) {}
       
       if (context.mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+        Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+          '/',
+          (route) => false,
+        );
       }
     }
   }
@@ -82,7 +88,10 @@ class LogoutService {
       
       // Navigate to login
       if (context.mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+        Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+          '/',
+          (route) => false,
+        );
       }
     } catch (e) {
       debugPrint('[LogoutService] Error during session expiry: $e');
@@ -91,7 +100,10 @@ class LogoutService {
       } catch (_) {}
       
       if (context.mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+        Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+          '/',
+          (route) => false,
+        );
       }
     }
   }

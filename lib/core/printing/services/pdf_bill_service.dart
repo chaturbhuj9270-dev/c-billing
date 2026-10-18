@@ -2098,6 +2098,22 @@ class PdfBillService {
     return '$day/$month/$year $hour:$minute $period';
   }
 
+  /// PDF bytes without writing a file. Used by the web preview.
+  Future<Uint8List> buildPdfBytes({
+    required PrintBillData billData,
+    required Shop shopDetails,
+  }) async {
+    final pdf = await buildPdfDocument(
+      billData: billData,
+      shopDetails: shopDetails,
+    );
+    final bytes = await pdf.save();
+    if (bytes.isEmpty) {
+      throw Exception('PDF generation failed: empty bytes');
+    }
+    return bytes;
+  }
+
   /// Save PDF to file and return the file path
   Future<File> savePdfToFile({
     required PrintBillData billData,

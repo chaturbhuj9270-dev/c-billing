@@ -63,9 +63,31 @@
         color: #F2F5F3;
       }
 
-      #splash .tagline {
-        color: #8E9892;
-      }
+    }
+
+    #splash .mark {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #splash .ring {
+      position: absolute;
+      width: 118px;
+      height: 118px;
+      border-radius: 50%;
+      border: 1.6px solid rgba(27, 77, 62, 0.32);
+      animation: splash-ripple 2.8s linear infinite;
+    }
+
+    #splash .ring.r2 { animation-delay: -1.87s; }
+    #splash .ring.r3 { animation-delay: -0.93s; }
+
+    #splash .logo {
+      animation: splash-logo-in 0.7s cubic-bezier(0.34, 1.45, 0.64, 1) both;
     }
 
     #splash img {
@@ -73,7 +95,9 @@
       height: 120px;
       border-radius: 50%;
       object-fit: cover;
+      display: block;
       box-shadow: 0 0 28px rgba(27, 77, 62, 0.28);
+      animation: splash-pulse 1.6s ease-in-out 0.7s infinite;
     }
 
     #splash h1 {
@@ -82,6 +106,16 @@
       font-weight: 800;
       letter-spacing: -0.4px;
       line-height: 1;
+      animation: splash-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
+    }
+
+    #splash .line {
+      width: 42px;
+      height: 3px;
+      margin-top: 16px;
+      border-radius: 2px;
+      background: #1B4D3E;
+      animation: splash-line 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.68s both;
     }
 
     #splash .tagline {
@@ -91,6 +125,66 @@
       font-weight: 600;
       letter-spacing: 1.6px;
       line-height: 1.45;
+      animation: splash-fade 0.55s ease-out 0.85s both;
+    }
+
+    @keyframes splash-ripple {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(2.28); opacity: 0; }
+    }
+
+    @keyframes splash-logo-in {
+      from { opacity: 0; transform: scale(0.55); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes splash-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.045); }
+    }
+
+    @keyframes splash-rise {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    @keyframes splash-line {
+      from { transform: scaleX(0); opacity: 0; }
+      to { transform: scaleX(1); opacity: 1; }
+    }
+
+    @keyframes splash-fade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      #splash .tagline {
+        color: #8E9892;
+      }
+
+      #splash .ring {
+        border-color: rgba(91, 175, 127, 0.55);
+      }
+
+      #splash img {
+        box-shadow: 0 0 28px rgba(59, 108, 79, 0.45);
+      }
+
+      #splash .line {
+        background: #5CAF7F;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #splash .ring,
+      #splash .logo,
+      #splash img,
+      #splash h1,
+      #splash .line,
+      #splash .tagline {
+        animation: none;
+      }
     }
   </style>
   <script>
@@ -102,8 +196,16 @@
 </head>
 <body>
   <div id="splash">
-    <img src="splash_logo.png" alt="">
+    <div class="mark">
+      <span class="ring r1"></span>
+      <span class="ring r2"></span>
+      <span class="ring r3"></span>
+      <div class="logo">
+        <img src="splash_logo.png" alt="">
+      </div>
+    </div>
     <h1>C-Billing</h1>
+    <div class="line"></div>
     <p class="tagline">THE BACKBONE FOR<br>YOUR BUSINESS</p>
   </div>
   <script src="flutter_bootstrap.js" async=""></script>

@@ -8026,6 +8026,28 @@ class AppLocalizations {
     }
   }
 
+  String get applyGst {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.applyGst;
+      case 'Marathi':
+        return MarathiLocalization.applyGst;
+      default:
+        return EnglishLocalization.applyGst;
+    }
+  }
+
+  String get applyGstHint {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.applyGstHint;
+      case 'Marathi':
+        return MarathiLocalization.applyGstHint;
+      default:
+        return EnglishLocalization.applyGstHint;
+    }
+  }
+
   String get tapToSelect {
     switch (languageCode) {
       case 'Hindi':

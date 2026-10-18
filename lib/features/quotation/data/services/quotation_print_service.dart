@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -94,6 +95,30 @@ class QuotationPrintService {
         onTimeout: () => Shop.empty,
       );
 
+      if (kIsWeb) {
+        final bytes = await _pdfService
+            .buildPdfBytes(billData: printData, shopDetails: shop)
+            .timeout(
+              const Duration(seconds: 90),
+              onTimeout: () =>
+                  throw Exception('PDF generation timed out after 90 seconds'),
+            );
+        if (context.mounted) GlassyToast.dismiss();
+        if (!context.mounted) return;
+        await FilePreviewPage.open(
+          context,
+          bytes: bytes,
+              fileName:
+                  '${localizations.quotation} - ${quotation.quotationNumber}',
+              fileType: FilePreviewType.pdf,
+              subtitle: DateFormat(
+                'dd MMM yyyy',
+              ).format(quotation.referenceDate),
+              customerPhone: quotation.customerContact,
+        );
+        return;
+      }
+
       final file = await _pdfService
           .savePdfToFile(billData: printData, shopDetails: shop)
           .timeout(
@@ -112,18 +137,14 @@ class QuotationPrintService {
 
       if (!context.mounted) return;
 
-      await Navigator.push(
+      await FilePreviewPage.open(
         context,
-        MaterialPageRoute(
-          builder: (context) => FilePreviewPage(
-            file: file,
+        file: file,
             fileName:
                 '${localizations.quotation} - ${quotation.quotationNumber}',
             fileType: FilePreviewType.pdf,
             subtitle: DateFormat('dd MMM yyyy').format(quotation.referenceDate),
             customerPhone: quotation.customerContact,
-          ),
-        ),
       );
     } catch (e) {
       if (context.mounted) {

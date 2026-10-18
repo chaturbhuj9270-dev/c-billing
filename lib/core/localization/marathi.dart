@@ -919,6 +919,8 @@ class MarathiLocalization {
   static const String createNewProductRecord = 'नवीन उत्पादन रेकॉर्ड तयार करा';
   static const String hsnCodeRequired = 'GST लागू असताना HSN कोड आवश्यक आहे';
   static const String hsnCode = 'HSN कोड';
+  static const String applyGst = 'GST लागू करा';
+  static const String applyGstHint = 'हे बंद असताना GST वगळले जाईल';
   static const String tapToSelect = 'निवडण्यासाठी टॅप करा';
   static const String perUnit = 'प्रति युनिट';
   static const String expiryDateAfterProduction =

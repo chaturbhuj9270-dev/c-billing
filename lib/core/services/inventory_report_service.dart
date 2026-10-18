@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
@@ -359,6 +361,26 @@ class InventoryReportService {
     String? customTitle,
     List<int?>? orderQuantities,
   }) async {
+    final csv = await _composeDynamicCsv(
+      products: products,
+      reportType: reportType,
+      customTitle: customTitle,
+      orderQuantities: orderQuantities,
+    );
+    final directory = await getApplicationDocumentsDirectory();
+    final fileName =
+        '${reportType.name}_report_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.csv';
+    final file = File('${directory.path}/$fileName');
+    await file.writeAsString(csv);
+    return file;
+  }
+
+  Future<String> _composeDynamicCsv({
+    required List<Product> products,
+    required ReportType reportType,
+    String? customTitle,
+    List<int?>? orderQuantities,
+  }) async {
     final reportTitle = customTitle ?? getReportTypeLabel(reportType);
     final dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now());
     final settings = StockReportSettingsService.instance;
@@ -461,14 +483,7 @@ class InventoryReportService {
       buffer.writeln(rowData.join(','));
     }
 
-    // Save to file
-    final directory = await getApplicationDocumentsDirectory();
-    final fileName =
-        '${reportType.name}_report_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.csv';
-    final file = File('${directory.path}/$fileName');
-    await file.writeAsString(buffer.toString());
-
-    return file;
+    return buffer.toString();
   }
 
   /// Share the generated report
@@ -511,14 +526,65 @@ class InventoryReportService {
       ),
     );
 
-    // Save to file
+    final bytes = await pdf.save();
     final directory = await getApplicationDocumentsDirectory();
     final fileName =
         '${reportType.name}_report_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.pdf';
     final file = File('${directory.path}/$fileName');
-    await file.writeAsBytes(await pdf.save());
-
+    await file.writeAsBytes(bytes);
     return file;
+  }
+
+  /// PDF bytes for the web report preview.
+  Future<Uint8List> buildPdfBytesWithOrderQty({
+    required List<Product> products,
+    required List<int?> orderQuantities,
+    required ReportType reportType,
+    String? shopName,
+    String? customTitle,
+    String? customSubtitle,
+  }) async {
+    final pdf = pw.Document();
+    final reportTitle = customTitle ?? getReportTypeLabel(reportType);
+    final reportSubtitle = customSubtitle;
+    final dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now());
+    final finalShopName = shopName ?? 'C-Billing Network';
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        header: (context) => _buildPdfHeader(
+          reportTitle,
+          dateStr,
+          finalShopName,
+          reportSubtitle,
+        ),
+        footer: (context) => _buildPdfFooter(context),
+        build: (context) => [
+          pw.SizedBox(height: 20),
+          _buildPdfSummary(products, reportType),
+          pw.SizedBox(height: 20),
+          _buildDynamicPdfTable(products, orderQuantities),
+        ],
+      ),
+    );
+    return pdf.save();
+  }
+
+  Future<Uint8List> buildCsvBytesWithOrderQty({
+    required List<Product> products,
+    required List<int?> orderQuantities,
+    required ReportType reportType,
+    String? customTitle,
+  }) async {
+    final csv = await _composeDynamicCsv(
+      products: products,
+      reportType: reportType,
+      customTitle: customTitle,
+      orderQuantities: orderQuantities,
+    );
+    return Uint8List.fromList(utf8.encode(csv));
   }
 
   /// Generate CSV report with order quantities

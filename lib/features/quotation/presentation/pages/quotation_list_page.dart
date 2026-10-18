@@ -143,7 +143,25 @@ class _QuotationListPageState extends State<QuotationListPage> {
                 },
               ),
             ],
-          ),
+          )
+          else
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 20),
+                child: AppTopBar.action(
+                  icon: Icons.settings_rounded,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const QuotationSettingsPage(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
           Expanded(child: _isLoading
           ? Center(
               child: CircularProgressIndicator(color: _primary),

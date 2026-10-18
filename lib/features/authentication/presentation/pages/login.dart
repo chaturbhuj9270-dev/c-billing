@@ -528,98 +528,10 @@ class _LoginPageV2State extends State<LoginPageV2>
                                             position: _fieldAnimations[2],
                                             child: FadeTransition(
                                               opacity: _fieldFadeAnimations[2],
-                                              child: Row(
-                                                children: [
-                                                  SizedBox(
-                                                    width: 24,
-                                                    height: 24,
-                                                    child: Checkbox(
-                                                      value: _rememberMe,
-                                                      onChanged: _loading
-                                                          ? null
-                                                          : (value) {
-                                                              setState(() {
-                                                                _rememberMe =
-                                                                    value ??
-                                                                    false;
-                                                              });
-                                                            },
-                                                      activeColor:
-                                                          AppColors.action(
-                                                            context,
-                                                          ),
-                                                      checkColor:
-                                                          AppTheme.white,
-                                                      side: BorderSide(
-                                                        color: AppColors.border(
-                                                          context,
-                                                        ),
-                                                      ),
-                                                      materialTapTargetSize:
-                                                          MaterialTapTargetSize
-                                                              .shrinkWrap,
-                                                      visualDensity:
-                                                          VisualDensity.compact,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                  GestureDetector(
-                                                    onTap: _loading
-                                                        ? null
-                                                        : () {
-                                                            setState(() {
-                                                              _rememberMe =
-                                                                  !_rememberMe;
-                                                            });
-                                                          },
-                                                    child: Text(
-                                                      _localizations.rememberMe,
-                                                      style: TextStyle(
-                                                        color:
-                                                            AppColors.secondaryText(
-                                                              context,
-                                                            ),
-                                                        fontSize: 13,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        fontFamily: 'Literata',
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const Spacer(),
-                                                  TextButton(
-                                                    onPressed: () {
-                                                      Navigator.of(
-                                                        context,
-                                                      ).push(
-                                                        MaterialPageRoute(
-                                                          builder: (_) =>
-                                                              const ChangePasswordPage(),
-                                                        ),
-                                                      );
-                                                    },
-                                                    style: TextButton.styleFrom(
-                                                      padding: EdgeInsets.zero,
-                                                      minimumSize: Size.zero,
-                                                      tapTargetSize:
-                                                          MaterialTapTargetSize
-                                                              .shrinkWrap,
-                                                    ),
-                                                    child: Text(
-                                                      _localizations
-                                                          .forgotPasswordQuestion,
-                                                      style: TextStyle(
-                                                        color: AppColors.accent(
-                                                          context,
-                                                        ),
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        fontSize: 13,
-                                                        fontFamily: 'Literata',
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
+                                              child: _buildRememberMeRow(
+                                                forgotColor: AppColors.accent(
+                                                  context,
+                                                ),
                                               ),
                                             ),
                                           ),
@@ -803,6 +715,73 @@ class _LoginPageV2State extends State<LoginPageV2>
     );
   }
 
+  Widget _buildRememberMeRow({required Color forgotColor}) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 24,
+          height: 24,
+          child: Checkbox(
+            value: _rememberMe,
+            onChanged: _loading
+                ? null
+                : (value) {
+                    setState(() {
+                      _rememberMe = value ?? false;
+                    });
+                  },
+            activeColor: AppColors.action(context),
+            checkColor: AppTheme.white,
+            side: BorderSide(color: AppColors.border(context)),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: VisualDensity.compact,
+          ),
+        ),
+        const SizedBox(width: 8),
+        GestureDetector(
+          onTap: _loading
+              ? null
+              : () {
+                  setState(() {
+                    _rememberMe = !_rememberMe;
+                  });
+                },
+          child: Text(
+            _localizations.rememberMe,
+            style: TextStyle(
+              color: AppColors.secondaryText(context),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Literata',
+            ),
+          ),
+        ),
+        const Spacer(),
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ChangePasswordPage()),
+            );
+          },
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.zero,
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          child: Text(
+            _localizations.forgotPasswordQuestion,
+            style: TextStyle(
+              color: forgotColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              fontFamily: 'Literata',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   /// Reusable login form widget used by both desktop and mobile layouts.
   Widget _buildLoginForm() {
     return Column(
@@ -855,30 +834,7 @@ class _LoginPageV2State extends State<LoginPageV2>
           position: _fieldAnimations[2],
           child: FadeTransition(
             opacity: _fieldFadeAnimations[2],
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => ChangePasswordPage()),
-                  );
-                },
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  _localizations.forgotPasswordQuestion,
-                  style: TextStyle(
-                    color: AppColors.action(context),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                    fontFamily: 'Literata',
-                  ),
-                ),
-              ),
-            ),
+            child: _buildRememberMeRow(forgotColor: AppColors.action(context)),
           ),
         ),
         const SizedBox(height: 24),

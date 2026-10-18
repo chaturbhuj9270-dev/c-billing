@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:printing/printing.dart';
@@ -9,6 +9,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/common_widgets/web_pdf_view.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 /// A reusable page for previewing PDF and CSV files with share and print functionality.
@@ -27,7 +28,11 @@ import 'package:c_billing/core/theme/app_theme.dart';
 /// );
 /// ```
 class FilePreviewPage extends StatefulWidget {
-  final File file;
+  /// Local file on mobile and desktop. Omitted on web, where [bytes] is used.
+  final File? file;
+
+  /// Document bytes. Required on web, where there is no local file to read.
+  final Uint8List? bytes;
   final String fileName;
   final FilePreviewType fileType;
   final String? subtitle;
@@ -36,15 +41,75 @@ class FilePreviewPage extends StatefulWidget {
   /// Optional customer phone number for direct WhatsApp sharing
   final String? customerPhone;
 
+  /// Web shows this preview in a dialog. Mobile and desktop use a full page.
+  final bool presentedAsDialog;
+
   const FilePreviewPage({
     super.key,
-    required this.file,
+    this.file,
+    this.bytes,
     required this.fileName,
     required this.fileType,
     this.subtitle,
     this.onClose,
     this.customerPhone,
-  });
+    this.presentedAsDialog = false,
+  }) : assert(file != null || bytes != null, 'Provide a file or document bytes');
+
+  /// Opens the preview. On web this is a popup. Other platforms push a page.
+  static Future<void> open(
+    BuildContext context, {
+    File? file,
+    Uint8List? bytes,
+    required String fileName,
+    required FilePreviewType fileType,
+    String? subtitle,
+    VoidCallback? onClose,
+    String? customerPhone,
+  }) {
+    final page = FilePreviewPage(
+      file: file,
+      bytes: bytes,
+      fileName: fileName,
+      fileType: fileType,
+      subtitle: subtitle,
+      onClose: onClose,
+      customerPhone: customerPhone,
+      presentedAsDialog: kIsWeb,
+    );
+    if (!kIsWeb) {
+      return Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => page),
+      );
+    }
+
+    return showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Close preview',
+      barrierColor: AppTheme.black.withValues(alpha: 0.62),
+      transitionDuration: const Duration(milliseconds: 180),
+      pageBuilder: (dialogContext, _, _) {
+        final size = MediaQuery.sizeOf(dialogContext);
+        final width = size.width >= 1200 ? 1040.0 : size.width - 48;
+        final height = size.height >= 760 ? size.height - 72 : size.height - 32;
+        return Center(
+          child: Material(
+            color: AppColors.card(dialogContext),
+            elevation: 0,
+            borderRadius: BorderRadius.circular(20),
+            clipBehavior: Clip.antiAlias,
+            child: SizedBox(width: width, height: height, child: page),
+          ),
+        );
+      },
+    );
+  }
+
+  void _closePreview(BuildContext context) {
+    if (!presentedAsDialog) onClose?.call();
+    Navigator.of(context).pop();
+  }
 
   @override
   State<FilePreviewPage> createState() => _FilePreviewPageState();
@@ -122,15 +187,24 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
 
   Future<void> _loadFile() async {
     try {
-      debugPrint('[FilePreviewPage] Loading file: ${widget.file.path}');
-      debugPrint('[FilePreviewPage] File type: ${widget.fileType}');
-
-      // Check if file exists
-      if (!widget.file.existsSync()) {
-        throw Exception('File does not exist: ${widget.file.path}');
+      if (widget.bytes != null) {
+        await _loadFromBytes(widget.bytes!);
+        return;
       }
 
-      final fileSize = widget.file.lengthSync();
+      final file = widget.file;
+      if (file == null) {
+        throw Exception('No document to preview');
+      }
+
+      debugPrint('[FilePreviewPage] Loading file: ${file.path}');
+      debugPrint('[FilePreviewPage] File type: ${widget.fileType}');
+
+      if (!file.existsSync()) {
+        throw Exception('File does not exist: ${file.path}');
+      }
+
+      final fileSize = file.lengthSync();
       debugPrint('[FilePreviewPage] File size: $fileSize bytes');
 
       if (fileSize == 0) {
@@ -138,7 +212,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       }
 
       if (widget.fileType == FilePreviewType.csv) {
-        final content = await widget.file.readAsString();
+        final content = await file.readAsString();
         final lines = const LineSplitter().convert(content);
         _csvData = lines.map((line) => _parseCSVLine(line)).toList();
         setState(() => _isLoading = false);
@@ -147,7 +221,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         int retries = 3;
         while (retries > 0) {
           try {
-            _pdfBytes = await widget.file.readAsBytes().timeout(
+            _pdfBytes = await file.readAsBytes().timeout(
               const Duration(seconds: 30),
               onTimeout: () => throw Exception('PDF file reading timed out'),
             );
@@ -199,6 +273,44 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         _errorMessage = 'Error loading file: $e';
       });
     }
+  }
+
+  Future<void> _loadFromBytes(Uint8List data) async {
+    if (data.isEmpty) {
+      throw Exception('Document is empty');
+    }
+
+    if (widget.fileType == FilePreviewType.csv) {
+      final content = utf8.decode(data);
+      final lines = const LineSplitter().convert(content);
+      _csvData = lines.map((line) => _parseCSVLine(line)).toList();
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
+
+    if (data.length < 4 || String.fromCharCodes(data.take(4)) != '%PDF') {
+      throw Exception('Invalid PDF file format');
+    }
+
+    _pdfBytes = data;
+    if (kIsWeb) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isRenderingPdf = false;
+        });
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+        _isRenderingPdf = true;
+        _renderingStatus = 'Preparing document...';
+      });
+    }
+    await _renderPdfPages();
   }
 
   /// Render PDF pages as images for reliable display
@@ -320,13 +432,37 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     return result;
   }
 
+  String _downloadName(String extension) {
+    final base = widget.fileName.trim().isEmpty ? 'report' : widget.fileName.trim();
+    return base.toLowerCase().endsWith('.$extension') ? base : '$base.$extension';
+  }
+
+  Future<void> _shareBytes() async {
+    final data = _pdfBytes ?? widget.bytes;
+    if (data == null) {
+      throw Exception('Document is not ready');
+    }
+    if (widget.fileType == FilePreviewType.pdf) {
+      await Printing.sharePdf(
+        bytes: data,
+        filename: _downloadName('pdf'),
+      );
+      return;
+    }
+    downloadWebBytes(data, _downloadName('csv'), 'text/csv');
+  }
+
   Future<void> _handleShare() async {
     if (_isSharing) return;
 
     setState(() => _isSharing = true);
     try {
+      if (widget.file == null) {
+        await _shareBytes();
+        return;
+      }
       await Share.shareXFiles([
-        XFile(widget.file.path),
+        XFile(widget.file!.path),
       ], subject: widget.fileName);
     } catch (e) {
       if (mounted) {
@@ -348,8 +484,12 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     final customerPhone = widget.customerPhone;
 
     try {
+      if (widget.file == null) {
+        await _shareBytes();
+        return;
+      }
       // Check if file exists
-      if (!await widget.file.exists()) {
+      if (!await widget.file!.exists()) {
         _showSnackBar('File not found', isError: true);
         return;
       }
@@ -362,7 +502,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       // Share file directly - this opens share sheet with file attached
       // User selects WhatsApp from sheet, then picks the contact
       await Share.shareXFiles(
-        [XFile(widget.file.path)],
+        [XFile(widget.file!.path)],
         subject: widget.fileName,
         text: customerPhone != null && customerPhone.isNotEmpty
             ? 'Invoice for $customerPhone'
@@ -385,7 +525,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     setState(() => _isPrinting = true);
     try {
       if (widget.fileType == FilePreviewType.pdf) {
-        final bytes = await widget.file.readAsBytes();
+        final bytes = _pdfBytes ?? await widget.file!.readAsBytes();
         await Printing.layoutPdf(
           onLayout: (format) async => bytes,
           name: widget.fileName,
@@ -465,28 +605,31 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
 
   @override
   Widget build(BuildContext context) {
+    final body = Column(
+      children: [
+        widget.presentedAsDialog ? _buildDialogHeader() : _buildHeader(),
+        if (widget.fileType == FilePreviewType.csv) _buildZoomControls(),
+        Expanded(
+          child: ColoredBox(
+            color: AppColors.scaffold(context),
+            child: _isLoading
+                ? _buildLoadingState()
+                : _errorMessage != null
+                ? _buildErrorState()
+                : widget.fileType == FilePreviewType.pdf
+                ? _buildPdfPreview()
+                : _buildCsvPreview(),
+          ),
+        ),
+        widget.presentedAsDialog ? _buildDialogFooter() : _buildBottomBar(),
+      ],
+    );
+
+    if (widget.presentedAsDialog) return body;
+
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      body: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            _buildHeader(),
-            // Show zoom controls only for CSV (PDF pages are rendered at optimal size)
-            if (widget.fileType == FilePreviewType.csv) _buildZoomControls(),
-            Expanded(
-              child: _isLoading
-                  ? _buildLoadingState()
-                  : _errorMessage != null
-                  ? _buildErrorState()
-                  : widget.fileType == FilePreviewType.pdf
-                  ? _buildPdfPreview()
-                  : _buildCsvPreview(),
-            ),
-            _buildBottomBar(),
-          ],
-        ),
-      ),
+      body: SafeArea(top: false, child: body),
     );
   }
 
@@ -601,16 +744,13 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     return AppTopBar(
       title: widget.fileName,
       subtitle: widget.subtitle ?? '$typeLabel · ${_getFileSizeString()}',
-      onBack: () {
-        widget.onClose?.call();
-        Navigator.of(context).pop();
-      },
+      onBack: () => widget._closePreview(context),
     );
   }
 
   String _getFileSizeString() {
     try {
-      final bytes = widget.file.lengthSync();
+      final bytes = widget.file?.lengthSync() ?? widget.bytes?.length ?? 0;
       if (bytes < 1024) return '$bytes B';
       if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
       return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
@@ -728,6 +868,10 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   }
 
   Widget _buildPdfPreview() {
+    if (kIsWeb && _pdfBytes != null) {
+      return buildWebPdfView(_pdfBytes!);
+    }
+
     // Show rendering progress if still rendering
     if (_isRenderingPdf) {
       return _buildPdfRenderingProgress();
@@ -1440,6 +1584,187 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       temp = (temp ~/ 26) - 1;
     }
     return result;
+  }
+
+  Widget _buildDialogHeader() {
+    final isPdf = widget.fileType == FilePreviewType.pdf;
+    final detail = widget.subtitle ??
+        '${isPdf ? 'PDF' : 'CSV'} · ${_getFileSizeString()}';
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        border: Border(bottom: BorderSide(color: AppColors.border(context))),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.accentSoft(context, 0.14),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              isPdf ? Icons.picture_as_pdf_outlined : Icons.table_chart_outlined,
+              color: AppColors.action(context),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.fileName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Literata',
+                    height: 1.15,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  detail,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.mutedText(context),
+                    fontSize: 13,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: () => widget._closePreview(context),
+            tooltip: 'Close',
+            icon: Icon(
+              Icons.close_rounded,
+              color: AppColors.secondaryText(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDialogFooter() {
+    final hasPhone =
+        widget.customerPhone != null && widget.customerPhone!.isNotEmpty;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        border: Border(top: BorderSide(color: AppColors.border(context))),
+      ),
+      child: Row(
+        children: [
+          Text(
+            _getFileSizeString(),
+            style: TextStyle(
+              color: AppColors.mutedText(context),
+              fontSize: 12,
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const Spacer(),
+          if (hasPhone) ...[
+            TextButton.icon(
+              onPressed: _isSharingWhatsApp ? null : _handleWhatsAppShare,
+              icon: _isSharingWhatsApp
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppTheme.paletteFF25D366,
+                      ),
+                    )
+                  : FaIcon(
+                      FontAwesomeIcons.whatsapp,
+                      size: 16,
+                      color: AppTheme.paletteFF25D366,
+                    ),
+              label: Text(
+                'WhatsApp',
+                style: TextStyle(
+                  color: AppTheme.paletteFF25D366,
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+          OutlinedButton.icon(
+            onPressed: _isSharing ? null : _handleShare,
+            icon: _isSharing
+                ? SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.action(context),
+                    ),
+                  )
+                : Icon(Icons.download_rounded, size: 18),
+            label: const Text(
+              'Download',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primaryText(context),
+              side: BorderSide(color: AppColors.border(context)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          FilledButton.icon(
+            onPressed: _isPrinting ? null : _handlePrint,
+            icon: _isPrinting
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppTheme.white,
+                    ),
+                  )
+                : const Icon(Icons.print_rounded, size: 18),
+            label: const Text(
+              'Print',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.action(context),
+              foregroundColor: AppTheme.white,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildBottomBar() {

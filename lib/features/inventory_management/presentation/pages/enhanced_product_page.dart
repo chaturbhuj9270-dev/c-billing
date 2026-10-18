@@ -133,7 +133,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
   void _checkUserAuthentication() {
     if (_auth.currentUser == null) {
-      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+      Navigator.of(
+        context,
+        rootNavigator: true,
+      ).pushNamedAndRemoveUntil('/login', (route) => false);
     }
   }
 
@@ -307,6 +310,38 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       body: Column(
         children: [
           if (!widget.isEmbedded) _buildAppBar(),
+          if (widget.isEmbedded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 16, 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  AppTopBar.action(
+                    icon: Icons.qr_code_2_rounded,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BarcodeGeneratorPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  AppTopBar.action(
+                    icon: Icons.settings_outlined,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ProductSettingsPage(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
           Expanded(
             child: SafeArea(
         top: widget.isEmbedded,
@@ -1495,6 +1530,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     final cgstController = TextEditingController();
     final sgstController = TextEditingController();
     final hsnController = TextEditingController();
+    bool applyGst = false;
 
     // Sync CGST and SGST values
     bool isSyncingGst = false;
@@ -1713,33 +1749,41 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           keyboardType: TextInputType.number,
                         ),
                         const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildTextField(
-                                controller: cgstController,
-                                label: 'CGST %',
-                                keyboardType: TextInputType.number,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildTextField(
-                                controller: sgstController,
-                                label: 'SGST %',
-                                keyboardType: TextInputType.number,
-                              ),
-                            ),
-                          ],
+                        _buildApplyGstToggle(
+                          applyGst: applyGst,
+                          onChanged: (value) =>
+                              setDialogState(() => applyGst = value),
                         ),
-                        const SizedBox(height: 12),
-                        _buildTextField(
-                          controller: hsnController,
-                          label: 'HSN Code',
-                          icon: Icons.tag_rounded,
-                          keyboardType: TextInputType.number,
-                          maxLength: 8,
-                        ),
+                        if (applyGst) ...[
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildTextField(
+                                  controller: cgstController,
+                                  label: 'CGST %',
+                                  keyboardType: TextInputType.number,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildTextField(
+                                  controller: sgstController,
+                                  label: 'SGST %',
+                                  keyboardType: TextInputType.number,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          _buildTextField(
+                            controller: hsnController,
+                            label: 'HSN Code',
+                            icon: Icons.tag_rounded,
+                            keyboardType: TextInputType.number,
+                            maxLength: 8,
+                          ),
+                        ],
                         // Custom fields
                         if (customColumns.isNotEmpty) ...[
                           SizedBox(height: 16),
@@ -1813,6 +1857,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               cgstController: cgstController,
                               sgstController: sgstController,
                               hsnController: hsnController,
+                              applyGst: applyGst,
                               selectedCompany: dialogSelectedCompany,
                               selectedSupplier: dialogSelectedSupplier,
                               customColumns: customColumns,
@@ -1845,6 +1890,53 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     );
   }
 
+  Widget _buildApplyGstToggle({
+    required bool applyGst,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return InkWell(
+      onTap: () => onChanged(!applyGst),
+      borderRadius: BorderRadius.circular(12),
+      child: Row(
+        children: [
+          Checkbox(
+            value: applyGst,
+            onChanged: (value) => onChanged(value ?? false),
+            activeColor: AppColors.action(context),
+            checkColor: AppTheme.white,
+            side: BorderSide(color: AppColors.border(context)),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _localizations.applyGst,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryText(context),
+                  ),
+                ),
+                Text(
+                  _localizations.applyGstHint,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 12,
+                    color: AppColors.mutedText(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _saveNewProduct({
     required TextEditingController nameController,
     required TextEditingController categoryController,
@@ -1854,6 +1946,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     required TextEditingController cgstController,
     required TextEditingController sgstController,
     required TextEditingController hsnController,
+    required bool applyGst,
     Map<String, dynamic>? selectedCompany,
     Map<String, dynamic>? selectedSupplier,
     required List<CustomColumn> customColumns,
@@ -1870,9 +1963,13 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     final purchasePrice = double.tryParse(purchasePriceController.text) ?? 0.0;
     final salesPrice = double.tryParse(salesPriceController.text) ?? 0.0;
     final initialStock = int.tryParse(initialStockController.text) ?? 0;
-    final cgstVal = double.tryParse(cgstController.text) ?? 0.0;
-    final sgstVal = double.tryParse(sgstController.text) ?? 0.0;
-    final hsnVal = hsnController.text.trim();
+    final cgstVal = applyGst
+        ? (double.tryParse(cgstController.text) ?? 0.0)
+        : 0.0;
+    final sgstVal = applyGst
+        ? (double.tryParse(sgstController.text) ?? 0.0)
+        : 0.0;
+    final hsnVal = applyGst ? hsnController.text.trim() : '';
 
     // Validate HSN: required if CGST or SGST > 0
     if ((cgstVal > 0 || sgstVal > 0) && hsnVal.isEmpty) {
@@ -1955,6 +2052,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       text: product.sgstPercent.toString(),
     );
     final hsnController = TextEditingController(text: product.hsnCode ?? '');
+    var applyGst = product.cgstPercent > 0 ||
+        product.sgstPercent > 0 ||
+        (product.hsnCode != null && product.hsnCode!.isNotEmpty);
 
     // Sync CGST and SGST values
     bool isSyncingGst = false;
@@ -2115,33 +2215,41 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           ],
                         ),
                         const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildTextField(
-                                controller: cgstController,
-                                label: 'CGST %',
-                                keyboardType: TextInputType.number,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildTextField(
-                                controller: sgstController,
-                                label: 'SGST %',
-                                keyboardType: TextInputType.number,
-                              ),
-                            ),
-                          ],
+                        _buildApplyGstToggle(
+                          applyGst: applyGst,
+                          onChanged: (value) =>
+                              setDialogState(() => applyGst = value),
                         ),
-                        const SizedBox(height: 12),
-                        _buildTextField(
-                          controller: hsnController,
-                          label: 'HSN Code',
-                          icon: Icons.tag_rounded,
-                          keyboardType: TextInputType.number,
-                          maxLength: 8,
-                        ),
+                        if (applyGst) ...[
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildTextField(
+                                  controller: cgstController,
+                                  label: 'CGST %',
+                                  keyboardType: TextInputType.number,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildTextField(
+                                  controller: sgstController,
+                                  label: 'SGST %',
+                                  keyboardType: TextInputType.number,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          _buildTextField(
+                            controller: hsnController,
+                            label: 'HSN Code',
+                            icon: Icons.tag_rounded,
+                            keyboardType: TextInputType.number,
+                            maxLength: 8,
+                          ),
+                        ],
                         const SizedBox(height: 12),
                         // Current stock (read-only)
                         Container(
@@ -2259,6 +2367,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               cgstController: cgstController,
                               sgstController: sgstController,
                               hsnController: hsnController,
+                              applyGst: applyGst,
                               customColumns: customColumns,
                               customTextControllers: customTextControllers,
                               customFieldValues: customFieldValues,
@@ -2299,6 +2408,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     required TextEditingController cgstController,
     required TextEditingController sgstController,
     required TextEditingController hsnController,
+    required bool applyGst,
     required List<CustomColumn> customColumns,
     required Map<String, TextEditingController> customTextControllers,
     required Map<String, dynamic> customFieldValues,
@@ -2312,9 +2422,13 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
     final purchasePrice = double.tryParse(purchasePriceController.text) ?? 0.0;
     final salesPrice = double.tryParse(salesPriceController.text) ?? 0.0;
-    final cgstVal = double.tryParse(cgstController.text) ?? 0.0;
-    final sgstVal = double.tryParse(sgstController.text) ?? 0.0;
-    final hsnVal = hsnController.text.trim();
+    final cgstVal = applyGst
+        ? (double.tryParse(cgstController.text) ?? 0.0)
+        : 0.0;
+    final sgstVal = applyGst
+        ? (double.tryParse(sgstController.text) ?? 0.0)
+        : 0.0;
+    final hsnVal = applyGst ? hsnController.text.trim() : '';
 
     // Validate HSN
     if ((cgstVal > 0 || sgstVal > 0) && hsnVal.isEmpty) {

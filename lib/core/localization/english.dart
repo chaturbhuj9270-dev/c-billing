@@ -914,6 +914,8 @@ class EnglishLocalization {
   static const String hsnCodeRequired =
       'HSN Code is required when GST is applied';
   static const String hsnCode = 'HSN Code';
+  static const String applyGst = 'Apply GST';
+  static const String applyGstHint = 'GST stays excluded until this is on';
   static const String tapToSelect = 'Tap to select';
   static const String perUnit = 'per unit';
   static const String expiryDateAfterProduction =

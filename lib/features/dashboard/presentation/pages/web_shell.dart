@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 /// Switches the web app's content pane without pushing a new route.
 class WebShell {
   static const int dashboard = 0;
@@ -19,6 +21,9 @@ class WebShell {
   static const int password = 16;
   static const int count = 17;
 
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
   static void Function(int index)? _select;
 
   static void register(void Function(int index)? select) {
@@ -29,7 +34,80 @@ class WebShell {
   static bool open(int index) {
     final select = _select;
     if (select == null) return false;
+    popToRoot();
     select(index);
     return true;
   }
+
+  /// Close any page opened inside the web content area.
+  static void popToRoot() {
+    final navigator = navigatorKey.currentState;
+    if (navigator == null) return;
+    navigator.popUntil((route) => route.isFirst);
+  }
+
+  /// Open [page] in the web content area. The sidebar stays put.
+  static Future<T?> push<T>(Widget page) {
+    final navigator = navigatorKey.currentState;
+    if (navigator == null) return Future<T?>.value();
+    return navigator.push<T>(MaterialPageRoute<T>(builder: (_) => page));
+  }
+}
+
+/// Shows the current web section inside the shell navigator.
+class WebShellScope extends InheritedWidget {
+  final Widget stack;
+
+  const WebShellScope({super.key, required this.stack, required super.child});
+
+  static Widget stackOf(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<WebShellScope>();
+    return scope?.stack ?? const SizedBox.shrink();
+  }
+
+  @override
+  bool updateShouldNotify(WebShellScope oldWidget) => stack != oldWidget.stack;
+}
+
+class WebShellPages extends StatelessWidget {
+  const WebShellPages({super.key});
+
+  @override
+  Widget build(BuildContext context) => WebShellScope.stackOf(context);
+}
+
+class WebShellRouteObserver extends NavigatorObserver {
+  WebShellRouteObserver(this.onChanged);
+
+  final VoidCallback onChanged;
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      onChanged();
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      onChanged();
+
+  @override
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      onChanged();
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) =>
+      onChanged();
+}
+
+/// Swaps web content in place, without a route slide.
+class InstantPageTransitionsBuilder extends PageTransitionsBuilder {
+  const InstantPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) => child;
 }

@@ -307,19 +307,59 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
   final List<Widget?> _webPanes = List<Widget?>.filled(WebShell.count, null);
 
+  bool _webChildOpen = false;
+  late final WebShellRouteObserver _webRouteObserver = WebShellRouteObserver(
+    _onWebRouteChanged,
+  );
+
+  void _onWebRouteChanged() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final open = WebShell.navigatorKey.currentState?.canPop() ?? false;
+      if (open != _webChildOpen) setState(() => _webChildOpen = open);
+    });
+  }
+
   Widget _buildWebContent() {
     _webPanes[_selectedIndex] ??= _createWebPane(_selectedIndex);
+    final stack = IndexedStack(
+      index: _selectedIndex,
+      children: [
+        for (var i = 0; i < WebShell.count; i++)
+          _webPanes[i] ?? const SizedBox.shrink(),
+      ],
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildWebScreenTitle(),
+        if (!_webChildOpen) _buildWebScreenTitle(),
         Expanded(
-          child: IndexedStack(
-            index: _selectedIndex,
-            children: [
-              for (var i = 0; i < WebShell.count; i++)
-                _webPanes[i] ?? const SizedBox.shrink(),
-            ],
+          child: WebShellScope(
+            stack: stack,
+            child: Theme(
+              data: Theme.of(context).copyWith(
+                pageTransitionsTheme: const PageTransitionsTheme(
+                  builders: {
+                    TargetPlatform.android: InstantPageTransitionsBuilder(),
+                    TargetPlatform.iOS: InstantPageTransitionsBuilder(),
+                    TargetPlatform.macOS: InstantPageTransitionsBuilder(),
+                    TargetPlatform.linux: InstantPageTransitionsBuilder(),
+                    TargetPlatform.windows: InstantPageTransitionsBuilder(),
+                    TargetPlatform.fuchsia: InstantPageTransitionsBuilder(),
+                  },
+                ),
+              ),
+              child: Navigator(
+                key: WebShell.navigatorKey,
+                observers: [_webRouteObserver],
+                onGenerateRoute: (settings) {
+                  return MaterialPageRoute(
+                    settings: settings,
+                    builder: (_) => const WebShellPages(),
+                  );
+                },
+              ),
+            ),
           ),
         ),
       ],
@@ -567,10 +607,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   /// Desktop/tablet side navigation rail
   Widget _buildDesktopSideNav() {
     final isExpanded = MediaQuery.of(context).size.width >= 1100;
+    final darkWeb = kIsWeb && AppColors.isDark(context);
     return Container(
       width: isExpanded ? (kIsWeb ? 236 : 220) : 72,
       decoration: BoxDecoration(
-        color: AppColors.card(context),
+        color: darkWeb ? AppTheme.darkSurface : AppColors.card(context),
         border: kIsWeb
             ? Border(right: BorderSide(color: AppColors.border(context)))
             : null,
@@ -591,6 +632,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
+                if (darkWeb) _webNavSection('MAIN', isExpanded),
                 _buildSideNavItem(
                   0,
                   Icons.dashboard_rounded,
@@ -621,11 +663,13 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   _localizations.purchase,
                   isExpanded,
                 ),
+                if (darkWeb) _webNavSection('MANAGE', isExpanded),
                 if (kIsWeb) ..._webQuickNavItems(isExpanded),
               ],
             ),
           ),
-          if (kIsWeb) ..._webPageTools(isExpanded),
+          if (darkWeb) _webNavSection('SYSTEM', isExpanded),
+          if (kIsWeb) ..._webPageTools(isExpanded, showDivider: !darkWeb),
           _buildSideNavItem(
             -1,
             Icons.menu_rounded,
@@ -639,6 +683,23 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     );
   }
 
+  Widget _webNavSection(String label, bool isExpanded) {
+    if (!isExpanded) return const SizedBox(height: 8);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(22, 14, 12, 4),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: AppColors.mutedText(context),
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.1,
+          fontFamily: 'Literata',
+        ),
+      ),
+    );
+  }
+
   Widget _buildSideNavItem(
     int index,
     IconData icon,
@@ -647,7 +708,12 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     VoidCallback? onTap,
   }) {
     final isSelected = index >= 0 && _selectedIndex == index;
-    return Padding(
+    final darkWeb = kIsWeb && AppColors.isDark(context);
+    final selectedColor = darkWeb
+        ? AppTheme.white
+        : (kIsWeb ? AppColors.action(context) : AppTheme.white);
+    final idleColor = AppColors.secondaryText(context);
+    final item = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       child: Material(
         color: AppTheme.transparent,
@@ -658,7 +724,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             duration: const Duration(milliseconds: 200),
             padding: EdgeInsets.symmetric(
               horizontal: isExpanded ? 16 : 0,
-              vertical: 12,
+              vertical: darkWeb ? 10 : 12,
             ),
             decoration: BoxDecoration(
               gradient: isSelected && !kIsWeb
@@ -668,11 +734,13 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                       end: Alignment.bottomRight,
                     )
                   : null,
-              color: isSelected && kIsWeb
-                  ? (AppColors.isDark(context)
-                        ? AppColors.accentSoft(context, 0.22)
-                        : AppTheme.paletteFFD7EDE3)
-                  : AppTheme.transparent,
+              color: !isSelected
+                  ? AppTheme.transparent
+                  : darkWeb
+                  ? AppTheme.darkAction
+                  : kIsWeb
+                  ? AppTheme.paletteFFD7EDE3
+                  : null,
               borderRadius: BorderRadius.circular(12),
               boxShadow: isSelected && !kIsWeb
                   ? [
@@ -689,28 +757,20 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     children: [
                       Icon(
                         icon,
-                        color: isSelected
-                            ? (kIsWeb
-                                  ? AppColors.action(context)
-                                  : AppTheme.white)
-                            : AppColors.secondaryText(context),
-                        size: 22,
+                        color: isSelected ? selectedColor : idleColor,
+                        size: darkWeb ? 20 : 22,
                       ),
-                      SizedBox(width: 14),
+                      SizedBox(width: darkWeb ? 12 : 14),
                       Expanded(
                         child: Text(
                           label,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: isSelected
-                                ? (kIsWeb
-                                      ? AppColors.action(context)
-                                      : AppTheme.white)
-                                : AppColors.secondaryText(context),
+                            color: isSelected ? selectedColor : idleColor,
                             fontSize: 13,
                             fontWeight: isSelected
-                                ? FontWeight.w700
+                                ? (darkWeb ? FontWeight.w600 : FontWeight.w700)
                                 : FontWeight.w500,
                             fontFamily: 'Literata',
                           ),
@@ -723,18 +783,32 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                       message: label,
                       child: Icon(
                         icon,
-                        color: isSelected
-                            ? (kIsWeb
-                                  ? AppColors.action(context)
-                                  : AppTheme.white)
-                            : AppColors.secondaryText(context),
-                        size: 24,
+                        color: isSelected ? selectedColor : idleColor,
+                        size: darkWeb ? 20 : 24,
                       ),
                     ),
                   ),
           ),
         ),
       ),
+    );
+    if (!darkWeb || !isSelected) return item;
+    return Stack(
+      alignment: Alignment.centerLeft,
+      children: [
+        item,
+        Positioned(
+          left: 0,
+          child: Container(
+            width: 3,
+            height: 22,
+            decoration: const BoxDecoration(
+              color: AppTheme.darkActionBright,
+              borderRadius: BorderRadius.horizontal(right: Radius.circular(3)),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -817,7 +891,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     }
   }
 
-  List<Widget> _webPageTools(bool isExpanded) {
+  List<Widget> _webPageTools(bool isExpanded, {bool showDivider = true}) {
     final tools = <Widget>[];
 
     void add(IconData icon, String label, VoidCallback onTap) {
@@ -843,16 +917,10 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         _selectedIndex == WebShell.purchase) {
       add(Icons.settings_outlined, _localizations.settings, () async {
         if (_selectedIndex == WebShell.billing) {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const BillSettingsPage()),
-          );
+          final result = await WebShell.push<bool>(const BillSettingsPage());
           if (result == true && mounted) setState(() {});
         } else {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const PurchaseSettingsPage()),
-          );
+          await WebShell.push(const PurchaseSettingsPage());
           if (mounted) setState(() {});
         }
       });
@@ -862,33 +930,20 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         _selectedIndex == WebShell.purchase) {
       add(Icons.view_column_rounded, _localizations.reportSettings, () async {
         if (_selectedIndex == WebShell.billing) {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const BillReportSettingsPage()),
-          );
+          await WebShell.push(const BillReportSettingsPage());
         } else if (_selectedIndex == WebShell.availability) {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const StockReportSettingsPage()),
-          );
+          await WebShell.push(const StockReportSettingsPage());
         } else {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const PurchaseReportSettingsPage(),
-            ),
-          );
+          await WebShell.push(const PurchaseReportSettingsPage());
         }
       });
     }
     add(Icons.bug_report_outlined, _localizations.reportIssue, () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const LogsViewerPage()),
-      );
+      WebShell.push(const LogsViewerPage());
     });
 
     if (tools.isEmpty) return const [];
+    if (!showDivider) return tools;
     return [
       Divider(height: 16, color: AppColors.border(context)),
       ...tools,
@@ -896,6 +951,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   }
 
   Widget _buildWebBrand(bool isExpanded) {
+    final darkWeb = AppColors.isDark(context);
     return Padding(
       padding: EdgeInsets.fromLTRB(isExpanded ? 16 : 0, 18, 12, 8),
       child: Row(
@@ -903,25 +959,41 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             ? MainAxisAlignment.start
             : MainAxisAlignment.center,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Image.asset(
-              'assets/images/app_logo.png',
-              width: 36,
-              height: 36,
-              fit: BoxFit.contain,
-              errorBuilder: (_, _, _) => Icon(
-                Icons.storefront_rounded,
-                color: AppColors.action(context),
-                size: 28,
+          if (darkWeb)
+            Container(
+              width: 34,
+              height: 34,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppTheme.darkAction,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.receipt_long_rounded,
+                color: AppTheme.white,
+                size: 18,
+              ),
+            )
+          else
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.asset(
+                'assets/images/app_logo.png',
+                width: 36,
+                height: 36,
+                fit: BoxFit.contain,
+                errorBuilder: (_, _, _) => Icon(
+                  Icons.storefront_rounded,
+                  color: AppColors.action(context),
+                  size: 28,
+                ),
               ),
             ),
-          ),
           if (isExpanded) ...[
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Billing',
+                darkWeb ? 'C-Billing' : 'Billing',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -2908,6 +2980,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
   void _navigateToPage(int index) {
     _resetSessionTimer();
+    if (kIsWeb) WebShell.popToRoot();
     setState(() => _selectedIndex = index);
   }
 

@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import '../features/dashboard/presentation/pages/web_shell.dart';
 import 'glass_bottom_sheet.dart';
 import '../core/localization/app_localizations.dart';
 import '../core/services/language_service.dart';
@@ -56,8 +58,9 @@ List<QuickActionItem> buildQuickActionItems(
 }) {
   final l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
 
-  void open(Widget page) {
+  void open(Widget page, int shellIndex) {
     beforeNavigate?.call();
+    if (kIsWeb && WebShell.open(shellIndex)) return;
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
 
@@ -68,84 +71,84 @@ List<QuickActionItem> buildQuickActionItems(
       label: l10n.customers,
       color: AppTheme.toneCyan,
       gradient: const [AppTheme.cyan600, AppTheme.cyan700],
-      onTap: () => open(const EnhancedCustomerPage()),
+      onTap: () => open(const EnhancedCustomerPage(), WebShell.customers),
     ),
     QuickActionItem(
       icon: Icons.receipt_long_rounded,
       label: l10n.billing,
       color: AppTheme.toneBlue,
       gradient: const [AppTheme.paletteFF667EEA, AppTheme.paletteFF764BA2],
-      onTap: () => open(const BillingPage()),
+      onTap: () => open(const BillingPage(), WebShell.billing),
     ),
     QuickActionItem(
       icon: Icons.event_available_rounded,
       label: l10n.availability,
       color: AppColors.action(context),
       gradient: [AppTheme.primaryLight, AppColors.action(context)],
-      onTap: () => open(const AvailabilityPage()),
+      onTap: () => open(const AvailabilityPage(), WebShell.availability),
     ),
     QuickActionItem(
       icon: Icons.shopping_cart_rounded,
       label: l10n.purchase,
       color: AppTheme.toneAmber,
       gradient: const [AppTheme.orange900, AppTheme.amber800],
-      onTap: () => open(const EnhancedPurchaseScreen()),
+      onTap: () => open(const EnhancedPurchaseScreen(), WebShell.purchase),
     ),
     QuickActionItem(
       icon: Icons.receipt_long_rounded,
       label: l10n.invoices,
       color: AppTheme.toneBlue,
       gradient: const [AppTheme.paletteFF667EEA, AppTheme.paletteFF764BA2],
-      onTap: () => open(const BillsListPage()),
+      onTap: () => open(const BillsListPage(), WebShell.invoices),
     ),
     QuickActionItem(
       icon: Icons.inventory_2_rounded,
       label: l10n.products,
       color: AppTheme.paletteFFC084FC,
       gradient: const [AppTheme.paletteFFF093FB, AppTheme.paletteFFF5576C],
-      onTap: () => open(const EnhancedProductPage()),
+      onTap: () => open(const EnhancedProductPage(), WebShell.products),
     ),
     QuickActionItem(
       icon: Icons.local_shipping_rounded,
       label: l10n.suppliers,
       color: AppTheme.deepOrange300,
       gradient: const [AppTheme.coral, AppTheme.paletteFFEE5A24],
-      onTap: () => open(const EnhancedSupplierPage()),
+      onTap: () => open(const EnhancedSupplierPage(), WebShell.suppliers),
     ),
     QuickActionItem(
       icon: Icons.business_rounded,
       label: l10n.companies,
       color: AppTheme.toneViolet,
       gradient: const [AppTheme.purple, AppTheme.purple700],
-      onTap: () => open(const EnhancedCompanyPage()),
+      onTap: () => open(const EnhancedCompanyPage(), WebShell.companies),
     ),
     QuickActionItem(
       icon: Icons.keyboard_return_rounded,
       label: l10n.purchaseReturnShort,
       color: AppTheme.orange300,
       gradient: const [AppTheme.orange900, AppTheme.amber800],
-      onTap: () => open(const PurchaseReturnScreen()),
+      onTap: () => open(const PurchaseReturnScreen(), WebShell.purchaseReturn),
     ),
     QuickActionItem(
       icon: Icons.auto_awesome_rounded,
       label: l10n.events,
       color: AppTheme.deepPurple200,
       gradient: const [AppTheme.paletteFF6C63FF, AppTheme.paletteFF8B5CF6],
-      onTap: () => open(const EventOrderListPage()),
+      onTap: () => open(const EventOrderListPage(), WebShell.events),
     ),
     QuickActionItem(
       icon: Icons.description_outlined,
       label: l10n.quotations,
       color: AppTheme.blue300,
       gradient: const [AppTheme.blue800, AppTheme.blue400],
-      onTap: () => open(const QuotationListPage()),
+      onTap: () => open(const QuotationListPage(), WebShell.quotations),
     ),
     QuickActionItem(
       icon: Icons.qr_code_scanner_rounded,
       label: l10n.barcode,
       color: AppTheme.greenAccent,
       gradient: const [AppTheme.teal600, AppTheme.teal900],
-      onTap: () => open(const BarcodeGeneratorPage()),
+      onTap: () => open(const BarcodeGeneratorPage(), WebShell.barcode),
     ),
   ];
 }

@@ -34,6 +34,7 @@ dependencies:
   # PDF Generation and Sharing
   pdf: ^3.11.1
   printing: ^5.13.3
+  web: ^1.1.1
   path_provider: ^2.1.4
   share_plus: ^10.0.3
   uuid: ^4.5.3

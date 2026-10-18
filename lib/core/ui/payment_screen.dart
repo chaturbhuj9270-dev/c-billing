@@ -154,7 +154,7 @@ class _PaymentScreenState extends State<PaymentScreen>
 
       if (active) {
         GlassyToast.show(context, _localizations.subscriptionActivatedSuccess);
-        Navigator.of(context).pushAndRemoveUntil(
+        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const OptimizedDashboardPage()),
           (_) => false,
         );

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -1389,6 +1390,26 @@ class _BillingPageState extends State<BillingPage> {
       debugPrint('[BillingPage] Shop: ${shop.shopName}');
 
       debugPrint('[BillingPage] Generating PDF file...');
+      if (kIsWeb) {
+        final bytes = await _pdfService
+            .buildPdfBytes(billData: printData, shopDetails: shop)
+            .timeout(
+              const Duration(seconds: 90),
+              onTimeout: () =>
+                  throw Exception('PDF generation timed out after 90 seconds'),
+            );
+        if (mounted) GlassyToast.dismiss();
+        if (!mounted) return;
+        await FilePreviewPage.open(
+          context,
+          bytes: bytes,
+              fileName: '${_localizations.bills} - ${bill.billNumber}',
+              fileType: FilePreviewType.pdf,
+              subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
+              customerPhone: bill.customerContact,
+        );
+        return;
+      }
       final file = await _pdfService
           .savePdfToFile(billData: printData, shopDetails: shop)
           .timeout(
@@ -1422,17 +1443,13 @@ class _BillingPageState extends State<BillingPage> {
 
       // Navigate to PDF preview
       debugPrint('[BillingPage] Navigating to FilePreviewPage...');
-      await Navigator.push(
+      await FilePreviewPage.open(
         context,
-        MaterialPageRoute(
-          builder: (context) => FilePreviewPage(
-            file: file,
+        file: file,
             fileName: '${_localizations.bills} - ${bill.billNumber}',
             fileType: FilePreviewType.pdf,
             subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
             customerPhone: bill.customerContact,
-          ),
-        ),
       );
       debugPrint('[BillingPage] Returned from FilePreviewPage');
     } catch (e, stack) {

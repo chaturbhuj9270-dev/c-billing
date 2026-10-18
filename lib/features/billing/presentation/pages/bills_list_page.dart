@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -258,6 +259,28 @@ class _BillsListPageState extends State<BillsListPage>
       debugPrint('[BillsListPage] Got shop: ${shop.shopName}');
 
       debugPrint('[BillsListPage] Generating PDF file...');
+      if (kIsWeb) {
+        final bytes = await _pdfService
+            .buildPdfBytes(billData: printData, shopDetails: shop)
+            .timeout(
+              const Duration(seconds: 15),
+              onTimeout: () => throw Exception('PDF generation timed out'),
+            );
+        if (!mounted) return;
+        setState(() {
+          _printingBillId = null;
+          _isProcessingPdf = false;
+        });
+        await FilePreviewPage.open(
+        context,
+              bytes: bytes,
+              fileName: '${_localizations.bills} - ${bill.billNumber}',
+              fileType: FilePreviewType.pdf,
+              subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
+              customerPhone: bill.customerContact,
+        );
+        return;
+      }
       final file = await _pdfService
           .savePdfToFile(billData: printData, shopDetails: shop)
           .timeout(
@@ -278,17 +301,13 @@ class _BillsListPageState extends State<BillsListPage>
       });
 
       debugPrint('[BillsListPage] Navigating to FilePreviewPage...');
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => FilePreviewPage(
+      await FilePreviewPage.open(
+      context,
             file: file,
             fileName: '${_localizations.bills} - ${bill.billNumber}',
             fileType: FilePreviewType.pdf,
             subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
             customerPhone: bill.customerContact,
-          ),
-        ),
       );
       debugPrint('[BillsListPage] Returned from FilePreviewPage');
     } catch (e, stack) {
@@ -355,6 +374,20 @@ class _BillsListPageState extends State<BillsListPage>
 
       debugPrint('[BillReport] PDF generated: ${pdfBytes.length} bytes');
 
+      if (kIsWeb) {
+        if (mounted) GlassyToast.dismiss();
+        if (!mounted) return;
+        await FilePreviewPage.open(
+        context,
+              bytes: pdfBytes,
+              fileName: _localizations.billReport,
+              fileType: FilePreviewType.pdf,
+              subtitle:
+                  '${filtered.length} bills • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
+        );
+        return;
+      }
+
       // Save to temporary file for preview
       final tempDir = await getTemporaryDirectory();
       final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
@@ -372,17 +405,13 @@ class _BillsListPageState extends State<BillsListPage>
       }
 
       // Navigate to file preview page
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => FilePreviewPage(
+      await FilePreviewPage.open(
+      context,
             file: tempFile,
             fileName: _localizations.billReport,
             fileType: FilePreviewType.pdf,
             subtitle:
                 '${filtered.length} bills • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
-          ),
-        ),
       );
 
       _isGeneratingReport = false;
@@ -680,6 +709,14 @@ class _BillsListPageState extends State<BillsListPage>
 
     if (result.action == _BillDialogAction.billReturned) {
       _loadBills();
+    } else if (result.action == _BillDialogAction.openReturn) {
+      final returned = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ReturnBillPage(initialBill: bill),
+        ),
+      );
+      if (returned == true && mounted) _loadBills();
     }
   }
 
@@ -710,7 +747,32 @@ class _BillsListPageState extends State<BillsListPage>
                 },
               ),
             ],
-          ),
+          )
+          else
+            Padding(
+              padding: const EdgeInsets.only(right: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  AppTopBar.action(
+                    icon: Icons.description_rounded,
+                    onTap: _generateBillReport,
+                  ),
+                  const SizedBox(width: 8),
+                  AppTopBar.action(
+                    icon: Icons.settings_rounded,
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const BillReportSettingsPage(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
           Expanded(
             child: Stack(
         children: [
@@ -1566,7 +1628,7 @@ class _BillsListPageState extends State<BillsListPage>
 }
 
 /// Actions that can be triggered from the bill details dialog
-enum _BillDialogAction { billReturned }
+enum _BillDialogAction { billReturned, openReturn }
 
 /// Result returned from the bill details dialog
 class _BillDialogResult {
@@ -1625,6 +1687,13 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
   }
 
   void _navigateToReturnBill() async {
+    if (kIsWeb) {
+      Navigator.pop(
+        context,
+        const _BillDialogResult(action: _BillDialogAction.openReturn),
+      );
+      return;
+    }
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
@@ -2361,6 +2430,28 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
       debugPrint('[BillDetailsDialog] Got shop: ${shop.shopName}');
 
       debugPrint('[BillDetailsDialog] Generating PDF file...');
+      if (kIsWeb) {
+        final bytes = await _pdfService
+            .buildPdfBytes(billData: printData, shopDetails: shop)
+            .timeout(
+              const Duration(seconds: 90),
+              onTimeout: () =>
+                  throw Exception('PDF generation timed out after 90 seconds'),
+            );
+        if (!mounted) return;
+        setState(() => _isGeneratingPdf = false);
+        await FilePreviewPage.open(
+        context,
+              bytes: bytes,
+              fileName: '${_localizations.bills} - ${_bill.billNumber}',
+              fileType: FilePreviewType.pdf,
+              subtitle: DateFormat(
+                'dd MMM yyyy, hh:mm a',
+              ).format(_bill.billDate),
+              customerPhone: _bill.customerContact,
+        );
+        return;
+      }
       final file = await _pdfService
           .savePdfToFile(billData: printData, shopDetails: shop)
           .timeout(
@@ -2396,17 +2487,13 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
       if (!mounted) return;
 
       debugPrint('[BillDetailsDialog] Navigating to FilePreviewPage...');
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => FilePreviewPage(
+      await FilePreviewPage.open(
+      context,
             file: file,
             fileName: '${_localizations.bills} - ${_bill.billNumber}',
             fileType: FilePreviewType.pdf,
             subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(_bill.billDate),
             customerPhone: _bill.customerContact,
-          ),
-        ),
       );
       debugPrint('[BillDetailsDialog] Returned from FilePreviewPage');
     } catch (e, stack) {

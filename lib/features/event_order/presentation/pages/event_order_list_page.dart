@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -129,7 +131,13 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           backgroundColor: AppColors.scaffold(context),
           body: Column(
             children: [
-              if (!widget.isEmbedded) _buildPremiumAppBar(context),
+              if (!widget.isEmbedded)
+                _buildPremiumAppBar(context)
+              else
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 16, 4),
+                  child: _eventActionRow(context),
+                ),
               Expanded(
                 child: CustomScrollView(
                   slivers: [
@@ -163,7 +171,26 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     return AppTopBar(
       title: title,
       subtitle: subtitle,
-      actions: [
+      actions: _eventBarActions(context),
+    );
+  }
+
+  Widget _eventActionRow(BuildContext context) {
+    final actions = _eventBarActions(context);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        for (var i = 0; i < actions.length; i++) ...[
+          if (i > 0) const SizedBox(width: 8),
+          actions[i],
+        ],
+      ],
+    );
+  }
+
+  List<Widget> _eventBarActions(BuildContext context) {
+    final l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
+    return [
         if (_unsyncedCount > 0)
           GestureDetector(
             onTap: () {
@@ -214,8 +241,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           icon: Icons.settings_rounded,
           onTap: () => _openSettings(context),
         ),
-      ],
-    );
+    ];
   }
 
   Widget _buildStatsSection() {
@@ -1690,6 +1716,24 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         throw Exception('PDF generation failed - empty result');
       }
 
+      if (kIsWeb) {
+        closeDialog();
+        if (!mounted || !context.mounted) return;
+        setState(() => _processingOrderId = null);
+        final title = order.orderType == OrderType.event
+            ? 'Event Invoice'
+            : 'Order Invoice';
+        await FilePreviewPage.open(
+        context,
+              bytes: pdfBytes,
+              fileName: '$title - ${order.orderName}',
+              fileType: FilePreviewType.pdf,
+              subtitle: DateFormat('dd MMM yyyy').format(order.eventDate),
+              customerPhone: order.customerContact,
+        );
+        return;
+      }
+
       // Save PDF to temp file for preview
       debugPrint('[EventOrderList] Saving PDF to temp file...');
       final tempDir = await Directory.systemTemp.createTemp('invoice_');
@@ -1718,17 +1762,13 @@ class _EventOrderListPageState extends State<EventOrderListPage>
 
       // Navigate to FilePreviewPage for preview with share/print options
       debugPrint('[EventOrderList] Opening PDF preview...');
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => FilePreviewPage(
+      await FilePreviewPage.open(
+      context,
             file: file,
             fileName: '$title - ${order.orderName}',
             fileType: FilePreviewType.pdf,
             subtitle: DateFormat('dd MMM yyyy').format(order.eventDate),
             customerPhone: order.customerContact,
-          ),
-        ),
       );
       debugPrint('[EventOrderList] PDF preview closed');
     } catch (e, stack) {
@@ -2230,6 +2270,19 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         throw Exception('Report generation failed - empty result');
       }
 
+      if (kIsWeb) {
+        if (mounted) GlassyToast.dismiss();
+        if (!mounted) return;
+        await FilePreviewPage.open(
+        context,
+              bytes: pdfBytes,
+              fileName: isEvent ? 'Event Report' : 'Order Report',
+              fileType: FilePreviewType.pdf,
+              subtitle: _getDateFilterLabel(),
+        );
+        return;
+      }
+
       // Save to file with timeout
       final file =
           await EventOrderReportPdfGenerator.saveToFile(
@@ -2250,16 +2303,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       if (!mounted) return;
 
       // Navigate to preview
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => FilePreviewPage(
+      await FilePreviewPage.open(
+      context,
             file: file,
             fileName: isEvent ? 'Event Report' : 'Order Report',
             fileType: FilePreviewType.pdf,
             subtitle: _getDateFilterLabel(),
-          ),
-        ),
       );
     } catch (e) {
       debugPrint('[EventOrderList] Report generation error: $e');

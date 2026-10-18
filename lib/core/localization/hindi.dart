@@ -915,6 +915,8 @@ class HindiLocalization {
   static const String createNewProductRecord = 'एक नया उत्पाद रिकॉर्ड बनाएं';
   static const String hsnCodeRequired = 'GST लागू होने पर HSN कोड आवश्यक है';
   static const String hsnCode = 'HSN कोड';
+  static const String applyGst = 'GST लागू करें';
+  static const String applyGstHint = 'बंद रखने पर GST शामिल नहीं होगा';
   static const String tapToSelect = 'चुनने के लिए टैप करें';
   static const String perUnit = 'प्रति इकाई';
   static const String expiryDateAfterProduction =

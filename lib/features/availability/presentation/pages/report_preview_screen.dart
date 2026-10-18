@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:c_billing/features/inventory_management/domain/entities/report_item.dart';
@@ -18,6 +19,7 @@ class ReportPreviewScreen extends StatefulWidget {
   final ReportType reportType;
   final ReportFormat selectedFormat;
   final String reportTitle;
+  final bool presentedAsDialog;
 
   const ReportPreviewScreen({
     super.key,
@@ -25,7 +27,52 @@ class ReportPreviewScreen extends StatefulWidget {
     required this.reportType,
     required this.selectedFormat,
     required this.reportTitle,
+    this.presentedAsDialog = false,
   });
+
+  /// Opens the stock report. On web this stays in a popup.
+  static Future<void> open(
+    BuildContext context, {
+    required List<ReportItem> reportItems,
+    required ReportType reportType,
+    required ReportFormat selectedFormat,
+    required String reportTitle,
+  }) {
+    final page = ReportPreviewScreen(
+      reportItems: reportItems,
+      reportType: reportType,
+      selectedFormat: selectedFormat,
+      reportTitle: reportTitle,
+      presentedAsDialog: kIsWeb,
+    );
+    if (!kIsWeb) {
+      return Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => page),
+      );
+    }
+
+    return showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Close report',
+      barrierColor: AppTheme.black.withValues(alpha: 0.62),
+      transitionDuration: const Duration(milliseconds: 180),
+      pageBuilder: (dialogContext, _, _) {
+        final size = MediaQuery.sizeOf(dialogContext);
+        final width = size.width >= 1200 ? 1040.0 : size.width - 48;
+        final height = size.height >= 760 ? size.height - 72 : size.height - 32;
+        return Center(
+          child: Material(
+            color: AppColors.card(dialogContext),
+            elevation: 0,
+            borderRadius: BorderRadius.circular(20),
+            clipBehavior: Clip.antiAlias,
+            child: SizedBox(width: width, height: height, child: page),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   State<ReportPreviewScreen> createState() => _ReportPreviewScreenState();
@@ -173,6 +220,33 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
       final products = selected.map((e) => e.product).toList();
       final orderQuantities = selected.map((e) => e.orderQuantity).toList();
 
+      if (kIsWeb) {
+        final bytes = widget.selectedFormat == ReportFormat.pdf
+            ? await _reportService.buildPdfBytesWithOrderQty(
+                products: products,
+                orderQuantities: orderQuantities,
+                reportType: widget.reportType,
+                customTitle: widget.reportTitle,
+              )
+            : await _reportService.buildCsvBytesWithOrderQty(
+                products: products,
+                orderQuantities: orderQuantities,
+                reportType: widget.reportType,
+                customTitle: widget.reportTitle,
+              );
+        if (mounted) {
+          await FilePreviewPage.open(
+          context,
+                bytes: bytes,
+                fileName: widget.reportTitle,
+                fileType: widget.selectedFormat == ReportFormat.pdf
+                    ? FilePreviewType.pdf
+                    : FilePreviewType.csv,
+          );
+        }
+        return;
+      }
+
       late final File file;
       if (widget.selectedFormat == ReportFormat.pdf) {
         file = await _reportService.generatePdfReportWithOrderQty(
@@ -192,10 +266,8 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
 
       // Navigate to file preview page
       if (mounted) {
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => FilePreviewPage(
+        await FilePreviewPage.open(
+        context,
               file: file,
               fileName: widget.reportTitle,
               fileType: widget.selectedFormat == ReportFormat.pdf
@@ -207,8 +279,6 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                 // Pop back to availability page when preview is closed
                 if (mounted) Navigator.of(context).pop();
               },
-            ),
-          ),
         );
       }
     } catch (e) {
@@ -228,29 +298,111 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
 
   @override
   Widget build(BuildContext context) {
+    final body = Column(
+      children: [
+        widget.presentedAsDialog ? _buildDialogHeader() : _buildHeader(),
+        _buildSelectionBar(),
+        Expanded(
+          child: ColoredBox(
+            color: AppColors.scaffold(context),
+            child: _editableItems.isEmpty
+                ? _buildEmptyState()
+                : _buildProductList(),
+          ),
+        ),
+        _buildBottomBar(),
+      ],
+    );
+
+    if (widget.presentedAsDialog) return body;
+
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      body: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            // Custom Header
-            _buildHeader(),
+      body: SafeArea(top: false, child: body),
+    );
+  }
 
-            // Selection Summary Bar
-            _buildSelectionBar(),
-
-            // Product List
-            Expanded(
-              child: _editableItems.isEmpty
-                  ? _buildEmptyState()
-                  : _buildProductList(),
+  Widget _buildDialogHeader() {
+    final isPdf = widget.selectedFormat == ReportFormat.pdf;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        border: Border(bottom: BorderSide(color: AppColors.border(context))),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.accentSoft(context, 0.14),
+              borderRadius: BorderRadius.circular(12),
             ),
-
-            // Bottom action bar
-            _buildBottomBar(),
-          ],
-        ),
+            child: Icon(
+              isPdf ? Icons.picture_as_pdf_outlined : Icons.table_chart_outlined,
+              color: AppColors.action(context),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _localizations.reportPreview,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Literata',
+                    height: 1.15,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  widget.reportTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.mutedText(context),
+                    fontSize: 13,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: AppColors.chipFill(context),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.border(context)),
+            ),
+            child: Text(
+              isPdf ? 'PDF' : 'CSV',
+              style: TextStyle(
+                color: AppColors.primaryText(context),
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            tooltip: 'Close',
+            icon: Icon(
+              Icons.close_rounded,
+              color: AppColors.secondaryText(context),
+            ),
+          ),
+        ],
       ),
     );
   }

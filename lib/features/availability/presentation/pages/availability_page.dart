@@ -516,17 +516,12 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           reportType = ReportType.allProducts;
       }
 
-      // Navigate to preview screen
-      await Navigator.push(
+      await ReportPreviewScreen.open(
         context,
-        MaterialPageRoute(
-          builder: (context) => ReportPreviewScreen(
-            reportItems: reportItems,
-            reportType: reportType,
-            selectedFormat: format,
-            reportTitle: reportTitle,
-          ),
-        ),
+        reportItems: reportItems,
+        reportType: reportType,
+        selectedFormat: format,
+        reportTitle: reportTitle,
       );
     } catch (e) {
       if (mounted) {

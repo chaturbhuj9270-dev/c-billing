@@ -277,6 +277,7 @@ class _PurchasePageState extends State<PurchasePage>
     final cgstController = TextEditingController();
     final sgstController = TextEditingController();
     final hsnController = TextEditingController();
+    var applyGst = false;
     Map<String, dynamic>? sheetSelectedCompany;
     Map<String, dynamic>? sheetSelectedSupplier;
 
@@ -499,43 +500,88 @@ class _PurchasePageState extends State<PurchasePage>
                         ],
                       ),
                       const SizedBox(height: 16),
-                      // GST row
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildBottomSheetTextField(
-                              controller: cgstController,
-                              label: 'CGST %',
-                              hint: '0',
-                              icon: Icons.percent,
-                              keyboardType: TextInputType.number,
-                              onChanged: (_) => setSheetState(() {}),
+                      InkWell(
+                        onTap: () => setSheetState(() => applyGst = !applyGst),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: applyGst,
+                              onChanged: (value) => setSheetState(
+                                () => applyGst = value ?? false,
+                              ),
+                              activeColor: AppColors.action(context),
+                              checkColor: AppTheme.white,
+                              side: BorderSide(color: AppColors.border(context)),
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildBottomSheetTextField(
-                              controller: sgstController,
-                              label: 'SGST %',
-                              hint: '0',
-                              icon: Icons.percent,
-                              keyboardType: TextInputType.number,
-                              onChanged: (_) => setSheetState(() {}),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _localizations.applyGst,
+                                    style: TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.primaryText(context),
+                                    ),
+                                  ),
+                                  Text(
+                                    _localizations.applyGstHint,
+                                    style: TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontSize: 12,
+                                      color: AppColors.mutedText(context),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 16),
-                      // HSN Code
-                      _buildBottomSheetTextField(
-                        controller: hsnController,
-                        label: _localizations.hsnCode,
-                        hint: 'e.g. 30049099',
-                        icon: Icons.tag,
-                        keyboardType: TextInputType.number,
-                        maxLength: 8,
-                        onChanged: (_) => setSheetState(() {}),
-                      ),
+                      if (applyGst) ...[
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildBottomSheetTextField(
+                                controller: cgstController,
+                                label: 'CGST %',
+                                hint: '0',
+                                icon: Icons.percent,
+                                keyboardType: TextInputType.number,
+                                onChanged: (_) => setSheetState(() {}),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildBottomSheetTextField(
+                                controller: sgstController,
+                                label: 'SGST %',
+                                hint: '0',
+                                icon: Icons.percent,
+                                keyboardType: TextInputType.number,
+                                onChanged: (_) => setSheetState(() {}),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        _buildBottomSheetTextField(
+                          controller: hsnController,
+                          label: _localizations.hsnCode,
+                          hint: 'e.g. 30049099',
+                          icon: Icons.tag,
+                          keyboardType: TextInputType.number,
+                          maxLength: 8,
+                          onChanged: (_) => setSheetState(() {}),
+                        ),
+                      ],
                       // Custom Fields Section
                       if (customColumns.isNotEmpty) ...[
                         const SizedBox(height: 16),
@@ -591,6 +637,7 @@ class _PurchasePageState extends State<PurchasePage>
                                       cgstController,
                                       sgstController,
                                       hsnController,
+                                      applyGst,
                                       sheetSelectedCompany,
                                       sheetSelectedSupplier,
                                       customColumns,
@@ -647,6 +694,7 @@ class _PurchasePageState extends State<PurchasePage>
     TextEditingController cgstController,
     TextEditingController sgstController,
     TextEditingController hsnController,
+    bool applyGst,
     Map<String, dynamic>? selectedCompany,
     Map<String, dynamic>? selectedSupplier,
     List<CustomColumn> customColumns,
@@ -655,9 +703,13 @@ class _PurchasePageState extends State<PurchasePage>
   ) async {
     try {
       // Validate HSN: required if CGST or SGST > 0
-      final cgstVal = double.tryParse(cgstController.text) ?? 0.0;
-      final sgstVal = double.tryParse(sgstController.text) ?? 0.0;
-      final hsnVal = hsnController.text.trim();
+      final cgstVal = applyGst
+          ? (double.tryParse(cgstController.text) ?? 0.0)
+          : 0.0;
+      final sgstVal = applyGst
+          ? (double.tryParse(sgstController.text) ?? 0.0)
+          : 0.0;
+      final hsnVal = applyGst ? hsnController.text.trim() : '';
       if ((cgstVal > 0 || sgstVal > 0) && hsnVal.isEmpty) {
         GlassyToast.show(
           sheetContext,

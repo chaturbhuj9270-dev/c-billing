@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
@@ -1545,6 +1546,20 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
       debugPrint('[PurchaseReport] PDF generated: ${pdfBytes.length} bytes');
 
+      if (kIsWeb) {
+        if (mounted) GlassyToast.dismiss();
+        if (!mounted) return;
+        await FilePreviewPage.open(
+        context,
+              bytes: pdfBytes,
+              fileName: 'Purchase Report',
+              fileType: FilePreviewType.pdf,
+              subtitle:
+                  '${filtered.length} entries • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
+        );
+        return;
+      }
+
       // Save to temporary file for preview
       final tempDir = await getTemporaryDirectory();
       final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
@@ -1562,17 +1577,13 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       }
 
       // Navigate to file preview page
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => FilePreviewPage(
+      await FilePreviewPage.open(
+      context,
             file: tempFile,
             fileName: 'Purchase Report',
             fileType: FilePreviewType.pdf,
             subtitle:
                 '${filtered.length} entries • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
-          ),
-        ),
       );
 
       _isGeneratingReport = false;
