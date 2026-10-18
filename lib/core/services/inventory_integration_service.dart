@@ -8,6 +8,8 @@ import '../../features/product/offline/controllers/product_offline_controller.da
 import '../../features/billing/offline/controllers/bill_offline_controller.dart';
 import '../../features/billing/offline/entities/bill_entity.dart';
 import '../../features/billing/domain/entities/bill_item.dart';
+import '../../features/customer/offline/controllers/customer_transaction_offline_controller.dart';
+import '../services/dashboard_refresh_service.dart';
 
 /// Unified service that orchestrates the integration between:
 /// - Old modules: Product, Supplier, Company, Purchase, Bill
@@ -319,6 +321,10 @@ class InventoryIntegrationService {
         '[Integration] Bill processed: COGS=$totalCOGS, Revenue=$totalRevenue, Profit=$totalProfit',
       );
 
+      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.product);
+      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.purchase);
+      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.bill);
+
       return IntegratedBillResult.success(
         billEntity: billEntity,
         billId: billId,
@@ -390,6 +396,7 @@ class InventoryIntegrationService {
 
       // 3. Update BillEntity with return info
       final bill = await _billController.getBillById(billLocalId);
+      var customerRefund = totalRefundAmount;
       if (bill != null) {
         // Update return quantities on bill items
         final updatedItems = bill.items.map((item) {
@@ -426,17 +433,58 @@ class InventoryIntegrationService {
           (item) => item.returnedQuantity >= item.quantity,
         );
 
+        // Refund follows what the customer was charged, including discount
+        // and exclusive tax, then only the unpaid part changes the ledger.
+        final chargeRatio = bill.totalAmount > 0
+            ? bill.finalAmount / bill.totalAmount
+            : 1.0;
+        customerRefund = 0;
+        for (final returnItem in returnItems) {
+          if (returnItem.returnQuantity <= 0) continue;
+          customerRefund +=
+              returnItem.returnQuantity * returnItem.sellingPrice * chargeRatio;
+        }
+        final appliedToDue = customerRefund > bill.pendingAmount
+            ? bill.pendingAmount
+            : customerRefund;
+        final pendingAfterReturn = bill.pendingAmount - appliedToDue;
+        final paymentStatus = pendingAfterReturn <= 0.009
+            ? BillPaymentStatus.paid
+            : (bill.paidAmount > 0
+                  ? BillPaymentStatus.partiallyPaid
+                  : BillPaymentStatus.pending);
+
         await _billController.updateBill(
           id: billLocalId,
           items: updatedItems,
           returnStatus: allReturned,
           returnDate: DateTime.now(),
+          pendingAmount: pendingAfterReturn,
+          paymentStatus: paymentStatus,
         );
+
+        final customerId = bill.customerId;
+        if (customerId != null &&
+            customerId.isNotEmpty &&
+            appliedToDue > 0) {
+          await CustomerTransactionOfflineController.instance
+              .addReturnTransaction(
+                customerId: customerId,
+                customerName: bill.customerName ?? '',
+                amount: appliedToDue,
+                billId: bill.serverId ?? 'local_${bill.id}',
+                description: 'Return for bill ${bill.serverId ?? bill.id}',
+              );
+        }
       }
 
-      debugPrint('[Integration] Return processed: refund=$totalRefundAmount');
+      debugPrint('[Integration] Return processed: refund=$customerRefund');
 
-      return IntegratedReturnResult.success(refundAmount: totalRefundAmount);
+      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.product);
+      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.purchase);
+      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.bill);
+
+      return IntegratedReturnResult.success(refundAmount: customerRefund);
     } catch (e) {
       debugPrint('[Integration] Return failed: $e');
       return IntegratedReturnResult.failure('Failed to process return: $e');

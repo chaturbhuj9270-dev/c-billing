@@ -1,12 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../../billing/offline/controllers/bill_offline_controller.dart';
 import '../../../billing/offline/entities/bill_entity.dart';
+import '../../../customer/offline/controllers/customer_offline_controller.dart';
 import '../../../event_order/offline/controllers/event_order_offline_controller.dart';
 import '../../../event_order/offline/entities/event_order_entity.dart';
 import '../../../event_order/domain/entities/event_order.dart';
 import 'package:intl/intl.dart';
 import 'package:c_billing/common_widgets/app_tab_bar.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Premium Customer Finance/History Page
@@ -46,8 +50,10 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
   double _totalEventAmount = 0;
   double _totalAdvanceAmount = 0;
   double _totalEventPending = 0;
+  double _shownPending = 0;
   int _totalBillCount = 0;
   int _totalEventCount = 0;
+  final List<StreamSubscription<void>> _refreshSubscriptions = [];
 
   @override
   void initState() {
@@ -59,16 +65,31 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
       }
     });
     _loadData();
+    final refresh = DashboardRefreshService.instance;
+    for (final stream in [
+      refresh.onCustomerChanged,
+      refresh.onBillChanged,
+      refresh.onEventOrderChanged,
+    ]) {
+      _refreshSubscriptions.add(
+        stream.listen((_) {
+          if (mounted) _loadData(silent: true);
+        }),
+      );
+    }
   }
 
   @override
   void dispose() {
+    for (final subscription in _refreshSubscriptions) {
+      subscription.cancel();
+    }
     _tabController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadData() async {
-    setState(() => _isLoading = true);
+  Future<void> _loadData({bool silent = false}) async {
+    if (!silent) setState(() => _isLoading = true);
 
     try {
       debugPrint(
@@ -171,6 +192,31 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
         totalEventPending += order.remainingAmount;
       }
 
+      var livePending = widget.currentPendingAmount;
+      var foundCustomer = false;
+      final customers = CustomerOfflineController.instance;
+      if (widget.customerId.isNotEmpty) {
+        final byServer = await customers.getCustomerByServerId(
+          widget.customerId,
+        );
+        if (byServer != null) {
+          livePending = byServer.currentPendingAmount;
+          foundCustomer = true;
+        }
+      }
+      final localId = int.tryParse(widget.customerLocalId ?? '');
+      if (!foundCustomer && localId != null) {
+        final byLocal = await customers.getCustomerById(localId);
+        if (byLocal != null) livePending = byLocal.currentPendingAmount;
+      }
+      final openEventPending = sortedEventOrders
+          .where(
+            (order) =>
+                order.status != OrderStatus.cancelled.index &&
+                order.status != OrderStatus.convertedToBill.index,
+          )
+          .fold<double>(0, (total, order) => total + order.remainingAmount);
+
       setState(() {
         _bills = bills;
         _eventOrders = sortedEventOrders;
@@ -180,6 +226,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
         _totalEventAmount = totalEvent;
         _totalAdvanceAmount = totalAdvance;
         _totalEventPending = totalEventPending;
+        _shownPending = livePending + openEventPending;
         _totalBillCount = bills.length;
         _totalEventCount = eventOrders.length;
         _isLoading = false;
@@ -341,7 +388,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                     ),
                   ),
                   // Pending Amount Badge
-                  if (widget.currentPendingAmount > 0)
+                  if (_shownPending > 0)
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -359,7 +406,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            '₹${widget.currentPendingAmount.toStringAsFixed(0)}',
+                            '₹${_shownPending.toStringAsFixed(0)}',
                             style: const TextStyle(
                               color: AppTheme.white,
                               fontSize: 15,

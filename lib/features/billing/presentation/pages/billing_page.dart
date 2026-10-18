@@ -36,6 +36,9 @@ import 'package:c_billing/features/inventory_management/offline/controllers/purc
 import 'package:c_billing/features/inventory_management/offline/entities/purchase_batch_entity.dart';
 import 'package:c_billing/features/customer/offline/controllers/customer_offline_controller.dart';
 import 'package:c_billing/features/customer/offline/entities/customer_entity.dart';
+import 'package:c_billing/features/event_order/domain/entities/event_order.dart';
+import 'package:c_billing/features/event_order/offline/controllers/event_order_offline_controller.dart';
+import 'package:c_billing/features/event_order/offline/entities/event_order_entity.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_tax_settings.dart';
 import 'package:c_billing/features/dashboard/data/repositories/dashboard_offline_repository.dart';
 import 'package:c_billing/features/billing/presentation/pages/bills_list_page.dart';
@@ -80,7 +83,10 @@ class _BillingPageState extends State<BillingPage> {
   // Real-time local stream subscriptions
   StreamSubscription<List<ProductEntity>>? _productStreamSubscription;
   StreamSubscription<List<CustomerEntity>>? _customerStreamSubscription;
+  StreamSubscription<List<EventOrderEntity>>? _eventPendingSubscription;
   StreamSubscription<void>? _billSettingsSubscription;
+  List<CustomerEntity> _watchedCustomers = [];
+  Map<String, double> _eventPendingByCustomer = {};
 
   // Printing services
   final _printerService = PosPrinterService();
@@ -219,6 +225,7 @@ class _BillingPageState extends State<BillingPage> {
   void dispose() {
     _productStreamSubscription?.cancel();
     _customerStreamSubscription?.cancel();
+    _eventPendingSubscription?.cancel();
     _billSettingsSubscription?.cancel();
     LanguageService.instance.removeListener(_onLanguageChanged);
     _debounceTimer?.cancel();
@@ -262,33 +269,63 @@ class _BillingPageState extends State<BillingPage> {
     _customerStreamSubscription = CustomerOfflineController.instance
         .watchAllCustomers()
         .listen((entities) {
-          if (!mounted) return;
-          // Convert entities directly from stream for instant update
-          final customers = entities.map((entity) {
-            final nameParts = entity.name.split(' ');
-            final firstName = nameParts.isNotEmpty ? nameParts.first : '';
-            final lastName = nameParts.length > 1
-                ? nameParts.sublist(1).join(' ')
-                : '';
-            return <String, dynamic>{
-              'id': entity.serverId ?? 'local_${entity.id}',
-              'localId': entity.id,
-              'firstName': firstName,
-              'lastName': lastName,
-              'contact': entity.mobile,
-              'fullName': entity.name,
-              'pendingBalance': entity.currentPendingAmount,
-              'totalPurchases': entity.totalPurchases,
-            };
-          }).toList();
-          setState(() {
-            _customers = customers;
-            _isLoadingCustomers = false;
-          });
-          debugPrint(
-            '[Billing] Customer stream: ${customers.length} customers',
-          );
+          _watchedCustomers = entities;
+          _publishBillingCustomers();
         }, onError: (e) => debugPrint('[Billing] Customer stream error: $e'));
+    _eventPendingSubscription = EventOrderOfflineController.instance
+        .watchAllEventOrders()
+        .listen((orders) {
+          final pending = <String, double>{};
+          for (final order in orders) {
+            if (order.status == OrderStatus.cancelled.index ||
+                order.status == OrderStatus.convertedToBill.index) {
+              continue;
+            }
+            final customerId = order.customerId;
+            if (customerId == null || customerId.isEmpty) continue;
+            pending[customerId] =
+                (pending[customerId] ?? 0) + order.remainingAmount;
+          }
+          _eventPendingByCustomer = pending;
+          _publishBillingCustomers();
+        }, onError: (e) => debugPrint('[Billing] Event pending stream error: $e'));
+  }
+
+  void _publishBillingCustomers() {
+    if (!mounted || _watchedCustomers.isEmpty) return;
+    final customers = _watchedCustomers.map((entity) {
+      final nameParts = entity.name.split(' ');
+      final firstName = nameParts.isNotEmpty ? nameParts.first : '';
+      final lastName = nameParts.length > 1
+          ? nameParts.sublist(1).join(' ')
+          : '';
+      final eventDue =
+          (_eventPendingByCustomer[entity.serverId ?? ''] ?? 0) +
+          (_eventPendingByCustomer['local_${entity.id}'] ?? 0);
+      return <String, dynamic>{
+        'id': entity.serverId ?? 'local_${entity.id}',
+        'localId': entity.id,
+        'firstName': firstName,
+        'lastName': lastName,
+        'contact': entity.mobile,
+        'fullName': entity.name,
+        'pendingBalance': entity.currentPendingAmount + eventDue,
+        'totalPurchases': entity.totalPurchases,
+      };
+    }).toList();
+    setState(() {
+      _customers = customers;
+      _isLoadingCustomers = false;
+      final selectedId = _selectedCustomer?['id'];
+      if (selectedId != null) {
+        for (final customer in customers) {
+          if (customer['id'] == selectedId) {
+            _selectedCustomer = customer;
+            break;
+          }
+        }
+      }
+    });
   }
 
   Future<void> _loadProducts({bool showLoader = true}) async {
@@ -425,7 +462,9 @@ class _BillingPageState extends State<BillingPage> {
             })
             .toList();
 
-        if (firebaseCustomers.isNotEmpty && mounted) {
+        if (localCustomers.isEmpty &&
+            firebaseCustomers.isNotEmpty &&
+            mounted) {
           setState(() {
             _customers = firebaseCustomers;
           });

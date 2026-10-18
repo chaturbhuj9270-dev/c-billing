@@ -3,6 +3,8 @@ import '../../../../core/database/app_database.dart';
 import '../../../../core/database/local_store.dart';
 import '../../../../core/services/local_database.dart';
 import '../../../../core/services/dashboard_refresh_service.dart';
+import '../../../billing/offline/controllers/bill_offline_controller.dart';
+import '../../../billing/offline/entities/bill_entity.dart';
 import '../entities/customer_transaction_entity.dart';
 import '../entities/customer_entity.dart';
 
@@ -37,6 +39,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     String? description,
     String? paymentMethod,
     DateTime? transactionDate,
+    bool allocateToBills = false,
   }) async {
     debugPrint(
       '[TransactionOffline] Adding payment: $amount for customer: $customerId',
@@ -70,6 +73,9 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     });
 
     debugPrint('[TransactionOffline] Payment saved. New pending: $newPending');
+    if (allocateToBills && amount > 0) {
+      await _allocatePaymentToBills(customer, customerId, amount);
+    }
     notifyListeners();
     DashboardRefreshService.instance.notifyDataChanged(DataChangeType.customer);
     return transaction;
@@ -116,6 +122,103 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     debugPrint(
       '[TransactionOffline] Bill transaction saved. New pending: $newPending',
     );
+    notifyListeners();
+    DashboardRefreshService.instance.notifyDataChanged(DataChangeType.customer);
+    return transaction;
+  }
+
+  /// Apply a later payment to the oldest open bills so invoice balances match the ledger.
+  Future<void> _allocatePaymentToBills(
+    CustomerEntity? customer,
+    String customerId,
+    double amount,
+  ) async {
+    final ids = <String>{customerId};
+    if (customer != null) {
+      final serverId = customer.serverId;
+      if (serverId != null && serverId.isNotEmpty) ids.add(serverId);
+      ids.add('local_${customer.id}');
+      ids.add('${customer.id}');
+    }
+
+    final billsController = BillOfflineController.instance;
+    final seen = <int>{};
+    final bills = <BillEntity>[];
+    for (final id in ids) {
+      if (id.isEmpty) continue;
+      for (final bill in await billsController.getBillsByCustomerId(id)) {
+        if (bill.pendingAmount > 0.009 && seen.add(bill.id)) {
+          bills.add(bill);
+        }
+      }
+    }
+    bills.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+    var remaining = amount;
+    var appliedAny = false;
+    for (final bill in bills) {
+      if (remaining <= 0.009) break;
+      final applied = remaining > bill.pendingAmount
+          ? bill.pendingAmount
+          : remaining;
+      final pending = bill.pendingAmount - applied;
+      await billsController.updateBill(
+        id: bill.id,
+        paidAmount: bill.paidAmount + applied,
+        pendingAmount: pending <= 0.009 ? 0 : pending,
+        paymentStatus: pending <= 0.009
+            ? BillPaymentStatus.paid
+            : BillPaymentStatus.partiallyPaid,
+      );
+      remaining -= applied;
+      appliedAny = true;
+    }
+    if (appliedAny) {
+      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.bill);
+    }
+  }
+
+  /// Reduce what the customer owes after a sale return.
+  Future<CustomerTransactionEntity> addReturnTransaction({
+    required String customerId,
+    required String customerName,
+    required double amount,
+    required String billId,
+    String? description,
+  }) async {
+    debugPrint(
+      '[TransactionOffline] Adding return: $amount for customer: $customerId',
+    );
+
+    final customer = await _getCustomerByIdOrServerId(customerId);
+    final currentPending = customer?.currentPendingAmount ?? 0.0;
+    final newPending = currentPending - amount;
+    final now = DateTime.now();
+    final transaction = CustomerTransactionEntity(
+      customerId: customerId,
+      customerName: customer?.name ?? customerName,
+      transactionType: TransactionType.billReturn,
+      amount: amount,
+      balanceAfter: newPending,
+      referenceId: billId,
+      referenceType: 'bill',
+      description: description,
+      transactionDate: now,
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    await _db.transaction(() async {
+      await _db.saveTransaction(transaction);
+      if (customer != null) {
+        customer.currentPendingAmount = newPending;
+        customer.updatedAt = DateTime.now();
+        customer.isSynced = false;
+        await _db.saveCustomer(customer);
+      }
+    });
+
+    debugPrint('[TransactionOffline] Return saved. New pending: $newPending');
     notifyListeners();
     DashboardRefreshService.instance.notifyDataChanged(DataChangeType.customer);
     return transaction;

@@ -1044,6 +1044,7 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
             ? _notesController.text.trim()
             : 'Payment received',
         paymentMethod: _selectedPaymentMode.name,
+        allocateToBills: true,
       );
 
       if (!mounted) return;

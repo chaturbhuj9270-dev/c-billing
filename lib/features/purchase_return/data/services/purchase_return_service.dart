@@ -3,6 +3,7 @@ import '../../../inventory_management/offline/controllers/purchase_batch_offline
 import '../../../inventory_management/offline/controllers/stock_ledger_offline_controller.dart';
 import '../../../inventory_management/offline/entities/purchase_batch_entity.dart';
 import '../../../inventory_management/offline/entities/stock_ledger_entity.dart';
+import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../domain/entities/purchase_return.dart';
 import '../repositories/firebase_purchase_return_repository.dart';
 
@@ -377,6 +378,8 @@ class PurchaseReturnService {
               '[PurchaseReturn] Deducted $qtyFromBatch from batch ${batch.id} '
               '(${batch.productName}), price: ${batch.purchasePrice}');
         }
+
+        await _reduceProductStock(item.productId, item.quantity);
       }
 
       // Create PurchaseReturn document
@@ -408,5 +411,28 @@ class PurchaseReturnService {
       return PurchaseReturnResult.failure(
           'Failed to process return: $e');
     }
+  }
+
+  Future<void> _reduceProductStock(String productId, int quantity) async {
+    final products = ProductOfflineController.instance;
+    final isServerId =
+        productId.isNotEmpty &&
+        !productId.startsWith('local_') &&
+        productId.length >= 10;
+    if (isServerId) {
+      await products.decrementStock(productId, quantity);
+      return;
+    }
+    final raw = productId.startsWith('local_')
+        ? productId.substring('local_'.length)
+        : productId;
+    final localId = int.tryParse(raw);
+    if (localId == null) return;
+    final entity = await products.getProductById(localId);
+    if (entity == null) return;
+    await products.updateProduct(
+      id: entity.id,
+      currentStock: (entity.currentStock - quantity).clamp(0, 999999999),
+    );
   }
 }

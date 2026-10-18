@@ -94,6 +94,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   List<Map<String, dynamic>> _lowStockItems = [];
   List<Map<String, dynamic>> _upcomingEvents = [];
   bool _isLoadingExpandableData = false;
+  bool _expandableReloadQueued = false;
 
   // Dashboard refresh subscription
   StreamSubscription<void>? _refreshSubscription;
@@ -158,7 +159,10 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
   /// Load data for all expandable sections in parallel
   Future<void> _loadExpandableSectionData() async {
-    if (_isLoadingExpandableData) return;
+    if (_isLoadingExpandableData) {
+      _expandableReloadQueued = true;
+      return;
+    }
 
     setState(() => _isLoadingExpandableData = true);
 
@@ -195,6 +199,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       debugPrint('[OptimizedDashboardPage] Stack trace: $stackTrace');
       if (mounted) {
         setState(() => _isLoadingExpandableData = false);
+      }
+    } finally {
+      if (_expandableReloadQueued && mounted) {
+        _expandableReloadQueued = false;
+        _loadExpandableSectionData();
       }
     }
   }

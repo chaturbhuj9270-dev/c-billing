@@ -313,6 +313,12 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
         DashboardRefreshService.instance.notifyDataChanged(
           DataChangeType.purchaseReturn,
         );
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.product,
+        );
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.purchase,
+        );
         // Refresh history
         _loadReturnHistory();
       } else {

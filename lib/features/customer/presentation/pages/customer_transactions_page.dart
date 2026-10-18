@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/services/customer_transaction_service.dart';
 import '../../data/repositories/customer_repository.dart';
 import '../../data/repositories/customer_transaction_repository.dart';
 import '../../domain/entities/customer_transaction.dart' show PaymentMode;
+import '../../offline/controllers/customer_offline_controller.dart';
 import '../../offline/controllers/customer_transaction_offline_controller.dart';
 import '../../offline/entities/customer_transaction_entity.dart';
 import '../../data/services/customer_transaction_sync_service.dart';
@@ -57,6 +61,8 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
   // Stats
   double _totalReceived = 0;
   double _currentPending = 0;
+  final List<StreamSubscription<void>> _refreshSubscriptions = [];
+
   @override
   void initState() {
     super.initState();
@@ -66,7 +72,23 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
     );
     _currentPending = widget.currentPendingAmount;
     _initTransactionService();
+    _listenForLedgerChanges();
     _syncAndLoadTransactions();
+  }
+
+  void _listenForLedgerChanges() {
+    final refresh = DashboardRefreshService.instance;
+    for (final stream in [
+      refresh.onCustomerChanged,
+      refresh.onBillChanged,
+      refresh.onEventOrderChanged,
+    ]) {
+      _refreshSubscriptions.add(
+        stream.listen((_) {
+          if (mounted) _loadTransactions(silent: true);
+        }),
+      );
+    }
   }
 
   /// Sync transactions from server, then load from local storage
@@ -77,7 +99,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
     } catch (e) {
       debugPrint('[Transactions] Sync failed (will load local data): $e');
     }
-    // Then load from local storage
+    if (!mounted) return;
     _loadTransactions();
   }
 
@@ -94,12 +116,29 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
 
   @override
   void dispose() {
+    for (final subscription in _refreshSubscriptions) {
+      subscription.cancel();
+    }
     _animController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadTransactions() async {
-    setState(() => _isLoading = true);
+  Future<double> _ledgerPending() async {
+    final controller = CustomerOfflineController.instance;
+    if (widget.customerId.isNotEmpty) {
+      final byServer = await controller.getCustomerByServerId(widget.customerId);
+      if (byServer != null) return byServer.currentPendingAmount;
+    }
+    final localId = int.tryParse(widget.customerLocalId);
+    if (localId != null) {
+      final byLocal = await controller.getCustomerById(localId);
+      if (byLocal != null) return byLocal.currentPendingAmount;
+    }
+    return widget.currentPendingAmount;
+  }
+
+  Future<void> _loadTransactions({bool silent = false}) async {
+    if (!silent) setState(() => _isLoading = true);
 
     try {
       final controller = CustomerTransactionOfflineController.instance;
@@ -239,22 +278,25 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
       // Sort by date descending (newest first)
       combined.sort((a, b) => b.date.compareTo(a.date));
 
-      // Get latest pending amount from last transaction
-      if (transactions.isNotEmpty) {
-        _currentPending = transactions.first.balanceAfter;
-      }
-
-      // Add event order remaining amounts (non-cancelled, non-converted)
-      for (final order in eventOrders) {
-        if (order.status != OrderStatus.cancelled.index &&
-            order.status != OrderStatus.convertedToBill.index) {
-          _currentPending += order.remainingAmount;
-        }
-      }
+      // The header always shows the live ledger plus open event dues.
+      // A date filter only changes which rows are listed.
+      final ledgerPending = await _ledgerPending();
+      final openEventPending = eventOrders
+          .where(
+            (order) =>
+                order.status != OrderStatus.cancelled.index &&
+                order.status != OrderStatus.convertedToBill.index,
+          )
+          .fold<double>(0, (total, order) => total + order.remainingAmount);
+      _currentPending = ledgerPending + openEventPending;
 
       // Compute running balance for each item (bank-statement style)
       // Walk from newest to oldest, undoing each item's effect
-      double balance = _currentPending;
+      var balance = _currentPending;
+      if (_selectedFilter != TransactionDateFilter.all &&
+          transactions.isNotEmpty) {
+        balance = transactions.first.balanceAfter + openEventPending;
+      }
       for (int i = 0; i < combined.length; i++) {
         combined[i].runningBalance = balance;
         final item = combined[i];
@@ -664,6 +706,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
         amount: amount,
         description: description,
         paymentMethod: paymentMethod,
+        allocateToBills: true,
       );
 
       // Sync to Firebase (online)
