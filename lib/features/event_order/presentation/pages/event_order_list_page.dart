@@ -2327,7 +2327,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           fileName: isEvent ? 'Event Report' : 'Order Report',
           fileType: FilePreviewType.pdf,
           subtitle: _getDateFilterLabel(),
-          centered: true,
+          details: FilePreviewDetails(
+            title: 'Report preview',
+            documentNo: isEvent ? 'Event Report' : 'Order Report',
+            dateLabel: _getDateFilterLabel(),
+            itemsQty: '${orders.length} ${isEvent ? 'events' : 'orders'}',
+          ),
         );
         return;
       }
@@ -2358,7 +2363,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         fileName: isEvent ? 'Event Report' : 'Order Report',
         fileType: FilePreviewType.pdf,
         subtitle: _getDateFilterLabel(),
-        centered: true,
+        details: FilePreviewDetails(
+          title: 'Report preview',
+          documentNo: isEvent ? 'Event Report' : 'Order Report',
+          dateLabel: _getDateFilterLabel(),
+          itemsQty: '${orders.length} ${isEvent ? 'events' : 'orders'}',
+        ),
       );
     } catch (e) {
       debugPrint('[EventOrderList] Report generation error: $e');

@@ -250,12 +250,23 @@ class _BillsListPageState extends State<BillsListPage>
           _isProcessingPdf = false;
         });
         await FilePreviewPage.open(
-        context,
-              bytes: bytes,
-              fileName: '${_localizations.bills} - ${bill.billNumber}',
-              fileType: FilePreviewType.pdf,
-              subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
-              customerPhone: bill.customerContact,
+          context,
+          bytes: bytes,
+          fileName: '${_localizations.bills} - ${bill.billNumber}',
+          fileType: FilePreviewType.pdf,
+          subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
+          customerPhone: bill.customerContact,
+          details: FilePreviewDetails(
+            title: 'Bill preview',
+            documentNo: bill.billNumber,
+            dateLabel:
+                DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
+            customer: (bill.customerName?.trim().isNotEmpty ?? false)
+                ? bill.customerName!.trim()
+                : 'Walk-in customer',
+            itemsQty: '${bill.items.length} · ${bill.totalQuantity}',
+            amount: '₹${bill.finalAmount.toStringAsFixed(2)}',
+          ),
         );
         return;
       }
@@ -280,12 +291,22 @@ class _BillsListPageState extends State<BillsListPage>
 
       debugPrint('[BillsListPage] Navigating to FilePreviewPage...');
       await FilePreviewPage.open(
-      context,
-            file: file,
-            fileName: '${_localizations.bills} - ${bill.billNumber}',
-            fileType: FilePreviewType.pdf,
-            subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
-            customerPhone: bill.customerContact,
+        context,
+        file: file,
+        fileName: '${_localizations.bills} - ${bill.billNumber}',
+        fileType: FilePreviewType.pdf,
+        subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
+        customerPhone: bill.customerContact,
+        details: FilePreviewDetails(
+          title: 'Bill preview',
+          documentNo: bill.billNumber,
+          dateLabel: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
+          customer: (bill.customerName?.trim().isNotEmpty ?? false)
+              ? bill.customerName!.trim()
+              : 'Walk-in customer',
+          itemsQty: '${bill.items.length} · ${bill.totalQuantity}',
+          amount: '₹${bill.finalAmount.toStringAsFixed(2)}',
+        ),
       );
       debugPrint('[BillsListPage] Returned from FilePreviewPage');
     } catch (e, stack) {
@@ -362,7 +383,12 @@ class _BillsListPageState extends State<BillsListPage>
           fileType: FilePreviewType.pdf,
           subtitle:
               '${filtered.length} bills • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
-          centered: true,
+          details: FilePreviewDetails(
+            title: 'Report preview',
+            documentNo: _localizations.billReport,
+            dateLabel: DateFormat('dd MMM yyyy').format(DateTime.now()),
+            itemsQty: '${filtered.length} bills',
+          ),
         );
         return;
       }
@@ -391,7 +417,12 @@ class _BillsListPageState extends State<BillsListPage>
         fileType: FilePreviewType.pdf,
         subtitle:
             '${filtered.length} bills • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
-        centered: true,
+        details: FilePreviewDetails(
+          title: 'Report preview',
+          documentNo: _localizations.billReport,
+          dateLabel: DateFormat('dd MMM yyyy').format(DateTime.now()),
+          itemsQty: '${filtered.length} bills',
+        ),
       );
 
       _isGeneratingReport = false;
@@ -2412,14 +2443,23 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
         if (!mounted) return;
         setState(() => _isGeneratingPdf = false);
         await FilePreviewPage.open(
-        context,
-              bytes: bytes,
-              fileName: '${_localizations.bills} - ${_bill.billNumber}',
-              fileType: FilePreviewType.pdf,
-              subtitle: DateFormat(
-                'dd MMM yyyy, hh:mm a',
-              ).format(_bill.billDate),
-              customerPhone: _bill.customerContact,
+          context,
+          bytes: bytes,
+          fileName: '${_localizations.bills} - ${_bill.billNumber}',
+          fileType: FilePreviewType.pdf,
+          subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(_bill.billDate),
+          customerPhone: _bill.customerContact,
+          details: FilePreviewDetails(
+            title: 'Bill preview',
+            documentNo: _bill.billNumber,
+            dateLabel:
+                DateFormat('dd MMM yyyy, hh:mm a').format(_bill.billDate),
+            customer: (_bill.customerName?.trim().isNotEmpty ?? false)
+                ? _bill.customerName!.trim()
+                : 'Walk-in customer',
+            itemsQty: '${_bill.items.length} · ${_bill.totalQuantity}',
+            amount: '₹${_bill.finalAmount.toStringAsFixed(2)}',
+          ),
         );
         return;
       }
@@ -2459,12 +2499,22 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
 
       debugPrint('[BillDetailsDialog] Navigating to FilePreviewPage...');
       await FilePreviewPage.open(
-      context,
-            file: file,
-            fileName: '${_localizations.bills} - ${_bill.billNumber}',
-            fileType: FilePreviewType.pdf,
-            subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(_bill.billDate),
-            customerPhone: _bill.customerContact,
+        context,
+        file: file,
+        fileName: '${_localizations.bills} - ${_bill.billNumber}',
+        fileType: FilePreviewType.pdf,
+        subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(_bill.billDate),
+        customerPhone: _bill.customerContact,
+        details: FilePreviewDetails(
+          title: 'Bill preview',
+          documentNo: _bill.billNumber,
+          dateLabel: DateFormat('dd MMM yyyy, hh:mm a').format(_bill.billDate),
+          customer: (_bill.customerName?.trim().isNotEmpty ?? false)
+              ? _bill.customerName!.trim()
+              : 'Walk-in customer',
+          itemsQty: '${_bill.items.length} · ${_bill.totalQuantity}',
+          amount: '₹${_bill.finalAmount.toStringAsFixed(2)}',
+        ),
       );
       debugPrint('[BillDetailsDialog] Returned from FilePreviewPage');
     } catch (e, stack) {

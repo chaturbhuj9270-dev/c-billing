@@ -9,12 +9,32 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
-import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/common_widgets/web_pdf_view.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
-// A reusable page for previewing PDF and CSV files with share and print functionality. Usage: Navigator.push( context, MaterialPageRoute( builder: (context) => FilePreviewPage( fi...
+// Optional side-panel fields for the desktop report preview.
+class FilePreviewDetails {
+  final String? title;
+  final String? documentNo;
+  final String? dateLabel;
+  final String? customer;
+  final String? itemsQty;
+  final String? amount;
+  final List<MapEntry<String, String>> extras;
+
+  const FilePreviewDetails({
+    this.title,
+    this.documentNo,
+    this.dateLabel,
+    this.customer,
+    this.itemsQty,
+    this.amount,
+    this.extras = const [],
+  });
+}
+
+// Preview for PDF and CSV files with share and print. Desktop uses a centered popup; phone uses a full page.
 class FilePreviewPage extends StatefulWidget {
   // Local file on mobile and desktop. Omitted on web, where [bytes] is used.
   final File? file;
@@ -29,11 +49,14 @@ class FilePreviewPage extends StatefulWidget {
   // Optional customer phone number for direct WhatsApp sharing
   final String? customerPhone;
 
-  // Web shows this preview in a dialog. Mobile and desktop use a full page.
+  // Desktop and web show this preview in a centered dialog. Phone uses a full page.
   final bool presentedAsDialog;
 
-  // Reports use this so each sheet is shown whole and centered.
+  // Fit each PDF page whole inside the preview area.
   final bool fitPage;
+
+  // Right-side summary used by the desktop split preview.
+  final FilePreviewDetails? details;
 
   const FilePreviewPage({
     super.key,
@@ -46,9 +69,10 @@ class FilePreviewPage extends StatefulWidget {
     this.customerPhone,
     this.presentedAsDialog = false,
     this.fitPage = false,
+    this.details,
   }) : assert(file != null || bytes != null, 'Provide a file or document bytes');
 
-  // Opens the preview. On web this is a popup. Other platforms push a page. [centered] opens a large popup on web, Windows, and Mac so wide report pages stay readable. Phone still p...
+  // Opens print/report preview. Web, Windows, and Mac always use a centered popup. Phone pushes a full page.
   static Future<void> open(
     BuildContext context, {
     File? file,
@@ -58,7 +82,8 @@ class FilePreviewPage extends StatefulWidget {
     String? subtitle,
     VoidCallback? onClose,
     String? customerPhone,
-    bool centered = false,
+    bool centered = true,
+    FilePreviewDetails? details,
   }) {
     final desktop = DesktopCanvas.isDesktopPlatform;
     final page = FilePreviewPage(
@@ -70,42 +95,33 @@ class FilePreviewPage extends StatefulWidget {
       onClose: onClose,
       customerPhone: customerPhone,
       presentedAsDialog: desktop,
-      fitPage: centered,
+      fitPage: centered || desktop,
+      details: details,
     );
-    if (centered && desktop) {
-      return _showCenteredDialog(context, page, wide: true);
-    }
-    if (!kIsWeb && desktop) {
-      return showAppPage(context, page);
-    }
     if (!desktop) {
       return Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => page),
       );
     }
 
-    return _showCenteredDialog(context, page, wide: false);
+    return _showCenteredDialog(context, page);
   }
 
   static Future<void> _showCenteredDialog(
     BuildContext context,
-    FilePreviewPage page, {
-    required bool wide,
-  }) {
+    FilePreviewPage page,
+  ) {
     return showGeneralDialog<void>(
       context: context,
       useRootNavigator: true,
       barrierDismissible: true,
       barrierLabel: 'Close preview',
-      barrierColor: AppTheme.black.withValues(alpha: 0.62),
+      barrierColor: AppTheme.black.withValues(alpha: 0.55),
       transitionDuration: const Duration(milliseconds: 180),
       pageBuilder: (dialogContext, _, _) {
         final size = MediaQuery.sizeOf(dialogContext);
-        final maxWidth = wide ? 1320.0 : 1040.0;
-        final width = size.width >= maxWidth + 64
-            ? maxWidth
-            : size.width - 40;
-        final height = size.height >= 760 ? size.height - 56 : size.height - 24;
+        final width = (size.width - 48).clamp(720.0, 1180.0);
+        final height = (size.height - 48).clamp(520.0, 820.0);
         return Center(
           child: Material(
             color: AppColors.card(dialogContext),
@@ -120,7 +136,7 @@ class FilePreviewPage extends StatefulWidget {
   }
 
   void _closePreview(BuildContext context) {
-    if (!presentedAsDialog) onClose?.call();
+    onClose?.call();
     Navigator.of(context).pop();
   }
 
@@ -144,7 +160,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   bool _isRenderingPdf = false;
   String _renderingStatus = '';
 
-  // Zoom controls for CSV
+  // Zoom controls for CSV and desktop PDF
   double _zoomLevel = 1.0;
   static const double _minZoom = 0.5;
   static const double _maxZoom = 3.0;
@@ -154,15 +170,30 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
 
   // Scroll controller for PDF
   final ScrollController _pdfScrollController = ScrollController();
+  int _currentPage = 1;
+  bool _isPreviewExpanded = false;
 
   @override
   void initState() {
     super.initState();
+    _pdfScrollController.addListener(_onPdfScroll);
     _loadFile();
+  }
+
+  void _onPdfScroll() {
+    if (!_pdfScrollController.hasClients || _totalPages <= 0) return;
+    final max = _pdfScrollController.position.maxScrollExtent;
+    if (max <= 0) return;
+    final page =
+        ((_pdfScrollController.offset / max) * (_totalPages - 1)).round() + 1;
+    if (page != _currentPage && mounted) {
+      setState(() => _currentPage = page.clamp(1, _totalPages));
+    }
   }
 
   @override
   void dispose() {
+    _pdfScrollController.removeListener(_onPdfScroll);
     _transformationController.dispose();
     _pdfScrollController.dispose();
     super.dispose();
@@ -404,6 +435,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         setState(() {
           _isRenderingPdf = false;
           _totalPages = pageCount;
+          _currentPage = pageCount > 0 ? 1 : 0;
           _renderedPages = pages.cast<Uint8List?>();
         });
       }
@@ -617,32 +649,463 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
 
   @override
   Widget build(BuildContext context) {
-    final body = Column(
+    if (widget.presentedAsDialog) {
+      return ColoredBox(
+        color: AppColors.card(context),
+        child: Column(
+          children: [
+            _buildSplitHeader(),
+            Expanded(child: _buildSplitBody()),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: AppColors.scaffold(context),
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            _buildHeader(),
+            if (widget.fileType == FilePreviewType.csv) _buildZoomControls(),
+            Expanded(
+              child: ColoredBox(
+                color: AppColors.scaffold(context),
+                child: _isLoading
+                    ? _buildLoadingState()
+                    : _errorMessage != null
+                    ? _buildErrorState()
+                    : widget.fileType == FilePreviewType.pdf
+                    ? _buildPdfPreview()
+                    : _buildCsvPreview(),
+              ),
+            ),
+            _buildBottomBar(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String get _previewTitle {
+    final custom = widget.details?.title?.trim();
+    if (custom != null && custom.isNotEmpty) return custom;
+    final name = widget.fileName.toLowerCase();
+    if (name.contains('bill')) return 'Bill preview';
+    if (name.contains('quotation')) return 'Quotation preview';
+    if (name.contains('purchase')) return 'Purchase preview';
+    return 'Report preview';
+  }
+
+  String get _previewSubtitle {
+    final details = widget.details;
+    final parts = <String>[];
+    if (details?.documentNo != null && details!.documentNo!.isNotEmpty) {
+      parts.add(details.documentNo!);
+    }
+    if (details?.dateLabel != null && details!.dateLabel!.isNotEmpty) {
+      parts.add(details.dateLabel!);
+    }
+    if (parts.isEmpty && (widget.subtitle?.isNotEmpty ?? false)) {
+      parts.add(widget.subtitle!);
+    }
+    if (parts.isEmpty) {
+      parts.add(widget.fileName);
+    }
+    return parts.join(' · ');
+  }
+
+  Widget _buildSplitHeader() {
+    final action = AppColors.action(context);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 14, 12, 14),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        border: Border(bottom: BorderSide(color: AppColors.border(context))),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: action.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              widget.fileType == FilePreviewType.pdf
+                  ? Icons.description_outlined
+                  : Icons.table_chart_outlined,
+              color: action,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _previewTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Literata',
+                    height: 1.15,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _previewSubtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.mutedText(context),
+                    fontSize: 12,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Material(
+            color: AppColors.chipFill(context),
+            shape: const CircleBorder(),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: () => widget._closePreview(context),
+              child: SizedBox(
+                width: 36,
+                height: 36,
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 20,
+                  color: AppColors.secondaryText(context),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSplitBody() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        widget.presentedAsDialog ? _buildDialogHeader() : _buildHeader(),
-        if (widget.fileType == FilePreviewType.csv) _buildZoomControls(),
         Expanded(
-          child: ColoredBox(
-            color: AppColors.scaffold(context),
+          flex: _isPreviewExpanded ? 1 : 7,
+          child: _buildPreviewPane(),
+        ),
+        if (!_isPreviewExpanded)
+          SizedBox(
+            width: 304,
+            child: _buildDetailsPane(),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildPreviewPane() {
+    return ColoredBox(
+      color: AppColors.chipFill(context),
+      child: Column(
+        children: [
+          _buildPreviewToolbar(),
+          Expanded(
             child: _isLoading
                 ? _buildLoadingState()
                 : _errorMessage != null
                 ? _buildErrorState()
                 : widget.fileType == FilePreviewType.pdf
-                ? _buildPdfPreview()
-                : _buildCsvPreview(),
+                ? _buildPdfPreview(showToolbar: false)
+                : InteractiveViewer(
+                    transformationController: _transformationController,
+                    minScale: _minZoom,
+                    maxScale: _maxZoom,
+                    child: _buildCsvPreview(),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPreviewToolbar() {
+    final muted = AppColors.mutedText(context);
+    final pageLabel = widget.fileType == FilePreviewType.pdf
+        ? 'Page $_currentPage of ${(_totalPages == 0 ? 1 : _totalPages)}'
+        : 'CSV';
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        border: Border(bottom: BorderSide(color: AppColors.border(context))),
+      ),
+      child: Row(
+        children: [
+          Text(
+            pageLabel,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: muted,
+            ),
+          ),
+          const Spacer(),
+          _buildToolbarIcon(
+            Icons.remove_rounded,
+            onTap: _zoomLevel > _minZoom ? _zoomOut : null,
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: GestureDetector(
+              onTap: _resetZoom,
+              child: Text(
+                '${(_zoomLevel * 100).round()}%',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryText(context),
+                ),
+              ),
+            ),
+          ),
+          _buildToolbarIcon(
+            Icons.add_rounded,
+            onTap: _zoomLevel < _maxZoom ? _zoomIn : null,
+          ),
+          const SizedBox(width: 8),
+          _buildToolbarIcon(
+            _isPreviewExpanded
+                ? Icons.fullscreen_exit_rounded
+                : Icons.fullscreen_rounded,
+            onTap: () => setState(() => _isPreviewExpanded = !_isPreviewExpanded),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToolbarIcon(IconData icon, {VoidCallback? onTap}) {
+    final enabled = onTap != null;
+    return Material(
+      color: AppTheme.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: SizedBox(
+          width: 32,
+          height: 32,
+          child: Icon(
+            icon,
+            size: 18,
+            color: enabled
+                ? AppColors.secondaryText(context)
+                : AppColors.mutedText(context).withValues(alpha: 0.45),
           ),
         ),
-        widget.presentedAsDialog ? _buildDialogFooter() : _buildBottomBar(),
+      ),
+    );
+  }
+
+  Widget _buildDetailsPane() {
+    final details = widget.details;
+    final typeLabel = widget.fileType == FilePreviewType.pdf ? 'PDF' : 'CSV';
+    final sizeLabel = _getFileSizeString();
+    final rows = <MapEntry<String, String>>[];
+
+    void addRow(String label, String? value) {
+      if (value == null || value.trim().isEmpty) return;
+      rows.add(MapEntry(label, value.trim()));
+    }
+
+    final docLabel = widget.fileName.toLowerCase().contains('bill')
+        ? 'Bill no'
+        : 'Document';
+    addRow(docLabel, details?.documentNo ?? _documentNoFromFileName());
+    addRow('Date', details?.dateLabel ?? widget.subtitle);
+    addRow('Customer', details?.customer);
+    addRow('Items · Qty', details?.itemsQty);
+    for (final extra in details?.extras ?? const <MapEntry<String, String>>[]) {
+      addRow(extra.key, extra.value);
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        border: Border(left: BorderSide(color: AppColors.border(context))),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                for (final row in rows) ...[
+                  _buildDetailRow(row.key, row.value),
+                  const SizedBox(height: 14),
+                ],
+                if (details?.amount != null && details!.amount!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    details.amount!,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primaryText(context),
+                      letterSpacing: -0.4,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                Text(
+                  sizeLabel.isEmpty ? typeLabel : '$typeLabel · $sizeLabel',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.mutedText(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 48,
+            child: FilledButton.icon(
+              onPressed: _isPrinting ? null : _handlePrint,
+              icon: _isPrinting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppTheme.white,
+                      ),
+                    )
+                  : const Icon(Icons.print_rounded, size: 18),
+              label: const Text(
+                'Print',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                ),
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.action(context),
+                foregroundColor: AppTheme.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 48,
+            child: OutlinedButton.icon(
+              onPressed: _isSharing ? null : _handleShare,
+              icon: _isSharing
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.action(context),
+                      ),
+                    )
+                  : const Icon(Icons.download_rounded, size: 18),
+              label: Text(
+                widget.fileType == FilePreviewType.pdf
+                    ? 'Download PDF'
+                    : 'Download CSV',
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primaryText(context),
+                side: BorderSide(color: AppColors.border(context)),
+                backgroundColor: AppColors.chipFill(context),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+          if (widget.customerPhone != null &&
+              widget.customerPhone!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: _isSharingWhatsApp ? null : _handleWhatsAppShare,
+              icon: FaIcon(
+                FontAwesomeIcons.whatsapp,
+                size: 16,
+                color: AppTheme.paletteFF25D366,
+              ),
+              label: Text(
+                'WhatsApp',
+                style: TextStyle(
+                  color: AppTheme.paletteFF25D366,
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: AppColors.mutedText(context),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: AppColors.primaryText(context),
+          ),
+        ),
       ],
     );
+  }
 
-    if (widget.presentedAsDialog) return body;
-
-    return Scaffold(
-      backgroundColor: AppColors.scaffold(context),
-      body: SafeArea(top: false, child: body),
-    );
+  String? _documentNoFromFileName() {
+    final parts = widget.fileName.split(' - ');
+    if (parts.length >= 2) return parts.sublist(1).join(' - ').trim();
+    return null;
   }
 
   Widget _buildZoomControls() {
@@ -879,17 +1342,15 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     );
   }
 
-  Widget _buildPdfPreview() {
+  Widget _buildPdfPreview({bool showToolbar = true}) {
     if (kIsWeb && _pdfBytes != null) {
       return buildWebPdfView(_pdfBytes!);
     }
 
-    // Show rendering progress if still rendering
     if (_isRenderingPdf) {
       return _buildPdfRenderingProgress();
     }
 
-    // If no pages rendered, show error
     if (_renderedPages.isEmpty) {
       return Center(
         child: Column(
@@ -955,10 +1416,34 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       );
     }
 
-    // Show rendered PDF pages in a scrollable list
+    final pages = LayoutBuilder(
+      builder: (context, constraints) {
+        return ListView.builder(
+          controller: _pdfScrollController,
+          padding: EdgeInsets.symmetric(
+            vertical: widget.fitPage ? 0 : 16,
+            horizontal: widget.fitPage ? 0 : 12,
+          ),
+          itemCount: _renderedPages.length,
+          itemBuilder: (context, index) {
+            final pageBytes = _renderedPages[index];
+            if (pageBytes == null) {
+              return _buildPagePlaceholder(index + 1);
+            }
+            final page = _buildPdfPage(pageBytes, index + 1);
+            if (!widget.fitPage) return page;
+            return SizedBox(height: constraints.maxHeight, child: page);
+          },
+        );
+      },
+    );
+
+    if (!showToolbar) {
+      return ColoredBox(color: AppColors.chipFill(context), child: pages);
+    }
+
     return Column(
       children: [
-        // Page indicator
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
@@ -969,10 +1454,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.accentSoft(context, 0.1),
                   borderRadius: BorderRadius.circular(16),
@@ -985,7 +1467,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                       size: 14,
                       color: AppColors.accent(context),
                     ),
-                    SizedBox(width: 6),
+                    const SizedBox(width: 6),
                     Text(
                       '$_totalPages ${_totalPages == 1 ? 'page' : 'pages'}',
                       style: TextStyle(
@@ -1001,32 +1483,8 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             ],
           ),
         ),
-        // PDF Pages
         Expanded(
-          child: Container(
-            color: AppColors.chipFill(context),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return ListView.builder(
-                  controller: _pdfScrollController,
-                  padding: EdgeInsets.symmetric(
-                    vertical: widget.fitPage ? 0 : 16,
-                    horizontal: widget.fitPage ? 0 : 12,
-                  ),
-                  itemCount: _renderedPages.length,
-                  itemBuilder: (context, index) {
-                    final pageBytes = _renderedPages[index];
-                    if (pageBytes == null) {
-                      return _buildPagePlaceholder(index + 1);
-                    }
-                    final page = _buildPdfPage(pageBytes, index + 1);
-                    if (!widget.fitPage) return page;
-                    return SizedBox(height: constraints.maxHeight, child: page);
-                  },
-                );
-              },
-            ),
-          ),
+          child: ColoredBox(color: AppColors.chipFill(context), child: pages),
         ),
       ],
     );
@@ -1149,36 +1607,42 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
 
   Widget _buildPdfPage(Uint8List pageBytes, int pageNumber) {
     if (widget.fitPage) {
+      final hideFooter = widget.presentedAsDialog;
       return Padding(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
+        padding: EdgeInsets.fromLTRB(24, 16, 24, hideFooter ? 16 : 12),
         child: Column(
           children: [
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   return Center(
-                    child: Image.memory(
-                      pageBytes,
-                      fit: BoxFit.contain,
-                      width: constraints.maxWidth,
-                      height: constraints.maxHeight,
-                      errorBuilder: (context, error, stackTrace) =>
-                          _pdfPageError(pageNumber),
+                    child: Transform.scale(
+                      scale: widget.presentedAsDialog ? _zoomLevel : 1.0,
+                      child: Image.memory(
+                        pageBytes,
+                        fit: BoxFit.contain,
+                        width: constraints.maxWidth,
+                        height: constraints.maxHeight,
+                        errorBuilder: (context, error, stackTrace) =>
+                            _pdfPageError(pageNumber),
+                      ),
                     ),
                   );
                 },
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Page $pageNumber of $_totalPages',
-              style: TextStyle(
-                fontFamily: 'Literata',
-                fontSize: 11,
-                color: AppColors.mutedText(context),
-                fontWeight: FontWeight.w500,
+            if (!hideFooter) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Page $pageNumber of $_totalPages',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 11,
+                  color: AppColors.mutedText(context),
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
+            ],
           ],
         ),
       );
@@ -1668,187 +2132,6 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       temp = (temp ~/ 26) - 1;
     }
     return result;
-  }
-
-  Widget _buildDialogHeader() {
-    final isPdf = widget.fileType == FilePreviewType.pdf;
-    final detail = widget.subtitle ??
-        '${isPdf ? 'PDF' : 'CSV'} · ${_getFileSizeString()}';
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        border: Border(bottom: BorderSide(color: AppColors.border(context))),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: AppColors.accentSoft(context, 0.14),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              isPdf ? Icons.picture_as_pdf_outlined : Icons.table_chart_outlined,
-              color: AppColors.action(context),
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.fileName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: AppColors.primaryText(context),
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Literata',
-                    height: 1.15,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  detail,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: AppColors.mutedText(context),
-                    fontSize: 13,
-                    fontFamily: 'Literata',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            onPressed: () => widget._closePreview(context),
-            tooltip: 'Close',
-            icon: Icon(
-              Icons.close_rounded,
-              color: AppColors.secondaryText(context),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDialogFooter() {
-    final hasPhone =
-        widget.customerPhone != null && widget.customerPhone!.isNotEmpty;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        border: Border(top: BorderSide(color: AppColors.border(context))),
-      ),
-      child: Row(
-        children: [
-          Text(
-            _getFileSizeString(),
-            style: TextStyle(
-              color: AppColors.mutedText(context),
-              fontSize: 12,
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const Spacer(),
-          if (hasPhone) ...[
-            TextButton.icon(
-              onPressed: _isSharingWhatsApp ? null : _handleWhatsAppShare,
-              icon: _isSharingWhatsApp
-                  ? SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppTheme.paletteFF25D366,
-                      ),
-                    )
-                  : FaIcon(
-                      FontAwesomeIcons.whatsapp,
-                      size: 16,
-                      color: AppTheme.paletteFF25D366,
-                    ),
-              label: Text(
-                'WhatsApp',
-                style: TextStyle(
-                  color: AppTheme.paletteFF25D366,
-                  fontFamily: 'Literata',
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
-          OutlinedButton.icon(
-            onPressed: _isSharing ? null : _handleShare,
-            icon: _isSharing
-                ? SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.action(context),
-                    ),
-                  )
-                : Icon(Icons.download_rounded, size: 18),
-            label: const Text(
-              'Download',
-              style: TextStyle(
-                fontFamily: 'Literata',
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.primaryText(context),
-              side: BorderSide(color: AppColors.border(context)),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          FilledButton.icon(
-            onPressed: _isPrinting ? null : _handlePrint,
-            icon: _isPrinting
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppTheme.white,
-                    ),
-                  )
-                : const Icon(Icons.print_rounded, size: 18),
-            label: const Text(
-              'Print',
-              style: TextStyle(
-                fontFamily: 'Literata',
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.action(context),
-              foregroundColor: AppTheme.white,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildBottomBar() {

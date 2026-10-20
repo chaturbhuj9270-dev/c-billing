@@ -1428,10 +1428,21 @@ class _BillingPageState extends State<BillingPage> {
         await FilePreviewPage.open(
           context,
           bytes: bytes,
-              fileName: '${_localizations.bills} - ${bill.billNumber}',
-              fileType: FilePreviewType.pdf,
-              subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
-              customerPhone: bill.customerContact,
+          fileName: '${_localizations.bills} - ${bill.billNumber}',
+          fileType: FilePreviewType.pdf,
+          subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
+          customerPhone: bill.customerContact,
+          details: FilePreviewDetails(
+            title: 'Bill preview',
+            documentNo: bill.billNumber,
+            dateLabel:
+                DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
+            customer: (bill.customerName?.trim().isNotEmpty ?? false)
+                ? bill.customerName!.trim()
+                : 'Walk-in customer',
+            itemsQty: '${bill.items.length} · ${bill.totalQuantity}',
+            amount: '₹${bill.finalAmount.toStringAsFixed(2)}',
+          ),
         );
         return;
       }
@@ -1471,10 +1482,20 @@ class _BillingPageState extends State<BillingPage> {
       await FilePreviewPage.open(
         context,
         file: file,
-            fileName: '${_localizations.bills} - ${bill.billNumber}',
-            fileType: FilePreviewType.pdf,
-            subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
-            customerPhone: bill.customerContact,
+        fileName: '${_localizations.bills} - ${bill.billNumber}',
+        fileType: FilePreviewType.pdf,
+        subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
+        customerPhone: bill.customerContact,
+        details: FilePreviewDetails(
+          title: 'Bill preview',
+          documentNo: bill.billNumber,
+          dateLabel: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
+          customer: (bill.customerName?.trim().isNotEmpty ?? false)
+              ? bill.customerName!.trim()
+              : 'Walk-in customer',
+          itemsQty: '${bill.items.length} · ${bill.totalQuantity}',
+          amount: '₹${bill.finalAmount.toStringAsFixed(2)}',
+        ),
       );
       debugPrint('[BillingPage] Returned from FilePreviewPage');
     } catch (e, stack) {

@@ -108,13 +108,21 @@ class QuotationPrintService {
         await FilePreviewPage.open(
           context,
           bytes: bytes,
-              fileName:
-                  '${localizations.quotation} - ${quotation.quotationNumber}',
-              fileType: FilePreviewType.pdf,
-              subtitle: DateFormat(
-                'dd MMM yyyy',
-              ).format(quotation.referenceDate),
-              customerPhone: quotation.customerContact,
+          fileName:
+              '${localizations.quotation} - ${quotation.quotationNumber}',
+          fileType: FilePreviewType.pdf,
+          subtitle: DateFormat('dd MMM yyyy').format(quotation.referenceDate),
+          customerPhone: quotation.customerContact,
+          details: FilePreviewDetails(
+            title: 'Quotation preview',
+            documentNo: quotation.quotationNumber,
+            dateLabel:
+                DateFormat('dd MMM yyyy').format(quotation.referenceDate),
+            customer: quotation.customerName.trim().isNotEmpty
+                ? quotation.customerName.trim()
+                : 'Walk-in customer',
+            amount: '₹${quotation.totalAmount.toStringAsFixed(2)}',
+          ),
         );
         return;
       }
@@ -140,11 +148,19 @@ class QuotationPrintService {
       await FilePreviewPage.open(
         context,
         file: file,
-            fileName:
-                '${localizations.quotation} - ${quotation.quotationNumber}',
-            fileType: FilePreviewType.pdf,
-            subtitle: DateFormat('dd MMM yyyy').format(quotation.referenceDate),
-            customerPhone: quotation.customerContact,
+        fileName: '${localizations.quotation} - ${quotation.quotationNumber}',
+        fileType: FilePreviewType.pdf,
+        subtitle: DateFormat('dd MMM yyyy').format(quotation.referenceDate),
+        customerPhone: quotation.customerContact,
+        details: FilePreviewDetails(
+          title: 'Quotation preview',
+          documentNo: quotation.quotationNumber,
+          dateLabel: DateFormat('dd MMM yyyy').format(quotation.referenceDate),
+          customer: quotation.customerName.trim().isNotEmpty
+              ? quotation.customerName.trim()
+              : 'Walk-in customer',
+          amount: '₹${quotation.totalAmount.toStringAsFixed(2)}',
+        ),
       );
     } catch (e) {
       if (context.mounted) {

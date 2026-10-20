@@ -1560,7 +1560,12 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
           fileType: FilePreviewType.pdf,
           subtitle:
               '${filtered.length} entries • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
-          centered: true,
+          details: FilePreviewDetails(
+            title: 'Report preview',
+            documentNo: 'Purchase Report',
+            dateLabel: DateFormat('dd MMM yyyy').format(DateTime.now()),
+            itemsQty: '${filtered.length} entries',
+          ),
         );
         return;
       }
@@ -1589,7 +1594,12 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
         fileType: FilePreviewType.pdf,
         subtitle:
             '${filtered.length} entries • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
-        centered: true,
+        details: FilePreviewDetails(
+          title: 'Report preview',
+          documentNo: 'Purchase Report',
+          dateLabel: DateFormat('dd MMM yyyy').format(DateTime.now()),
+          itemsQty: '${filtered.length} entries',
+        ),
       );
 
       _isGeneratingReport = false;

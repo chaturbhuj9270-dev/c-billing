@@ -204,40 +204,37 @@ class EscPosBillFormatter {
 
   // ─────────────── SECTION BUILDERS ───────────────
 
-  // ┌────────────────────────────────┐ │ SHOP NAME (big) │ │ 123 Main St, City-431001 │ │ Tel: 9876543210 │ │ GSTIN: 12ABCDE3456F │ ├════════════════════════════════┤
+  // Header: large shop name, address, Prop / Ph, GST — matches POS PDF receipt
   List<int> _buildHeader(Shop shop) {
     final b = <int>[];
 
-    // Shop name — centered, bold, large Double-size text uses 2x width per char, so effective cols = _cols / 2
+    // Shop name — bold, large (double-size uses 2x width, so wrap at cols/2)
     final nameLines = _wrap(shop.shopName.toUpperCase(), maxWidth: _cols ~/ 2);
     for (final line in nameLines) {
       b.addAll(_center(line, bold: true, large: true));
     }
     b.addAll(_lf());
 
-    // Address (word-wrapped, centered)
     if (shop.address.isNotEmpty) {
       for (final line in _wrap(shop.fullAddress)) {
         b.addAll(_center(line));
       }
     }
 
-    // Phone
-    if (shop.phone.isNotEmpty) {
-      b.addAll(_center('Tel: ${shop.phone}'));
+    if (shop.ownerName != null && shop.ownerName!.isNotEmpty) {
+      b.addAll(_center('Prop: ${shop.ownerName}'));
     }
-
-    // Email
+    if (shop.phone.isNotEmpty) {
+      b.addAll(_center('Ph: ${shop.phone}'));
+    }
     if (shop.email != null && shop.email!.isNotEmpty) {
       b.addAll(_center(shop.email!));
     }
-
-    // GST
     if (shop.gstNumber != null && shop.gstNumber!.isNotEmpty) {
       b.addAll(_center('GSTIN: ${shop.gstNumber}'));
     }
 
-    b.addAll(_thickDiv());
+    b.addAll(_thinDiv());
     return b;
   }
 
@@ -261,16 +258,15 @@ class EscPosBillFormatter {
     }
 
     // Bill / quotation number
-    b.addAll(_kv(d.numberLabel, d.billNumber, boldLabel: true));
+    b.addAll(_kv('${d.numberLabel}:', d.billNumber, boldLabel: true));
 
-    // Date & time — always printed
-    final dateFmt = DateFormat('dd/MM/yyyy');
-    final timeFmt = DateFormat('hh:mm a');
-    b.addAll(_kv('Date', dateFmt.format(d.dateTime)));
-    b.addAll(_kv('Time', timeFmt.format(d.dateTime)));
+    // Date + time on one line (matches POS receipt mockup)
+    final dateTimeFmt = DateFormat('dd/MM/yyyy hh:mm a');
+    b.addAll(_kv('Date:', dateTimeFmt.format(d.dateTime)));
 
     if (d.isQuotation && d.eventOrderDate != null) {
-      b.addAll(_kv('Event Date', dateFmt.format(d.eventOrderDate!)));
+      final dateFmt = DateFormat('dd/MM/yyyy');
+      b.addAll(_kv('Event Date:', dateFmt.format(d.eventOrderDate!)));
     }
 
     // Customer info
@@ -430,11 +426,10 @@ class EscPosBillFormatter {
   List<int> _buildTotals(PrintBillData d) {
     final b = <int>[];
 
-    // Item count
     final totalQtyDisplay = d.totalQuantity == d.totalQuantity.roundToDouble()
         ? d.totalQuantity.toInt().toString()
         : d.totalQuantity.toStringAsFixed(2);
-    b.addAll(_kv('Total Items', '$totalQtyDisplay qty'));
+    b.addAll(_kv('Total Items: ${d.items.length}', 'Qty: $totalQtyDisplay'));
 
     // Subtotal
     b.addAll(_kv('Subtotal', 'Rs.${_fmt(d.subtotal)}'));
@@ -455,11 +450,11 @@ class EscPosBillFormatter {
       b.addAll(_kv(lbl, 'Rs.${_fmt(d.taxAmount!)}'));
     }
 
-    // ══ Grand Total — bold + double height ══
+    // Grand Total — bold + double height
     b.addAll(_thickDiv());
     b.addAll(EscPosCommands.boldOn);
     b.addAll(EscPosCommands.textDoubleHeight);
-    b.addAll(_kv('TOTAL', 'Rs.${_fmt(d.grandTotal)}'));
+    b.addAll(_kv('GRAND TOTAL', 'Rs.${_fmt(d.grandTotal)}'));
     b.addAll(EscPosCommands.textNormal);
     b.addAll(EscPosCommands.boldOff);
     b.addAll(_thickDiv());
@@ -475,11 +470,13 @@ class EscPosBillFormatter {
     // Payment breakdown
     if (d.hasPaymentInfo) {
       if (d.paidAmount != null) {
-        b.addAll(_kv('Paid', 'Rs.${_fmt(d.paidAmount!)}'));
+        b.addAll(EscPosCommands.boldOn);
+        b.addAll(_kv('PAID', 'Rs.${_fmt(d.paidAmount!)}'));
+        b.addAll(EscPosCommands.boldOff);
       }
       if (d.hasPendingAmount) {
         b.addAll(EscPosCommands.boldOn);
-        b.addAll(_kv('Pending', 'Rs.${_fmt(d.pendingAmount!)}'));
+        b.addAll(_kv('BALANCE DUE', 'Rs.${_fmt(d.pendingAmount!)}'));
         b.addAll(EscPosCommands.boldOff);
       }
       if (d.totalDueAmount != null && d.totalDueAmount! > 0) {
@@ -512,8 +509,8 @@ class EscPosBillFormatter {
     }
 
     b.addAll(_thinDiv());
-    b.addAll(_center('Thank You!', bold: true));
-    b.addAll(_center('Visit Again'));
+    b.addAll(_center('*** THANK YOU ***', bold: true));
+    b.addAll(_center('Please Visit Again!'));
     b.addAll(_lf());
     return b;
   }

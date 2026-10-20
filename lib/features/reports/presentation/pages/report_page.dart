@@ -307,7 +307,14 @@ class _ReportPageState extends State<ReportPage>
         fileName: 'Inventory Report',
         fileType: FilePreviewType.pdf,
         subtitle: _reportResult?.filterSummary,
-        centered: true,
+        details: FilePreviewDetails(
+          title: 'Report preview',
+          documentNo: 'Inventory Report',
+          dateLabel: _reportResult?.filterSummary,
+          itemsQty: _reportResult == null
+              ? null
+              : '${_reportResult!.rows.length} rows',
+        ),
       );
     } catch (e) {
       if (mounted) _showSnackbar('Failed to print: $e', true);

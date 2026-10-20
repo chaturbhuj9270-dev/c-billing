@@ -243,7 +243,11 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
             fileType: widget.selectedFormat == ReportFormat.pdf
                 ? FilePreviewType.pdf
                 : FilePreviewType.csv,
-            centered: true,
+            details: FilePreviewDetails(
+              title: 'Report preview',
+              documentNo: widget.reportTitle,
+              itemsQty: '${selected.length} products',
+            ),
           );
         }
         return;
@@ -277,9 +281,13 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
               : FilePreviewType.csv,
           subtitle:
               '${selected.length} products • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
-          centered: true,
+          details: FilePreviewDetails(
+            title: 'Report preview',
+            documentNo: widget.reportTitle,
+            dateLabel: DateFormat('dd MMM yyyy').format(DateTime.now()),
+            itemsQty: '${selected.length} products',
+          ),
           onClose: () {
-            // Pop back to availability page when preview is closed
             if (mounted) Navigator.of(context).pop();
           },
         );
