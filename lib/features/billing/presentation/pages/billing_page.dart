@@ -1816,7 +1816,6 @@ class _BillingPageState extends State<BillingPage> {
                           _buildCustomerSection(),
                         _buildAddItemsSection(),
                         _buildBillItemsSection(),
-                        _buildDiscountSection(),
                         if (_taxSettings.hasAnyTaxEnabled)
                           _buildGstModeSection(),
                         const SizedBox(height: 12),
@@ -1831,6 +1830,8 @@ class _BillingPageState extends State<BillingPage> {
               physics: const BouncingScrollPhysics(),
               child: Column(
                 children: [
+                  if (_billItems.isNotEmpty)
+                    _buildDiscountSection(showNestedSummary: false),
                   _buildDesktopSummaryCard(),
                   if (_billItems.isNotEmpty && !_isFullPayment)
                     _buildPaymentSection(),
@@ -4339,12 +4340,15 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  Widget _buildDiscountSection() {
+  Widget _buildDiscountSection({bool showNestedSummary = true}) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+      margin: showNestedSummary
+          ? const EdgeInsets.fromLTRB(16, 6, 16, 6)
+          : const EdgeInsets.fromLTRB(0, 0, 0, 12),
+      width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border(context)),
       ),
       child: Column(
@@ -4355,8 +4359,8 @@ class _BillingPageState extends State<BillingPage> {
             child: Row(
               children: [
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 36,
+                  height: 36,
                   decoration: BoxDecoration(
                     color: AppTheme.headerDarkStart,
                     borderRadius: BorderRadius.circular(12),
@@ -4364,7 +4368,7 @@ class _BillingPageState extends State<BillingPage> {
                   child: const Icon(
                     Icons.local_offer_outlined,
                     color: AppTheme.white,
-                    size: 20,
+                    size: 18,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -4407,7 +4411,7 @@ class _BillingPageState extends State<BillingPage> {
           ),
           // Content
           Padding(
-            padding: EdgeInsets.all(12),
+            padding: const EdgeInsets.all(12),
             child: Column(
               children: [
                 Row(
@@ -4445,7 +4449,7 @@ class _BillingPageState extends State<BillingPage> {
                         ],
                       ),
                     ),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     // Discount input
                     Expanded(
                       child: Container(
@@ -4510,8 +4514,9 @@ class _BillingPageState extends State<BillingPage> {
                     _buildQuickDiscountChip('20%', 20, true),
                   ],
                 ),
-                // Summary
-                if (_discountAmount > 0 || _taxBreakdown != null) ...[
+                // Nested summary (mobile layout only — desktop already has Bill summary)
+                if (showNestedSummary &&
+                    (_discountAmount > 0 || _taxBreakdown != null)) ...[
                   const SizedBox(height: 12),
                   _buildBillSummaryCard(),
                 ],

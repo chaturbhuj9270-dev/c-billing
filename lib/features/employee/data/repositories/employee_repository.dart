@@ -70,27 +70,38 @@ class EmployeeRepository {
           .get();
       for (final r in rows) {
         if (!r.active) continue;
-        return Employee(
-          id: r.serverId ?? '${r.id}',
-          email: r.email,
-          displayName: r.displayName,
-          phone: r.phone,
-          tokenNumber: r.tokenNumber,
-          counterAccess: r.counterAccess,
-          points: r.points,
-          allowedModules: r.allowedModulesJson
-              .split(',')
-              .where((s) => s.isNotEmpty)
-              .toList(),
-          active: r.active,
-          createdAt: r.createdAt,
-          updatedAt: r.updatedAt,
-        );
+        return _fromRecord(r);
       }
     } catch (e) {
       debugPrint('[EmployeeRepository] findByToken local failed: $e');
     }
     return null;
+  }
+
+  Employee _fromRecord(EmployeeRecord r) {
+    return Employee(
+      id: r.serverId ?? '${r.id}',
+      email: r.email,
+      displayName: r.displayName,
+      phone: r.phone,
+      tokenNumber: r.tokenNumber,
+      counterAccess: r.counterAccess,
+      points: r.points,
+      dateOfBirth: r.dateOfBirth,
+      address: r.address,
+      pinCode: r.pinCode,
+      govIdNumber: r.govIdNumber,
+      govIdType: r.govIdType,
+      salary: r.salary,
+      dateOfJoining: r.dateOfJoining,
+      allowedModules: r.allowedModulesJson
+          .split(',')
+          .where((s) => s.isNotEmpty)
+          .toList(),
+      active: r.active,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+    );
   }
 
   // Credit cloth-collection points: ₹1000 sales = 1 point.
@@ -156,6 +167,13 @@ class EmployeeRepository {
     String? phone,
     required bool counterAccess,
     required List<String> allowedModules,
+    DateTime? dateOfBirth,
+    String? address,
+    String? pinCode,
+    String? govIdNumber,
+    String? govIdType,
+    double? salary,
+    DateTime? dateOfJoining,
   }) async {
     if (!AccessControlService.instance.isOwner) {
       throw StateError('Only the shop admin can create employees');
@@ -163,6 +181,15 @@ class EmployeeRepository {
     final ownerId = TenantContext.dataOwnerId;
     final modules = _sanitizeModules(allowedModules, counterAccess: counterAccess);
     final tokenNumber = await nextTokenNumber();
+    final profile = <String, dynamic>{
+      'dateOfBirth': dateOfBirth?.toIso8601String(),
+      'address': address?.trim(),
+      'pinCode': pinCode?.trim(),
+      'govIdNumber': govIdNumber?.trim(),
+      'govIdType': govIdType?.trim(),
+      'salary': salary,
+      'dateOfJoining': dateOfJoining?.toIso8601String(),
+    };
 
     String employeeUid;
     try {
@@ -175,6 +202,7 @@ class EmployeeRepository {
         'tokenNumber': tokenNumber,
         'counterAccess': counterAccess,
         'allowedModules': modules,
+        ...profile,
       });
       final data = Map<String, dynamic>.from(result.data as Map);
       employeeUid = data['uid'] as String;
@@ -191,8 +219,12 @@ class EmployeeRepository {
         counterAccess: counterAccess,
         modules: modules,
         ownerId: ownerId,
+        profile: profile,
       );
     }
+
+    // Ensure profile fields are stored even if CF ignored them.
+    await _employeesCol.doc(employeeUid).set(profile, SetOptions(merge: true));
 
     final employee = Employee(
       id: employeeUid,
@@ -202,6 +234,13 @@ class EmployeeRepository {
       tokenNumber: tokenNumber,
       counterAccess: counterAccess,
       points: 0,
+      dateOfBirth: dateOfBirth,
+      address: address?.trim(),
+      pinCode: pinCode?.trim(),
+      govIdNumber: govIdNumber?.trim(),
+      govIdType: govIdType?.trim(),
+      salary: salary,
+      dateOfJoining: dateOfJoining,
       allowedModules: modules,
       active: true,
       createdAt: DateTime.now(),
@@ -226,6 +265,7 @@ class EmployeeRepository {
       'counterAccess': employee.counterAccess,
       'allowedModules': modules,
       'active': employee.active,
+      ...employee.profileToJson(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
@@ -239,6 +279,7 @@ class EmployeeRepository {
         'counterAccess': employee.counterAccess,
         'allowedModules': modules,
         'active': employee.active,
+        ...employee.profileToJson(),
       });
     } catch (e) {
       debugPrint(
@@ -252,6 +293,7 @@ class EmployeeRepository {
         'counterAccess': employee.counterAccess,
         'allowedModules': modules,
         'active': employee.active,
+        ...employee.profileToJson(),
         'role': 'employee',
         'tenantOwnerId': TenantContext.dataOwnerId,
         'updatedAt': FieldValue.serverTimestamp(),
@@ -278,6 +320,7 @@ class EmployeeRepository {
     required bool counterAccess,
     required List<String> modules,
     required String ownerId,
+    Map<String, dynamic> profile = const {},
   }) async {
     FirebaseApp? secondary;
     try {
@@ -324,6 +367,7 @@ class EmployeeRepository {
         counterAccess: counterAccess,
         modules: modules,
         ownerId: ownerId,
+        profile: profile,
       );
 
       return uid;
@@ -352,6 +396,7 @@ class EmployeeRepository {
     required bool counterAccess,
     required List<String> modules,
     required String ownerId,
+    Map<String, dynamic> profile = const {},
   }) async {
     final now = FieldValue.serverTimestamp();
     await _employeesCol.doc(uid).set({
@@ -362,6 +407,7 @@ class EmployeeRepository {
       'tokenNumber': tokenNumber,
       'counterAccess': counterAccess,
       'points': 0,
+      ...profile,
       'allowedModules': modules,
       'active': true,
       'createdAt': now,
@@ -375,6 +421,7 @@ class EmployeeRepository {
       'tokenNumber': tokenNumber,
       'counterAccess': counterAccess,
       'points': 0,
+      ...profile,
       'allowedModules': modules,
       'active': true,
       'role': 'employee',
@@ -422,6 +469,13 @@ class EmployeeRepository {
         tokenNumber: Value(e.tokenNumber),
         counterAccess: Value(e.counterAccess),
         points: Value(e.points),
+        dateOfBirth: Value(e.dateOfBirth),
+        address: Value(e.address),
+        pinCode: Value(e.pinCode),
+        govIdNumber: Value(e.govIdNumber),
+        govIdType: Value(e.govIdType),
+        salary: Value(e.salary),
+        dateOfJoining: Value(e.dateOfJoining),
         allowedModulesJson: Value(e.allowedModules.join(',')),
         active: Value(e.active),
         syncStatus: const Value(1),
@@ -442,6 +496,13 @@ class EmployeeRepository {
             tokenNumber: Value(e.tokenNumber),
             counterAccess: Value(e.counterAccess),
             points: Value(e.points),
+            dateOfBirth: Value(e.dateOfBirth),
+            address: Value(e.address),
+            pinCode: Value(e.pinCode),
+            govIdNumber: Value(e.govIdNumber),
+            govIdType: Value(e.govIdType),
+            salary: Value(e.salary),
+            dateOfJoining: Value(e.dateOfJoining),
             allowedModulesJson: Value(e.allowedModules.join(',')),
             active: Value(e.active),
             syncStatus: const Value(1),
@@ -457,26 +518,7 @@ class EmployeeRepository {
   Future<List<Employee>> _loadLocal() async {
     try {
       final rows = await _db.select(_db.employeeRecords).get();
-      return rows
-          .map(
-            (r) => Employee(
-              id: r.serverId ?? '${r.id}',
-              email: r.email,
-              displayName: r.displayName,
-              phone: r.phone,
-              tokenNumber: r.tokenNumber,
-              counterAccess: r.counterAccess,
-              points: r.points,
-              allowedModules: r.allowedModulesJson
-                  .split(',')
-                  .where((s) => s.isNotEmpty)
-                  .toList(),
-              active: r.active,
-              createdAt: r.createdAt,
-              updatedAt: r.updatedAt,
-            ),
-          )
-          .toList()
+      return rows.map(_fromRecord).toList()
         ..sort((a, b) => a.tokenNumber.compareTo(b.tokenNumber));
     } catch (_) {
       return [];

@@ -75,6 +75,9 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
   List<PurchaseReturn> _returnHistory = [];
   bool _isLoadingHistory = false;
 
+  // Cross-page refresh so stock/history update immediately after related transactions
+  final List<StreamSubscription<void>> _refreshSubscriptions = [];
+
   @override
   void initState() {
     super.initState();
@@ -85,10 +88,34 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
       }
     });
     _loadSuppliers();
+    _listenForInventoryChanges();
+  }
+
+  void _listenForInventoryChanges() {
+    final refresh = DashboardRefreshService.instance;
+    for (final stream in [
+      refresh.onPurchaseReturnChanged,
+      refresh.onPurchaseChanged,
+      refresh.onProductChanged,
+    ]) {
+      _refreshSubscriptions.add(
+        stream.listen((_) {
+          if (!mounted) return;
+          _loadReturnHistory();
+          final supplierId = _selectedSupplier?['id'] as String?;
+          if (supplierId != null && supplierId.isNotEmpty) {
+            _loadProductsForSupplier(supplierId);
+          }
+        }),
+      );
+    }
   }
 
   @override
   void dispose() {
+    for (final subscription in _refreshSubscriptions) {
+      subscription.cancel();
+    }
     _tabController.dispose();
     _supplierSearchCtrl.dispose();
     _productSearchCtrl.dispose();
@@ -300,15 +327,9 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
       if (result.success) {
         _showSnackbar(_localizations.returnProcessedSuccessfully, false);
         _resetForm();
-        // Notify dashboard to refresh data
-        DashboardRefreshService.instance.notifyDataChanged(
-          DataChangeType.purchaseReturn,
-        );
-        DashboardRefreshService.instance.notifyDataChanged(
-          DataChangeType.product,
-        );
-        DashboardRefreshService.instance.notifyDataChanged(
-          DataChangeType.purchase,
+        // Notify all inventory/ledger pages immediately (availability, products, purchases, dashboard)
+        DashboardRefreshService.instance.notifyInventoryTransactionChanged(
+          includeSupplier: true,
         );
         // Refresh history
         _loadReturnHistory();

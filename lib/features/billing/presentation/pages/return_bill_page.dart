@@ -17,11 +17,13 @@ import 'package:c_billing/common_widgets/printer_selection_widget.dart';
 import 'package:c_billing/features/billing/offline/controllers/bill_offline_controller.dart';
 import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
 import 'package:c_billing/core/services/inventory_integration_service.dart';
+import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/features/product/offline/controllers/product_offline_controller.dart';
 
 // Return Bill Page for processing bill returns Allows searching by bill number or customer mobile and processing returns
 class ReturnBillPage extends StatefulWidget {
@@ -351,8 +353,15 @@ class _ReturnBillPageState extends State<ReturnBillPage>
               );
             } else {
               debugPrint(
-                '[ReturnBill] Warning: Could not find local bill for FIFO return - Firebase return still succeeded',
+                '[ReturnBill] Warning: Could not find local bill for FIFO return - updating local product stock',
               );
+              // Still restore local product stock so availability/ledger UIs update immediately
+              for (final detail in returnItemDetails) {
+                await ProductOfflineController.instance.incrementStock(
+                  detail.productId,
+                  detail.returnQuantity,
+                );
+              }
             }
           }
         } catch (e) {
@@ -361,6 +370,11 @@ class _ReturnBillPageState extends State<ReturnBillPage>
           );
           // Don't fail the whole return - Firebase already processed it
         }
+
+        // Always notify so open pages (availability, products, customer ledger, bills) refresh immediately
+        DashboardRefreshService.instance.notifyInventoryTransactionChanged(
+          includeCustomer: true,
+        );
       }
 
       if (mounted) {

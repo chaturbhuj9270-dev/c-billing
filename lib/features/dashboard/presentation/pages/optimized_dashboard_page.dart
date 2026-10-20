@@ -579,6 +579,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         return _localizations.trackPurchases;
       case WebShell.events:
         return _localizations.manageYourEvents;
+      case WebShell.employees:
+        return 'Manage staff and their access.';
       default:
         return '';
     }

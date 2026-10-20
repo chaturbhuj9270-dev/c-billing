@@ -70,14 +70,22 @@ class DashboardRefreshService {
   
   // Call this method when any data that affects dashboard stats changes. Optionally specify the data type that changed for more granular notifications.
   void notifyDataChanged([DataChangeType? dataType]) {
-    // Invalidate the cache in dashboard repository
+    if (dataType == null) {
+      notifyDataChangedTypes(DataChangeType.values);
+      return;
+    }
+    notifyDataChangedTypes([dataType]);
+  }
+
+  // Notify multiple related streams with a single dashboard refresh. Use this for transactions that affect stock, bills, and ledgers together.
+  void notifyDataChangedTypes(Iterable<DataChangeType> types) {
+    final unique = <DataChangeType>{...types};
+    if (unique.isEmpty) return;
+
     DashboardRepository.invalidateCache();
-    
-    // Notify all general listeners
     _refreshController.add(null);
-    
-    // Notify specific data type listeners
-    if (dataType != null) {
+
+    for (final dataType in unique) {
       switch (dataType) {
         case DataChangeType.customer:
           _customerChangeController.add(null);
@@ -107,20 +115,27 @@ class DashboardRefreshService {
           _eventOrderChangeController.add(null);
           break;
       }
-      debugPrint('[DashboardRefreshService] ${dataType.name} data changed - notifying listeners');
-    } else {
-      // Notify all specific listeners when no specific type is given
-      _customerChangeController.add(null);
-      _supplierChangeController.add(null);
-      _companyChangeController.add(null);
-      _productChangeController.add(null);
-      _billChangeController.add(null);
-      _purchaseChangeController.add(null);
-      _purchaseReturnChangeController.add(null);
-      _billSettingsChangeController.add(null);
-      _eventOrderChangeController.add(null);
-      debugPrint('[DashboardRefreshService] All data changed - notifying all listeners');
     }
+
+    debugPrint(
+      '[DashboardRefreshService] ${unique.map((t) => t.name).join(', ')} changed - notifying listeners',
+    );
+  }
+
+  // Stock / sale / purchase / return flows that should refresh inventory and ledger UIs immediately.
+  void notifyInventoryTransactionChanged({
+    bool includeCustomer = false,
+    bool includeSupplier = false,
+  }) {
+    final types = <DataChangeType>[
+      DataChangeType.product,
+      DataChangeType.purchase,
+      DataChangeType.purchaseReturn,
+      DataChangeType.bill,
+    ];
+    if (includeCustomer) types.add(DataChangeType.customer);
+    if (includeSupplier) types.add(DataChangeType.supplier);
+    notifyDataChangedTypes(types);
   }
   
   // Dispose the service (typically called when app closes)

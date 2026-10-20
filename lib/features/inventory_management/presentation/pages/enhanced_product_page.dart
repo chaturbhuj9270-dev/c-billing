@@ -74,6 +74,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
   // Cross-page refresh subscriptions
   StreamSubscription<void>? _purchaseChangeSubscription;
   StreamSubscription<void>? _productChangeSubscription;
+  StreamSubscription<void>? _purchaseReturnChangeSubscription;
+  StreamSubscription<void>? _billChangeSubscription;
 
   // Services
   final _auth = FirebaseAuth.instance;
@@ -127,6 +129,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     _batchStreamSub?.cancel();
     _purchaseChangeSubscription?.cancel();
     _productChangeSubscription?.cancel();
+    _purchaseReturnChangeSubscription?.cancel();
+    _billChangeSubscription?.cancel();
     LanguageService.instance.removeListener(_onLanguageChanged);
     super.dispose();
   }
@@ -208,20 +212,28 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         );
   }
 
-  // Listen for purchase/product changes from other pages
+  // Listen for purchase/product/return/bill changes from other pages
   void _setupCrossPageRefresh() {
+    void reloadIfMounted(_) {
+      if (mounted) _reloadFromLocal();
+    }
+
     _purchaseChangeSubscription = DashboardRefreshService
         .instance
         .onPurchaseChanged
-        .listen((_) {
-          if (mounted) _reloadFromLocal();
-        });
+        .listen(reloadIfMounted);
     _productChangeSubscription = DashboardRefreshService
         .instance
         .onProductChanged
-        .listen((_) {
-          if (mounted) _reloadFromLocal();
-        });
+        .listen(reloadIfMounted);
+    _purchaseReturnChangeSubscription = DashboardRefreshService
+        .instance
+        .onPurchaseReturnChanged
+        .listen(reloadIfMounted);
+    _billChangeSubscription = DashboardRefreshService
+        .instance
+        .onBillChanged
+        .listen(reloadIfMounted);
   }
 
   Future<void> _reloadFromLocal() async {

@@ -11,6 +11,13 @@ class Employee {
   final bool counterAccess;
   // Cloth-collection style sales points (from attributed bill sale prices).
   final double points;
+  final DateTime? dateOfBirth;
+  final String? address;
+  final String? pinCode;
+  final String? govIdNumber;
+  final String? govIdType;
+  final double? salary;
+  final DateTime? dateOfJoining;
   final List<String> allowedModules;
   final bool active;
   final DateTime? createdAt;
@@ -24,6 +31,13 @@ class Employee {
     this.tokenNumber = 0,
     this.counterAccess = true,
     this.points = 0,
+    this.dateOfBirth,
+    this.address,
+    this.pinCode,
+    this.govIdNumber,
+    this.govIdType,
+    this.salary,
+    this.dateOfJoining,
     this.allowedModules = const [],
     this.active = true,
     this.createdAt,
@@ -43,10 +57,20 @@ class Employee {
     int? tokenNumber,
     bool? counterAccess,
     double? points,
+    DateTime? dateOfBirth,
+    String? address,
+    String? pinCode,
+    String? govIdNumber,
+    String? govIdType,
+    double? salary,
+    DateTime? dateOfJoining,
     List<String>? allowedModules,
     bool? active,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool clearDateOfBirth = false,
+    bool clearDateOfJoining = false,
+    bool clearSalary = false,
   }) {
     return Employee(
       id: id ?? this.id,
@@ -56,6 +80,17 @@ class Employee {
       tokenNumber: tokenNumber ?? this.tokenNumber,
       counterAccess: counterAccess ?? this.counterAccess,
       points: points ?? this.points,
+      dateOfBirth: clearDateOfBirth
+          ? null
+          : (dateOfBirth ?? this.dateOfBirth),
+      address: address ?? this.address,
+      pinCode: pinCode ?? this.pinCode,
+      govIdNumber: govIdNumber ?? this.govIdNumber,
+      govIdType: govIdType ?? this.govIdType,
+      salary: clearSalary ? null : (salary ?? this.salary),
+      dateOfJoining: clearDateOfJoining
+          ? null
+          : (dateOfJoining ?? this.dateOfJoining),
       allowedModules: allowedModules ?? this.allowedModules,
       active: active ?? this.active,
       createdAt: createdAt ?? this.createdAt,
@@ -72,10 +107,30 @@ class Employee {
       'tokenNumber': tokenNumber,
       'counterAccess': counterAccess,
       'points': points,
+      'dateOfBirth': dateOfBirth?.toIso8601String(),
+      'address': address,
+      'pinCode': pinCode,
+      'govIdNumber': govIdNumber,
+      'govIdType': govIdType,
+      'salary': salary,
+      'dateOfJoining': dateOfJoining?.toIso8601String(),
       'allowedModules': allowedModules,
       'active': active,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
+    };
+  }
+
+  // Profile fields only — used when merging into Firestore writes.
+  Map<String, dynamic> profileToJson() {
+    return {
+      'dateOfBirth': dateOfBirth?.toIso8601String(),
+      'address': address,
+      'pinCode': pinCode,
+      'govIdNumber': govIdNumber,
+      'govIdType': govIdType,
+      'salary': salary,
+      'dateOfJoining': dateOfJoining?.toIso8601String(),
     };
   }
 
@@ -92,6 +147,12 @@ class Employee {
     final points = pointsRaw is num
         ? pointsRaw.toDouble()
         : double.tryParse('$pointsRaw') ?? 0;
+    final salaryRaw = json['salary'];
+    final salary = salaryRaw == null
+        ? null
+        : (salaryRaw is num
+              ? salaryRaw.toDouble()
+              : double.tryParse('$salaryRaw'));
     return Employee(
       id: id ?? json['id'] as String? ?? '',
       email: json['email'] as String? ?? '',
@@ -100,6 +161,13 @@ class Employee {
       tokenNumber: token,
       counterAccess: json['counterAccess'] as bool? ?? true,
       points: points,
+      dateOfBirth: _parseDate(json['dateOfBirth']),
+      address: json['address'] as String?,
+      pinCode: json['pinCode'] as String?,
+      govIdNumber: json['govIdNumber'] as String?,
+      govIdType: json['govIdType'] as String?,
+      salary: salary,
+      dateOfJoining: _parseDate(json['dateOfJoining']),
       allowedModules: modules,
       active: json['active'] as bool? ?? true,
       createdAt: _parseDate(json['createdAt']),

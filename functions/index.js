@@ -603,6 +603,26 @@ exports.createEmployee = onCall(async (request) => {
     Number(request.data?.tokenNumber) > 0
       ? Number(request.data.tokenNumber)
       : await nextEmployeeToken(ownerId);
+  const profile = {
+    dateOfBirth: request.data?.dateOfBirth
+      ? String(request.data.dateOfBirth)
+      : null,
+    address: request.data?.address ? String(request.data.address).trim() : null,
+    pinCode: request.data?.pinCode ? String(request.data.pinCode).trim() : null,
+    govIdNumber: request.data?.govIdNumber
+      ? String(request.data.govIdNumber).trim()
+      : null,
+    govIdType: request.data?.govIdType
+      ? String(request.data.govIdType).trim()
+      : null,
+    salary:
+      request.data?.salary != null && Number.isFinite(Number(request.data.salary))
+        ? Number(request.data.salary)
+        : null,
+    dateOfJoining: request.data?.dateOfJoining
+      ? String(request.data.dateOfJoining)
+      : null,
+  };
 
   if (!email || !email.includes("@")) {
     throw new HttpsError("invalid-argument", "Valid email required");
@@ -638,6 +658,7 @@ exports.createEmployee = onCall(async (request) => {
     tokenNumber,
     counterAccess,
     points: 0,
+    ...profile,
     allowedModules: modules,
     active: true,
     createdAt: now,
@@ -653,6 +674,7 @@ exports.createEmployee = onCall(async (request) => {
       tokenNumber,
       counterAccess,
       points: 0,
+      ...profile,
       allowedModules: modules,
       active: true,
       role: "employee",
@@ -729,6 +751,48 @@ exports.updateEmployee = onCall(async (request) => {
     counterAccess,
     allowedModules: modules,
     active,
+    dateOfBirth:
+      request.data?.dateOfBirth !== undefined
+        ? request.data.dateOfBirth
+          ? String(request.data.dateOfBirth)
+          : null
+        : empSnap.data()?.dateOfBirth ?? null,
+    address:
+      request.data?.address !== undefined
+        ? request.data.address
+          ? String(request.data.address).trim()
+          : null
+        : empSnap.data()?.address ?? null,
+    pinCode:
+      request.data?.pinCode !== undefined
+        ? request.data.pinCode
+          ? String(request.data.pinCode).trim()
+          : null
+        : empSnap.data()?.pinCode ?? null,
+    govIdNumber:
+      request.data?.govIdNumber !== undefined
+        ? request.data.govIdNumber
+          ? String(request.data.govIdNumber).trim()
+          : null
+        : empSnap.data()?.govIdNumber ?? null,
+    govIdType:
+      request.data?.govIdType !== undefined
+        ? request.data.govIdType
+          ? String(request.data.govIdType).trim()
+          : null
+        : empSnap.data()?.govIdType ?? null,
+    salary:
+      request.data?.salary !== undefined
+        ? request.data.salary != null && Number.isFinite(Number(request.data.salary))
+          ? Number(request.data.salary)
+          : null
+        : empSnap.data()?.salary ?? null,
+    dateOfJoining:
+      request.data?.dateOfJoining !== undefined
+        ? request.data.dateOfJoining
+          ? String(request.data.dateOfJoining)
+          : null
+        : empSnap.data()?.dateOfJoining ?? null,
     updatedAt: now,
   };
 

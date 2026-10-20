@@ -1,6 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:c_billing/common_widgets/app_pill_button.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
@@ -17,6 +19,8 @@ class EmployeeScreenActions {
   static VoidCallback? add;
 }
 
+enum _StatusFilter { all, active, inactive }
+
 class EmployeesPage extends StatefulWidget {
   final bool isEmbedded;
 
@@ -28,9 +32,29 @@ class EmployeesPage extends StatefulWidget {
 
 class _EmployeesPageState extends State<EmployeesPage> {
   final _repo = EmployeeRepository();
+  final _searchCtrl = TextEditingController();
   List<Employee> _employees = [];
   bool _loading = true;
   String? _error;
+  _StatusFilter _filter = _StatusFilter.all;
+
+  bool get _desktop => DesktopCanvas.isDesktopPlatform;
+
+  int get _activeCount => _employees.where((e) => e.active).length;
+  int get _inactiveCount => _employees.length - _activeCount;
+
+  List<Employee> get _filtered {
+    final q = _searchCtrl.text.trim().toLowerCase();
+    return _employees.where((e) {
+      if (_filter == _StatusFilter.active && !e.active) return false;
+      if (_filter == _StatusFilter.inactive && e.active) return false;
+      if (q.isEmpty) return true;
+      return e.displayName.toLowerCase().contains(q) ||
+          e.email.toLowerCase().contains(q) ||
+          '${e.tokenNumber}'.contains(q) ||
+          (e.phone?.toLowerCase().contains(q) ?? false);
+    }).toList();
+  }
 
   @override
   void initState() {
@@ -44,6 +68,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
     if (EmployeeScreenActions.add != null) {
       EmployeeScreenActions.add = null;
     }
+    _searchCtrl.dispose();
     super.dispose();
   }
 
@@ -75,6 +100,16 @@ class _EmployeesPageState extends State<EmployeesPage> {
     }
   }
 
+  Future<void> _setActive(Employee e, bool active) async {
+    try {
+      await _repo.setActive(e.id, active);
+      await _load();
+    } catch (err) {
+      if (!mounted) return;
+      GlassyToast.show(context, 'Update failed: $err');
+    }
+  }
+
   Future<void> _openEditor({Employee? existing}) async {
     final nextToken =
         existing?.tokenNumber ?? await _repo.nextTokenNumber();
@@ -95,6 +130,13 @@ class _EmployeesPageState extends State<EmployeesPage> {
               phone: data.phone,
               counterAccess: data.counterAccess,
               allowedModules: data.modules,
+              dateOfBirth: data.dateOfBirth,
+              address: data.address,
+              pinCode: data.pinCode,
+              govIdNumber: data.govIdNumber,
+              govIdType: data.govIdType,
+              salary: data.salary,
+              dateOfJoining: data.dateOfJoining,
             );
           } else {
             await _repo.updateEmployee(
@@ -104,6 +146,16 @@ class _EmployeesPageState extends State<EmployeesPage> {
                 counterAccess: data.counterAccess,
                 allowedModules: data.modules,
                 active: data.active,
+                dateOfBirth: data.dateOfBirth,
+                address: data.address,
+                pinCode: data.pinCode,
+                govIdNumber: data.govIdNumber,
+                govIdType: data.govIdType,
+                salary: data.salary,
+                dateOfJoining: data.dateOfJoining,
+                clearDateOfBirth: data.dateOfBirth == null,
+                clearDateOfJoining: data.dateOfJoining == null,
+                clearSalary: data.salary == null,
               ),
             );
           }
@@ -121,26 +173,41 @@ class _EmployeesPageState extends State<EmployeesPage> {
     }
   }
 
+  String _initials(Employee e) {
+    final parts = e.displayName.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts.first.isEmpty) return '?';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return (parts.first[0] + parts.last[0]).toUpperCase();
+  }
+
+  String _pointsLabel(double points) {
+    return points % 1 == 0
+        ? points.toStringAsFixed(0)
+        : points.toStringAsFixed(2);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final body = Stack(
-      children: [
-        _buildBody(),
-        if (AccessControlService.instance.isOwner &&
-            !(widget.isEmbedded && DesktopCanvas.isDesktopPlatform))
-          Positioned(
-            right: 16,
-            bottom: 16,
-            child: FloatingActionButton.extended(
-              onPressed: () => _openEditor(),
-              icon: const Icon(Icons.person_add_alt_1_rounded),
-              label: const Text('Add employee'),
-            ),
-          ),
-      ],
-    );
+    final body = _buildBody();
     if (widget.isEmbedded) return body;
-    return AppScaffold(title: 'Employees', body: body);
+    return AppScaffold(
+      title: 'Employees',
+      body: Stack(
+        children: [
+          body,
+          if (AccessControlService.instance.isOwner && !_desktop)
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: FloatingActionButton.extended(
+                onPressed: () => _openEditor(),
+                icon: const Icon(Icons.person_add_alt_1_rounded),
+                label: const Text('Add employee'),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   Widget _buildBody() {
@@ -162,29 +229,102 @@ class _EmployeesPageState extends State<EmployeesPage> {
         ),
       );
     }
-    if (_employees.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.groups_outlined,
-                size: 56,
-                color: AppTheme.grey,
+
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
+        slivers: [
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+              _desktop ? 20 : 16,
+              _desktop ? 8 : 12,
+              _desktop ? 20 : 16,
+              8,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (!_desktop && !widget.isEmbedded) ...[
+                    Text(
+                      'Manage staff and their access.',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        color: AppColors.mutedText(context),
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  _buildStatCards(),
+                  const SizedBox(height: 14),
+                  _buildSearchAndFilters(),
+                  const SizedBox(height: 14),
+                ],
               ),
-              const SizedBox(height: 12),
-              const Text(
-                'No employees yet',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+          ),
+          if (_filtered.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: _buildEmptyState(),
+            )
+          else if (_desktop)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+              sliver: SliverToBoxAdapter(child: _buildDesktopTable()),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+              sliver: SliverList.separated(
+                itemCount: _filtered.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
+                itemBuilder: (context, index) =>
+                    _buildMobileCard(_filtered[index]),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Add counter staff and choose which modules they can use.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppTheme.grey600),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    final searching = _searchCtrl.text.trim().isNotEmpty ||
+        _filter != _StatusFilter.all;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              searching ? Icons.search_off_rounded : Icons.groups_outlined,
+              size: 56,
+              color: AppColors.mutedText(context),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              searching ? 'No matching employees' : 'No employees yet',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primaryText(context),
               ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              searching
+                  ? 'Try a different search or filter.'
+                  : 'Add counter staff and choose which modules they can use.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.mutedText(context)),
+            ),
+            if (!searching) ...[
               const SizedBox(height: 16),
               FilledButton.icon(
                 onPressed: () => _openEditor(),
@@ -192,76 +332,635 @@ class _EmployeesPageState extends State<EmployeesPage> {
                 label: const Text('Add employee'),
               ),
             ],
-          ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatCards() {
+    final cards = [
+      _StatSpec(
+        icon: Icons.groups_rounded,
+        label: 'Employees',
+        value: '${_employees.length}',
+        color: AppColors.action(context),
+      ),
+      _StatSpec(
+        icon: Icons.check_circle_rounded,
+        label: 'Active',
+        value: '$_activeCount',
+        color: AppTheme.green,
+      ),
+      _StatSpec(
+        icon: Icons.cancel_rounded,
+        label: 'Inactive',
+        value: '$_inactiveCount',
+        color: AppTheme.coral,
+      ),
+    ];
+
+    if (_desktop) {
+      return Row(
+        children: [
+          for (var i = 0; i < cards.length; i++) ...[
+            if (i > 0) const SizedBox(width: 12),
+            Expanded(child: _buildStatCard(cards[i])),
+          ],
+        ],
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _load,
+    return SizedBox(
+      height: 92,
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),
-        itemCount: _employees.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 8),
-        itemBuilder: (context, index) {
-          final e = _employees[index];
-          final moduleCount = e.allowedModules.length;
-          return Material(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(12),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 8,
-              ),
-              leading: CircleAvatar(
-                backgroundColor: e.active
-                    ? AppTheme.primary.withValues(alpha: 0.15)
-                    : AppTheme.grey300,
-                child: Text(
-                  e.tokenNumber > 0 ? '${e.tokenNumber}' : '?',
+        scrollDirection: Axis.horizontal,
+        itemCount: cards.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
+        itemBuilder: (_, i) => SizedBox(
+          width: 148,
+          child: _buildStatCard(cards[i]),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatCard(_StatSpec spec) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: spec.color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(spec.icon, color: spec.color, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  spec.value,
                   style: TextStyle(
-                    color: e.active ? AppTheme.primary : AppTheme.grey600,
-                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Literata',
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primaryText(context),
+                  ),
+                ),
+                Text(
+                  spec.label,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 12,
+                    color: AppColors.mutedText(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchAndFilters() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          height: 46,
+          decoration: BoxDecoration(
+            color: AppColors.inputFill(context),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border(context)),
+          ),
+          child: TextField(
+            controller: _searchCtrl,
+            onChanged: (_) => setState(() {}),
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 14,
+              color: AppColors.primaryText(context),
+            ),
+            decoration: InputDecoration(
+              hintText: 'Search employees',
+              hintStyle: TextStyle(
+                fontFamily: 'Literata',
+                color: AppColors.mutedText(context),
+              ),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: AppColors.mutedText(context),
+                size: 20,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _filterChip(
+              label: 'All ${_employees.length}',
+              selected: _filter == _StatusFilter.all,
+              onTap: () => setState(() => _filter = _StatusFilter.all),
+            ),
+            _filterChip(
+              label: 'Active $_activeCount',
+              selected: _filter == _StatusFilter.active,
+              onTap: () => setState(() => _filter = _StatusFilter.active),
+            ),
+            _filterChip(
+              label: 'Inactive $_inactiveCount',
+              selected: _filter == _StatusFilter.inactive,
+              onTap: () => setState(() => _filter = _StatusFilter.inactive),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _filterChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    final action = AppColors.action(context);
+    return Material(
+      color: selected ? action : AppColors.card(context),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: selected ? action : AppColors.border(context),
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: selected
+                  ? AppTheme.white
+                  : AppColors.secondaryText(context),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopTable() {
+    final rows = _filtered;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          _buildTableHeader(),
+          for (var i = 0; i < rows.length; i++) ...[
+            if (i > 0)
+              Divider(height: 1, color: AppColors.border(context)),
+            _buildDesktopRow(rows[i]),
+          ],
+        ],
+      ),
+    );
+  }
+
+  static const _tokenW = 100.0;
+  static const _roleW = 110.0;
+  static const _accessW = 110.0;
+  static const _pointsW = 100.0;
+  static const _statusW = 140.0;
+  static const _actionsW = 88.0;
+
+  Widget _tableCell({
+    double? width,
+    int? flex,
+    Alignment align = Alignment.centerLeft,
+    required Widget child,
+  }) {
+    final aligned = Align(alignment: align, child: child);
+    if (width != null) {
+      return SizedBox(width: width, child: aligned);
+    }
+    return Expanded(flex: flex ?? 1, child: aligned);
+  }
+
+  Widget _buildTableHeader() {
+    final style = TextStyle(
+      fontFamily: 'Literata',
+      fontSize: 11,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.6,
+      color: AppColors.mutedText(context),
+    );
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      color: AppColors.scaffold(context).withValues(alpha: 0.55),
+      child: Row(
+        children: [
+          _tableCell(flex: 3, child: Text('EMPLOYEE', style: style)),
+          _tableCell(width: _tokenW, child: Text('TOKEN', style: style)),
+          _tableCell(width: _roleW, child: Text('ROLE', style: style)),
+          _tableCell(width: _accessW, child: Text('ACCESS', style: style)),
+          _tableCell(width: _pointsW, child: Text('POINTS', style: style)),
+          _tableCell(width: _statusW, child: Text('STATUS', style: style)),
+          _tableCell(
+            width: _actionsW,
+            align: Alignment.centerRight,
+            child: Text('ACTIONS', style: style),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _themeSwitch({
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    final action = AppColors.action(context);
+    return Switch(
+      value: value,
+      onChanged: onChanged,
+      activeThumbColor: AppTheme.white,
+      activeTrackColor: action,
+      inactiveThumbColor: AppColors.isDark(context)
+          ? AppTheme.grey
+          : AppTheme.grey50,
+      inactiveTrackColor: AppColors.isDark(context)
+          ? AppTheme.white24
+          : AppTheme.black12,
+    );
+  }
+
+  Widget _buildDesktopRow(Employee e) {
+    final modules = e.allowedModules.length;
+    return Material(
+      color: AppTheme.transparent,
+      child: InkWell(
+        onTap: () => _openEditor(existing: e),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            children: [
+              _tableCell(
+                flex: 3,
+                child: Row(
+                  children: [
+                    _Avatar(initials: _initials(e), active: e.active),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            e.displayName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: AppColors.primaryText(context),
+                            ),
+                          ),
+                          Text(
+                            e.email,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 12,
+                              color: AppColors.mutedText(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _tableCell(
+                width: _tokenW,
+                child: Text(
+                  '${e.tokenNumber}',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryText(context),
                   ),
                 ),
               ),
-              title: Text(
-                e.displayName,
-                style: const TextStyle(fontWeight: FontWeight.w600),
+              _tableCell(
+                width: _roleW,
+                child: _RoleBadge(counter: e.counterAccess),
               ),
-              subtitle: Text(
-                [
-                  'Token ${e.tokenNumber}',
-                  e.email,
-                  e.counterAccess ? 'Counter' : 'No counter',
-                  '$moduleCount modules',
-                  if (!e.active) 'Inactive',
-                ].join(' · '),
+              _tableCell(
+                width: _accessW,
+                child: Text(
+                  '$modules modules',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 12,
+                    color: AppColors.secondaryText(context),
+                  ),
+                ),
               ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
+              _tableCell(
+                width: _pointsW,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.star_rounded,
+                      size: 16,
+                      color: AppColors.action(context),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _pointsLabel(e.points),
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: AppColors.primaryText(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _tableCell(
+                width: _statusW,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _themeSwitch(
+                      value: e.active,
+                      onChanged: (v) => _setActive(e, v),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      e.active ? 'Active' : 'Inactive',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: e.active
+                            ? AppColors.action(context)
+                            : AppColors.mutedText(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _tableCell(
+                width: _actionsW,
+                align: Alignment.centerRight,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      tooltip: 'Edit',
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 36,
+                        minHeight: 36,
+                      ),
+                      onPressed: () => _openEditor(existing: e),
+                      icon: Icon(
+                        Icons.edit_outlined,
+                        size: 20,
+                        color: AppColors.secondaryText(context),
+                      ),
+                    ),
+                    PopupMenuButton<String>(
+                      tooltip: 'More',
+                      padding: EdgeInsets.zero,
+                      onSelected: (v) async {
+                        if (v == 'edit') {
+                          await _openEditor(existing: e);
+                        } else if (v == 'toggle') {
+                          await _setActive(e, !e.active);
+                        }
+                      },
+                      itemBuilder: (_) => [
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: Text('Edit'),
+                        ),
+                        PopupMenuItem(
+                          value: 'toggle',
+                          child: Text(e.active ? 'Deactivate' : 'Activate'),
+                        ),
+                      ],
+                      icon: Icon(
+                        Icons.more_vert_rounded,
+                        color: AppColors.secondaryText(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileCard(Employee e) {
+    final modules = e.allowedModules.length;
+    return Material(
+      color: AppColors.card(context),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: () => _openEditor(existing: e),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border(context)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  _PointsGlassBadge(points: e.points),
-                  const SizedBox(width: 10),
-                  Switch(
+                  _Avatar(initials: _initials(e), active: e.active),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          e.displayName,
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            color: AppColors.primaryText(context),
+                          ),
+                        ),
+                        Text(
+                          e.email,
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 12,
+                            color: AppColors.mutedText(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _themeSwitch(
                     value: e.active,
-                    onChanged: (v) async {
-                      try {
-                        await _repo.setActive(e.id, v);
-                        await _load();
-                      } catch (err) {
-                        if (!mounted) return;
-                        GlassyToast.show(context, 'Update failed: $err');
-                      }
-                    },
+                    onChanged: (v) => _setActive(e, v),
                   ),
                 ],
               ),
-              onTap: () => _openEditor(existing: e),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _infoChip(Icons.tag_rounded, '${e.tokenNumber}'),
+                  _RoleBadge(counter: e.counterAccess),
+                  _infoChip(Icons.apps_rounded, '$modules modules'),
+                  _PointsGlassBadge(points: e.points),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _infoChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.chipFill(context),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: AppColors.mutedText(context)),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.secondaryText(context),
             ),
-          );
-        },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatSpec {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  const _StatSpec({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+}
+
+class _Avatar extends StatelessWidget {
+  final String initials;
+  final bool active;
+
+  const _Avatar({required this.initials, required this.active});
+
+  @override
+  Widget build(BuildContext context) {
+    return CircleAvatar(
+      radius: 20,
+      backgroundColor: active
+          ? AppColors.action(context).withValues(alpha: 0.15)
+          : AppTheme.grey300,
+      child: Text(
+        initials,
+        style: TextStyle(
+          fontFamily: 'Literata',
+          fontWeight: FontWeight.w800,
+          color: active ? AppColors.action(context) : AppTheme.grey600,
+        ),
+      ),
+    );
+  }
+}
+
+class _RoleBadge extends StatelessWidget {
+  final bool counter;
+
+  const _RoleBadge({required this.counter});
+
+  @override
+  Widget build(BuildContext context) {
+    final label = counter ? 'Counter' : 'No counter';
+    final color = counter ? AppTheme.paletteFF7B68EE : AppTheme.grey600;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'Literata',
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
       ),
     );
   }
@@ -297,7 +996,7 @@ class _PointsGlassBadge extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.stars_rounded,
+                Icons.star_rounded,
                 size: 14,
                 color: isDark ? AppTheme.white : AppTheme.primary,
               ),
@@ -326,6 +1025,13 @@ class _EditorData {
   final bool counterAccess;
   final List<String> modules;
   final bool active;
+  final DateTime? dateOfBirth;
+  final String? address;
+  final String? pinCode;
+  final String? govIdNumber;
+  final String? govIdType;
+  final double? salary;
+  final DateTime? dateOfJoining;
 
   const _EditorData({
     required this.email,
@@ -335,6 +1041,13 @@ class _EditorData {
     required this.counterAccess,
     required this.modules,
     required this.active,
+    this.dateOfBirth,
+    this.address,
+    this.pinCode,
+    this.govIdNumber,
+    this.govIdType,
+    this.salary,
+    this.dateOfJoining,
   });
 }
 
@@ -354,15 +1067,32 @@ class _EmployeeEditorSheet extends StatefulWidget {
 }
 
 class _EmployeeEditorSheetState extends State<_EmployeeEditorSheet> {
+  static const _govIdTypes = [
+    'Aadhaar',
+    'PAN',
+    'Voter ID',
+    'Driving License',
+    'Passport',
+    'Other',
+  ];
+
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameCtrl;
   late final TextEditingController _emailCtrl;
   late final TextEditingController _passwordCtrl;
   late final TextEditingController _phoneCtrl;
+  late final TextEditingController _addressCtrl;
+  late final TextEditingController _pinCtrl;
+  late final TextEditingController _govIdCtrl;
+  late final TextEditingController _salaryCtrl;
   late Set<String> _modules;
   late bool _active;
   late bool _counterAccess;
+  DateTime? _dateOfBirth;
+  DateTime? _dateOfJoining;
+  String? _govIdType;
   bool _saving = false;
+  final _dateFmt = DateFormat('dd MMM yyyy');
 
   @override
   void initState() {
@@ -372,6 +1102,19 @@ class _EmployeeEditorSheetState extends State<_EmployeeEditorSheet> {
     _emailCtrl = TextEditingController(text: e?.email ?? '');
     _passwordCtrl = TextEditingController();
     _phoneCtrl = TextEditingController(text: e?.phone ?? '');
+    _addressCtrl = TextEditingController(text: e?.address ?? '');
+    _pinCtrl = TextEditingController(text: e?.pinCode ?? '');
+    _govIdCtrl = TextEditingController(text: e?.govIdNumber ?? '');
+    _salaryCtrl = TextEditingController(
+      text: e?.salary != null
+          ? (e!.salary! % 1 == 0
+                ? e.salary!.toStringAsFixed(0)
+                : e.salary!.toStringAsFixed(2))
+          : '',
+    );
+    _dateOfBirth = e?.dateOfBirth;
+    _dateOfJoining = e?.dateOfJoining;
+    _govIdType = e?.govIdType;
     _counterAccess = e?.counterAccess ?? true;
     _modules = {
       ...(e?.allowedModules ??
@@ -389,7 +1132,27 @@ class _EmployeeEditorSheetState extends State<_EmployeeEditorSheet> {
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     _phoneCtrl.dispose();
+    _addressCtrl.dispose();
+    _pinCtrl.dispose();
+    _govIdCtrl.dispose();
+    _salaryCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickDate({
+    required DateTime? current,
+    required ValueChanged<DateTime?> onPicked,
+    DateTime? firstDate,
+    DateTime? lastDate,
+  }) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: current ?? now,
+      firstDate: firstDate ?? DateTime(1950),
+      lastDate: lastDate ?? now,
+    );
+    if (picked != null) onPicked(picked);
   }
 
   Future<void> _submit() async {
@@ -400,6 +1163,7 @@ class _EmployeeEditorSheetState extends State<_EmployeeEditorSheet> {
     }
     setState(() => _saving = true);
     try {
+      final salaryRaw = _salaryCtrl.text.trim();
       await widget.onSave(
         _EditorData(
           email: _emailCtrl.text.trim(),
@@ -409,6 +1173,17 @@ class _EmployeeEditorSheetState extends State<_EmployeeEditorSheet> {
           counterAccess: _counterAccess,
           modules: _modules.toList(),
           active: _active,
+          dateOfBirth: _dateOfBirth,
+          address: _addressCtrl.text.trim().isEmpty
+              ? null
+              : _addressCtrl.text.trim(),
+          pinCode: _pinCtrl.text.trim().isEmpty ? null : _pinCtrl.text.trim(),
+          govIdNumber: _govIdCtrl.text.trim().isEmpty
+              ? null
+              : _govIdCtrl.text.trim(),
+          govIdType: _govIdType,
+          salary: salaryRaw.isEmpty ? null : double.tryParse(salaryRaw),
+          dateOfJoining: _dateOfJoining,
         ),
       );
       if (mounted) Navigator.pop(context, true);
@@ -555,6 +1330,146 @@ class _EmployeeEditorSheetState extends State<_EmployeeEditorSheet> {
               decoration: const InputDecoration(
                 labelText: 'Phone (optional)',
                 border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Personal & employment',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: AppColors.primaryText(context),
+              ),
+            ),
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: _saving
+                  ? null
+                  : () => _pickDate(
+                        current: _dateOfBirth,
+                        lastDate: DateTime.now(),
+                        onPicked: (d) => setState(() => _dateOfBirth = d),
+                      ),
+              child: InputDecorator(
+                decoration: InputDecoration(
+                  labelText: 'Date of birth',
+                  border: const OutlineInputBorder(),
+                  suffixIcon: _dateOfBirth != null
+                      ? IconButton(
+                          icon: const Icon(Icons.clear_rounded, size: 18),
+                          onPressed: _saving
+                              ? null
+                              : () => setState(() => _dateOfBirth = null),
+                        )
+                      : const Icon(Icons.calendar_today_outlined, size: 18),
+                ),
+                child: Text(
+                  _dateOfBirth != null
+                      ? _dateFmt.format(_dateOfBirth!)
+                      : 'Select date',
+                  style: TextStyle(
+                    color: _dateOfBirth != null
+                        ? AppColors.primaryText(context)
+                        : AppColors.mutedText(context),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _addressCtrl,
+              enabled: !_saving,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'Address',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _pinCtrl,
+              enabled: !_saving,
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(6),
+              ],
+              decoration: const InputDecoration(
+                labelText: 'PIN code',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              initialValue: _govIdType,
+              decoration: const InputDecoration(
+                labelText: 'Gov ID type',
+                border: OutlineInputBorder(),
+              ),
+              items: _govIdTypes
+                  .map(
+                    (t) => DropdownMenuItem(value: t, child: Text(t)),
+                  )
+                  .toList(),
+              onChanged: _saving
+                  ? null
+                  : (v) => setState(() => _govIdType = v),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _govIdCtrl,
+              enabled: !_saving,
+              decoration: const InputDecoration(
+                labelText: 'Gov ID number / proof',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _salaryCtrl,
+              enabled: !_saving,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+              ],
+              decoration: const InputDecoration(
+                labelText: 'Salary (₹)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: _saving
+                  ? null
+                  : () => _pickDate(
+                        current: _dateOfJoining ?? DateTime.now(),
+                        firstDate: DateTime(1990),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                        onPicked: (d) => setState(() => _dateOfJoining = d),
+                      ),
+              child: InputDecorator(
+                decoration: InputDecoration(
+                  labelText: 'Date of joining',
+                  border: const OutlineInputBorder(),
+                  suffixIcon: _dateOfJoining != null
+                      ? IconButton(
+                          icon: const Icon(Icons.clear_rounded, size: 18),
+                          onPressed: _saving
+                              ? null
+                              : () => setState(() => _dateOfJoining = null),
+                        )
+                      : const Icon(Icons.event_available_outlined, size: 18),
+                ),
+                child: Text(
+                  _dateOfJoining != null
+                      ? _dateFmt.format(_dateOfJoining!)
+                      : 'Select date',
+                  style: TextStyle(
+                    color: _dateOfJoining != null
+                        ? AppColors.primaryText(context)
+                        : AppColors.mutedText(context),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 8),

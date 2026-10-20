@@ -357,6 +357,13 @@ class EmployeeRecords extends Table {
   IntColumn get tokenNumber => integer().withDefault(const Constant(0))();
   BoolColumn get counterAccess => boolean().withDefault(const Constant(true))();
   RealColumn get points => real().withDefault(const Constant(0.0))();
+  DateTimeColumn get dateOfBirth => dateTime().nullable()();
+  TextColumn get address => text().nullable()();
+  TextColumn get pinCode => text().nullable()();
+  TextColumn get govIdNumber => text().nullable()();
+  TextColumn get govIdType => text().nullable()();
+  RealColumn get salary => real().nullable()();
+  DateTimeColumn get dateOfJoining => dateTime().nullable()();
   TextColumn get allowedModulesJson => text().withDefault(const Constant(''))();
   BoolColumn get active => boolean().withDefault(const Constant(true))();
   IntColumn get syncStatus => integer().withDefault(const Constant(0))();
@@ -386,7 +393,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? openAppDatabase());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -401,6 +408,15 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 4) {
         await m.addColumn(employeeRecords, employeeRecords.points);
+      }
+      if (from < 5) {
+        await m.addColumn(employeeRecords, employeeRecords.dateOfBirth);
+        await m.addColumn(employeeRecords, employeeRecords.address);
+        await m.addColumn(employeeRecords, employeeRecords.pinCode);
+        await m.addColumn(employeeRecords, employeeRecords.govIdNumber);
+        await m.addColumn(employeeRecords, employeeRecords.govIdType);
+        await m.addColumn(employeeRecords, employeeRecords.salary);
+        await m.addColumn(employeeRecords, employeeRecords.dateOfJoining);
       }
     },
   );

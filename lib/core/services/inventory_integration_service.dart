@@ -293,9 +293,9 @@ class InventoryIntegrationService {
         '[Integration] Bill processed: COGS=$totalCOGS, Revenue=$totalRevenue, Profit=$totalProfit',
       );
 
-      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.product);
-      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.purchase);
-      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.bill);
+      DashboardRefreshService.instance.notifyInventoryTransactionChanged(
+        includeCustomer: true,
+      );
 
       return IntegratedBillResult.success(
         billEntity: billEntity,
@@ -445,9 +445,9 @@ class InventoryIntegrationService {
 
       debugPrint('[Integration] Return processed: refund=$customerRefund');
 
-      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.product);
-      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.purchase);
-      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.bill);
+      DashboardRefreshService.instance.notifyInventoryTransactionChanged(
+        includeCustomer: true,
+      );
 
       return IntegratedReturnResult.success(refundAmount: customerRefund);
     } catch (e) {

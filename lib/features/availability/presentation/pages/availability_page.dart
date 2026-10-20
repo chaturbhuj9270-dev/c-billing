@@ -54,6 +54,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   // Data refresh subscription
   StreamSubscription<void>? _productRefreshSubscription;
   StreamSubscription<void>? _purchaseRefreshSubscription;
+  StreamSubscription<void>? _purchaseReturnRefreshSubscription;
+  StreamSubscription<void>? _billRefreshSubscription;
 
   // Filter states
   String _stockFilter =
@@ -76,21 +78,27 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     LanguageService.instance.addListener(_onLanguageChanged);
     AvailabilityScreenActions.register(_showReportBottomSheet);
 
-    // Listen for product changes from other screens (purchase page, product management, etc.)
+    // Listen for product / purchase / return / bill changes so stock updates immediately
+    void reloadIfMounted(_) {
+      if (mounted) _loadProducts();
+    }
+
     _productRefreshSubscription = DashboardRefreshService
         .instance
         .onProductChanged
-        .listen((_) {
-          if (mounted) _loadProducts();
-        });
-
-    // Also listen for purchase changes which affect stock
+        .listen(reloadIfMounted);
     _purchaseRefreshSubscription = DashboardRefreshService
         .instance
         .onPurchaseChanged
-        .listen((_) {
-          if (mounted) _loadProducts();
-        });
+        .listen(reloadIfMounted);
+    _purchaseReturnRefreshSubscription = DashboardRefreshService
+        .instance
+        .onPurchaseReturnChanged
+        .listen(reloadIfMounted);
+    _billRefreshSubscription = DashboardRefreshService
+        .instance
+        .onBillChanged
+        .listen(reloadIfMounted);
 
     // Listen for changes from ProductOfflineController
     ProductOfflineController.instance.addListener(_onProductsChanged);
@@ -198,6 +206,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     AvailabilityScreenActions.unregister(_showReportBottomSheet);
     _productRefreshSubscription?.cancel();
     _purchaseRefreshSubscription?.cancel();
+    _purchaseReturnRefreshSubscription?.cancel();
+    _billRefreshSubscription?.cancel();
     _batchStreamSubscription?.cancel();
     ProductOfflineController.instance.removeListener(_onProductsChanged);
     LanguageService.instance.removeListener(_onLanguageChanged);

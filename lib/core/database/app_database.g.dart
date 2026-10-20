@@ -13989,6 +13989,82 @@ class $EmployeeRecordsTable extends EmployeeRecords
     requiredDuringInsert: false,
     defaultValue: const Constant(0.0),
   );
+  static const VerificationMeta _dateOfBirthMeta = const VerificationMeta(
+    'dateOfBirth',
+  );
+  @override
+  late final GeneratedColumn<DateTime> dateOfBirth = GeneratedColumn<DateTime>(
+    'date_of_birth',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _addressMeta = const VerificationMeta(
+    'address',
+  );
+  @override
+  late final GeneratedColumn<String> address = GeneratedColumn<String>(
+    'address',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _pinCodeMeta = const VerificationMeta(
+    'pinCode',
+  );
+  @override
+  late final GeneratedColumn<String> pinCode = GeneratedColumn<String>(
+    'pin_code',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _govIdNumberMeta = const VerificationMeta(
+    'govIdNumber',
+  );
+  @override
+  late final GeneratedColumn<String> govIdNumber = GeneratedColumn<String>(
+    'gov_id_number',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _govIdTypeMeta = const VerificationMeta(
+    'govIdType',
+  );
+  @override
+  late final GeneratedColumn<String> govIdType = GeneratedColumn<String>(
+    'gov_id_type',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _salaryMeta = const VerificationMeta('salary');
+  @override
+  late final GeneratedColumn<double> salary = GeneratedColumn<double>(
+    'salary',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _dateOfJoiningMeta = const VerificationMeta(
+    'dateOfJoining',
+  );
+  @override
+  late final GeneratedColumn<DateTime> dateOfJoining =
+      GeneratedColumn<DateTime>(
+        'date_of_joining',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _allowedModulesJsonMeta =
       const VerificationMeta('allowedModulesJson');
   @override
@@ -14059,6 +14135,13 @@ class $EmployeeRecordsTable extends EmployeeRecords
     tokenNumber,
     counterAccess,
     points,
+    dateOfBirth,
+    address,
+    pinCode,
+    govIdNumber,
+    govIdType,
+    salary,
+    dateOfJoining,
     allowedModulesJson,
     active,
     syncStatus,
@@ -14144,6 +14227,57 @@ class $EmployeeRecordsTable extends EmployeeRecords
         points.isAcceptableOrUnknown(data['points']!, _pointsMeta),
       );
     }
+    if (data.containsKey('date_of_birth')) {
+      context.handle(
+        _dateOfBirthMeta,
+        dateOfBirth.isAcceptableOrUnknown(
+          data['date_of_birth']!,
+          _dateOfBirthMeta,
+        ),
+      );
+    }
+    if (data.containsKey('address')) {
+      context.handle(
+        _addressMeta,
+        address.isAcceptableOrUnknown(data['address']!, _addressMeta),
+      );
+    }
+    if (data.containsKey('pin_code')) {
+      context.handle(
+        _pinCodeMeta,
+        pinCode.isAcceptableOrUnknown(data['pin_code']!, _pinCodeMeta),
+      );
+    }
+    if (data.containsKey('gov_id_number')) {
+      context.handle(
+        _govIdNumberMeta,
+        govIdNumber.isAcceptableOrUnknown(
+          data['gov_id_number']!,
+          _govIdNumberMeta,
+        ),
+      );
+    }
+    if (data.containsKey('gov_id_type')) {
+      context.handle(
+        _govIdTypeMeta,
+        govIdType.isAcceptableOrUnknown(data['gov_id_type']!, _govIdTypeMeta),
+      );
+    }
+    if (data.containsKey('salary')) {
+      context.handle(
+        _salaryMeta,
+        salary.isAcceptableOrUnknown(data['salary']!, _salaryMeta),
+      );
+    }
+    if (data.containsKey('date_of_joining')) {
+      context.handle(
+        _dateOfJoiningMeta,
+        dateOfJoining.isAcceptableOrUnknown(
+          data['date_of_joining']!,
+          _dateOfJoiningMeta,
+        ),
+      );
+    }
     if (data.containsKey('allowed_modules_json')) {
       context.handle(
         _allowedModulesJsonMeta,
@@ -14226,6 +14360,34 @@ class $EmployeeRecordsTable extends EmployeeRecords
         DriftSqlType.double,
         data['${effectivePrefix}points'],
       )!,
+      dateOfBirth: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}date_of_birth'],
+      ),
+      address: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}address'],
+      ),
+      pinCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pin_code'],
+      ),
+      govIdNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}gov_id_number'],
+      ),
+      govIdType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}gov_id_type'],
+      ),
+      salary: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}salary'],
+      ),
+      dateOfJoining: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}date_of_joining'],
+      ),
       allowedModulesJson: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}allowed_modules_json'],
@@ -14265,6 +14427,13 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
   final int tokenNumber;
   final bool counterAccess;
   final double points;
+  final DateTime? dateOfBirth;
+  final String? address;
+  final String? pinCode;
+  final String? govIdNumber;
+  final String? govIdType;
+  final double? salary;
+  final DateTime? dateOfJoining;
   final String allowedModulesJson;
   final bool active;
   final int syncStatus;
@@ -14280,6 +14449,13 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
     required this.tokenNumber,
     required this.counterAccess,
     required this.points,
+    this.dateOfBirth,
+    this.address,
+    this.pinCode,
+    this.govIdNumber,
+    this.govIdType,
+    this.salary,
+    this.dateOfJoining,
     required this.allowedModulesJson,
     required this.active,
     required this.syncStatus,
@@ -14304,6 +14480,27 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
     map['token_number'] = Variable<int>(tokenNumber);
     map['counter_access'] = Variable<bool>(counterAccess);
     map['points'] = Variable<double>(points);
+    if (!nullToAbsent || dateOfBirth != null) {
+      map['date_of_birth'] = Variable<DateTime>(dateOfBirth);
+    }
+    if (!nullToAbsent || address != null) {
+      map['address'] = Variable<String>(address);
+    }
+    if (!nullToAbsent || pinCode != null) {
+      map['pin_code'] = Variable<String>(pinCode);
+    }
+    if (!nullToAbsent || govIdNumber != null) {
+      map['gov_id_number'] = Variable<String>(govIdNumber);
+    }
+    if (!nullToAbsent || govIdType != null) {
+      map['gov_id_type'] = Variable<String>(govIdType);
+    }
+    if (!nullToAbsent || salary != null) {
+      map['salary'] = Variable<double>(salary);
+    }
+    if (!nullToAbsent || dateOfJoining != null) {
+      map['date_of_joining'] = Variable<DateTime>(dateOfJoining);
+    }
     map['allowed_modules_json'] = Variable<String>(allowedModulesJson);
     map['active'] = Variable<bool>(active);
     map['sync_status'] = Variable<int>(syncStatus);
@@ -14329,6 +14526,27 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
       tokenNumber: Value(tokenNumber),
       counterAccess: Value(counterAccess),
       points: Value(points),
+      dateOfBirth: dateOfBirth == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dateOfBirth),
+      address: address == null && nullToAbsent
+          ? const Value.absent()
+          : Value(address),
+      pinCode: pinCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pinCode),
+      govIdNumber: govIdNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(govIdNumber),
+      govIdType: govIdType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(govIdType),
+      salary: salary == null && nullToAbsent
+          ? const Value.absent()
+          : Value(salary),
+      dateOfJoining: dateOfJoining == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dateOfJoining),
       allowedModulesJson: Value(allowedModulesJson),
       active: Value(active),
       syncStatus: Value(syncStatus),
@@ -14352,6 +14570,13 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
       tokenNumber: serializer.fromJson<int>(json['tokenNumber']),
       counterAccess: serializer.fromJson<bool>(json['counterAccess']),
       points: serializer.fromJson<double>(json['points']),
+      dateOfBirth: serializer.fromJson<DateTime?>(json['dateOfBirth']),
+      address: serializer.fromJson<String?>(json['address']),
+      pinCode: serializer.fromJson<String?>(json['pinCode']),
+      govIdNumber: serializer.fromJson<String?>(json['govIdNumber']),
+      govIdType: serializer.fromJson<String?>(json['govIdType']),
+      salary: serializer.fromJson<double?>(json['salary']),
+      dateOfJoining: serializer.fromJson<DateTime?>(json['dateOfJoining']),
       allowedModulesJson: serializer.fromJson<String>(
         json['allowedModulesJson'],
       ),
@@ -14374,6 +14599,13 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
       'tokenNumber': serializer.toJson<int>(tokenNumber),
       'counterAccess': serializer.toJson<bool>(counterAccess),
       'points': serializer.toJson<double>(points),
+      'dateOfBirth': serializer.toJson<DateTime?>(dateOfBirth),
+      'address': serializer.toJson<String?>(address),
+      'pinCode': serializer.toJson<String?>(pinCode),
+      'govIdNumber': serializer.toJson<String?>(govIdNumber),
+      'govIdType': serializer.toJson<String?>(govIdType),
+      'salary': serializer.toJson<double?>(salary),
+      'dateOfJoining': serializer.toJson<DateTime?>(dateOfJoining),
       'allowedModulesJson': serializer.toJson<String>(allowedModulesJson),
       'active': serializer.toJson<bool>(active),
       'syncStatus': serializer.toJson<int>(syncStatus),
@@ -14392,6 +14624,13 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
     int? tokenNumber,
     bool? counterAccess,
     double? points,
+    Value<DateTime?> dateOfBirth = const Value.absent(),
+    Value<String?> address = const Value.absent(),
+    Value<String?> pinCode = const Value.absent(),
+    Value<String?> govIdNumber = const Value.absent(),
+    Value<String?> govIdType = const Value.absent(),
+    Value<double?> salary = const Value.absent(),
+    Value<DateTime?> dateOfJoining = const Value.absent(),
     String? allowedModulesJson,
     bool? active,
     int? syncStatus,
@@ -14407,6 +14646,15 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
     tokenNumber: tokenNumber ?? this.tokenNumber,
     counterAccess: counterAccess ?? this.counterAccess,
     points: points ?? this.points,
+    dateOfBirth: dateOfBirth.present ? dateOfBirth.value : this.dateOfBirth,
+    address: address.present ? address.value : this.address,
+    pinCode: pinCode.present ? pinCode.value : this.pinCode,
+    govIdNumber: govIdNumber.present ? govIdNumber.value : this.govIdNumber,
+    govIdType: govIdType.present ? govIdType.value : this.govIdType,
+    salary: salary.present ? salary.value : this.salary,
+    dateOfJoining: dateOfJoining.present
+        ? dateOfJoining.value
+        : this.dateOfJoining,
     allowedModulesJson: allowedModulesJson ?? this.allowedModulesJson,
     active: active ?? this.active,
     syncStatus: syncStatus ?? this.syncStatus,
@@ -14432,6 +14680,19 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
           ? data.counterAccess.value
           : this.counterAccess,
       points: data.points.present ? data.points.value : this.points,
+      dateOfBirth: data.dateOfBirth.present
+          ? data.dateOfBirth.value
+          : this.dateOfBirth,
+      address: data.address.present ? data.address.value : this.address,
+      pinCode: data.pinCode.present ? data.pinCode.value : this.pinCode,
+      govIdNumber: data.govIdNumber.present
+          ? data.govIdNumber.value
+          : this.govIdNumber,
+      govIdType: data.govIdType.present ? data.govIdType.value : this.govIdType,
+      salary: data.salary.present ? data.salary.value : this.salary,
+      dateOfJoining: data.dateOfJoining.present
+          ? data.dateOfJoining.value
+          : this.dateOfJoining,
       allowedModulesJson: data.allowedModulesJson.present
           ? data.allowedModulesJson.value
           : this.allowedModulesJson,
@@ -14456,6 +14717,13 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
           ..write('tokenNumber: $tokenNumber, ')
           ..write('counterAccess: $counterAccess, ')
           ..write('points: $points, ')
+          ..write('dateOfBirth: $dateOfBirth, ')
+          ..write('address: $address, ')
+          ..write('pinCode: $pinCode, ')
+          ..write('govIdNumber: $govIdNumber, ')
+          ..write('govIdType: $govIdType, ')
+          ..write('salary: $salary, ')
+          ..write('dateOfJoining: $dateOfJoining, ')
           ..write('allowedModulesJson: $allowedModulesJson, ')
           ..write('active: $active, ')
           ..write('syncStatus: $syncStatus, ')
@@ -14466,7 +14734,7 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     serverId,
     email,
@@ -14476,12 +14744,19 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
     tokenNumber,
     counterAccess,
     points,
+    dateOfBirth,
+    address,
+    pinCode,
+    govIdNumber,
+    govIdType,
+    salary,
+    dateOfJoining,
     allowedModulesJson,
     active,
     syncStatus,
     createdAt,
     updatedAt,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -14495,6 +14770,13 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
           other.tokenNumber == this.tokenNumber &&
           other.counterAccess == this.counterAccess &&
           other.points == this.points &&
+          other.dateOfBirth == this.dateOfBirth &&
+          other.address == this.address &&
+          other.pinCode == this.pinCode &&
+          other.govIdNumber == this.govIdNumber &&
+          other.govIdType == this.govIdType &&
+          other.salary == this.salary &&
+          other.dateOfJoining == this.dateOfJoining &&
           other.allowedModulesJson == this.allowedModulesJson &&
           other.active == this.active &&
           other.syncStatus == this.syncStatus &&
@@ -14512,6 +14794,13 @@ class EmployeeRecordsCompanion extends UpdateCompanion<EmployeeRecord> {
   final Value<int> tokenNumber;
   final Value<bool> counterAccess;
   final Value<double> points;
+  final Value<DateTime?> dateOfBirth;
+  final Value<String?> address;
+  final Value<String?> pinCode;
+  final Value<String?> govIdNumber;
+  final Value<String?> govIdType;
+  final Value<double?> salary;
+  final Value<DateTime?> dateOfJoining;
   final Value<String> allowedModulesJson;
   final Value<bool> active;
   final Value<int> syncStatus;
@@ -14527,6 +14816,13 @@ class EmployeeRecordsCompanion extends UpdateCompanion<EmployeeRecord> {
     this.tokenNumber = const Value.absent(),
     this.counterAccess = const Value.absent(),
     this.points = const Value.absent(),
+    this.dateOfBirth = const Value.absent(),
+    this.address = const Value.absent(),
+    this.pinCode = const Value.absent(),
+    this.govIdNumber = const Value.absent(),
+    this.govIdType = const Value.absent(),
+    this.salary = const Value.absent(),
+    this.dateOfJoining = const Value.absent(),
     this.allowedModulesJson = const Value.absent(),
     this.active = const Value.absent(),
     this.syncStatus = const Value.absent(),
@@ -14543,6 +14839,13 @@ class EmployeeRecordsCompanion extends UpdateCompanion<EmployeeRecord> {
     this.tokenNumber = const Value.absent(),
     this.counterAccess = const Value.absent(),
     this.points = const Value.absent(),
+    this.dateOfBirth = const Value.absent(),
+    this.address = const Value.absent(),
+    this.pinCode = const Value.absent(),
+    this.govIdNumber = const Value.absent(),
+    this.govIdType = const Value.absent(),
+    this.salary = const Value.absent(),
+    this.dateOfJoining = const Value.absent(),
     this.allowedModulesJson = const Value.absent(),
     this.active = const Value.absent(),
     this.syncStatus = const Value.absent(),
@@ -14562,6 +14865,13 @@ class EmployeeRecordsCompanion extends UpdateCompanion<EmployeeRecord> {
     Expression<int>? tokenNumber,
     Expression<bool>? counterAccess,
     Expression<double>? points,
+    Expression<DateTime>? dateOfBirth,
+    Expression<String>? address,
+    Expression<String>? pinCode,
+    Expression<String>? govIdNumber,
+    Expression<String>? govIdType,
+    Expression<double>? salary,
+    Expression<DateTime>? dateOfJoining,
     Expression<String>? allowedModulesJson,
     Expression<bool>? active,
     Expression<int>? syncStatus,
@@ -14578,6 +14888,13 @@ class EmployeeRecordsCompanion extends UpdateCompanion<EmployeeRecord> {
       if (tokenNumber != null) 'token_number': tokenNumber,
       if (counterAccess != null) 'counter_access': counterAccess,
       if (points != null) 'points': points,
+      if (dateOfBirth != null) 'date_of_birth': dateOfBirth,
+      if (address != null) 'address': address,
+      if (pinCode != null) 'pin_code': pinCode,
+      if (govIdNumber != null) 'gov_id_number': govIdNumber,
+      if (govIdType != null) 'gov_id_type': govIdType,
+      if (salary != null) 'salary': salary,
+      if (dateOfJoining != null) 'date_of_joining': dateOfJoining,
       if (allowedModulesJson != null)
         'allowed_modules_json': allowedModulesJson,
       if (active != null) 'active': active,
@@ -14597,6 +14914,13 @@ class EmployeeRecordsCompanion extends UpdateCompanion<EmployeeRecord> {
     Value<int>? tokenNumber,
     Value<bool>? counterAccess,
     Value<double>? points,
+    Value<DateTime?>? dateOfBirth,
+    Value<String?>? address,
+    Value<String?>? pinCode,
+    Value<String?>? govIdNumber,
+    Value<String?>? govIdType,
+    Value<double?>? salary,
+    Value<DateTime?>? dateOfJoining,
     Value<String>? allowedModulesJson,
     Value<bool>? active,
     Value<int>? syncStatus,
@@ -14613,6 +14937,13 @@ class EmployeeRecordsCompanion extends UpdateCompanion<EmployeeRecord> {
       tokenNumber: tokenNumber ?? this.tokenNumber,
       counterAccess: counterAccess ?? this.counterAccess,
       points: points ?? this.points,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      address: address ?? this.address,
+      pinCode: pinCode ?? this.pinCode,
+      govIdNumber: govIdNumber ?? this.govIdNumber,
+      govIdType: govIdType ?? this.govIdType,
+      salary: salary ?? this.salary,
+      dateOfJoining: dateOfJoining ?? this.dateOfJoining,
       allowedModulesJson: allowedModulesJson ?? this.allowedModulesJson,
       active: active ?? this.active,
       syncStatus: syncStatus ?? this.syncStatus,
@@ -14651,6 +14982,27 @@ class EmployeeRecordsCompanion extends UpdateCompanion<EmployeeRecord> {
     if (points.present) {
       map['points'] = Variable<double>(points.value);
     }
+    if (dateOfBirth.present) {
+      map['date_of_birth'] = Variable<DateTime>(dateOfBirth.value);
+    }
+    if (address.present) {
+      map['address'] = Variable<String>(address.value);
+    }
+    if (pinCode.present) {
+      map['pin_code'] = Variable<String>(pinCode.value);
+    }
+    if (govIdNumber.present) {
+      map['gov_id_number'] = Variable<String>(govIdNumber.value);
+    }
+    if (govIdType.present) {
+      map['gov_id_type'] = Variable<String>(govIdType.value);
+    }
+    if (salary.present) {
+      map['salary'] = Variable<double>(salary.value);
+    }
+    if (dateOfJoining.present) {
+      map['date_of_joining'] = Variable<DateTime>(dateOfJoining.value);
+    }
     if (allowedModulesJson.present) {
       map['allowed_modules_json'] = Variable<String>(allowedModulesJson.value);
     }
@@ -14681,6 +15033,13 @@ class EmployeeRecordsCompanion extends UpdateCompanion<EmployeeRecord> {
           ..write('tokenNumber: $tokenNumber, ')
           ..write('counterAccess: $counterAccess, ')
           ..write('points: $points, ')
+          ..write('dateOfBirth: $dateOfBirth, ')
+          ..write('address: $address, ')
+          ..write('pinCode: $pinCode, ')
+          ..write('govIdNumber: $govIdNumber, ')
+          ..write('govIdType: $govIdType, ')
+          ..write('salary: $salary, ')
+          ..write('dateOfJoining: $dateOfJoining, ')
           ..write('allowedModulesJson: $allowedModulesJson, ')
           ..write('active: $active, ')
           ..write('syncStatus: $syncStatus, ')
@@ -21089,6 +21448,13 @@ typedef $$EmployeeRecordsTableCreateCompanionBuilder =
       Value<int> tokenNumber,
       Value<bool> counterAccess,
       Value<double> points,
+      Value<DateTime?> dateOfBirth,
+      Value<String?> address,
+      Value<String?> pinCode,
+      Value<String?> govIdNumber,
+      Value<String?> govIdType,
+      Value<double?> salary,
+      Value<DateTime?> dateOfJoining,
       Value<String> allowedModulesJson,
       Value<bool> active,
       Value<int> syncStatus,
@@ -21106,6 +21472,13 @@ typedef $$EmployeeRecordsTableUpdateCompanionBuilder =
       Value<int> tokenNumber,
       Value<bool> counterAccess,
       Value<double> points,
+      Value<DateTime?> dateOfBirth,
+      Value<String?> address,
+      Value<String?> pinCode,
+      Value<String?> govIdNumber,
+      Value<String?> govIdType,
+      Value<double?> salary,
+      Value<DateTime?> dateOfJoining,
       Value<String> allowedModulesJson,
       Value<bool> active,
       Value<int> syncStatus,
@@ -21164,6 +21537,41 @@ class $$EmployeeRecordsTableFilterComposer
 
   ColumnFilters<double> get points => $composableBuilder(
     column: $table.points,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get dateOfBirth => $composableBuilder(
+    column: $table.dateOfBirth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get address => $composableBuilder(
+    column: $table.address,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get pinCode => $composableBuilder(
+    column: $table.pinCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get govIdNumber => $composableBuilder(
+    column: $table.govIdNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get govIdType => $composableBuilder(
+    column: $table.govIdType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get salary => $composableBuilder(
+    column: $table.salary,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get dateOfJoining => $composableBuilder(
+    column: $table.dateOfJoining,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -21247,6 +21655,41 @@ class $$EmployeeRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get dateOfBirth => $composableBuilder(
+    column: $table.dateOfBirth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get address => $composableBuilder(
+    column: $table.address,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pinCode => $composableBuilder(
+    column: $table.pinCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get govIdNumber => $composableBuilder(
+    column: $table.govIdNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get govIdType => $composableBuilder(
+    column: $table.govIdType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get salary => $composableBuilder(
+    column: $table.salary,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get dateOfJoining => $composableBuilder(
+    column: $table.dateOfJoining,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get allowedModulesJson => $composableBuilder(
     column: $table.allowedModulesJson,
     builder: (column) => ColumnOrderings(column),
@@ -21317,6 +21760,33 @@ class $$EmployeeRecordsTableAnnotationComposer
   GeneratedColumn<double> get points =>
       $composableBuilder(column: $table.points, builder: (column) => column);
 
+  GeneratedColumn<DateTime> get dateOfBirth => $composableBuilder(
+    column: $table.dateOfBirth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get address =>
+      $composableBuilder(column: $table.address, builder: (column) => column);
+
+  GeneratedColumn<String> get pinCode =>
+      $composableBuilder(column: $table.pinCode, builder: (column) => column);
+
+  GeneratedColumn<String> get govIdNumber => $composableBuilder(
+    column: $table.govIdNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get govIdType =>
+      $composableBuilder(column: $table.govIdType, builder: (column) => column);
+
+  GeneratedColumn<double> get salary =>
+      $composableBuilder(column: $table.salary, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get dateOfJoining => $composableBuilder(
+    column: $table.dateOfJoining,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get allowedModulesJson => $composableBuilder(
     column: $table.allowedModulesJson,
     builder: (column) => column,
@@ -21383,6 +21853,13 @@ class $$EmployeeRecordsTableTableManager
                 Value<int> tokenNumber = const Value.absent(),
                 Value<bool> counterAccess = const Value.absent(),
                 Value<double> points = const Value.absent(),
+                Value<DateTime?> dateOfBirth = const Value.absent(),
+                Value<String?> address = const Value.absent(),
+                Value<String?> pinCode = const Value.absent(),
+                Value<String?> govIdNumber = const Value.absent(),
+                Value<String?> govIdType = const Value.absent(),
+                Value<double?> salary = const Value.absent(),
+                Value<DateTime?> dateOfJoining = const Value.absent(),
                 Value<String> allowedModulesJson = const Value.absent(),
                 Value<bool> active = const Value.absent(),
                 Value<int> syncStatus = const Value.absent(),
@@ -21398,6 +21875,13 @@ class $$EmployeeRecordsTableTableManager
                 tokenNumber: tokenNumber,
                 counterAccess: counterAccess,
                 points: points,
+                dateOfBirth: dateOfBirth,
+                address: address,
+                pinCode: pinCode,
+                govIdNumber: govIdNumber,
+                govIdType: govIdType,
+                salary: salary,
+                dateOfJoining: dateOfJoining,
                 allowedModulesJson: allowedModulesJson,
                 active: active,
                 syncStatus: syncStatus,
@@ -21415,6 +21899,13 @@ class $$EmployeeRecordsTableTableManager
                 Value<int> tokenNumber = const Value.absent(),
                 Value<bool> counterAccess = const Value.absent(),
                 Value<double> points = const Value.absent(),
+                Value<DateTime?> dateOfBirth = const Value.absent(),
+                Value<String?> address = const Value.absent(),
+                Value<String?> pinCode = const Value.absent(),
+                Value<String?> govIdNumber = const Value.absent(),
+                Value<String?> govIdType = const Value.absent(),
+                Value<double?> salary = const Value.absent(),
+                Value<DateTime?> dateOfJoining = const Value.absent(),
                 Value<String> allowedModulesJson = const Value.absent(),
                 Value<bool> active = const Value.absent(),
                 Value<int> syncStatus = const Value.absent(),
@@ -21430,6 +21921,13 @@ class $$EmployeeRecordsTableTableManager
                 tokenNumber: tokenNumber,
                 counterAccess: counterAccess,
                 points: points,
+                dateOfBirth: dateOfBirth,
+                address: address,
+                pinCode: pinCode,
+                govIdNumber: govIdNumber,
+                govIdType: govIdType,
+                salary: salary,
+                dateOfJoining: dateOfJoining,
                 allowedModulesJson: allowedModulesJson,
                 active: active,
                 syncStatus: syncStatus,

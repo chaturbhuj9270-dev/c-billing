@@ -80,6 +80,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   StreamSubscription<List<PurchaseBatchEntity>>? _purchaseStreamSubscription;
   StreamSubscription<List<SupplierEntity>>? _supplierStreamSubscription;
   StreamSubscription<void>? _purchaseChangeSubscription;
+  StreamSubscription<void>? _purchaseReturnChangeSubscription;
 
   @override
   void initState() {
@@ -140,6 +141,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     _purchaseStreamSubscription?.cancel();
     _supplierStreamSubscription?.cancel();
     _purchaseChangeSubscription?.cancel();
+    _purchaseReturnChangeSubscription?.cancel();
     super.dispose();
   }
 
@@ -251,17 +253,20 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     }
   }
 
-  // Listen for purchase changes from other screens
+  // Listen for purchase / purchase-return changes from other screens
   void _setupCrossPageRefresh() {
+    void reloadIfMounted(_) {
+      if (mounted) _loadPurchasesFromLocal();
+    }
+
     _purchaseChangeSubscription = DashboardRefreshService
         .instance
         .onPurchaseChanged
-        .listen((_) {
-          if (mounted) {
-            // Reload from the local database when purchases change
-            _loadPurchasesFromLocal();
-          }
-        });
+        .listen(reloadIfMounted);
+    _purchaseReturnChangeSubscription = DashboardRefreshService
+        .instance
+        .onPurchaseReturnChanged
+        .listen(reloadIfMounted);
   }
 
   // Navigate to add purchase page
