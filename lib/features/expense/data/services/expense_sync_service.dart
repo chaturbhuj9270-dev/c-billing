@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../offline/controllers/expense_offline_controller.dart';
 import '../../offline/entities/expense_entity.dart';
+import 'package:c_billing/core/access/tenant_context.dart';
 
 // Sync status for tracking sync state
 enum ExpenseSyncServiceStatus { idle, syncing, success, failed }
@@ -90,7 +91,7 @@ class ExpenseSyncService extends ChangeNotifier {
   bool get isSyncing => _status == ExpenseSyncServiceStatus.syncing;
 
   // Get the current user ID
-  String? get _userId => _auth.currentUser?.uid;
+  String? get _userId => TenantContext.dataOwnerIdOrNull;
 
   // Get expenses collection reference
   CollectionReference get _expensesCollection {

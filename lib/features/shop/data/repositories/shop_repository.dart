@@ -1,20 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:c_billing/core/access/tenant_context.dart';
 import '../../domain/entities/shop.dart';
 
 // Repository for fetching and managing shop details
 class ShopRepository {
   final FirebaseFirestore _firestore;
-  final FirebaseAuth _auth;
 
   Shop? _cachedShop;
 
   ShopRepository({
     FirebaseFirestore? firestore,
-    FirebaseAuth? auth,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+  }) : _firestore = firestore ?? FirebaseFirestore.instance;
 
   // Get shop details for the current user
   Future<Shop> getShopDetails({bool forceRefresh = false}) async {
@@ -24,14 +21,11 @@ class ShopRepository {
     }
 
     try {
-      final currentUser = _auth.currentUser;
-      if (currentUser == null) {
-        throw Exception('User not authenticated');
-      }
+      final ownerId = TenantContext.dataOwnerId;
 
       final doc = await _firestore
           .collection('users')
-          .doc(currentUser.uid)
+          .doc(ownerId)
           .collection('shop_details')
           .doc('main')
           .get();
@@ -52,14 +46,11 @@ class ShopRepository {
   // Save or update shop details
   Future<bool> saveShopDetails(Shop shop) async {
     try {
-      final currentUser = _auth.currentUser;
-      if (currentUser == null) {
-        throw Exception('User not authenticated');
-      }
+      final ownerId = TenantContext.dataOwnerId;
 
       await _firestore
           .collection('users')
-          .doc(currentUser.uid)
+          .doc(ownerId)
           .collection('shop_details')
           .doc('main')
           .set(shop.toJson(), SetOptions(merge: true));
@@ -74,14 +65,14 @@ class ShopRepository {
 
   // Stream of shop details changes
   Stream<Shop> watchShopDetails() {
-    final currentUser = _auth.currentUser;
-    if (currentUser == null) {
+    final ownerId = TenantContext.dataOwnerIdOrNull;
+    if (ownerId == null) {
       return Stream.value(Shop.empty);
     }
 
     return _firestore
         .collection('users')
-        .doc(currentUser.uid)
+        .doc(ownerId)
         .collection('shop_details')
         .doc('main')
         .snapshots()

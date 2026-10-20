@@ -343,6 +343,24 @@ class CustomerTransactionRecords extends Table {
   DateTimeColumn get updatedAt => dateTime()();
 }
 
+@DataClassName('EmployeeRecord')
+class EmployeeRecords extends Table {
+  @override
+  String get tableName => 'employees';
+
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get serverId => text().nullable()();
+  TextColumn get email => text()();
+  TextColumn get displayName => text()();
+  TextColumn get phone => text().nullable()();
+  TextColumn get counterLabel => text().nullable()();
+  TextColumn get allowedModulesJson => text().withDefault(const Constant(''))();
+  BoolColumn get active => boolean().withDefault(const Constant(true))();
+  IntColumn get syncStatus => integer().withDefault(const Constant(0))();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+}
+
 @DriftDatabase(
   tables: [
     CompanyRecords,
@@ -358,13 +376,24 @@ class CustomerTransactionRecords extends Table {
     ExpenseRecords,
     ShopImageRecords,
     CustomerTransactionRecords,
+    EmployeeRecords,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? openAppDatabase());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) async => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.createTable(employeeRecords);
+      }
+    },
+  );
 
   Future<void> clearAll() async {
     await transaction(() async {
@@ -381,6 +410,7 @@ class AppDatabase extends _$AppDatabase {
       await delete(expenseRecords).go();
       await delete(shopImageRecords).go();
       await delete(customerTransactionRecords).go();
+      await delete(employeeRecords).go();
     });
   }
 }

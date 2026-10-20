@@ -526,3 +526,198 @@ exports.cashfreeWebhook = onRequest(
     }
   }
 );
+
+// ─── Employee management ───────────────────────────────────────────────────
+
+function sanitizeModules(raw) {
+  const allow = new Set([
+    "dashboard",
+    "customers",
+    "billing",
+    "availability",
+    "purchase",
+    "invoices",
+    "products",
+    "suppliers",
+    "companies",
+    "purchase_return",
+    "events",
+    "quotations",
+    "barcode",
+    "expenses",
+    "password",
+  ]);
+  const list = Array.isArray(raw)
+    ? raw.map(String).filter((k) => allow.has(k))
+    : [];
+  // Password always allowed; dashboard/expenses stay opt-in from admin.
+  if (!list.includes("password")) list.push("password");
+  return [...new Set(list)].sort();
+}
+
+async function assertOwner(uid) {
+  const snap = await db.collection("users").doc(uid).get();
+  if (!snap.exists) {
+    throw new HttpsError("failed-precondition", "Owner profile not found");
+  }
+  const data = snap.data() || {};
+  if (data.role === "employee") {
+    throw new HttpsError("permission-denied", "Only shop admin can manage employees");
+  }
+  return data;
+}
+
+exports.createEmployee = onCall(async (request) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "Sign in required");
+  }
+  const ownerId = request.auth.uid;
+  await assertOwner(ownerId);
+
+  const email = String(request.data?.email || "").trim().toLowerCase();
+  const password = String(request.data?.password || "");
+  const displayName = String(request.data?.displayName || "").trim();
+  const phone = request.data?.phone ? String(request.data.phone).trim() : null;
+  const counterLabel = request.data?.counterLabel
+    ? String(request.data.counterLabel).trim()
+    : null;
+  const modules = sanitizeModules(request.data?.allowedModules);
+
+  if (!email || !email.includes("@")) {
+    throw new HttpsError("invalid-argument", "Valid email required");
+  }
+  if (password.length < 6) {
+    throw new HttpsError("invalid-argument", "Password must be at least 6 characters");
+  }
+  if (!displayName) {
+    throw new HttpsError("invalid-argument", "Display name required");
+  }
+
+  let userRecord;
+  try {
+    userRecord = await admin.auth().createUser({
+      email,
+      password,
+      displayName,
+      emailVerified: false,
+      disabled: false,
+    });
+  } catch (err) {
+    console.error("createEmployee auth error", err);
+    throw new HttpsError("already-exists", err.message || "Could not create user");
+  }
+
+  const uid = userRecord.uid;
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  const employeePayload = {
+    id: uid,
+    email,
+    displayName,
+    phone,
+    counterLabel,
+    allowedModules: modules,
+    active: true,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await db.collection("users").doc(ownerId).collection("employees").doc(uid).set(employeePayload);
+  await db.collection("users").doc(uid).set(
+    {
+      email,
+      displayName,
+      phone,
+      counterLabel,
+      allowedModules: modules,
+      active: true,
+      role: "employee",
+      tenantOwnerId: ownerId,
+      createdAt: now,
+      updatedAt: now,
+    },
+    { merge: true }
+  );
+
+  await admin.auth().setCustomUserClaims(uid, {
+    role: "employee",
+    tenantOwnerId: ownerId,
+    modules,
+  });
+
+  return { uid, email, displayName, allowedModules: modules };
+});
+
+exports.updateEmployee = onCall(async (request) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "Sign in required");
+  }
+  const ownerId = request.auth.uid;
+  await assertOwner(ownerId);
+
+  const employeeUid = String(request.data?.employeeUid || "");
+  if (!employeeUid) {
+    throw new HttpsError("invalid-argument", "employeeUid required");
+  }
+
+  const empRef = db.collection("users").doc(ownerId).collection("employees").doc(employeeUid);
+  const empSnap = await empRef.get();
+  if (!empSnap.exists) {
+    throw new HttpsError("not-found", "Employee not found");
+  }
+
+  const modules = sanitizeModules(
+    request.data?.allowedModules ?? empSnap.data()?.allowedModules
+  );
+  const active =
+    typeof request.data?.active === "boolean"
+      ? request.data.active
+      : empSnap.data()?.active !== false;
+  const displayName =
+    request.data?.displayName != null
+      ? String(request.data.displayName).trim()
+      : empSnap.data()?.displayName;
+  const phone =
+    request.data?.phone !== undefined
+      ? request.data.phone
+        ? String(request.data.phone).trim()
+        : null
+      : empSnap.data()?.phone;
+  const counterLabel =
+    request.data?.counterLabel !== undefined
+      ? request.data.counterLabel
+        ? String(request.data.counterLabel).trim()
+        : null
+      : empSnap.data()?.counterLabel;
+
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  const patch = {
+    displayName,
+    phone,
+    counterLabel,
+    allowedModules: modules,
+    active,
+    updatedAt: now,
+  };
+
+  await empRef.set(patch, { merge: true });
+  await db.collection("users").doc(employeeUid).set(
+    {
+      ...patch,
+      role: "employee",
+      tenantOwnerId: ownerId,
+    },
+    { merge: true }
+  );
+
+  await admin.auth().setCustomUserClaims(employeeUid, {
+    role: "employee",
+    tenantOwnerId: ownerId,
+    modules,
+  });
+  await admin.auth().updateUser(employeeUid, {
+    displayName,
+    disabled: !active,
+  });
+
+  return { uid: employeeUid, ok: true };
+});

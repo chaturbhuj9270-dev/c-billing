@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/stock_ledger.dart';
 import '../../domain/repositories/stock_ledger_repository.dart';
+import 'package:c_billing/core/access/tenant_context.dart';
 
 // Firebase implementation of StockLedgerRepository
 class FirebaseStockLedgerRepository implements StockLedgerRepository {
@@ -15,13 +16,7 @@ class FirebaseStockLedgerRepository implements StockLedgerRepository {
   }) : _firestore = firestore,
        _auth = auth ?? FirebaseAuth.instance;
 
-  String get _userId {
-    final user = _auth.currentUser;
-    if (user == null) {
-      throw Exception('User not authenticated');
-    }
-    return user.uid;
-  }
+  String get _userId => TenantContext.dataOwnerId;
 
   CollectionReference get _ledgerCollection {
     return _firestore

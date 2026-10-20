@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:c_billing/core/access/tenant_context.dart';
 
 // Supported data types for custom event/subevent columns
 enum EventCustomColumnType {
@@ -165,7 +166,7 @@ class EventOrderSettingsService extends ChangeNotifier {
   bool get isLoading => _isLoading;
   
   // Get current user ID
-  String? get _userId => FirebaseAuth.instance.currentUser?.uid;
+  String? get _userId => TenantContext.dataOwnerIdOrNull;
   
   // Get Firestore reference for user's custom columns
   DocumentReference? get _userSettingsDoc {

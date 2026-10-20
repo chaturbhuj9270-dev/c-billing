@@ -18,6 +18,7 @@ import 'subscription_screen.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_logo_mark.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/access/access_control_service.dart';
 
 class SplashPage extends StatefulWidget {
   final Duration duration;
@@ -159,9 +160,19 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
             '[DEBUG] Firebase user already authenticated: ${currentUser.uid}',
           );
           try {
+            await AccessControlService.instance.loadForCurrentUser();
             initializeSyncServices();
           } catch (e) {
-            debugPrint('[ERROR] Sync services failed to start: $e');
+            debugPrint('[ERROR] Access/sync start failed: $e');
+            if (mounted) {
+              GlassyToast.show(
+                context,
+                'Account access denied. Contact your shop admin.',
+                isError: true,
+              );
+            }
+            _goToLogin();
+            return;
           }
           _reloadSettingsInBackground();
           _goToDashboard();
@@ -230,9 +241,19 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       if (userCredential.user != null) {
         debugPrint('[DEBUG] Auto-login successful for: ${userCredential.user!.uid}');
         try {
+          await AccessControlService.instance.loadForCurrentUser();
           initializeSyncServices();
         } catch (e) {
-          debugPrint('[ERROR] Sync services failed to start: $e');
+          debugPrint('[ERROR] Access/sync start failed: $e');
+          if (mounted) {
+            GlassyToast.show(
+              context,
+              'Account access denied. Contact your shop admin.',
+              isError: true,
+            );
+          }
+          _goToLogin();
+          return;
         }
         // Reload settings in background - don't wait
         _reloadSettingsInBackground();
@@ -359,6 +380,22 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
 
   Future<void> _navigateToDashboard() async {
     if (!mounted) return;
+
+    // Resolve owner vs employee before sync / subscription (tenant data root).
+    try {
+      await AccessControlService.instance.loadForCurrentUser();
+    } catch (e) {
+      debugPrint('[ERROR] Access control load failed: $e');
+      if (mounted) {
+        GlassyToast.show(
+          context,
+          'Account access denied. Contact your shop admin.',
+          isError: true,
+        );
+        _goToLogin();
+      }
+      return;
+    }
 
     // Check subscription status before navigating to dashboard
     try {

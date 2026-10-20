@@ -3,26 +3,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/bill.dart';
 import '../../domain/repositories/bill_repository.dart';
+import 'package:c_billing/core/access/tenant_context.dart';
 
 // Firebase implementation of BillRepository
 class FirebaseBillRepository implements BillRepository {
   final FirebaseFirestore _firestore;
-  final FirebaseAuth _auth;
   final String _collection = 'bills';
 
   FirebaseBillRepository({
     required FirebaseFirestore firestore,
     FirebaseAuth? auth,
-  }) : _firestore = firestore,
-       _auth = auth ?? FirebaseAuth.instance;
+  }) : _firestore = firestore;
 
-  String get _userId {
-    final user = _auth.currentUser;
-    if (user == null) {
-      throw Exception('User not authenticated');
-    }
-    return user.uid;
-  }
+  String get _userId => TenantContext.dataOwnerId;
 
   CollectionReference get _billsCollection {
     return _firestore.collection('users').doc(_userId).collection(_collection);

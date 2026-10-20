@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:c_billing/core/access/tenant_context.dart';
 
 // API service for Purchase Batch Firebase operations Handles all server-side CRUD for sync
 class PurchaseBatchApiService {
@@ -25,7 +26,7 @@ class PurchaseBatchApiService {
   bool get isAuthenticated => _auth.currentUser != null;
 
   // Get current user ID
-  String? get _userId => _auth.currentUser?.uid;
+  String? get _userId => TenantContext.dataOwnerIdOrNull;
 
   // Get purchase batches collection reference
   CollectionReference<Map<String, dynamic>> get _batchesRef {

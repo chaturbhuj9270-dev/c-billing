@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/dashboard_data.dart';
+import 'package:c_billing/core/access/tenant_context.dart';
 
 // Repository for fetching dashboard data from Firestore
 class DashboardRepository {
@@ -19,7 +20,7 @@ class DashboardRepository {
       _auth = auth ?? FirebaseAuth.instance;
 
   // Get current user ID or null if not authenticated
-  String? get _userId => _auth.currentUser?.uid;
+  String? get _userId => TenantContext.dataOwnerIdOrNull;
 
   // Get user's collection reference
   DocumentReference? get _userRef {

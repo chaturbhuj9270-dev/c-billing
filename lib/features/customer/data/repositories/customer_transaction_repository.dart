@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:c_billing/core/access/tenant_context.dart';
 import 'package:c_billing/features/customer/domain/entities/customer_transaction.dart';
 
 // Repository for customer transaction data operations Handles all CRUD operations for customer transactions Uses Firebase Firestore for persistence
@@ -41,12 +42,11 @@ class FirebaseCustomerTransactionRepository
 
   FirebaseCustomerTransactionRepository({required this.firestore});
 
-  // Get current user ID
-  String get _userId {
-    final user = _auth.currentUser;
-    if (user == null) throw Exception('User not authenticated');
-    return user.uid;
-  }
+  // Shop data owner for collection paths
+  String get _userId => TenantContext.dataOwnerId;
+
+  // Actor who created the row (employee or admin)
+  String get _actorId => TenantContext.authUid;
 
   // Get reference to customer_transactions collection
   CollectionReference<Map<String, dynamic>> get _transactionsCollection =>
@@ -125,7 +125,7 @@ class FirebaseCustomerTransactionRepository
 
       final transactionData = transaction.copyWith(
         id: docRef.id,
-        createdBy: _userId,
+        createdBy: _actorId,
       );
 
       await docRef.set(transactionData.toJson());
@@ -214,7 +214,7 @@ class FirebaseCustomerTransactionRepository
 
     final transactionData = customerTransaction.copyWith(
       id: docRef.id,
-      createdBy: _userId,
+      createdBy: _actorId,
     );
 
     transaction.set(docRef, transactionData.toJson());

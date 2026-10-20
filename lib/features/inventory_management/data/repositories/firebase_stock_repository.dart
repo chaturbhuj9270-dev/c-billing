@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/stock.dart';
 import '../../domain/repositories/stock_repository.dart';
+import 'package:c_billing/core/access/tenant_context.dart';
 
 class FirebaseStockRepository implements StockRepository {
   final FirebaseFirestore _firestore;
@@ -14,13 +15,7 @@ class FirebaseStockRepository implements StockRepository {
   }) : _firestore = firestore,
        _auth = auth ?? FirebaseAuth.instance;
 
-  String get _userId {
-    final user = _auth.currentUser;
-    if (user == null) {
-      throw Exception('User not authenticated');
-    }
-    return user.uid;
-  }
+  String get _userId => TenantContext.dataOwnerId;
 
   CollectionReference get _stockCollection {
     return _firestore.collection('users').doc(_userId).collection(_collection);

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:c_billing/core/access/tenant_context.dart';
 import 'package:c_billing/features/customer/domain/entities/customer.dart';
 
 // Repository for customer data operations Handles all CRUD operations and balance management for customers Uses Firebase Firestore for persistence
@@ -41,16 +41,11 @@ abstract class CustomerRepository {
 // Firebase implementation of CustomerRepository
 class FirebaseCustomerRepository implements CustomerRepository {
   final FirebaseFirestore firestore;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   FirebaseCustomerRepository({required this.firestore});
 
-  // Get current user ID (public for use by services)
-  String get userId {
-    final user = _auth.currentUser;
-    if (user == null) throw Exception('User not authenticated');
-    return user.uid;
-  }
+  // Shop data owner id (admin for employees)
+  String get userId => TenantContext.dataOwnerId;
 
   // Get reference to customers collection
   CollectionReference<Map<String, dynamic>> get _customersCollection =>

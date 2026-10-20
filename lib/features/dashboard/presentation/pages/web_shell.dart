@@ -21,7 +21,8 @@ class WebShell {
   static const int shop = 14;
   static const int profile = 15;
   static const int password = 16;
-  static const int count = 17;
+  static const int employees = 17;
+  static const int count = 18;
 
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();

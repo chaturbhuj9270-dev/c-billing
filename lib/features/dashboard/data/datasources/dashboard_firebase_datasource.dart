@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/repositories/dashboard_repository_interface.dart';
+import 'package:c_billing/core/access/tenant_context.dart';
 
 // Firebase datasource for dashboard data Optimized for minimal reads using parallel queries and Firestore caching
 class DashboardFirebaseDataSource {
@@ -16,7 +17,7 @@ class DashboardFirebaseDataSource {
        _auth = auth ?? FirebaseAuth.instance;
 
   // Get current user ID
-  String? get _userId => _auth.currentUser?.uid;
+  String? get _userId => TenantContext.dataOwnerIdOrNull;
 
   // Get user's document reference
   DocumentReference? get _userRef {

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:c_billing/core/access/access_control_service.dart';
 import 'local_database.dart';
 import 'session_manager.dart';
 import 'credentials_manager.dart';
@@ -25,15 +26,18 @@ class LogoutService {
       SessionManager().endSession();
       debugPrint('[LogoutService] Session ended');
 
-      // 2. Clear stored credentials
+      // 2. Clear access / tenant context
+      AccessControlService.instance.clear();
+
+      // 3. Clear stored credentials
       await CredentialsManager().clearCredentials();
       debugPrint('[LogoutService] Credentials cleared');
 
-      // 3. Clear ALL local database data - THIS IS CRITICAL FOR SECURITY
+      // 4. Clear ALL local database data - THIS IS CRITICAL FOR SECURITY
       await _clearAllLocalData();
       debugPrint('[LogoutService] Local data cleared');
 
-      // 4. Sign out from Firebase
+      // 5. Sign out from Firebase
       await _auth.signOut();
       debugPrint('[LogoutService] Firebase sign out complete');
 

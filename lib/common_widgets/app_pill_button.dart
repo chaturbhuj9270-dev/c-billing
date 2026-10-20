@@ -69,21 +69,34 @@ class AppPillButton extends StatelessWidget {
                     horizontal: 22,
                     vertical: 14,
                   ),
-                  child: loading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            valueColor: AlwaysStoppedAnimation(AppTheme.white),
-                          ),
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: expanded
-                              ? MainAxisSize.max
-                              : MainAxisSize.min,
-                          children: [
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize:
+                        expanded ? MainAxisSize.max : MainAxisSize.min,
+                    children: loading
+                        ? [
+                            const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.4,
+                                valueColor: AlwaysStoppedAnimation(
+                                  AppTheme.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Please wait…',
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.white,
+                              ),
+                            ),
+                          ]
+                        : [
                             Icon(icon, size: 18, color: AppTheme.white),
                             const SizedBox(width: 8),
                             Text(
@@ -96,7 +109,7 @@ class AppPillButton extends StatelessWidget {
                               ),
                             ),
                           ],
-                        ),
+                  ),
                 ),
               ),
             ),

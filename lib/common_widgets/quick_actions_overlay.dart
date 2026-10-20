@@ -5,6 +5,7 @@ import '../features/dashboard/presentation/pages/web_shell.dart';
 import 'glass_bottom_sheet.dart';
 import '../core/localization/app_localizations.dart';
 import '../core/services/language_service.dart';
+import '../core/access/access_control_service.dart';
 import '../features/availability/presentation/pages/availability_page.dart';
 import '../features/billing/presentation/pages/billing_page.dart';
 import '../features/billing/presentation/pages/bills_list_page.dart';
@@ -64,8 +65,18 @@ List<QuickActionItem> buildQuickActionItems(
     showAppPage(context, page);
   }
 
-  return [
-    // Same order as the bottom tabs, after Dashboard.
+  final access = AccessControlService.instance;
+  final items = <QuickActionItem>[];
+
+  void add(
+    int shellIndex,
+    QuickActionItem item,
+  ) {
+    if (access.canAccessShellIndex(shellIndex)) items.add(item);
+  }
+
+  add(
+    WebShell.customers,
     QuickActionItem(
       icon: Icons.people_rounded,
       label: l10n.customers,
@@ -73,6 +84,9 @@ List<QuickActionItem> buildQuickActionItems(
       gradient: const [AppTheme.cyan600, AppTheme.cyan700],
       onTap: () => open(const EnhancedCustomerPage(), WebShell.customers),
     ),
+  );
+  add(
+    WebShell.billing,
     QuickActionItem(
       icon: Icons.receipt_long_rounded,
       label: l10n.billing,
@@ -80,6 +94,9 @@ List<QuickActionItem> buildQuickActionItems(
       gradient: const [AppTheme.paletteFF667EEA, AppTheme.paletteFF764BA2],
       onTap: () => open(const BillingPage(), WebShell.billing),
     ),
+  );
+  add(
+    WebShell.availability,
     QuickActionItem(
       icon: Icons.event_available_rounded,
       label: l10n.availability,
@@ -87,6 +104,9 @@ List<QuickActionItem> buildQuickActionItems(
       gradient: [AppTheme.primaryLight, AppColors.action(context)],
       onTap: () => open(const AvailabilityPage(), WebShell.availability),
     ),
+  );
+  add(
+    WebShell.purchase,
     QuickActionItem(
       icon: Icons.shopping_cart_rounded,
       label: l10n.purchase,
@@ -94,6 +114,9 @@ List<QuickActionItem> buildQuickActionItems(
       gradient: const [AppTheme.orange900, AppTheme.amber800],
       onTap: () => open(const EnhancedPurchaseScreen(), WebShell.purchase),
     ),
+  );
+  add(
+    WebShell.invoices,
     QuickActionItem(
       icon: Icons.receipt_long_rounded,
       label: l10n.invoices,
@@ -101,6 +124,9 @@ List<QuickActionItem> buildQuickActionItems(
       gradient: const [AppTheme.paletteFF667EEA, AppTheme.paletteFF764BA2],
       onTap: () => open(const BillsListPage(), WebShell.invoices),
     ),
+  );
+  add(
+    WebShell.products,
     QuickActionItem(
       icon: Icons.inventory_2_rounded,
       label: l10n.products,
@@ -108,6 +134,9 @@ List<QuickActionItem> buildQuickActionItems(
       gradient: const [AppTheme.paletteFFF093FB, AppTheme.paletteFFF5576C],
       onTap: () => open(const EnhancedProductPage(), WebShell.products),
     ),
+  );
+  add(
+    WebShell.suppliers,
     QuickActionItem(
       icon: Icons.local_shipping_rounded,
       label: l10n.suppliers,
@@ -115,6 +144,9 @@ List<QuickActionItem> buildQuickActionItems(
       gradient: const [AppTheme.coral, AppTheme.paletteFFEE5A24],
       onTap: () => open(const EnhancedSupplierPage(), WebShell.suppliers),
     ),
+  );
+  add(
+    WebShell.companies,
     QuickActionItem(
       icon: Icons.business_rounded,
       label: l10n.companies,
@@ -122,6 +154,9 @@ List<QuickActionItem> buildQuickActionItems(
       gradient: const [AppTheme.purple, AppTheme.purple700],
       onTap: () => open(const EnhancedCompanyPage(), WebShell.companies),
     ),
+  );
+  add(
+    WebShell.purchaseReturn,
     QuickActionItem(
       icon: Icons.keyboard_return_rounded,
       label: l10n.purchaseReturnShort,
@@ -129,6 +164,9 @@ List<QuickActionItem> buildQuickActionItems(
       gradient: const [AppTheme.orange900, AppTheme.amber800],
       onTap: () => open(const PurchaseReturnScreen(), WebShell.purchaseReturn),
     ),
+  );
+  add(
+    WebShell.events,
     QuickActionItem(
       icon: Icons.auto_awesome_rounded,
       label: l10n.events,
@@ -136,6 +174,9 @@ List<QuickActionItem> buildQuickActionItems(
       gradient: const [AppTheme.paletteFF6C63FF, AppTheme.paletteFF8B5CF6],
       onTap: () => open(const EventOrderListPage(), WebShell.events),
     ),
+  );
+  add(
+    WebShell.quotations,
     QuickActionItem(
       icon: Icons.description_outlined,
       label: l10n.quotations,
@@ -143,6 +184,9 @@ List<QuickActionItem> buildQuickActionItems(
       gradient: const [AppTheme.blue800, AppTheme.blue400],
       onTap: () => open(const QuotationListPage(), WebShell.quotations),
     ),
+  );
+  add(
+    WebShell.barcode,
     QuickActionItem(
       icon: Icons.qr_code_scanner_rounded,
       label: l10n.barcode,
@@ -150,7 +194,8 @@ List<QuickActionItem> buildQuickActionItems(
       gradient: const [AppTheme.teal600, AppTheme.teal900],
       onTap: () => open(const BarcodeGeneratorPage(), WebShell.barcode),
     ),
-  ];
+  );
+  return items;
 }
 
 // Bottom sheet grid: "Quick actions" / "Jump to any section".

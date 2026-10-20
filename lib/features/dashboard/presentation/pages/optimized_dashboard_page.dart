@@ -48,6 +48,8 @@ import '../../../../common_widgets/glass_bevel_frame.dart';
 import '../../../../common_widgets/range_calendar_sheet.dart';
 import '../../../../common_widgets/quick_actions_overlay.dart';
 import '../../../../core/services/theme_service.dart';
+import '../../../../core/access/access_control_service.dart';
+import '../../../employee/presentation/pages/employees_page.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 
@@ -79,7 +81,9 @@ class _OptimizedDashboardView extends StatefulWidget {
 
 class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     with TickerProviderStateMixin {
-  int _selectedIndex = 2;
+  int _selectedIndex = AccessControlService.instance.canAccessShellIndex(2)
+      ? 2
+      : AccessControlService.instance.firstAllowedShellIndex();
   late SessionManager _sessionManager;
   late AppLocalizations _localizations;
 
@@ -131,6 +135,10 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     if (DesktopCanvas.isDesktopPlatform) {
       WebShell.register((index) {
         if (!mounted) return;
+        if (!AccessControlService.instance.canAccessShellIndex(index)) {
+          GlassyToast.show(context, 'Access not allowed for this module');
+          return;
+        }
         setState(() => _selectedIndex = index);
       });
     }
@@ -504,6 +512,12 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           icon: Icons.add,
           onPressed: () => ExpenseScreenActions.add?.call(),
         );
+      case WebShell.employees:
+        return AppPillButton(
+          label: 'Add employee',
+          icon: Icons.person_add_alt_1_rounded,
+          onPressed: () => EmployeeScreenActions.add?.call(),
+        );
       default:
         return null;
     }
@@ -545,6 +559,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         return _localizations.myProfile;
       case WebShell.password:
         return _localizations.changePasswordTitle;
+      case WebShell.employees:
+        return 'Employees';
       default:
         return 'Billing';
     }
@@ -605,6 +621,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         return Icons.person_rounded;
       case WebShell.password:
         return Icons.key_rounded;
+      case WebShell.employees:
+        return Icons.groups_rounded;
       default:
         return Icons.dashboard_rounded;
     }
@@ -646,6 +664,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         return const ProfilePage(isEmbedded: true);
       case WebShell.password:
         return const ChangePasswordPage(isEmbedded: true);
+      case WebShell.employees:
+        return const EmployeesPage(isEmbedded: true);
       default:
         return const SizedBox.shrink();
     }
@@ -717,42 +737,54 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               padding: EdgeInsets.zero,
               children: [
                 if (shell) _webNavSection('MAIN', isExpanded),
-                _buildSideNavItem(
-                  0,
-                  Icons.dashboard_rounded,
-                  _localizations.dashboard,
-                  isExpanded,
-                ),
-                _buildSideNavItem(
-                  1,
-                  Icons.people_rounded,
-                  _localizations.customers,
-                  isExpanded,
-                ),
-                _buildSideNavItem(
-                  2,
-                  Icons.receipt_long_rounded,
-                  _localizations.billing,
-                  isExpanded,
-                ),
-                _buildSideNavItem(
-                  3,
-                  Icons.event_available_rounded,
-                  _localizations.availability,
-                  isExpanded,
-                ),
-                _buildSideNavItem(
-                  4,
-                  Icons.shopping_cart_rounded,
-                  _localizations.purchase,
-                  isExpanded,
-                ),
+                if (AccessControlService.instance.canAccessShellIndex(0))
+                  _buildSideNavItem(
+                    0,
+                    Icons.dashboard_rounded,
+                    _localizations.dashboard,
+                    isExpanded,
+                  ),
+                if (AccessControlService.instance.canAccessShellIndex(1))
+                  _buildSideNavItem(
+                    1,
+                    Icons.people_rounded,
+                    _localizations.customers,
+                    isExpanded,
+                  ),
+                if (AccessControlService.instance.canAccessShellIndex(2))
+                  _buildSideNavItem(
+                    2,
+                    Icons.receipt_long_rounded,
+                    _localizations.billing,
+                    isExpanded,
+                  ),
+                if (AccessControlService.instance.canAccessShellIndex(3))
+                  _buildSideNavItem(
+                    3,
+                    Icons.event_available_rounded,
+                    _localizations.availability,
+                    isExpanded,
+                  ),
+                if (AccessControlService.instance.canAccessShellIndex(4))
+                  _buildSideNavItem(
+                    4,
+                    Icons.shopping_cart_rounded,
+                    _localizations.purchase,
+                    isExpanded,
+                  ),
                 if (shell) _webNavSection('MANAGE', isExpanded),
                 if (shell) ..._webQuickNavItems(isExpanded),
               ],
             ),
           ),
           if (shell) _webNavSection('SYSTEM', isExpanded),
+          if (shell && AccessControlService.instance.isOwner)
+            _buildSideNavItem(
+              WebShell.employees,
+              Icons.groups_rounded,
+              'Employees',
+              isExpanded,
+            ),
           if (shell) ..._webPageTools(isExpanded, showDivider: !darkWeb),
           _buildSideNavItem(
             -1,
@@ -1107,28 +1139,28 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       );
     }
 
-    return [
-      item(WebShell.invoices, Icons.receipt_long_outlined, _localizations.invoices),
-      item(WebShell.products, Icons.inventory_2_rounded, _localizations.products),
-      item(WebShell.suppliers, Icons.local_shipping_rounded, _localizations.suppliers),
-      item(WebShell.companies, Icons.business_rounded, _localizations.companies),
-      item(
-        WebShell.purchaseReturn,
-        Icons.keyboard_return_rounded,
-        _localizations.purchaseReturnShort,
-      ),
-      item(WebShell.events, Icons.auto_awesome_rounded, _localizations.events),
-      item(
-        WebShell.quotations,
-        Icons.description_outlined,
-        _localizations.quotations,
-      ),
-      item(
-        WebShell.barcode,
-        Icons.qr_code_scanner_rounded,
-        _localizations.barcode,
-      ),
-    ];
+    final access = AccessControlService.instance;
+    final items = <Widget>[];
+    void add(int index, IconData icon, String label) {
+      if (access.canAccessShellIndex(index)) {
+        items.add(item(index, icon, label));
+      }
+    }
+
+    add(WebShell.invoices, Icons.receipt_long_outlined, _localizations.invoices);
+    add(WebShell.products, Icons.inventory_2_rounded, _localizations.products);
+    add(WebShell.suppliers, Icons.local_shipping_rounded, _localizations.suppliers);
+    add(WebShell.companies, Icons.business_rounded, _localizations.companies);
+    add(
+      WebShell.purchaseReturn,
+      Icons.keyboard_return_rounded,
+      _localizations.purchaseReturnShort,
+    );
+    add(WebShell.events, Icons.auto_awesome_rounded, _localizations.events);
+    add(WebShell.quotations, Icons.description_outlined, _localizations.quotations);
+    add(WebShell.barcode, Icons.qr_code_scanner_rounded, _localizations.barcode);
+    add(WebShell.expenses, Icons.account_balance_wallet_outlined, 'Expenses');
+    return items;
   }
 
   Widget _buildCommonHeader() {
@@ -3041,6 +3073,10 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
   void _navigateToPage(int index) {
     _resetSessionTimer();
+    if (!AccessControlService.instance.canAccessShellIndex(index)) {
+      GlassyToast.show(context, 'Access not allowed for this module');
+      return;
+    }
     if (DesktopCanvas.isDesktopPlatform) WebShell.popToRoot();
     setState(() => _selectedIndex = index);
   }

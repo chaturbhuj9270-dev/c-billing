@@ -20,6 +20,7 @@ import 'change_password_page.dart';
 import 'package:c_billing/common_widgets/app_logo_mark.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/access/access_control_service.dart';
 
 class LoginPageV2 extends StatefulWidget {
   const LoginPageV2({super.key});
@@ -243,6 +244,13 @@ class _LoginPageV2State extends State<LoginPageV2>
 
   Future<void> _checkSubscriptionAndNavigate() async {
     try {
+      await AccessControlService.instance.loadForCurrentUser();
+      try {
+        initializeSyncServices();
+      } catch (e) {
+        debugPrint('[ERROR] Sync services failed to start: $e');
+      }
+
       final subscriptionService = SubscriptionService();
       final isValid = await subscriptionService.isSubscriptionValid();
 
@@ -258,13 +266,22 @@ class _LoginPageV2State extends State<LoginPageV2>
         );
       }
     } catch (e) {
-      debugPrint('[ERROR] Error checking subscription: $e');
-      // Fail closed — require subscription screen on errors
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
+      debugPrint('[ERROR] Error checking subscription/access: $e');
+      if (!mounted) return;
+      final msg = e.toString();
+      if (msg.contains('deactivated') || msg.contains('Employee')) {
+        GlassyToast.show(
+          context,
+          'Account access denied. Contact your shop admin.',
+          isError: true,
         );
+        await LogoutService.instance.logout(context);
+        return;
       }
+      // Fail closed — require subscription screen on errors
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
+      );
     }
   }
 

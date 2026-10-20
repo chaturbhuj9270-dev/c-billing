@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
+import 'package:c_billing/core/access/tenant_context.dart';
 
 class FirebaseProductRepository implements ProductRepository {
   final FirebaseFirestore _firestore;
@@ -15,13 +16,7 @@ class FirebaseProductRepository implements ProductRepository {
   }) : _firestore = firestore,
        _auth = auth ?? FirebaseAuth.instance;
 
-  String get _userId {
-    final user = _auth.currentUser;
-    if (user == null) {
-      throw Exception('User not authenticated');
-    }
-    return user.uid;
-  }
+  String get _userId => TenantContext.dataOwnerId;
 
   CollectionReference get _productsCollection {
     return _firestore.collection('users').doc(_userId).collection(_collection);

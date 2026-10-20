@@ -22,6 +22,8 @@ import '../../../shop/presentation/pages/shop_details_page.dart';
 import '../../../expense/presentation/pages/expenses_page.dart';
 import 'package:c_billing/common_widgets/glass_bevel_frame.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/access/access_control_service.dart';
+import '../../../employee/presentation/pages/employees_page.dart';
 
 class FlyoutMenu extends StatefulWidget {
   const FlyoutMenu({super.key});
@@ -47,45 +49,60 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   late List<Animation<Offset>> _menuItemAnimations;
   late List<Animation<double>> _menuItemFadeAnimations;
 
-  // Menu items with icons and colors
-  final List<_MenuItem> _menuItems = [
-    _MenuItem(
-      icon: Icons.person_rounded,
-      label: 'Profile',
-      route: 'Profile',
-      color: AppTheme.primary,
-    ),
-    _MenuItem(
-      icon: Icons.storefront_outlined,
-      label: 'Shop details',
-      route: 'ShopDetails',
-      color: AppTheme.toneBlue,
-    ),
-    _MenuItem(
-      icon: Icons.account_balance_wallet_outlined,
-      label: 'Expenses',
-      route: 'Expenses',
-      color: AppTheme.toneRose,
-    ),
-    _MenuItem(
-      icon: Icons.key_rounded,
-      label: 'Change password',
-      route: 'ChangePassword',
-      color: AppTheme.toneAmber,
-    ),
-    _MenuItem(
-      icon: Icons.language_rounded,
-      label: 'Language',
-      route: 'Language',
-      color: AppTheme.toneCyan,
-    ),
-    _MenuItem(
-      icon: Icons.dark_mode_outlined,
-      label: 'Theme',
-      route: 'Theme',
-      color: AppTheme.toneViolet,
-    ),
-  ];
+  // Menu items with icons and colors (filtered by AccessControlService at build)
+  List<_MenuItem> get _menuItems {
+    final access = AccessControlService.instance;
+    final items = <_MenuItem>[
+      if (access.canAccessShellIndex(WebShell.profile))
+        _MenuItem(
+          icon: Icons.person_rounded,
+          label: 'Profile',
+          route: 'Profile',
+          color: AppTheme.primary,
+        ),
+      if (access.canAccessShellIndex(WebShell.shop))
+        _MenuItem(
+          icon: Icons.storefront_outlined,
+          label: 'Shop details',
+          route: 'ShopDetails',
+          color: AppTheme.toneBlue,
+        ),
+      if (access.isOwner)
+        _MenuItem(
+          icon: Icons.groups_rounded,
+          label: 'Employees',
+          route: 'Employees',
+          color: AppTheme.toneViolet,
+        ),
+      if (access.canAccessShellIndex(WebShell.expenses))
+        _MenuItem(
+          icon: Icons.account_balance_wallet_outlined,
+          label: 'Expenses',
+          route: 'Expenses',
+          color: AppTheme.toneRose,
+        ),
+      if (access.canAccessShellIndex(WebShell.password))
+        _MenuItem(
+          icon: Icons.key_rounded,
+          label: 'Change password',
+          route: 'ChangePassword',
+          color: AppTheme.toneAmber,
+        ),
+      _MenuItem(
+        icon: Icons.language_rounded,
+        label: 'Language',
+        route: 'Language',
+        color: AppTheme.toneCyan,
+      ),
+      _MenuItem(
+        icon: Icons.dark_mode_outlined,
+        label: 'Theme',
+        route: 'Theme',
+        color: AppTheme.toneViolet,
+      ),
+    ];
+    return items;
+  }
 
   @override
   void initState() {
@@ -114,13 +131,14 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       ),
     );
 
-    // Staggered menu item animations
+    // Staggered menu item animations (max slots for filtered menu)
     _staggerController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
 
-    _menuItemAnimations = List.generate(_menuItems.length, (index) {
+    const maxMenuSlots = 12;
+    _menuItemAnimations = List.generate(maxMenuSlots, (index) {
       final start = index * 0.08;
       final end = start + 0.4;
       return Tween<Offset>(
@@ -138,7 +156,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       );
     });
 
-    _menuItemFadeAnimations = List.generate(_menuItems.length, (index) {
+    _menuItemFadeAnimations = List.generate(maxMenuSlots, (index) {
       final start = index * 0.08;
       final end = start + 0.4;
       return Tween<double>(begin: 0, end: 1).animate(
@@ -303,6 +321,12 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
             showAppPage(ctx, const ExpensesPage());
           });
           break;
+        case 'Employees':
+          afterClose((ctx) {
+            if (WebShell.open(WebShell.employees)) return;
+            showAppPage(ctx, const EmployeesPage());
+          });
+          break;
         case 'ChangePassword':
           afterClose((ctx) {
             if (WebShell.open(WebShell.password)) return;
@@ -441,32 +465,54 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                               padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
                               children: [
                                 _sectionLabel('Account'),
-                                ...List.generate(3, (index) {
-                                  return SlideTransition(
-                                    position: _menuItemAnimations[index],
-                                    child: FadeTransition(
-                                      opacity: _menuItemFadeAnimations[index],
-                                      child: _buildMenuItem(
-                                        item: _menuItems[index],
-                                        index: index,
-                                      ),
-                                    ),
-                                  );
-                                }),
-                                _sectionLabel(_localizations.settings),
-                                ...List.generate(3, (offset) {
-                                  final index = offset + 3;
-                                  return SlideTransition(
-                                    position: _menuItemAnimations[index],
-                                    child: FadeTransition(
-                                      opacity: _menuItemFadeAnimations[index],
-                                      child: _buildMenuItem(
-                                        item: _menuItems[index],
-                                        index: index,
-                                      ),
-                                    ),
-                                  );
-                                }),
+                                ...() {
+                                  final items = _menuItems;
+                                  final account = items
+                                      .where(
+                                        (i) =>
+                                            i.route != 'Language' &&
+                                            i.route != 'Theme',
+                                      )
+                                      .toList();
+                                  final settings = items
+                                      .where(
+                                        (i) =>
+                                            i.route == 'Language' ||
+                                            i.route == 'Theme',
+                                      )
+                                      .toList();
+                                  var animIndex = 0;
+                                  final widgets = <Widget>[
+                                    ...account.map((item) {
+                                      final i = animIndex++;
+                                      return SlideTransition(
+                                        position: _menuItemAnimations[i],
+                                        child: FadeTransition(
+                                          opacity: _menuItemFadeAnimations[i],
+                                          child: _buildMenuItem(
+                                            item: item,
+                                            index: i,
+                                          ),
+                                        ),
+                                      );
+                                    }),
+                                    _sectionLabel(_localizations.settings),
+                                    ...settings.map((item) {
+                                      final i = animIndex++;
+                                      return SlideTransition(
+                                        position: _menuItemAnimations[i],
+                                        child: FadeTransition(
+                                          opacity: _menuItemFadeAnimations[i],
+                                          child: _buildMenuItem(
+                                            item: item,
+                                            index: i,
+                                          ),
+                                        ),
+                                      );
+                                    }),
+                                  ];
+                                  return widgets;
+                                }(),
                                 if (_canUseBiometrics) _buildBiometricToggle(),
                               ],
                             ),

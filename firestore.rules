@@ -1,12 +1,33 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
     function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Employee membership via custom claim or profile doc.
+    function isEmployeeOf(userId) {
+      return isSignedIn()
+        && (
+          request.auth.token.tenantOwnerId == userId
+          || (
+            exists(/databases/$(database)/documents/users/$(request.auth.uid))
+            && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'employee'
+            && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantOwnerId == userId
+            && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active != false
+          )
+        );
+    }
+
+    function isOwnerOrMember(userId) {
+      return isOwner(userId) || isEmployeeOf(userId);
     }
 
     // Clients must not self-activate subscription fields.
-    // Cloud Functions (Admin SDK) bypass these rules after Cashfree PAID.
     function subscriptionFieldsUnchanged() {
       return !request.resource.data
         .diff(resource.data)
@@ -27,57 +48,107 @@ service cloud.firestore {
           || request.resource.data.subscriptionStatus == 'inactive');
     }
 
-    // Shop data stays closed until Cloud Functions set a paid subscription.
-    // The user profile itself stays readable so the paywall can load.
     function hasActiveSubscription(userId) {
       let data = get(/databases/$(database)/documents/users/$(userId)).data;
       return data.subscriptionDate is timestamp
         && request.time < data.subscriptionDate + duration.value(365, 'd');
     }
 
+    // Employee profile docs: owner create/update via Admin SDK preferred;
+    // employees may read their own profile; owners may not invent subscription on employee docs.
     match /users/{userId} {
-      allow read: if isOwner(userId);
-      allow create: if isOwner(userId) && creatingInactiveSubscription();
-      allow update: if isOwner(userId) && subscriptionFieldsUnchanged();
-      allow delete: if isOwner(userId);
+      allow read: if isOwner(userId) || isEmployeeOf(userId)
+        || (isSignedIn() && request.auth.uid == userId);
+
+      // Owner signup OR admin creating an employee profile under their shop.
+      allow create: if (isOwner(userId) && creatingInactiveSubscription())
+        || (
+          isSignedIn()
+          && request.resource.data.role == 'employee'
+          && request.resource.data.tenantOwnerId == request.auth.uid
+          && !('subscriptionDate' in request.resource.data)
+        );
+
+      allow update: if (isOwner(userId) && subscriptionFieldsUnchanged())
+        || (
+          isSignedIn()
+          && resource.data.role == 'employee'
+          && resource.data.tenantOwnerId == request.auth.uid
+          && request.resource.data.role == 'employee'
+          && request.resource.data.tenantOwnerId == resource.data.tenantOwnerId
+          && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['subscriptionDate', 'subscriptionStatus', 'subscriptionProvider'])
+        );
+
+      allow delete: if isOwner(userId)
+        || (
+          isSignedIn()
+          && resource.data.role == 'employee'
+          && resource.data.tenantOwnerId == request.auth.uid
+        );
 
       match /subscription_payments/{paymentId} {
         allow read: if isOwner(userId);
-        allow write: if false; // Admin SDK / Cloud Functions only
+        allow write: if false;
+      }
+
+      // Employee roster — admin only write; members can read own row
+      match /employees/{employeeId} {
+        allow read: if isOwner(userId)
+          || (isSignedIn() && request.auth.uid == employeeId && isEmployeeOf(userId));
+        allow write: if isOwner(userId) && hasActiveSubscription(userId);
       }
 
       match /customers/{document=**} {
-        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+        allow read, write: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
       }
-
+      match /customer_transactions/{document=**} {
+        allow read, write: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
+      }
       match /suppliers/{document=**} {
-        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+        allow read, write: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
       }
-
       match /companies/{document=**} {
-        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+        allow read, write: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
       }
-
       match /products/{document=**} {
-        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+        allow read, write: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
       }
-
       match /stock/{document=**} {
-        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+        allow read, write: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
       }
-
+      match /stockLedger/{document=**} {
+        allow read, write: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
+      }
       match /purchases/{document=**} {
-        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+        allow read, write: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
       }
-
+      match /purchaseBatches/{document=**} {
+        allow read, write: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
+      }
+      match /purchaseReturns/{document=**} {
+        allow read, write: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
+      }
       match /bills/{document=**} {
-        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+        allow read, write: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
       }
-
       match /invoices/{document=**} {
-        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+        allow read, write: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
       }
-
+      match /eventOrders/{document=**} {
+        allow read, write: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
+      }
+      match /expenses/{document=**} {
+        allow read, write: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
+      }
+      match /shop_details/{document=**} {
+        allow read: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
+        allow write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+      match /settings/{document=**} {
+        allow read: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
+        allow write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
       match /profile/{document=**} {
         allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
       }

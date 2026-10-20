@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:c_billing/core/access/tenant_context.dart';
 
 // API Service for Event Order data operations with Firebase Handles all remote server communication for event orders
 class EventOrderApiService {
@@ -22,7 +23,7 @@ class EventOrderApiService {
   }
 
   // Get current user ID
-  String? get _userId => _auth.currentUser?.uid;
+  String? get _userId => TenantContext.dataOwnerIdOrNull;
 
   // Check if user is authenticated
   bool get isAuthenticated => _userId != null;

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:c_billing/core/access/tenant_context.dart';
 
 // API service for Bill Firebase operations Used by BillSyncService for server communication
 class BillApiService {
@@ -20,7 +21,7 @@ class BillApiService {
   }
 
   // Get current user ID
-  String? get _userId => _auth.currentUser?.uid;
+  String? get _userId => TenantContext.dataOwnerIdOrNull;
 
   // Get bills collection reference
   CollectionReference<Map<String, dynamic>> get _billsCollection {

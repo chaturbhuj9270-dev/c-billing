@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:c_billing/core/access/tenant_context.dart';
 
 // Service to manage user subscription status. Access requires an active `subscriptionDate` within [subscriptionDuration]. Activation after Cashfree payment is performed by Cloud F...
 class SubscriptionService {
@@ -9,7 +9,6 @@ class SubscriptionService {
   SubscriptionService._internal();
 
   FirebaseFirestore get _firestore => FirebaseFirestore.instance;
-  FirebaseAuth get _auth => FirebaseAuth.instance;
 
   // Subscription price in INR
   static const double subscriptionPrice = 3999.0;
@@ -21,7 +20,7 @@ class SubscriptionService {
   static const Duration subscriptionDuration = Duration(days: 365);
 
   // Get current user ID
-  String? get _userId => _auth.currentUser?.uid;
+  String? get _userId => TenantContext.dataOwnerIdOrNull;
 
   DateTime? _parseSubscriptionDate(dynamic subscriptionDate) {
     if (subscriptionDate == null) return null;

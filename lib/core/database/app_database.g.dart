@@ -13882,6 +13882,666 @@ class CustomerTransactionRecordsCompanion
   }
 }
 
+class $EmployeeRecordsTable extends EmployeeRecords
+    with TableInfo<$EmployeeRecordsTable, EmployeeRecord> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $EmployeeRecordsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
+  @override
+  late final GeneratedColumn<String> serverId = GeneratedColumn<String>(
+    'server_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+    'email',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _displayNameMeta = const VerificationMeta(
+    'displayName',
+  );
+  @override
+  late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
+    'display_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _phoneMeta = const VerificationMeta('phone');
+  @override
+  late final GeneratedColumn<String> phone = GeneratedColumn<String>(
+    'phone',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _counterLabelMeta = const VerificationMeta(
+    'counterLabel',
+  );
+  @override
+  late final GeneratedColumn<String> counterLabel = GeneratedColumn<String>(
+    'counter_label',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _allowedModulesJsonMeta =
+      const VerificationMeta('allowedModulesJson');
+  @override
+  late final GeneratedColumn<String> allowedModulesJson =
+      GeneratedColumn<String>(
+        'allowed_modules_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(''),
+      );
+  static const VerificationMeta _activeMeta = const VerificationMeta('active');
+  @override
+  late final GeneratedColumn<bool> active = GeneratedColumn<bool>(
+    'active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _syncStatusMeta = const VerificationMeta(
+    'syncStatus',
+  );
+  @override
+  late final GeneratedColumn<int> syncStatus = GeneratedColumn<int>(
+    'sync_status',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    serverId,
+    email,
+    displayName,
+    phone,
+    counterLabel,
+    allowedModulesJson,
+    active,
+    syncStatus,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'employees';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<EmployeeRecord> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('server_id')) {
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+        _emailMeta,
+        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_emailMeta);
+    }
+    if (data.containsKey('display_name')) {
+      context.handle(
+        _displayNameMeta,
+        displayName.isAcceptableOrUnknown(
+          data['display_name']!,
+          _displayNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_displayNameMeta);
+    }
+    if (data.containsKey('phone')) {
+      context.handle(
+        _phoneMeta,
+        phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta),
+      );
+    }
+    if (data.containsKey('counter_label')) {
+      context.handle(
+        _counterLabelMeta,
+        counterLabel.isAcceptableOrUnknown(
+          data['counter_label']!,
+          _counterLabelMeta,
+        ),
+      );
+    }
+    if (data.containsKey('allowed_modules_json')) {
+      context.handle(
+        _allowedModulesJsonMeta,
+        allowedModulesJson.isAcceptableOrUnknown(
+          data['allowed_modules_json']!,
+          _allowedModulesJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('active')) {
+      context.handle(
+        _activeMeta,
+        active.isAcceptableOrUnknown(data['active']!, _activeMeta),
+      );
+    }
+    if (data.containsKey('sync_status')) {
+      context.handle(
+        _syncStatusMeta,
+        syncStatus.isAcceptableOrUnknown(data['sync_status']!, _syncStatusMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  EmployeeRecord map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return EmployeeRecord(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}server_id'],
+      ),
+      email: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}email'],
+      )!,
+      displayName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}display_name'],
+      )!,
+      phone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phone'],
+      ),
+      counterLabel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}counter_label'],
+      ),
+      allowedModulesJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}allowed_modules_json'],
+      )!,
+      active: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}active'],
+      )!,
+      syncStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sync_status'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $EmployeeRecordsTable createAlias(String alias) {
+    return $EmployeeRecordsTable(attachedDatabase, alias);
+  }
+}
+
+class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
+  final int id;
+  final String? serverId;
+  final String email;
+  final String displayName;
+  final String? phone;
+  final String? counterLabel;
+  final String allowedModulesJson;
+  final bool active;
+  final int syncStatus;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const EmployeeRecord({
+    required this.id,
+    this.serverId,
+    required this.email,
+    required this.displayName,
+    this.phone,
+    this.counterLabel,
+    required this.allowedModulesJson,
+    required this.active,
+    required this.syncStatus,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    if (!nullToAbsent || serverId != null) {
+      map['server_id'] = Variable<String>(serverId);
+    }
+    map['email'] = Variable<String>(email);
+    map['display_name'] = Variable<String>(displayName);
+    if (!nullToAbsent || phone != null) {
+      map['phone'] = Variable<String>(phone);
+    }
+    if (!nullToAbsent || counterLabel != null) {
+      map['counter_label'] = Variable<String>(counterLabel);
+    }
+    map['allowed_modules_json'] = Variable<String>(allowedModulesJson);
+    map['active'] = Variable<bool>(active);
+    map['sync_status'] = Variable<int>(syncStatus);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  EmployeeRecordsCompanion toCompanion(bool nullToAbsent) {
+    return EmployeeRecordsCompanion(
+      id: Value(id),
+      serverId: serverId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serverId),
+      email: Value(email),
+      displayName: Value(displayName),
+      phone: phone == null && nullToAbsent
+          ? const Value.absent()
+          : Value(phone),
+      counterLabel: counterLabel == null && nullToAbsent
+          ? const Value.absent()
+          : Value(counterLabel),
+      allowedModulesJson: Value(allowedModulesJson),
+      active: Value(active),
+      syncStatus: Value(syncStatus),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory EmployeeRecord.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return EmployeeRecord(
+      id: serializer.fromJson<int>(json['id']),
+      serverId: serializer.fromJson<String?>(json['serverId']),
+      email: serializer.fromJson<String>(json['email']),
+      displayName: serializer.fromJson<String>(json['displayName']),
+      phone: serializer.fromJson<String?>(json['phone']),
+      counterLabel: serializer.fromJson<String?>(json['counterLabel']),
+      allowedModulesJson: serializer.fromJson<String>(
+        json['allowedModulesJson'],
+      ),
+      active: serializer.fromJson<bool>(json['active']),
+      syncStatus: serializer.fromJson<int>(json['syncStatus']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'serverId': serializer.toJson<String?>(serverId),
+      'email': serializer.toJson<String>(email),
+      'displayName': serializer.toJson<String>(displayName),
+      'phone': serializer.toJson<String?>(phone),
+      'counterLabel': serializer.toJson<String?>(counterLabel),
+      'allowedModulesJson': serializer.toJson<String>(allowedModulesJson),
+      'active': serializer.toJson<bool>(active),
+      'syncStatus': serializer.toJson<int>(syncStatus),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  EmployeeRecord copyWith({
+    int? id,
+    Value<String?> serverId = const Value.absent(),
+    String? email,
+    String? displayName,
+    Value<String?> phone = const Value.absent(),
+    Value<String?> counterLabel = const Value.absent(),
+    String? allowedModulesJson,
+    bool? active,
+    int? syncStatus,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => EmployeeRecord(
+    id: id ?? this.id,
+    serverId: serverId.present ? serverId.value : this.serverId,
+    email: email ?? this.email,
+    displayName: displayName ?? this.displayName,
+    phone: phone.present ? phone.value : this.phone,
+    counterLabel: counterLabel.present ? counterLabel.value : this.counterLabel,
+    allowedModulesJson: allowedModulesJson ?? this.allowedModulesJson,
+    active: active ?? this.active,
+    syncStatus: syncStatus ?? this.syncStatus,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  EmployeeRecord copyWithCompanion(EmployeeRecordsCompanion data) {
+    return EmployeeRecord(
+      id: data.id.present ? data.id.value : this.id,
+      serverId: data.serverId.present ? data.serverId.value : this.serverId,
+      email: data.email.present ? data.email.value : this.email,
+      displayName: data.displayName.present
+          ? data.displayName.value
+          : this.displayName,
+      phone: data.phone.present ? data.phone.value : this.phone,
+      counterLabel: data.counterLabel.present
+          ? data.counterLabel.value
+          : this.counterLabel,
+      allowedModulesJson: data.allowedModulesJson.present
+          ? data.allowedModulesJson.value
+          : this.allowedModulesJson,
+      active: data.active.present ? data.active.value : this.active,
+      syncStatus: data.syncStatus.present
+          ? data.syncStatus.value
+          : this.syncStatus,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EmployeeRecord(')
+          ..write('id: $id, ')
+          ..write('serverId: $serverId, ')
+          ..write('email: $email, ')
+          ..write('displayName: $displayName, ')
+          ..write('phone: $phone, ')
+          ..write('counterLabel: $counterLabel, ')
+          ..write('allowedModulesJson: $allowedModulesJson, ')
+          ..write('active: $active, ')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    serverId,
+    email,
+    displayName,
+    phone,
+    counterLabel,
+    allowedModulesJson,
+    active,
+    syncStatus,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is EmployeeRecord &&
+          other.id == this.id &&
+          other.serverId == this.serverId &&
+          other.email == this.email &&
+          other.displayName == this.displayName &&
+          other.phone == this.phone &&
+          other.counterLabel == this.counterLabel &&
+          other.allowedModulesJson == this.allowedModulesJson &&
+          other.active == this.active &&
+          other.syncStatus == this.syncStatus &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class EmployeeRecordsCompanion extends UpdateCompanion<EmployeeRecord> {
+  final Value<int> id;
+  final Value<String?> serverId;
+  final Value<String> email;
+  final Value<String> displayName;
+  final Value<String?> phone;
+  final Value<String?> counterLabel;
+  final Value<String> allowedModulesJson;
+  final Value<bool> active;
+  final Value<int> syncStatus;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  const EmployeeRecordsCompanion({
+    this.id = const Value.absent(),
+    this.serverId = const Value.absent(),
+    this.email = const Value.absent(),
+    this.displayName = const Value.absent(),
+    this.phone = const Value.absent(),
+    this.counterLabel = const Value.absent(),
+    this.allowedModulesJson = const Value.absent(),
+    this.active = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  EmployeeRecordsCompanion.insert({
+    this.id = const Value.absent(),
+    this.serverId = const Value.absent(),
+    required String email,
+    required String displayName,
+    this.phone = const Value.absent(),
+    this.counterLabel = const Value.absent(),
+    this.allowedModulesJson = const Value.absent(),
+    this.active = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+  }) : email = Value(email),
+       displayName = Value(displayName),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<EmployeeRecord> custom({
+    Expression<int>? id,
+    Expression<String>? serverId,
+    Expression<String>? email,
+    Expression<String>? displayName,
+    Expression<String>? phone,
+    Expression<String>? counterLabel,
+    Expression<String>? allowedModulesJson,
+    Expression<bool>? active,
+    Expression<int>? syncStatus,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (serverId != null) 'server_id': serverId,
+      if (email != null) 'email': email,
+      if (displayName != null) 'display_name': displayName,
+      if (phone != null) 'phone': phone,
+      if (counterLabel != null) 'counter_label': counterLabel,
+      if (allowedModulesJson != null)
+        'allowed_modules_json': allowedModulesJson,
+      if (active != null) 'active': active,
+      if (syncStatus != null) 'sync_status': syncStatus,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  EmployeeRecordsCompanion copyWith({
+    Value<int>? id,
+    Value<String?>? serverId,
+    Value<String>? email,
+    Value<String>? displayName,
+    Value<String?>? phone,
+    Value<String?>? counterLabel,
+    Value<String>? allowedModulesJson,
+    Value<bool>? active,
+    Value<int>? syncStatus,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+  }) {
+    return EmployeeRecordsCompanion(
+      id: id ?? this.id,
+      serverId: serverId ?? this.serverId,
+      email: email ?? this.email,
+      displayName: displayName ?? this.displayName,
+      phone: phone ?? this.phone,
+      counterLabel: counterLabel ?? this.counterLabel,
+      allowedModulesJson: allowedModulesJson ?? this.allowedModulesJson,
+      active: active ?? this.active,
+      syncStatus: syncStatus ?? this.syncStatus,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (serverId.present) {
+      map['server_id'] = Variable<String>(serverId.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (displayName.present) {
+      map['display_name'] = Variable<String>(displayName.value);
+    }
+    if (phone.present) {
+      map['phone'] = Variable<String>(phone.value);
+    }
+    if (counterLabel.present) {
+      map['counter_label'] = Variable<String>(counterLabel.value);
+    }
+    if (allowedModulesJson.present) {
+      map['allowed_modules_json'] = Variable<String>(allowedModulesJson.value);
+    }
+    if (active.present) {
+      map['active'] = Variable<bool>(active.value);
+    }
+    if (syncStatus.present) {
+      map['sync_status'] = Variable<int>(syncStatus.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EmployeeRecordsCompanion(')
+          ..write('id: $id, ')
+          ..write('serverId: $serverId, ')
+          ..write('email: $email, ')
+          ..write('displayName: $displayName, ')
+          ..write('phone: $phone, ')
+          ..write('counterLabel: $counterLabel, ')
+          ..write('allowedModulesJson: $allowedModulesJson, ')
+          ..write('active: $active, ')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -13912,6 +14572,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $CustomerTransactionRecordsTable customerTransactionRecords =
       $CustomerTransactionRecordsTable(this);
+  late final $EmployeeRecordsTable employeeRecords = $EmployeeRecordsTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -13930,6 +14593,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     expenseRecords,
     shopImageRecords,
     customerTransactionRecords,
+    employeeRecords,
   ];
 }
 
@@ -20265,6 +20929,328 @@ typedef $$CustomerTransactionRecordsTableProcessedTableManager =
       CustomerTransactionRecord,
       PrefetchHooks Function()
     >;
+typedef $$EmployeeRecordsTableCreateCompanionBuilder =
+    EmployeeRecordsCompanion Function({
+      Value<int> id,
+      Value<String?> serverId,
+      required String email,
+      required String displayName,
+      Value<String?> phone,
+      Value<String?> counterLabel,
+      Value<String> allowedModulesJson,
+      Value<bool> active,
+      Value<int> syncStatus,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+    });
+typedef $$EmployeeRecordsTableUpdateCompanionBuilder =
+    EmployeeRecordsCompanion Function({
+      Value<int> id,
+      Value<String?> serverId,
+      Value<String> email,
+      Value<String> displayName,
+      Value<String?> phone,
+      Value<String?> counterLabel,
+      Value<String> allowedModulesJson,
+      Value<bool> active,
+      Value<int> syncStatus,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+    });
+
+class $$EmployeeRecordsTableFilterComposer
+    extends Composer<_$AppDatabase, $EmployeeRecordsTable> {
+  $$EmployeeRecordsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get serverId => $composableBuilder(
+    column: $table.serverId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get phone => $composableBuilder(
+    column: $table.phone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get counterLabel => $composableBuilder(
+    column: $table.counterLabel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get allowedModulesJson => $composableBuilder(
+    column: $table.allowedModulesJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get active => $composableBuilder(
+    column: $table.active,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get syncStatus => $composableBuilder(
+    column: $table.syncStatus,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$EmployeeRecordsTableOrderingComposer
+    extends Composer<_$AppDatabase, $EmployeeRecordsTable> {
+  $$EmployeeRecordsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get serverId => $composableBuilder(
+    column: $table.serverId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get phone => $composableBuilder(
+    column: $table.phone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get counterLabel => $composableBuilder(
+    column: $table.counterLabel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get allowedModulesJson => $composableBuilder(
+    column: $table.allowedModulesJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get active => $composableBuilder(
+    column: $table.active,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get syncStatus => $composableBuilder(
+    column: $table.syncStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$EmployeeRecordsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $EmployeeRecordsTable> {
+  $$EmployeeRecordsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get serverId =>
+      $composableBuilder(column: $table.serverId, builder: (column) => column);
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get phone =>
+      $composableBuilder(column: $table.phone, builder: (column) => column);
+
+  GeneratedColumn<String> get counterLabel => $composableBuilder(
+    column: $table.counterLabel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get allowedModulesJson => $composableBuilder(
+    column: $table.allowedModulesJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get active =>
+      $composableBuilder(column: $table.active, builder: (column) => column);
+
+  GeneratedColumn<int> get syncStatus => $composableBuilder(
+    column: $table.syncStatus,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$EmployeeRecordsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $EmployeeRecordsTable,
+          EmployeeRecord,
+          $$EmployeeRecordsTableFilterComposer,
+          $$EmployeeRecordsTableOrderingComposer,
+          $$EmployeeRecordsTableAnnotationComposer,
+          $$EmployeeRecordsTableCreateCompanionBuilder,
+          $$EmployeeRecordsTableUpdateCompanionBuilder,
+          (
+            EmployeeRecord,
+            BaseReferences<
+              _$AppDatabase,
+              $EmployeeRecordsTable,
+              EmployeeRecord
+            >,
+          ),
+          EmployeeRecord,
+          PrefetchHooks Function()
+        > {
+  $$EmployeeRecordsTableTableManager(
+    _$AppDatabase db,
+    $EmployeeRecordsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$EmployeeRecordsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$EmployeeRecordsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$EmployeeRecordsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String?> serverId = const Value.absent(),
+                Value<String> email = const Value.absent(),
+                Value<String> displayName = const Value.absent(),
+                Value<String?> phone = const Value.absent(),
+                Value<String?> counterLabel = const Value.absent(),
+                Value<String> allowedModulesJson = const Value.absent(),
+                Value<bool> active = const Value.absent(),
+                Value<int> syncStatus = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => EmployeeRecordsCompanion(
+                id: id,
+                serverId: serverId,
+                email: email,
+                displayName: displayName,
+                phone: phone,
+                counterLabel: counterLabel,
+                allowedModulesJson: allowedModulesJson,
+                active: active,
+                syncStatus: syncStatus,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String?> serverId = const Value.absent(),
+                required String email,
+                required String displayName,
+                Value<String?> phone = const Value.absent(),
+                Value<String?> counterLabel = const Value.absent(),
+                Value<String> allowedModulesJson = const Value.absent(),
+                Value<bool> active = const Value.absent(),
+                Value<int> syncStatus = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+              }) => EmployeeRecordsCompanion.insert(
+                id: id,
+                serverId: serverId,
+                email: email,
+                displayName: displayName,
+                phone: phone,
+                counterLabel: counterLabel,
+                allowedModulesJson: allowedModulesJson,
+                active: active,
+                syncStatus: syncStatus,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$EmployeeRecordsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $EmployeeRecordsTable,
+      EmployeeRecord,
+      $$EmployeeRecordsTableFilterComposer,
+      $$EmployeeRecordsTableOrderingComposer,
+      $$EmployeeRecordsTableAnnotationComposer,
+      $$EmployeeRecordsTableCreateCompanionBuilder,
+      $$EmployeeRecordsTableUpdateCompanionBuilder,
+      (
+        EmployeeRecord,
+        BaseReferences<_$AppDatabase, $EmployeeRecordsTable, EmployeeRecord>,
+      ),
+      EmployeeRecord,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -20299,4 +21285,6 @@ class $AppDatabaseManager {
         _db,
         _db.customerTransactionRecords,
       );
+  $$EmployeeRecordsTableTableManager get employeeRecords =>
+      $$EmployeeRecordsTableTableManager(_db, _db.employeeRecords);
 }
