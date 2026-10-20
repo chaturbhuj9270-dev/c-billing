@@ -353,7 +353,10 @@ class EmployeeRecords extends Table {
   TextColumn get email => text()();
   TextColumn get displayName => text()();
   TextColumn get phone => text().nullable()();
-  TextColumn get counterLabel => text().nullable()();
+  TextColumn get counterLabel => text().nullable()(); // legacy, unused
+  IntColumn get tokenNumber => integer().withDefault(const Constant(0))();
+  BoolColumn get counterAccess => boolean().withDefault(const Constant(true))();
+  RealColumn get points => real().withDefault(const Constant(0.0))();
   TextColumn get allowedModulesJson => text().withDefault(const Constant(''))();
   BoolColumn get active => boolean().withDefault(const Constant(true))();
   IntColumn get syncStatus => integer().withDefault(const Constant(0))();
@@ -383,7 +386,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? openAppDatabase());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -391,6 +394,13 @@ class AppDatabase extends _$AppDatabase {
     onUpgrade: (m, from, to) async {
       if (from < 2) {
         await m.createTable(employeeRecords);
+      }
+      if (from < 3) {
+        await m.addColumn(employeeRecords, employeeRecords.tokenNumber);
+        await m.addColumn(employeeRecords, employeeRecords.counterAccess);
+      }
+      if (from < 4) {
+        await m.addColumn(employeeRecords, employeeRecords.points);
       }
     },
   );

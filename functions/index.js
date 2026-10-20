@@ -567,6 +567,19 @@ async function assertOwner(uid) {
   return data;
 }
 
+async function nextEmployeeToken(ownerId) {
+  const snap = await db
+    .collection("users")
+    .doc(ownerId)
+    .collection("employees")
+    .orderBy("tokenNumber", "desc")
+    .limit(1)
+    .get();
+  if (snap.empty) return 1;
+  const max = Number(snap.docs[0].data()?.tokenNumber || 0);
+  return Number.isFinite(max) ? max + 1 : 1;
+}
+
 exports.createEmployee = onCall(async (request) => {
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "Sign in required");
@@ -578,10 +591,18 @@ exports.createEmployee = onCall(async (request) => {
   const password = String(request.data?.password || "");
   const displayName = String(request.data?.displayName || "").trim();
   const phone = request.data?.phone ? String(request.data.phone).trim() : null;
-  const counterLabel = request.data?.counterLabel
-    ? String(request.data.counterLabel).trim()
-    : null;
-  const modules = sanitizeModules(request.data?.allowedModules);
+  const counterAccess =
+    typeof request.data?.counterAccess === "boolean"
+      ? request.data.counterAccess
+      : true;
+  let modules = sanitizeModules(request.data?.allowedModules);
+  if (!counterAccess) {
+    modules = modules.filter((m) => m !== "billing");
+  }
+  const tokenNumber =
+    Number(request.data?.tokenNumber) > 0
+      ? Number(request.data.tokenNumber)
+      : await nextEmployeeToken(ownerId);
 
   if (!email || !email.includes("@")) {
     throw new HttpsError("invalid-argument", "Valid email required");
@@ -614,7 +635,9 @@ exports.createEmployee = onCall(async (request) => {
     email,
     displayName,
     phone,
-    counterLabel,
+    tokenNumber,
+    counterAccess,
+    points: 0,
     allowedModules: modules,
     active: true,
     createdAt: now,
@@ -627,7 +650,9 @@ exports.createEmployee = onCall(async (request) => {
       email,
       displayName,
       phone,
-      counterLabel,
+      tokenNumber,
+      counterAccess,
+      points: 0,
       allowedModules: modules,
       active: true,
       role: "employee",
@@ -642,9 +667,11 @@ exports.createEmployee = onCall(async (request) => {
     role: "employee",
     tenantOwnerId: ownerId,
     modules,
+    tokenNumber,
+    counterAccess,
   });
 
-  return { uid, email, displayName, allowedModules: modules };
+  return { uid, email, displayName, tokenNumber, counterAccess, allowedModules: modules };
 });
 
 exports.updateEmployee = onCall(async (request) => {
@@ -665,9 +692,16 @@ exports.updateEmployee = onCall(async (request) => {
     throw new HttpsError("not-found", "Employee not found");
   }
 
-  const modules = sanitizeModules(
+  const counterAccess =
+    typeof request.data?.counterAccess === "boolean"
+      ? request.data.counterAccess
+      : empSnap.data()?.counterAccess !== false;
+  let modules = sanitizeModules(
     request.data?.allowedModules ?? empSnap.data()?.allowedModules
   );
+  if (!counterAccess) {
+    modules = modules.filter((m) => m !== "billing");
+  }
   const active =
     typeof request.data?.active === "boolean"
       ? request.data.active
@@ -682,18 +716,17 @@ exports.updateEmployee = onCall(async (request) => {
         ? String(request.data.phone).trim()
         : null
       : empSnap.data()?.phone;
-  const counterLabel =
-    request.data?.counterLabel !== undefined
-      ? request.data.counterLabel
-        ? String(request.data.counterLabel).trim()
-        : null
-      : empSnap.data()?.counterLabel;
+  const tokenNumber =
+    Number(request.data?.tokenNumber) > 0
+      ? Number(request.data.tokenNumber)
+      : Number(empSnap.data()?.tokenNumber || 0);
 
   const now = admin.firestore.FieldValue.serverTimestamp();
   const patch = {
     displayName,
     phone,
-    counterLabel,
+    tokenNumber,
+    counterAccess,
     allowedModules: modules,
     active,
     updatedAt: now,
@@ -713,6 +746,8 @@ exports.updateEmployee = onCall(async (request) => {
     role: "employee",
     tenantOwnerId: ownerId,
     modules,
+    tokenNumber,
+    counterAccess,
   });
   await admin.auth().updateUser(employeeUid, {
     displayName,

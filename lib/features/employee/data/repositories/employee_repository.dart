@@ -3,7 +3,6 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:drift/drift.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-// FirebaseAuth used for secondary-app employee creation only.
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/access/access_control_service.dart';
@@ -38,7 +37,7 @@ class EmployeeRepository {
     }
 
     try {
-      final snap = await _employeesCol.orderBy('displayName').get();
+      final snap = await _employeesCol.orderBy('tokenNumber').get();
       final list = snap.docs
           .map((d) => Employee.fromJson(d.data(), id: d.id))
           .toList();
@@ -50,19 +49,120 @@ class EmployeeRepository {
     }
   }
 
+  // Resolve active employee by billing token (owner or counter staff).
+  Future<Employee?> findByToken(int tokenNumber) async {
+    if (tokenNumber <= 0) return null;
+    try {
+      final snap = await _employeesCol
+          .where('tokenNumber', isEqualTo: tokenNumber)
+          .limit(5)
+          .get();
+      for (final doc in snap.docs) {
+        final emp = Employee.fromJson(doc.data(), id: doc.id);
+        if (emp.active) return emp;
+      }
+    } catch (e) {
+      debugPrint('[EmployeeRepository] findByToken remote failed: $e');
+    }
+    try {
+      final rows = await (_db.select(_db.employeeRecords)
+            ..where((t) => t.tokenNumber.equals(tokenNumber)))
+          .get();
+      for (final r in rows) {
+        if (!r.active) continue;
+        return Employee(
+          id: r.serverId ?? '${r.id}',
+          email: r.email,
+          displayName: r.displayName,
+          phone: r.phone,
+          tokenNumber: r.tokenNumber,
+          counterAccess: r.counterAccess,
+          points: r.points,
+          allowedModules: r.allowedModulesJson
+              .split(',')
+              .where((s) => s.isNotEmpty)
+              .toList(),
+          active: r.active,
+          createdAt: r.createdAt,
+          updatedAt: r.updatedAt,
+        );
+      }
+    } catch (e) {
+      debugPrint('[EmployeeRepository] findByToken local failed: $e');
+    }
+    return null;
+  }
+
+  // Credit cloth-collection points: ₹1000 sales = 1 point.
+  Future<void> addSalesPoints({
+    required int tokenNumber,
+    required double salesAmount,
+  }) async {
+    if (tokenNumber <= 0 || salesAmount <= 0) return;
+    final points = double.parse((salesAmount / 1000).toStringAsFixed(4));
+    if (points <= 0) return;
+    final emp = await findByToken(tokenNumber);
+    if (emp == null) {
+      throw StateError('No active employee for token $tokenNumber');
+    }
+
+    try {
+      await _employeesCol.doc(emp.id).set({
+        'points': FieldValue.increment(points),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('[EmployeeRepository] addSalesPoints remote failed: $e');
+    }
+
+    final updated = emp.copyWith(
+      points: emp.points + points,
+      updatedAt: DateTime.now(),
+    );
+    await _upsertLocal(updated);
+  }
+
+  // Next free token: max(existing) + 1, starting at 1.
+  Future<int> nextTokenNumber() async {
+    try {
+      final snap = await _employeesCol
+          .orderBy('tokenNumber', descending: true)
+          .limit(1)
+          .get();
+      if (snap.docs.isNotEmpty) {
+        final raw = snap.docs.first.data()['tokenNumber'];
+        final max = raw is int ? raw : int.tryParse('$raw') ?? 0;
+        return max + 1;
+      }
+    } catch (e) {
+      debugPrint('[EmployeeRepository] nextToken remote failed: $e');
+    }
+    try {
+      final rows = await _db.select(_db.employeeRecords).get();
+      var max = 0;
+      for (final r in rows) {
+        if (r.tokenNumber > max) max = r.tokenNumber;
+      }
+      return max + 1;
+    } catch (_) {
+      return 1;
+    }
+  }
+
   Future<Employee> createEmployee({
     required String email,
     required String password,
     required String displayName,
     String? phone,
-    String? counterLabel,
+    required bool counterAccess,
     required List<String> allowedModules,
   }) async {
     if (!AccessControlService.instance.isOwner) {
       throw StateError('Only the shop admin can create employees');
     }
     final ownerId = TenantContext.dataOwnerId;
-    final modules = _sanitizeModules(allowedModules);
+    final modules = _sanitizeModules(allowedModules, counterAccess: counterAccess);
+    final tokenNumber = await nextTokenNumber();
 
     String employeeUid;
     try {
@@ -72,7 +172,8 @@ class EmployeeRepository {
         'password': password,
         'displayName': displayName.trim(),
         'phone': phone?.trim(),
-        'counterLabel': counterLabel?.trim(),
+        'tokenNumber': tokenNumber,
+        'counterAccess': counterAccess,
         'allowedModules': modules,
       });
       final data = Map<String, dynamic>.from(result.data as Map);
@@ -86,7 +187,8 @@ class EmployeeRepository {
         password: password,
         displayName: displayName.trim(),
         phone: phone?.trim(),
-        counterLabel: counterLabel?.trim(),
+        tokenNumber: tokenNumber,
+        counterAccess: counterAccess,
         modules: modules,
         ownerId: ownerId,
       );
@@ -97,7 +199,9 @@ class EmployeeRepository {
       email: email.trim(),
       displayName: displayName.trim(),
       phone: phone?.trim(),
-      counterLabel: counterLabel?.trim(),
+      tokenNumber: tokenNumber,
+      counterAccess: counterAccess,
+      points: 0,
       allowedModules: modules,
       active: true,
       createdAt: DateTime.now(),
@@ -111,11 +215,15 @@ class EmployeeRepository {
     if (!AccessControlService.instance.isOwner) {
       throw StateError('Only the shop admin can update employees');
     }
-    final modules = _sanitizeModules(employee.allowedModules);
+    final modules = _sanitizeModules(
+      employee.allowedModules,
+      counterAccess: employee.counterAccess,
+    );
     final payload = <String, dynamic>{
       'displayName': employee.displayName.trim(),
       'phone': employee.phone?.trim(),
-      'counterLabel': employee.counterLabel?.trim(),
+      'tokenNumber': employee.tokenNumber,
+      'counterAccess': employee.counterAccess,
       'allowedModules': modules,
       'active': employee.active,
       'updatedAt': FieldValue.serverTimestamp(),
@@ -127,7 +235,8 @@ class EmployeeRepository {
         'employeeUid': employee.id,
         'displayName': employee.displayName.trim(),
         'phone': employee.phone?.trim(),
-        'counterLabel': employee.counterLabel?.trim(),
+        'tokenNumber': employee.tokenNumber,
+        'counterAccess': employee.counterAccess,
         'allowedModules': modules,
         'active': employee.active,
       });
@@ -139,7 +248,8 @@ class EmployeeRepository {
       await _firestore.collection('users').doc(employee.id).set({
         'displayName': employee.displayName.trim(),
         'phone': employee.phone?.trim(),
-        'counterLabel': employee.counterLabel?.trim(),
+        'tokenNumber': employee.tokenNumber,
+        'counterAccess': employee.counterAccess,
         'allowedModules': modules,
         'active': employee.active,
         'role': 'employee',
@@ -164,11 +274,11 @@ class EmployeeRepository {
     required String password,
     required String displayName,
     String? phone,
-    String? counterLabel,
+    required int tokenNumber,
+    required bool counterAccess,
     required List<String> modules,
     required String ownerId,
   }) async {
-    // Create Auth user on a secondary app so the admin session stays signed in.
     FirebaseApp? secondary;
     try {
       secondary = await Firebase.initializeApp(
@@ -190,7 +300,6 @@ class EmployeeRepository {
         uid = cred.user?.uid;
         await cred.user?.updateDisplayName(displayName);
       } on FirebaseAuthException catch (e) {
-        // Previous attempt may have created Auth but failed Firestore writes.
         if (e.code == 'email-already-in-use') {
           final signedIn = await secondaryAuth.signInWithEmailAndPassword(
             email: email,
@@ -211,14 +320,17 @@ class EmployeeRepository {
         email: email,
         displayName: displayName,
         phone: phone,
-        counterLabel: counterLabel,
+        tokenNumber: tokenNumber,
+        counterAccess: counterAccess,
         modules: modules,
         ownerId: ownerId,
       );
 
       return uid;
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'email-already-in-use' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
+      if (e.code == 'email-already-in-use' ||
+          e.code == 'wrong-password' ||
+          e.code == 'invalid-credential') {
         throw StateError(
           'This email is already registered. Use a different email, or the same temporary password used when it was first created.',
         );
@@ -236,7 +348,8 @@ class EmployeeRepository {
     required String email,
     required String displayName,
     String? phone,
-    String? counterLabel,
+    required int tokenNumber,
+    required bool counterAccess,
     required List<String> modules,
     required String ownerId,
   }) async {
@@ -246,7 +359,9 @@ class EmployeeRepository {
       'email': email,
       'displayName': displayName,
       'phone': phone,
-      'counterLabel': counterLabel,
+      'tokenNumber': tokenNumber,
+      'counterAccess': counterAccess,
+      'points': 0,
       'allowedModules': modules,
       'active': true,
       'createdAt': now,
@@ -257,7 +372,9 @@ class EmployeeRepository {
       'email': email,
       'displayName': displayName,
       'phone': phone,
-      'counterLabel': counterLabel,
+      'tokenNumber': tokenNumber,
+      'counterAccess': counterAccess,
+      'points': 0,
       'allowedModules': modules,
       'active': true,
       'role': 'employee',
@@ -267,11 +384,16 @@ class EmployeeRepository {
     }, SetOptions(merge: true));
   }
 
-  List<String> _sanitizeModules(List<String> raw) {
+  List<String> _sanitizeModules(
+    List<String> raw, {
+    required bool counterAccess,
+  }) {
     final grantable = AppModule.grantable.map((m) => m.key).toSet();
     final cleaned = raw.where(grantable.contains).toSet();
-    // Password always allowed for self-service; dashboard/expenses stay opt-in.
     cleaned.add(AppModule.password.key);
+    if (!counterAccess) {
+      cleaned.remove(AppModule.billing.key);
+    }
     return cleaned.toList()..sort();
   }
 
@@ -297,7 +419,9 @@ class EmployeeRepository {
         email: e.email,
         displayName: e.displayName,
         phone: Value(e.phone),
-        counterLabel: Value(e.counterLabel),
+        tokenNumber: Value(e.tokenNumber),
+        counterAccess: Value(e.counterAccess),
+        points: Value(e.points),
         allowedModulesJson: Value(e.allowedModules.join(',')),
         active: Value(e.active),
         syncStatus: const Value(1),
@@ -315,7 +439,9 @@ class EmployeeRepository {
             email: Value(e.email),
             displayName: Value(e.displayName),
             phone: Value(e.phone),
-            counterLabel: Value(e.counterLabel),
+            tokenNumber: Value(e.tokenNumber),
+            counterAccess: Value(e.counterAccess),
+            points: Value(e.points),
             allowedModulesJson: Value(e.allowedModules.join(',')),
             active: Value(e.active),
             syncStatus: const Value(1),
@@ -338,7 +464,9 @@ class EmployeeRepository {
               email: r.email,
               displayName: r.displayName,
               phone: r.phone,
-              counterLabel: r.counterLabel,
+              tokenNumber: r.tokenNumber,
+              counterAccess: r.counterAccess,
+              points: r.points,
               allowedModules: r.allowedModulesJson
                   .split(',')
                   .where((s) => s.isNotEmpty)
@@ -348,7 +476,8 @@ class EmployeeRepository {
               updatedAt: r.updatedAt,
             ),
           )
-          .toList();
+          .toList()
+        ..sort((a, b) => a.tokenNumber.compareTo(b.tokenNumber));
     } catch (_) {
       return [];
     }

@@ -18,7 +18,8 @@ class AccessControlService {
   bool _isOwner = true;
   Set<String> _allowedModules = AppModule.allKeys;
   String? displayName;
-  String? counterLabel;
+  int? tokenNumber;
+  bool counterAccess = true;
   bool _loaded = false;
 
   bool get isLoaded => _loaded;
@@ -36,6 +37,7 @@ class AccessControlService {
   bool canAccess(AppModule module) {
     if (!_loaded || _isOwner) return true;
     if (AppModule.ownerOnly.contains(module)) return false;
+    if (module == AppModule.billing && !counterAccess) return false;
     return _allowedModules.contains(module.key);
   }
 
@@ -69,7 +71,8 @@ class AccessControlService {
 
     _authUid = user.uid;
     displayName = user.displayName;
-    counterLabel = null;
+    tokenNumber = null;
+    counterAccess = true;
 
     try {
       // Prefer custom claims when Cloud Functions have set them.
@@ -85,6 +88,7 @@ class AccessControlService {
           ownerId: claimOwner,
           modulesFromClaims: _modulesFromClaims(claims['modules']),
         );
+        // Claims may omit token; refresh already ran inside _applyEmployee.
         _loaded = true;
         debugPrint(
           '[AccessControl] Employee via claims → owner=$claimOwner modules=${_allowedModules.length}',
@@ -102,11 +106,15 @@ class AccessControlService {
         if (data['active'] == false) {
           throw StateError('Employee account is deactivated');
         }
+        final tokenRaw = data['tokenNumber'];
+        tokenNumber = tokenRaw is int
+            ? tokenRaw
+            : int.tryParse('$tokenRaw');
+        counterAccess = data['counterAccess'] as bool? ?? true;
         await _applyEmployee(
           ownerId: data['tenantOwnerId'] as String,
           modulesFromClaims: _stringSet(data['allowedModules']),
           name: data['displayName'] as String?,
-          counter: data['counterLabel'] as String?,
         );
         _loaded = true;
         debugPrint(
@@ -142,7 +150,6 @@ class AccessControlService {
     required String ownerId,
     Set<String>? modulesFromClaims,
     String? name,
-    String? counter,
   }) async {
     _isOwner = false;
     _dataOwnerId = ownerId;
@@ -165,21 +172,28 @@ class AccessControlService {
         final live = _stringSet(d?['allowedModules']);
         if (live.isNotEmpty) modules = live;
         displayName = d?['displayName'] as String? ?? name ?? displayName;
-        counterLabel = d?['counterLabel'] as String? ?? counter;
+        final tokenRaw = d?['tokenNumber'];
+        tokenNumber = tokenRaw is int
+            ? tokenRaw
+            : int.tryParse('$tokenRaw');
+        counterAccess = d?['counterAccess'] as bool? ?? true;
       }
     } catch (e) {
       if (e is StateError) rethrow;
       debugPrint('[AccessControl] employee doc refresh skipped: $e');
       displayName = name ?? displayName;
-      counterLabel = counter;
     }
 
     // Strip owner-only keys even if stored incorrectly.
     modules.removeWhere(
       (k) => AppModule.ownerOnly.any((m) => m.key == k),
     );
+    if (!counterAccess) {
+      modules.remove(AppModule.billing.key);
+    }
     if (modules.isEmpty) {
       modules = AppModule.defaultEmployeeModules.map((m) => m.key).toSet();
+      if (!counterAccess) modules.remove(AppModule.billing.key);
     }
     // Password always allowed for self-service.
     modules.add(AppModule.password.key);
@@ -208,7 +222,8 @@ class AccessControlService {
     _isOwner = true;
     _allowedModules = AppModule.allKeys;
     displayName = null;
-    counterLabel = null;
+    tokenNumber = null;
+    counterAccess = true;
     _loaded = false;
   }
 }

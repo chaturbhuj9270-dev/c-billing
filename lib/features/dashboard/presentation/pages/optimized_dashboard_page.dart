@@ -40,7 +40,6 @@ import 'web_shell.dart';
 import '../../../authentication/presentation/pages/change_password_page.dart';
 import '../../../expense/presentation/pages/expenses_page.dart';
 import '../../../shop/presentation/pages/shop_details_page.dart';
-import '../../../settings/presentation/pages/logs_viewer_page.dart';
 import '../../../../common_widgets/action_menu.dart';
 import '../../../../common_widgets/app_top_bar.dart';
 import '../../../../common_widgets/glassy_bottom_nav_bar.dart';
@@ -1055,10 +1054,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         }
       });
     }
-    add(Icons.bug_report_outlined, _localizations.reportIssue, () {
-      WebShell.push(const LogsViewerPage());
-    });
-
     if (tools.isEmpty) return const [];
     if (!showDivider) return tools;
     return [
@@ -1275,9 +1270,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             }
           : null,
       onLanguageTap: _showLanguageDialog,
-      onBugReportTap: () {
-        showAppPage(context, const LogsViewerPage());
-      },
     );
   }
 

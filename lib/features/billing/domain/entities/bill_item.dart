@@ -19,6 +19,8 @@ class BillItem {
   final String? hsnCode; // HSN code for GST compliance
   final String? unit; // Base unit (kg, ltr, pcs, etc.)
   final String? sellUnit; // Unit used for sale (kg, gm, ltr, ml, pcs)
+  // Salesperson token for this line (cloth collection — per product).
+  final int? employeeToken;
 
   BillItem({
     required this.id,
@@ -36,6 +38,7 @@ class BillItem {
     this.hsnCode,
     this.unit,
     this.sellUnit,
+    this.employeeToken,
   });
 
   // CGST amount computed from subtotal
@@ -102,6 +105,7 @@ class BillItem {
         hsnCode: json['hsnCode'] as String?,
         unit: json['unit'] as String?,
         sellUnit: json['sellUnit'] as String?,
+        employeeToken: _parseToken(json['employeeToken']),
       );
     } catch (e) {
       debugPrint('[ERROR] Failed to parse BillItem from JSON: $json');
@@ -139,7 +143,14 @@ class BillItem {
       'hsnCode': hsnCode,
       'unit': unit,
       'sellUnit': sellUnit,
+      if (employeeToken != null) 'employeeToken': employeeToken,
     };
+  }
+
+  static int? _parseToken(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is int) return raw > 0 ? raw : null;
+    return int.tryParse('$raw');
   }
 
   // Copy with modifications
@@ -159,6 +170,8 @@ class BillItem {
     String? hsnCode,
     String? unit,
     String? sellUnit,
+    int? employeeToken,
+    bool clearEmployeeToken = false,
   }) {
     return BillItem(
       id: id ?? this.id,
@@ -176,6 +189,9 @@ class BillItem {
       hsnCode: hsnCode ?? this.hsnCode,
       unit: unit ?? this.unit,
       sellUnit: sellUnit ?? this.sellUnit,
+      employeeToken: clearEmployeeToken
+          ? null
+          : (employeeToken ?? this.employeeToken),
     );
   }
 
@@ -195,6 +211,7 @@ class BillItem {
     String? hsnCode,
     String? unit,
     String? sellUnit,
+    int? employeeToken,
   }) {
     return BillItem(
       id: id,
@@ -212,6 +229,7 @@ class BillItem {
       hsnCode: hsnCode,
       unit: unit,
       sellUnit: sellUnit,
+      employeeToken: employeeToken,
     );
   }
 

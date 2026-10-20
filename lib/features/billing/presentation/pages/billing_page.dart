@@ -29,6 +29,7 @@ import 'package:c_billing/features/product/offline/controllers/product_offline_c
 import 'package:c_billing/features/product/offline/entities/product_entity.dart';
 import 'package:c_billing/features/product/data/services/product_sync_service.dart';
 import 'package:c_billing/core/services/inventory_integration_service.dart';
+import 'package:c_billing/features/employee/data/repositories/employee_repository.dart';
 import 'package:c_billing/features/inventory_management/offline/controllers/purchase_batch_offline_controller.dart';
 import 'package:c_billing/features/inventory_management/offline/entities/purchase_batch_entity.dart';
 import 'package:c_billing/features/customer/offline/controllers/customer_offline_controller.dart';
@@ -135,6 +136,12 @@ class _BillingPageState extends State<BillingPage> {
   // Bill settings
   bool _showCustomerOnBill = true;
   bool _generateBillViaContact = false;
+  bool _enableEmployeeToken = true;
+  final _employeeRepo = EmployeeRepository();
+  // Per-line employee token inputs (keyed by bill item productId).
+  final Map<String, TextEditingController> _itemTokenControllers = {};
+  final Map<String, FocusNode> _itemTokenFocusNodes = {};
+  final Map<String, String?> _itemTokenNames = {};
 
   // Quick Stats data
   final DashboardOfflineRepository _dashboardRepo =
@@ -205,10 +212,94 @@ class _BillingPageState extends State<BillingPage> {
             prefs.getBool('bill_show_customer_details') ?? true;
         _generateBillViaContact =
             prefs.getBool('bill_generate_via_contact') ?? false;
+        _enableEmployeeToken =
+            prefs.getBool('bill_enable_employee_token') ?? true;
         _taxSettings = taxSettings;
         _gstMode = taxSettings.defaultGstMode;
       });
     }
+  }
+
+  TextEditingController _tokenControllerFor(String productId, int? token) {
+    final existing = _itemTokenControllers[productId];
+    if (existing != null) return existing;
+    final ctrl = TextEditingController(
+      text: (token != null && token > 0) ? '$token' : '',
+    );
+    _itemTokenControllers[productId] = ctrl;
+    return ctrl;
+  }
+
+  FocusNode _tokenFocusFor(String productId) {
+    return _itemTokenFocusNodes.putIfAbsent(productId, FocusNode.new);
+  }
+
+  void _disposeItemTokenInputs([String? productId]) {
+    if (productId != null) {
+      _itemTokenControllers.remove(productId)?.dispose();
+      _itemTokenFocusNodes.remove(productId)?.dispose();
+      _itemTokenNames.remove(productId);
+      return;
+    }
+    for (final c in _itemTokenControllers.values) {
+      c.dispose();
+    }
+    for (final f in _itemTokenFocusNodes.values) {
+      f.dispose();
+    }
+    _itemTokenControllers.clear();
+    _itemTokenFocusNodes.clear();
+    _itemTokenNames.clear();
+  }
+
+  Future<void> _onItemTokenChanged(int index, String productId) async {
+    if (index < 0 || index >= _billItems.length) return;
+    final raw = _itemTokenControllers[productId]?.text.trim() ?? '';
+    if (raw.isEmpty) {
+      setState(() {
+        _billItems[index] = _billItems[index].copyWith(
+          clearEmployeeToken: true,
+        );
+        _itemTokenNames[productId] = null;
+      });
+      return;
+    }
+    final token = int.tryParse(raw);
+    if (token == null || token <= 0) {
+      setState(() => _itemTokenNames[productId] = null);
+      return;
+    }
+    setState(() {
+      _billItems[index] = _billItems[index].copyWith(employeeToken: token);
+    });
+    final emp = await _employeeRepo.findByToken(token);
+    if (!mounted) return;
+    if (_itemTokenControllers[productId]?.text.trim() != raw) return;
+    setState(() => _itemTokenNames[productId] = emp?.displayName);
+  }
+
+  // After adding a product: focus that line's token if empty.
+  void _focusAfterProductAdded([String? productId]) {
+    final id =
+        productId ??
+        (_billItems.isNotEmpty ? _billItems.last.productId : null);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || id == null) return;
+      BillItem? item;
+      for (final i in _billItems) {
+        if (i.productId == id) {
+          item = i;
+          break;
+        }
+      }
+      if (item == null ||
+          item.employeeToken == null ||
+          item.employeeToken! <= 0) {
+        _tokenFocusFor(id).requestFocus();
+      } else {
+        _indexNoFocusNode.requestFocus();
+      }
+    });
   }
 
   @override
@@ -221,6 +312,7 @@ class _BillingPageState extends State<BillingPage> {
     _debounceTimer?.cancel();
     _phoneSearchDebounceTimer?.cancel();
     _customerContactController.removeListener(_onPhoneNumberChanged);
+    _disposeItemTokenInputs();
     _indexNoController.dispose();
     _indexNoFocusNode.dispose();
     _customerNameController.dispose();
@@ -912,6 +1004,7 @@ class _BillingPageState extends State<BillingPage> {
               );
               setState(() {
                 if (existingIndex != -1) {
+                  final prev = _billItems[existingIndex];
                   _billItems[existingIndex] = BillItem.create(
                     productId: uniqueKey,
                     productName: productName,
@@ -924,6 +1017,7 @@ class _BillingPageState extends State<BillingPage> {
                     hsnCode: hsnCode,
                     unit: unit,
                     sellUnit: sellUnit,
+                    employeeToken: prev.employeeToken,
                   );
                 } else {
                   _billItems.add(
@@ -943,8 +1037,10 @@ class _BillingPageState extends State<BillingPage> {
                   );
                 }
               });
+              _focusAfterProductAdded(uniqueKey);
             },
         onItemRemoved: (uniqueKey) {
+          _disposeItemTokenInputs(uniqueKey);
           setState(() {
             _billItems.removeWhere((item) => item.productId == uniqueKey);
           });
@@ -1020,6 +1116,7 @@ class _BillingPageState extends State<BillingPage> {
             hsnCode: hsnCode,
             unit: existing.unit ?? unit,
             sellUnit: existing.sellUnit ?? unit,
+            employeeToken: existing.employeeToken,
           );
         } else {
           _showSnackbar(
@@ -1047,6 +1144,7 @@ class _BillingPageState extends State<BillingPage> {
         );
       }
     });
+    _focusAfterProductAdded(uniqueKey);
   }
 
   double get _totalAmount =>
@@ -1107,6 +1205,30 @@ class _BillingPageState extends State<BillingPage> {
       }
     }
 
+    // Each product line needs its own employee token when enabled
+    if (_enableEmployeeToken) {
+      for (final item in _billItems) {
+        final token = item.employeeToken;
+        if (token == null || token <= 0) {
+          _showSnackbar(
+            'Enter employee token for "${item.productName}"',
+            isError: true,
+          );
+          _focusAfterProductAdded(item.productId);
+          return;
+        }
+        final tokenEmp = await _employeeRepo.findByToken(token);
+        if (tokenEmp == null) {
+          _showSnackbar(
+            'No active employee for token $token (${item.productName})',
+            isError: true,
+          );
+          _focusAfterProductAdded(item.productId);
+          return;
+        }
+      }
+    }
+
     // Validate customer details are required for partial payment
     if (!_isFullPayment && _selectedCustomer == null) {
       final customerName = _customerNameController.text.trim();
@@ -1150,6 +1272,9 @@ class _BillingPageState extends State<BillingPage> {
           cgstPercent: item.cgstPercent,
           sgstPercent: item.sgstPercent,
           hsnCode: item.hsnCode,
+          unit: item.unit,
+          sellUnit: item.sellUnit,
+          employeeToken: item.employeeToken,
         );
       }).toList();
 
@@ -1168,9 +1293,7 @@ class _BillingPageState extends State<BillingPage> {
             discountAmount: _discountAmount,
             discountPercent: _discountPercent,
             finalAmount: _finalAmount,
-            notes: _notesController.text.trim().isNotEmpty
-                ? _notesController.text.trim()
-                : null,
+            notes: _billNotesText(),
             paymentStatus: paymentStatus,
             paidAmount: actualPaidAmount > 0 ? actualPaidAmount : 0,
             pendingAmount: calculatedPendingAmount > 0
@@ -1287,7 +1410,31 @@ class _BillingPageState extends State<BillingPage> {
         }
       }
 
-      // 4. Trigger background sync
+      // 4. Award points per employee token from each product's sale price
+      if (_enableEmployeeToken) {
+        final pointsByToken = <int, double>{};
+        for (final item in _billItems) {
+          final token = item.employeeToken;
+          if (token == null || token <= 0) continue;
+          pointsByToken[token] =
+              (pointsByToken[token] ?? 0) +
+              (item.sellingPrice * item.quantity);
+        }
+        for (final entry in pointsByToken.entries) {
+          try {
+            await _employeeRepo.addSalesPoints(
+              tokenNumber: entry.key,
+              salesAmount: entry.value,
+            );
+          } catch (e) {
+            debugPrint(
+              '[Billing] Points for token ${entry.key} failed (non-blocking): $e',
+            );
+          }
+        }
+      }
+
+      // 5. Trigger background sync
       unawaited(BillSyncService.instance.syncNow());
 
       setState(() => _isSavingBill = false);
@@ -1312,7 +1459,7 @@ class _BillingPageState extends State<BillingPage> {
       // Notify dashboard to refresh (bill count and products count may change)
       DashboardRefreshService.instance.notifyDataChanged(DataChangeType.bill);
 
-      // Show bill PDF preview with print/share options (like purchase report)
+      // Show bill PDF preview with print/share options (token is never printed)
       if (mounted) {
         await _showBillPdfPreview(createdBill);
       }
@@ -1342,6 +1489,7 @@ class _BillingPageState extends State<BillingPage> {
   }
 
   void _clearBill() {
+    _disposeItemTokenInputs();
     setState(() {
       _billItems.clear();
       _customerNameController.clear();
@@ -1362,13 +1510,23 @@ class _BillingPageState extends State<BillingPage> {
     });
   }
 
+  String? _billNotesText() {
+    final typed = _notesController.text.trim();
+    return typed.isNotEmpty ? typed : null;
+  }
+
   // Create PrintBillData from bill — no network calls, uses bill data directly
+  // Employee token is intentionally omitted from printed bills.
   PrintBillData _createPrintBillData(Bill bill) {
     // Use bill's own pending amount as totalDueAmount (already computed at bill creation time)
     final double? totalDueAmount = bill.pendingAmount > 0
         ? bill.pendingAmount
         : null;
-    return PrintBillData.fromBill(bill, totalDueAmount: totalDueAmount);
+    return PrintBillData.fromBill(
+      bill,
+      totalDueAmount: totalDueAmount,
+      employeeToken: null,
+    );
   }
 
   // Show bill PDF preview with share/print options (like purchase report)
@@ -2742,6 +2900,7 @@ class _BillingPageState extends State<BillingPage> {
             );
             setState(() {
               if (existingIndex != -1) {
+                final prev = _billItems[existingIndex];
                 _billItems[existingIndex] = BillItem.create(
                   productId: uniqueKey,
                   productName: product.name,
@@ -2754,6 +2913,7 @@ class _BillingPageState extends State<BillingPage> {
                   hsnCode: product.hsnCode,
                   unit: product.unit,
                   sellUnit: sellUnit,
+                  employeeToken: prev.employeeToken,
                 );
               } else {
                 _billItems.add(
@@ -2778,15 +2938,16 @@ class _BillingPageState extends State<BillingPage> {
               '${_localizations.added}: ${product.name}',
               isError: false,
             );
+            _focusAfterProductAdded(uniqueKey);
           },
           onItemRemoved: (uniqueKey) {
+            _disposeItemTokenInputs(uniqueKey);
             setState(() {
               _billItems.removeWhere((item) => item.productId == uniqueKey);
             });
           },
         ),
       );
-      _indexNoFocusNode.requestFocus();
       return;
     }
 
@@ -2819,6 +2980,7 @@ class _BillingPageState extends State<BillingPage> {
             hsnCode: product.hsnCode,
             unit: existing.unit ?? product.unit,
             sellUnit: existing.sellUnit ?? product.unit,
+            employeeToken: existing.employeeToken,
           );
         } else {
           _showSnackbar(
@@ -2849,9 +3011,9 @@ class _BillingPageState extends State<BillingPage> {
 
     _showSnackbar('${_localizations.added}: ${product.name}', isError: false);
 
-    // Clear input and keep focus for next entry
+    // Clear input; focus this line's token (if needed) or index for next entry
     _indexNoController.clear();
-    _indexNoFocusNode.requestFocus();
+    _focusAfterProductAdded(uniqueKey);
   }
 
   void _onPageIndexNoChanged() {
@@ -3140,7 +3302,10 @@ class _BillingPageState extends State<BillingPage> {
                     size: 20,
                   ),
                 ),
-                onDismissed: (_) => setState(() => _billItems.removeAt(index)),
+                onDismissed: (_) {
+                  _disposeItemTokenInputs(item.productId);
+                  setState(() => _billItems.removeAt(index));
+                },
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
                   child: Column(
@@ -3264,9 +3429,11 @@ class _BillingPageState extends State<BillingPage> {
                                     hsnCode: item.hsnCode,
                                     unit: item.unit,
                                     sellUnit: item.sellUnit,
+                                    employeeToken: item.employeeToken,
                                   );
                                 });
                               } else {
+                                _disposeItemTokenInputs(item.productId);
                                 setState(() => _billItems.removeAt(index));
                               }
                             },
@@ -3303,10 +3470,12 @@ class _BillingPageState extends State<BillingPage> {
                                   hsnCode: item.hsnCode,
                                   unit: item.unit,
                                   sellUnit: item.sellUnit,
+                                  employeeToken: item.employeeToken,
                                 );
                               });
                             },
                             onRemoveItem: () {
+                              _disposeItemTokenInputs(item.productId);
                               setState(() => _billItems.removeAt(index));
                             },
                           ),
@@ -3331,6 +3500,7 @@ class _BillingPageState extends State<BillingPage> {
                                     hsnCode: item.hsnCode,
                                     unit: item.unit,
                                     sellUnit: item.sellUnit,
+                                  employeeToken: item.employeeToken,
                                   );
                                 });
                               } else {
@@ -3368,6 +3538,10 @@ class _BillingPageState extends State<BillingPage> {
                           item: item,
                           maxStock: maxStock,
                         ),
+                      if (_enableEmployeeToken) ...[
+                        const SizedBox(height: 8),
+                        _buildItemEmployeeTokenField(index, item),
+                      ],
                     ],
                   ),
                 ),
@@ -3406,6 +3580,99 @@ class _BillingPageState extends State<BillingPage> {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemEmployeeTokenField(int index, BillItem item) {
+    final ctrl = _tokenControllerFor(item.productId, item.employeeToken);
+    final focus = _tokenFocusFor(item.productId);
+    final name = _itemTokenNames[item.productId];
+    // ₹1000 sales = 1 point
+    final linePts =
+        ((item.sellingPrice * item.quantity) / 1000).toStringAsFixed(2);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+      decoration: BoxDecoration(
+        color: AppColors.action(context).withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.confirmation_number_outlined,
+                size: 16,
+                color: AppColors.action(context),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Emp token',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryText(context),
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '+$linePts pts',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.mutedText(context),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: ctrl,
+            focusNode: focus,
+            keyboardType: TextInputType.number,
+            textInputAction: TextInputAction.next,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onChanged: (_) => _onItemTokenChanged(index, item.productId),
+            decoration: InputDecoration(
+              hintText: 'Token #',
+              isDense: true,
+              filled: true,
+              fillColor: AppColors.card(context),
+              prefixIcon: const Icon(Icons.tag_rounded, size: 18),
+              suffixIcon: name != null
+                  ? const Icon(
+                      Icons.check_circle_rounded,
+                      color: AppTheme.green,
+                      size: 18,
+                    )
+                  : null,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 10,
+              ),
+            ),
+          ),
+          if (name != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              name,
+              style: const TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.green,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -3463,6 +3730,7 @@ class _BillingPageState extends State<BillingPage> {
                               hsnCode: item.hsnCode,
                               unit: item.unit,
                               sellUnit: subUnit,
+                            employeeToken: item.employeeToken,
                             );
                           });
                         }
@@ -3520,6 +3788,7 @@ class _BillingPageState extends State<BillingPage> {
                             hsnCode: item.hsnCode,
                             unit: item.unit,
                             sellUnit: unit,
+                          employeeToken: item.employeeToken,
                           );
                         });
                       }
@@ -3736,6 +4005,7 @@ class _BillingPageState extends State<BillingPage> {
                               hsnCode: item.hsnCode,
                               unit: item.unit,
                               sellUnit: subUnit,
+                            employeeToken: item.employeeToken,
                             );
                           });
                           Navigator.pop(ctx);
@@ -4029,6 +4299,9 @@ class _BillingPageState extends State<BillingPage> {
                               cgstPercent: item.cgstPercent,
                               sgstPercent: item.sgstPercent,
                               hsnCode: item.hsnCode,
+                            unit: item.unit,
+                            sellUnit: item.sellUnit,
+                            employeeToken: item.employeeToken,
                             );
                           });
                           Navigator.pop(ctx);

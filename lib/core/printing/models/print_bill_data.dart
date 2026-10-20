@@ -169,6 +169,9 @@ class PrintBillData {
   // Total tax amount
   final double totalTaxAmount;
 
+  // Employee counter token printed on the bill (1, 2, 3…).
+  final int? employeeToken;
+
   const PrintBillData({
     required this.billNumber,
     required this.dateTime,
@@ -192,6 +195,7 @@ class PrintBillData {
     this.paidAmount,
     this.pendingAmount,
     this.totalDueAmount,
+    this.employeeToken,
     this.isGstApplied = false,
     this.isTaxInclusive = false,
     this.cgstPercent = 0.0,
@@ -214,6 +218,7 @@ class PrintBillData {
     bool isReturn = false,
     double? refund,
     double? totalDueAmount,
+    int? employeeToken,
   }) {
     // Extract payment info from bill if available
     final double? paidAmount = bill.paidAmount as double?;
@@ -237,6 +242,7 @@ class PrintBillData {
       paidAmount: paidAmount,
       pendingAmount: pendingAmount,
       totalDueAmount: totalDueAmount,
+      employeeToken: employeeToken,
       isGstApplied: (bill.isGstApplied as bool?) ?? false,
       isTaxInclusive: (bill.isTaxInclusive as bool?) ?? false,
       cgstPercent: (bill.cgstPercent as double?) ?? 0.0,

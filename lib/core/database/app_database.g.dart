@@ -13952,6 +13952,43 @@ class $EmployeeRecordsTable extends EmployeeRecords
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _tokenNumberMeta = const VerificationMeta(
+    'tokenNumber',
+  );
+  @override
+  late final GeneratedColumn<int> tokenNumber = GeneratedColumn<int>(
+    'token_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _counterAccessMeta = const VerificationMeta(
+    'counterAccess',
+  );
+  @override
+  late final GeneratedColumn<bool> counterAccess = GeneratedColumn<bool>(
+    'counter_access',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("counter_access" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _pointsMeta = const VerificationMeta('points');
+  @override
+  late final GeneratedColumn<double> points = GeneratedColumn<double>(
+    'points',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.0),
+  );
   static const VerificationMeta _allowedModulesJsonMeta =
       const VerificationMeta('allowedModulesJson');
   @override
@@ -14019,6 +14056,9 @@ class $EmployeeRecordsTable extends EmployeeRecords
     displayName,
     phone,
     counterLabel,
+    tokenNumber,
+    counterAccess,
+    points,
     allowedModulesJson,
     active,
     syncStatus,
@@ -14078,6 +14118,30 @@ class $EmployeeRecordsTable extends EmployeeRecords
           data['counter_label']!,
           _counterLabelMeta,
         ),
+      );
+    }
+    if (data.containsKey('token_number')) {
+      context.handle(
+        _tokenNumberMeta,
+        tokenNumber.isAcceptableOrUnknown(
+          data['token_number']!,
+          _tokenNumberMeta,
+        ),
+      );
+    }
+    if (data.containsKey('counter_access')) {
+      context.handle(
+        _counterAccessMeta,
+        counterAccess.isAcceptableOrUnknown(
+          data['counter_access']!,
+          _counterAccessMeta,
+        ),
+      );
+    }
+    if (data.containsKey('points')) {
+      context.handle(
+        _pointsMeta,
+        points.isAcceptableOrUnknown(data['points']!, _pointsMeta),
       );
     }
     if (data.containsKey('allowed_modules_json')) {
@@ -14150,6 +14214,18 @@ class $EmployeeRecordsTable extends EmployeeRecords
         DriftSqlType.string,
         data['${effectivePrefix}counter_label'],
       ),
+      tokenNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}token_number'],
+      )!,
+      counterAccess: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}counter_access'],
+      )!,
+      points: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}points'],
+      )!,
       allowedModulesJson: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}allowed_modules_json'],
@@ -14186,6 +14262,9 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
   final String displayName;
   final String? phone;
   final String? counterLabel;
+  final int tokenNumber;
+  final bool counterAccess;
+  final double points;
   final String allowedModulesJson;
   final bool active;
   final int syncStatus;
@@ -14198,6 +14277,9 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
     required this.displayName,
     this.phone,
     this.counterLabel,
+    required this.tokenNumber,
+    required this.counterAccess,
+    required this.points,
     required this.allowedModulesJson,
     required this.active,
     required this.syncStatus,
@@ -14219,6 +14301,9 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
     if (!nullToAbsent || counterLabel != null) {
       map['counter_label'] = Variable<String>(counterLabel);
     }
+    map['token_number'] = Variable<int>(tokenNumber);
+    map['counter_access'] = Variable<bool>(counterAccess);
+    map['points'] = Variable<double>(points);
     map['allowed_modules_json'] = Variable<String>(allowedModulesJson);
     map['active'] = Variable<bool>(active);
     map['sync_status'] = Variable<int>(syncStatus);
@@ -14241,6 +14326,9 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
       counterLabel: counterLabel == null && nullToAbsent
           ? const Value.absent()
           : Value(counterLabel),
+      tokenNumber: Value(tokenNumber),
+      counterAccess: Value(counterAccess),
+      points: Value(points),
       allowedModulesJson: Value(allowedModulesJson),
       active: Value(active),
       syncStatus: Value(syncStatus),
@@ -14261,6 +14349,9 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
       displayName: serializer.fromJson<String>(json['displayName']),
       phone: serializer.fromJson<String?>(json['phone']),
       counterLabel: serializer.fromJson<String?>(json['counterLabel']),
+      tokenNumber: serializer.fromJson<int>(json['tokenNumber']),
+      counterAccess: serializer.fromJson<bool>(json['counterAccess']),
+      points: serializer.fromJson<double>(json['points']),
       allowedModulesJson: serializer.fromJson<String>(
         json['allowedModulesJson'],
       ),
@@ -14280,6 +14371,9 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
       'displayName': serializer.toJson<String>(displayName),
       'phone': serializer.toJson<String?>(phone),
       'counterLabel': serializer.toJson<String?>(counterLabel),
+      'tokenNumber': serializer.toJson<int>(tokenNumber),
+      'counterAccess': serializer.toJson<bool>(counterAccess),
+      'points': serializer.toJson<double>(points),
       'allowedModulesJson': serializer.toJson<String>(allowedModulesJson),
       'active': serializer.toJson<bool>(active),
       'syncStatus': serializer.toJson<int>(syncStatus),
@@ -14295,6 +14389,9 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
     String? displayName,
     Value<String?> phone = const Value.absent(),
     Value<String?> counterLabel = const Value.absent(),
+    int? tokenNumber,
+    bool? counterAccess,
+    double? points,
     String? allowedModulesJson,
     bool? active,
     int? syncStatus,
@@ -14307,6 +14404,9 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
     displayName: displayName ?? this.displayName,
     phone: phone.present ? phone.value : this.phone,
     counterLabel: counterLabel.present ? counterLabel.value : this.counterLabel,
+    tokenNumber: tokenNumber ?? this.tokenNumber,
+    counterAccess: counterAccess ?? this.counterAccess,
+    points: points ?? this.points,
     allowedModulesJson: allowedModulesJson ?? this.allowedModulesJson,
     active: active ?? this.active,
     syncStatus: syncStatus ?? this.syncStatus,
@@ -14325,6 +14425,13 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
       counterLabel: data.counterLabel.present
           ? data.counterLabel.value
           : this.counterLabel,
+      tokenNumber: data.tokenNumber.present
+          ? data.tokenNumber.value
+          : this.tokenNumber,
+      counterAccess: data.counterAccess.present
+          ? data.counterAccess.value
+          : this.counterAccess,
+      points: data.points.present ? data.points.value : this.points,
       allowedModulesJson: data.allowedModulesJson.present
           ? data.allowedModulesJson.value
           : this.allowedModulesJson,
@@ -14346,6 +14453,9 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
           ..write('displayName: $displayName, ')
           ..write('phone: $phone, ')
           ..write('counterLabel: $counterLabel, ')
+          ..write('tokenNumber: $tokenNumber, ')
+          ..write('counterAccess: $counterAccess, ')
+          ..write('points: $points, ')
           ..write('allowedModulesJson: $allowedModulesJson, ')
           ..write('active: $active, ')
           ..write('syncStatus: $syncStatus, ')
@@ -14363,6 +14473,9 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
     displayName,
     phone,
     counterLabel,
+    tokenNumber,
+    counterAccess,
+    points,
     allowedModulesJson,
     active,
     syncStatus,
@@ -14379,6 +14492,9 @@ class EmployeeRecord extends DataClass implements Insertable<EmployeeRecord> {
           other.displayName == this.displayName &&
           other.phone == this.phone &&
           other.counterLabel == this.counterLabel &&
+          other.tokenNumber == this.tokenNumber &&
+          other.counterAccess == this.counterAccess &&
+          other.points == this.points &&
           other.allowedModulesJson == this.allowedModulesJson &&
           other.active == this.active &&
           other.syncStatus == this.syncStatus &&
@@ -14393,6 +14509,9 @@ class EmployeeRecordsCompanion extends UpdateCompanion<EmployeeRecord> {
   final Value<String> displayName;
   final Value<String?> phone;
   final Value<String?> counterLabel;
+  final Value<int> tokenNumber;
+  final Value<bool> counterAccess;
+  final Value<double> points;
   final Value<String> allowedModulesJson;
   final Value<bool> active;
   final Value<int> syncStatus;
@@ -14405,6 +14524,9 @@ class EmployeeRecordsCompanion extends UpdateCompanion<EmployeeRecord> {
     this.displayName = const Value.absent(),
     this.phone = const Value.absent(),
     this.counterLabel = const Value.absent(),
+    this.tokenNumber = const Value.absent(),
+    this.counterAccess = const Value.absent(),
+    this.points = const Value.absent(),
     this.allowedModulesJson = const Value.absent(),
     this.active = const Value.absent(),
     this.syncStatus = const Value.absent(),
@@ -14418,6 +14540,9 @@ class EmployeeRecordsCompanion extends UpdateCompanion<EmployeeRecord> {
     required String displayName,
     this.phone = const Value.absent(),
     this.counterLabel = const Value.absent(),
+    this.tokenNumber = const Value.absent(),
+    this.counterAccess = const Value.absent(),
+    this.points = const Value.absent(),
     this.allowedModulesJson = const Value.absent(),
     this.active = const Value.absent(),
     this.syncStatus = const Value.absent(),
@@ -14434,6 +14559,9 @@ class EmployeeRecordsCompanion extends UpdateCompanion<EmployeeRecord> {
     Expression<String>? displayName,
     Expression<String>? phone,
     Expression<String>? counterLabel,
+    Expression<int>? tokenNumber,
+    Expression<bool>? counterAccess,
+    Expression<double>? points,
     Expression<String>? allowedModulesJson,
     Expression<bool>? active,
     Expression<int>? syncStatus,
@@ -14447,6 +14575,9 @@ class EmployeeRecordsCompanion extends UpdateCompanion<EmployeeRecord> {
       if (displayName != null) 'display_name': displayName,
       if (phone != null) 'phone': phone,
       if (counterLabel != null) 'counter_label': counterLabel,
+      if (tokenNumber != null) 'token_number': tokenNumber,
+      if (counterAccess != null) 'counter_access': counterAccess,
+      if (points != null) 'points': points,
       if (allowedModulesJson != null)
         'allowed_modules_json': allowedModulesJson,
       if (active != null) 'active': active,
@@ -14463,6 +14594,9 @@ class EmployeeRecordsCompanion extends UpdateCompanion<EmployeeRecord> {
     Value<String>? displayName,
     Value<String?>? phone,
     Value<String?>? counterLabel,
+    Value<int>? tokenNumber,
+    Value<bool>? counterAccess,
+    Value<double>? points,
     Value<String>? allowedModulesJson,
     Value<bool>? active,
     Value<int>? syncStatus,
@@ -14476,6 +14610,9 @@ class EmployeeRecordsCompanion extends UpdateCompanion<EmployeeRecord> {
       displayName: displayName ?? this.displayName,
       phone: phone ?? this.phone,
       counterLabel: counterLabel ?? this.counterLabel,
+      tokenNumber: tokenNumber ?? this.tokenNumber,
+      counterAccess: counterAccess ?? this.counterAccess,
+      points: points ?? this.points,
       allowedModulesJson: allowedModulesJson ?? this.allowedModulesJson,
       active: active ?? this.active,
       syncStatus: syncStatus ?? this.syncStatus,
@@ -14505,6 +14642,15 @@ class EmployeeRecordsCompanion extends UpdateCompanion<EmployeeRecord> {
     if (counterLabel.present) {
       map['counter_label'] = Variable<String>(counterLabel.value);
     }
+    if (tokenNumber.present) {
+      map['token_number'] = Variable<int>(tokenNumber.value);
+    }
+    if (counterAccess.present) {
+      map['counter_access'] = Variable<bool>(counterAccess.value);
+    }
+    if (points.present) {
+      map['points'] = Variable<double>(points.value);
+    }
     if (allowedModulesJson.present) {
       map['allowed_modules_json'] = Variable<String>(allowedModulesJson.value);
     }
@@ -14532,6 +14678,9 @@ class EmployeeRecordsCompanion extends UpdateCompanion<EmployeeRecord> {
           ..write('displayName: $displayName, ')
           ..write('phone: $phone, ')
           ..write('counterLabel: $counterLabel, ')
+          ..write('tokenNumber: $tokenNumber, ')
+          ..write('counterAccess: $counterAccess, ')
+          ..write('points: $points, ')
           ..write('allowedModulesJson: $allowedModulesJson, ')
           ..write('active: $active, ')
           ..write('syncStatus: $syncStatus, ')
@@ -20937,6 +21086,9 @@ typedef $$EmployeeRecordsTableCreateCompanionBuilder =
       required String displayName,
       Value<String?> phone,
       Value<String?> counterLabel,
+      Value<int> tokenNumber,
+      Value<bool> counterAccess,
+      Value<double> points,
       Value<String> allowedModulesJson,
       Value<bool> active,
       Value<int> syncStatus,
@@ -20951,6 +21103,9 @@ typedef $$EmployeeRecordsTableUpdateCompanionBuilder =
       Value<String> displayName,
       Value<String?> phone,
       Value<String?> counterLabel,
+      Value<int> tokenNumber,
+      Value<bool> counterAccess,
+      Value<double> points,
       Value<String> allowedModulesJson,
       Value<bool> active,
       Value<int> syncStatus,
@@ -20994,6 +21149,21 @@ class $$EmployeeRecordsTableFilterComposer
 
   ColumnFilters<String> get counterLabel => $composableBuilder(
     column: $table.counterLabel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get tokenNumber => $composableBuilder(
+    column: $table.tokenNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get counterAccess => $composableBuilder(
+    column: $table.counterAccess,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get points => $composableBuilder(
+    column: $table.points,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -21062,6 +21232,21 @@ class $$EmployeeRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get tokenNumber => $composableBuilder(
+    column: $table.tokenNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get counterAccess => $composableBuilder(
+    column: $table.counterAccess,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get points => $composableBuilder(
+    column: $table.points,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get allowedModulesJson => $composableBuilder(
     column: $table.allowedModulesJson,
     builder: (column) => ColumnOrderings(column),
@@ -21118,6 +21303,19 @@ class $$EmployeeRecordsTableAnnotationComposer
     column: $table.counterLabel,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get tokenNumber => $composableBuilder(
+    column: $table.tokenNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get counterAccess => $composableBuilder(
+    column: $table.counterAccess,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get points =>
+      $composableBuilder(column: $table.points, builder: (column) => column);
 
   GeneratedColumn<String> get allowedModulesJson => $composableBuilder(
     column: $table.allowedModulesJson,
@@ -21182,6 +21380,9 @@ class $$EmployeeRecordsTableTableManager
                 Value<String> displayName = const Value.absent(),
                 Value<String?> phone = const Value.absent(),
                 Value<String?> counterLabel = const Value.absent(),
+                Value<int> tokenNumber = const Value.absent(),
+                Value<bool> counterAccess = const Value.absent(),
+                Value<double> points = const Value.absent(),
                 Value<String> allowedModulesJson = const Value.absent(),
                 Value<bool> active = const Value.absent(),
                 Value<int> syncStatus = const Value.absent(),
@@ -21194,6 +21395,9 @@ class $$EmployeeRecordsTableTableManager
                 displayName: displayName,
                 phone: phone,
                 counterLabel: counterLabel,
+                tokenNumber: tokenNumber,
+                counterAccess: counterAccess,
+                points: points,
                 allowedModulesJson: allowedModulesJson,
                 active: active,
                 syncStatus: syncStatus,
@@ -21208,6 +21412,9 @@ class $$EmployeeRecordsTableTableManager
                 required String displayName,
                 Value<String?> phone = const Value.absent(),
                 Value<String?> counterLabel = const Value.absent(),
+                Value<int> tokenNumber = const Value.absent(),
+                Value<bool> counterAccess = const Value.absent(),
+                Value<double> points = const Value.absent(),
                 Value<String> allowedModulesJson = const Value.absent(),
                 Value<bool> active = const Value.absent(),
                 Value<int> syncStatus = const Value.absent(),
@@ -21220,6 +21427,9 @@ class $$EmployeeRecordsTableTableManager
                 displayName: displayName,
                 phone: phone,
                 counterLabel: counterLabel,
+                tokenNumber: tokenNumber,
+                counterAccess: counterAccess,
+                points: points,
                 allowedModulesJson: allowedModulesJson,
                 active: active,
                 syncStatus: syncStatus,

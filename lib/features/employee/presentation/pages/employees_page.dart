@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:c_billing/common_widgets/app_pill_button.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
@@ -74,12 +76,16 @@ class _EmployeesPageState extends State<EmployeesPage> {
   }
 
   Future<void> _openEditor({Employee? existing}) async {
+    final nextToken =
+        existing?.tokenNumber ?? await _repo.nextTokenNumber();
+    if (!mounted) return;
     final result = await showAppBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
       builder: (ctx) => _EmployeeEditorSheet(
         existing: existing,
+        previewToken: nextToken,
         onSave: (data) async {
           if (existing == null) {
             await _repo.createEmployee(
@@ -87,7 +93,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
               password: data.password!,
               displayName: data.displayName,
               phone: data.phone,
-              counterLabel: data.counterLabel,
+              counterAccess: data.counterAccess,
               allowedModules: data.modules,
             );
           } else {
@@ -95,7 +101,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
               existing.copyWith(
                 displayName: data.displayName,
                 phone: data.phone,
-                counterLabel: data.counterLabel,
+                counterAccess: data.counterAccess,
                 allowedModules: data.modules,
                 active: data.active,
               ),
@@ -213,9 +219,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
                     ? AppTheme.primary.withValues(alpha: 0.15)
                     : AppTheme.grey300,
                 child: Text(
-                  e.displayName.isNotEmpty
-                      ? e.displayName[0].toUpperCase()
-                      : '?',
+                  e.tokenNumber > 0 ? '${e.tokenNumber}' : '?',
                   style: TextStyle(
                     color: e.active ? AppTheme.primary : AppTheme.grey600,
                     fontWeight: FontWeight.bold,
@@ -228,24 +232,31 @@ class _EmployeesPageState extends State<EmployeesPage> {
               ),
               subtitle: Text(
                 [
+                  'Token ${e.tokenNumber}',
                   e.email,
-                  if (e.counterLabel != null && e.counterLabel!.isNotEmpty)
-                    e.counterLabel!,
+                  e.counterAccess ? 'Counter' : 'No counter',
                   '$moduleCount modules',
                   if (!e.active) 'Inactive',
                 ].join(' · '),
               ),
-              trailing: Switch(
-                value: e.active,
-                onChanged: (v) async {
-                  try {
-                    await _repo.setActive(e.id, v);
-                    await _load();
-                  } catch (err) {
-                    if (!mounted) return;
-                    GlassyToast.show(context, 'Update failed: $err');
-                  }
-                },
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _PointsGlassBadge(points: e.points),
+                  const SizedBox(width: 10),
+                  Switch(
+                    value: e.active,
+                    onChanged: (v) async {
+                      try {
+                        await _repo.setActive(e.id, v);
+                        await _load();
+                      } catch (err) {
+                        if (!mounted) return;
+                        GlassyToast.show(context, 'Update failed: $err');
+                      }
+                    },
+                  ),
+                ],
               ),
               onTap: () => _openEditor(existing: e),
             ),
@@ -256,12 +267,63 @@ class _EmployeesPageState extends State<EmployeesPage> {
   }
 }
 
+class _PointsGlassBadge extends StatelessWidget {
+  final double points;
+
+  const _PointsGlassBadge({required this.points});
+
+  @override
+  Widget build(BuildContext context) {
+    final label = points % 1 == 0
+        ? points.toStringAsFixed(0)
+        : points.toStringAsFixed(2);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: (isDark ? AppTheme.white : AppTheme.primary)
+                .withValues(alpha: isDark ? 0.12 : 0.10),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: (isDark ? AppTheme.white : AppTheme.primary)
+                  .withValues(alpha: 0.22),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.stars_rounded,
+                size: 14,
+                color: isDark ? AppTheme.white : AppTheme.primary,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? AppTheme.white : AppTheme.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _EditorData {
   final String email;
   final String? password;
   final String displayName;
   final String? phone;
-  final String? counterLabel;
+  final bool counterAccess;
   final List<String> modules;
   final bool active;
 
@@ -270,7 +332,7 @@ class _EditorData {
     this.password,
     required this.displayName,
     this.phone,
-    this.counterLabel,
+    required this.counterAccess,
     required this.modules,
     required this.active,
   });
@@ -278,10 +340,12 @@ class _EditorData {
 
 class _EmployeeEditorSheet extends StatefulWidget {
   final Employee? existing;
+  final int previewToken;
   final Future<void> Function(_EditorData data) onSave;
 
   const _EmployeeEditorSheet({
     required this.existing,
+    required this.previewToken,
     required this.onSave,
   });
 
@@ -295,9 +359,9 @@ class _EmployeeEditorSheetState extends State<_EmployeeEditorSheet> {
   late final TextEditingController _emailCtrl;
   late final TextEditingController _passwordCtrl;
   late final TextEditingController _phoneCtrl;
-  late final TextEditingController _counterCtrl;
   late Set<String> _modules;
   late bool _active;
+  late bool _counterAccess;
   bool _saving = false;
 
   @override
@@ -308,11 +372,14 @@ class _EmployeeEditorSheetState extends State<_EmployeeEditorSheet> {
     _emailCtrl = TextEditingController(text: e?.email ?? '');
     _passwordCtrl = TextEditingController();
     _phoneCtrl = TextEditingController(text: e?.phone ?? '');
-    _counterCtrl = TextEditingController(text: e?.counterLabel ?? '');
+    _counterAccess = e?.counterAccess ?? true;
     _modules = {
       ...(e?.allowedModules ??
           AppModule.defaultEmployeeModules.map((m) => m.key)),
     };
+    if (!_counterAccess) {
+      _modules.remove(AppModule.billing.key);
+    }
     _active = e?.active ?? true;
   }
 
@@ -322,7 +389,6 @@ class _EmployeeEditorSheetState extends State<_EmployeeEditorSheet> {
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     _phoneCtrl.dispose();
-    _counterCtrl.dispose();
     super.dispose();
   }
 
@@ -340,9 +406,7 @@ class _EmployeeEditorSheetState extends State<_EmployeeEditorSheet> {
           password: widget.existing == null ? _passwordCtrl.text : null,
           displayName: _nameCtrl.text.trim(),
           phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
-          counterLabel: _counterCtrl.text.trim().isEmpty
-              ? null
-              : _counterCtrl.text.trim(),
+          counterAccess: _counterAccess,
           modules: _modules.toList(),
           active: _active,
         ),
@@ -419,13 +483,27 @@ class _EmployeeEditorSheetState extends State<_EmployeeEditorSheet> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Choose modules this counter user can open.',
+              'Token is used on bills. Counter access controls billing.',
               style: TextStyle(
                 color: AppColors.mutedText(context),
                 fontSize: 13,
               ),
             ),
             const SizedBox(height: 16),
+            InputDecorator(
+              decoration: const InputDecoration(
+                labelText: 'Token number',
+                border: OutlineInputBorder(),
+              ),
+              child: Text(
+                '${widget.previewToken}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
             TextFormField(
               controller: _nameCtrl,
               enabled: !_saving,
@@ -479,18 +557,27 @@ class _EmployeeEditorSheetState extends State<_EmployeeEditorSheet> {
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _counterCtrl,
-              enabled: !_saving,
-              decoration: const InputDecoration(
-                labelText: 'Counter / label (optional)',
-                hintText: 'e.g. Counter 1',
-                border: OutlineInputBorder(),
-              ),
+            const SizedBox(height: 8),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Allow counter access'),
+              subtitle: const Text('Required to open Billing and print bills'),
+              value: _counterAccess,
+              onChanged: _saving
+                  ? null
+                  : (v) {
+                      setState(() {
+                        _counterAccess = v ?? false;
+                        if (_counterAccess) {
+                          _modules.add(AppModule.billing.key);
+                        } else {
+                          _modules.remove(AppModule.billing.key);
+                        }
+                      });
+                    },
+              controlAffinity: ListTileControlAffinity.leading,
             ),
             if (!isNew) ...[
-              const SizedBox(height: 8),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Active'),
@@ -498,7 +585,7 @@ class _EmployeeEditorSheetState extends State<_EmployeeEditorSheet> {
                 onChanged: _saving ? null : (v) => setState(() => _active = v),
               ),
             ],
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             const Text(
               'Module access',
               style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
@@ -509,10 +596,12 @@ class _EmployeeEditorSheetState extends State<_EmployeeEditorSheet> {
               runSpacing: 8,
               children: AppModule.grantable.map((m) {
                 final selected = _modules.contains(m.key);
+                final billingLocked =
+                    m == AppModule.billing && !_counterAccess;
                 return FilterChip(
                   label: Text(m.label),
                   selected: selected,
-                  onSelected: _saving
+                  onSelected: (_saving || billingLocked)
                       ? null
                       : (v) {
                           setState(() {

@@ -1379,6 +1379,22 @@ class PdfBillService {
                   ),
                 ],
               ),
+              if (billData.employeeToken != null) ...[
+                pw.SizedBox(height: 3),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text('Token:', style: const pw.TextStyle(fontSize: 8)),
+                    pw.Text(
+                      '${billData.employeeToken}',
+                      style: pw.TextStyle(
+                        fontSize: 8,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               if (billData.isQuotation &&
                   billData.quotationTitle != null &&
                   billData.quotationTitle!.isNotEmpty) ...[

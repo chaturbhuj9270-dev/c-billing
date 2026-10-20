@@ -209,6 +209,7 @@ class Bill {
             hsnCode: item.hsnCode,
             unit: item.unit,
             sellUnit: item.sellUnit,
+            employeeToken: item.employeeToken,
           ),
         )
         .toList();

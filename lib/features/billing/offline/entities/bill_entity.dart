@@ -50,6 +50,7 @@ class BillItemEmbedded {
   String? hsnCode;
   String? unit; // Base unit (kg, ltr, pcs)
   String? sellUnit; // Sale unit (gm, ml, kg, ltr, pcs)
+  int? employeeToken; // Salesperson token for this line item
 
   BillItemEmbedded({
     this.itemId,
@@ -63,6 +64,7 @@ class BillItemEmbedded {
     this.hsnCode,
     this.unit,
     this.sellUnit,
+    this.employeeToken,
   });
 
   Map<String, dynamic> toJson() {
@@ -78,10 +80,15 @@ class BillItemEmbedded {
       'hsnCode': hsnCode,
       'unit': unit,
       'sellUnit': sellUnit,
+      if (employeeToken != null) 'employeeToken': employeeToken,
     };
   }
 
   static BillItemEmbedded fromJson(Map<String, dynamic> json) {
+    final tokenRaw = json['employeeToken'];
+    final token = tokenRaw is int
+        ? tokenRaw
+        : int.tryParse('${tokenRaw ?? ''}');
     return BillItemEmbedded(
       itemId: json['id'] as String? ?? '',
       productId: json['productId'] as String? ?? '',
@@ -94,6 +101,7 @@ class BillItemEmbedded {
       hsnCode: json['hsnCode'] as String?,
       unit: json['unit'] as String?,
       sellUnit: json['sellUnit'] as String?,
+      employeeToken: (token != null && token > 0) ? token : null,
     );
   }
 }

@@ -22,10 +22,12 @@ class _BillSettingsPageState extends State<BillSettingsPage>
     with SingleTickerProviderStateMixin {
   static const String _keyShowCustomerOnBill = 'bill_show_customer_details';
   static const String _keyGenerateViaContact = 'bill_generate_via_contact';
+  static const String _keyEnableEmployeeToken = 'bill_enable_employee_token';
   static const String _keyBillType = 'bill_type'; // 'pos' or 'normal'
 
   bool _showCustomerDetails = true;
   bool _generateViaContact = false;
+  bool _enableEmployeeToken = true;
   String _billType = 'pos'; // Default to POS printer
   bool _isLoading = true;
   late AppLocalizations _localizations;
@@ -72,6 +74,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
     setState(() {
       _showCustomerDetails = prefs.getBool(_keyShowCustomerOnBill) ?? true;
       _generateViaContact = prefs.getBool(_keyGenerateViaContact) ?? false;
+      _enableEmployeeToken = prefs.getBool(_keyEnableEmployeeToken) ?? true;
       _billType = prefs.getString(_keyBillType) ?? 'pos';
       _taxSettings = taxSettings;
       _cgstController.text = taxSettings.cgstPercent > 0
@@ -93,6 +96,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyShowCustomerOnBill, _showCustomerDetails);
     await prefs.setBool(_keyGenerateViaContact, _generateViaContact);
+    await prefs.setBool(_keyEnableEmployeeToken, _enableEmployeeToken);
     await prefs.setString(_keyBillType, _billType);
     await _taxSettings.save();
 
@@ -171,6 +175,21 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                                   onChanged: (value) async {
                                     setState(() {
                                       _generateViaContact = value;
+                                    });
+                                    await _saveSettings();
+                                  },
+                                ),
+                                const SizedBox(height: 14),
+                                _buildModernToggle(
+                                  icon: Icons.confirmation_number_rounded,
+                                  iconColor: AppTheme.paletteFF7B68EE,
+                                  title: 'Employee token on bill',
+                                  subtitle:
+                                      'Per-product token; 1 point per ₹1000 of that item’s sale',
+                                  value: _enableEmployeeToken,
+                                  onChanged: (value) async {
+                                    setState(() {
+                                      _enableEmployeeToken = value;
                                     });
                                     await _saveSettings();
                                   },

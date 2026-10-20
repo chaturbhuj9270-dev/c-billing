@@ -92,11 +92,18 @@ service cloud.firestore {
         allow write: if false;
       }
 
-      // Employee roster — admin only write; members can read own row
+      // Employee roster — members can read (token lookup on bills);
+      // owners full write; members may only increment points.
       match /employees/{employeeId} {
-        allow read: if isOwner(userId)
-          || (isSignedIn() && request.auth.uid == employeeId && isEmployeeOf(userId));
-        allow write: if isOwner(userId) && hasActiveSubscription(userId);
+        allow read: if isOwnerOrMember(userId);
+        allow create, delete: if isOwner(userId) && hasActiveSubscription(userId);
+        allow update: if (isOwner(userId) && hasActiveSubscription(userId))
+          || (
+            isOwnerOrMember(userId)
+            && hasActiveSubscription(userId)
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['points', 'updatedAt'])
+          );
       }
 
       match /customers/{document=**} {

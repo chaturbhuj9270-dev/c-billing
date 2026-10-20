@@ -5,7 +5,12 @@ class Employee {
   final String email;
   final String displayName;
   final String? phone;
-  final String? counterLabel;
+  // Auto-assigned sequential token used on bills (1, 2, 3…).
+  final int tokenNumber;
+  // When true, employee may use counter / billing.
+  final bool counterAccess;
+  // Cloth-collection style sales points (from attributed bill sale prices).
+  final double points;
   final List<String> allowedModules;
   final bool active;
   final DateTime? createdAt;
@@ -16,7 +21,9 @@ class Employee {
     required this.email,
     required this.displayName,
     this.phone,
-    this.counterLabel,
+    this.tokenNumber = 0,
+    this.counterAccess = true,
+    this.points = 0,
     this.allowedModules = const [],
     this.active = true,
     this.createdAt,
@@ -33,7 +40,9 @@ class Employee {
     String? email,
     String? displayName,
     String? phone,
-    String? counterLabel,
+    int? tokenNumber,
+    bool? counterAccess,
+    double? points,
     List<String>? allowedModules,
     bool? active,
     DateTime? createdAt,
@@ -44,7 +53,9 @@ class Employee {
       email: email ?? this.email,
       displayName: displayName ?? this.displayName,
       phone: phone ?? this.phone,
-      counterLabel: counterLabel ?? this.counterLabel,
+      tokenNumber: tokenNumber ?? this.tokenNumber,
+      counterAccess: counterAccess ?? this.counterAccess,
+      points: points ?? this.points,
       allowedModules: allowedModules ?? this.allowedModules,
       active: active ?? this.active,
       createdAt: createdAt ?? this.createdAt,
@@ -58,7 +69,9 @@ class Employee {
       'email': email,
       'displayName': displayName,
       'phone': phone,
-      'counterLabel': counterLabel,
+      'tokenNumber': tokenNumber,
+      'counterAccess': counterAccess,
+      'points': points,
       'allowedModules': allowedModules,
       'active': active,
       'createdAt': createdAt?.toIso8601String(),
@@ -71,12 +84,22 @@ class Employee {
     final modules = modulesRaw is List
         ? modulesRaw.map((e) => e.toString()).toList()
         : <String>[];
+    final tokenRaw = json['tokenNumber'];
+    final token = tokenRaw is int
+        ? tokenRaw
+        : int.tryParse('$tokenRaw') ?? 0;
+    final pointsRaw = json['points'];
+    final points = pointsRaw is num
+        ? pointsRaw.toDouble()
+        : double.tryParse('$pointsRaw') ?? 0;
     return Employee(
       id: id ?? json['id'] as String? ?? '',
       email: json['email'] as String? ?? '',
       displayName: json['displayName'] as String? ?? '',
       phone: json['phone'] as String?,
-      counterLabel: json['counterLabel'] as String?,
+      tokenNumber: token,
+      counterAccess: json['counterAccess'] as bool? ?? true,
+      points: points,
       allowedModules: modules,
       active: json['active'] as bool? ?? true,
       createdAt: _parseDate(json['createdAt']),
@@ -89,7 +112,6 @@ class Employee {
     if (value is DateTime) return value;
     if (value is String) return DateTime.tryParse(value);
     try {
-      // Firestore Timestamp
       return (value as dynamic).toDate() as DateTime?;
     } catch (_) {
       return null;

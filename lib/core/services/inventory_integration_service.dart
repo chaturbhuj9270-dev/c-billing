@@ -220,6 +220,9 @@ class InventoryIntegrationService {
               subtotal: item.subtotal,
               returnedQuantity: item.returnedQuantity,
               hsnCode: item.hsnCode,
+              unit: item.unit,
+              sellUnit: item.sellUnit,
+              employeeToken: item.employeeToken,
             ),
           )
           .toList();
