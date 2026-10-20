@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -300,29 +302,51 @@ class InvoiceScannerService {
 
   InvoiceScannerService._internal();
 
-  // Default API key for invoice scanning
-  static const String _defaultApiKey =
-      'AIzaSyBvOITAj5_Rm5Jx8UDIPiCNQpCuwEEZ1fI';
+  /// SHA-256 of the key that used to ship in the app. The key itself is not stored.
+  static const String _revokedKeyHash =
+      '64fbad5a478a1b5c79753f8ce29b5cb7e51f88337de3280865f3ba6876a9b036';
+
+  static const FlutterSecureStorage _keyStorage = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock_this_device,
+    ),
+    mOptions: MacOsOptions(
+      accessibility: KeychainAccessibility.unlocked,
+      useDataProtectionKeyChain: false,
+    ),
+    webOptions: WebOptions(
+      dbName: 'c_billing_secure',
+      publicKey: 'c_billing_credentials',
+    ),
+  );
 
   GenerativeModel? _model;
   String? _apiKey;
 
-  /// Initialize the service with API key
+  /// Initialize the service with the shop's own API key.
+  ///
+  /// There is no built-in key. Scanning stays available once a key is saved.
   Future<void> initialize({String? apiKey}) async {
     if (apiKey != null && apiKey.isNotEmpty) {
+      if (_isRevokedKey(apiKey)) {
+        await clearApiKey();
+        return;
+      }
       _apiKey = apiKey;
       await _saveApiKey(apiKey);
     } else {
       _apiKey = await _loadApiKey();
-      // Use default API key if none is stored
-      if (_apiKey == null || _apiKey!.isEmpty) {
-        _apiKey = _defaultApiKey;
-      }
     }
 
     if (_apiKey != null && _apiKey!.isNotEmpty) {
       _initializeModel();
     }
+  }
+
+  bool _isRevokedKey(String value) {
+    final digest = sha256.convert(utf8.encode(value.trim()));
+    return digest.toString() == _revokedKeyHash;
   }
 
   void _initializeModel() {
@@ -341,12 +365,32 @@ class InvoiceScannerService {
 
   Future<void> _saveApiKey(String apiKey) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_apiKeyPrefKey, apiKey);
+    try {
+      await _keyStorage.write(key: _apiKeyPrefKey, value: apiKey);
+      await prefs.remove(_apiKeyPrefKey);
+    } catch (e) {
+      debugPrint('[InvoiceScanner] Secure key save failed: $e');
+      await prefs.setString(_apiKeyPrefKey, apiKey);
+    }
   }
 
   Future<String?> _loadApiKey() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_apiKeyPrefKey);
+    String? stored;
+    try {
+      stored = await _keyStorage.read(key: _apiKeyPrefKey);
+    } catch (e) {
+      debugPrint('[InvoiceScanner] Secure key read failed: $e');
+    }
+    if (stored == null || stored.isEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      stored = prefs.getString(_apiKeyPrefKey);
+    }
+    if (stored == null || stored.isEmpty) return null;
+    if (_isRevokedKey(stored)) {
+      await clearApiKey();
+      return null;
+    }
+    return stored;
   }
 
   /// Check if API key is configured
@@ -360,6 +404,10 @@ class InvoiceScannerService {
 
   /// Update API key
   Future<void> setApiKey(String apiKey) async {
+    if (_isRevokedKey(apiKey)) {
+      await clearApiKey();
+      return;
+    }
     _apiKey = apiKey;
     await _saveApiKey(apiKey);
     _initializeModel();
@@ -369,6 +417,11 @@ class InvoiceScannerService {
   Future<void> clearApiKey() async {
     _apiKey = null;
     _model = null;
+    try {
+      await _keyStorage.delete(key: _apiKeyPrefKey);
+    } catch (e) {
+      debugPrint('[InvoiceScanner] Secure key clear failed: $e');
+    }
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_apiKeyPrefKey);
   }

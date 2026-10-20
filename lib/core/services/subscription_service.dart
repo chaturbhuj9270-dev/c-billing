@@ -35,16 +35,16 @@ class SubscriptionService {
 
   /// Check if user's subscription is valid.
   ///
-  /// Fail-closed for logged-in users: missing/expired/error → false.
-  /// No logged-in user → true (auth flow handles that case).
+  /// Fail-closed: no user, a missing date, an expired date, or a read error
+  /// all return false. Login still happens before this check.
   Future<bool> isSubscriptionValid() async {
     try {
       final userId = _userId;
       if (userId == null) {
         debugPrint(
-          '[SubscriptionService] No user logged in - returning true to let auth flow handle',
+          '[SubscriptionService] No user logged in - subscription required',
         );
-        return true;
+        return false;
       }
 
       final userDoc = await _firestore

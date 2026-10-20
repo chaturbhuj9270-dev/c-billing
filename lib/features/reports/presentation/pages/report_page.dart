@@ -14,6 +14,7 @@ import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/file_preview_page.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 // ──────────────────────────────────────────────────────────
@@ -309,7 +310,14 @@ class _ReportPageState extends State<ReportPage>
   Future<void> _printReport() async {
     if (_pdfBytes == null) return;
     try {
-      await ReportPdfGenerator.shareOrPrint(context, _pdfBytes!);
+      await FilePreviewPage.open(
+        context,
+        bytes: _pdfBytes,
+        fileName: 'Inventory Report',
+        fileType: FilePreviewType.pdf,
+        subtitle: _reportResult?.filterSummary,
+        centered: true,
+      );
     } catch (e) {
       if (mounted) _showSnackbar('Failed to print: $e', true);
     }

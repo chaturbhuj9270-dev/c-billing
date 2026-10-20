@@ -46,6 +46,9 @@ class FilePreviewPage extends StatefulWidget {
   /// Web shows this preview in a dialog. Mobile and desktop use a full page.
   final bool presentedAsDialog;
 
+  /// Reports use this so each sheet is shown whole and centered.
+  final bool fitPage;
+
   const FilePreviewPage({
     super.key,
     this.file,
@@ -56,9 +59,13 @@ class FilePreviewPage extends StatefulWidget {
     this.onClose,
     this.customerPhone,
     this.presentedAsDialog = false,
+    this.fitPage = false,
   }) : assert(file != null || bytes != null, 'Provide a file or document bytes');
 
   /// Opens the preview. On web this is a popup. Other platforms push a page.
+  ///
+  /// [centered] opens a large popup on web, Windows, and Mac so wide report
+  /// pages stay readable. Phone still pushes a full page.
   static Future<void> open(
     BuildContext context, {
     File? file,
@@ -68,7 +75,9 @@ class FilePreviewPage extends StatefulWidget {
     String? subtitle,
     VoidCallback? onClose,
     String? customerPhone,
+    bool centered = false,
   }) {
+    final desktop = DesktopCanvas.isDesktopPlatform;
     final page = FilePreviewPage(
       file: file,
       bytes: bytes,
@@ -77,27 +86,43 @@ class FilePreviewPage extends StatefulWidget {
       subtitle: subtitle,
       onClose: onClose,
       customerPhone: customerPhone,
-      presentedAsDialog: DesktopCanvas.isDesktopPlatform,
+      presentedAsDialog: desktop,
+      fitPage: centered,
     );
-    if (!kIsWeb && DesktopCanvas.isDesktopPlatform) {
+    if (centered && desktop) {
+      return _showCenteredDialog(context, page, wide: true);
+    }
+    if (!kIsWeb && desktop) {
       return showAppPage(context, page);
     }
-    if (!DesktopCanvas.isDesktopPlatform) {
+    if (!desktop) {
       return Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => page),
       );
     }
 
+    return _showCenteredDialog(context, page, wide: false);
+  }
+
+  static Future<void> _showCenteredDialog(
+    BuildContext context,
+    FilePreviewPage page, {
+    required bool wide,
+  }) {
     return showGeneralDialog<void>(
       context: context,
+      useRootNavigator: true,
       barrierDismissible: true,
       barrierLabel: 'Close preview',
       barrierColor: AppTheme.black.withValues(alpha: 0.62),
       transitionDuration: const Duration(milliseconds: 180),
       pageBuilder: (dialogContext, _, _) {
         final size = MediaQuery.sizeOf(dialogContext);
-        final width = size.width >= 1200 ? 1040.0 : size.width - 48;
-        final height = size.height >= 760 ? size.height - 72 : size.height - 32;
+        final maxWidth = wide ? 1320.0 : 1040.0;
+        final width = size.width >= maxWidth + 64
+            ? maxWidth
+            : size.width - 40;
+        final height = size.height >= 760 ? size.height - 56 : size.height - 24;
         return Center(
           child: Material(
             color: AppColors.card(dialogContext),
@@ -998,16 +1023,25 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         Expanded(
           child: Container(
             color: AppColors.chipFill(context),
-            child: ListView.builder(
-              controller: _pdfScrollController,
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-              itemCount: _renderedPages.length,
-              itemBuilder: (context, index) {
-                final pageBytes = _renderedPages[index];
-                if (pageBytes == null) {
-                  return _buildPagePlaceholder(index + 1);
-                }
-                return _buildPdfPage(pageBytes, index + 1);
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return ListView.builder(
+                  controller: _pdfScrollController,
+                  padding: EdgeInsets.symmetric(
+                    vertical: widget.fitPage ? 0 : 16,
+                    horizontal: widget.fitPage ? 0 : 12,
+                  ),
+                  itemCount: _renderedPages.length,
+                  itemBuilder: (context, index) {
+                    final pageBytes = _renderedPages[index];
+                    if (pageBytes == null) {
+                      return _buildPagePlaceholder(index + 1);
+                    }
+                    final page = _buildPdfPage(pageBytes, index + 1);
+                    if (!widget.fitPage) return page;
+                    return SizedBox(height: constraints.maxHeight, child: page);
+                  },
+                );
               },
             ),
           ),
@@ -1104,7 +1138,70 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     );
   }
 
+  Widget _pdfPageError(int pageNumber) {
+    return SizedBox(
+      height: 200,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.broken_image_outlined,
+              size: 32,
+              color: AppTheme.grey400,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Failed to load page $pageNumber',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 12,
+                color: AppTheme.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildPdfPage(Uint8List pageBytes, int pageNumber) {
+    if (widget.fitPage) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
+        child: Column(
+          children: [
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return Center(
+                    child: Image.memory(
+                      pageBytes,
+                      fit: BoxFit.contain,
+                      width: constraints.maxWidth,
+                      height: constraints.maxHeight,
+                      errorBuilder: (context, error, stackTrace) =>
+                          _pdfPageError(pageNumber),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Page $pageNumber of $_totalPages',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 11,
+                color: AppColors.mutedText(context),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       margin: EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(

@@ -157,17 +157,15 @@ class BiometricService {
     }
   }
 
-  /// Check if global biometric lock is enabled
+  /// Check if global biometric lock is enabled.
+  ///
+  /// Throws when the setting cannot be read. Callers must not treat that as
+  /// "lock off", or a storage error would open the app.
   Future<bool> isBiometricLockEnabled() async {
-    try {
-      final value = await _secureStorage.read(
-        key: _biometricLockEnabledKey,
-      );
-      return value == 'true';
-    } catch (e) {
-      debugPrint('[BiometricService] Error checking biometric lock status: $e');
-      return false;
-    }
+    final value = await _secureStorage.read(
+      key: _biometricLockEnabledKey,
+    );
+    return value == 'true';
   }
 
   /// Set biometric lock status (convenience method)

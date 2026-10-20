@@ -27,6 +27,14 @@ service cloud.firestore {
           || request.resource.data.subscriptionStatus == 'inactive');
     }
 
+    // Shop data stays closed until Cloud Functions set a paid subscription.
+    // The user profile itself stays readable so the paywall can load.
+    function hasActiveSubscription(userId) {
+      let data = get(/databases/$(database)/documents/users/$(userId)).data;
+      return data.subscriptionDate is timestamp
+        && request.time < data.subscriptionDate + duration.value(365, 'd');
+    }
+
     match /users/{userId} {
       allow read: if isOwner(userId);
       allow create: if isOwner(userId) && creatingInactiveSubscription();
@@ -39,39 +47,39 @@ service cloud.firestore {
       }
 
       match /customers/{document=**} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
       }
 
       match /suppliers/{document=**} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
       }
 
       match /companies/{document=**} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
       }
 
       match /products/{document=**} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
       }
 
       match /stock/{document=**} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
       }
 
       match /purchases/{document=**} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
       }
 
       match /bills/{document=**} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
       }
 
       match /invoices/{document=**} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
       }
 
       match /profile/{document=**} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
       }
     }
 

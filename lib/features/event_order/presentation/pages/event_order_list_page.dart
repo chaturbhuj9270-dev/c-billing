@@ -2323,11 +2323,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         if (mounted) GlassyToast.dismiss();
         if (!mounted) return;
         await FilePreviewPage.open(
-        context,
-              bytes: pdfBytes,
-              fileName: isEvent ? 'Event Report' : 'Order Report',
-              fileType: FilePreviewType.pdf,
-              subtitle: _getDateFilterLabel(),
+          context,
+          bytes: pdfBytes,
+          fileName: isEvent ? 'Event Report' : 'Order Report',
+          fileType: FilePreviewType.pdf,
+          subtitle: _getDateFilterLabel(),
+          centered: true,
         );
         return;
       }
@@ -2353,11 +2354,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
 
       // Navigate to preview
       await FilePreviewPage.open(
-      context,
-            file: file,
-            fileName: isEvent ? 'Event Report' : 'Order Report',
-            fileType: FilePreviewType.pdf,
-            subtitle: _getDateFilterLabel(),
+        context,
+        file: file,
+        fileName: isEvent ? 'Event Report' : 'Order Report',
+        fileType: FilePreviewType.pdf,
+        subtitle: _getDateFilterLabel(),
+        centered: true,
       );
     } catch (e) {
       debugPrint('[EventOrderList] Report generation error: $e');

@@ -1555,12 +1555,13 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
         if (mounted) GlassyToast.dismiss();
         if (!mounted) return;
         await FilePreviewPage.open(
-        context,
-              bytes: pdfBytes,
-              fileName: 'Purchase Report',
-              fileType: FilePreviewType.pdf,
-              subtitle:
-                  '${filtered.length} entries • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
+          context,
+          bytes: pdfBytes,
+          fileName: 'Purchase Report',
+          fileType: FilePreviewType.pdf,
+          subtitle:
+              '${filtered.length} entries • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
+          centered: true,
         );
         return;
       }
@@ -1583,12 +1584,13 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
       // Navigate to file preview page
       await FilePreviewPage.open(
-      context,
-            file: tempFile,
-            fileName: 'Purchase Report',
-            fileType: FilePreviewType.pdf,
-            subtitle:
-                '${filtered.length} entries • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
+        context,
+        file: tempFile,
+        fileName: 'Purchase Report',
+        fileType: FilePreviewType.pdf,
+        subtitle:
+            '${filtered.length} entries • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
+        centered: true,
       );
 
       _isGeneratingReport = false;

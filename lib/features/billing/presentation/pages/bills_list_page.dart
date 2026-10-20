@@ -379,12 +379,13 @@ class _BillsListPageState extends State<BillsListPage>
         if (mounted) GlassyToast.dismiss();
         if (!mounted) return;
         await FilePreviewPage.open(
-        context,
-              bytes: pdfBytes,
-              fileName: _localizations.billReport,
-              fileType: FilePreviewType.pdf,
-              subtitle:
-                  '${filtered.length} bills • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
+          context,
+          bytes: pdfBytes,
+          fileName: _localizations.billReport,
+          fileType: FilePreviewType.pdf,
+          subtitle:
+              '${filtered.length} bills • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
+          centered: true,
         );
         return;
       }
@@ -407,12 +408,13 @@ class _BillsListPageState extends State<BillsListPage>
 
       // Navigate to file preview page
       await FilePreviewPage.open(
-      context,
-            file: tempFile,
-            fileName: _localizations.billReport,
-            fileType: FilePreviewType.pdf,
-            subtitle:
-                '${filtered.length} bills • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
+        context,
+        file: tempFile,
+        fileName: _localizations.billReport,
+        fileType: FilePreviewType.pdf,
+        subtitle:
+            '${filtered.length} bills • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
+        centered: true,
       );
 
       _isGeneratingReport = false;

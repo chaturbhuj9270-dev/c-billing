@@ -55,11 +55,21 @@ class CredentialsManager {
   }
 
   /// Save credentials after the user signs in with Remember me checked.
+  ///
+  /// Web keeps the email and the remember flag only. The password is not
+  /// stored there because the web encryption key ships inside the app.
+  /// Firebase Auth persistence keeps that session instead.
   Future<void> saveCredentials({
     required String email,
     required String password,
     required String userId,
   }) async {
+    if (kIsWeb) {
+      await _writeRememberedSession(email: email, userId: userId);
+      await _storage.delete(key: _passwordKey);
+      debugPrint('[DEBUG] Remembered web session saved without a password');
+      return;
+    }
     await _writeCredentials(email: email, password: password, userId: userId);
     debugPrint('[DEBUG] Remembered login saved in secure storage');
   }
@@ -67,6 +77,10 @@ class CredentialsManager {
   /// Replace the stored password after a successful password change.
   Future<void> updateStoredPassword(String password) async {
     if (!await isRemembered()) return;
+    if (kIsWeb) {
+      await _storage.delete(key: _passwordKey);
+      return;
+    }
     await _storage.write(key: _passwordKey, value: password);
     await _storage.write(
       key: _timestampKey,
@@ -88,8 +102,12 @@ class CredentialsManager {
   }
 
   /// Credentials for automatic sign-in. Null when Remember me is off.
+  ///
+  /// Web never returns a password. The splash screen uses the Firebase
+  /// session that Remember me already persisted.
   Future<Map<String, String>?> getStoredCredentials() async {
     try {
+      if (kIsWeb) return null;
       if (!await isRemembered()) return null;
       final email = await _storage.read(key: _emailKey);
       final password = await _storage.read(key: _passwordKey);
@@ -120,6 +138,19 @@ class CredentialsManager {
       debugPrint('[ERROR] Failed to clear remembered login: $e');
       rethrow;
     }
+  }
+
+  Future<void> _writeRememberedSession({
+    required String email,
+    required String userId,
+  }) async {
+    await _storage.write(key: _emailKey, value: email);
+    await _storage.write(key: _userIdKey, value: userId);
+    await _storage.write(key: _rememberKey, value: 'true');
+    await _storage.write(
+      key: _timestampKey,
+      value: DateTime.now().millisecondsSinceEpoch.toString(),
+    );
   }
 
   Future<void> _writeCredentials({
@@ -163,6 +194,11 @@ class CredentialsManager {
 
       for (final key in _legacyKeys) {
         await prefs.remove(key);
+      }
+
+      // Drop any password previously saved in web storage.
+      if (kIsWeb) {
+        await _storage.delete(key: _passwordKey);
       }
     } catch (e) {
       debugPrint('[ERROR] Legacy credential migration failed: $e');

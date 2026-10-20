@@ -154,7 +154,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       if (await _credentialsManager.isRemembered()) {
         debugPrint('[DEBUG] Remembered login found, attempting auto-login');
 
-        final currentUser = FirebaseAuth.instance.currentUser;
+        final currentUser = await _restoredUser();
         if (currentUser != null) {
           debugPrint(
             '[DEBUG] Firebase user already authenticated: ${currentUser.uid}',
@@ -166,6 +166,13 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
           }
           _reloadSettingsInBackground();
           _goToDashboard();
+          return;
+        }
+
+        // Web does not keep the password. Without a Firebase session, sign in.
+        if (kIsWeb) {
+          debugPrint('[DEBUG] No web session to restore, going to login');
+          _goToLogin();
           return;
         }
 
@@ -184,6 +191,20 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     } catch (e) {
       debugPrint('[ERROR] Error during initialization: $e');
       _timer = Timer(widget.duration, _goToLogin);
+    }
+  }
+
+  /// Waits until Firebase has restored a persisted session, if there is one.
+  Future<User?> _restoredUser() async {
+    final existing = FirebaseAuth.instance.currentUser;
+    if (existing != null) return existing;
+    try {
+      return await FirebaseAuth.instance
+          .authStateChanges()
+          .first
+          .timeout(const Duration(seconds: 5));
+    } on TimeoutException {
+      return FirebaseAuth.instance.currentUser;
     }
   }
 
@@ -282,9 +303,26 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       }
     } catch (e) {
       debugPrint('[ERROR] Error checking biometric lock: $e');
-      // On error, go directly to dashboard
-      _navigateToDashboard();
+      // Don't open the shop when the lock state can't be read.
+      // Devices without biometrics still continue, because the lock
+      // cannot be turned on there.
+      final canUse = await BiometricService.instance.canUseBiometrics();
+      if (!mounted) return;
+      if (canUse) {
+        setState(() => _showUnlockButton = true);
+      } else {
+        _navigateToDashboard();
+      }
     }
+  }
+
+  Future<void> _signInWithPasswordInstead() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+    } catch (e) {
+      debugPrint('[ERROR] Sign out before password login failed: $e');
+    }
+    _goToLogin();
   }
 
   Future<void> _showFingerprintDialog(String userId) async {
@@ -635,33 +673,52 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   Widget _buildUnlockButton(Color themeColor) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: SizedBox(
-        width: double.infinity,
-        height: 52,
-        child: Material(
-          color: themeColor,
-          borderRadius: BorderRadius.circular(26),
-          child: InkWell(
-            onTap: _showUnlockBiometric,
-            borderRadius: BorderRadius.circular(26),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.fingerprint, color: AppTheme.white, size: 22),
-                const SizedBox(width: 8),
-                Text(
-                  _localizations.unlockNow,
-                  style: const TextStyle(
-                    color: AppTheme.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Literata',
-                  ),
+      child: Column(
+        children: [
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: Material(
+              color: themeColor,
+              borderRadius: BorderRadius.circular(26),
+              child: InkWell(
+                onTap: _showUnlockBiometric,
+                borderRadius: BorderRadius.circular(26),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.fingerprint,
+                      color: AppTheme.white,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _localizations.unlockNow,
+                      style: const TextStyle(
+                        color: AppTheme.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
+          TextButton(
+            onPressed: _signInWithPasswordInstead,
+            child: Text(
+              _localizations.signIn,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                color: themeColor,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

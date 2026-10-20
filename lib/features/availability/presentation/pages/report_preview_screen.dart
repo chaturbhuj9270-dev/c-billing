@@ -241,12 +241,13 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
               );
         if (mounted) {
           await FilePreviewPage.open(
-          context,
-                bytes: bytes,
-                fileName: widget.reportTitle,
-                fileType: widget.selectedFormat == ReportFormat.pdf
-                    ? FilePreviewType.pdf
-                    : FilePreviewType.csv,
+            context,
+            bytes: bytes,
+            fileName: widget.reportTitle,
+            fileType: widget.selectedFormat == ReportFormat.pdf
+                ? FilePreviewType.pdf
+                : FilePreviewType.csv,
+            centered: true,
           );
         }
         return;
@@ -272,18 +273,19 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
       // Navigate to file preview page
       if (mounted) {
         await FilePreviewPage.open(
-        context,
-              file: file,
-              fileName: widget.reportTitle,
-              fileType: widget.selectedFormat == ReportFormat.pdf
-                  ? FilePreviewType.pdf
-                  : FilePreviewType.csv,
-              subtitle:
-                  '${selected.length} products • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
-              onClose: () {
-                // Pop back to availability page when preview is closed
-                if (mounted) Navigator.of(context).pop();
-              },
+          context,
+          file: file,
+          fileName: widget.reportTitle,
+          fileType: widget.selectedFormat == ReportFormat.pdf
+              ? FilePreviewType.pdf
+              : FilePreviewType.csv,
+          subtitle:
+              '${selected.length} products • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
+          centered: true,
+          onClose: () {
+            // Pop back to availability page when preview is closed
+            if (mounted) Navigator.of(context).pop();
+          },
         );
       }
     } catch (e) {

@@ -41,6 +41,7 @@ dependencies:
   url_launcher: ^6.3.2
   # Google Gemini AI for Invoice Scanning
   google_generative_ai: ^0.4.6
+  crypto: ^3.0.6
   # Offline-first SQLite database
   drift: ^2.28.1
   drift_flutter: ^0.2.7
