@@ -168,13 +168,25 @@ class ProductOfflineController extends ChangeNotifier {
   }
 
   Future<ProductEntity?> getProductByBarcode(String barcode) async {
+    final needle = barcode.trim();
+    if (needle.isEmpty) return null;
+    final needleLower = needle.toLowerCase();
+
+    ProductEntity? exact;
+    ProductEntity? caseInsensitive;
     for (final product in await _db.loadProducts()) {
-      if (product.barcode == barcode &&
-          product.syncStatus != SyncStatus.deleted) {
-        return product;
+      if (product.syncStatus == SyncStatus.deleted) continue;
+      final stored = (product.barcode ?? '').trim();
+      if (stored.isEmpty) continue;
+      if (stored == needle) {
+        exact = product;
+        break;
+      }
+      if (caseInsensitive == null && stored.toLowerCase() == needleLower) {
+        caseInsensitive = product;
       }
     }
-    return null;
+    return exact ?? caseInsensitive;
   }
 
   Future<ProductEntity?> getProductByIndexNo(int indexNo) async {

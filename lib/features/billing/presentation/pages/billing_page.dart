@@ -29,6 +29,8 @@ import 'package:c_billing/features/product/offline/controllers/product_offline_c
 import 'package:c_billing/features/product/offline/entities/product_entity.dart';
 import 'package:c_billing/features/product/data/services/product_sync_service.dart';
 import 'package:c_billing/core/services/inventory_integration_service.dart';
+import 'package:c_billing/core/services/barcode_service.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 import 'package:c_billing/features/employee/data/repositories/employee_repository.dart';
 import 'package:c_billing/features/inventory_management/offline/controllers/purchase_batch_offline_controller.dart';
 import 'package:c_billing/features/inventory_management/offline/entities/purchase_batch_entity.dart';
@@ -58,7 +60,6 @@ import 'package:c_billing/features/customer/domain/entities/customer_transaction
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
-import 'package:c_billing/core/ui/desktop_canvas.dart';
 import 'package:c_billing/common_widgets/app_pill_button.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
@@ -114,11 +115,13 @@ class _BillingPageState extends State<BillingPage> {
   Map<String, dynamic>? _selectedCustomer;
   List<Map<String, dynamic>> _customers = [];
 
-  // Quick add by index number
+  // Quick add by index number / barcode (USB wedge scanners type into this field)
   final _indexNoController = TextEditingController();
   final _indexNoFocusNode = FocusNode();
   Timer? _debounceTimer;
   Map<int, Product> _productByIndexNo = {};
+  Map<String, Product> _productByBarcode = {};
+  bool _isResolvingScan = false;
 
   // FIFO batch data for billing
   List<PurchaseBatchEntity> _availableBatches = [];
@@ -452,11 +455,18 @@ class _BillingPageState extends State<BillingPage> {
               batches.where((b) => b.quantityRemaining > 0).toList()..sort(
                 (a, b) => a.purchaseDate.compareTo(b.purchaseDate),
               ); // FIFO order
-          // Build index lookup map from ALL products (not just in-stock) so product code search works even when currentStock=0 but batches have stock
+          // Build index + barcode lookup maps from ALL products so code/barcode search works even when currentStock=0 but batches have stock
           _productByIndexNo = {
             for (final product in allMappedProducts)
               if (product.indexNo > 0) product.indexNo: product,
           };
+          _productByBarcode = {};
+          for (final product in allMappedProducts) {
+            final code = (product.barcode ?? '').trim();
+            if (code.isEmpty) continue;
+            _productByBarcode[code] = product;
+            _productByBarcode[code.toLowerCase()] = product;
+          }
           if (showLoader) _isLoading = false;
         });
       }
@@ -2834,43 +2844,62 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  // Add product by index number directly from the Create Bill page Uses FIFO: picks the oldest batch's selling price automatically
-  void _addProductByIndexNoOnPage() {
+  // Add product by product code, manufacturer barcode, or app barcode. USB barcode readers type into the Add Items field and send Enter.
+  Future<void> _addProductByIndexNoOnPage() async {
     final indexText = _indexNoController.text.trim();
-    if (indexText.isEmpty) return;
+    if (indexText.isEmpty || _isResolvingScan) return;
+    _debounceTimer?.cancel();
+
+    Product? product = _productByBarcode[indexText] ??
+        _productByBarcode[indexText.toLowerCase()];
 
     final indexNo = int.tryParse(indexText);
-    if (indexNo == null) {
-      _showSnackbar(_localizations.pleaseEnterValidNumber, isError: true);
-      _indexNoController.clear();
-      return;
+    if (product == null && indexNo != null) {
+      product = _productByIndexNo[indexNo];
     }
 
-    final product = _productByIndexNo[indexNo];
-    if (product == null) {
+    // Fall back to full barcode service (manufacturer variants, generated EAN, etc.)
+    final resolved = product;
+    if (resolved == null) {
+      _isResolvingScan = true;
+      try {
+        final scanned = await BarcodeService.instance.scanForBilling(indexText);
+        if (!mounted) return;
+        if (scanned != null) {
+          _indexNoController.clear();
+          _addScannedProductToBill(scanned);
+          return;
+        }
+      } finally {
+        _isResolvingScan = false;
+      }
+
       _showSnackbar(
-        '${_localizations.productNotFound} #$indexNo',
+        indexNo != null
+            ? '${_localizations.productNotFound} #$indexNo'
+            : '${_localizations.productNotFound}: $indexText',
         isError: true,
       );
       _indexNoController.clear();
+      _indexNoFocusNode.requestFocus();
       return;
     }
 
     // Check FIFO batch stock first
     final productBatches =
         _availableBatches
-            .where((b) => b.productId == product.id && b.quantityRemaining > 0)
+            .where((b) => b.productId == resolved.id && b.quantityRemaining > 0)
             .toList()
           ..sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
     final batchStock = productBatches.fold<int>(
       0,
       (s, b) => s + b.quantityRemaining,
     );
-    final effectiveStock = batchStock > 0 ? batchStock : product.currentStock;
+    final effectiveStock = batchStock > 0 ? batchStock : resolved.currentStock;
 
     if (effectiveStock <= 0) {
       _showSnackbar(
-        '${product.name} ${_localizations.outOfStock}',
+        '${resolved.name} ${_localizations.outOfStock}',
         isError: true,
       );
       _indexNoController.clear();
@@ -2885,17 +2914,17 @@ class _BillingPageState extends State<BillingPage> {
         isScrollControlled: true,
         backgroundColor: AppTheme.transparent,
         builder: (ctx) => BatchSelectionSheet(
-          productName: product.name,
-          productCode: product.indexNo,
+          productName: resolved.name,
+          productCode: resolved.indexNo,
           batches: productBatches,
           localizations: _localizations,
           existingBillItems: _billItems,
-          cgstPercent: product.cgstPercent,
-          sgstPercent: product.sgstPercent,
-          hsnCode: product.hsnCode,
-          unit: product.unit,
+          cgstPercent: resolved.cgstPercent,
+          sgstPercent: resolved.sgstPercent,
+          hsnCode: resolved.hsnCode,
+          unit: resolved.unit,
           onBatchSelected: (batch, quantity, sellUnit) {
-            final uniqueKey = '${product.id}_batch_${batch.id}';
+            final uniqueKey = '${resolved.id}_batch_${batch.id}';
             final existingIndex = _billItems.indexWhere(
               (item) => item.productId == uniqueKey,
             );
@@ -2904,15 +2933,15 @@ class _BillingPageState extends State<BillingPage> {
                 final prev = _billItems[existingIndex];
                 _billItems[existingIndex] = BillItem.create(
                   productId: uniqueKey,
-                  productName: product.name,
+                  productName: resolved.name,
                   companyName: batch.companyName.isNotEmpty
                       ? batch.companyName
                       : null,
                   sellingPrice: batch.sellingPrice,
                   purchasePrice: batch.purchasePrice,
                   quantity: quantity,
-                  hsnCode: product.hsnCode,
-                  unit: product.unit,
+                  hsnCode: resolved.hsnCode,
+                  unit: resolved.unit,
                   sellUnit: sellUnit,
                   employeeToken: prev.employeeToken,
                 );
@@ -2920,15 +2949,15 @@ class _BillingPageState extends State<BillingPage> {
                 _billItems.add(
                   BillItem.create(
                     productId: uniqueKey,
-                    productName: product.name,
+                    productName: resolved.name,
                     companyName: batch.companyName.isNotEmpty
                         ? batch.companyName
                         : null,
                     sellingPrice: batch.sellingPrice,
                     purchasePrice: batch.purchasePrice,
                     quantity: quantity,
-                    hsnCode: product.hsnCode,
-                    unit: product.unit,
+                    hsnCode: resolved.hsnCode,
+                    unit: resolved.unit,
                     sellUnit: sellUnit,
                   ),
                 );
@@ -2936,7 +2965,7 @@ class _BillingPageState extends State<BillingPage> {
             });
             Navigator.pop(ctx);
             _showSnackbar(
-              '${_localizations.added}: ${product.name}',
+              '${_localizations.added}: ${resolved.name}',
               isError: false,
             );
             _focusAfterProductAdded(uniqueKey);
@@ -2953,9 +2982,9 @@ class _BillingPageState extends State<BillingPage> {
     }
 
     // No batches — fallback to product-level data
-    final fifoPrice = product.salesPrice;
-    final fifoPurchasePrice = product.purchasePrice;
-    final uniqueKey = product.id;
+    final fifoPrice = resolved.salesPrice;
+    final fifoPurchasePrice = resolved.purchasePrice;
+    final uniqueKey = resolved.id;
 
     // Add product — increment quantity if already in cart
     final existingIndex = _billItems.indexWhere(
@@ -2971,16 +3000,16 @@ class _BillingPageState extends State<BillingPage> {
         if (existing.quantity + step <= effectiveStock) {
           _billItems[existingIndex] = BillItem.create(
             productId: uniqueKey,
-            productName: product.name,
-            companyName: product.companyName.isNotEmpty
-                ? product.companyName
+            productName: resolved.name,
+            companyName: resolved.companyName.isNotEmpty
+                ? resolved.companyName
                 : null,
             sellingPrice: existing.sellingPrice,
             purchasePrice: fifoPurchasePrice,
             quantity: existing.quantity + step,
-            hsnCode: product.hsnCode,
-            unit: existing.unit ?? product.unit,
-            sellUnit: existing.sellUnit ?? product.unit,
+            hsnCode: resolved.hsnCode,
+            unit: existing.unit ?? resolved.unit,
+            sellUnit: existing.sellUnit ?? resolved.unit,
             employeeToken: existing.employeeToken,
           );
         } else {
@@ -2995,22 +3024,22 @@ class _BillingPageState extends State<BillingPage> {
         _billItems.add(
           BillItem.create(
             productId: uniqueKey,
-            productName: product.name,
-            companyName: product.companyName.isNotEmpty
-                ? product.companyName
+            productName: resolved.name,
+            companyName: resolved.companyName.isNotEmpty
+                ? resolved.companyName
                 : null,
             sellingPrice: fifoPrice,
             purchasePrice: fifoPurchasePrice,
             quantity: 1,
-            hsnCode: product.hsnCode,
-            unit: product.unit,
-            sellUnit: product.unit,
+            hsnCode: resolved.hsnCode,
+            unit: resolved.unit,
+            sellUnit: resolved.unit,
           ),
         );
       }
     });
 
-    _showSnackbar('${_localizations.added}: ${product.name}', isError: false);
+    _showSnackbar('${_localizations.added}: ${resolved.name}', isError: false);
 
     // Clear input; focus this line's token (if needed) or index for next entry
     _indexNoController.clear();
@@ -3019,8 +3048,11 @@ class _BillingPageState extends State<BillingPage> {
 
   void _onPageIndexNoChanged() {
     _debounceTimer?.cancel();
-    if (_indexNoController.text.trim().isEmpty) return;
-    _debounceTimer = Timer(Duration(milliseconds: 800), () {
+    final text = _indexNoController.text.trim();
+    if (text.isEmpty) return;
+    // Short codes = product index (wait for typing). Longer = likely barcode wedge (fast pause).
+    final delayMs = text.length >= 8 ? 200 : 800;
+    _debounceTimer = Timer(Duration(milliseconds: delayMs), () {
       _addProductByIndexNoOnPage();
     });
   }
@@ -3109,7 +3141,9 @@ class _BillingPageState extends State<BillingPage> {
                               color: AppColors.primaryText(context),
                             ),
                             decoration: InputDecoration(
-                              hintText: 'Product code or name',
+                              hintText: DesktopCanvas.isDesktopPlatform
+                                  ? 'Scan barcode or enter product code'
+                                  : 'Product code or barcode',
                               hintStyle: TextStyle(
                                 color: AppColors.mutedText(context),
                                 fontWeight: FontWeight.w400,

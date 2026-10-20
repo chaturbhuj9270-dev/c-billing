@@ -21,6 +21,7 @@ class Product {
   final bool isSynced;
   final String? customFieldsJson;
   final String? unit; // Measurement unit (kg, ltr, pcs, etc.)
+  final String? barcode; // Manufacturer or app-generated barcode / QR payload
 
   Product({
     required this.id,
@@ -41,6 +42,7 @@ class Product {
     this.isSynced = true,
     this.customFieldsJson,
     this.unit,
+    this.barcode,
   });
 
   // Factory constructor to create from ProductEntity (offline entity)
@@ -64,6 +66,7 @@ class Product {
       isSynced: entity.syncStatus == SyncStatus.synced,
       customFieldsJson: entity.customFieldsJson as String?,
       unit: entity.unit as String?,
+      barcode: entity.barcode as String?,
     );
   }
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -90,6 +93,7 @@ class Product {
         hsnCode: json['hsnCode'] as String?,
         customFieldsJson: json['customFieldsJson'] as String?,
         unit: json['unit'] as String?,
+        barcode: json['barcode'] as String?,
       );
     } catch (e) {
       debugPrint('[ERROR] Failed to parse Product from JSON: $json');
@@ -130,6 +134,7 @@ class Product {
       'hsnCode': hsnCode,
       'customFieldsJson': customFieldsJson,
       'unit': unit,
+      'barcode': barcode,
     };
   }
 
@@ -153,6 +158,7 @@ class Product {
     bool? isSynced,
     String? customFieldsJson,
     String? unit,
+    String? barcode,
   }) {
     return Product(
       id: id ?? this.id,
@@ -173,6 +179,7 @@ class Product {
       isSynced: isSynced ?? this.isSynced,
       customFieldsJson: customFieldsJson ?? this.customFieldsJson,
       unit: unit ?? this.unit,
+      barcode: barcode ?? this.barcode,
     );
   }
 

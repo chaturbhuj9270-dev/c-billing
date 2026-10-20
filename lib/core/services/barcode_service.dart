@@ -338,7 +338,8 @@ class BarcodeService {
 
   // Look up product by barcode - primary method for fast billing Supports: - Direct barcode field match - EAN-13 format (200BBNNNNNNC) - extracts product index - EAN-8 format (20NNN...
   Future<BarcodeLookupResult> lookupByBarcode(String barcode) async {
-    if (barcode.isEmpty) {
+    final code = barcode.trim();
+    if (code.isEmpty) {
       return BarcodeLookupResult(
         found: false,
         errorMessage: 'Barcode is empty',
@@ -346,17 +347,27 @@ class BarcodeService {
     }
 
     try {
-      // First try to find product by exact barcode field match
+      // First try exact / case-insensitive manufacturer or assigned barcode match
       var product = await ProductOfflineController.instance.getProductByBarcode(
-        barcode,
+        code,
       );
+
+      // Common USB-scanner / packaging variants (UPC-A <-> EAN-13 padding)
+      if (product == null) {
+        for (final variant in _barcodeLookupVariants(code)) {
+          product = await ProductOfflineController.instance.getProductByBarcode(
+            variant,
+          );
+          if (product != null) break;
+        }
+      }
 
       if (product != null) {
         return await _buildLookupResult(product);
       }
 
       // Try to parse barcode and extract product index number
-      final parsedResult = _parseGeneratedBarcode(barcode);
+      final parsedResult = _parseGeneratedBarcode(code);
       if (parsedResult != null) {
         final indexNo = parsedResult['indexNo'] as int;
         final batchNo = parsedResult['batchNo'] as int?;
@@ -385,9 +396,9 @@ class BarcodeService {
       }
 
       // If barcode starts with 'B', it might be a batch-specific barcode
-      if (barcode.startsWith('B') && barcode.length > 9) {
+      if (code.startsWith('B') && code.length > 9) {
         // Try to parse batch ID from barcode Format: B{batchId}{timestamp} - timestamp is 8 chars
-        final batchIdPart = barcode.substring(1, barcode.length - 8);
+        final batchIdPart = code.substring(1, code.length - 8);
         final batches = await PurchaseBatchOfflineController.instance
             .getAllBatches(includeConsumed: false);
 
@@ -406,9 +417,9 @@ class BarcodeService {
       }
 
       // If barcode starts with 'P', it might be a product-specific barcode
-      if (barcode.startsWith('P') && barcode.length > 9) {
+      if (code.startsWith('P') && code.length > 9) {
         // Format: P{productIdPart}{timestamp} - timestamp is 8 chars
-        final productIdPart = barcode.substring(1, barcode.length - 8);
+        final productIdPart = code.substring(1, code.length - 8);
         final products = await ProductOfflineController.instance
             .getAllProducts();
 
@@ -421,16 +432,16 @@ class BarcodeService {
       }
 
       // Try Code128 - could be any alphanumeric string matching product name/code
-      if (barcode.length >= 3) {
+      if (code.length >= 3) {
         final products = await ProductOfflineController.instance.searchProducts(
-          barcode,
+          code,
         );
         if (products.isNotEmpty) {
           return await _buildLookupResult(products.first);
         }
       }
 
-      return BarcodeLookupResult.notFound(barcode);
+      return BarcodeLookupResult.notFound(code);
     } catch (e) {
       return BarcodeLookupResult(
         found: false,
@@ -451,6 +462,17 @@ class BarcodeService {
       product: product,
       batch: batches.isNotEmpty ? batches.first : null,
     );
+  }
+
+  // USB scanners and printed labels sometimes differ by a leading zero (UPC-A vs EAN-13).
+  Iterable<String> _barcodeLookupVariants(String code) sync* {
+    if (!RegExp(r'^\d+$').hasMatch(code)) return;
+    if (code.length == 12) {
+      yield '0$code';
+    }
+    if (code.length == 13 && code.startsWith('0')) {
+      yield code.substring(1);
+    }
   }
 
   // Parse generated barcode to extract product index and batch number Returns null if barcode format is not recognized

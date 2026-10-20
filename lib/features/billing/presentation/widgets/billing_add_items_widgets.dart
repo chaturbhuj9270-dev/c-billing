@@ -1974,13 +1974,10 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                       itemCount: _filteredBatches.length,
                       itemBuilder: (context, index) {
                         final batch = _filteredBatches[index];
-                        final isOldest = widget.batches.isNotEmpty &&
-                            batch.id == widget.batches.first.id;
                         final existingQty = _getExistingQtyForBatch(batch);
                         return _buildBatchCard(
                           batch: batch,
                           isSelected: _selectedBatchIndex == index,
-                          isOldest: isOldest,
                           existingQty: existingQty,
                           onTap: () {
                             if (existingQty > 0) {
@@ -2063,7 +2060,6 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
   Widget _buildBatchCard({
     required PurchaseBatchEntity batch,
     required bool isSelected,
-    required bool isOldest,
     required double existingQty,
     required VoidCallback onTap,
   }) {
@@ -2141,37 +2137,6 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                         ],
                       ),
                     ),
-                    if (isOldest)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppTheme.toneAmber.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.verified_rounded,
-                              size: 14,
-                              color: AppTheme.toneAmber,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              'FIFO',
-                              style: TextStyle(
-                                fontFamily: 'Literata',
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: AppTheme.toneAmber,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                   ],
                 ),
                 if (existingQty > 0) ...[

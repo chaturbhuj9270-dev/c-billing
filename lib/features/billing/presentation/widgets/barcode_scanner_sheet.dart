@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -28,12 +29,19 @@ class BarcodeScannerSheet extends StatefulWidget {
     this.onClose,
   });
 
-  // Show the scanner as a bottom sheet
+  // Show scanner UI. On desktop/web uses USB barcode-reader (keyboard wedge) mode; on mobile opens the camera scanner.
   static Future<void> show(
     BuildContext context, {
     required Function(Map<String, dynamic> productData) onProductScanned,
     Function(String productKey)? onProductRemoved,
   }) {
+    if (DesktopCanvas.isDesktopPlatform) {
+      return HardwareBarcodeReaderDialog.show(
+        context,
+        onProductScanned: onProductScanned,
+        onProductRemoved: onProductRemoved,
+      );
+    }
     return showAppBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1005,5 +1013,277 @@ class _ScanOverlayPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _ScanOverlayPainter oldDelegate) {
     return oldDelegate.scanAreaRect != scanAreaRect;
+  }
+}
+
+// Desktop / USB barcode-reader (keyboard wedge) dialog. Scanners type digits into the focused field and usually send Enter — works with manufacturer EAN/UPC barcodes and app-generated codes.
+class HardwareBarcodeReaderDialog extends StatefulWidget {
+  final Function(Map<String, dynamic> productData) onProductScanned;
+  final Function(String productKey)? onProductRemoved;
+
+  const HardwareBarcodeReaderDialog({
+    super.key,
+    required this.onProductScanned,
+    this.onProductRemoved,
+  });
+
+  static Future<void> show(
+    BuildContext context, {
+    required Function(Map<String, dynamic> productData) onProductScanned,
+    Function(String productKey)? onProductRemoved,
+  }) {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => HardwareBarcodeReaderDialog(
+        onProductScanned: onProductScanned,
+        onProductRemoved: onProductRemoved,
+      ),
+    );
+  }
+
+  @override
+  State<HardwareBarcodeReaderDialog> createState() =>
+      _HardwareBarcodeReaderDialogState();
+}
+
+class _HardwareBarcodeReaderDialogState
+    extends State<HardwareBarcodeReaderDialog> {
+  final _controller = TextEditingController();
+  final _focusNode = FocusNode();
+  Timer? _wedgeDebounce;
+  bool _isProcessing = false;
+  String? _statusMessage;
+  bool _statusIsError = false;
+  int _successCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focusNode.requestFocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _wedgeDebounce?.cancel();
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _onChanged(String _) {
+    _wedgeDebounce?.cancel();
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+    // USB wedges type very fast; short pause after last char covers scanners without Enter suffix
+    final delayMs = text.length >= 8 ? 180 : 700;
+    _wedgeDebounce = Timer(Duration(milliseconds: delayMs), () {
+      _submitScan();
+    });
+  }
+
+  Future<void> _submitScan() async {
+    _wedgeDebounce?.cancel();
+    final code = _controller.text.trim();
+    if (code.isEmpty || _isProcessing) return;
+
+    setState(() {
+      _isProcessing = true;
+      _statusMessage = null;
+    });
+
+    try {
+      final productData = await BarcodeService.instance.scanForBilling(code);
+      if (!mounted) return;
+
+      if (productData == null) {
+        setState(() {
+          _statusMessage = 'No product found for: $code';
+          _statusIsError = true;
+          _isProcessing = false;
+        });
+        _controller.clear();
+        _focusNode.requestFocus();
+        return;
+      }
+
+      widget.onProductScanned(productData);
+      setState(() {
+        _successCount += 1;
+        _statusMessage =
+            'Added ${productData['productName']} ($_successCount scanned)';
+        _statusIsError = false;
+        _isProcessing = false;
+      });
+      _controller.clear();
+      _focusNode.requestFocus();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _statusMessage = 'Scan failed: $e';
+        _statusIsError = true;
+        _isProcessing = false;
+      });
+      _controller.clear();
+      _focusNode.requestFocus();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final action = AppColors.action(context);
+    return Dialog(
+      backgroundColor: AppColors.card(context),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 20, 22, 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: action,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.qr_code_scanner_rounded,
+                      color: AppTheme.white,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Barcode reader',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primaryText(context),
+                          ),
+                        ),
+                        Text(
+                          'Use USB / Bluetooth barcode scanner',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 12,
+                            color: AppColors.mutedText(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: AppColors.mutedText(context),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Scan manufacturer barcodes or your printed labels. Keep this field focused — the reader types the code automatically.',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 13,
+                  color: AppColors.secondaryText(context),
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: _controller,
+                focusNode: _focusNode,
+                autofocus: true,
+                enabled: !_isProcessing,
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.6,
+                  color: AppColors.primaryText(context),
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Waiting for scan…',
+                  hintStyle: TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.mutedText(context),
+                  ),
+                  filled: true,
+                  fillColor: AppColors.inputFill(context),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: AppColors.border(context)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: AppColors.border(context)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: action, width: 1.6),
+                  ),
+                  prefixIcon: Icon(
+                    Icons.qr_code_2_rounded,
+                    color: action,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 16,
+                  ),
+                ),
+                textInputAction: TextInputAction.done,
+                onChanged: _onChanged,
+                onSubmitted: (_) => _submitScan(),
+              ),
+              if (_statusMessage != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  _statusMessage!,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: _statusIsError
+                        ? AppTheme.toneRose
+                        : AppColors.action(context),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    'Done',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontWeight: FontWeight.w700,
+                      color: action,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
