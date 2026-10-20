@@ -1,0 +1,489 @@
+import 'package:flutter/material.dart';
+import '../core/printing/models/printer_models.dart';
+import '../core/printing/services/pos_printer_service.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+
+// Widget for discovering and selecting POS printers Shows a bottom sheet with available printers
+class PrinterSelectionWidget extends StatefulWidget {
+  final Function(PosPrinterDevice)? onPrinterSelected;
+  final VoidCallback? onDismiss;
+
+  const PrinterSelectionWidget({
+    super.key,
+    this.onPrinterSelected,
+    this.onDismiss,
+  });
+
+  // Show printer selection as a bottom sheet
+  static Future<PosPrinterDevice?> show(BuildContext context) async {
+    return showAppBottomSheet<PosPrinterDevice>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.transparent,
+      builder: (context) => PrinterSelectionWidget(
+        onPrinterSelected: (printer) => Navigator.pop(context, printer),
+        onDismiss: () => Navigator.pop(context),
+      ),
+    );
+  }
+
+  @override
+  State<PrinterSelectionWidget> createState() => _PrinterSelectionWidgetState();
+}
+
+class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
+  final PosPrinterService _printerService = PosPrinterService();
+
+  List<PosPrinterDevice> _devices = [];
+  bool _isScanning = false;
+  bool _isConnecting = false;
+  String? _errorMessage;
+  PosPrinterDevice? _selectedDevice;
+  PosPaperSize _selectedPaperSize = PosPaperSize.mm58;
+
+  @override
+  void initState() {
+    super.initState();
+    _listenToDevices();
+    _startScan();
+  }
+
+  void _listenToDevices() {
+    _printerService.devicesStream.listen((devices) {
+      if (mounted) {
+        setState(() {
+          _devices = devices;
+        });
+      }
+    });
+  }
+
+  Future<void> _startScan() async {
+    setState(() {
+      _isScanning = true;
+      _errorMessage = null;
+      _devices = [];
+    });
+
+    final result = await _printerService.startScan();
+
+    if (mounted) {
+      setState(() {
+        _isScanning = false;
+        if (!result.success) {
+          _errorMessage = result.message;
+        }
+      });
+    }
+  }
+
+  Future<void> _connectAndSelect(PosPrinterDevice device) async {
+    setState(() {
+      _isConnecting = true;
+      _selectedDevice = device;
+      _errorMessage = null;
+    });
+
+    // Update config with selected paper size
+    _printerService.updateConfig(
+      _printerService.config.copyWith(paperSize: _selectedPaperSize),
+    );
+
+    final result = await _printerService.connectPrinter(device);
+
+    if (mounted) {
+      setState(() {
+        _isConnecting = false;
+      });
+
+      if (result.success) {
+        widget.onPrinterSelected?.call(device);
+      } else {
+        setState(() {
+          _errorMessage = result.message;
+          _selectedDevice = null;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: DraggableScrollableSheet(
+        initialChildSize: drawerSheetSize(0.6),
+        minChildSize: drawerSheetSize(0.4),
+        maxChildSize: drawerSheetSize(0.9),
+        expand: false,
+        builder: (context, scrollController) {
+          return Column(
+            children: [
+              _buildHeader(),
+              _buildPaperSizeSelector(),
+              Expanded(child: _buildDeviceList(scrollController)),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Drag handle
+          Container(
+            width: 40,
+            height: 4,
+            margin: EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: AppTheme.grey300,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.accentSoft(context, 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.print,
+                  color: AppColors.accent(context),
+                  size: 24,
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Select Printer',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.accent(context),
+                      ),
+                    ),
+                    Text(
+                      _isScanning
+                          ? 'Scanning...'
+                          : '${_devices.length} printer(s) found',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 12,
+                        color: AppTheme.grey600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Refresh button
+              IconButton(
+                onPressed: _isScanning ? null : _startScan,
+                icon: _isScanning
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.action(context),
+                          ),
+                        ),
+                      )
+                    : Icon(Icons.refresh, color: AppColors.accent(context)),
+              ),
+              // Close button
+              IconButton(
+                onPressed: widget.onDismiss,
+                icon: const Icon(Icons.close, color: AppTheme.grey),
+              ),
+            ],
+          ),
+          if (_errorMessage != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppTheme.red50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppTheme.red200),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.error_outline, color: AppTheme.red700, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 12,
+                        color: AppTheme.red700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaperSizeSelector() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.scaffold(context),
+        border: Border(bottom: BorderSide(color: AppColors.border(context))),
+      ),
+      child: Row(
+        children: [
+          Text(
+            'Paper Size:',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 13,
+              color: AppTheme.grey700,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Row(
+              children: [
+                _buildPaperSizeOption(PosPaperSize.mm58, '58mm'),
+                const SizedBox(width: 12),
+                _buildPaperSizeOption(PosPaperSize.mm80, '80mm'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaperSizeOption(PosPaperSize size, String label) {
+    final isSelected = _selectedPaperSize == size;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedPaperSize = size),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.selectedFill(context)
+              : AppColors.card(context),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.selectedFill(context)
+                : AppColors.border(context),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: isSelected
+                ? AppColors.selectedOnFill(context)
+                : AppColors.secondaryText(context),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDeviceList(ScrollController scrollController) {
+    if (_isScanning && _devices.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.action(context)),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Scanning for printers...',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 14,
+                color: AppTheme.grey,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_devices.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.print_disabled, size: 48, color: AppTheme.grey400),
+            const SizedBox(height: 16),
+            const Text(
+              'No printers found',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.grey,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Make sure your printer is on and\nBluetooth is enabled',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 13,
+                color: AppTheme.grey,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _startScan,
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Scan Again'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.action(context),
+                foregroundColor: AppTheme.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      controller: scrollController,
+      padding: EdgeInsets.all(16),
+      itemCount: _devices.length,
+      itemBuilder: (context, index) {
+        final device = _devices[index];
+        final isSelected = _selectedDevice?.id == device.id;
+        final isConnecting = _isConnecting && isSelected;
+
+        return Container(
+          margin: EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: AppColors.card(context),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? AppColors.action(context) : AppColors.border(context),
+              width: isSelected ? 2 : 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.black.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
+            leading: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: device.isConnected
+                    ? AppTheme.green50
+                    : AppColors.action(context).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.print,
+                color: device.isConnected
+                    ? AppTheme.green700
+                    : AppColors.action(context),
+                size: 22,
+              ),
+            ),
+            title: Text(
+              device.name,
+              style: const TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            subtitle: Text(
+              device.address ?? 'Unknown address',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 11,
+                color: AppTheme.grey,
+              ),
+            ),
+            trailing: isConnecting
+                ? SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.action(context),
+                      ),
+                    ),
+                  )
+                : device.isConnected
+                ? Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.green50,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Connected',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.green700,
+                      ),
+                    ),
+                  )
+                : const Icon(Icons.chevron_right, color: AppTheme.grey),
+            onTap: isConnecting ? null : () => _connectAndSelect(device),
+          ),
+        );
+      },
+    );
+  }
+}

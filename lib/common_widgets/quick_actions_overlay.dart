@@ -1,0 +1,380 @@
+import 'package:flutter/material.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
+import '../features/dashboard/presentation/pages/web_shell.dart';
+import 'glass_bottom_sheet.dart';
+import '../core/localization/app_localizations.dart';
+import '../core/services/language_service.dart';
+import '../features/availability/presentation/pages/availability_page.dart';
+import '../features/billing/presentation/pages/billing_page.dart';
+import '../features/billing/presentation/pages/bills_list_page.dart';
+import '../features/inventory_management/presentation/pages/enhanced_purchase_screen.dart';
+import '../features/inventory_management/presentation/pages/enhanced_product_page.dart';
+import '../features/supplier/presentation/pages/enhanced_supplier_page.dart';
+import '../features/company/presentation/pages/enhanced_company_page.dart';
+import '../features/purchase_return/presentation/pages/purchase_return_screen.dart';
+import '../features/event_order/presentation/pages/event_order_list_page.dart';
+import '../features/quotation/presentation/pages/quotation_list_page.dart';
+import '../features/inventory_management/presentation/pages/barcode_generator_page.dart';
+import '../features/customer/presentation/pages/enhanced_customer_page.dart';
+
+// Data class for a quick-action item
+class QuickActionItem {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final List<Color> gradient;
+  final VoidCallback? onTap;
+
+  const QuickActionItem({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.gradient,
+    this.onTap,
+  });
+}
+
+// Opens the quick-actions sheet used by billing and purchase.
+Future<void> showQuickActionsSheet(BuildContext context) {
+  return showAppBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showClose: true,
+    builder: (sheetContext) {
+      return QuickActionsPanel(
+        actions: buildQuickActionItems(
+          context,
+          beforeNavigate: () => Navigator.pop(sheetContext),
+        ),
+      );
+    },
+  );
+}
+
+List<QuickActionItem> buildQuickActionItems(
+  BuildContext context, {
+  VoidCallback? beforeNavigate,
+}) {
+  final l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
+
+  void open(Widget page, int shellIndex) {
+    beforeNavigate?.call();
+    if (DesktopCanvas.isDesktopPlatform && WebShell.open(shellIndex)) return;
+    showAppPage(context, page);
+  }
+
+  return [
+    // Same order as the bottom tabs, after Dashboard.
+    QuickActionItem(
+      icon: Icons.people_rounded,
+      label: l10n.customers,
+      color: AppTheme.toneCyan,
+      gradient: const [AppTheme.cyan600, AppTheme.cyan700],
+      onTap: () => open(const EnhancedCustomerPage(), WebShell.customers),
+    ),
+    QuickActionItem(
+      icon: Icons.receipt_long_rounded,
+      label: l10n.billing,
+      color: AppTheme.toneBlue,
+      gradient: const [AppTheme.paletteFF667EEA, AppTheme.paletteFF764BA2],
+      onTap: () => open(const BillingPage(), WebShell.billing),
+    ),
+    QuickActionItem(
+      icon: Icons.event_available_rounded,
+      label: l10n.availability,
+      color: AppColors.action(context),
+      gradient: [AppTheme.primaryLight, AppColors.action(context)],
+      onTap: () => open(const AvailabilityPage(), WebShell.availability),
+    ),
+    QuickActionItem(
+      icon: Icons.shopping_cart_rounded,
+      label: l10n.purchase,
+      color: AppTheme.toneAmber,
+      gradient: const [AppTheme.orange900, AppTheme.amber800],
+      onTap: () => open(const EnhancedPurchaseScreen(), WebShell.purchase),
+    ),
+    QuickActionItem(
+      icon: Icons.receipt_long_rounded,
+      label: l10n.invoices,
+      color: AppTheme.toneBlue,
+      gradient: const [AppTheme.paletteFF667EEA, AppTheme.paletteFF764BA2],
+      onTap: () => open(const BillsListPage(), WebShell.invoices),
+    ),
+    QuickActionItem(
+      icon: Icons.inventory_2_rounded,
+      label: l10n.products,
+      color: AppTheme.paletteFFC084FC,
+      gradient: const [AppTheme.paletteFFF093FB, AppTheme.paletteFFF5576C],
+      onTap: () => open(const EnhancedProductPage(), WebShell.products),
+    ),
+    QuickActionItem(
+      icon: Icons.local_shipping_rounded,
+      label: l10n.suppliers,
+      color: AppTheme.deepOrange300,
+      gradient: const [AppTheme.coral, AppTheme.paletteFFEE5A24],
+      onTap: () => open(const EnhancedSupplierPage(), WebShell.suppliers),
+    ),
+    QuickActionItem(
+      icon: Icons.business_rounded,
+      label: l10n.companies,
+      color: AppTheme.toneViolet,
+      gradient: const [AppTheme.purple, AppTheme.purple700],
+      onTap: () => open(const EnhancedCompanyPage(), WebShell.companies),
+    ),
+    QuickActionItem(
+      icon: Icons.keyboard_return_rounded,
+      label: l10n.purchaseReturnShort,
+      color: AppTheme.orange300,
+      gradient: const [AppTheme.orange900, AppTheme.amber800],
+      onTap: () => open(const PurchaseReturnScreen(), WebShell.purchaseReturn),
+    ),
+    QuickActionItem(
+      icon: Icons.auto_awesome_rounded,
+      label: l10n.events,
+      color: AppTheme.deepPurple200,
+      gradient: const [AppTheme.paletteFF6C63FF, AppTheme.paletteFF8B5CF6],
+      onTap: () => open(const EventOrderListPage(), WebShell.events),
+    ),
+    QuickActionItem(
+      icon: Icons.description_outlined,
+      label: l10n.quotations,
+      color: AppTheme.blue300,
+      gradient: const [AppTheme.blue800, AppTheme.blue400],
+      onTap: () => open(const QuotationListPage(), WebShell.quotations),
+    ),
+    QuickActionItem(
+      icon: Icons.qr_code_scanner_rounded,
+      label: l10n.barcode,
+      color: AppTheme.greenAccent,
+      gradient: const [AppTheme.teal600, AppTheme.teal900],
+      onTap: () => open(const BarcodeGeneratorPage(), WebShell.barcode),
+    ),
+  ];
+}
+
+// Bottom sheet grid: "Quick actions" / "Jump to any section".
+class QuickActionsPanel extends StatelessWidget {
+  final List<QuickActionItem> actions;
+
+  const QuickActionsPanel({super.key, required this.actions});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
+    final bottom = MediaQuery.paddingOf(context).bottom;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 10, 16, bottom + 20),
+      child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 36,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: AppColors.mutedText(context).withValues(
+                              alpha: 0.45,
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        l10n.quickActions,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w800,
+                          fontSize: 20,
+                          color: AppColors.primaryText(context),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Jump to any section',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 13,
+                          color: AppColors.mutedText(context),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: actions.length,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              childAspectRatio: 1.05,
+                            ),
+                        itemBuilder: (context, index) =>
+                            _ActionTile(item: actions[index]),
+                      ),
+                    ],
+      ),
+    );
+  }
+}
+
+class _ActionTile extends StatelessWidget {
+  final QuickActionItem item;
+
+  const _ActionTile({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.isDark(context)
+          ? AppTheme.paletteFF1E2422
+          : AppColors.chipFill(context),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: item.onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: item.color.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(item.icon, color: item.color, size: 22),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Text(
+                item.label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primaryText(context),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// A global Quick Actions FAB + overlay that can be placed in any Scaffold. Usage: Add [GlobalQuickActionsFAB] to a Stack on top of your page content. It manages its own open/close...
+class GlobalQuickActionsFAB extends StatefulWidget {
+  // Distance from the bottom of the stack. Raise this when a floating bottom nav bar overlays the body (e.g. with [Scaffold.extendBody]).
+  final double bottomOffset;
+
+  const GlobalQuickActionsFAB({super.key, this.bottomOffset = 16});
+
+  @override
+  State<GlobalQuickActionsFAB> createState() => _GlobalQuickActionsFABState();
+}
+
+class _GlobalQuickActionsFABState extends State<GlobalQuickActionsFAB>
+    with SingleTickerProviderStateMixin {
+  bool _isOpen = false;
+  late final AnimationController _animController;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+    _scaleAnimation = CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  void _toggle() {
+    setState(() => _isOpen = !_isOpen);
+    if (_isOpen) {
+      _animController.forward();
+    } else {
+      _animController.reverse();
+    }
+  }
+
+  void _close() {
+    if (_isOpen) _toggle();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        if (_isOpen)
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _close,
+              child: Container(
+                color: AppTheme.black.withValues(alpha: 0.45),
+                alignment: Alignment.bottomCenter,
+                child: GestureDetector(
+                  onTap: () {},
+                  child: GlassSheetCard(
+                    showClose: true,
+                    onClose: _close,
+                    child: QuickActionsPanel(
+                      actions: buildQuickActionItems(
+                        context,
+                        beforeNavigate: _close,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        Positioned(
+          right: 16,
+          bottom: widget.bottomOffset,
+          child: ScaleTransition(
+            scale: Tween(begin: 1.0, end: 0.9).animate(_scaleAnimation),
+            child: GestureDetector(
+              onTap: _toggle,
+              child: Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: AppColors.action(context),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppTheme.white.withValues(alpha: 0.12),
+                  ),
+                ),
+                child: Icon(
+                  _isOpen ? Icons.close_rounded : Icons.apps_rounded,
+                  color: AppTheme.white,
+                  size: 24,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

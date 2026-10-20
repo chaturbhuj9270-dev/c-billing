@@ -1,0 +1,206 @@
+import 'package:flutter/material.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/services/language_service.dart';
+import 'package:c_billing/core/localization/app_localizations.dart';
+
+// World-class UI/UX Action Menu — three-dot popup menu Works inside Row, Column, AppBar, or any layout widget. Uses PopupMenuButton under the hood so it never causes Stack constra...
+class ActionMenu extends StatelessWidget {
+  final VoidCallback? onSettingsTap;
+  final VoidCallback? onReportSettingsTap;
+  final VoidCallback? onLanguageTap;
+  final VoidCallback? onBugReportTap;
+  final VoidCallback? onExpandTap;
+  final VoidCallback? onDownloadTap;
+  final Color iconColor;
+  final double iconSize;
+
+  // Flat outlined button used by the web navbar. Phone and desktop keep the glass button.
+  final bool outlined;
+
+  const ActionMenu({
+    super.key,
+    this.onSettingsTap,
+    this.onReportSettingsTap,
+    this.onLanguageTap,
+    this.onBugReportTap,
+    this.onExpandTap,
+    this.onDownloadTap,
+    this.iconColor = AppTheme.white,
+    this.iconSize = 22,
+    this.outlined = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(
+      LanguageService.instance.currentLanguage,
+    );
+
+    final List<_MenuEntry> entries = [];
+    if (onExpandTap != null) {
+      entries.add(
+        _MenuEntry(
+          icon: Icons.open_in_full_rounded,
+          color: AppColors.action(context),
+          label: 'Expand',
+          onTap: onExpandTap!,
+        ),
+      );
+    }
+    if (onDownloadTap != null) {
+      entries.add(
+        _MenuEntry(
+          icon: Icons.file_download_outlined,
+          color: AppTheme.toneCyan,
+          label: 'Download',
+          onTap: onDownloadTap!,
+        ),
+      );
+    }
+    if (onSettingsTap != null) {
+      entries.add(
+        _MenuEntry(
+          icon: Icons.settings_outlined,
+          color: AppColors.action(context),
+          label: localizations.settings,
+          onTap: onSettingsTap!,
+        ),
+      );
+    }
+    if (onReportSettingsTap != null) {
+      entries.add(
+        _MenuEntry(
+          icon: Icons.view_column_rounded,
+          color: AppTheme.toneBlue,
+          label: localizations.reportSettings,
+          onTap: onReportSettingsTap!,
+        ),
+      );
+    }
+    if (onLanguageTap != null) {
+      entries.add(
+        _MenuEntry(
+          icon: Icons.language_rounded,
+          color: AppTheme.toneAmber,
+          label: localizations.language,
+          onTap: onLanguageTap!,
+        ),
+      );
+    }
+    if (onBugReportTap != null) {
+      entries.add(
+        _MenuEntry(
+          icon: Icons.bug_report_outlined,
+          color: AppTheme.toneRose,
+          label: localizations.reportIssue,
+          onTap: onBugReportTap!,
+        ),
+      );
+    }
+
+    final buttonIconColor = outlined
+        ? AppColors.primaryText(context)
+        : iconColor;
+
+    return PopupMenuButton<int>(
+      padding: EdgeInsets.zero,
+      icon: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: outlined
+              ? AppColors.card(context)
+              : AppTheme.white.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: outlined
+                ? AppColors.border(context)
+                : AppTheme.white.withValues(alpha: 0.2),
+          ),
+        ),
+        child: Icon(
+          Icons.more_vert_rounded,
+          color: buttonIconColor,
+          size: iconSize,
+        ),
+      ),
+      offset: const Offset(0, 48),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      elevation: 12,
+      color: AppColors.isDark(context)
+          ? AppTheme.darkCard
+          : AppColors.card(context),
+      surfaceTintColor: AppTheme.transparent,
+      onSelected: (index) => entries[index].onTap(),
+      itemBuilder: (context) {
+        final items = <PopupMenuEntry<int>>[
+          PopupMenuItem<int>(
+            enabled: false,
+            height: 32,
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Text(
+              localizations.options.toUpperCase(),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.1,
+                color: AppColors.mutedText(context),
+                fontFamily: 'Literata',
+              ),
+            ),
+          ),
+        ];
+
+        for (var i = 0; i < entries.length; i++) {
+          final entry = entries[i];
+          items.add(
+            PopupMenuItem<int>(
+              value: i,
+              height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: entry.color.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(entry.icon, color: entry.color, size: 18),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    entry.label,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primaryText(context),
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return items;
+      },
+    );
+  }
+}
+
+class _MenuEntry {
+  final IconData icon;
+  final Color color;
+  final String label;
+  final VoidCallback onTap;
+
+  const _MenuEntry({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.onTap,
+  });
+}

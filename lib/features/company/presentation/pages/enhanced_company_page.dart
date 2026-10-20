@@ -1,0 +1,875 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/services/communication_service.dart';
+import '../../../../core/services/session_manager.dart';
+import '../../../../core/services/language_service.dart';
+import '../../../../core/services/dashboard_refresh_service.dart';
+import '../../../../core/localization/app_localizations.dart';
+import '../../data/datasources/company_cache_datasource.dart';
+import '../../offline/controllers/company_offline_controller.dart';
+import '../../offline/entities/company_entity.dart';
+import '../../data/services/company_sync_service.dart';
+import '../widgets/company_summary_widget.dart';
+import '../widgets/company_filter_widget.dart';
+import '../widgets/company_list_widget.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/common_widgets/app_pill_button.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
+
+// Lets the desktop shell header open the add-company sheet.
+class CompanyScreenActions {
+  static VoidCallback? add;
+}
+
+class EnhancedCompanyPage extends StatefulWidget {
+  final bool isEmbedded;
+
+  const EnhancedCompanyPage({super.key, this.isEmbedded = false});
+
+  @override
+  State<EnhancedCompanyPage> createState() => _EnhancedCompanyPageState();
+}
+
+class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
+    with SingleTickerProviderStateMixin {
+  // Animation
+  late AnimationController _animController;
+  late Animation<Offset> _offsetAnimation;
+  late Animation<double> _opacityAnimation;
+
+  // Form controllers
+  final _companyNameController = TextEditingController();
+  final _companyCodeController = TextEditingController();
+  final _gstCodeController = TextEditingController();
+  final _contactController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
+  // State
+  bool _isLoading = true;
+  bool _isSaving = false;
+  bool _isEditing = false;
+  String? _editingCompanyId;
+  int? _editingCompanyLocalId;
+  List<Map<String, dynamic>> _companies = [];
+  String _searchQuery = '';
+  CompanySortField _sortField = CompanySortField.name;
+  bool _sortAscending = true;
+  bool _isNavigatingAway = false;
+
+  // local stream for real-time updates
+  StreamSubscription<List<CompanyEntity>>? _companyStreamSub;
+  // Firestore stream for cross-device real-time sync
+  StreamSubscription<QuerySnapshot>? _firestoreStreamSub;
+
+  // Services
+  final _auth = FirebaseAuth.instance;
+  late final FirebaseFirestore _firestore;
+  late AppLocalizations _localizations;
+  late SessionManager _sessionManager;
+  final _cacheDataSource = CompanyCacheDataSource();
+
+  @override
+  void initState() {
+    super.initState();
+    _firestore = FirebaseFirestore.instance;
+    _sessionManager = SessionManager();
+    _localizations = AppLocalizations.of(
+      LanguageService.instance.currentLanguage,
+    );
+    LanguageService.instance.addListener(_onLanguageChanged);
+
+    // Setup animations
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _offsetAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
+        );
+    _opacityAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
+
+    CompanyScreenActions.add = _showAddCompanySheet;
+    _checkUserAuthentication();
+    _setupLocalStream();
+    _loadLocalCompanies();
+    _fetchFromFirebase();
+    _setupFirestoreStream();
+
+    // Start animation after frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _animController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    CompanyScreenActions.add = null;
+    _isNavigatingAway = true;
+    _animController.dispose();
+    _companyStreamSub?.cancel();
+    _firestoreStreamSub?.cancel();
+    _companyNameController.dispose();
+    _companyCodeController.dispose();
+    _gstCodeController.dispose();
+    _contactController.dispose();
+    _addressController.dispose();
+    LanguageService.instance.removeListener(_onLanguageChanged);
+    super.dispose();
+  }
+
+  void _onLanguageChanged() {
+    if (mounted) {
+      setState(() {
+        _localizations = AppLocalizations.of(
+          LanguageService.instance.currentLanguage,
+        );
+      });
+    }
+  }
+
+  void _checkUserAuthentication() {
+    if (_auth.currentUser == null) {
+      Navigator.of(
+        context,
+        rootNavigator: true,
+      ).pushNamedAndRemoveUntil('/login', (route) => false);
+    }
+  }
+
+  // ━━━ DATA: Local stream (offline-first, real-time) ━━━
+
+  Future<void> _loadLocalCompanies() async {
+    try {
+      final entities = await CompanyOfflineController.instance
+          .getAllCompanies();
+      if (!mounted || _isNavigatingAway) return;
+      setState(() {
+        _companies = entities.map(_entityToMap).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('[EnhancedCompany] local load error: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _setupLocalStream() {
+    final offlineCtrl = CompanyOfflineController.instance;
+    _companyStreamSub = offlineCtrl.watchAllCompanies().listen(
+      (entities) {
+        if (!mounted || _isNavigatingAway) return;
+        final mapped = entities.map(_entityToMap).toList();
+        setState(() {
+          _companies = mapped;
+          _isLoading = false;
+        });
+        debugPrint('[EnhancedCompany] local stream: ${mapped.length} companies');
+      },
+      onError: (e) {
+        debugPrint('[EnhancedCompany] local stream error: $e');
+        if (mounted) setState(() => _isLoading = false);
+      },
+    );
+  }
+
+  Map<String, dynamic> _entityToMap(CompanyEntity e) {
+    return {
+      'id': e.serverId ?? 'local_${e.id}',
+      'localId': e.id,
+      'companyName': e.companyName,
+      'companyCode': e.companyCode,
+      'gstCode': e.gstCode,
+      'contact': e.contact,
+      'address': e.address,
+      'isActive': e.isActive,
+      'isSynced': e.syncStatus == CompanySyncStatus.synced,
+      'syncStatus': e.syncStatus.name,
+      'createdAt': e.createdAt,
+      'updatedAt': e.updatedAt,
+    };
+  }
+
+  // ━━━ DATA: Firebase Fetch (background) ━━━
+
+  Future<void> _fetchFromFirebase() async {
+    try {
+      final currentUser = _auth.currentUser;
+      if (currentUser == null) return;
+
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('companies')
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      if (!mounted || _isNavigatingAway) return;
+
+      final freshCompanies = snapshot.docs
+          .map((doc) => {...doc.data(), 'id': doc.id})
+          .toList();
+
+      // Import to the local database
+      await CompanyOfflineController.instance.importFromServer(freshCompanies);
+
+      // Trigger background sync
+      CompanySyncService.instance.syncNow();
+
+      // Cache for next time
+      _cacheDataSource.saveCompanies(freshCompanies);
+    } catch (e) {
+      debugPrint('[EnhancedCompany] Firebase fetch error: $e');
+    }
+  }
+
+  // ━━━ DATA: Firestore Stream (cross-device sync) ━━━
+
+  void _setupFirestoreStream() {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) return;
+
+    _firestoreStreamSub = _firestore
+        .collection('users')
+        .doc(currentUser.uid)
+        .collection('companies')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .listen(
+          (snapshot) async {
+            if (!mounted || _isNavigatingAway) return;
+
+            final freshCompanies = snapshot.docs
+                .map((doc) => {...doc.data(), 'id': doc.id})
+                .toList();
+
+            await CompanyOfflineController.instance.importFromServer(
+              freshCompanies,
+            );
+            _cacheDataSource.saveCompanies(freshCompanies);
+          },
+          onError: (e) {
+            debugPrint('[EnhancedCompany] Firestore stream error: $e');
+          },
+        );
+  }
+
+  // ━━━ CRUD: Add/Edit/Delete ━━━
+
+  void _clearForm() {
+    _companyNameController.clear();
+    _companyCodeController.clear();
+    _gstCodeController.clear();
+    _contactController.clear();
+    _addressController.clear();
+    _editingCompanyId = null;
+    _editingCompanyLocalId = null;
+    _isEditing = false;
+  }
+
+  Future<String> _generateNextCompanyCode() async {
+    try {
+      if (_companies.isEmpty) return '1';
+
+      int maxCode = 0;
+      for (var company in _companies) {
+        final code = company['companyCode'] as String?;
+        if (code != null && code.isNotEmpty) {
+          final numericCode = int.tryParse(code);
+          if (numericCode != null && numericCode > maxCode) {
+            maxCode = numericCode;
+          }
+        }
+      }
+      return '${maxCode + 1}';
+    } catch (e) {
+      return '1';
+    }
+  }
+
+  void _showAddCompanySheet() async {
+    _clearForm();
+    final nextCode = await _generateNextCompanyCode();
+    _companyCodeController.text = nextCode;
+
+    if (!mounted) return;
+
+    showAppBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.transparent,
+      builder: (ctx) => _buildCompanyFormSheet(ctx),
+    );
+  }
+
+  void _showEditCompanySheet(Map<String, dynamic> company) {
+    _companyNameController.text = company['companyName'] ?? '';
+    _companyCodeController.text = company['companyCode'] ?? '';
+    _gstCodeController.text = company['gstCode'] ?? '';
+    _contactController.text = company['contact'] ?? '';
+    _addressController.text = company['address'] ?? '';
+    _editingCompanyId = company['id'];
+    _editingCompanyLocalId = company['localId'] as int?;
+    _isEditing = true;
+
+    showAppBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.transparent,
+      builder: (ctx) => _buildCompanyFormSheet(ctx),
+    );
+  }
+
+  Widget _buildCompanyFormSheet(BuildContext ctx) {
+    return StatefulBuilder(
+      builder: (context, setSheetState) {
+        return dockDrawerAction(
+          context: context,
+          phoneDecoration: BoxDecoration(
+            color: AppColors.card(context),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          action: DrawerBottomBar(
+            leading: _isEditing
+                ? TextButton(
+                    onPressed: _isSaving
+                        ? null
+                        : () => _deleteCompany(ctx, setSheetState),
+                    child: const Text(
+                      'Delete',
+                      style: TextStyle(
+                        color: AppTheme.red,
+                        fontFamily: 'Literata',
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  )
+                : null,
+            action: AppPillButton(
+              label: _isEditing
+                  ? _localizations.update
+                  : _localizations.addCompany,
+              icon: Icons.check_rounded,
+              loading: _isSaving,
+              expanded: !_isEditing,
+              onPressed: _isSaving
+                  ? null
+                  : () => _saveCompany(ctx, setSheetState),
+            ),
+          ),
+          body: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (!DesktopCanvas.isDesktopPlatform)
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: AppTheme.grey300,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                    if (!DesktopCanvas.isDesktopPlatform)
+                      const SizedBox(height: 16),
+                    // Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _isEditing
+                              ? _localizations.editCompany
+                              : _localizations.addNewCompany,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.accent(context),
+                            fontFamily: 'Literata',
+                          ),
+                        ),
+                        if (!DesktopCanvas.isDesktopPlatform)
+                          IconButton(
+                          icon: const Icon(Icons.close_rounded),
+                          onPressed: () {
+                            _clearForm();
+                            Navigator.pop(ctx);
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    // Form fields
+                    _buildInputField(
+                      label: _localizations.companyName,
+                      controller: _companyNameController,
+                      icon: Icons.business_outlined,
+                      isRequired: true,
+                    ),
+                    const SizedBox(height: 16),
+                    // Only show code field when adding (hide when editing)
+                    if (!_isEditing) ...[
+                      _buildInputField(
+                        label: _localizations.companyCode,
+                        controller: _companyCodeController,
+                        icon: Icons.qr_code_rounded,
+                        isRequired: false,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    // GST Code field
+                    _buildInputField(
+                      label: 'GST Code',
+                      controller: _gstCodeController,
+                      icon: Icons.receipt_long_outlined,
+                      isRequired: false,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildInputField(
+                      label: _localizations.contactNumber,
+                      controller: _contactController,
+                      icon: Icons.phone_outlined,
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildInputField(
+                      label: _localizations.address,
+                      controller: _addressController,
+                      icon: Icons.location_on_outlined,
+                      maxLines: 3,
+                    ),
+                  ],
+                ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInputField({
+    required String label,
+    required TextEditingController controller,
+    required IconData icon,
+    bool isRequired = false,
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+    bool isReadOnly = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.accent(context),
+                fontFamily: 'Literata',
+              ),
+            ),
+            if (isRequired)
+              const Text(' *', style: TextStyle(color: AppTheme.red)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          minLines: maxLines,
+          readOnly: isReadOnly,
+          style: TextStyle(
+            color: isReadOnly ? AppTheme.grey600 : null,
+            fontFamily: 'Literata',
+          ),
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon, color: AppTheme.grey600),
+            suffixIcon: isReadOnly
+                ? Tooltip(
+                    message: 'Auto-generated',
+                    child: Icon(
+                      Icons.lock_outline,
+                      size: 18,
+                      color: AppTheme.grey,
+                    ),
+                  )
+                : null,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppTheme.grey300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppTheme.grey300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.accent(context), width: 2),
+            ),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
+            filled: true,
+            fillColor: isReadOnly ? AppColors.chipFill(context) : AppColors.scaffold(context),
+          ),
+          validator: (value) {
+            if (isRequired && (value == null || value.isEmpty)) {
+              return '$label ${_localizations.isRequired}';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  Future<void> _saveCompany(
+    BuildContext ctx,
+    void Function(void Function()) setSheetState,
+  ) async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setSheetState(() => _isSaving = true);
+
+    try {
+      final offlineCtrl = CompanyOfflineController.instance;
+
+      if (_isEditing) {
+        int? localId = _editingCompanyLocalId;
+        if (localId == null && _editingCompanyId != null) {
+          final existing = await offlineCtrl.getCompanyByServerId(
+            _editingCompanyId!,
+          );
+          localId = existing?.id;
+        }
+
+        if (localId != null) {
+          await offlineCtrl.updateCompany(
+            id: localId,
+            companyName: _companyNameController.text.trim(),
+            companyCode: _companyCodeController.text.trim(),
+            gstCode: _gstCodeController.text.trim(),
+            contact: _contactController.text.trim(),
+            address: _addressController.text.trim(),
+          );
+        } else {
+          throw Exception('Company not found');
+        }
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.company,
+        );
+      } else {
+        await offlineCtrl.addCompany(
+          companyName: _companyNameController.text.trim(),
+          companyCode: _companyCodeController.text.trim(),
+          gstCode: _gstCodeController.text.trim(),
+          contact: _contactController.text.trim(),
+          address: _addressController.text.trim(),
+        );
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.company,
+        );
+      }
+
+      final syncResult = await CompanySyncService.instance.syncNow();
+      debugPrint('[EnhancedCompany] Sync after save result: $syncResult');
+
+      if (mounted && ctx.mounted) {
+        Navigator.pop(ctx);
+        GlassyToast.show(context, _isEditing
+                  ? _localizations.companyUpdatedSuccessfully
+                  : _localizations.companyAddedSuccessfully);
+      }
+
+      _clearForm();
+    } catch (e) {
+      if (mounted && ctx.mounted) {
+        GlassyToast.show(context, 'Error: $e', isError: true);
+      }
+    } finally {
+      if (mounted) {
+        setSheetState(() => _isSaving = false);
+      }
+    }
+  }
+
+  Future<void> _deleteCompany(
+    BuildContext ctx,
+    void Function(void Function()) setSheetState,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Company'),
+        content: const Text('Are you sure you want to delete this company?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setSheetState(() => _isSaving = true);
+
+    try {
+      final offlineCtrl = CompanyOfflineController.instance;
+      int? localId = _editingCompanyLocalId;
+
+      if (localId == null && _editingCompanyId != null) {
+        final existing = await offlineCtrl.getCompanyByServerId(
+          _editingCompanyId!,
+        );
+        localId = existing?.id;
+      }
+
+      if (localId != null) {
+        await offlineCtrl.deleteCompany(localId);
+      } else {
+        throw Exception('Company not found');
+      }
+
+      final syncResult = await CompanySyncService.instance.syncNow();
+      debugPrint('[EnhancedCompany] Sync after delete result: $syncResult');
+      DashboardRefreshService.instance.notifyDataChanged(
+        DataChangeType.company,
+      );
+
+      if (mounted && ctx.mounted) {
+        Navigator.pop(ctx);
+        GlassyToast.show(context, _localizations.companyDeletedSuccessfully);
+      }
+
+      _clearForm();
+    } catch (e) {
+      if (mounted && ctx.mounted) {
+        GlassyToast.show(context, 'Error: $e', isError: true);
+      }
+    } finally {
+      if (mounted) {
+        setSheetState(() => _isSaving = false);
+      }
+    }
+  }
+
+  // ━━━ UI: Context Menu ━━━
+
+  void _showContextMenu(Map<String, dynamic> company) {
+    showAppBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.transparent,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: AppColors.card(context),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppTheme.grey300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildContextMenuItem(
+                  icon: Icons.edit_rounded,
+                  label: 'Edit Company',
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _showEditCompanySheet(company);
+                  },
+                ),
+                if ((company['contact'] ?? '').toString().isNotEmpty)
+                  _buildContextMenuItem(
+                    icon: Icons.phone_rounded,
+                    label: 'Call ${company['contact']}',
+                    onTap: () {
+                      final phone = (company['contact'] ?? '').toString();
+                      Navigator.pop(ctx);
+                      CommunicationService.instance.makeCall(
+                        phone,
+                        context: context,
+                      );
+                    },
+                  ),
+                _buildContextMenuItem(
+                  icon: Icons.delete_rounded,
+                  label: 'Delete',
+                  color: AppTheme.red,
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _companyNameController.text = company['companyName'] ?? '';
+                    _editingCompanyId = company['id'];
+                    _editingCompanyLocalId = company['localId'] as int?;
+                    _isEditing = true;
+                    _deleteCompany(context, setState);
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContextMenuItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: color ?? AppColors.action(context)),
+      title: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'Literata',
+          fontWeight: FontWeight.w600,
+          color: color ?? AppTheme.grey800,
+        ),
+      ),
+      onTap: onTap,
+    );
+  }
+
+  // ━━━ BUILD ━━━
+
+  @override
+  Widget build(BuildContext context) {
+    _sessionManager.resetSession();
+
+    return Scaffold(
+      backgroundColor: AppColors.scaffold(context),
+      floatingActionButton:
+          widget.isEmbedded && DesktopCanvas.isDesktopPlatform
+          ? null
+          : _buildFAB(),
+      body: Column(
+        children: [
+          if (!widget.isEmbedded)
+            AppTopBar(
+              title: _localizations.myCompanies,
+              subtitle: _localizations.manageYourBusinesses,
+              onBack: () {
+                _isNavigatingAway = true;
+                Navigator.of(context).pop();
+              },
+            ),
+          Expanded(
+            child: SlideTransition(
+        position: _offsetAnimation,
+        child: FadeTransition(
+          opacity: _opacityAnimation,
+          child: Column(
+            children: [
+              // Summary widget
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: CompanySummaryWidget(
+                  companies: _companies,
+                  searchQuery: _searchQuery,
+                ),
+              ),
+              // Filter widget
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: CompanyFilterWidget(
+                  searchQuery: _searchQuery,
+                  onSearchChanged: (q) => setState(() => _searchQuery = q),
+                  sortField: _sortField,
+                  onSortFieldChanged: (f) => setState(() => _sortField = f),
+                  sortAscending: _sortAscending,
+                  onSortDirectionToggle: () =>
+                      setState(() => _sortAscending = !_sortAscending),
+                ),
+              ),
+              // Company list
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: CompanyListWidget(
+                    companies: _companies,
+                    isLoading: _isLoading,
+                    searchQuery: _searchQuery,
+                    sortField: _sortField,
+                    sortAscending: _sortAscending,
+                    onRefresh: _fetchFromFirebase,
+                    onCompanyTap: _showEditCompanySheet,
+                    onCompanyLongPress: _showContextMenu,
+                    emptyTitle: _localizations.noCompaniesYet,
+                    emptySubtitle: _localizations.createFirstCompany,
+                    noResultsTitle: _localizations.noResultsFound,
+                    noResultsSubtitle: _localizations.tryDifferentSearch,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+            ),
+          ],
+        ),
+    );
+  }
+
+  Widget _buildFAB() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: AppColors.headerGradient(context),
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accentSoft(context, 0.4),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: FloatingActionButton(
+        onPressed: _showAddCompanySheet,
+        backgroundColor: AppTheme.transparent,
+        elevation: 0,
+        child: const Icon(Icons.add, color: AppTheme.white),
+      ),
+    );
+  }
+}

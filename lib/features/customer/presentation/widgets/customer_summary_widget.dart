@@ -1,0 +1,186 @@
+import 'package:flutter/material.dart';
+import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
+
+// Summary widget for customer statistics Displays: Total customers, Pending amount, Synced status
+class CustomerSummaryWidget extends StatelessWidget {
+  final List<Map<String, dynamic>> customers;
+  final String searchQuery;
+
+  // Labels
+  final String customersLabel;
+  final String pendingLabel;
+  final String unsyncedLabel;
+  final String allSyncedLabel;
+
+  const CustomerSummaryWidget({
+    super.key,
+    required this.customers,
+    this.searchQuery = '',
+    this.customersLabel = 'Customers',
+    this.pendingLabel = 'Pending',
+    this.unsyncedLabel = 'Unsynced',
+    this.allSyncedLabel = 'All Synced',
+  });
+
+  List<Map<String, dynamic>> get _filteredCustomers {
+    if (searchQuery.isEmpty) return customers;
+
+    final query = searchQuery.toLowerCase();
+    return customers.where((c) {
+      final firstName = (c['firstName'] ?? '').toString().toLowerCase();
+      final lastName = (c['lastName'] ?? '').toString().toLowerCase();
+      final contact = (c['contact'] ?? '').toString().toLowerCase();
+      final fullName = '$firstName $lastName';
+      return firstName.contains(query) ||
+          lastName.contains(query) ||
+          fullName.contains(query) ||
+          contact.contains(query);
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = _filteredCustomers;
+    final totalPending = filtered.fold<double>(
+      0,
+      (total, c) =>
+          total + ((c['currentPendingAmount'] as num?)?.toDouble() ?? 0.0),
+    );
+    final unsyncedCount = filtered.where((c) => c['isSynced'] != true).length;
+
+    if (DesktopCanvas.wide(context)) {
+      return _buildWideCards(
+        context,
+        count: filtered.length,
+        totalPending: totalPending,
+        unsyncedCount: unsyncedCount,
+      );
+    }
+
+    final header = AppColors.headerGradient(context);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [header.first, header.last],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(
+              alpha: AppColors.isDark(context) ? 0.45 : 0.3,
+            ),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          _buildStatItem(
+            icon: Icons.people_rounded,
+            label: customersLabel,
+            value: '${filtered.length}',
+          ),
+          _buildDivider(),
+          _buildStatItem(
+            icon: Icons.account_balance_wallet_rounded,
+            label: pendingLabel,
+            value: totalPending.round() == 0
+                ? 'No pending'
+                : '₹${totalPending.toStringAsFixed(0)}',
+            valueColor: totalPending.round() != 0 ? AppTheme.amber300 : null,
+          ),
+          _buildDivider(),
+          Expanded(
+            child: _buildStatItem(
+              icon: unsyncedCount > 0
+                  ? Icons.cloud_off_rounded
+                  : Icons.cloud_done_rounded,
+              label: unsyncedCount > 0 ? unsyncedLabel : allSyncedLabel,
+              value: unsyncedCount > 0 ? '$unsyncedCount' : '✓',
+              valueColor: unsyncedCount > 0
+                  ? AppTheme.orange300
+                  : AppTheme.green300,
+              isExpanded: true,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWideCards(
+    BuildContext context, {
+    required int count,
+    required double totalPending,
+    required int unsyncedCount,
+  }) {
+    final synced = unsyncedCount == 0;
+    return DesktopStatBar(
+      stats: [
+        DesktopStat(value: '$count', label: customersLabel),
+        DesktopStat(
+          value: totalPending.round() == 0
+              ? 'No pending'
+              : '₹${totalPending.toStringAsFixed(0)}',
+          label: pendingLabel,
+        ),
+        DesktopStat(
+          value: synced ? allSyncedLabel : '$unsyncedCount',
+          label: synced ? 'Cloud sync' : unsyncedLabel,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    Color? valueColor,
+    bool isExpanded = false,
+  }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 8),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: AppTheme.white, size: 20),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+              color: valueColor ?? AppTheme.white,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w400,
+              fontSize: 11,
+              color: AppTheme.white.withValues(alpha: 0.7),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Container(
+      width: 1,
+      height: 40,
+      color: AppTheme.white.withValues(alpha: 0.2),
+    );
+  }
+}

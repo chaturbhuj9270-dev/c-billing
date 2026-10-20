@@ -1,0 +1,1276 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:c_billing/features/inventory_management/domain/entities/report_item.dart';
+import 'package:c_billing/core/services/inventory_report_service.dart';
+import 'package:c_billing/core/services/stock_report_settings_service.dart';
+import 'package:c_billing/core/localization/app_localizations.dart';
+import 'package:c_billing/core/services/language_service.dart';
+import 'package:c_billing/common_widgets/file_preview_page.dart';
+import 'package:intl/intl.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
+
+class ReportPreviewScreen extends StatefulWidget {
+  final List<ReportItem> reportItems;
+  final ReportType reportType;
+  final ReportFormat selectedFormat;
+  final String reportTitle;
+  final bool presentedAsDialog;
+
+  const ReportPreviewScreen({
+    super.key,
+    required this.reportItems,
+    required this.reportType,
+    required this.selectedFormat,
+    required this.reportTitle,
+    this.presentedAsDialog = false,
+  });
+
+  // Opens the stock report. On web this stays in a popup.
+  static Future<void> open(
+    BuildContext context, {
+    required List<ReportItem> reportItems,
+    required ReportType reportType,
+    required ReportFormat selectedFormat,
+    required String reportTitle,
+  }) {
+    final page = ReportPreviewScreen(
+      reportItems: reportItems,
+      reportType: reportType,
+      selectedFormat: selectedFormat,
+      reportTitle: reportTitle,
+      presentedAsDialog: DesktopCanvas.isDesktopPlatform,
+    );
+    if (!kIsWeb && DesktopCanvas.isDesktopPlatform) {
+      return showAppPage(context, page);
+    }
+    if (!DesktopCanvas.isDesktopPlatform) {
+      return Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => page),
+      );
+    }
+
+    return showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Close report',
+      barrierColor: AppTheme.black.withValues(alpha: 0.62),
+      transitionDuration: const Duration(milliseconds: 180),
+      pageBuilder: (dialogContext, _, _) {
+        final size = MediaQuery.sizeOf(dialogContext);
+        final width = size.width >= 1200 ? 1040.0 : size.width - 48;
+        final height = size.height >= 760 ? size.height - 72 : size.height - 32;
+        return Center(
+          child: Material(
+            color: AppColors.card(dialogContext),
+            elevation: 0,
+            borderRadius: BorderRadius.circular(20),
+            clipBehavior: Clip.antiAlias,
+            child: SizedBox(width: width, height: height, child: page),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  State<ReportPreviewScreen> createState() => _ReportPreviewScreenState();
+}
+
+class _ReportPreviewScreenState extends State<ReportPreviewScreen>
+    with SingleTickerProviderStateMixin {
+  late List<ReportItem> _editableItems;
+  bool _isGenerating = false;
+  final _reportService = InventoryReportService();
+  late AnimationController _animationController;
+  late AppLocalizations _localizations;
+
+  // Controllers for order quantity text fields
+  final Map<String, TextEditingController> _controllers = {};
+  final Map<String, FocusNode> _focusNodes = {};
+
+  // Visible columns cache
+  List<String> _visibleColumnIds = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _localizations = AppLocalizations.of(
+      LanguageService.instance.currentLanguage,
+    );
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _animationController.forward();
+
+    // All items are selected by default, order qty is null (shown as "-")
+    _editableItems = widget.reportItems
+        .map(
+          (item) =>
+              ReportItem.fromProduct(item.product, expiryDate: item.expiryDate),
+        )
+        .toList();
+
+    // Initialize text controllers – empty means null / dash
+    for (final item in _editableItems) {
+      final key = item.product.id;
+      _controllers[key] = TextEditingController();
+      _focusNodes[key] = FocusNode();
+    }
+
+    // Cache visible columns
+    _loadVisibleColumns();
+  }
+
+  void _loadVisibleColumns() {
+    final settings = StockReportSettingsService.instance;
+    final columnOrder = [
+      'sr_no',
+      'product_name',
+      'category',
+      'company',
+      'hsn_code',
+      'purchase_price',
+      'selling_price',
+      'stock',
+      'stock_value',
+      'status',
+      'order_qty',
+      'supplier',
+      'cgst',
+      'sgst',
+    ];
+
+    _visibleColumnIds = columnOrder
+        .where((id) => settings.isColumnVisible(id))
+        .toList();
+
+    // Fallback
+    if (_visibleColumnIds.isEmpty) {
+      _visibleColumnIds = ['product_name', 'stock', 'order_qty'];
+    }
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    for (var c in _controllers.values) {
+      c.dispose();
+    }
+    for (var f in _focusNodes.values) {
+      f.dispose();
+    }
+    super.dispose();
+  }
+
+  // --------------------------------------------------------------------------- Helpers ---------------------------------------------------------------------------
+
+  int get _selectedCount => _editableItems.where((e) => e.isSelected).length;
+  bool get _allSelected => _editableItems.every((e) => e.isSelected);
+  bool get _noneSelected => _editableItems.every((e) => !e.isSelected);
+
+  void _toggleSelectAll(bool value) {
+    setState(() {
+      for (final item in _editableItems) {
+        item.isSelected = value;
+      }
+    });
+  }
+
+  void _toggleItem(int index) {
+    setState(() {
+      _editableItems[index].isSelected = !_editableItems[index].isSelected;
+    });
+  }
+
+  void _updateOrderQuantity(int index, String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      _editableItems[index].updateOrderQuantity(null);
+    } else {
+      final qty = int.tryParse(trimmed);
+      _editableItems[index].updateOrderQuantity(qty);
+    }
+  }
+
+  // --------------------------------------------------------------------------- Report generation – only checked rows ---------------------------------------------------------------...
+
+  Future<void> _generateReport() async {
+    final selected = _editableItems.where((e) => e.isSelected).toList();
+
+    if (selected.isEmpty) {
+      GlassyToast.show(
+        context,
+        _localizations.pleaseSelectAtLeastOneItem,
+        isError: true,
+        icon: Icons.warning_amber_rounded,
+      );
+      return;
+    }
+
+    setState(() => _isGenerating = true);
+
+    try {
+      final products = selected.map((e) => e.product).toList();
+      final orderQuantities = selected.map((e) => e.orderQuantity).toList();
+
+      if (kIsWeb) {
+        final bytes = widget.selectedFormat == ReportFormat.pdf
+            ? await _reportService.buildPdfBytesWithOrderQty(
+                products: products,
+                orderQuantities: orderQuantities,
+                reportType: widget.reportType,
+                customTitle: widget.reportTitle,
+              )
+            : await _reportService.buildCsvBytesWithOrderQty(
+                products: products,
+                orderQuantities: orderQuantities,
+                reportType: widget.reportType,
+                customTitle: widget.reportTitle,
+              );
+        if (mounted) {
+          await FilePreviewPage.open(
+            context,
+            bytes: bytes,
+            fileName: widget.reportTitle,
+            fileType: widget.selectedFormat == ReportFormat.pdf
+                ? FilePreviewType.pdf
+                : FilePreviewType.csv,
+            details: FilePreviewDetails(
+              title: 'Report preview',
+              documentNo: widget.reportTitle,
+              itemsQty: '${selected.length} products',
+            ),
+          );
+        }
+        return;
+      }
+
+      late final File file;
+      if (widget.selectedFormat == ReportFormat.pdf) {
+        file = await _reportService.generatePdfReportWithOrderQty(
+          products: products,
+          orderQuantities: orderQuantities,
+          reportType: widget.reportType,
+          customTitle: widget.reportTitle,
+        );
+      } else {
+        file = await _reportService.generateCsvReportWithOrderQty(
+          products: products,
+          orderQuantities: orderQuantities,
+          reportType: widget.reportType,
+          customTitle: widget.reportTitle,
+        );
+      }
+
+      // Navigate to file preview page
+      if (mounted) {
+        await FilePreviewPage.open(
+          context,
+          file: file,
+          fileName: widget.reportTitle,
+          fileType: widget.selectedFormat == ReportFormat.pdf
+              ? FilePreviewType.pdf
+              : FilePreviewType.csv,
+          subtitle:
+              '${selected.length} products • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
+          details: FilePreviewDetails(
+            title: 'Report preview',
+            documentNo: widget.reportTitle,
+            dateLabel: DateFormat('dd MMM yyyy').format(DateTime.now()),
+            itemsQty: '${selected.length} products',
+          ),
+          onClose: () {
+            if (mounted) Navigator.of(context).pop();
+          },
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        GlassyToast.show(context, 'Error: $e', isError: true);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isGenerating = false);
+      }
+    }
+  }
+
+  // --------------------------------------------------------------------------- Build ---------------------------------------------------------------------------
+
+  @override
+  Widget build(BuildContext context) {
+    final body = Column(
+      children: [
+        widget.presentedAsDialog ? _buildDialogHeader() : _buildHeader(),
+        _buildSelectionBar(),
+        Expanded(
+          child: ColoredBox(
+            color: AppColors.scaffold(context),
+            child: _editableItems.isEmpty
+                ? _buildEmptyState()
+                : _buildProductList(),
+          ),
+        ),
+        _buildBottomBar(),
+      ],
+    );
+
+    if (widget.presentedAsDialog) return body;
+
+    return Scaffold(
+      backgroundColor: AppColors.scaffold(context),
+      body: SafeArea(top: false, child: body),
+    );
+  }
+
+  Widget _buildDialogHeader() {
+    final isPdf = widget.selectedFormat == ReportFormat.pdf;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        border: Border(bottom: BorderSide(color: AppColors.border(context))),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.accentSoft(context, 0.14),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              isPdf ? Icons.picture_as_pdf_outlined : Icons.table_chart_outlined,
+              color: AppColors.action(context),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _localizations.reportPreview,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Literata',
+                    height: 1.15,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  widget.reportTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.mutedText(context),
+                    fontSize: 13,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: AppColors.chipFill(context),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.border(context)),
+            ),
+            child: Text(
+              isPdf ? 'PDF' : 'CSV',
+              style: TextStyle(
+                color: AppColors.primaryText(context),
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            tooltip: 'Close',
+            icon: Icon(
+              Icons.close_rounded,
+              color: AppColors.secondaryText(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --------------------------------------------------------------------------- Header ---------------------------------------------------------------------------
+
+  Widget _buildHeader() {
+    final isPdf = widget.selectedFormat == ReportFormat.pdf;
+    return AppTopBar(
+      title: _localizations.reportPreview,
+      subtitle: widget.reportTitle,
+      actions: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppTopBar.chipFill(context),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppTopBar.chipBorder(context)),
+          ),
+          child: Text(
+            isPdf ? 'PDF' : 'CSV',
+            style: TextStyle(
+              color: AppTopBar.onBar(context),
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'Literata',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSelectionBar() {
+    return Container(
+      margin: EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.action(context).withValues(alpha: 0.08),
+            AppColors.action(context).withValues(alpha: 0.04),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.accentSoft(context, 0.15),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Select all checkbox
+          GestureDetector(
+            onTap: () => _toggleSelectAll(!_allSelected),
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: _allSelected ? AppColors.action(context) : AppTheme.white,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: _allSelected
+                      ? AppColors.action(context)
+                      : AppColors.action(context).withValues(alpha: 0.3),
+                  width: 2,
+                ),
+              ),
+              child: _allSelected
+                  ? Icon(Icons.check, color: AppTheme.white, size: 16)
+                  : _noneSelected
+                  ? null
+                  : Container(
+                      margin: EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent(context),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Selection text
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _allSelected
+                      ? _localizations.allSelected
+                      : _localizations.selectAll,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: AppColors.accent(context),
+                  ),
+                ),
+                Text(
+                  _localizations.tapItemsToIncludeExclude,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 11,
+                    color: AppColors.accentSoft(context, 0.6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Count badge
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.accent(context),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '$_selectedCount / ${_editableItems.length}',
+              style: const TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                color: AppTheme.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --------------------------------------------------------------------------- Empty State ---------------------------------------------------------------------------
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppColors.accentSoft(context, 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.inventory_2_outlined,
+              size: 48,
+              color: AppColors.accentSoft(context, 0.5),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _localizations.noItemsToDisplay,
+            style: TextStyle(
+              fontSize: 16,
+              color: AppTheme.grey600,
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _localizations.addProductsToGenerateReport,
+            style: TextStyle(
+              fontSize: 13,
+              color: AppTheme.grey400,
+              fontFamily: 'Literata',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --------------------------------------------------------------------------- Product List ---------------------------------------------------------------------------
+
+  Widget _buildProductList() {
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      itemCount: _editableItems.length,
+      itemBuilder: (context, index) {
+        return SlideTransition(
+          position: Tween<Offset>(begin: const Offset(0.3, 0), end: Offset.zero)
+              .animate(
+                CurvedAnimation(
+                  parent: _animationController,
+                  curve: Interval(
+                    (index / _editableItems.length) * 0.5,
+                    0.5 + (index / _editableItems.length) * 0.5,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
+              ),
+          child: FadeTransition(
+            opacity: CurvedAnimation(
+              parent: _animationController,
+              curve: Interval(
+                (index / _editableItems.length) * 0.5,
+                0.5 + (index / _editableItems.length) * 0.5,
+                curve: Curves.easeOut,
+              ),
+            ),
+            child: _buildProductCard(index),
+          ),
+        );
+      },
+    );
+  }
+
+  // --------------------------------------------------------------------------- Product Card ---------------------------------------------------------------------------
+
+  Widget _buildProductCard(int index) {
+    final item = _editableItems[index];
+    final product = item.product;
+    final key = product.id;
+    final controller = _controllers[key]!;
+    final focusNode = _focusNodes[key]!;
+    final isSelected = item.isSelected;
+    final numberFormat = NumberFormat('#,##0.00');
+
+    return GestureDetector(
+      onTap: () => _toggleItem(index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: AppColors.card(context),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.action(context).withValues(alpha: 0.4)
+                : AppTheme.grey.withValues(alpha: 0.15),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? AppColors.action(context).withValues(alpha: 0.08)
+                  : AppTheme.black.withValues(alpha: 0.03),
+              blurRadius: isSelected ? 12 : 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 200),
+          opacity: isSelected ? 1.0 : 0.6,
+          child: Column(
+            children: [
+              // Card Header
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppColors.action(context).withValues(alpha: 0.04)
+                      : AppTheme.grey.withValues(alpha: 0.02),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(15),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    // Selection indicator
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.action(context)
+                            : AppTheme.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.action(context)
+                              : AppTheme.grey.withValues(alpha: 0.3),
+                          width: 2,
+                        ),
+                      ),
+                      child: isSelected
+                          ? Icon(
+                              Icons.check_rounded,
+                              color: AppTheme.white,
+                              size: 18,
+                            )
+                          : null,
+                    ),
+                    SizedBox(width: 12),
+                    // Serial number
+                    if (_visibleColumnIds.contains('sr_no'))
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.accentSoft(context, 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '#${index + 1}',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                            color: AppColors.accent(context),
+                          ),
+                        ),
+                      ),
+                    if (_visibleColumnIds.contains('sr_no'))
+                      const SizedBox(width: 10),
+                    // Product name
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_visibleColumnIds.contains('product_name'))
+                            Text(
+                              product.name.isEmpty ? '-' : product.name,
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                                color: AppColors.accent(context),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          if (_visibleColumnIds.contains('company') &&
+                              product.companyName.isNotEmpty)
+                            Text(
+                              product.companyName,
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 12,
+                                color: AppTheme.grey600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
+                    ),
+                    // Stock badge
+                    if (_visibleColumnIds.contains('stock'))
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _getStockColor(
+                            item.availableQuantity,
+                          ).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: _getStockColor(
+                              item.availableQuantity,
+                            ).withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.inventory_2_rounded,
+                              size: 14,
+                              color: _getStockColor(item.availableQuantity),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${item.availableQuantity}',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                                color: _getStockColor(item.availableQuantity),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+              // Card Body - Dynamic Fields
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
+                child: Column(
+                  children: [
+                    // Row 1: Category, HSN, Status
+                    _buildInfoRow([
+                      if (_visibleColumnIds.contains('category'))
+                        _buildInfoChip(
+                          Icons.category_rounded,
+                          _localizations.category,
+                          product.category.isEmpty ? '-' : product.category,
+                        ),
+                      if (_visibleColumnIds.contains('hsn_code'))
+                        _buildInfoChip(
+                          Icons.tag_rounded,
+                          _localizations.hsn,
+                          product.hsnCode?.isNotEmpty == true
+                              ? product.hsnCode!
+                              : '-',
+                        ),
+                      if (_visibleColumnIds.contains('status'))
+                        _buildStatusChip(item.availableQuantity),
+                    ]),
+
+                    // Row 2: Prices
+                    if (_visibleColumnIds.contains('purchase_price') ||
+                        _visibleColumnIds.contains('selling_price') ||
+                        _visibleColumnIds.contains('stock_value'))
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: _buildInfoRow([
+                          if (_visibleColumnIds.contains('purchase_price'))
+                            _buildPriceChip(
+                              'Purchase',
+                              '₹${numberFormat.format(product.purchasePrice)}',
+                              AppTheme.orange,
+                            ),
+                          if (_visibleColumnIds.contains('selling_price'))
+                            _buildPriceChip(
+                              'Selling',
+                              '₹${numberFormat.format(product.salesPrice)}',
+                              AppTheme.blue,
+                            ),
+                          if (_visibleColumnIds.contains('stock_value'))
+                            _buildPriceChip(
+                              'Value',
+                              '₹${numberFormat.format(product.getStockValue())}',
+                              AppColors.action(context),
+                            ),
+                        ]),
+                      ),
+
+                    // Row 3: Tax & Supplier
+                    if (_visibleColumnIds.contains('cgst') ||
+                        _visibleColumnIds.contains('sgst') ||
+                        _visibleColumnIds.contains('supplier'))
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: _buildInfoRow([
+                          if (_visibleColumnIds.contains('cgst'))
+                            _buildInfoChip(
+                              Icons.percent_rounded,
+                              'CGST',
+                              '${product.cgstPercent}%',
+                            ),
+                          if (_visibleColumnIds.contains('sgst'))
+                            _buildInfoChip(
+                              Icons.percent_rounded,
+                              'SGST',
+                              '${product.sgstPercent}%',
+                            ),
+                          if (_visibleColumnIds.contains('supplier'))
+                            _buildInfoChip(
+                              Icons.local_shipping_rounded,
+                              _localizations.supplier,
+                              product.defaultSupplierName?.isNotEmpty == true
+                                  ? product.defaultSupplierName!
+                                  : '-',
+                            ),
+                        ]),
+                      ),
+
+                    // Order Quantity Input
+                    if (_visibleColumnIds.contains('order_qty'))
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: _buildOrderQuantityInput(
+                          controller,
+                          focusNode,
+                          isSelected,
+                          index,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(List<Widget> children) {
+    final validChildren = children
+        .where((w) => w is! SizedBox || (w).width != 0)
+        .toList();
+    if (validChildren.isEmpty) return const SizedBox.shrink();
+
+    return Wrap(spacing: 8, runSpacing: 8, children: validChildren);
+  }
+
+  Widget _buildInfoChip(IconData icon, String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppTheme.grey.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: AppTheme.grey600),
+          const SizedBox(width: 6),
+          Text(
+            '$label: ',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 11,
+              color: AppTheme.grey,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.paletteFF333333,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusChip(int stock) {
+    final status = _getStockStatus(stock);
+    final color = _getStockColor(stock);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            status,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPriceChip(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$label: ',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 11,
+              color: color.withValues(alpha: 0.7),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrderQuantityInput(
+    TextEditingController controller,
+    FocusNode focusNode,
+    bool isSelected,
+    int index,
+  ) {
+    return Container(
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.accentSoft(context, 0.04),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.accentSoft(context, 0.15),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.accentSoft(context, 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.shopping_cart_rounded,
+              size: 18,
+              color: AppColors.accent(context),
+            ),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _localizations.orderQuantity,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.accent(context),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _localizations.enterQuantityToOrder,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 10,
+                    color: AppTheme.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            width: 100,
+            height: 44,
+            child: TextField(
+              controller: controller,
+              focusNode: focusNode,
+              enabled: isSelected,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                color: AppColors.accent(context),
+              ),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: AppColors.inputFill(context),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: AppColors.accent(context)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: AppColors.accentSoft(context, 0.3),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: AppColors.accent(context),
+                    width: 2,
+                  ),
+                ),
+                disabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: AppTheme.grey300),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                hintText: '-',
+                hintStyle: TextStyle(
+                  color: AppTheme.grey400,
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              onChanged: (value) => _updateOrderQuantity(index, value),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --------------------------------------------------------------------------- Bottom action bar ---------------------------------------------------------------------------
+
+  Widget _buildBottomBar() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            // Cancel button
+            Expanded(
+              child: Material(
+                color: AppTheme.transparent,
+                child: InkWell(
+                  onTap: _isGenerating
+                      ? null
+                      : () => Navigator.of(context).pop(),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: AppColors.accentSoft(context, 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.close_rounded,
+                          color: AppColors.accent(context),
+                          size: 20,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          _localizations.cancel,
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: AppColors.accent(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Generate button
+            Expanded(
+              flex: 2,
+              child: Material(
+                color: AppTheme.transparent,
+                child: InkWell(
+                  onTap: _isGenerating || _noneSelected
+                      ? null
+                      : _generateReport,
+                  borderRadius: BorderRadius.circular(14),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      gradient: _isGenerating || _noneSelected
+                          ? LinearGradient(
+                              colors: [AppTheme.grey400, AppTheme.grey],
+                            )
+                          : LinearGradient(
+                              colors: [AppTheme.paletteFF2E7D4A, AppColors.action(context)],
+                            ),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: _isGenerating || _noneSelected
+                          ? null
+                          : [
+                              BoxShadow(
+                                color: AppColors.action(context).withValues(alpha: 0.4),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (_isGenerating)
+                          const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: AppTheme.white,
+                            ),
+                          )
+                        else
+                          Icon(
+                            widget.selectedFormat == ReportFormat.pdf
+                                ? Icons.picture_as_pdf_rounded
+                                : Icons.table_chart_rounded,
+                            color: AppTheme.white,
+                            size: 20,
+                          ),
+                        const SizedBox(width: 10),
+                        Text(
+                          _isGenerating
+                              ? _localizations.generating
+                              : '${_localizations.generate} ($_selectedCount)',
+                          style: const TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            color: AppTheme.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --------------------------------------------------------------------------- Helpers ---------------------------------------------------------------------------
+
+  String _getStockStatus(int stock) {
+    if (stock == 0) return _localizations.outOfStock;
+    if (stock <= 10) return _localizations.lowStock;
+    return _localizations.inStock;
+  }
+
+  Color _getStockColor(int stock) {
+    if (stock == 0) return AppTheme.red600;
+    if (stock <= 10) return AppTheme.orange600;
+    return AppTheme.green600;
+  }
+}

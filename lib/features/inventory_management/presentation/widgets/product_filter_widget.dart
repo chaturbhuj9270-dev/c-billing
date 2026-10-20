@@ -1,0 +1,460 @@
+import 'package:flutter/material.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+
+// Sort options for product list
+enum ProductSortField { name, stock, price, category }
+
+// Filter widget for product list Features: Search bar, Sort options, Category filter
+class ProductFilterWidget extends StatefulWidget {
+  final String searchQuery;
+  final ProductSortField sortField;
+  final bool sortAscending;
+  final String? selectedCategory;
+  final List<String> categories;
+  final ValueChanged<String> onSearchChanged;
+  final ValueChanged<ProductSortField> onSortFieldChanged;
+  final VoidCallback onSortDirectionToggle;
+  final ValueChanged<String?> onCategoryChanged;
+  final VoidCallback? onClearSearch;
+  final VoidCallback? onFilterTap;
+
+  // Labels
+  final String searchHint;
+  final String sortByNameLabel;
+  final String sortByStockLabel;
+  final String sortByPriceLabel;
+
+  const ProductFilterWidget({
+    super.key,
+    required this.searchQuery,
+    required this.sortField,
+    required this.sortAscending,
+    required this.selectedCategory,
+    required this.categories,
+    required this.onSearchChanged,
+    required this.onSortFieldChanged,
+    required this.onSortDirectionToggle,
+    required this.onCategoryChanged,
+    this.onClearSearch,
+    this.onFilterTap,
+    this.searchHint = 'Search products...',
+    this.sortByNameLabel = 'Name',
+    this.sortByStockLabel = 'Stock',
+    this.sortByPriceLabel = 'Price',
+  });
+
+  @override
+  State<ProductFilterWidget> createState() => _ProductFilterWidgetState();
+}
+
+class _ProductFilterWidgetState extends State<ProductFilterWidget> {
+  late TextEditingController _searchController;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController(text: widget.searchQuery);
+  }
+
+  @override
+  void didUpdateWidget(covariant ProductFilterWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.searchQuery != widget.searchQuery &&
+        widget.searchQuery != _searchController.text) {
+      _searchController.text = widget.searchQuery;
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Search bar row
+          Row(
+            children: [
+              Expanded(child: _buildSearchBar()),
+              const SizedBox(width: 10),
+              _buildSortDirectionButton(),
+              if (widget.onFilterTap != null) ...[
+                const SizedBox(width: 8),
+                _buildFilterButton(),
+              ],
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Sort chips row
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildSortChip(
+                  label: widget.sortByNameLabel,
+                  isSelected: widget.sortField == ProductSortField.name,
+                  onTap: () => widget.onSortFieldChanged(ProductSortField.name),
+                  icon: Icons.sort_by_alpha_rounded,
+                ),
+                const SizedBox(width: 8),
+                _buildSortChip(
+                  label: widget.sortByStockLabel,
+                  isSelected: widget.sortField == ProductSortField.stock,
+                  onTap: () =>
+                      widget.onSortFieldChanged(ProductSortField.stock),
+                  icon: Icons.inventory_rounded,
+                ),
+                const SizedBox(width: 8),
+                _buildSortChip(
+                  label: widget.sortByPriceLabel,
+                  isSelected: widget.sortField == ProductSortField.price,
+                  onTap: () =>
+                      widget.onSortFieldChanged(ProductSortField.price),
+                  icon: Icons.currency_rupee_rounded,
+                ),
+                if (widget.categories.isNotEmpty) ...[
+                  SizedBox(width: 8),
+                  _buildCategoryDropdown(),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: AppColors.scaffold(context),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border(context), width: 1),
+      ),
+      child: TextField(
+        controller: _searchController,
+        style: TextStyle(
+          fontSize: 14,
+          fontFamily: 'Literata',
+          color: AppColors.accent(context),
+        ),
+        decoration: InputDecoration(
+          hintText: widget.searchHint,
+          hintStyle: TextStyle(
+            color: AppTheme.grey400,
+            fontFamily: 'Literata',
+            fontSize: 13,
+          ),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            color: AppTheme.grey,
+            size: 20,
+          ),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? GestureDetector(
+                  onTap: () {
+                    _searchController.clear();
+                    widget.onSearchChanged('');
+                    widget.onClearSearch?.call();
+                  },
+                  child: Icon(
+                    Icons.close_rounded,
+                    color: AppTheme.grey,
+                    size: 18,
+                  ),
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          isDense: true,
+        ),
+        onChanged: (value) {
+          widget.onSearchChanged(value);
+          setState(() {}); // Rebuild to show/hide clear button
+        },
+      ),
+    );
+  }
+
+  Widget _buildSortDirectionButton() {
+    return GestureDetector(
+      onTap: widget.onSortDirectionToggle,
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 200),
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: AppColors.accent(context),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Center(
+          child: AnimatedRotation(
+            duration: const Duration(milliseconds: 200),
+            turns: widget.sortAscending ? 0 : 0.5,
+            child: Icon(
+              Icons.arrow_upward_rounded,
+              color: AppTheme.white,
+              size: 20,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterButton() {
+    return GestureDetector(
+      onTap: widget.onFilterTap,
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: AppColors.chipFill(context),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppTheme.grey300, width: 1),
+        ),
+        child: Center(
+          child: Icon(Icons.tune_rounded, color: AppTheme.grey700, size: 20),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSortChip({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required IconData icon,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.selectedFill(context)
+              : AppColors.chipFill(context),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.selectedFill(context)
+                : AppColors.border(context),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected
+                  ? AppColors.selectedOnFill(context)
+                  : AppColors.secondaryText(context),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: isSelected
+                    ? AppColors.selectedOnFill(context)
+                    : AppColors.secondaryText(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryDropdown() {
+    final hasSelection =
+        widget.selectedCategory != null && widget.selectedCategory!.isNotEmpty;
+
+    return GestureDetector(
+      onTap: () => _showCategoryPicker(context),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: hasSelection
+              ? AppColors.action(context).withValues(alpha: 0.1)
+              : AppColors.chipFill(context),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: hasSelection ? AppColors.action(context) : AppTheme.grey300,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.category_rounded,
+              size: 16,
+              color: hasSelection ? AppColors.action(context) : AppTheme.grey600,
+            ),
+            const SizedBox(width: 6),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 80),
+              child: Text(
+                hasSelection ? widget.selectedCategory! : 'Category',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  color: hasSelection
+                      ? AppColors.action(context)
+                      : AppTheme.grey700,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            SizedBox(width: 4),
+            Icon(
+              Icons.arrow_drop_down_rounded,
+              size: 18,
+              color: hasSelection ? AppColors.action(context) : AppTheme.grey600,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCategoryPicker(BuildContext context) {
+    showAppBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: AppColors.card(context),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.grey300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  'Select Category',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    color: AppColors.accent(context),
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+              // All categories option
+              ListTile(
+                leading: Icon(
+                  Icons.all_inclusive_rounded,
+                  color: widget.selectedCategory == null
+                      ? AppColors.action(context)
+                      : AppTheme.grey600,
+                ),
+                title: Text(
+                  'All Categories',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: widget.selectedCategory == null
+                        ? FontWeight.w700
+                        : FontWeight.w500,
+                    color: widget.selectedCategory == null
+                        ? AppColors.action(context)
+                        : AppTheme.grey800,
+                  ),
+                ),
+                trailing: widget.selectedCategory == null
+                    ? Icon(Icons.check_rounded, color: AppColors.accent(context))
+                    : null,
+                onTap: () {
+                  widget.onCategoryChanged(null);
+                  Navigator.pop(context);
+                },
+              ),
+              // Category list
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: widget.categories.length,
+                  itemBuilder: (context, index) {
+                    final category = widget.categories[index];
+                    final isSelected = widget.selectedCategory == category;
+                    return ListTile(
+                      leading: Icon(
+                        Icons.label_rounded,
+                        color: isSelected
+                            ? AppColors.action(context)
+                            : AppTheme.grey600,
+                      ),
+                      title: Text(
+                        category,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: isSelected
+                              ? AppColors.action(context)
+                              : AppTheme.grey800,
+                        ),
+                      ),
+                      trailing: isSelected
+                          ? Icon(
+                              Icons.check_rounded,
+                              color: AppColors.accent(context),
+                            )
+                          : null,
+                      onTap: () {
+                        widget.onCategoryChanged(category);
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
