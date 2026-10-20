@@ -51,8 +51,7 @@ import '../../../../core/services/theme_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 
-/// High-performance dashboard page with cache-first loading
-/// Renders instantly with cached data, updates smoothly when fresh data arrives
+// High-performance dashboard page with cache-first loading Renders instantly with cached data, updates smoothly when fresh data arrives
 class OptimizedDashboardPage extends StatelessWidget {
   const OptimizedDashboardPage({super.key});
 
@@ -140,11 +139,10 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     _loadExpandableSectionData();
   }
 
-  /// Called when data changes in other pages (customers, suppliers, etc.)
+  // Called when data changes in other pages (customers, suppliers, etc.)
   void _onDataChanged() {
     if (mounted) {
-      // Cubit handles its own refresh via DashboardRefreshService subscription.
-      // Here we only reload expandable section data (quick insights).
+      // Cubit handles its own refresh via DashboardRefreshService subscription. Here we only reload expandable section data (quick insights).
       _loadExpandableSectionData();
     }
   }
@@ -159,7 +157,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     }
   }
 
-  /// Load data for all expandable sections in parallel
+  // Load data for all expandable sections in parallel
   Future<void> _loadExpandableSectionData() async {
     if (_isLoadingExpandableData) {
       _expandableReloadQueued = true;
@@ -333,9 +331,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
   Widget _buildWebContent() {
     _webPanes[_selectedIndex] ??= _createWebPane(_selectedIndex);
-    // Only the selected page is laid out. IndexedStack still lays out every
-    // visited page, so one page's layout error freezes every other screen on
-    // its last frame (the loading shimmer).
+    // Only the selected page is laid out. IndexedStack still lays out every visited page, so one page's layout error freezes every other screen on its last frame (the loading shimmer).
     final stack = Stack(
       fit: StackFit.expand,
       children: [
@@ -358,8 +354,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             fit: StackFit.expand,
             children: [
               stack,
-              // Pushed pages sit above the section. The root route stays
-              // transparent so the section underneath remains visible.
+              // Pushed pages sit above the section. The root route stays transparent so the section underneath remains visible.
               Offstage(
                 offstage: !_webChildOpen,
                 child: Theme(
@@ -692,7 +687,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     );
   }
 
-  /// Desktop/tablet side navigation rail
+  // Desktop/tablet side navigation rail
   Widget _buildDesktopSideNav() {
     final isExpanded = MediaQuery.of(context).size.width >= 1100;
     final shell = DesktopCanvas.isDesktopPlatform;

@@ -32,7 +32,7 @@ class ReportPreviewScreen extends StatefulWidget {
     this.presentedAsDialog = false,
   });
 
-  /// Opens the stock report. On web this stays in a popup.
+  // Opens the stock report. On web this stays in a popup.
   static Future<void> open(
     BuildContext context, {
     required List<ReportItem> reportItems,
@@ -170,9 +170,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     super.dispose();
   }
 
-  // ---------------------------------------------------------------------------
-  // Helpers
-  // ---------------------------------------------------------------------------
+  // --------------------------------------------------------------------------- Helpers ---------------------------------------------------------------------------
 
   int get _selectedCount => _editableItems.where((e) => e.isSelected).length;
   bool get _allSelected => _editableItems.every((e) => e.isSelected);
@@ -202,9 +200,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Report generation – only checked rows
-  // ---------------------------------------------------------------------------
+  // --------------------------------------------------------------------------- Report generation – only checked rows ---------------------------------------------------------------...
 
   Future<void> _generateReport() async {
     final selected = _editableItems.where((e) => e.isSelected).toList();
@@ -299,9 +295,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Build
-  // ---------------------------------------------------------------------------
+  // --------------------------------------------------------------------------- Build ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -414,9 +408,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Header
-  // ---------------------------------------------------------------------------
+  // --------------------------------------------------------------------------- Header ---------------------------------------------------------------------------
 
   Widget _buildHeader() {
     final isPdf = widget.selectedFormat == ReportFormat.pdf;
@@ -542,9 +534,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Empty State
-  // ---------------------------------------------------------------------------
+  // --------------------------------------------------------------------------- Empty State ---------------------------------------------------------------------------
 
   Widget _buildEmptyState() {
     return Center(
@@ -587,9 +577,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Product List
-  // ---------------------------------------------------------------------------
+  // --------------------------------------------------------------------------- Product List ---------------------------------------------------------------------------
 
   Widget _buildProductList() {
     return ListView.builder(
@@ -624,9 +612,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Product Card
-  // ---------------------------------------------------------------------------
+  // --------------------------------------------------------------------------- Product Card ---------------------------------------------------------------------------
 
   Widget _buildProductCard(int index) {
     final item = _editableItems[index];
@@ -1129,9 +1115,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Bottom action bar
-  // ---------------------------------------------------------------------------
+  // --------------------------------------------------------------------------- Bottom action bar ---------------------------------------------------------------------------
 
   Widget _buildBottomBar() {
     return Container(
@@ -1268,9 +1252,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Helpers
-  // ---------------------------------------------------------------------------
+  // --------------------------------------------------------------------------- Helpers ---------------------------------------------------------------------------
 
   String _getStockStatus(int stock) {
     if (stock == 0) return _localizations.outOfStock;

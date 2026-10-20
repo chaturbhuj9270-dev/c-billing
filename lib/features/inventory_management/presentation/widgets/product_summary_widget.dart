@@ -4,8 +4,7 @@ import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
-/// Summary widget for product statistics
-/// Displays: Total products, Total stock, Out of stock, Sync status
+// Summary widget for product statistics Displays: Total products, Total stock, Out of stock, Sync status
 class ProductSummaryWidget extends StatelessWidget {
   final List<ProductEntity> products;
   final String searchQuery;

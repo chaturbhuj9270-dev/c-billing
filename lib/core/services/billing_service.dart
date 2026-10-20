@@ -9,7 +9,7 @@ import 'package:c_billing/features/inventory_management/domain/repositories/prod
 import 'package:c_billing/features/inventory_management/domain/repositories/stock_repository.dart';
 import 'package:c_billing/core/services/customer_transaction_service.dart';
 
-/// Result class for billing operations
+// Result class for billing operations
 class BillingResult {
   final bool success;
   final String? billId;
@@ -39,7 +39,7 @@ class BillingResult {
   }
 }
 
-/// Result class for return bill operations
+// Result class for return bill operations
 class ReturnBillResult {
   final bool success;
   final String? billId;
@@ -84,7 +84,7 @@ class ReturnBillResult {
   }
 }
 
-/// Represents an item to be returned with specific quantity
+// Represents an item to be returned with specific quantity
 class ReturnItem {
   final String productId;
   final String itemId;
@@ -98,7 +98,7 @@ class ReturnItem {
   });
 }
 
-/// Service class for handling billing operations with transaction support
+// Service class for handling billing operations with transaction support
 class BillingService {
   final FirebaseBillRepository _billRepository;
   final ProductRepository _productRepository;
@@ -115,22 +115,22 @@ class BillingService {
        _stockRepository = stockRepository,
        _customerTransactionService = customerTransactionService;
 
-  /// Calculate subtotal for a bill item
+  // Calculate subtotal for a bill item
   double calculateSubtotal(double sellingPrice, double quantity) {
     return sellingPrice * quantity;
   }
 
-  /// Calculate total quantity from bill items (rounded for display)
+  // Calculate total quantity from bill items (rounded for display)
   int calculateTotalQuantity(List<BillItem> items) {
     return items.fold(0, (total, item) => total + item.quantityInt);
   }
 
-  /// Calculate total amount from bill items
+  // Calculate total amount from bill items
   double calculateTotalAmount(List<BillItem> items) {
     return items.fold(0.0, (total, item) => total + item.subtotal);
   }
 
-  /// Validate stock availability for all items
+  // Validate stock availability for all items
   Future<Map<String, String>> validateStock(List<BillItem> items) async {
     final errors = <String, String>{};
 
@@ -158,13 +158,13 @@ class BillingService {
     return errors;
   }
 
-  /// Get current stock for a product
+  // Get current stock for a product
   Future<int> getProductStock(String productId) async {
     final product = await _productRepository.getProductById(productId);
     return product?.currentStock ?? 0;
   }
 
-  /// Create a bill item from a product
+  // Create a bill item from a product
   BillItem createBillItem({
     required Product product,
     required double quantity,
@@ -179,11 +179,7 @@ class BillingService {
     );
   }
 
-  /// Process and save a bill with transaction support
-  /// This method ensures that either all operations succeed or all are rolled back
-  ///
-  /// [paidAmount] - Amount paid upfront. If null, assumes full payment.
-  /// If paidAmount < finalAmount, the remaining is added to customer's pending balance.
+  // Process and save a bill with transaction support This method ensures that either all operations succeed or all are rolled back [paidAmount] - Amount paid upfront. If null, assum...
   Future<BillingResult> processBill({
     required List<BillItem> items,
     String? customerId,
@@ -313,9 +309,7 @@ class BillingService {
 
         transaction.set(billRef, bill.toJson());
 
-        // Step 3: Update stock for each product and create stock entries
-        // Track new balances for products that might appear multiple times in the bill
-        // Note: Stock is tracked in whole units, so we round fractional quantities
+        // Step 3: Update stock for each product and create stock entries Track new balances for products that might appear multiple times in the bill Note: Stock is tracked in whole units...
         final productNewBalances = Map<String, int>.from(productStocks);
 
         for (final item in items) {
@@ -325,8 +319,7 @@ class BillingService {
           final newStock = currentBalance - stockQty;
           productNewBalances[item.productId] = newStock;
 
-          // Update product stock with the final accumulated new balance
-          // Note: We'll set the update call outside this loop per unique product to be more efficient
+          // Update product stock with the final accumulated new balance Note: We'll set the update call outside this loop per unique product to be more efficient
         }
 
         // Apply product updates once per unique product
@@ -340,8 +333,7 @@ class BillingService {
           });
         }
 
-        // Still need individual stock entries for each line item (or summarized per bill)
-        // Usually stock history is per line item or per bill. Keeping it per line item as before.
+        // Still need individual stock entries for each line item (or summarized per bill) Usually stock history is per line item or per bill. Keeping it per line item as before.
         for (final item in items) {
           final stockRef = firestore
               .collection('users')
@@ -401,33 +393,33 @@ class BillingService {
     }
   }
 
-  /// Get all products for selection
+  // Get all products for selection
   Future<List<Product>> getAllProducts() async {
     return await _productRepository.getAllProducts();
   }
 
-  /// Get products with available stock
+  // Get products with available stock
   Future<List<Product>> getAvailableProducts() async {
     final products = await _productRepository.getAllProducts();
     return products.where((p) => p.currentStock > 0).toList();
   }
 
-  /// Get all bills
+  // Get all bills
   Future<List<Bill>> getAllBills() async {
     return await _billRepository.getAllBills();
   }
 
-  /// Get today's bills
+  // Get today's bills
   Future<List<Bill>> getTodaysBills() async {
     return await _billRepository.getTodaysBills();
   }
 
-  /// Get bill by ID
+  // Get bill by ID
   Future<Bill?> getBillById(String billId) async {
     return await _billRepository.getBillById(billId);
   }
 
-  /// Get bills by date range
+  // Get bills by date range
   Future<List<Bill>> getBillsByDateRange(
     DateTime startDate,
     DateTime endDate,
@@ -435,12 +427,12 @@ class BillingService {
     return await _billRepository.getBillsByDateRange(startDate, endDate);
   }
 
-  /// Search bills
+  // Search bills
   Future<List<Bill>> searchBills(String query) async {
     return await _billRepository.searchBills(query);
   }
 
-  /// Get total sales amount
+  // Get total sales amount
   Future<double> getTotalSalesAmount({
     DateTime? startDate,
     DateTime? endDate,
@@ -451,7 +443,7 @@ class BillingService {
     );
   }
 
-  /// Get total bills count
+  // Get total bills count
   Future<int> getTotalBillsCount({
     DateTime? startDate,
     DateTime? endDate,
@@ -462,7 +454,7 @@ class BillingService {
     );
   }
 
-  /// Get daily sales summary
+  // Get daily sales summary
   Future<Map<String, dynamic>> getDailySalesSummary() async {
     final todaysBills = await getTodaysBills();
     final totalAmount = todaysBills.fold(
@@ -482,18 +474,17 @@ class BillingService {
     };
   }
 
-  /// Get stock history for a product
+  // Get stock history for a product
   Future<List<Stock>> getProductStockHistory(String productId) async {
     return await _stockRepository.getStockByProductId(productId);
   }
 
-  /// Get current stock balance for a product from stock repository
+  // Get current stock balance for a product from stock repository
   Future<int> getStockBalance(String productId) async {
     return await _stockRepository.getCurrentBalance(productId);
   }
 
-  /// Validate if a bill can be returned
-  /// Returns the bill if valid, or a failure result
+  // Validate if a bill can be returned Returns the bill if valid, or a failure result
   Future<ReturnBillResult> validateBillForReturn(String billId) async {
     try {
       final bill = await _billRepository.getBillById(billId);
@@ -516,7 +507,7 @@ class BillingService {
     }
   }
 
-  /// Search for a bill by bill number or customer mobile for return
+  // Search for a bill by bill number or customer mobile for return
   Future<ReturnBillResult> searchBillForReturn(String query) async {
     try {
       final bills = await _billRepository.searchBills(query);
@@ -558,10 +549,7 @@ class BillingService {
     }
   }
 
-  /// Process a partial or full bill return with atomic transaction
-  /// This method ensures inventory is updated and item return quantities are updated atomically
-  /// @param billId - The ID of the bill to process return for
-  /// @param returnItems - Map of itemId to quantity to return (in base units). If null, returns all remaining quantities.
+  // Process a partial or full bill return with atomic transaction This method ensures inventory is updated and item return quantities are updated atomically @param billId - The ID o...
   Future<ReturnBillResult> processReturn({
     required String billId,
     Map<String, double>? returnItems,
@@ -668,8 +656,7 @@ class BillingService {
           }
         }
 
-        // Step 4: Calculate new stock quantities (add back returned quantities)
-        // Note: Stock is tracked in whole units, so we round fractional returns
+        // Step 4: Calculate new stock quantities (add back returned quantities) Note: Stock is tracked in whole units, so we round fractional returns
         final productNewBalances = Map<String, int>.from(productStocks);
         for (final entry in itemsToReturn.entries) {
           final productId = entry.key.productId;

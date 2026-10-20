@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 
-/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTime(dynamic value) {
   if (value == null) return null;
   if (value is Timestamp) return value.toDate();
@@ -9,7 +9,7 @@ DateTime? _parseDateTime(dynamic value) {
   return null;
 }
 
-/// Represents shop details used for bill printing and display
+// Represents shop details used for bill printing and display
 class Shop {
   final String id;
   final String shopName;
@@ -51,7 +51,7 @@ class Shop {
     this.updatedAt,
   });
 
-  /// Factory constructor to create from JSON (for Firebase)
+  // Factory constructor to create from JSON (for Firebase)
   factory Shop.fromJson(Map<String, dynamic> json) {
     return Shop(
       id: (json['id'] ?? 'main') as String,
@@ -75,7 +75,7 @@ class Shop {
     );
   }
 
-  /// Convert to JSON for Firebase
+  // Convert to JSON for Firebase
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -99,7 +99,7 @@ class Shop {
     };
   }
 
-  /// Copy with modifications
+  // Copy with modifications
   Shop copyWith({
     String? id,
     String? shopName,
@@ -142,11 +142,11 @@ class Shop {
     );
   }
 
-  /// Check if shop has valid print details
+  // Check if shop has valid print details
   bool get hasValidPrintDetails =>
       shopName.isNotEmpty && address.isNotEmpty && phone.isNotEmpty;
 
-  /// Get formatted address with pincode
+  // Get formatted address with pincode
   String get fullAddress {
     if (pincode != null && pincode!.isNotEmpty) {
       return '$address - $pincode';
@@ -154,7 +154,7 @@ class Shop {
     return address;
   }
 
-  /// Default empty shop for fallback
+  // Default empty shop for fallback
   static const Shop empty = Shop(
     id: 'main',
     shopName: 'C-BIlling',

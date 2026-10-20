@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Persists and broadcasts the app [ThemeMode] (light / dark / system).
+// Persists and broadcasts the app [ThemeMode] (light / dark / system).
 class ThemeService extends ChangeNotifier {
   static const String _themeKey = 'selected_theme_mode';
   static ThemeService? _instance;

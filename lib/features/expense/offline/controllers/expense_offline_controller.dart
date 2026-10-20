@@ -4,8 +4,7 @@ import '../../../../core/database/local_store.dart';
 import '../../../../core/services/local_database.dart';
 import '../entities/expense_entity.dart';
 
-/// Offline-first controller for Expense CRUD operations.
-/// All operations go to the local database first, then sync in the background.
+// Offline-first controller for Expense CRUD operations. All operations go to the local database first, then sync in the background.
 class ExpenseOfflineController extends ChangeNotifier {
   static ExpenseOfflineController? _instance;
 
@@ -13,13 +12,13 @@ class ExpenseOfflineController extends ChangeNotifier {
 
   ExpenseOfflineController._(this._db);
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static ExpenseOfflineController get instance {
     _instance ??= ExpenseOfflineController._(LocalDatabase.instance.db);
     return _instance!;
   }
 
-  /// Reset instance (for testing)
+  // Reset instance (for testing)
   @visibleForTesting
   static void resetInstance() {
     _instance = null;
@@ -27,7 +26,7 @@ class ExpenseOfflineController extends ChangeNotifier {
 
   // ==================== CREATE ====================
 
-  /// Add a new expense locally
+  // Add a new expense locally
   Future<ExpenseEntity> addExpense({
     required String title,
     String? description,
@@ -62,7 +61,7 @@ class ExpenseOfflineController extends ChangeNotifier {
     return expense;
   }
 
-  /// Import expense from server (for sync)
+  // Import expense from server (for sync)
   Future<ExpenseEntity> importFromServer(ExpenseEntity expense) async {
     // Check if already exists by serverId
     for (final row in await _db.loadExpenses()) {
@@ -79,7 +78,7 @@ class ExpenseOfflineController extends ChangeNotifier {
 
   // ==================== READ ====================
 
-  /// Get all active expenses (not deleted)
+  // Get all active expenses (not deleted)
   Future<List<ExpenseEntity>> getAllExpenses() async {
     final expenses = (await _db.loadExpenses())
         .where((expense) => expense.syncStatus != ExpenseSyncStatus.deleted)
@@ -88,7 +87,7 @@ class ExpenseOfflineController extends ChangeNotifier {
     return expenses;
   }
 
-  /// Get expense by local ID
+  // Get expense by local ID
   Future<ExpenseEntity?> getExpenseById(int id) async {
     for (final expense in await _db.loadExpenses()) {
       if (expense.id == id) return expense;
@@ -96,7 +95,7 @@ class ExpenseOfflineController extends ChangeNotifier {
     return null;
   }
 
-  /// Get expense by server ID
+  // Get expense by server ID
   Future<ExpenseEntity?> getExpenseByServerId(String serverId) async {
     for (final expense in await _db.loadExpenses()) {
       if (expense.serverId == serverId) return expense;
@@ -104,7 +103,7 @@ class ExpenseOfflineController extends ChangeNotifier {
     return null;
   }
 
-  /// Get expenses by category
+  // Get expenses by category
   Future<List<ExpenseEntity>> getExpensesByCategory(
     ExpenseCategory category,
   ) async {
@@ -116,7 +115,7 @@ class ExpenseOfflineController extends ChangeNotifier {
     return expenses;
   }
 
-  /// Get expenses for this month
+  // Get expenses for this month
   Future<List<ExpenseEntity>> getThisMonthExpenses() async {
     final now = DateTime.now();
     final startOfMonth = DateTime(now.year, now.month, 1);
@@ -125,7 +124,7 @@ class ExpenseOfflineController extends ChangeNotifier {
     return _expensesBetween(startOfMonth, endOfMonth);
   }
 
-  /// Get expenses for this year
+  // Get expenses for this year
   Future<List<ExpenseEntity>> getThisYearExpenses() async {
     final now = DateTime.now();
     final startOfYear = DateTime(now.year, 1, 1);
@@ -134,7 +133,7 @@ class ExpenseOfflineController extends ChangeNotifier {
     return _expensesBetween(startOfYear, endOfYear);
   }
 
-  /// Get expenses for last year
+  // Get expenses for last year
   Future<List<ExpenseEntity>> getLastYearExpenses() async {
     final now = DateTime.now();
     final startOfLastYear = DateTime(now.year - 1, 1, 1);
@@ -143,7 +142,7 @@ class ExpenseOfflineController extends ChangeNotifier {
     return _expensesBetween(startOfLastYear, endOfLastYear);
   }
 
-  /// Get expenses by date range
+  // Get expenses by date range
   Future<List<ExpenseEntity>> getExpensesByDateRange({
     required DateTime startDate,
     required DateTime endDate,
@@ -151,7 +150,7 @@ class ExpenseOfflineController extends ChangeNotifier {
     return _expensesBetween(startDate, endDate);
   }
 
-  /// Get expenses by category and date range
+  // Get expenses by category and date range
   Future<List<ExpenseEntity>> getExpensesByCategoryAndDateRange({
     required ExpenseCategory category,
     required DateTime startDate,
@@ -167,7 +166,7 @@ class ExpenseOfflineController extends ChangeNotifier {
     return expenses;
   }
 
-  /// Get recent expenses (last N)
+  // Get recent expenses (last N)
   Future<List<ExpenseEntity>> getRecentExpenses({int limit = 50}) async {
     final expenses = (await _db.loadExpenses())
         .where((expense) => expense.syncStatus != ExpenseSyncStatus.deleted)
@@ -176,7 +175,7 @@ class ExpenseOfflineController extends ChangeNotifier {
     return expenses.take(limit).toList();
   }
 
-  /// Watch all expenses (reactive stream)
+  // Watch all expenses (reactive stream)
   Stream<List<ExpenseEntity>> watchAllExpenses() {
     return _db.watchExpenses().map((rows) {
       final expenses = rows
@@ -187,7 +186,7 @@ class ExpenseOfflineController extends ChangeNotifier {
     });
   }
 
-  /// Get total expense amount for a period
+  // Get total expense amount for a period
   Future<double> getTotalExpenseAmount({
     DateTime? startDate,
     DateTime? endDate,
@@ -210,14 +209,14 @@ class ExpenseOfflineController extends ChangeNotifier {
     return total;
   }
 
-  /// Get expense count
+  // Get expense count
   Future<int> getExpenseCount() async {
     return (await _db.loadExpenses())
         .where((expense) => expense.syncStatus != ExpenseSyncStatus.deleted)
         .length;
   }
 
-  /// Get expenses grouped by category with totals
+  // Get expenses grouped by category with totals
   Future<Map<ExpenseCategory, double>> getExpenseTotalsByCategory() async {
     final expenses = await getAllExpenses();
     final Map<ExpenseCategory, double> categoryTotals = {};
@@ -236,7 +235,7 @@ class ExpenseOfflineController extends ChangeNotifier {
 
   // ==================== UPDATE ====================
 
-  /// Update an existing expense
+  // Update an existing expense
   Future<ExpenseEntity?> updateExpense({
     required int id,
     String? title,
@@ -295,7 +294,7 @@ class ExpenseOfflineController extends ChangeNotifier {
     return updated;
   }
 
-  /// Mark expense as synced (after successful server sync)
+  // Mark expense as synced (after successful server sync)
   Future<void> markAsSynced(int id, String serverId) async {
     final expense = await getExpenseById(id);
     if (expense == null) return;
@@ -311,7 +310,7 @@ class ExpenseOfflineController extends ChangeNotifier {
 
   // ==================== DELETE ====================
 
-  /// Soft delete an expense (marks for deletion)
+  // Soft delete an expense (marks for deletion)
   Future<void> deleteExpense(int id) async {
     final expense = await getExpenseById(id);
     if (expense == null) {
@@ -337,7 +336,7 @@ class ExpenseOfflineController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Hard delete after server confirms deletion
+  // Hard delete after server confirms deletion
   Future<void> hardDelete(int id) async {
     await _db.deleteExpenseById(id);
     notifyListeners();
@@ -345,21 +344,21 @@ class ExpenseOfflineController extends ChangeNotifier {
 
   // ==================== SYNC HELPERS ====================
 
-  /// Get all expenses pending sync (NEW, UPDATED, or DELETED)
+  // Get all expenses pending sync (NEW, UPDATED, or DELETED)
   Future<List<ExpenseEntity>> getPendingSyncExpenses() async {
     return (await _db.loadExpenses())
         .where((expense) => expense.syncStatus != ExpenseSyncStatus.synced)
         .toList();
   }
 
-  /// Get count of expenses pending sync
+  // Get count of expenses pending sync
   Future<int> getPendingSyncCount() async {
     return (await _db.loadExpenses())
         .where((expense) => expense.syncStatus != ExpenseSyncStatus.synced)
         .length;
   }
 
-  /// Check if there are any pending syncs
+  // Check if there are any pending syncs
   Future<bool> hasPendingSyncs() async {
     return (await getPendingSyncCount()) > 0;
   }

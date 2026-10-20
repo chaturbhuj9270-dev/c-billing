@@ -1,36 +1,36 @@
 import 'sub_event.dart';
 import 'order_item.dart';
 
-/// The type of order
+// The type of order
 enum OrderType {
-  /// Event with sub-events (like wedding event with haldi, sangeet, etc.)
+  // Event with sub-events (like wedding event with haldi, sangeet, etc.)
   event,
   
-  /// Sales order/booking with products
+  // Sales order/booking with products
   salesOrder,
 }
 
-/// The status of an order
+// The status of an order
 enum OrderStatus {
-  /// Order just created, not yet confirmed
+  // Order just created, not yet confirmed
   pending,
   
-  /// Order confirmed with advance payment
+  // Order confirmed with advance payment
   confirmed,
   
-  /// Order partially delivered or in progress
+  // Order partially delivered or in progress
   inProgress,
   
-  /// Order fully delivered
+  // Order fully delivered
   delivered,
   
-  /// Order cancelled
+  // Order cancelled
   cancelled,
   
-  /// Order converted to final bill
+  // Order converted to final bill
   convertedToBill;
   
-  /// Get display name for the status
+  // Get display name for the status
   String get displayName {
     switch (this) {
       case OrderStatus.pending:
@@ -49,75 +49,75 @@ enum OrderStatus {
   }
 }
 
-/// Main entity representing an Event or Sales Order
+// Main entity representing an Event or Sales Order
 class EventOrder {
-  /// Unique identifier
+  // Unique identifier
   final String id;
   
-  /// Type of order (event or sales order)
+  // Type of order (event or sales order)
   final OrderType orderType;
   
-  /// Customer ID (linked to existing customer)
+  // Customer ID (linked to existing customer)
   final String? customerId;
   
-  /// Customer name
+  // Customer name
   final String customerName;
   
-  /// Customer contact number
+  // Customer contact number
   final String customerContact;
   
-  /// Customer address (optional)
+  // Customer address (optional)
   final String? customerAddress;
   
-  /// Event/Order name (e.g., "John's Wedding", "Bulk Order #123")
+  // Event/Order name (e.g., "John's Wedding", "Bulk Order #123")
   final String orderName;
   
-  /// Description of the event/order
+  // Description of the event/order
   final String? description;
   
-  /// Main event date / delivery date
+  // Main event date / delivery date
   final DateTime eventDate;
   
-  /// Event/Order location (optional)
+  // Event/Order location (optional)
   final String? eventLocation;
   
-  /// List of sub-events (only for event type)
+  // List of sub-events (only for event type)
   final List<SubEvent> subEvents;
   
-  /// List of order items (only for sales order type)
+  // List of order items (only for sales order type)
   final List<OrderItem> items;
   
-  /// Event-level charges (separate from sub-events/products)
+  // Event-level charges (separate from sub-events/products)
   final double eventCharges;
   
-  /// Total amount (calculated from sub-events or items + event charges)
+  // Total amount (calculated from sub-events or items + event charges)
   final double totalAmount;
   
-  /// Advance amount received
+  // Advance amount received
   final double advanceAmount;
   
-  /// Remaining amount (totalAmount - advanceAmount)
+  // Remaining amount (totalAmount - advanceAmount)
   final double remainingAmount;
   
-  /// Additional notes
+  // Additional notes
   final String? notes;
   
-  /// Current status of the order
+  // Current status of the order
   final OrderStatus status;
   
-  /// Bill ID if order is converted to bill
+  // Bill ID if order is converted to bill
   final String? convertedBillId;
   
-  /// Custom column data (key: columnId, value: column value)
+  // Custom column data (key: columnId, value: column value)
   final Map<String, dynamic> customData;
   
-  /// Created timestamp
+  // Created timestamp
   final DateTime createdAt;
   
-  /// Updated timestamp
+  // Updated timestamp
   final DateTime updatedAt;
   
-  /// Whether this record is synced to cloud
+  // Whether this record is synced to cloud
   final bool isSynced;
   
   const EventOrder({
@@ -146,34 +146,34 @@ class EventOrder {
     this.isSynced = false,
   });
   
-  /// Check if this is an event type
+  // Check if this is an event type
   bool get isEvent => orderType == OrderType.event;
   
-  /// Check if this is a sales order type
+  // Check if this is a sales order type
   bool get isSalesOrder => orderType == OrderType.salesOrder;
   
-  /// Check if advance is paid
+  // Check if advance is paid
   bool get hasAdvance => advanceAmount > 0;
   
-  /// Check if fully paid
+  // Check if fully paid
   bool get isFullyPaid => remainingAmount <= 0;
   
-  /// Check if order is confirmed
+  // Check if order is confirmed
   bool get isConfirmed => status == OrderStatus.confirmed || 
       status == OrderStatus.inProgress || 
       status == OrderStatus.delivered ||
       status == OrderStatus.convertedToBill;
   
-  /// Check if order is pending
+  // Check if order is pending
   bool get isPending => status == OrderStatus.pending;
   
-  /// Check if order is cancelled
+  // Check if order is cancelled
   bool get isCancelled => status == OrderStatus.cancelled;
   
-  /// Check if order is converted to bill
+  // Check if order is converted to bill
   bool get isConvertedToBill => status == OrderStatus.convertedToBill;
   
-  /// Create a copy with updated fields
+  // Create a copy with updated fields
   EventOrder copyWith({
     String? id,
     OrderType? orderType,
@@ -226,7 +226,7 @@ class EventOrder {
     );
   }
   
-  /// Convert to JSON
+  // Convert to JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -254,7 +254,7 @@ class EventOrder {
     };
   }
   
-  /// Create from JSON
+  // Create from JSON
   factory EventOrder.fromJson(Map<String, dynamic> json) {
     return EventOrder(
       id: json['id'] as String,
@@ -286,7 +286,7 @@ class EventOrder {
     );
   }
   
-  /// Create an empty event order
+  // Create an empty event order
   factory EventOrder.empty({OrderType type = OrderType.event}) {
     final now = DateTime.now();
     return EventOrder(

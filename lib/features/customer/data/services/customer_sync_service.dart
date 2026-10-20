@@ -5,10 +5,10 @@ import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../offline/controllers/customer_offline_controller.dart';
 import 'customer_api_service.dart';
 
-/// Sync status for tracking sync state
+// Sync status for tracking sync state
 enum SyncStatus { idle, syncing, success, failed }
 
-/// Result of a sync operation
+// Result of a sync operation
 class SyncResult {
   final bool success;
   final int uploadedCount;
@@ -35,8 +35,7 @@ class SyncResult {
   }
 }
 
-/// Service for background synchronization of Customer data
-/// Handles bidirectional sync between local and remote server
+// Service for background synchronization of Customer data Handles bidirectional sync between local and remote server
 class CustomerSyncService extends ChangeNotifier {
   static CustomerSyncService? _instance;
 
@@ -50,7 +49,7 @@ class CustomerSyncService extends ChangeNotifier {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _periodicSyncTimer;
 
-  /// Mutex to prevent concurrent sync operations
+  // Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
 
   CustomerSyncService._({
@@ -62,26 +61,25 @@ class CustomerSyncService extends ChangeNotifier {
        _apiService = apiService ?? CustomerApiService.instance,
        _connectivity = connectivity ?? Connectivity();
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static CustomerSyncService get instance {
     _instance ??= CustomerSyncService._();
     return _instance!;
   }
 
-  /// Current sync status
+  // Current sync status
   SyncStatus get status => _status;
 
-  /// Last successful sync time
+  // Last successful sync time
   DateTime? get lastSyncTime => _lastSyncTime;
 
-  /// Last error message
+  // Last error message
   String? get lastError => _lastError;
 
-  /// Check if currently syncing
+  // Check if currently syncing
   bool get isSyncing => _status == SyncStatus.syncing;
 
-  /// Initialize the sync service
-  /// Call this after the local database is initialized
+  // Initialize the sync service Call this after the local database is initialized
   void initialize() {
     debugPrint('[CustomerSync] Initializing...');
 
@@ -111,7 +109,7 @@ class CustomerSyncService extends ChangeNotifier {
     debugPrint('[CustomerSync] Initialized');
   }
 
-  /// Dispose resources
+  // Dispose resources
   @override
   void dispose() {
     _connectivitySubscription?.cancel();
@@ -130,14 +128,13 @@ class CustomerSyncService extends ChangeNotifier {
     }
   }
 
-  /// Check if device is online
+  // Check if device is online
   Future<bool> isOnline() async {
     final results = await _connectivity.checkConnectivity();
     return _isConnected(results);
   }
 
-  /// Perform sync now
-  /// Returns SyncResult with details of the sync operation
+  // Perform sync now Returns SyncResult with details of the sync operation
   Future<SyncResult> syncNow() async {
     // Prevent concurrent syncs
     if (_isSyncing) {
@@ -222,7 +219,7 @@ class CustomerSyncService extends ChangeNotifier {
     }
   }
 
-  /// Push local changes to server
+  // Push local changes to server
   Future<Map<String, int>> _pushLocalChanges() async {
     int uploaded = 0;
     int failed = 0;
@@ -265,7 +262,7 @@ class CustomerSyncService extends ChangeNotifier {
     return {'uploaded': uploaded, 'failed': failed};
   }
 
-  /// Pull changes from server
+  // Pull changes from server
   Future<int> _pullServerChanges() async {
     try {
       // Get last sync time for incremental sync
@@ -287,8 +284,7 @@ class CustomerSyncService extends ChangeNotifier {
     }
   }
 
-  /// Force full refresh from server
-  /// Use with caution - may overwrite local changes
+  // Force full refresh from server Use with caution - may overwrite local changes
   Future<SyncResult> forceFullRefresh() async {
     if (_status == SyncStatus.syncing) {
       return SyncResult(
@@ -339,7 +335,7 @@ class CustomerSyncService extends ChangeNotifier {
     }
   }
 
-  /// Get number of pending sync items
+  // Get number of pending sync items
   Future<int> getPendingSyncCount() async {
     return await _offlineController.getUnsyncedCount();
   }

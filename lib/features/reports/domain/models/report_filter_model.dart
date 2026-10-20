@@ -1,36 +1,35 @@
-/// Filter model for Report generation
-/// Encapsulates all possible filter criteria
+// Filter model for Report generation Encapsulates all possible filter criteria
 class ReportFilterModel {
-  /// Date range
+  // Date range
   final DateTime startDate;
   final DateTime endDate;
 
-  /// Optional product filter (by productId)
+  // Optional product filter (by productId)
   final String? productId;
   final String? productName;
 
-  /// Optional supplier filter (by supplierId)
+  // Optional supplier filter (by supplierId)
   final String? supplierId;
   final String? supplierName;
 
-  /// Show only expired products (expiryDate < today)
+  // Show only expired products (expiryDate < today)
   final bool expiredOnly;
 
-  /// Show only products expiring this week
+  // Show only products expiring this week
   final bool expiringThisWeek;
 
-  /// Show only returned products (having SALE_RETURN or PURCHASE_RETURN entries)
+  // Show only returned products (having SALE_RETURN or PURCHASE_RETURN entries)
   final bool returnedOnly;
 
-  /// Price range filter (purchase price)
+  // Price range filter (purchase price)
   final double? minPrice;
   final double? maxPrice;
 
-  /// Low stock filter (currentStock <= threshold)
+  // Low stock filter (currentStock <= threshold)
   final bool lowStockOnly;
   final int lowStockThreshold;
 
-  /// Preset label for display
+  // Preset label for display
   final String presetLabel;
 
   const ReportFilterModel({
@@ -50,7 +49,7 @@ class ReportFilterModel {
     this.presetLabel = 'Custom',
   });
 
-  /// Today preset
+  // Today preset
   factory ReportFilterModel.today() {
     final now = DateTime.now();
     return ReportFilterModel(
@@ -60,7 +59,7 @@ class ReportFilterModel {
     );
   }
 
-  /// This week preset
+  // This week preset
   factory ReportFilterModel.thisWeek() {
     final now = DateTime.now();
     final weekStart = now.subtract(Duration(days: now.weekday - 1));
@@ -71,7 +70,7 @@ class ReportFilterModel {
     );
   }
 
-  /// This month preset
+  // This month preset
   factory ReportFilterModel.thisMonth() {
     final now = DateTime.now();
     return ReportFilterModel(
@@ -81,7 +80,7 @@ class ReportFilterModel {
     );
   }
 
-  /// This year preset
+  // This year preset
   factory ReportFilterModel.thisYear() {
     final now = DateTime.now();
     return ReportFilterModel(
@@ -129,7 +128,7 @@ class ReportFilterModel {
     );
   }
 
-  /// Whether any advanced filter is active
+  // Whether any advanced filter is active
   bool get hasAdvancedFilters =>
       productId != null ||
       supplierId != null ||
@@ -140,7 +139,7 @@ class ReportFilterModel {
       maxPrice != null ||
       lowStockOnly;
 
-  /// Summary string for PDF header
+  // Summary string for PDF header
   String get filterSummary {
     final parts = <String>[];
     parts.add('Period: $presetLabel');

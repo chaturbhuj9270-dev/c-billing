@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Shimmer loading effect widget for dashboard placeholders
-/// Provides smooth loading animation while data is being fetched
+// Shimmer loading effect widget for dashboard placeholders Provides smooth loading animation while data is being fetched
 class ShimmerWidget extends StatefulWidget {
   final double width;
   final double height;
@@ -19,7 +18,7 @@ class ShimmerWidget extends StatefulWidget {
     this.highlightColor,
   });
 
-  /// Creates a rectangular shimmer
+  // Creates a rectangular shimmer
   ShimmerWidget.rectangular({
     super.key,
     required this.width,
@@ -29,7 +28,7 @@ class ShimmerWidget extends StatefulWidget {
        baseColor = null,
        highlightColor = null;
 
-  /// Creates a circular shimmer
+  // Creates a circular shimmer
   factory ShimmerWidget.circular({Key? key, required double size}) {
     return ShimmerWidget(
       key: key,
@@ -97,7 +96,7 @@ class _ShimmerWidgetState extends State<ShimmerWidget>
   }
 }
 
-/// Shimmer placeholder for a metric card
+// Shimmer placeholder for a metric card
 class MetricCardShimmer extends StatelessWidget {
   const MetricCardShimmer({super.key});
 
@@ -124,7 +123,7 @@ class MetricCardShimmer extends StatelessWidget {
   }
 }
 
-/// Full dashboard shimmer loading layout
+// Full dashboard shimmer loading layout
 class DashboardShimmerLoading extends StatelessWidget {
   const DashboardShimmerLoading({super.key});
 

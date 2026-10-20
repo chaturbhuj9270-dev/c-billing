@@ -183,8 +183,7 @@ class _LoginPageV2State extends State<LoginPageV2>
           if (!mounted) return;
           debugPrint('[DEBUG] Login successful for user: ${cred.user?.uid}');
 
-          // Start sync services now that user is authenticated.
-          // A local-database problem must not cancel a successful sign-in.
+          // Start sync services now that user is authenticated. A local-database problem must not cancel a successful sign-in.
           try {
             initializeSyncServices();
           } catch (e) {
@@ -782,7 +781,7 @@ class _LoginPageV2State extends State<LoginPageV2>
     );
   }
 
-  /// Reusable login form widget used by both desktop and mobile layouts.
+  // Reusable login form widget used by both desktop and mobile layouts.
   Widget _buildLoginForm() {
     return Column(
       mainAxisSize: MainAxisSize.min,

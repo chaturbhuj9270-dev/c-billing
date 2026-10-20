@@ -13,7 +13,7 @@ import '../../domain/entities/order_item.dart';
 import '../../../shop/domain/entities/shop.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Service for generating PDF for Event Orders / Sales Orders
+// Service for generating PDF for Event Orders / Sales Orders
 class EventOrderPdfService {
   static final EventOrderPdfService _instance =
       EventOrderPdfService._internal();
@@ -22,15 +22,15 @@ class EventOrderPdfService {
 
   bool _isGenerating = false;
 
-  /// Reset the generating flag - useful for error recovery
+  // Reset the generating flag - useful for error recovery
   void resetGeneratingState() {
     _isGenerating = false;
   }
 
-  /// Check if PDF generation is in progress
+  // Check if PDF generation is in progress
   bool get isGenerating => _isGenerating;
 
-  /// Generate PDF document for an Event Order
+  // Generate PDF document for an Event Order
   Future<pw.Document> generateEventOrderPdf({
     required EventOrder order,
     required Shop shopDetails,
@@ -50,7 +50,7 @@ class EventOrderPdfService {
     return pdf;
   }
 
-  /// Build the main content of the PDF - Compact Professional UI
+  // Build the main content of the PDF - Compact Professional UI
   pw.Widget _buildOrderContent(
     EventOrder order,
     Shop shopDetails,
@@ -84,9 +84,7 @@ class EventOrderPdfService {
       child: pw.Column(
         mainAxisSize: pw.MainAxisSize.min,
         children: [
-          // ═══════════════════════════════════════════════════════════════
-          // ROW 1: COMPACT HEADER (Logo | Shop Info | Invoice Type | GSTIN)
-          // ═══════════════════════════════════════════════════════════════
+          // ═══════════════════════════════════════════════════════════════ ROW 1: COMPACT HEADER (Logo | Shop Info | Invoice Type | GSTIN) ═════════════════════════════════════════════════...
           pw.Container(
             width: double.infinity,
             padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 10),
@@ -229,9 +227,7 @@ class EventOrderPdfService {
             ),
           ),
 
-          // ═══════════════════════════════════════════════════════════════
-          // ROW 2: ORDER INFO BAR (Event/Order | Date | Status | Created)
-          // ═══════════════════════════════════════════════════════════════
+          // ═══════════════════════════════════════════════════════════════ ROW 2: ORDER INFO BAR (Event/Order | Date | Status | Created) ═══════════════════════════════════════════════════...
           pw.Container(
             width: double.infinity,
             padding: const pw.EdgeInsets.symmetric(vertical: 5, horizontal: 10),
@@ -320,9 +316,7 @@ class EventOrderPdfService {
             ),
           ),
 
-          // ═══════════════════════════════════════════════════════════════
-          // ROW 3: CUSTOMER & OWNER INFO (2-Column Compact)
-          // ═══════════════════════════════════════════════════════════════
+          // ═══════════════════════════════════════════════════════════════ ROW 3: CUSTOMER & OWNER INFO (2-Column Compact) ═══════════════════════════════════════════════════════════════
           pw.Container(
             decoration: pw.BoxDecoration(border: pw.Border(bottom: borderSide)),
             child: pw.Row(
@@ -453,9 +447,7 @@ class EventOrderPdfService {
             ),
           ),
 
-          // ═══════════════════════════════════════════════════════════════
-          // SECTION 4: EVENT DETAILS TABLE (Compact)
-          // ═══════════════════════════════════════════════════════════════
+          // ═══════════════════════════════════════════════════════════════ SECTION 4: EVENT DETAILS TABLE (Compact) ═══════════════════════════════════════════════════════════════
           if (isEvent && order.subEvents.isNotEmpty)
             _buildEventDetailsTableCompact(
               order,
@@ -464,15 +456,11 @@ class EventOrderPdfService {
               thinBorder,
             ),
 
-          // ═══════════════════════════════════════════════════════════════
-          // SECTION 5: PRODUCTS TABLE (Compact)
-          // ═══════════════════════════════════════════════════════════════
+          // ═══════════════════════════════════════════════════════════════ SECTION 5: PRODUCTS TABLE (Compact) ═══════════════════════════════════════════════════════════════
           if (order.items.isNotEmpty)
             _buildProductsTableCompact(order.items, borderSide, thinBorder),
 
-          // ═══════════════════════════════════════════════════════════════
-          // SECTION 6: SUMMARY ROW (Amount Words | Description | Totals)
-          // ═══════════════════════════════════════════════════════════════
+          // ═══════════════════════════════════════════════════════════════ SECTION 6: SUMMARY ROW (Amount Words | Description | Totals) ════════════════════════════════════════════════════...
           pw.Container(
             decoration: pw.BoxDecoration(border: pw.Border(bottom: borderSide)),
             child: pw.Row(
@@ -666,9 +654,7 @@ class EventOrderPdfService {
             ),
           ),
 
-          // ═══════════════════════════════════════════════════════════════
-          // FOOTER: Bank Details | Customer Signature | Owner Signature
-          // ═══════════════════════════════════════════════════════════════
+          // ═══════════════════════════════════════════════════════════════ FOOTER: Bank Details | Customer Signature | Owner Signature ═════════════════════════════════════════════════════...
           pw.Container(
             padding: const pw.EdgeInsets.all(8),
             child: pw.Row(
@@ -869,7 +855,7 @@ class EventOrderPdfService {
     );
   }
 
-  /// Get status color
+  // Get status color
   PdfColor _getStatusColor(OrderStatus status) {
     switch (status) {
       case OrderStatus.confirmed:
@@ -885,7 +871,7 @@ class EventOrderPdfService {
     }
   }
 
-  /// Compact summary line helper
+  // Compact summary line helper
   pw.Widget _buildCompactSummaryLine(
     String label,
     double amount, {
@@ -913,7 +899,7 @@ class EventOrderPdfService {
     );
   }
 
-  /// Build Compact Event Details Table
+  // Build Compact Event Details Table
   pw.Widget _buildEventDetailsTableCompact(
     EventOrder order,
     DateFormat dateFormatter,
@@ -1077,7 +1063,7 @@ class EventOrderPdfService {
     );
   }
 
-  /// Build Compact Products Table
+  // Build Compact Products Table
   pw.Widget _buildProductsTableCompact(
     List<OrderItem> items,
     pw.BorderSide borderSide,
@@ -1232,7 +1218,7 @@ class EventOrderPdfService {
     );
   }
 
-  /// Compact table cell
+  // Compact table cell
   pw.Widget _buildTableCellCompact(
     String text, {
     bool isHeader = false,
@@ -1251,7 +1237,7 @@ class EventOrderPdfService {
     );
   }
 
-  /// Build image safely with base64 decoding error handling
+  // Build image safely with base64 decoding error handling
   pw.Widget _buildSafeImage({
     required String base64String,
     double? width,
@@ -1281,7 +1267,7 @@ class EventOrderPdfService {
     }
   }
 
-  /// Number to words converter
+  // Number to words converter
   String _numberToWords(double number) {
     final units = [
       '',
@@ -1371,7 +1357,7 @@ class EventOrderPdfService {
     return result.trim();
   }
 
-  /// Share the order as PDF via the system share sheet
+  // Share the order as PDF via the system share sheet
   Future<void> shareOrderAsPdf({
     required EventOrder order,
     required Shop shopDetails,
@@ -1431,7 +1417,7 @@ class EventOrderPdfService {
     }
   }
 
-  /// Preview and print PDF using system print dialog
+  // Preview and print PDF using system print dialog
   Future<void> printOrder({
     required EventOrder order,
     required Shop shopDetails,
@@ -1461,7 +1447,7 @@ class EventOrderPdfService {
     }
   }
 
-  /// Save PDF to file
+  // Save PDF to file
   Future<File> saveOrderPdf({
     required EventOrder order,
     required Shop shopDetails,

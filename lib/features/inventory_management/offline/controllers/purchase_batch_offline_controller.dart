@@ -10,8 +10,7 @@ import '../entities/purchase_batch_entity.dart';
 import '../entities/purchase_entity.dart';
 import 'purchase_offline_controller.dart';
 
-/// Offline-first controller for Purchase Batch CRUD operations
-/// Implements FIFO inventory management
+// Offline-first controller for Purchase Batch CRUD operations Implements FIFO inventory management
 class PurchaseBatchOfflineController extends ChangeNotifier {
   static PurchaseBatchOfflineController? _instance;
 
@@ -19,13 +18,13 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
 
   PurchaseBatchOfflineController._(this._db);
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static PurchaseBatchOfflineController get instance {
     _instance ??= PurchaseBatchOfflineController._(LocalDatabase.instance.db);
     return _instance!;
   }
 
-  /// Reset instance (for testing)
+  // Reset instance (for testing)
   @visibleForTesting
   static void resetInstance() {
     _instance = null;
@@ -33,8 +32,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
 
   // ==================== CREATE ====================
 
-  /// Add a new purchase batch
-  /// Creates a new batch even if same product exists with different price
+  // Add a new purchase batch Creates a new batch even if same product exists with different price
   Future<PurchaseBatchEntity> addBatch({
     required String productId,
     required String productName,
@@ -84,7 +82,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
 
   // ==================== READ ====================
 
-  /// Get all batches (excluding deleted)
+  // Get all batches (excluding deleted)
   Future<List<PurchaseBatchEntity>> getAllBatches({
     bool includeConsumed = false,
   }) async {
@@ -103,7 +101,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     return batches;
   }
 
-  /// Watch all batches for real-time updates
+  // Watch all batches for real-time updates
   Stream<List<PurchaseBatchEntity>> watchAllBatches({
     bool includeConsumed = false,
   }) {
@@ -133,7 +131,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     return null;
   }
 
-  /// Get batch by server ID
+  // Get batch by server ID
   Future<PurchaseBatchEntity?> getBatchByServerId(String serverId) async {
     for (final batch in await _db.loadBatches()) {
       if (batch.serverId == serverId) return batch;
@@ -141,7 +139,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     return null;
   }
 
-  /// Get batches by product ID sorted by purchase date (oldest first for FIFO)
+  // Get batches by product ID sorted by purchase date (oldest first for FIFO)
   Future<List<PurchaseBatchEntity>> getBatchesByProductId(
     String productId, {
     bool onlyWithStock = true,
@@ -163,8 +161,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     return batches;
   }
 
-  /// Get batches by product unique key (name + company + model)
-  /// Sorted by purchase date ASC for FIFO
+  // Get batches by product unique key (name + company + model) Sorted by purchase date ASC for FIFO
   Future<List<PurchaseBatchEntity>> getBatchesByProductUniqueKey(
     String productUniqueKey, {
     bool onlyWithStock = true,
@@ -186,8 +183,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     return batches;
   }
 
-  /// Get available batches for FIFO consumption
-  /// Returns batches with stock, sorted by purchase date (oldest first)
+  // Get available batches for FIFO consumption Returns batches with stock, sorted by purchase date (oldest first)
   Future<List<PurchaseBatchEntity>> getAvailableBatchesForProduct(
     String productId,
   ) async {
@@ -200,7 +196,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     return batches;
   }
 
-  /// Get batches by supplier
+  // Get batches by supplier
   Future<List<PurchaseBatchEntity>> getBatchesBySupplierId(
     String supplierId,
   ) async {
@@ -212,7 +208,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     return batches;
   }
 
-  /// Get batches by date range
+  // Get batches by date range
   Future<List<PurchaseBatchEntity>> getBatchesByDateRange(
     DateTime startDate,
     DateTime endDate,
@@ -226,7 +222,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     return batches;
   }
 
-  /// Get batches expiring soon
+  // Get batches expiring soon
   Future<List<PurchaseBatchEntity>> getBatchesExpiringSoon({
     int withinDays = 30,
   }) async {
@@ -244,7 +240,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     return batches;
   }
 
-  /// Get expired batches
+  // Get expired batches
   Future<List<PurchaseBatchEntity>> getExpiredBatches() async {
     final now = DateTime.now();
 
@@ -261,7 +257,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
 
   // ==================== UPDATE ====================
 
-  /// Update a batch
+  // Update a batch
   Future<PurchaseBatchEntity?> updateBatch({
     required int id,
     double? purchasePrice,
@@ -328,8 +324,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     return updated;
   }
 
-  /// Deduct quantity from batch (for FIFO sale)
-  /// Returns updated batch
+  // Deduct quantity from batch (for FIFO sale) Returns updated batch
   Future<PurchaseBatchEntity?> deductFromBatch(int id, int quantity) async {
     final existing = await getBatchById(id);
     if (existing == null) {
@@ -352,8 +347,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     );
   }
 
-  /// Add quantity to batch (for returns)
-  /// Returns updated batch
+  // Add quantity to batch (for returns) Returns updated batch
   Future<PurchaseBatchEntity?> addToBatch(int id, int quantity) async {
     final existing = await getBatchById(id);
     if (existing == null) {
@@ -370,14 +364,14 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     );
   }
 
-  /// Mark batch as consumed
+  // Mark batch as consumed
   Future<void> markBatchAsConsumed(int id) async {
     await updateBatch(id: id, quantityRemaining: 0, isConsumed: true);
   }
 
   // ==================== DELETE ====================
 
-  /// Soft delete batch
+  // Soft delete batch
   Future<bool> deleteBatch(int id) async {
     final existing = await getBatchById(id);
     if (existing == null) return false;
@@ -391,7 +385,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     return true;
   }
 
-  /// Hard delete batch (for local cleanup after server deletion)
+  // Hard delete batch (for local cleanup after server deletion)
   Future<bool> hardDeleteBatch(int id) async {
     final result = await _db.deleteBatchById(id);
 
@@ -404,7 +398,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
 
   // ==================== QUERY / AGGREGATIONS ====================
 
-  /// Get total available stock for a product
+  // Get total available stock for a product
   Future<int> getTotalStockByProductId(String productId) async {
     final batches = await getBatchesByProductId(productId, onlyWithStock: true);
     return batches.fold<int>(
@@ -413,7 +407,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     );
   }
 
-  /// Get total available stock by product unique key
+  // Get total available stock by product unique key
   Future<int> getTotalStockByProductUniqueKey(String productUniqueKey) async {
     final batches = await getBatchesByProductUniqueKey(
       productUniqueKey,
@@ -425,7 +419,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     );
   }
 
-  /// Get total stock value for a product
+  // Get total stock value for a product
   Future<double> getTotalStockValueByProductId(String productId) async {
     final batches = await getBatchesByProductId(productId, onlyWithStock: true);
     return batches.fold<double>(
@@ -434,7 +428,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     );
   }
 
-  /// Get weighted average cost for a product
+  // Get weighted average cost for a product
   Future<double> getWeightedAverageCost(String productId) async {
     final batches = await getBatchesByProductId(productId, onlyWithStock: true);
     if (batches.isEmpty) return 0.0;
@@ -451,7 +445,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     return totalQty > 0 ? totalValue / totalQty : 0.0;
   }
 
-  /// Get all unique products with their total stock
+  // Get all unique products with their total stock
   Future<Map<String, int>> getAllProductsWithStock() async {
     final batches = await getAllBatches(includeConsumed: false);
     final stockMap = <String, int>{};
@@ -464,7 +458,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     return stockMap;
   }
 
-  /// Get batch count for a product
+  // Get batch count for a product
   Future<int> getBatchCountByProductId(String productId) async {
     final batches = await getBatchesByProductId(
       productId,
@@ -475,14 +469,14 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
 
   // ==================== SYNC HELPERS ====================
 
-  /// Get batches that need to be synced
+  // Get batches that need to be synced
   Future<List<PurchaseBatchEntity>> getBatchesNeedingSync() async {
     return (await _db.loadBatches())
         .where((batch) => batch.syncStatus != BatchSyncStatus.synced)
         .toList();
   }
 
-  /// Mark batch as synced
+  // Mark batch as synced
   Future<void> markAsSynced(int id, String serverId) async {
     final existing = await getBatchById(id);
     if (existing == null) return;
@@ -498,7 +492,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Permanently delete batch from local DB (after server deletion)
+  // Permanently delete batch from local DB (after server deletion)
   Future<bool> permanentlyDelete(int id) async {
     final result = await _db.deleteBatchById(id);
 
@@ -509,7 +503,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     return result;
   }
 
-  /// Import batches from server
+  // Import batches from server
   Future<void> importFromServer(
     List<Map<String, dynamic>> serverBatches,
   ) async {
@@ -533,8 +527,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
           }
         }
 
-        // 2. If not found by serverId, check by business key to prevent duplicates
-        //    (same product, same purchase date, same quantity, same price)
+        // 2. If not found by serverId, check by business key to prevent duplicates (same product, same purchase date, same quantity, same price)
         existing ??= _firstBatchByBusinessKey(all, entity);
 
         if (existing != null) {
@@ -572,7 +565,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// purchaseDateEqualTo OR purchaseDateBetween(target ± 2 seconds), both inclusive.
+  // purchaseDateEqualTo OR purchaseDateBetween(target ± 2 seconds), both inclusive.
   PurchaseBatchEntity? _firstBatchByBusinessKey(
     List<PurchaseBatchEntity> batches,
     PurchaseBatchEntity entity,
@@ -592,8 +585,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     return null;
   }
 
-  /// Remove duplicate batches from local database
-  /// Keeps the one with serverId (synced) or the newest one
+  // Remove duplicate batches from local database Keeps the one with serverId (synced) or the newest one
   Future<int> deduplicateBatches() async {
     int removedCount = 0;
 
@@ -655,9 +647,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
   static const _legacyMigrationNotePrefix = '[legacy-purchase:';
   static const _openingStockNote = '[opening-stock]';
 
-  /// Build purchase history from legacy PurchaseEntity records and opening stock.
-  /// The purchase list UI reads PurchaseBatchEntity only; older data lives in
-  /// PurchaseEntity (Firestore `purchases` collection) or as product opening stock.
+  // Build purchase history from legacy PurchaseEntity records and opening stock. The purchase list UI reads PurchaseBatchEntity only; older data lives in PurchaseEntity (Firestore `...
   Future<int> ensurePurchaseHistoryAvailable() async {
     var batches = await getAllBatches(includeConsumed: true);
     if (batches.isNotEmpty) return batches.length;
@@ -676,7 +666,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     return (await getAllBatches(includeConsumed: true)).length;
   }
 
-  /// Convert legacy PurchaseEntity records into PurchaseBatchEntity records.
+  // Convert legacy PurchaseEntity records into PurchaseBatchEntity records.
   Future<int> migrateLegacyPurchasesToBatches() async {
     final purchases = await PurchaseOfflineController.instance
         .getAllPurchases();
@@ -726,7 +716,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     return migrated;
   }
 
-  /// Create batch records for products that have stock but no purchase history.
+  // Create batch records for products that have stock but no purchase history.
   Future<int> backfillOpeningStockBatches() async {
     final products = await ProductOfflineController.instance.getAllProducts();
     int created = 0;
@@ -816,7 +806,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     };
   }
 
-  /// Align batch remaining quantities with product.currentStock using FIFO.
+  // Align batch remaining quantities with product.currentStock using FIFO.
   Future<void> _reconcileBatchStockWithProducts() async {
     final products = await ProductOfflineController.instance.getAllProducts();
 
@@ -873,7 +863,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     });
   }
 
-  /// Clear all local batches (for testing or logout)
+  // Clear all local batches (for testing or logout)
   Future<void> clearAll() async {
     await _db.clearBatches();
     debugPrint('[BatchOffline] All batches cleared');

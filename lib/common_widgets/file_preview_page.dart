@@ -14,39 +14,25 @@ import 'package:c_billing/common_widgets/web_pdf_view.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
-/// A reusable page for previewing PDF and CSV files with share and print functionality.
-///
-/// Usage:
-/// ```dart
-/// Navigator.push(
-///   context,
-///   MaterialPageRoute(
-///     builder: (context) => FilePreviewPage(
-///       file: generatedFile,
-///       fileName: 'Inventory Report',
-///       fileType: FilePreviewType.pdf, // or FilePreviewType.csv
-///     ),
-///   ),
-/// );
-/// ```
+// A reusable page for previewing PDF and CSV files with share and print functionality. Usage: Navigator.push( context, MaterialPageRoute( builder: (context) => FilePreviewPage( fi...
 class FilePreviewPage extends StatefulWidget {
-  /// Local file on mobile and desktop. Omitted on web, where [bytes] is used.
+  // Local file on mobile and desktop. Omitted on web, where [bytes] is used.
   final File? file;
 
-  /// Document bytes. Required on web, where there is no local file to read.
+  // Document bytes. Required on web, where there is no local file to read.
   final Uint8List? bytes;
   final String fileName;
   final FilePreviewType fileType;
   final String? subtitle;
   final VoidCallback? onClose;
 
-  /// Optional customer phone number for direct WhatsApp sharing
+  // Optional customer phone number for direct WhatsApp sharing
   final String? customerPhone;
 
-  /// Web shows this preview in a dialog. Mobile and desktop use a full page.
+  // Web shows this preview in a dialog. Mobile and desktop use a full page.
   final bool presentedAsDialog;
 
-  /// Reports use this so each sheet is shown whole and centered.
+  // Reports use this so each sheet is shown whole and centered.
   final bool fitPage;
 
   const FilePreviewPage({
@@ -62,10 +48,7 @@ class FilePreviewPage extends StatefulWidget {
     this.fitPage = false,
   }) : assert(file != null || bytes != null, 'Provide a file or document bytes');
 
-  /// Opens the preview. On web this is a popup. Other platforms push a page.
-  ///
-  /// [centered] opens a large popup on web, Windows, and Mac so wide report
-  /// pages stay readable. Phone still pushes a full page.
+  // Opens the preview. On web this is a popup. Other platforms push a page. [centered] opens a large popup on web, Windows, and Mac so wide report pages stay readable. Phone still p...
   static Future<void> open(
     BuildContext context, {
     File? file,
@@ -343,7 +326,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     await _renderPdfPages();
   }
 
-  /// Render PDF pages as images for reliable display
+  // Render PDF pages as images for reliable display
   Future<void> _renderPdfPages() async {
     if (_pdfBytes == null || _pdfBytes!.isEmpty) {
       setState(() {
@@ -505,7 +488,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     }
   }
 
-  /// Share via WhatsApp - opens WhatsApp with customer number if available
+  // Share via WhatsApp - opens WhatsApp with customer number if available
   Future<void> _handleWhatsAppShare() async {
     if (_isSharingWhatsApp) return;
 
@@ -529,8 +512,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         _showSnackBar('Tap WhatsApp → Select "$customerPhone"', isError: false);
       }
 
-      // Share file directly - this opens share sheet with file attached
-      // User selects WhatsApp from sheet, then picks the contact
+      // Share file directly - this opens share sheet with file attached User selects WhatsApp from sheet, then picks the contact
       await Share.shareXFiles(
         [XFile(widget.file!.path)],
         subject: widget.fileName,
@@ -2010,5 +1992,5 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   }
 }
 
-/// File type for preview
+// File type for preview
 enum FilePreviewType { pdf, csv }

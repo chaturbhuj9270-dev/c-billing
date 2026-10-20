@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/stock_ledger.dart';
 import '../../domain/repositories/stock_ledger_repository.dart';
 
-/// Firebase implementation of StockLedgerRepository
+// Firebase implementation of StockLedgerRepository
 class FirebaseStockLedgerRepository implements StockLedgerRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;

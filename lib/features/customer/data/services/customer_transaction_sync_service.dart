@@ -6,10 +6,10 @@ import '../../offline/controllers/customer_transaction_offline_controller.dart';
 import '../../offline/entities/customer_transaction_entity.dart';
 import 'customer_transaction_api_service.dart';
 
-/// Sync status for tracking sync state
+// Sync status for tracking sync state
 enum CustomerTransactionSyncStatus { idle, syncing, success, failed }
 
-/// Result of a sync operation
+// Result of a sync operation
 class CustomerTransactionSyncResult {
   final bool success;
   final int uploadedCount;
@@ -36,8 +36,7 @@ class CustomerTransactionSyncResult {
   }
 }
 
-/// Service for background synchronization of Customer Transaction data
-/// Handles bidirectional sync between local and Firebase Firestore
+// Service for background synchronization of Customer Transaction data Handles bidirectional sync between local and Firebase Firestore
 class CustomerTransactionSyncService extends ChangeNotifier {
   static CustomerTransactionSyncService? _instance;
 
@@ -51,7 +50,7 @@ class CustomerTransactionSyncService extends ChangeNotifier {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _periodicSyncTimer;
 
-  /// Mutex to prevent concurrent sync operations
+  // Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
 
   CustomerTransactionSyncService._({
@@ -63,31 +62,30 @@ class CustomerTransactionSyncService extends ChangeNotifier {
        _apiService = apiService ?? CustomerTransactionApiService.instance,
        _connectivity = connectivity ?? Connectivity();
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static CustomerTransactionSyncService get instance {
     _instance ??= CustomerTransactionSyncService._();
     return _instance!;
   }
 
-  /// Reset instance (for testing)
+  // Reset instance (for testing)
   static void resetInstance() {
     _instance = null;
   }
 
-  /// Current sync status
+  // Current sync status
   CustomerTransactionSyncStatus get status => _status;
 
-  /// Last successful sync time
+  // Last successful sync time
   DateTime? get lastSyncTime => _lastSyncTime;
 
-  /// Last error message
+  // Last error message
   String? get lastError => _lastError;
 
-  /// Check if currently syncing
+  // Check if currently syncing
   bool get isSyncing => _status == CustomerTransactionSyncStatus.syncing;
 
-  /// Initialize the sync service
-  /// Call this after the local database is initialized
+  // Initialize the sync service Call this after the local database is initialized
   void initialize() {
     debugPrint('[CustomerTransactionSync] Initializing...');
 
@@ -119,7 +117,7 @@ class CustomerTransactionSyncService extends ChangeNotifier {
     debugPrint('[CustomerTransactionSync] Initialized');
   }
 
-  /// Dispose resources
+  // Dispose resources
   @override
   void dispose() {
     _connectivitySubscription?.cancel();
@@ -138,14 +136,13 @@ class CustomerTransactionSyncService extends ChangeNotifier {
     }
   }
 
-  /// Check if device is online
+  // Check if device is online
   Future<bool> isOnline() async {
     final results = await _connectivity.checkConnectivity();
     return _isConnected(results);
   }
 
-  /// Perform sync now
-  /// Returns SyncResult with details of the sync operation
+  // Perform sync now Returns SyncResult with details of the sync operation
   Future<CustomerTransactionSyncResult> syncNow() async {
     // Prevent concurrent syncs
     if (_isSyncing) {
@@ -238,7 +235,7 @@ class CustomerTransactionSyncService extends ChangeNotifier {
     }
   }
 
-  /// Push local changes to server
+  // Push local changes to server
   Future<Map<String, int>> _pushLocalChanges() async {
     int uploaded = 0;
     int failed = 0;
@@ -264,8 +261,7 @@ class CustomerTransactionSyncService extends ChangeNotifier {
             response,
           );
         }
-        // Note: We don't update transactions on server after creation
-        // Transactions are immutable financial records
+        // Note: We don't update transactions on server after creation Transactions are immutable financial records
         uploaded++;
       } catch (e) {
         debugPrint(
@@ -278,7 +274,7 @@ class CustomerTransactionSyncService extends ChangeNotifier {
     return {'uploaded': uploaded, 'failed': failed};
   }
 
-  /// Pull changes from server
+  // Pull changes from server
   Future<int> _pullServerChanges() async {
     try {
       // Get last sync time for incremental sync
@@ -300,8 +296,7 @@ class CustomerTransactionSyncService extends ChangeNotifier {
     }
   }
 
-  /// Force full refresh from server
-  /// Use with caution - may overwrite local changes
+  // Force full refresh from server Use with caution - may overwrite local changes
   Future<CustomerTransactionSyncResult> forceFullRefresh() async {
     if (_status == CustomerTransactionSyncStatus.syncing) {
       return CustomerTransactionSyncResult(
@@ -358,12 +353,12 @@ class CustomerTransactionSyncService extends ChangeNotifier {
     }
   }
 
-  /// Get number of pending sync items
+  // Get number of pending sync items
   Future<int> getPendingSyncCount() async {
     return await _offlineController.getUnsyncedCount();
   }
 
-  /// Convert offline entity to server payload
+  // Convert offline entity to server payload
   Map<String, dynamic> _convertToServerPayload(
     CustomerTransactionEntity transaction,
   ) {

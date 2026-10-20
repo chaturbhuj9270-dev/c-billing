@@ -1,19 +1,19 @@
-/// Represents the type of customer transaction
+// Represents the type of customer transaction
 enum TransactionType {
-  /// Payment received from customer
+  // Payment received from customer
   received,
 
-  /// Amount adjusted (e.g., discount, write-off)
+  // Amount adjusted (e.g., discount, write-off)
   adjusted,
 
-  /// Bill generated (increases pending balance)
+  // Bill generated (increases pending balance)
   billGenerated,
 
-  /// Refund given to customer
+  // Refund given to customer
   refund,
 }
 
-/// Extension to convert TransactionType to/from string for storage
+// Extension to convert TransactionType to/from string for storage
 extension TransactionTypeExtension on TransactionType {
   String get value {
     switch (this) {
@@ -44,7 +44,7 @@ extension TransactionTypeExtension on TransactionType {
   }
 }
 
-/// Represents the payment mode for a transaction
+// Represents the payment mode for a transaction
 enum PaymentMode {
   cash,
   online,
@@ -54,7 +54,7 @@ enum PaymentMode {
   other,
 }
 
-/// Extension to convert PaymentMode to/from string for storage
+// Extension to convert PaymentMode to/from string for storage
 extension PaymentModeExtension on PaymentMode {
   String get value {
     switch (this) {
@@ -110,52 +110,42 @@ extension PaymentModeExtension on PaymentMode {
   }
 }
 
-/// Represents a customer transaction (payment received or bill generated)
-/// 
-/// This entity is used for:
-/// - Recording payments received from customers
-/// - Tracking bill generation events
-/// - Maintaining audit trail of all balance changes
-/// - Supporting multi-bill partial payment scenarios
+// Represents a customer transaction (payment received or bill generated) This entity is used for: - Recording payments received from customers - Tracking bill generation events -...
 class CustomerTransaction {
-  /// Unique identifier for the transaction
+  // Unique identifier for the transaction
   final String id;
 
-  /// Customer ID this transaction belongs to
+  // Customer ID this transaction belongs to
   final String customerId;
 
-  /// Bill ID this transaction is associated with (nullable for advance payments)
+  // Bill ID this transaction is associated with (nullable for advance payments)
   final String? billId;
 
-  /// Bill number for display purposes
+  // Bill number for display purposes
   final String? billNumber;
 
-  /// Transaction amount (positive value)
-  /// For payments: amount received
-  /// For bills: bill total amount
+  // Transaction amount (positive value) For payments: amount received For bills: bill total amount
   final double amount;
 
-  /// Type of transaction (RECEIVED, ADJUSTED, BILL_GENERATED, REFUND)
+  // Type of transaction (RECEIVED, ADJUSTED, BILL_GENERATED, REFUND)
   final TransactionType transactionType;
 
-  /// Payment mode (CASH, ONLINE, CARD, UPI, etc.)
-  /// Only applicable for RECEIVED transactions
+  // Payment mode (CASH, ONLINE, CARD, UPI, etc.) Only applicable for RECEIVED transactions
   final PaymentMode? paymentMode;
 
-  /// Customer's pending balance after this transaction
-  /// Stored for quick access without recalculating from all transactions
+  // Customer's pending balance after this transaction Stored for quick access without recalculating from all transactions
   final double balanceAfterTransaction;
 
-  /// Optional notes/remarks for the transaction
+  // Optional notes/remarks for the transaction
   final String? notes;
 
-  /// Reference number (e.g., UPI transaction ID, cheque number)
+  // Reference number (e.g., UPI transaction ID, cheque number)
   final String? referenceNumber;
 
-  /// Transaction creation timestamp
+  // Transaction creation timestamp
   final DateTime createdAt;
 
-  /// User who created the transaction (for audit)
+  // User who created the transaction (for audit)
   final String? createdBy;
 
   const CustomerTransaction({
@@ -173,16 +163,16 @@ class CustomerTransaction {
     this.createdBy,
   });
 
-  /// Check if this is a payment transaction (reduces pending balance)
+  // Check if this is a payment transaction (reduces pending balance)
   bool get isPayment =>
       transactionType == TransactionType.received ||
       transactionType == TransactionType.adjusted;
 
-  /// Check if this is a bill transaction (increases pending balance)
+  // Check if this is a bill transaction (increases pending balance)
   bool get isBillTransaction =>
       transactionType == TransactionType.billGenerated;
 
-  /// Get display string for transaction type
+  // Get display string for transaction type
   String get transactionTypeDisplay {
     switch (transactionType) {
       case TransactionType.received:
@@ -196,7 +186,7 @@ class CustomerTransaction {
     }
   }
 
-  /// Factory constructor to create from Firebase JSON
+  // Factory constructor to create from Firebase JSON
   factory CustomerTransaction.fromJson(Map<String, dynamic> json) {
     return CustomerTransaction(
       id: (json['id'] ?? '') as String,
@@ -223,7 +213,7 @@ class CustomerTransaction {
     );
   }
 
-  /// Convert to JSON for Firebase
+  // Convert to JSON for Firebase
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -241,7 +231,7 @@ class CustomerTransaction {
     };
   }
 
-  /// Create a copy with updated fields
+  // Create a copy with updated fields
   CustomerTransaction copyWith({
     String? id,
     String? customerId,

@@ -5,15 +5,11 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
-import 'package:share_plus/share_plus.dart';
-
 import '../../domain/entities/event_order.dart';
 import '../../../shop/domain/entities/shop.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// PDF Report generator for Event Orders / Sales Orders.
-/// Generates professional tabular reports with shop branding.
+// PDF Report generator for Event Orders / Sales Orders. Generates professional tabular reports with shop branding.
 class EventOrderReportPdfGenerator {
   EventOrderReportPdfGenerator._();
 
@@ -25,7 +21,7 @@ class EventOrderReportPdfGenerator {
   static final _lightBg = PdfColor.fromInt(AppTheme.paletteFFF8F9FA.toARGB32());
   static final _borderColor = PdfColor.fromInt(AppTheme.grey300.toARGB32());
 
-  /// Generate PDF bytes from a list of event orders.
+  // Generate PDF bytes from a list of event orders.
   static Future<Uint8List> generate({
     required List<EventOrder> orders,
     Shop? shopDetails,
@@ -192,13 +188,13 @@ class EventOrderReportPdfGenerator {
     }
   }
 
-  /// Truncate string with ellipsis
+  // Truncate string with ellipsis
   static String _truncate(String text, int maxLength) {
     if (text.length <= maxLength) return text;
     return '${text.substring(0, maxLength)}...';
   }
 
-  /// Build compact header - single row design
+  // Build compact header - single row design
   static pw.Widget _buildCompactHeader({
     Shop? shopDetails,
     required String reportTitle,
@@ -347,7 +343,7 @@ class EventOrderReportPdfGenerator {
     );
   }
 
-  /// Mini stat badge for header
+  // Mini stat badge for header
   static pw.Widget _buildMiniStat(
     String label,
     String value,
@@ -380,7 +376,7 @@ class EventOrderReportPdfGenerator {
     );
   }
 
-  /// Build compact footer - bank details | signatures | summary in one row
+  // Build compact footer - bank details | signatures | summary in one row
   static pw.Widget _buildCompactFooter({
     Shop? shopDetails,
     required int pageNumber,
@@ -593,7 +589,7 @@ class EventOrderReportPdfGenerator {
     );
   }
 
-  /// Safe image builder to handle corrupted base64
+  // Safe image builder to handle corrupted base64
   static pw.Widget _buildSafeImage(
     String base64String,
     double width,
@@ -617,38 +613,7 @@ class EventOrderReportPdfGenerator {
     }
   }
 
-  /// Print the PDF.
-  static Future<void> printReport(
-    Uint8List pdfBytes, {
-    bool isEvent = true,
-  }) async {
-    debugPrint('[EventOrderReport] Printing ${pdfBytes.length} bytes');
-    final name = isEvent ? 'event_report' : 'order_report';
-    await Printing.layoutPdf(
-      onLayout: (_) => pdfBytes,
-      name: '${name}_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.pdf',
-    );
-  }
-
-  /// Share the PDF via system share sheet.
-  static Future<void> shareReport(
-    Uint8List pdfBytes, {
-    bool isEvent = true,
-  }) async {
-    debugPrint('[EventOrderReport] Sharing ${pdfBytes.length} bytes');
-    final tempDir = await getTemporaryDirectory();
-    final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-    final name = isEvent ? 'event_report' : 'order_report';
-    final tempFile = File('${tempDir.path}/${name}_$timestamp.pdf');
-    await tempFile.writeAsBytes(pdfBytes);
-    await Share.shareXFiles(
-      [XFile(tempFile.path, mimeType: 'application/pdf')],
-      text: '${isEvent ? "Event" : "Order"} Report — C-Billing',
-      subject: '${isEvent ? "Event" : "Order"} Report',
-    );
-  }
-
-  /// Save PDF to file and return the file.
+  // Save PDF to file and return the file.
   static Future<File> saveToFile(
     Uint8List pdfBytes, {
     bool isEvent = true,

@@ -8,7 +8,7 @@ import '../../data/services/quotation_format_settings.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Quotation print/PDF settings (format matches billing: POS vs normal).
+// Quotation print/PDF settings (format matches billing: POS vs normal).
 class QuotationSettingsPage extends StatefulWidget {
   const QuotationSettingsPage({super.key});
 

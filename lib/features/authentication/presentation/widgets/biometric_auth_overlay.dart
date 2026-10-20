@@ -5,7 +5,7 @@ import '../cubit/biometric_state.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Bottom sheet overlay for biometric authentication
+// Bottom sheet overlay for biometric authentication
 class BiometricAuthOverlay extends StatefulWidget {
   final String userId;
   final VoidCallback onSuccess;
@@ -38,8 +38,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
     );
 
     if (result && mounted) {
-      // Immediately call onSuccess (which closes sheet and navigates)
-      // Don't wait for state to update to BiometricAuthenticated
+      // Immediately call onSuccess (which closes sheet and navigates) Don't wait for state to update to BiometricAuthenticated
       widget.onSuccess();
     }
   }
@@ -96,8 +95,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
                       ] else if (state is BiometricAuthCancelled) ...[
                         _buildCancelledContent(),
                       ] else ...[
-                        // Initial/Available state - show unlock prompt
-                        // Note: BiometricAuthenticated state never reaches here - navigation happens in _authenticateUser()
+                        // Initial/Available state - show unlock prompt Note: BiometricAuthenticated state never reaches here - navigation happens in _authenticateUser()
                         _buildInitialContent(),
                       ],
                       const SizedBox(height: 16),

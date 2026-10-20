@@ -2,52 +2,51 @@ import 'package:uuid/uuid.dart';
 import '../../../inventory_management/domain/entities/product.dart';
 import '../../../product/offline/entities/product_entity.dart';
 
-/// Represents a product item in a sales order
-/// Note: Stock is NOT deducted when creating order. Only when converting to bill.
+// Represents a product item in a sales order Note: Stock is NOT deducted when creating order. Only when converting to bill.
 class OrderItem {
-  /// Unique identifier for this order item
+  // Unique identifier for this order item
   final String id;
   
-  /// Product ID
+  // Product ID
   final String productId;
   
-  /// Product name
+  // Product name
   final String productName;
   
-  /// HSN code (if applicable)
+  // HSN code (if applicable)
   final String? hsnCode;
   
-  /// Quantity ordered
+  // Quantity ordered
   final int quantity;
   
-  /// Rate per unit
+  // Rate per unit
   final double rate;
   
-  /// Discount percentage (0-100)
+  // Discount percentage (0-100)
   final double discountPercent;
   
-  /// Discount amount
+  // Discount amount
   final double discountAmount;
   
-  /// CGST percentage
+  // CGST percentage
   final double cgstPercent;
   
-  /// SGST percentage
+  // SGST percentage
   final double sgstPercent;
   
-  /// CGST amount
+  // CGST amount
   final double cgstAmount;
   
-  /// SGST amount
+  // SGST amount
   final double sgstAmount;
   
-  /// Total tax amount
+  // Total tax amount
   final double taxAmount;
   
-  /// Subtotal before tax and discount
+  // Subtotal before tax and discount
   final double subtotal;
   
-  /// Total amount after discount and tax
+  // Total amount after discount and tax
   final double total;
   
   const OrderItem({
@@ -68,7 +67,7 @@ class OrderItem {
     required this.total,
   });
   
-  /// Create from product with calculated values
+  // Create from product with calculated values
   factory OrderItem.fromProductData({
     required String id,
     required String productId,
@@ -107,7 +106,7 @@ class OrderItem {
     );
   }
   
-  /// Create from Product domain entity
+  // Create from Product domain entity
   factory OrderItem.fromProduct({
     required Product product,
     required int quantity,
@@ -130,7 +129,7 @@ class OrderItem {
     );
   }
   
-  /// Create from ProductEntity (offline entity)
+  // Create from ProductEntity (offline entity)
   factory OrderItem.fromProductEntity({
     required ProductEntity entity,
     required int quantity,
@@ -153,7 +152,7 @@ class OrderItem {
     );
   }
   
-  /// Create a copy with updated fields and recalculations
+  // Create a copy with updated fields and recalculations
   OrderItem copyWith({
     String? id,
     String? productId,
@@ -198,7 +197,7 @@ class OrderItem {
     );
   }
   
-  /// Convert to JSON
+  // Convert to JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -219,7 +218,7 @@ class OrderItem {
     };
   }
   
-  /// Create from JSON
+  // Create from JSON
   factory OrderItem.fromJson(Map<String, dynamic> json) {
     return OrderItem(
       id: json['id'] as String,

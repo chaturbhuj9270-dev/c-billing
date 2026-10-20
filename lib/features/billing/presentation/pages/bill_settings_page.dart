@@ -10,7 +10,7 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Bill settings page for configuring billing preferences
+// Bill settings page for configuring billing preferences
 class BillSettingsPage extends StatefulWidget {
   const BillSettingsPage({super.key});
 
@@ -975,7 +975,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
     );
   }
 
-  /// Builds a percentage input field for tax configuration
+  // Builds a percentage input field for tax configuration
   Widget _buildPercentageInput({
     required TextEditingController controller,
     required String label,
@@ -1040,7 +1040,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
     );
   }
 
-  /// Builds a text input field (e.g., for other tax name)
+  // Builds a text input field (e.g., for other tax name)
   Widget _buildTextInput({
     required TextEditingController controller,
     required String label,

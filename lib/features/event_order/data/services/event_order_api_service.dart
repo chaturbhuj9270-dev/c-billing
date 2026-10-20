@@ -2,8 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
-/// API Service for Event Order data operations with Firebase
-/// Handles all remote server communication for event orders
+// API Service for Event Order data operations with Firebase Handles all remote server communication for event orders
 class EventOrderApiService {
   static EventOrderApiService? _instance;
 
@@ -16,19 +15,19 @@ class EventOrderApiService {
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
         _auth = auth ?? FirebaseAuth.instance;
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static EventOrderApiService get instance {
     _instance ??= EventOrderApiService._();
     return _instance!;
   }
 
-  /// Get current user ID
+  // Get current user ID
   String? get _userId => _auth.currentUser?.uid;
 
-  /// Check if user is authenticated
+  // Check if user is authenticated
   bool get isAuthenticated => _userId != null;
 
-  /// Get event orders collection reference for current user
+  // Get event orders collection reference for current user
   CollectionReference<Map<String, dynamic>>? get _eventOrdersRef {
     final userId = _userId;
     if (userId == null) return null;
@@ -38,15 +37,14 @@ class EventOrderApiService {
         .collection('eventOrders');
   }
 
-  /// Ensure user is authenticated
+  // Ensure user is authenticated
   void _ensureAuthenticated() {
     if (_userId == null) {
       throw Exception('User not authenticated');
     }
   }
 
-  /// Fetch all event orders from server
-  /// If [updatedSince] is provided, only fetch orders updated after that time
+  // Fetch all event orders from server If [updatedSince] is provided, only fetch orders updated after that time
   Future<List<Map<String, dynamic>>> getEventOrders({
     DateTime? updatedSince,
   }) async {
@@ -76,7 +74,7 @@ class EventOrderApiService {
     }
   }
 
-  /// Get a single event order by ID
+  // Get a single event order by ID
   Future<Map<String, dynamic>?> getEventOrder(String id) async {
     _ensureAuthenticated();
     
@@ -93,8 +91,7 @@ class EventOrderApiService {
     }
   }
 
-  /// Create a new event order on the server
-  /// Returns the server response with the new document ID
+  // Create a new event order on the server Returns the server response with the new document ID
   Future<Map<String, dynamic>> createEventOrder(Map<String, dynamic> orderData) async {
     _ensureAuthenticated();
     
@@ -125,7 +122,7 @@ class EventOrderApiService {
     }
   }
 
-  /// Update an existing event order on the server
+  // Update an existing event order on the server
   Future<Map<String, dynamic>> updateEventOrder(String id, Map<String, dynamic> orderData) async {
     _ensureAuthenticated();
     
@@ -155,7 +152,7 @@ class EventOrderApiService {
     }
   }
 
-  /// Delete an event order from server
+  // Delete an event order from server
   Future<void> deleteEventOrder(String id) async {
     _ensureAuthenticated();
     

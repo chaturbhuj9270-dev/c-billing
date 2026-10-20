@@ -4,7 +4,7 @@ import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Page for managing which columns appear in purchase reports
+// Page for managing which columns appear in purchase reports
 class PurchaseReportSettingsPage extends StatefulWidget {
   const PurchaseReportSettingsPage({super.key});
 

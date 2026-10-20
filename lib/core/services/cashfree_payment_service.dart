@@ -9,7 +9,7 @@ import 'package:flutter_cashfree_pg_sdk/api/cfsession/cfsession.dart';
 import 'package:flutter_cashfree_pg_sdk/utils/cfenums.dart';
 import 'package:flutter_cashfree_pg_sdk/utils/cfexceptions.dart';
 
-/// Result of a Cashfree subscription payment attempt.
+// Result of a Cashfree subscription payment attempt.
 class CashfreePaymentResult {
   final bool success;
   final String orderId;
@@ -24,10 +24,7 @@ class CashfreePaymentResult {
   });
 }
 
-/// Handles Cashfree PG checkout for the yearly subscription.
-///
-/// Order creation and payment verification run on Cloud Functions so the
-/// Cashfree secret key never ships in the app.
+// Handles Cashfree PG checkout for the yearly subscription. Order creation and payment verification run on Cloud Functions so the Cashfree secret key never ships in the app.
 class CashfreePaymentService {
   static final CashfreePaymentService _instance =
       CashfreePaymentService._internal();
@@ -43,9 +40,7 @@ class CashfreePaymentService {
 
   Completer<CashfreePaymentResult>? _pendingCheckout;
 
-  /// Starts Cashfree Web Checkout for ₹3999 subscription.
-  ///
-  /// Resolves after SDK callback + server-side verification.
+  // Starts Cashfree Web Checkout for ₹3999 subscription. Resolves after SDK callback + server-side verification.
   Future<CashfreePaymentResult> payForSubscription() async {
     if (_pendingCheckout != null && !_pendingCheckout!.isCompleted) {
       throw StateError('A payment is already in progress');

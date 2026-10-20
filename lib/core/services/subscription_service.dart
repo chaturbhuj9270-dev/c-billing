@@ -2,10 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-/// Service to manage user subscription status.
-///
-/// Access requires an active `subscriptionDate` within [subscriptionDuration].
-/// Activation after Cashfree payment is performed by Cloud Functions.
+// Service to manage user subscription status. Access requires an active `subscriptionDate` within [subscriptionDuration]. Activation after Cashfree payment is performed by Cloud F...
 class SubscriptionService {
   static final SubscriptionService _instance = SubscriptionService._internal();
   factory SubscriptionService() => _instance;
@@ -14,16 +11,16 @@ class SubscriptionService {
   FirebaseFirestore get _firestore => FirebaseFirestore.instance;
   FirebaseAuth get _auth => FirebaseAuth.instance;
 
-  /// Subscription price in INR
+  // Subscription price in INR
   static const double subscriptionPrice = 3999.0;
 
-  /// Display price (with thousands separator)
+  // Display price (with thousands separator)
   static const String subscriptionPriceDisplay = '3,999';
 
-  /// Subscription validity duration
+  // Subscription validity duration
   static const Duration subscriptionDuration = Duration(days: 365);
 
-  /// Get current user ID
+  // Get current user ID
   String? get _userId => _auth.currentUser?.uid;
 
   DateTime? _parseSubscriptionDate(dynamic subscriptionDate) {
@@ -33,10 +30,7 @@ class SubscriptionService {
     return null;
   }
 
-  /// Check if user's subscription is valid.
-  ///
-  /// Fail-closed: no user, a missing date, an expired date, or a read error
-  /// all return false. Login still happens before this check.
+  // Check if user's subscription is valid. Fail-closed: no user, a missing date, an expired date, or a read error all return false. Login still happens before this check.
   Future<bool> isSubscriptionValid() async {
     try {
       final userId = _userId;
@@ -87,7 +81,7 @@ class SubscriptionService {
     }
   }
 
-  /// Get subscription expiry date
+  // Get subscription expiry date
   Future<DateTime?> getExpiryDate() async {
     try {
       final userId = _userId;
@@ -106,7 +100,7 @@ class SubscriptionService {
     }
   }
 
-  /// Get remaining days in subscription
+  // Get remaining days in subscription
   Future<int> getRemainingDays() async {
     final expiryDate = await getExpiryDate();
     if (expiryDate == null) return 0;
@@ -116,7 +110,7 @@ class SubscriptionService {
     return expiryDate.difference(now).inDays;
   }
 
-  /// Wait until Firestore reflects an active subscription (after Cashfree verify).
+  // Wait until Firestore reflects an active subscription (after Cashfree verify).
   Future<bool> waitUntilActive({
     Duration timeout = const Duration(seconds: 20),
     Duration pollInterval = const Duration(seconds: 1),
@@ -129,31 +123,7 @@ class SubscriptionService {
     return await isSubscriptionValid();
   }
 
-  /// Client-side activate — kept for admin/manual tooling only.
-  /// Production unlock must go through Cloud Functions after Cashfree PAID.
-  Future<bool> activateSubscription() async {
-    try {
-      final userId = _userId;
-      if (userId == null) {
-        debugPrint('[SubscriptionService] No user logged in');
-        return false;
-      }
-
-      await _firestore.collection('users').doc(userId).update({
-        'subscriptionDate': FieldValue.serverTimestamp(),
-        'lastSubscriptionUpdate': FieldValue.serverTimestamp(),
-        'subscriptionStatus': 'active',
-      });
-
-      debugPrint('[SubscriptionService] Subscription activated successfully');
-      return true;
-    } catch (e) {
-      debugPrint('[SubscriptionService] Error activating subscription: $e');
-      return false;
-    }
-  }
-
-  /// New users start without an active subscription (must pay via Cashfree).
+  // New users start without an active subscription (must pay via Cashfree).
   static Future<void> setInitialSubscription(String userId) async {
     try {
       await FirebaseFirestore.instance.collection('users').doc(userId).set({
@@ -168,7 +138,7 @@ class SubscriptionService {
     }
   }
 
-  /// Get subscription status details
+  // Get subscription status details
   Future<Map<String, dynamic>> getSubscriptionStatus() async {
     try {
       final userId = _userId;

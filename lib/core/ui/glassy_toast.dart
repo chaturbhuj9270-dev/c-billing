@@ -3,22 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:c_billing/common_widgets/glass_bevel_frame.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// A premium glassmorphic toast overlay used throughout the app.
-///
-/// Usage:
-///   GlassyToast.show(context, 'Message here');                    // success
-///   GlassyToast.show(context, 'Error!', isError: true);           // error
-///   GlassyToast.show(context, 'Info', isError: false, icon: Icons.info); // custom icon
+// A premium glassmorphic toast overlay used throughout the app. Usage: GlassyToast.show(context, 'Message here'); // success GlassyToast.show(context, 'Error!', isError: true); //...
 class GlassyToast {
   static OverlayEntry? _currentEntry;
 
-  /// Show a glassy toast overlay at the top of the screen, below the status bar.
-  ///
-  /// [context] - BuildContext (needs Overlay ancestor)
-  /// [message] - The message to display
-  /// [isError] - Whether this is an error toast (red) or success (green)
-  /// [icon] - Optional custom icon override
-  /// [duration] - How long to show the toast before auto-dismiss
+  // Show a glassy toast overlay at the top of the screen, below the status bar. [context] - BuildContext (needs Overlay ancestor) [message] - The message to display [isError] - Whet...
   static void show(
     BuildContext context,
     String message, {
@@ -29,8 +18,7 @@ class GlassyToast {
     // Dismiss any existing toast
     dismiss();
 
-    // Prefer the root overlay so toasts still work when called from nested
-    // navigators / post-flyout contexts.
+    // Prefer the root overlay so toasts still work when called from nested navigators / post-flyout contexts.
     final overlay = Overlay.maybeOf(context, rootOverlay: true) ??
         Overlay.maybeOf(context);
     if (overlay == null) {
@@ -63,7 +51,7 @@ class GlassyToast {
     overlay.insert(entry);
   }
 
-  /// Dismiss the currently showing toast (if any).
+  // Dismiss the currently showing toast (if any).
   static void dismiss() {
     _currentEntry?.remove();
     _currentEntry = null;

@@ -9,7 +9,7 @@ import '../../domain/entities/event_order.dart';
 import '../../domain/entities/sub_event.dart';
 import '../../domain/entities/order_item.dart';
 
-/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTime(dynamic value) {
   if (value == null) return null;
   if (value is Timestamp) return value.toDate();
@@ -18,8 +18,7 @@ DateTime? _parseDateTime(dynamic value) {
   return null;
 }
 
-/// Offline-first controller for Event/Sales Order CRUD operations.
-/// All operations go to the local database first, then sync in the background.
+// Offline-first controller for Event/Sales Order CRUD operations. All operations go to the local database first, then sync in the background.
 class EventOrderOfflineController extends ChangeNotifier {
   static EventOrderOfflineController? _instance;
 
@@ -27,13 +26,13 @@ class EventOrderOfflineController extends ChangeNotifier {
 
   EventOrderOfflineController._(this._db);
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static EventOrderOfflineController get instance {
     _instance ??= EventOrderOfflineController._(LocalDatabase.instance.db);
     return _instance!;
   }
 
-  /// Reset instance (for testing)
+  // Reset instance (for testing)
   @visibleForTesting
   static void resetInstance() {
     _instance = null;
@@ -41,8 +40,7 @@ class EventOrderOfflineController extends ChangeNotifier {
 
   // ==================== CREATE ====================
 
-  /// Add a new event order locally
-  /// Sets syncStatus to NEW for background sync
+  // Add a new event order locally Sets syncStatus to NEW for background sync
   Future<EventOrderEntity> addEventOrder({
     required OrderType orderType,
     String? customerId,
@@ -111,7 +109,7 @@ class EventOrderOfflineController extends ChangeNotifier {
 
   // ==================== READ ====================
 
-  /// Get all event orders (excluding deleted)
+  // Get all event orders (excluding deleted)
   Future<List<EventOrderEntity>> getAllEventOrders() async {
     final orders = (await _db.loadEventOrders())
         .where((order) => order.syncStatus != EventOrderSyncStatus.deleted)
@@ -120,7 +118,7 @@ class EventOrderOfflineController extends ChangeNotifier {
     return orders;
   }
 
-  /// Watch all event orders for real-time updates
+  // Watch all event orders for real-time updates
   Stream<List<EventOrderEntity>> watchAllEventOrders() {
     return _db.watchEventOrders().map((rows) {
       final orders = rows
@@ -131,7 +129,7 @@ class EventOrderOfflineController extends ChangeNotifier {
     });
   }
 
-  /// Get event order by local id
+  // Get event order by local id
   Future<EventOrderEntity?> getEventOrderById(int id) async {
     for (final order in await _db.loadEventOrders()) {
       if (order.id == id) return order;
@@ -139,7 +137,7 @@ class EventOrderOfflineController extends ChangeNotifier {
     return null;
   }
 
-  /// Get event order by server ID
+  // Get event order by server ID
   Future<EventOrderEntity?> getEventOrderByServerId(String serverId) async {
     for (final order in await _db.loadEventOrders()) {
       if (order.serverId == serverId) return order;
@@ -147,7 +145,7 @@ class EventOrderOfflineController extends ChangeNotifier {
     return null;
   }
 
-  /// Get event orders by type
+  // Get event orders by type
   Future<List<EventOrderEntity>> getEventOrdersByType(OrderType type) async {
     final orders = (await _db.loadEventOrders()).where((order) {
       return order.orderType == type.index &&
@@ -157,7 +155,7 @@ class EventOrderOfflineController extends ChangeNotifier {
     return orders;
   }
 
-  /// Get event orders by customer ID
+  // Get event orders by customer ID
   Future<List<EventOrderEntity>> getEventOrdersByCustomerId(
     String customerId,
   ) async {
@@ -169,7 +167,7 @@ class EventOrderOfflineController extends ChangeNotifier {
     return orders;
   }
 
-  /// Get event orders by status
+  // Get event orders by status
   Future<List<EventOrderEntity>> getEventOrdersByStatus(
     OrderStatus status,
   ) async {
@@ -181,7 +179,7 @@ class EventOrderOfflineController extends ChangeNotifier {
     return orders;
   }
 
-  /// Get event orders by date range
+  // Get event orders by date range
   Future<List<EventOrderEntity>> getEventOrdersByDateRange(
     DateTime startDate,
     DateTime endDate,
@@ -195,7 +193,7 @@ class EventOrderOfflineController extends ChangeNotifier {
     return orders;
   }
 
-  /// Get pending event orders (not delivered, cancelled, or converted)
+  // Get pending event orders (not delivered, cancelled, or converted)
   Future<List<EventOrderEntity>> getPendingEventOrders() async {
     final orders = (await _db.loadEventOrders()).where((order) {
       return order.status < OrderStatus.delivered.index &&
@@ -205,7 +203,7 @@ class EventOrderOfflineController extends ChangeNotifier {
     return orders;
   }
 
-  /// Get today's event orders
+  // Get today's event orders
   Future<List<EventOrderEntity>> getTodaysEventOrders() async {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
@@ -220,7 +218,7 @@ class EventOrderOfflineController extends ChangeNotifier {
     return orders;
   }
 
-  /// Get upcoming events (event date today or in future)
+  // Get upcoming events (event date today or in future)
   Future<List<EventOrderEntity>> getUpcomingEvents() async {
     final now = DateTime.now();
     final startOfToday = DateTime(now.year, now.month, now.day);
@@ -258,7 +256,7 @@ class EventOrderOfflineController extends ChangeNotifier {
     return upcomingEvents;
   }
 
-  /// Search event orders by name or customer
+  // Search event orders by name or customer
   Future<List<EventOrderEntity>> searchEventOrders(String query) async {
     if (query.isEmpty) return getAllEventOrders();
 
@@ -275,7 +273,7 @@ class EventOrderOfflineController extends ChangeNotifier {
 
   // ==================== UPDATE ====================
 
-  /// Update an existing event order
+  // Update an existing event order
   Future<EventOrderEntity?> updateEventOrder({
     required int id,
     OrderType? orderType,
@@ -364,7 +362,7 @@ class EventOrderOfflineController extends ChangeNotifier {
 
   // ==================== DELETE ====================
 
-  /// Soft delete an event order (mark as deleted for sync)
+  // Soft delete an event order (mark as deleted for sync)
   Future<bool> deleteEventOrder(int id) async {
     final existing = await getEventOrderById(id);
     if (existing == null) {
@@ -390,7 +388,7 @@ class EventOrderOfflineController extends ChangeNotifier {
 
   // ==================== STATISTICS ====================
 
-  /// Get total advance amount collected
+  // Get total advance amount collected
   Future<double> getTotalAdvanceAmount({
     DateTime? startDate,
     DateTime? endDate,
@@ -411,7 +409,7 @@ class EventOrderOfflineController extends ChangeNotifier {
     return total;
   }
 
-  /// Get total pending amount (remaining)
+  // Get total pending amount (remaining)
   Future<double> getTotalPendingAmount() async {
     final orders = (await _db.loadEventOrders()).where((order) {
       return order.status < OrderStatus.delivered.index &&
@@ -425,7 +423,7 @@ class EventOrderOfflineController extends ChangeNotifier {
     return total;
   }
 
-  /// Get order counts by status
+  // Get order counts by status
   Future<Map<OrderStatus, int>> getOrderCountByStatus() async {
     final result = <OrderStatus, int>{};
     final orders = await _db.loadEventOrders();
@@ -443,7 +441,7 @@ class EventOrderOfflineController extends ChangeNotifier {
     return result;
   }
 
-  /// Get total event order count
+  // Get total event order count
   Future<int> getTotalCount() async {
     return (await _db.loadEventOrders())
         .where((order) => order.syncStatus != EventOrderSyncStatus.deleted)
@@ -452,14 +450,14 @@ class EventOrderOfflineController extends ChangeNotifier {
 
   // ==================== SYNC HELPERS ====================
 
-  /// Get all records that need to be synced to server
+  // Get all records that need to be synced to server
   Future<List<EventOrderEntity>> getRecordsToSync() async {
     return (await _db.loadEventOrders())
         .where((order) => order.syncStatus != EventOrderSyncStatus.synced)
         .toList();
   }
 
-  /// Mark a record as synced (call after successful server sync)
+  // Mark a record as synced (call after successful server sync)
   Future<void> markAsSynced(int id, String serverId) async {
     final existing = await getEventOrderById(id);
     if (existing == null) return;
@@ -472,7 +470,7 @@ class EventOrderOfflineController extends ChangeNotifier {
     debugPrint('[EventOrderOffline] Marked synced: $id -> $serverId');
   }
 
-  /// Permanently delete all records marked as deleted (call after sync)
+  // Permanently delete all records marked as deleted (call after sync)
   Future<int> purgeDeletedRecords() async {
     final toDelete = (await _db.loadEventOrders())
         .where((order) => order.syncStatus == EventOrderSyncStatus.deleted)
@@ -486,7 +484,7 @@ class EventOrderOfflineController extends ChangeNotifier {
     return toDelete.length;
   }
 
-  /// Import an event order from server (used during sync)
+  // Import an event order from server (used during sync)
   Future<void> importEventOrder(EventOrderEntity entity) async {
     await _db.saveEventOrder(entity);
     debugPrint(
@@ -495,7 +493,7 @@ class EventOrderOfflineController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Update an order from server data (used during sync)
+  // Update an order from server data (used during sync)
   Future<void> updateFromServer(int localId, Map<String, dynamic> data) async {
     final existing = await getEventOrderById(localId);
     if (existing == null) return;
@@ -587,7 +585,7 @@ class EventOrderOfflineController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Get count of unsynced records
+  // Get count of unsynced records
   Future<int> getUnsyncedCount() async {
     return (await _db.loadEventOrders())
         .where(

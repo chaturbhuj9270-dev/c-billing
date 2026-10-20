@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// One figure in the desktop summary bar used by list screens.
+// One figure in the desktop summary bar used by list screens.
 class DesktopStat {
   final String value;
   final String label;
@@ -16,7 +16,7 @@ class DesktopStat {
   });
 }
 
-/// White summary bar matching the Invoices screen: value, label, dividers.
+// White summary bar matching the Invoices screen: value, label, dividers.
 class DesktopStatBar extends StatelessWidget {
   final List<DesktopStat> stats;
 

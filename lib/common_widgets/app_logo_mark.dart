@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Circular app logo with the splash ripple and pulse.
+// Circular app logo with the splash ripple and pulse.
 class AppLogoMark extends StatelessWidget {
   final bool isDark;
   final Animation<double> rings;

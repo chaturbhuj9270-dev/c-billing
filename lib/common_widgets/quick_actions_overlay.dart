@@ -18,7 +18,7 @@ import '../features/quotation/presentation/pages/quotation_list_page.dart';
 import '../features/inventory_management/presentation/pages/barcode_generator_page.dart';
 import '../features/customer/presentation/pages/enhanced_customer_page.dart';
 
-/// Data class for a quick-action item
+// Data class for a quick-action item
 class QuickActionItem {
   final IconData icon;
   final String label;
@@ -35,7 +35,7 @@ class QuickActionItem {
   });
 }
 
-/// Opens the quick-actions sheet used by billing and purchase.
+// Opens the quick-actions sheet used by billing and purchase.
 Future<void> showQuickActionsSheet(BuildContext context) {
   return showAppBottomSheet<void>(
     context: context,
@@ -153,7 +153,7 @@ List<QuickActionItem> buildQuickActionItems(
   ];
 }
 
-/// Bottom sheet grid: "Quick actions" / "Jump to any section".
+// Bottom sheet grid: "Quick actions" / "Jump to any section".
 class QuickActionsPanel extends StatelessWidget {
   final List<QuickActionItem> actions;
 
@@ -271,13 +271,9 @@ class _ActionTile extends StatelessWidget {
   }
 }
 
-/// A global Quick Actions FAB + overlay that can be placed in any Scaffold.
-///
-/// Usage: Add [GlobalQuickActionsFAB] to a Stack on top of your page content.
-/// It manages its own open/close state internally.
+// A global Quick Actions FAB + overlay that can be placed in any Scaffold. Usage: Add [GlobalQuickActionsFAB] to a Stack on top of your page content. It manages its own open/close...
 class GlobalQuickActionsFAB extends StatefulWidget {
-  /// Distance from the bottom of the stack. Raise this when a floating
-  /// bottom nav bar overlays the body (e.g. with [Scaffold.extendBody]).
+  // Distance from the bottom of the stack. Raise this when a floating bottom nav bar overlays the body (e.g. with [Scaffold.extendBody]).
   final double bottomOffset;
 
   const GlobalQuickActionsFAB({super.key, this.bottomOffset = 16});

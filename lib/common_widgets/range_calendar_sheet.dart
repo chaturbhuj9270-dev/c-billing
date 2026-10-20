@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Centered glassy popup for choosing a custom date range.
+// Centered glassy popup for choosing a custom date range.
 Future<DateTimeRange?> showAppRangeCalendar({
   required BuildContext context,
   required DateTime firstDate,

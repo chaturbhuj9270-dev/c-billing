@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-/// States for biometric authentication
+// States for biometric authentication
 sealed class BiometricState extends Equatable {
   const BiometricState();
 

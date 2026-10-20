@@ -128,8 +128,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       }
     });
 
-    // Defer initialization until after first frame is rendered
-    // This ensures splash screen shows immediately
+    // Defer initialization until after first frame is rendered This ensures splash screen shows immediately
     Future.microtask(() => _initializeApp());
   }
 
@@ -194,7 +193,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     }
   }
 
-  /// Waits until Firebase has restored a persisted session, if there is one.
+  // Waits until Firebase has restored a persisted session, if there is one.
   Future<User?> _restoredUser() async {
     final existing = FirebaseAuth.instance.currentUser;
     if (existing != null) return existing;
@@ -264,7 +263,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     }
   }
 
-  /// Reload settings in background without blocking navigation
+  // Reload settings in background without blocking navigation
   void _reloadSettingsInBackground() {
     // Fire and forget - don't await these
     Future.microtask(() async {
@@ -303,9 +302,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       }
     } catch (e) {
       debugPrint('[ERROR] Error checking biometric lock: $e');
-      // Don't open the shop when the lock state can't be read.
-      // Devices without biometrics still continue, because the lock
-      // cannot be turned on there.
+      // Don't open the shop when the lock state can't be read. Devices without biometrics still continue, because the lock cannot be turned on there.
       final canUse = await BiometricService.instance.canUseBiometrics();
       if (!mounted) return;
       if (canUse) {

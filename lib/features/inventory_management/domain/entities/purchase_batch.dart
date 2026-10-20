@@ -1,71 +1,67 @@
 import 'package:flutter/foundation.dart';
-/// Represents a purchase batch for FIFO inventory management.
-/// Each purchase creates a separate batch even for the same product.
-/// 
-/// Unique product identification is based on: productName + companyName + modelName
-/// Different purchase prices result in different batches.
+// Represents a purchase batch for FIFO inventory management. Each purchase creates a separate batch even for the same product. Unique product identification is based on: productNa...
 class PurchaseBatch {
-  /// Unique identifier for this batch
+  // Unique identifier for this batch
   final String batchId;
   
-  /// Product ID (reference to Product)
+  // Product ID (reference to Product)
   final String productId;
   
-  /// Product name for quick reference
+  // Product name for quick reference
   final String productName;
   
-  /// Company/Brand name
+  // Company/Brand name
   final String companyName;
   
-  /// Model name or variant
+  // Model name or variant
   final String modelName;
   
-  /// Category of the product
+  // Category of the product
   final String category;
   
-  /// Purchase price per unit for this batch
+  // Purchase price per unit for this batch
   final double purchasePrice;
   
-  /// Selling price per unit for this batch
+  // Selling price per unit for this batch
   final double sellingPrice;
   
-  /// Original quantity purchased in this batch
+  // Original quantity purchased in this batch
   final int quantityPurchased;
   
-  /// Remaining quantity available for sale (FIFO tracking)
+  // Remaining quantity available for sale (FIFO tracking)
   final int quantityRemaining;
   
-  /// Date when this batch was purchased
+  // Date when this batch was purchased
   final DateTime purchaseDate;
   
-  /// Supplier ID (optional)
+  // Supplier ID (optional)
   final String? supplierId;
   
-  /// Supplier name (optional)
+  // Supplier name (optional)
   final String? supplierName;
   
-  /// Unit of measurement
+  // Unit of measurement
   final String unit;
   
-  /// Expiry date (optional)
+  // Expiry date (optional)
   final DateTime? expiryDate;
   
-  /// Production/Manufacturing date (optional)
+  // Production/Manufacturing date (optional)
   final DateTime? productionDate;
   
-  /// Warranty in months (optional)
+  // Warranty in months (optional)
   final int? warrantyMonths;
   
-  /// Notes for this batch
+  // Notes for this batch
   final String? notes;
   
-  /// Whether this batch is fully consumed
+  // Whether this batch is fully consumed
   final bool isConsumed;
   
-  /// When the record was created
+  // When the record was created
   final DateTime createdAt;
   
-  /// When the record was last updated
+  // When the record was last updated
   final DateTime updatedAt;
 
   PurchaseBatch({
@@ -92,20 +88,20 @@ class PurchaseBatch {
     required this.updatedAt,
   });
 
-  /// Generate unique product key based on name + company + model
+  // Generate unique product key based on name + company + model
   String get productUniqueKey => 
       '${productName.toLowerCase().trim()}_${companyName.toLowerCase().trim()}_${modelName.toLowerCase().trim()}';
 
-  /// Total purchase value for this batch
+  // Total purchase value for this batch
   double get totalPurchaseValue => purchasePrice * quantityPurchased;
   
-  /// Remaining value of this batch
+  // Remaining value of this batch
   double get remainingValue => purchasePrice * quantityRemaining;
   
-  /// Quantity already sold from this batch
+  // Quantity already sold from this batch
   int get quantitySold => quantityPurchased - quantityRemaining;
 
-  /// Factory constructor to create from JSON (for Firebase)
+  // Factory constructor to create from JSON (for Firebase)
   factory PurchaseBatch.fromJson(Map<String, dynamic> json) {
     try {
       return PurchaseBatch(
@@ -160,7 +156,7 @@ class PurchaseBatch {
     }
   }
 
-  /// Convert to JSON for Firebase
+  // Convert to JSON for Firebase
   Map<String, dynamic> toJson() {
     return {
       'batchId': batchId,
@@ -188,7 +184,7 @@ class PurchaseBatch {
     };
   }
 
-  /// Copy with modifications
+  // Copy with modifications
   PurchaseBatch copyWith({
     String? batchId,
     String? productId,

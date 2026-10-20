@@ -3,8 +3,7 @@ import '../../../../core/database/local_store.dart';
 import '../../../../core/services/local_database.dart';
 import '../entities/shop_image_cache_entity.dart';
 
-/// Controller for managing shop image cache in the local database.
-/// Provides fast local access to shop images (logo, signature, QR code).
+// Controller for managing shop image cache in the local database. Provides fast local access to shop images (logo, signature, QR code).
 class ShopImageCacheController {
   static ShopImageCacheController? _instance;
 
@@ -12,14 +11,13 @@ class ShopImageCacheController {
 
   ShopImageCacheController._();
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static ShopImageCacheController get instance {
     _instance ??= ShopImageCacheController._();
     return _instance!;
   }
 
-  /// Get cached images for a user
-  /// Returns null if no cache exists
+  // Get cached images for a user Returns null if no cache exists
   Future<ShopImageCacheEntity?> getCachedImages(String userId) async {
     for (final image in await _db.loadShopImages()) {
       if (image.userId == userId) return image;
@@ -27,8 +25,7 @@ class ShopImageCacheController {
     return null;
   }
 
-  /// Save images to local cache
-  /// Creates new entry or updates existing one
+  // Save images to local cache Creates new entry or updates existing one
   Future<void> saveToCache({
     required String userId,
     String? shopLogoBase64,
@@ -60,7 +57,7 @@ class ShopImageCacheController {
     }
   }
 
-  /// Update specific image in cache
+  // Update specific image in cache
   Future<void> updateLogo(String userId, String? logoBase64) async {
     final existing = await getCachedImages(userId);
 
@@ -80,7 +77,7 @@ class ShopImageCacheController {
     }
   }
 
-  /// Update signature in cache
+  // Update signature in cache
   Future<void> updateSignature(String userId, String? signatureBase64) async {
     final existing = await getCachedImages(userId);
 
@@ -100,7 +97,7 @@ class ShopImageCacheController {
     }
   }
 
-  /// Update QR code in cache
+  // Update QR code in cache
   Future<void> updateQrCode(String userId, String? qrCodeBase64) async {
     final existing = await getCachedImages(userId);
 
@@ -120,7 +117,7 @@ class ShopImageCacheController {
     }
   }
 
-  /// Remove specific image from cache
+  // Remove specific image from cache
   Future<void> removeLogo(String userId) async {
     await updateLogo(userId, null);
   }
@@ -133,15 +130,14 @@ class ShopImageCacheController {
     await updateQrCode(userId, null);
   }
 
-  /// Clear all cached images for a user
+  // Clear all cached images for a user
   Future<void> clearCache(String userId) async {
     final existing = await getCachedImages(userId);
     if (existing == null) return;
     await _db.deleteShopImageById(existing.id);
   }
 
-  /// Sync images from Firebase to local cache
-  /// Call this after fetching from Firebase
+  // Sync images from Firebase to local cache Call this after fetching from Firebase
   Future<void> syncFromFirebase({
     required String userId,
     String? shopLogoBase64,

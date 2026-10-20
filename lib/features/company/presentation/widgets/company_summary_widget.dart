@@ -3,8 +3,7 @@ import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
-/// Summary widget for company statistics
-/// Displays: Total companies, Active companies, Synced status
+// Summary widget for company statistics Displays: Total companies, Active companies, Synced status
 class CompanySummaryWidget extends StatelessWidget {
   final List<Map<String, dynamic>> companies;
   final String searchQuery;

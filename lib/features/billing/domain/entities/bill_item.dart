@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-/// Represents an individual item in a bill
+// Represents an individual item in a bill
 class BillItem {
   final String id;
   final String billId;
@@ -38,26 +38,25 @@ class BillItem {
     this.sellUnit,
   });
 
-  /// CGST amount computed from subtotal
+  // CGST amount computed from subtotal
   double get cgstAmount => subtotal * cgstPercent / 100;
 
-  /// SGST amount computed from subtotal
+  // SGST amount computed from subtotal
   double get sgstAmount => subtotal * sgstPercent / 100;
 
-  /// Total GST amount for this item
+  // Total GST amount for this item
   double get totalGstAmount => cgstAmount + sgstAmount;
 
-  /// Calculate profit for this item (before any bill-level discount)
+  // Calculate profit for this item (before any bill-level discount)
   double get itemProfit => (sellingPrice - purchasePrice) * quantity;
 
-  /// Get remaining quantity that can still be returned
+  // Get remaining quantity that can still be returned
   double get remainingQuantity => quantity - returnedQuantity;
 
-  /// Get quantity as int (for backward compatibility)
+  // Get quantity as int (for backward compatibility)
   int get quantityInt => quantity.round();
 
-  /// Get display quantity with appropriate unit conversion
-  /// If sold in gm, shows gm value; if sold in ml, shows ml value
+  // Get display quantity with appropriate unit conversion If sold in gm, shows gm value; if sold in ml, shows ml value
   String get displayQuantity {
     if (sellUnit == 'gm' && unit == 'kg') {
       return '${(quantity * 1000).toStringAsFixed(quantity * 1000 == (quantity * 1000).roundToDouble() ? 0 : 1)} gm';
@@ -71,20 +70,20 @@ class BillItem {
         : quantity.toStringAsFixed(2);
   }
 
-  /// Get the display unit string
+  // Get the display unit string
   String get displayUnit => sellUnit ?? unit ?? '';
 
-  /// Check if this item is fully returned
+  // Check if this item is fully returned
   bool get isFullyReturned =>
       returnedQuantity >=
       quantity - 0.001; // Small tolerance for floating point
 
-  /// Check if this item has been partially returned
+  // Check if this item has been partially returned
   bool get isPartiallyReturned =>
       returnedQuantity > 0.001 &&
       returnedQuantity < quantity - 0.001; // Small tolerance for floating point
 
-  /// Factory constructor to create from JSON (for Firebase)
+  // Factory constructor to create from JSON (for Firebase)
   factory BillItem.fromJson(Map<String, dynamic> json) {
     try {
       return BillItem(
@@ -122,7 +121,7 @@ class BillItem {
     }
   }
 
-  /// Convert to JSON for Firebase
+  // Convert to JSON for Firebase
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -143,7 +142,7 @@ class BillItem {
     };
   }
 
-  /// Copy with modifications
+  // Copy with modifications
   BillItem copyWith({
     String? id,
     String? billId,
@@ -180,7 +179,7 @@ class BillItem {
     );
   }
 
-  /// Create a bill item with auto-calculated subtotal
+  // Create a bill item with auto-calculated subtotal
   static BillItem create({
     String id = '',
     String billId = '',

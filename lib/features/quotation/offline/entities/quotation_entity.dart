@@ -11,7 +11,7 @@ class QuotationEntity {
 
   String quotationNumber;
 
-  /// 0=product, 1=event, 2=hybrid
+  // 0=product, 1=event, 2=hybrid
   int quotationType;
 
   String? customerId;
@@ -40,7 +40,7 @@ class QuotationEntity {
 
   String? notes;
 
-  /// 0=draft, 1=sent, 2=accepted, 3=rejected, 4=expired, 5=converted
+  // 0=draft, 1=sent, 2=accepted, 3=rejected, 4=expired, 5=converted
   int status;
 
   String? convertedBillId;

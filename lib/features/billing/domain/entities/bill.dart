@@ -2,19 +2,19 @@ import 'package:flutter/foundation.dart';
 import 'bill_item.dart';
 import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
 
-/// Payment status of a bill
+// Payment status of a bill
 enum PaymentStatus {
-  /// Full amount received at time of sale
+  // Full amount received at time of sale
   paid,
 
-  /// Partial payment received, some amount pending
+  // Partial payment received, some amount pending
   partiallyPaid,
 
-  /// No payment received, full amount pending
+  // No payment received, full amount pending
   pending,
 }
 
-/// Represents a sales bill containing multiple items sold to a customer
+// Represents a sales bill containing multiple items sold to a customer
 class Bill {
   final String id;
   final String? customerId;
@@ -33,47 +33,46 @@ class Bill {
   final bool returnStatus;
   final DateTime? returnDate;
 
-  /// Payment status of the bill
+  // Payment status of the bill
   final PaymentStatus paymentStatus;
 
-  /// Amount already paid for this bill
+  // Amount already paid for this bill
   final double paidAmount;
 
-  /// Amount still pending for this bill
+  // Amount still pending for this bill
   final double pendingAmount;
 
-  // ═══════════════════ GST Fields ═══════════════════
-  /// Whether GST was applied to this bill
+  // ═══════════════════ GST Fields ═══════════════════ Whether GST was applied to this bill
   final bool isGstApplied;
 
-  /// Whether GST is inclusive (true) or exclusive (false)
+  // Whether GST is inclusive (true) or exclusive (false)
   final bool isTaxInclusive;
 
-  /// CGST percentage applied
+  // CGST percentage applied
   final double cgstPercent;
 
-  /// SGST percentage applied
+  // SGST percentage applied
   final double sgstPercent;
 
-  /// Other tax percentage applied
+  // Other tax percentage applied
   final double otherTaxPercent;
 
-  /// Other tax name (e.g., "Cess")
+  // Other tax name (e.g., "Cess")
   final String otherTaxName;
 
-  /// Calculated CGST amount
+  // Calculated CGST amount
   final double cgstAmount;
 
-  /// Calculated SGST amount
+  // Calculated SGST amount
   final double sgstAmount;
 
-  /// Calculated other tax amount
+  // Calculated other tax amount
   final double otherTaxAmount;
 
-  /// Total tax amount (CGST + SGST + Other)
+  // Total tax amount (CGST + SGST + Other)
   final double totalTaxAmount;
 
-  /// Whether the bill is synced with the server
+  // Whether the bill is synced with the server
   final bool isSynced;
 
   Bill({
@@ -109,7 +108,7 @@ class Bill {
     this.isSynced = true,
   });
 
-  /// Factory constructor to create from JSON (for Firebase)
+  // Factory constructor to create from JSON (for Firebase)
   factory Bill.fromJson(Map<String, dynamic> json) {
     try {
       List<BillItem> billItems = [];
@@ -192,7 +191,7 @@ class Bill {
     }
   }
 
-  /// Factory constructor to create from BillEntity (for offline-first)
+  // Factory constructor to create from BillEntity (for offline-first)
   factory Bill.fromBillEntity(BillEntity entity) {
     // Convert embedded bill items to domain BillItem
     final billItems = entity.items
@@ -262,7 +261,7 @@ class Bill {
     );
   }
 
-  /// Parse payment status from string
+  // Parse payment status from string
   static PaymentStatus _parsePaymentStatus(String? status) {
     switch (status) {
       case 'paid':
@@ -276,7 +275,7 @@ class Bill {
     }
   }
 
-  /// Convert to JSON for Firebase
+  // Convert to JSON for Firebase
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -311,7 +310,7 @@ class Bill {
     };
   }
 
-  /// Copy with modifications
+  // Copy with modifications
   Bill copyWith({
     String? id,
     String? customerId,
@@ -378,7 +377,7 @@ class Bill {
     );
   }
 
-  /// Get a formatted bill number
+  // Get a formatted bill number
   String get billNumber {
     final dateStr = billDate
         .toIso8601String()
@@ -387,29 +386,29 @@ class Bill {
     return 'BILL-$dateStr-${id.substring(0, id.length > 6 ? 6 : id.length).toUpperCase()}';
   }
 
-  /// Check if bill has customer information
+  // Check if bill has customer information
   bool get hasCustomerInfo =>
       (customerName != null && customerName!.isNotEmpty) ||
       (customerContact != null && customerContact!.isNotEmpty);
 
-  /// Check if all items in the bill are fully returned
+  // Check if all items in the bill are fully returned
   bool get isFullyReturned => items.every((item) => item.isFullyReturned);
 
-  /// Check if any item has been partially or fully returned
+  // Check if any item has been partially or fully returned
   bool get hasAnyReturns => items.any((item) => item.returnedQuantity > 0.001);
 
-  /// Check if there are any items that can still be returned
+  // Check if there are any items that can still be returned
   bool get hasReturnableItems =>
       items.any((item) => item.remainingQuantity > 0.001);
 
-  /// Get total returned quantity across all items
+  // Get total returned quantity across all items
   double get totalReturnedQuantity =>
       items.fold(0.0, (total, item) => total + item.returnedQuantity);
 
-  /// Get total returned quantity as int (for display)
+  // Get total returned quantity as int (for display)
   int get totalReturnedQuantityInt => totalReturnedQuantity.round();
 
-  /// Get total refund amount based on returned quantities
+  // Get total refund amount based on returned quantities
   double get totalReturnedAmount => items.fold(
     0.0,
     (total, item) => total + (item.sellingPrice * item.returnedQuantity),

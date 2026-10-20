@@ -13,7 +13,7 @@ import '../../../features/shop/domain/entities/shop.dart';
 import '../../services/bill_report_settings_service.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Service for generating PDF bills and sharing them
+// Service for generating PDF bills and sharing them
 class PdfBillService {
   static final PdfBillService _instance = PdfBillService._internal();
   factory PdfBillService() => _instance;
@@ -21,7 +21,7 @@ class PdfBillService {
 
   static final Set<String> _generatingBills = <String>{};
 
-  /// POS (`pos`) or normal/tabular (`normal`) — uses quotation_type for quotations.
+  // POS (`pos`) or normal/tabular (`normal`) — uses quotation_type for quotations.
   Future<String> resolvePdfFormat(PrintBillData billData) async {
     final prefs = await SharedPreferences.getInstance();
     if (billData.isQuotation) {
@@ -44,7 +44,7 @@ class PdfBillService {
     return generateBillPdf(billData: billData, shopDetails: shopDetails);
   }
 
-  /// Generate a PDF document from bill data (POS receipt format)
+  // Generate a PDF document from bill data (POS receipt format)
   Future<pw.Document> generateBillPdf({
     required PrintBillData billData,
     required Shop shopDetails,
@@ -73,7 +73,7 @@ class PdfBillService {
     return pdf;
   }
 
-  /// Generate a Normal/Tabular A4 bill PDF (Krushi Seva Kendra style — half A4 page, compact)
+  // Generate a Normal/Tabular A4 bill PDF (Krushi Seva Kendra style — half A4 page, compact)
   Future<pw.Document> generateNormalBillPdf({
     required PrintBillData billData,
     required Shop shopDetails,
@@ -99,7 +99,7 @@ class PdfBillService {
     return pdf;
   }
 
-  /// Build content for Normal/Tabular bill (Modern professional design - full A4 utilization)
+  // Build content for Normal/Tabular bill (Modern professional design - full A4 utilization)
   pw.Widget _buildNormalBillContent(
     PrintBillData billData,
     Shop shopDetails,
@@ -118,9 +118,7 @@ class PdfBillService {
       child: pw.Column(
         mainAxisSize: pw.MainAxisSize.min,
         children: [
-          // ═══════════════════════════════════════════
-          // HEADER — Logo, Shop Name, Contact Details
-          // ═══════════════════════════════════════════
+          // ═══════════════════════════════════════════ HEADER — Logo, Shop Name, Contact Details ═══════════════════════════════════════════
           pw.Container(
             width: double.infinity,
             padding: const pw.EdgeInsets.symmetric(
@@ -252,9 +250,7 @@ class PdfBillService {
             ),
           ),
 
-          // ═══════════════════════════════════════════
-          // TAX INVOICE TITLE
-          // ═══════════════════════════════════════════
+          // ═══════════════════════════════════════════ TAX INVOICE TITLE ═══════════════════════════════════════════
           pw.Container(
             width: double.infinity,
             padding: const pw.EdgeInsets.symmetric(vertical: 6),
@@ -271,9 +267,7 @@ class PdfBillService {
             ),
           ),
 
-          // ═══════════════════════════════════════════
-          // CUSTOMER & INVOICE INFO (3-column layout)
-          // ═══════════════════════════════════════════
+          // ═══════════════════════════════════════════ CUSTOMER & INVOICE INFO (3-column layout) ═══════════════════════════════════════════
           pw.Container(
             decoration: pw.BoxDecoration(
               border: pw.Border(
@@ -404,18 +398,14 @@ class PdfBillService {
             ),
           ),
 
-          // ═══════════════════════════════════════════
-          // ITEMS TABLE
-          // ═══════════════════════════════════════════
+          // ═══════════════════════════════════════════ ITEMS TABLE ═══════════════════════════════════════════
           _buildDynamicItemsTable(
             billData,
             thinBorder,
             pw.BorderSide(color: primaryColor, width: 0.5),
           ),
 
-          // ═══════════════════════════════════════════
-          // SUMMARY SECTION — Amounts & Amount in Words
-          // ═══════════════════════════════════════════
+          // ═══════════════════════════════════════════ SUMMARY SECTION — Amounts & Amount in Words ═══════════════════════════════════════════
           pw.Container(
             decoration: pw.BoxDecoration(
               border: pw.Border(
@@ -602,9 +592,7 @@ class PdfBillService {
             ),
           ),
 
-          // ═══════════════════════════════════════════
-          // TOTAL DUE (if customer has running balance)
-          // ═══════════════════════════════════════════
+          // ═══════════════════════════════════════════ TOTAL DUE (if customer has running balance) ═══════════════════════════════════════════
           if (billData.totalDueAmount != null && billData.totalDueAmount! > 0)
             pw.Container(
               width: double.infinity,
@@ -636,9 +624,7 @@ class PdfBillService {
               ),
             ),
 
-          // ═══════════════════════════════════════════
-          // FOOTER — Bank Details, QR Code, Signatures
-          // ═══════════════════════════════════════════
+          // ═══════════════════════════════════════════ FOOTER — Bank Details, QR Code, Signatures ═══════════════════════════════════════════
           pw.Container(
             padding: const pw.EdgeInsets.all(12),
             child: pw.Row(
@@ -833,7 +819,7 @@ class PdfBillService {
     );
   }
 
-  /// Helper for info line in customer/invoice section
+  // Helper for info line in customer/invoice section
   pw.Widget _buildInfoLine(String label, String value, {bool bold = false}) {
     return pw.Row(
       children: [
@@ -852,7 +838,7 @@ class PdfBillService {
     );
   }
 
-  /// Helper for summary rows
+  // Helper for summary rows
   pw.Widget _buildSummaryRow(
     String label,
     double amount, {
@@ -886,7 +872,7 @@ class PdfBillService {
     );
   }
 
-  /// Convert number to words (Indian numbering system)
+  // Convert number to words (Indian numbering system)
   String _numberToWords(double amount) {
     final rupees = amount.floor();
     final paise = ((amount - rupees) * 100).round();
@@ -963,7 +949,7 @@ class PdfBillService {
     return '$finalResult Only';
   }
 
-  /// Compact table header cell
+  // Compact table header cell
   pw.Widget _buildCompactHeaderCell(
     String text, {
     pw.TextAlign align = pw.TextAlign.center,
@@ -978,7 +964,7 @@ class PdfBillService {
     );
   }
 
-  /// Compact table data cell
+  // Compact table data cell
   pw.Widget _buildCompactCell(
     String text, {
     pw.TextAlign align = pw.TextAlign.left,
@@ -993,7 +979,7 @@ class PdfBillService {
     );
   }
 
-  /// Build dynamic items table based on visible columns from settings
+  // Build dynamic items table based on visible columns from settings
   pw.Widget _buildDynamicItemsTable(
     PrintBillData billData,
     pw.BorderSide thinBorder,
@@ -1257,9 +1243,7 @@ class PdfBillService {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: [
-        // ═══════════════════════════════════════════════
-        // SHOP HEADER - Centered Layout
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════ SHOP HEADER - Centered Layout ═══════════════════════════════════════════════
         pw.Container(
           width: receiptWidth,
           child: pw.Column(
@@ -1360,9 +1344,7 @@ class PdfBillService {
           pw.SizedBox(height: 4),
         ],
 
-        // ═══════════════════════════════════════════════
-        // INVOICE INFO
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════ INVOICE INFO ═══════════════════════════════════════════════
         pw.Container(
           width: receiptWidth,
           child: pw.Column(
@@ -1481,9 +1463,7 @@ class PdfBillService {
         pw.SizedBox(height: 4),
         _buildDashedDivider(),
 
-        // ═══════════════════════════════════════════════
-        // ITEMS TABLE HEADER
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════ ITEMS TABLE HEADER ═══════════════════════════════════════════════
         pw.SizedBox(height: 4),
         pw.Container(
           width: receiptWidth,
@@ -1543,9 +1523,7 @@ class PdfBillService {
           ),
         ),
 
-        // ═══════════════════════════════════════════════
-        // ITEMS LIST
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════ ITEMS LIST ═══════════════════════════════════════════════
         ...billData.items.expand(
           (item) => [
             pw.Container(
@@ -1640,9 +1618,7 @@ class PdfBillService {
         _buildDashedDivider(),
         pw.SizedBox(height: 4),
 
-        // ═══════════════════════════════════════════════
-        // TOTALS SECTION
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════ TOTALS SECTION ═══════════════════════════════════════════════
         pw.Container(
           width: receiptWidth,
           child: pw.Column(
@@ -1759,9 +1735,7 @@ class PdfBillService {
         pw.Container(width: receiptWidth, height: 1.5, color: PdfColor.fromInt(AppTheme.black.toARGB32())),
         pw.SizedBox(height: 4),
 
-        // ═══════════════════════════════════════════════
-        // GRAND TOTAL - Prominent
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════ GRAND TOTAL - Prominent ═══════════════════════════════════════════════
         pw.Container(
           width: receiptWidth,
           padding: const pw.EdgeInsets.symmetric(vertical: 4),
@@ -1797,9 +1771,7 @@ class PdfBillService {
         ),
         pw.Container(width: receiptWidth, height: 1.5, color: PdfColor.fromInt(AppTheme.black.toARGB32())),
 
-        // ═══════════════════════════════════════════════
-        // PAYMENT STATUS
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════ PAYMENT STATUS ═══════════════════════════════════════════════
         if (billData.hasPaymentInfo) ...[
           pw.SizedBox(height: 6),
           pw.Container(
@@ -1898,9 +1870,7 @@ class PdfBillService {
         _buildDashedDivider(),
         pw.SizedBox(height: 6),
 
-        // ═══════════════════════════════════════════════
-        // FOOTER - Bank & QR Code
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════ FOOTER - Bank & QR Code ═══════════════════════════════════════════════
         if ((shopDetails.qrCodeBase64 != null &&
                 shopDetails.qrCodeBase64!.isNotEmpty) ||
             (shopDetails.bankName != null &&
@@ -2039,7 +2009,7 @@ class PdfBillService {
     );
   }
 
-  /// Build dashed divider for POS receipt (full width)
+  // Build dashed divider for POS receipt (full width)
   pw.Widget _buildDashedDivider() {
     return pw.Container(
       width: double.infinity,
@@ -2059,7 +2029,7 @@ class PdfBillService {
     );
   }
 
-  /// Build total row for POS receipt
+  // Build total row for POS receipt
   pw.Widget _buildPOSTotalRow(
     String label,
     double amount, {
@@ -2098,7 +2068,7 @@ class PdfBillService {
     return '$day/$month/$year $hour:$minute $period';
   }
 
-  /// PDF bytes without writing a file. Used by the web preview.
+  // PDF bytes without writing a file. Used by the web preview.
   Future<Uint8List> buildPdfBytes({
     required PrintBillData billData,
     required Shop shopDetails,
@@ -2114,7 +2084,7 @@ class PdfBillService {
     return bytes;
   }
 
-  /// Save PDF to file and return the file path
+  // Save PDF to file and return the file path
   Future<File> savePdfToFile({
     required PrintBillData billData,
     required Shop shopDetails,
@@ -2196,7 +2166,7 @@ class PdfBillService {
     }
   }
 
-  /// Share the bill as PDF via the system share sheet
+  // Share the bill as PDF via the system share sheet
   Future<void> shareBillAsPdf({
     required PrintBillData billData,
     required Shop shopDetails,
@@ -2243,7 +2213,7 @@ class PdfBillService {
     }
   }
 
-  /// Preview and print PDF using system print dialog
+  // Preview and print PDF using system print dialog
   Future<void> previewAndPrintPdf({
     required PrintBillData billData,
     required Shop shopDetails,
@@ -2260,7 +2230,7 @@ class PdfBillService {
     );
   }
 
-  /// Show PDF preview in a dialog
+  // Show PDF preview in a dialog
   Future<void> showPdfPreview({
     required PrintBillData billData,
     required Shop shopDetails,
@@ -2279,7 +2249,7 @@ class PdfBillService {
   }
 }
 
-/// Helper class for column configuration
+// Helper class for column configuration
 class _ColumnConfig {
   final String header;
   final pw.TableColumnWidth width;

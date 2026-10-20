@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 
-/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTime(dynamic value) {
   if (value == null) return null;
   if (value is Timestamp) return value.toDate();
@@ -9,43 +9,42 @@ DateTime? _parseDateTime(dynamic value) {
   return null;
 }
 
-/// Local record for Customer with offline-first support
-/// Designed for high-performance CRUD operations with proper indexing
+// Local record for Customer with offline-first support Designed for high-performance CRUD operations with proper indexing
 class CustomerEntity {
-  /// Local row id
+  // Local row id
   int id = 0;
 
-  /// Server-side ID (null for locally created, not yet synced records)
+  // Server-side ID (null for locally created, not yet synced records)
   String? serverId;
 
-  /// Customer name
+  // Customer name
   String name;
 
-  /// Mobile number (indexed for fast lookup)
+  // Mobile number (indexed for fast lookup)
   String mobile;
 
-  /// Address (optional)
+  // Address (optional)
   String? address;
 
-  /// Email (optional)
+  // Email (optional)
   String? email;
 
-  /// Current pending amount for this customer
+  // Current pending amount for this customer
   double currentPendingAmount;
 
-  /// Total purchases made by this customer
+  // Total purchases made by this customer
   double totalPurchases;
 
-  /// Sync status - false means pending sync with server
+  // Sync status - false means pending sync with server
   bool isSynced;
 
-  /// Soft delete flag - true means marked for deletion
+  // Soft delete flag - true means marked for deletion
   bool isDeleted;
 
-  /// Last update timestamp for conflict resolution
+  // Last update timestamp for conflict resolution
   DateTime updatedAt;
 
-  /// Created timestamp
+  // Created timestamp
   DateTime createdAt;
 
   CustomerEntity({
@@ -62,7 +61,7 @@ class CustomerEntity {
     required this.createdAt,
   });
 
-  /// Factory constructor for convenience with default timestamps
+  // Factory constructor for convenience with default timestamps
   factory CustomerEntity.create({
     String? serverId,
     required String name,
@@ -91,8 +90,7 @@ class CustomerEntity {
     );
   }
 
-  /// Create from server/domain Customer data
-  /// Handles both flat format (name, mobile) and Firebase format (firstName, lastName, contact)
+  // Create from server/domain Customer data Handles both flat format (name, mobile) and Firebase format (firstName, lastName, contact)
   factory CustomerEntity.fromCustomer(Map<String, dynamic> customer) {
     final now = DateTime.now();
 
@@ -141,8 +139,7 @@ class CustomerEntity {
     );
   }
 
-  /// Convert to Map for API sync
-  /// Maps to Firebase field names (firstName, lastName, contact, etc.)
+  // Convert to Map for API sync Maps to Firebase field names (firstName, lastName, contact, etc.)
   Map<String, dynamic> toSyncPayload() {
     // Split name into firstName, middleName, lastName for Firebase compatibility
     final nameParts = name.split(' ');
@@ -168,7 +165,7 @@ class CustomerEntity {
     };
   }
 
-  /// Convert to domain Customer map
+  // Convert to domain Customer map
   Map<String, dynamic> toCustomerMap() {
     return {
       'id': serverId ?? id.toString(),
@@ -186,7 +183,7 @@ class CustomerEntity {
     };
   }
 
-  /// Copy with modifications
+  // Copy with modifications
   CustomerEntity copyWith({
     int? id,
     String? serverId,

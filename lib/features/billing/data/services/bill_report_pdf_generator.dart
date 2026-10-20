@@ -1,26 +1,19 @@
-import 'dart:io';
-import 'dart:typed_data';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
-import 'package:share_plus/share_plus.dart';
 import '../../../../core/services/bill_report_settings_service.dart';
 import '../../domain/entities/bill.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Fast PDF generator for Bill Reports.
-/// Generates reports with columns based on user's Bill Report Settings.
+// Fast PDF generator for Bill Reports. Generates reports with columns based on user's Bill Report Settings.
 class BillReportPdfGenerator {
   BillReportPdfGenerator._();
 
   static final _dateFmt = DateFormat('dd MMM yyyy');
   static final _dateTimeFmt = DateFormat('dd MMM yyyy, hh:mm a');
 
-  /// Generate PDF bytes directly from bill entities.
-  /// Uses BillReportSettingsService to determine visible columns.
+  // Generate PDF bytes directly from bill entities. Uses BillReportSettingsService to determine visible columns.
   static Future<Uint8List> generate({
     required List<Bill> bills,
     String? filterDescription,
@@ -69,8 +62,7 @@ class BillReportPdfGenerator {
 
       debugPrint('[BillReport] Totals calculated');
 
-      // Build dynamic header based on visible columns
-      // For bill report, we show bill-level info first, then expand items
+      // Build dynamic header based on visible columns For bill report, we show bill-level info first, then expand items
       final headers = <String>['Sr', 'Bill No', 'Date', 'Customer'];
 
       // Add item-level columns
@@ -297,13 +289,13 @@ class BillReportPdfGenerator {
     }
   }
 
-  /// Truncate string to max length
+  // Truncate string to max length
   static String _truncate(String text, int maxLength) {
     if (text.length <= maxLength) return text;
     return '${text.substring(0, maxLength)}...';
   }
 
-  /// Get column header text
+  // Get column header text
   static String _getColumnHeader(String columnId, String defaultName) {
     switch (columnId) {
       case 'sr_no':
@@ -331,7 +323,7 @@ class BillReportPdfGenerator {
     }
   }
 
-  /// Get cell value for a column
+  // Get cell value for a column
   static String _getCellValue(String columnId, Bill bill, dynamic item) {
     switch (columnId) {
       case 'product_name':
@@ -361,7 +353,7 @@ class BillReportPdfGenerator {
     }
   }
 
-  /// Calculate column widths based on visible columns
+  // Calculate column widths based on visible columns
   static Map<int, pw.TableColumnWidth> _calculateColumnWidths(
     int totalColumns,
     List<BillReportColumn> visibleColumns,
@@ -389,7 +381,7 @@ class BillReportPdfGenerator {
     return widths;
   }
 
-  /// Get flex value for column width
+  // Get flex value for column width
   static double _getColumnFlex(String columnId) {
     switch (columnId) {
       case 'product_name':
@@ -415,46 +407,4 @@ class BillReportPdfGenerator {
     }
   }
 
-  /// Print the PDF.
-  static Future<void> printReport(Uint8List pdfBytes) async {
-    debugPrint('[BillReport] Printing ${pdfBytes.length} bytes');
-    await Printing.layoutPdf(
-      onLayout: (_) => pdfBytes,
-      name:
-          'bill_report_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.pdf',
-    );
-  }
-
-  /// Share the PDF via system share sheet.
-  static Future<void> shareReport(Uint8List pdfBytes) async {
-    debugPrint('[BillReport] Sharing ${pdfBytes.length} bytes');
-    final tempDir = await getTemporaryDirectory();
-    final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-    final tempFile = File('${tempDir.path}/bill_report_$timestamp.pdf');
-    await tempFile.writeAsBytes(pdfBytes);
-    await Share.shareXFiles(
-      [XFile(tempFile.path, mimeType: 'application/pdf')],
-      text: 'Bill Report — C-Billing',
-      subject: 'Bill Report',
-    );
-  }
-
-  /// Save PDF locally and return saved path.
-  static Future<String?> saveLocally(Uint8List pdfBytes) async {
-    try {
-      final docsDir = await getApplicationDocumentsDirectory();
-      final reportsDir = Directory('${docsDir.path}/Reports');
-      if (!await reportsDir.exists()) {
-        await reportsDir.create(recursive: true);
-      }
-      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      final filePath = '${reportsDir.path}/bill_report_$timestamp.pdf';
-      await File(filePath).writeAsBytes(pdfBytes);
-      debugPrint('[BillReport] Saved to: $filePath');
-      return filePath;
-    } catch (e) {
-      debugPrint('[BillReport] Save error: $e');
-      return null;
-    }
-  }
 }

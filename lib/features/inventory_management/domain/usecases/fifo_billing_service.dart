@@ -3,9 +3,7 @@ import '../../../billing/domain/entities/bill_item.dart';
 import '../../../billing/offline/entities/bill_entity.dart';
 import '../../../billing/offline/controllers/bill_offline_controller.dart';
 import '../../data/services/fifo_inventory_service.dart';
-import '../../offline/controllers/purchase_batch_offline_controller.dart';
-
-/// Result class for FIFO billing operations
+// Result of a FIFO billing operation.
 class FifoBillingResult {
   final bool success;
   final String? billId;
@@ -52,42 +50,33 @@ class FifoBillingResult {
   }
 }
 
-/// Service for handling billing operations with FIFO inventory management
-/// Ensures accurate COGS calculation by tracking which batches are consumed
+// Handles billing with FIFO stock so COGS tracks the consumed batches.
 class FifoBillingService {
   static FifoBillingService? _instance;
 
   final FifoInventoryService _fifoService;
   final BillOfflineController _billController;
-  // ignore: unused_field
-  final PurchaseBatchOfflineController _batchController;
 
   FifoBillingService._({
     required FifoInventoryService fifoService,
     required BillOfflineController billController,
-    required PurchaseBatchOfflineController batchController,
   }) : _fifoService = fifoService,
-       _billController = billController,
-       _batchController = batchController;
+       _billController = billController;
 
-  /// Get the singleton instance
   static FifoBillingService get instance {
     _instance ??= FifoBillingService._(
       fifoService: FifoInventoryService.instance,
       billController: BillOfflineController.instance,
-      batchController: PurchaseBatchOfflineController.instance,
     );
     return _instance!;
   }
 
-  /// Reset instance (for testing)
   @visibleForTesting
   static void resetInstance() {
     _instance = null;
   }
 
-  /// Validate stock availability for bill items
-  /// Returns map of productId -> error message for products with insufficient stock
+  // Returns productId -> error for items with insufficient stock.
   Future<Map<String, String>> validateStock(List<BillItem> items) async {
     final errors = <String, String>{};
 
@@ -109,13 +98,12 @@ class FifoBillingService {
     return errors;
   }
 
-  /// Get current stock for a product
+  // Get current stock for a product
   Future<int> getProductStock(String productId) async {
     return await _fifoService.getAvailableStock(productId);
   }
 
-  /// Process and save a bill with FIFO inventory management
-  /// Creates ledger entries for each consumed batch with accurate COGS
+  // Process and save a bill with FIFO inventory management Creates ledger entries for each consumed batch with accurate COGS
   Future<FifoBillingResult> processBill({
     required List<BillItem> items,
     String? customerId,
@@ -251,8 +239,7 @@ class FifoBillingService {
     }
   }
 
-  /// Process a return for bill items
-  /// Adds stock back to original batches using FIFO reverse
+  // Process a return for bill items Adds stock back to original batches using FIFO reverse
   Future<bool> processReturn({
     required String billId,
     required List<ReturnItemInfo> returnItems,
@@ -284,15 +271,13 @@ class FifoBillingService {
     }
   }
 
-  /// Get bill with COGS information
+  // Get bill with COGS information
   Future<Map<String, dynamic>?> getBillWithCOGS(String billId) async {
-    // This would typically join bill data with ledger entries to show
-    // which batches were consumed and at what cost
-    // Implementation depends on your specific needs
+    // This would typically join bill data with ledger entries to show which batches were consumed and at what cost Implementation depends on your specific needs
     return null;
   }
 
-  /// Get profit summary for a date range
+  // Get profit summary for a date range
   Future<Map<String, dynamic>> getProfitSummary({
     DateTime? startDate,
     DateTime? endDate,
@@ -323,7 +308,7 @@ class FifoBillingService {
   }
 }
 
-/// Information about an item being returned
+// Information about an item being returned
 class ReturnItemInfo {
   final String productId;
   final String productName;

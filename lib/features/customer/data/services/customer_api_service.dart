@@ -2,8 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
-/// API Service for Customer data operations with Firebase
-/// This handles all remote server communication
+// API Service for Customer data operations with Firebase This handles all remote server communication
 class CustomerApiService {
   static CustomerApiService? _instance;
 
@@ -16,19 +15,19 @@ class CustomerApiService {
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
         _auth = auth ?? FirebaseAuth.instance;
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static CustomerApiService get instance {
     _instance ??= CustomerApiService._();
     return _instance!;
   }
 
-  /// Get current user ID
+  // Get current user ID
   String? get _userId => _auth.currentUser?.uid;
 
-  /// Check if user is authenticated
+  // Check if user is authenticated
   bool get isAuthenticated => _userId != null;
 
-  /// Get customers collection reference for current user
+  // Get customers collection reference for current user
   CollectionReference<Map<String, dynamic>>? get _customersRef {
     final userId = _userId;
     if (userId == null) return null;
@@ -38,15 +37,14 @@ class CustomerApiService {
         .collection('customers');
   }
 
-  /// Ensure user is authenticated
+  // Ensure user is authenticated
   void _ensureAuthenticated() {
     if (_userId == null) {
       throw Exception('User not authenticated');
     }
   }
 
-  /// Fetch all customers from server
-  /// If [updatedSince] is provided, only fetch customers updated after that time
+  // Fetch all customers from server If [updatedSince] is provided, only fetch customers updated after that time
   Future<List<Map<String, dynamic>>> getCustomers({
     DateTime? updatedSince,
   }) async {
@@ -76,7 +74,7 @@ class CustomerApiService {
     }
   }
 
-  /// Get a single customer by ID
+  // Get a single customer by ID
   Future<Map<String, dynamic>?> getCustomer(String id) async {
     _ensureAuthenticated();
     
@@ -93,8 +91,7 @@ class CustomerApiService {
     }
   }
 
-  /// Create a new customer on the server
-  /// Returns the server response with the new document ID
+  // Create a new customer on the server Returns the server response with the new document ID
   Future<Map<String, dynamic>> createCustomer(Map<String, dynamic> customerData) async {
     _ensureAuthenticated();
     
@@ -125,7 +122,7 @@ class CustomerApiService {
     }
   }
 
-  /// Update an existing customer on the server
+  // Update an existing customer on the server
   Future<Map<String, dynamic>> updateCustomer(String id, Map<String, dynamic> customerData) async {
     _ensureAuthenticated();
     
@@ -155,7 +152,7 @@ class CustomerApiService {
     }
   }
 
-  /// Delete a customer from the server
+  // Delete a customer from the server
   Future<void> deleteCustomer(String id) async {
     _ensureAuthenticated();
     
@@ -168,7 +165,7 @@ class CustomerApiService {
     }
   }
 
-  /// Check if a customer with the given mobile exists on server
+  // Check if a customer with the given mobile exists on server
   Future<bool> mobileExists(String mobile, {String? excludeId}) async {
     _ensureAuthenticated();
     
@@ -187,7 +184,7 @@ class CustomerApiService {
     }
   }
 
-  /// Get customers count on server
+  // Get customers count on server
   Future<int> getCustomersCount() async {
     _ensureAuthenticated();
     
@@ -200,14 +197,12 @@ class CustomerApiService {
     }
   }
 
-  /// Search customers by name or mobile (server-side)
-  /// Note: Firebase has limited text search - consider using Algolia for production
+  // Search customers by name or mobile (server-side) Note: Firebase has limited text search - consider using Algolia for production
   Future<List<Map<String, dynamic>>> searchCustomers(String query) async {
     _ensureAuthenticated();
     
     try {
-      // Firebase doesn't support full-text search well
-      // This searches by exact prefix match on firstName
+      // Firebase doesn't support full-text search well This searches by exact prefix match on firstName
       final snapshot = await _customersRef!
           .where('firstName', isGreaterThanOrEqualTo: query)
           .where('firstName', isLessThanOrEqualTo: '$query\uf8ff')
@@ -225,7 +220,7 @@ class CustomerApiService {
     }
   }
 
-  /// Batch create customers (for bulk import)
+  // Batch create customers (for bulk import)
   Future<List<String>> batchCreateCustomers(List<Map<String, dynamic>> customers) async {
     _ensureAuthenticated();
     
@@ -254,7 +249,7 @@ class CustomerApiService {
     }
   }
 
-  /// Batch update customers
+  // Batch update customers
   Future<void> batchUpdateCustomers(Map<String, Map<String, dynamic>> updates) async {
     _ensureAuthenticated();
     
@@ -278,7 +273,7 @@ class CustomerApiService {
     }
   }
 
-  /// Batch delete customers
+  // Batch delete customers
   Future<void> batchDeleteCustomers(List<String> ids) async {
     _ensureAuthenticated();
     

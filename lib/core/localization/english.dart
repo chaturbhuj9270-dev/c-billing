@@ -458,9 +458,7 @@ class EnglishLocalization {
   static const String productCode = 'Product Code';
   static const String noBatchesFound = 'No batches match your search';
 
-  // ═══════════════════════════════════════════════════
-  // Bill Details Dialog (Bills History)
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Bill Details Dialog (Bills History) ═══════════════════════════════════════════════════
   static const String billDetails = 'Bill Details';
   static const String soldItems = 'Sold Items';
   static const String billNo = 'Bill No';
@@ -491,9 +489,7 @@ class EnglishLocalization {
   static const String errorPrintingBill = 'Error printing bill';
   static const String totalReturns = 'Total Returns';
 
-  // ═══════════════════════════════════════════════════
-  // Dashboard Page
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Dashboard Page ═══════════════════════════════════════════════════
   static const String exitApp = 'Exit App';
   static const String exitAppConfirm = 'Are you sure you want to exit the app?';
   static const String exit = 'Exit';
@@ -522,9 +518,7 @@ class EnglishLocalization {
   static const String noDataAvailableDashboard = 'No data available';
   static const String year = 'Year';
 
-  // ═══════════════════════════════════════════════════
-  // Return Bill Page
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Return Bill Page ═══════════════════════════════════════════════════
   static const String returnBill = 'Return Bill';
   static const String processBillReturns = 'Process bill returns';
   static const String searchBill = 'Search Bill';
@@ -564,9 +558,7 @@ class EnglishLocalization {
   static const String returnedOn = 'Returned on';
   static const String refund = 'Refund';
 
-  // ═══════════════════════════════════════════════════
-  // Billing Page (additional)
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Billing Page (additional) ═══════════════════════════════════════════════════
   static const String enterPhoneNumber = 'Enter Phone Number';
   static const String enterCustomerPhone = 'Enter customer phone number';
   static const String firstNameRequired2 = 'First name is required';
@@ -585,9 +577,7 @@ class EnglishLocalization {
   static const String customerColon = 'Customer:';
   static const String discountWithPercent = 'Discount';
 
-  // ═══════════════════════════════════════════════════
-  // Bill Settings Page
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Bill Settings Page ═══════════════════════════════════════════════════
   static const String billingSettings = 'Billing Settings';
   static const String billType = 'Bill Type';
   static const String selectDefaultBillType =
@@ -610,9 +600,7 @@ class EnglishLocalization {
       'When "Generate Bill via Contact Number" is enabled, a valid phone number is required before saving a bill.';
   static const String settingsSaved = 'Settings saved successfully';
 
-  // ═══════════════════════════════════════════════════
-  // Shop Details Page
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Shop Details Page ═══════════════════════════════════════════════════
   static const String shopDetails = 'Shop Details';
   static const String shopInformation = 'Shop Information';
   static const String shopName = 'Shop Name';
@@ -653,9 +641,7 @@ class EnglishLocalization {
   static const String uploadingSignature = 'Uploading signature...';
   static const String errorUploadingSignature = 'Error uploading signature';
 
-  // ═══════════════════════════════════════════════════
-  // Flyout Menu
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Flyout Menu ═══════════════════════════════════════════════════
   static const String profile = 'Profile';
   static const String settings = 'Settings';
   static const String inventory = 'Inventory';
@@ -678,9 +664,7 @@ class EnglishLocalization {
   static const String user = 'User';
   static const String logs = 'Logs';
 
-  // ═══════════════════════════════════════════════════
-  // Profile Page
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Profile Page ═══════════════════════════════════════════════════
   static const String myProfile = 'My Profile';
   static const String fullName = 'Full Name';
   static const String enterFullName = 'Enter your full name';
@@ -697,9 +681,7 @@ class EnglishLocalization {
   static const String errorSavingProfile = 'Error saving profile';
   static const String failedToPickImage = 'Failed to pick image';
 
-  // ═══════════════════════════════════════════════════
-  // Auth Pages (Login/Signup/Change Password)
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Auth Pages (Login/Signup/Change Password) ═══════════════════════════════════════════════════
   static const String welcomeBackLogin = 'Welcome Back';
   static const String signInToAccount = 'Sign in to your account';
   static const String backboneOfBusiness = 'The backbone of your business';
@@ -762,9 +744,7 @@ class EnglishLocalization {
   static const String addNumbersSpecial = 'Add numbers and special characters';
   static const String avoidPersonalInfo = 'Avoid using personal information';
 
-  // ═══════════════════════════════════════════════════
-  // Logs Viewer Page
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Logs Viewer Page ═══════════════════════════════════════════════════
   static const String appLogs = 'App Logs';
   static const String searchLogs = 'Search logs...';
   static const String clearLogs = 'Clear Logs';
@@ -785,9 +765,7 @@ class EnglishLocalization {
   static const String level = 'Level';
   static const String stackTrace = 'Stack Trace';
 
-  // ═══════════════════════════════════════════════════
-  // GST / Tax Settings
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ GST / Tax Settings ═══════════════════════════════════════════════════
   static const String taxSettings = 'Tax / GST Settings';
   static const String taxConfiguration = 'Tax Configuration';
   static const String enableCgst = 'Enable CGST';
@@ -826,9 +804,7 @@ class EnglishLocalization {
   static const String noPurchasesFound = 'No Purchases Found';
   static const String addNewPurchase = 'Add New Purchase';
 
-  // ═══════════════════════════════════════════════════
-  // Billing Module Extended
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Billing Module Extended ═══════════════════════════════════════════════════
   static const String linkCustomerToBill = 'Link a customer to this bill';
   static const String autoLinkByPhone = 'Auto-link customer by phone';
   static const String quickAddByCodeOrSearch = 'Quick add by code or search';
@@ -871,9 +847,7 @@ class EnglishLocalization {
   static const String failedToGeneratePdf = 'Failed to generate PDF';
   static const String partial = 'Partial';
 
-  // ═══════════════════════════════════════════════════
-  // Availability Module Extended
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Availability Module Extended ═══════════════════════════════════════════════════
   static const String exporting = 'Exporting:';
   static const String productsWillBeIncluded = 'products will be included';
   static const String previewAndGenerate = 'Preview & Generate';
@@ -907,9 +881,7 @@ class EnglishLocalization {
       'Please select at least one item';
   static const String selling = 'Selling';
 
-  // ═══════════════════════════════════════════════════
-  // Purchase Module Extended
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Purchase Module Extended ═══════════════════════════════════════════════════
   static const String createNewProductRecord = 'Create a new product record';
   static const String hsnCodeRequired =
       'HSN Code is required when GST is applied';
@@ -1092,9 +1064,7 @@ class EnglishLocalization {
   static const String addCustomFieldsDesc =
       'Add custom fields for events & sub-events';
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // Bill History Extended
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════ Bill History Extended ═══════════════════════════════════════════════════════════════════════════
 
   // Error Messages
   static const String errorGeneratingPdf = 'Error generating PDF';

@@ -4,10 +4,10 @@ import 'package:flutter/foundation.dart';
 import '../../offline/controllers/supplier_offline_controller.dart';
 import 'supplier_api_service.dart';
 
-/// Sync status for tracking sync state
+// Sync status for tracking sync state
 enum SupplierSyncServiceStatus { idle, syncing, success, failed }
 
-/// Result of a sync operation
+// Result of a sync operation
 class SupplierSyncResult {
   final bool success;
   final int createdCount;
@@ -40,8 +40,7 @@ class SupplierSyncResult {
   }
 }
 
-/// Service for background synchronization of Supplier data
-/// Implements delta sync - only syncs NEW, UPDATED, or DELETED suppliers
+// Service for background synchronization of Supplier data Implements delta sync - only syncs NEW, UPDATED, or DELETED suppliers
 class SupplierSyncService extends ChangeNotifier {
   static SupplierSyncService? _instance;
 
@@ -55,7 +54,7 @@ class SupplierSyncService extends ChangeNotifier {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _periodicSyncTimer;
 
-  /// Mutex to prevent concurrent sync operations
+  // Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
 
   SupplierSyncService._({
@@ -67,25 +66,25 @@ class SupplierSyncService extends ChangeNotifier {
        _apiService = apiService ?? SupplierApiService.instance,
        _connectivity = connectivity ?? Connectivity();
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static SupplierSyncService get instance {
     _instance ??= SupplierSyncService._();
     return _instance!;
   }
 
-  /// Current sync status
+  // Current sync status
   SupplierSyncServiceStatus get status => _status;
 
-  /// Last successful sync time
+  // Last successful sync time
   DateTime? get lastSyncTime => _lastSyncTime;
 
-  /// Last error message
+  // Last error message
   String? get lastError => _lastError;
 
-  /// Check if currently syncing
+  // Check if currently syncing
   bool get isSyncing => _status == SupplierSyncServiceStatus.syncing;
 
-  /// Initialize the sync service
+  // Initialize the sync service
   void initialize() {
     debugPrint('[SupplierSync] Initializing...');
 
@@ -110,7 +109,7 @@ class SupplierSyncService extends ChangeNotifier {
     debugPrint('[SupplierSync] Initialized');
   }
 
-  /// Perform initial sync - download all suppliers if local database is empty
+  // Perform initial sync - download all suppliers if local database is empty
   Future<void> _initialSync() async {
     // Add a small delay to ensure authentication is fully ready
     await Future.delayed(const Duration(milliseconds: 500));
@@ -156,7 +155,7 @@ class SupplierSyncService extends ChangeNotifier {
     }
   }
 
-  /// Download all suppliers from server to local
+  // Download all suppliers from server to local
   Future<void> _downloadAllFromServer() async {
     try {
       final serverSuppliers = await _apiService.getSuppliers();
@@ -187,13 +186,13 @@ class SupplierSyncService extends ChangeNotifier {
     }
   }
 
-  /// Check if device is online
+  // Check if device is online
   Future<bool> isOnline() async {
     final results = await _connectivity.checkConnectivity();
     return _isConnected(results);
   }
 
-  /// Perform delta sync now
+  // Perform delta sync now
   Future<SupplierSyncResult> syncNow() async {
     // Prevent concurrent sync operations
     if (_isSyncing) {
@@ -371,13 +370,13 @@ class SupplierSyncService extends ChangeNotifier {
     }
   }
 
-  /// Force full sync (ignore last sync time)
+  // Force full sync (ignore last sync time)
   Future<SupplierSyncResult> forceFullSync() async {
     _lastSyncTime = null;
     return await syncNow();
   }
 
-  /// Get pending sync count
+  // Get pending sync count
   Future<int> getPendingSyncCount() async {
     return await _offlineController.getUnsyncedCount();
   }

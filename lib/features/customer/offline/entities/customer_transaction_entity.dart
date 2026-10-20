@@ -1,80 +1,79 @@
 
-/// Type of transaction
+// Type of transaction
 enum TransactionType {
-  /// Payment received from customer
+  // Payment received from customer
   payment,
 
-  /// Bill created (increases pending)
+  // Bill created (increases pending)
   billCreated,
 
-  /// Bill returned (decreases pending)
+  // Bill returned (decreases pending)
   billReturn,
 
-  /// Adjustment (manual correction)
+  // Adjustment (manual correction)
   adjustment,
 }
 
-/// Sync status for delta sync
+// Sync status for delta sync
 enum TransactionSyncStatus {
-  /// Newly created locally
+  // Newly created locally
   newRecord,
 
-  /// Modified locally after sync
+  // Modified locally after sync
   updated,
 
-  /// Marked for deletion
+  // Marked for deletion
   deleted,
 
-  /// Fully synced with server
+  // Fully synced with server
   synced,
 }
 
-/// Local record for Customer Transactions
-/// Tracks all payment and billing transactions for a customer
+// Local record for Customer Transactions Tracks all payment and billing transactions for a customer
 class CustomerTransactionEntity {
-  /// Local row id
+  // Local row id
   int id = 0;
 
-  /// Server-side ID
+  // Server-side ID
   String? serverId;
 
-  /// Customer ID (indexed for fast lookup)
+  // Customer ID (indexed for fast lookup)
   String customerId;
 
-  /// Customer name (for display)
+  // Customer name (for display)
   String customerName;
 
-  /// Transaction type
+  // Transaction type
   TransactionType transactionType;
 
-  /// Amount of transaction (positive for payment, negative for bill)
+  // Amount of transaction (positive for payment, negative for bill)
   double amount;
 
-  /// Running balance after this transaction
+  // Running balance after this transaction
   double balanceAfter;
 
-  /// Reference ID (bill ID, event ID, etc.)
+  // Reference ID (bill ID, event ID, etc.)
   String? referenceId;
 
-  /// Reference type (bill, event_order, manual)
+  // Reference type (bill, event_order, manual)
   String? referenceType;
 
-  /// Description/notes
+  // Description/notes
   String? description;
 
-  /// Payment method (cash, upi, bank, card, etc.)
+  // Payment method (cash, upi, bank, card, etc.)
   String? paymentMethod;
 
-  /// Transaction date
+  // Transaction date
   DateTime transactionDate;
 
-  /// Sync status
+  // Sync status
   TransactionSyncStatus syncStatus;
 
-  /// Created timestamp
+  // Created timestamp
   DateTime createdAt;
 
-  /// Updated timestamp
+  // Updated timestamp
   DateTime updatedAt;
 
   CustomerTransactionEntity({
@@ -94,7 +93,7 @@ class CustomerTransactionEntity {
     required this.updatedAt,
   });
 
-  /// Factory for creating a new payment transaction
+  // Factory for creating a new payment transaction
   factory CustomerTransactionEntity.payment({
     required String customerId,
     required String customerName,
@@ -119,7 +118,7 @@ class CustomerTransactionEntity {
     );
   }
 
-  /// Factory for creating a bill transaction
+  // Factory for creating a bill transaction
   factory CustomerTransactionEntity.bill({
     required String customerId,
     required String customerName,
@@ -144,7 +143,7 @@ class CustomerTransactionEntity {
     );
   }
 
-  /// Convert to map for API
+  // Convert to map for API
   Map<String, dynamic> toJson() {
     return {
       'id': serverId,
@@ -163,7 +162,7 @@ class CustomerTransactionEntity {
     };
   }
 
-  /// Create from API response
+  // Create from API response
   static CustomerTransactionEntity fromJson(Map<String, dynamic> json) {
     return CustomerTransactionEntity(
       serverId: json['id'] as String?,

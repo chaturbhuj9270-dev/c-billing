@@ -2,8 +2,7 @@ import 'package:equatable/equatable.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/repositories/dashboard_repository_interface.dart';
 
-/// Optimized dashboard state for cache-first loading
-/// Uses sealed classes for type-safe state handling
+// Optimized dashboard state for cache-first loading Uses sealed classes for type-safe state handling
 sealed class OptimizedDashboardState extends Equatable {
   final DashboardParams params;
   final DashboardSummary? data;
@@ -17,26 +16,24 @@ sealed class OptimizedDashboardState extends Equatable {
     this.lastUpdated,
   });
 
-  /// Check if we have data to display
+  // Check if we have data to display
   bool get hasData => data != null;
 
-  /// Check if data is from cache
+  // Check if data is from cache
   bool get isFromCache => data?.isFromCache ?? false;
 
   @override
   List<Object?> get props => [params, data, isRefreshing, lastUpdated];
 }
 
-/// Initial state - no data loaded yet
-/// UI should show placeholder/shimmer
+// Initial state - no data loaded yet UI should show placeholder/shimmer
 class DashboardInitialState extends OptimizedDashboardState {
   const DashboardInitialState({
     super.params = const DashboardParams(),
   }) : super(data: null, isRefreshing: false);
 }
 
-/// Ready state - has data (cached or fresh)
-/// UI renders normally with data
+// Ready state - has data (cached or fresh) UI renders normally with data
 class DashboardReadyState extends OptimizedDashboardState {
   const DashboardReadyState({
     required super.params,
@@ -45,7 +42,7 @@ class DashboardReadyState extends OptimizedDashboardState {
     super.lastUpdated,
   });
 
-  /// Create a copy with refreshing status
+  // Create a copy with refreshing status
   DashboardReadyState withRefreshing(bool refreshing) {
     return DashboardReadyState(
       params: params,
@@ -55,7 +52,7 @@ class DashboardReadyState extends OptimizedDashboardState {
     );
   }
 
-  /// Create a copy with new data
+  // Create a copy with new data
   DashboardReadyState withNewData(DashboardSummary newData) {
     return DashboardReadyState(
       params: params,
@@ -66,8 +63,7 @@ class DashboardReadyState extends OptimizedDashboardState {
   }
 }
 
-/// Error state - fetch failed but may have cached data
-/// UI shows error indicator but can still display cached data
+// Error state - fetch failed but may have cached data UI shows error indicator but can still display cached data
 class DashboardErrorState extends OptimizedDashboardState {
   final String errorMessage;
   final bool canRetry;

@@ -4,8 +4,7 @@ import '../../../../core/database/local_store.dart';
 import '../../../../core/services/local_database.dart';
 import '../entities/stock_ledger_entity.dart';
 
-/// Offline-first controller for Stock Ledger CRUD operations
-/// Tracks all inventory movements for COGS calculation and audit trail
+// Offline-first controller for Stock Ledger CRUD operations Tracks all inventory movements for COGS calculation and audit trail
 class StockLedgerOfflineController extends ChangeNotifier {
   static StockLedgerOfflineController? _instance;
 
@@ -13,13 +12,13 @@ class StockLedgerOfflineController extends ChangeNotifier {
 
   StockLedgerOfflineController._(this._db);
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static StockLedgerOfflineController get instance {
     _instance ??= StockLedgerOfflineController._(LocalDatabase.instance.db);
     return _instance!;
   }
 
-  /// Reset instance (for testing)
+  // Reset instance (for testing)
   @visibleForTesting
   static void resetInstance() {
     _instance = null;
@@ -27,7 +26,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
 
   // ==================== CREATE ====================
 
-  /// Record a purchase transaction
+  // Record a purchase transaction
   Future<StockLedgerEntity> recordPurchase({
     required String productId,
     required String productName,
@@ -66,7 +65,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     return entry;
   }
 
-  /// Record a sale transaction
+  // Record a sale transaction
   Future<StockLedgerEntity> recordSale({
     required String productId,
     required String productName,
@@ -107,7 +106,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     return entry;
   }
 
-  /// Record a sale return transaction
+  // Record a sale return transaction
   Future<StockLedgerEntity> recordSaleReturn({
     required String productId,
     required String productName,
@@ -148,7 +147,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     return entry;
   }
 
-  /// Record multiple ledger entries in a single transaction
+  // Record multiple ledger entries in a single transaction
   Future<List<StockLedgerEntity>> recordMultipleEntries(
     List<StockLedgerEntity> entries,
   ) async {
@@ -165,7 +164,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
 
   // ==================== READ ====================
 
-  /// Get all ledger entries (excluding deleted)
+  // Get all ledger entries (excluding deleted)
   Future<List<StockLedgerEntity>> getAllLedgerEntries() async {
     final entries = (await _db.loadLedger())
         .where((entry) => entry.syncStatus != LedgerSyncStatus.deleted)
@@ -174,7 +173,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     return entries;
   }
 
-  /// Watch all ledger entries for real-time updates
+  // Watch all ledger entries for real-time updates
   Stream<List<StockLedgerEntity>> watchAllLedgerEntries() {
     return _db.watchLedger().map((rows) {
       final entries = rows
@@ -192,7 +191,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     return null;
   }
 
-  /// Get ledger entry by server ID
+  // Get ledger entry by server ID
   Future<StockLedgerEntity?> getLedgerByServerId(String serverId) async {
     for (final entry in await _db.loadLedger()) {
       if (entry.serverId == serverId) return entry;
@@ -200,7 +199,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     return null;
   }
 
-  /// Get ledger entries by product ID
+  // Get ledger entries by product ID
   Future<List<StockLedgerEntity>> getLedgerByProductId(String productId) async {
     final entries = (await _db.loadLedger()).where((entry) {
       return entry.productId == productId &&
@@ -210,7 +209,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     return entries;
   }
 
-  /// Get ledger entries by product unique key
+  // Get ledger entries by product unique key
   Future<List<StockLedgerEntity>> getLedgerByProductUniqueKey(
     String productUniqueKey,
   ) async {
@@ -222,7 +221,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     return entries;
   }
 
-  /// Get ledger entries by batch ID
+  // Get ledger entries by batch ID
   Future<List<StockLedgerEntity>> getLedgerByBatchId(String batchId) async {
     final entries = (await _db.loadLedger()).where((entry) {
       return entry.batchId == batchId &&
@@ -232,7 +231,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     return entries;
   }
 
-  /// Get ledger entries by reference ID (bill ID, purchase ID, etc.)
+  // Get ledger entries by reference ID (bill ID, purchase ID, etc.)
   Future<List<StockLedgerEntity>> getLedgerByReferenceId(
     String referenceId,
   ) async {
@@ -244,7 +243,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     return entries;
   }
 
-  /// Get ledger entries by type
+  // Get ledger entries by type
   Future<List<StockLedgerEntity>> getLedgerByType(
     LedgerTransactionType type,
   ) async {
@@ -256,7 +255,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     return entries;
   }
 
-  /// Get ledger entries by date range
+  // Get ledger entries by date range
   Future<List<StockLedgerEntity>> getLedgerByDateRange(
     DateTime startDate,
     DateTime endDate,
@@ -270,7 +269,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     return entries;
   }
 
-  /// Get recent ledger entries
+  // Get recent ledger entries
   Future<List<StockLedgerEntity>> getRecentLedgerEntries({
     int limit = 50,
   }) async {
@@ -283,7 +282,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
 
   // ==================== QUERY / AGGREGATIONS ====================
 
-  /// Get total COGS (Cost of Goods Sold) for a date range
+  // Get total COGS (Cost of Goods Sold) for a date range
   Future<double> getTotalCOGS({DateTime? startDate, DateTime? endDate}) async {
     final entries = (await _db.loadLedger()).where((entry) {
       if (entry.ledgerType != LedgerTransactionType.SALE) return false;
@@ -298,7 +297,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     return entries.fold<double>(0.0, (total, e) => total + e.totalCost);
   }
 
-  /// Get COGS by product for a date range
+  // Get COGS by product for a date range
   Future<Map<String, double>> getCOGSByProduct({
     DateTime? startDate,
     DateTime? endDate,
@@ -323,7 +322,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     return cogsMap;
   }
 
-  /// Get total profit for a date range
+  // Get total profit for a date range
   Future<double> getTotalProfit({
     DateTime? startDate,
     DateTime? endDate,
@@ -344,7 +343,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     return entries.fold<double>(0.0, (total, e) => total + e.profit);
   }
 
-  /// Get profit by product for a date range
+  // Get profit by product for a date range
   Future<Map<String, double>> getProfitByProduct({
     DateTime? startDate,
     DateTime? endDate,
@@ -372,7 +371,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     return profitMap;
   }
 
-  /// Get total sales revenue for a date range
+  // Get total sales revenue for a date range
   Future<double> getTotalRevenue({
     DateTime? startDate,
     DateTime? endDate,
@@ -390,7 +389,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     return entries.fold<double>(0.0, (total, e) => total + e.totalRevenue);
   }
 
-  /// Get total purchase value for a date range
+  // Get total purchase value for a date range
   Future<double> getTotalPurchaseValue({
     DateTime? startDate,
     DateTime? endDate,
@@ -408,7 +407,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     return entries.fold<double>(0.0, (total, e) => total + e.totalCost);
   }
 
-  /// Get stock movement summary for a product
+  // Get stock movement summary for a product
   Future<Map<String, dynamic>> getStockMovementSummary(
     String productId, {
     DateTime? startDate,
@@ -462,14 +461,14 @@ class StockLedgerOfflineController extends ChangeNotifier {
 
   // ==================== SYNC HELPERS ====================
 
-  /// Get ledger entries that need to be synced
+  // Get ledger entries that need to be synced
   Future<List<StockLedgerEntity>> getLedgerNeedingSync() async {
     return (await _db.loadLedger())
         .where((entry) => entry.syncStatus != LedgerSyncStatus.synced)
         .toList();
   }
 
-  /// Mark ledger entry as synced
+  // Mark ledger entry as synced
   Future<void> markAsSynced(int id, String serverId) async {
     final existing = await getLedgerById(id);
     if (existing == null) return;
@@ -484,7 +483,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     debugPrint('[LedgerOffline] Entry marked as synced: $id -> $serverId');
   }
 
-  /// Import ledger entries from server
+  // Import ledger entries from server
   Future<void> importFromServer(
     List<Map<String, dynamic>> serverEntries,
   ) async {
@@ -520,7 +519,7 @@ class StockLedgerOfflineController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Clear all local ledger entries (for testing or logout)
+  // Clear all local ledger entries (for testing or logout)
   Future<void> clearAll() async {
     await _db.clearLedger();
     debugPrint('[LedgerOffline] All ledger entries cleared');

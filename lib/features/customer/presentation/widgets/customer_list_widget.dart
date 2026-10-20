@@ -4,8 +4,7 @@ import 'customer_filter_widget.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
-/// Enhanced list widget for displaying customers
-/// Features: Shimmer loading, Enhanced cards, Empty states
+// Enhanced list widget for displaying customers Features: Shimmer loading, Enhanced cards, Empty states
 class CustomerListWidget extends StatelessWidget {
   final List<Map<String, dynamic>> customers;
   final bool isLoading;
@@ -501,7 +500,7 @@ class CustomerListWidget extends StatelessWidget {
   }
 }
 
-/// Enhanced customer card widget
+// Enhanced customer card widget
 class _CustomerCard extends StatelessWidget {
   final Map<String, dynamic> customer;
   final VoidCallback onTap;
@@ -746,7 +745,7 @@ class _CustomerCard extends StatelessWidget {
   }
 }
 
-/// Shimmer loading card for customer list
+// Shimmer loading card for customer list
 class _ShimmerCard extends StatefulWidget {
   const _ShimmerCard();
 

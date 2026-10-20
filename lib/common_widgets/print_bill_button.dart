@@ -7,7 +7,7 @@ import 'printer_selection_widget.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Reusable widget for printing bills with printer selection and status display
+// Reusable widget for printing bills with printer selection and status display
 class PrintBillButton extends StatefulWidget {
   final PrintBillData billData;
   final Shop? shopDetails;
@@ -228,7 +228,7 @@ class _PrintBillButtonState extends State<PrintBillButton> {
   }
 }
 
-/// Standalone print action widget that can be used in any screen
+// Standalone print action widget that can be used in any screen
 class PrintActionWidget extends StatefulWidget {
   final PrintBillData billData;
   final Shop? shopDetails;

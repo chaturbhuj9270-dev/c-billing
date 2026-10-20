@@ -1,29 +1,22 @@
 import 'dart:convert';
-import 'dart:io';
-import 'dart:typed_data';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
-import 'package:share_plus/share_plus.dart';
 import '../../../../core/services/purchase_report_settings_service.dart';
 import '../../../../core/services/product_settings_service.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../offline/entities/purchase_batch_entity.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Fast PDF generator for Purchase Reports.
-/// Generates reports with columns based on user's Report Settings.
+// Fast PDF generator for Purchase Reports. Generates reports with columns based on user's Report Settings.
 class PurchaseReportPdfGenerator {
   PurchaseReportPdfGenerator._();
 
   static final _dateFmt = DateFormat('dd MMM yyyy');
   static final _dateTimeFmt = DateFormat('dd MMM yyyy, hh:mm a');
 
-  /// Generate PDF bytes directly from purchase entities.
-  /// Uses PurchaseReportSettingsService to determine visible columns.
+  // Generate PDF bytes directly from purchase entities. Uses PurchaseReportSettingsService to determine visible columns.
   static Future<Uint8List> generate({
     required List<PurchaseBatchEntity> purchases,
     String? filterDescription,
@@ -179,7 +172,7 @@ class PurchaseReportPdfGenerator {
     }
   }
 
-  /// Load custom fields for all products in purchases
+  // Load custom fields for all products in purchases
   static Future<Map<String, Map<String, dynamic>>> _loadProductCustomFields(
     List<PurchaseBatchEntity> purchases,
   ) async {
@@ -204,7 +197,7 @@ class PurchaseReportPdfGenerator {
     return result;
   }
 
-  /// Get column header text
+  // Get column header text
   static String _getColumnHeader(String columnId, String defaultName) {
     switch (columnId) {
       case 'sr_no': return 'Sr';
@@ -232,7 +225,7 @@ class PurchaseReportPdfGenerator {
     }
   }
 
-  /// Get cell value for a column
+  // Get cell value for a column
   static String _getCellValue(
     String columnId,
     PurchaseBatchEntity p,
@@ -310,7 +303,7 @@ class PurchaseReportPdfGenerator {
     }
   }
 
-  /// Format custom field value based on type
+  // Format custom field value based on type
   static String _formatCustomValue(dynamic value, CustomColumnType type) {
     if (value == null) return '-';
     
@@ -333,7 +326,7 @@ class PurchaseReportPdfGenerator {
     }
   }
 
-  /// Calculate column widths based on visible columns
+  // Calculate column widths based on visible columns
   static Map<int, pw.TableColumnWidth> _calculateColumnWidths(
     List<ReportColumn> visibleColumns,
   ) {
@@ -347,7 +340,7 @@ class PurchaseReportPdfGenerator {
     return widths;
   }
 
-  /// Get flex value for column width
+  // Get flex value for column width
   static double _getColumnFlex(String columnId) {
     switch (columnId) {
       case 'sr_no': return 0.5;
@@ -370,45 +363,4 @@ class PurchaseReportPdfGenerator {
     }
   }
 
-  /// Print the PDF.
-  static Future<void> printReport(Uint8List pdfBytes) async {
-    debugPrint('[PurchaseReport] Printing ${pdfBytes.length} bytes');
-    await Printing.layoutPdf(
-      onLayout: (_) => pdfBytes,
-      name: 'purchase_report_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.pdf',
-    );
-  }
-
-  /// Share the PDF via system share sheet.
-  static Future<void> shareReport(Uint8List pdfBytes) async {
-    debugPrint('[PurchaseReport] Sharing ${pdfBytes.length} bytes');
-    final tempDir = await getTemporaryDirectory();
-    final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-    final tempFile = File('${tempDir.path}/purchase_report_$timestamp.pdf');
-    await tempFile.writeAsBytes(pdfBytes);
-    await Share.shareXFiles(
-      [XFile(tempFile.path, mimeType: 'application/pdf')],
-      text: 'Purchase Report — C-Billing',
-      subject: 'Purchase Report',
-    );
-  }
-
-  /// Save PDF locally and return saved path.
-  static Future<String?> saveLocally(Uint8List pdfBytes) async {
-    try {
-      final docsDir = await getApplicationDocumentsDirectory();
-      final reportsDir = Directory('${docsDir.path}/Reports');
-      if (!await reportsDir.exists()) {
-        await reportsDir.create(recursive: true);
-      }
-      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      final filePath = '${reportsDir.path}/purchase_report_$timestamp.pdf';
-      await File(filePath).writeAsBytes(pdfBytes);
-      debugPrint('[PurchaseReport] Saved to: $filePath');
-      return filePath;
-    } catch (e) {
-      debugPrint('[PurchaseReport] Save error: $e');
-      return null;
-    }
-  }
 }

@@ -17,16 +17,7 @@ import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/file_preview_page.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
-// ──────────────────────────────────────────────────────────
-// Premium Report Page — v2
-//   ✅ Date presets (Today / This Week / This Month / This Year / Custom)
-//   ✅ Advanced filters: product, supplier, expired, returned, price, low stock
-//   ✅ Summary preview after generation
-//   ✅ Save PDF locally to Documents/Reports/
-//   ✅ Share PDF via system share sheet
-//   ✅ Print PDF via system dialog
-//   ✅ Loading overlay, empty states, snackbars
-// ──────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────── Premium Report Page — v2 ✅ Date presets (Today / This Week / This Month / This Year / Custom) ✅ Advanced filters: prod...
 
 class ReportPage extends StatefulWidget {
   const ReportPage({super.key});

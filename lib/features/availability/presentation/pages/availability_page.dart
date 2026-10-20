@@ -19,7 +19,7 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
-/// Lets the dashboard download button open the stock report.
+// Lets the dashboard download button open the stock report.
 class AvailabilityScreenActions {
   static final List<VoidCallback> _downloads = [];
 
@@ -102,7 +102,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     ProductSyncService.instance.syncNow();
   }
 
-  /// Setup batch stream for real-time updates
+  // Setup batch stream for real-time updates
   void _setupBatchStream() {
     final batchController = PurchaseBatchOfflineController.instance;
     _batchStreamSubscription = batchController
@@ -120,7 +120,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
         );
   }
 
-  /// Rebuild grouped product list from batches + products
+  // Rebuild grouped product list from batches + products
   void _rebuildGroupedProducts() {
     // Products with no batches
     final batchProductIds = _allBatches.map((b) => b.productId).toSet();
@@ -1310,7 +1310,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     );
   }
 
-  /// Smaller badge for batch row status indicators
+  // Smaller badge for batch row status indicators
   Widget _buildMicroBadge({
     required String label,
     required Color color,

@@ -2,8 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
-/// API Service for Supplier data operations with Firebase
-/// Handles all remote server communication for suppliers
+// API Service for Supplier data operations with Firebase Handles all remote server communication for suppliers
 class SupplierApiService {
   static SupplierApiService? _instance;
 
@@ -16,19 +15,19 @@ class SupplierApiService {
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
         _auth = auth ?? FirebaseAuth.instance;
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static SupplierApiService get instance {
     _instance ??= SupplierApiService._();
     return _instance!;
   }
 
-  /// Get current user ID
+  // Get current user ID
   String? get _userId => _auth.currentUser?.uid;
 
-  /// Check if user is authenticated
+  // Check if user is authenticated
   bool get isAuthenticated => _userId != null;
 
-  /// Get suppliers collection reference for current user
+  // Get suppliers collection reference for current user
   CollectionReference<Map<String, dynamic>>? get _suppliersRef {
     final userId = _userId;
     if (userId == null) return null;
@@ -38,14 +37,14 @@ class SupplierApiService {
         .collection('suppliers');
   }
 
-  /// Ensure user is authenticated
+  // Ensure user is authenticated
   void _ensureAuthenticated() {
     if (_userId == null) {
       throw Exception('User not authenticated');
     }
   }
 
-  /// Fetch all suppliers from server
+  // Fetch all suppliers from server
   Future<List<Map<String, dynamic>>> getSuppliers({
     DateTime? updatedSince,
   }) async {
@@ -78,7 +77,7 @@ class SupplierApiService {
     }
   }
 
-  /// Get a single supplier by ID
+  // Get a single supplier by ID
   Future<Map<String, dynamic>?> getSupplier(String id) async {
     _ensureAuthenticated();
     
@@ -95,8 +94,7 @@ class SupplierApiService {
     }
   }
 
-  /// Create a new supplier on the server
-  /// Returns the server response with the new document ID
+  // Create a new supplier on the server Returns the server response with the new document ID
   Future<Map<String, dynamic>> createSupplier(Map<String, dynamic> supplierData) async {
     _ensureAuthenticated();
     
@@ -128,7 +126,7 @@ class SupplierApiService {
     }
   }
 
-  /// Update an existing supplier on the server
+  // Update an existing supplier on the server
   Future<Map<String, dynamic>> updateSupplier(String id, Map<String, dynamic> supplierData) async {
     _ensureAuthenticated();
     
@@ -159,7 +157,7 @@ class SupplierApiService {
     }
   }
 
-  /// Delete a supplier from the server
+  // Delete a supplier from the server
   Future<void> deleteSupplier(String id) async {
     _ensureAuthenticated();
     
@@ -172,7 +170,7 @@ class SupplierApiService {
     }
   }
 
-  /// Check if supplier with contact exists
+  // Check if supplier with contact exists
   Future<bool> contactExists(String contact, {String? excludeId}) async {
     _ensureAuthenticated();
     

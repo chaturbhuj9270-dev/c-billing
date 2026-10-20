@@ -13,8 +13,7 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Premium Customer Finance/History Page
-/// Shows all bills and events/orders for a specific customer
+// Premium Customer Finance/History Page Shows all bills and events/orders for a specific customer
 class CustomerFinancePage extends StatefulWidget {
   final String customerId; // Server ID (Firebase document ID)
   final String? customerLocalId; // Local ID
@@ -634,7 +633,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
   }
 }
 
-/// Statistics Card Widget
+// Statistics Card Widget
 class _StatCard extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -699,7 +698,7 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-/// Bill Card Widget
+// Bill Card Widget
 class _BillCard extends StatelessWidget {
   final BillEntity bill;
 
@@ -870,7 +869,7 @@ class _BillCard extends StatelessWidget {
   }
 }
 
-/// Amount Detail Widget
+// Amount Detail Widget
 class _AmountDetail extends StatelessWidget {
   final String label;
   final double amount;
@@ -910,7 +909,7 @@ class _AmountDetail extends StatelessWidget {
   }
 }
 
-/// Event/Order Card Widget
+// Event/Order Card Widget
 class _EventOrderCard extends StatelessWidget {
   final EventOrderEntity order;
 

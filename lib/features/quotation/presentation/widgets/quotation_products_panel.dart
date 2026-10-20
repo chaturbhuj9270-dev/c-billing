@@ -19,7 +19,7 @@ import '../../../product/offline/entities/product_entity.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
-/// Product add UI for quotations — same flow and line editing as billing.
+// Product add UI for quotations — same flow and line editing as billing.
 class QuotationProductsPanel extends StatefulWidget {
   final List<OrderItem> items;
   final ValueChanged<List<OrderItem>> onItemsChanged;

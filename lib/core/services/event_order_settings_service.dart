@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Supported data types for custom event/subevent columns
+// Supported data types for custom event/subevent columns
 enum EventCustomColumnType {
   text,
   number,
@@ -14,13 +14,13 @@ enum EventCustomColumnType {
   boolean,
 }
 
-/// Target type for the custom column
+// Target type for the custom column
 enum EventColumnTarget {
   event,    // For main event orders
   subEvent, // For sub-events within an event
 }
 
-/// Model for a custom column definition for events/subevents
+// Model for a custom column definition for events/subevents
 class EventCustomColumn {
   final String id;
   final String name;
@@ -90,7 +90,7 @@ class EventCustomColumn {
     isActive: isActive ?? this.isActive,
   );
 
-  /// Get display name for column type
+  // Get display name for column type
   static String getTypeDisplayName(EventCustomColumnType type) {
     switch (type) {
       case EventCustomColumnType.text:
@@ -108,7 +108,7 @@ class EventCustomColumn {
     }
   }
 
-  /// Get display name for column target
+  // Get display name for column target
   static String getTargetDisplayName(EventColumnTarget target) {
     switch (target) {
       case EventColumnTarget.event:
@@ -119,8 +119,7 @@ class EventCustomColumn {
   }
 }
 
-/// Service for managing event/subevent custom columns settings
-/// Stores in Firestore per user so data persists across app reinstalls
+// Service for managing event/subevent custom columns settings Stores in Firestore per user so data persists across app reinstalls
 class EventOrderSettingsService extends ChangeNotifier {
   static const String _localCacheKey = 'event_order_custom_columns_cache';
   static const String _firestoreCollection = 'event_order_settings';
@@ -139,36 +138,36 @@ class EventOrderSettingsService extends ChangeNotifier {
     return _instance!;
   }
   
-  /// Get all custom columns
+  // Get all custom columns
   List<EventCustomColumn> get customColumns => _customColumns;
   
-  /// Get only active custom columns
+  // Get only active custom columns
   List<EventCustomColumn> get activeCustomColumns => 
       _customColumns.where((c) => c.isActive).toList();
   
-  /// Get active columns for events only
+  // Get active columns for events only
   List<EventCustomColumn> get activeEventColumns =>
       _customColumns.where((c) => c.isActive && c.target == EventColumnTarget.event).toList();
   
-  /// Get active columns for sub-events only
+  // Get active columns for sub-events only
   List<EventCustomColumn> get activeSubEventColumns =>
       _customColumns.where((c) => c.isActive && c.target == EventColumnTarget.subEvent).toList();
   
-  /// Get columns for events only
+  // Get columns for events only
   List<EventCustomColumn> get eventColumns =>
       _customColumns.where((c) => c.target == EventColumnTarget.event).toList();
   
-  /// Get columns for sub-events only
+  // Get columns for sub-events only
   List<EventCustomColumn> get subEventColumns =>
       _customColumns.where((c) => c.target == EventColumnTarget.subEvent).toList();
   
-  /// Check if loading
+  // Check if loading
   bool get isLoading => _isLoading;
   
-  /// Get current user ID
+  // Get current user ID
   String? get _userId => FirebaseAuth.instance.currentUser?.uid;
   
-  /// Get Firestore reference for user's custom columns
+  // Get Firestore reference for user's custom columns
   DocumentReference? get _userSettingsDoc {
     final uid = _userId;
     if (uid == null) return null;
@@ -179,7 +178,7 @@ class EventOrderSettingsService extends ChangeNotifier {
         .doc(_customColumnsDoc);
   }
   
-  /// Initialize service - load from Firestore (with local cache fallback)
+  // Initialize service - load from Firestore (with local cache fallback)
   Future<void> init() async {
     _isLoading = true;
     notifyListeners();
@@ -228,7 +227,7 @@ class EventOrderSettingsService extends ChangeNotifier {
     }
   }
   
-  /// Reload data (useful when user changes)
+  // Reload data (useful when user changes)
   Future<void> reload() async {
     final newUserId = _userId;
     if (newUserId != _currentUserId) {
@@ -238,7 +237,7 @@ class EventOrderSettingsService extends ChangeNotifier {
     await init();
   }
   
-  /// Load from local cache (SharedPreferences)
+  // Load from local cache (SharedPreferences)
   Future<void> _loadFromLocalCache() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -259,7 +258,7 @@ class EventOrderSettingsService extends ChangeNotifier {
     }
   }
   
-  /// Save to local cache
+  // Save to local cache
   Future<void> _saveToLocalCache() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -272,7 +271,7 @@ class EventOrderSettingsService extends ChangeNotifier {
     }
   }
   
-  /// Save to Firestore
+  // Save to Firestore
   Future<void> _saveToFirestore() async {
     try {
       final docRef = _userSettingsDoc;
@@ -293,7 +292,7 @@ class EventOrderSettingsService extends ChangeNotifier {
     }
   }
   
-  /// Save columns (to both Firestore and local cache)
+  // Save columns (to both Firestore and local cache)
   Future<void> _saveColumns() async {
     await Future.wait([
       _saveToFirestore(),
@@ -301,14 +300,14 @@ class EventOrderSettingsService extends ChangeNotifier {
     ]);
   }
   
-  /// Add a new custom column
+  // Add a new custom column
   Future<void> addColumn(EventCustomColumn column) async {
     _customColumns.add(column);
     await _saveColumns();
     notifyListeners();
   }
   
-  /// Update an existing column
+  // Update an existing column
   Future<void> updateColumn(String id, EventCustomColumn updatedColumn) async {
     final index = _customColumns.indexWhere((c) => c.id == id);
     if (index != -1) {
@@ -318,14 +317,14 @@ class EventOrderSettingsService extends ChangeNotifier {
     }
   }
   
-  /// Delete a column
+  // Delete a column
   Future<void> deleteColumn(String id) async {
     _customColumns.removeWhere((c) => c.id == id);
     await _saveColumns();
     notifyListeners();
   }
   
-  /// Toggle column active status
+  // Toggle column active status
   Future<void> toggleColumnActive(String id) async {
     final index = _customColumns.indexWhere((c) => c.id == id);
     if (index != -1) {
@@ -337,7 +336,7 @@ class EventOrderSettingsService extends ChangeNotifier {
     }
   }
   
-  /// Reorder columns
+  // Reorder columns
   Future<void> reorderColumns(int oldIndex, int newIndex) async {
     if (newIndex > oldIndex) {
       newIndex -= 1;
@@ -348,7 +347,7 @@ class EventOrderSettingsService extends ChangeNotifier {
     notifyListeners();
   }
   
-  /// Generate unique column ID
+  // Generate unique column ID
   String generateColumnId() {
     return 'col_${DateTime.now().millisecondsSinceEpoch}_${_customColumns.length}';
   }

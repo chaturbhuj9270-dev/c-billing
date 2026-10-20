@@ -3,9 +3,7 @@ import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 
-/// World-class UI/UX Action Menu — three-dot popup menu
-/// Works inside Row, Column, AppBar, or any layout widget.
-/// Uses PopupMenuButton under the hood so it never causes Stack constraint errors.
+// World-class UI/UX Action Menu — three-dot popup menu Works inside Row, Column, AppBar, or any layout widget. Uses PopupMenuButton under the hood so it never causes Stack constra...
 class ActionMenu extends StatelessWidget {
   final VoidCallback? onSettingsTap;
   final VoidCallback? onReportSettingsTap;
@@ -16,7 +14,7 @@ class ActionMenu extends StatelessWidget {
   final Color iconColor;
   final double iconSize;
 
-  /// Flat outlined button used by the web navbar. Phone and desktop keep the glass button.
+  // Flat outlined button used by the web navbar. Phone and desktop keep the glass button.
   final bool outlined;
 
   const ActionMenu({

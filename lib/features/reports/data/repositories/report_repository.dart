@@ -6,7 +6,7 @@ import '../../../product/offline/entities/product_entity.dart';
 import '../../../supplier/offline/entities/supplier_entity.dart';
 import '../../domain/models/report_filter_model.dart';
 
-/// Repository for report queries against the local database.
+// Repository for report queries against the local database.
 class ReportRepository {
   ReportRepository._();
 

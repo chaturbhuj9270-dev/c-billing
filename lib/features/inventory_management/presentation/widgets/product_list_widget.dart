@@ -3,8 +3,7 @@ import 'package:c_billing/features/product/offline/entities/product_entity.dart'
 import 'product_filter_widget.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Enhanced list widget for displaying products
-/// Features: Shimmer loading, Enhanced cards, Stock badges, Sync icons, Empty states
+// Enhanced list widget for displaying products Features: Shimmer loading, Enhanced cards, Stock badges, Sync icons, Empty states
 class ProductListWidget extends StatelessWidget {
   final List<ProductEntity> products;
   final bool isLoading;
@@ -209,7 +208,7 @@ class ProductListWidget extends StatelessWidget {
   }
 }
 
-/// Enhanced product card widget
+// Enhanced product card widget
 class _ProductCard extends StatelessWidget {
   final ProductEntity product;
   final VoidCallback onTap;
@@ -654,7 +653,7 @@ class _ProductCard extends StatelessWidget {
   }
 }
 
-/// Shimmer loading card for product list
+// Shimmer loading card for product list
 class _ShimmerCard extends StatefulWidget {
   const _ShimmerCard();
 

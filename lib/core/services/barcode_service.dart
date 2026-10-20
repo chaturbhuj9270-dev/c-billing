@@ -6,7 +6,7 @@ import '../../features/product/offline/entities/product_entity.dart';
 import '../../features/inventory_management/offline/controllers/purchase_batch_offline_controller.dart';
 import '../../features/inventory_management/offline/entities/purchase_batch_entity.dart';
 
-/// Barcode types supported for generation
+// Barcode types supported for generation
 enum BarcodeFormat {
   ean13('EAN13', 'EAN-13 - 13 digits'),
   ean8('EAN8', 'EAN-8 - 8 digits'),
@@ -20,7 +20,7 @@ enum BarcodeFormat {
   const BarcodeFormat(this.code, this.displayName);
 }
 
-/// Data model for barcode content
+// Data model for barcode content
 class BarcodeData {
   final String code;
   final String productId;
@@ -69,7 +69,7 @@ class BarcodeData {
   );
 }
 
-/// Result of barcode lookup for fast billing
+// Result of barcode lookup for fast billing
 class BarcodeLookupResult {
   final bool found;
   final ProductEntity? product;
@@ -94,14 +94,13 @@ class BarcodeLookupResult {
   }) => BarcodeLookupResult(found: true, product: product, batch: batch);
 }
 
-/// Barcode Service - Common logic for barcode generation and lookup
-/// Used for fast billing and inventory management
+// Barcode Service - Common logic for barcode generation and lookup Used for fast billing and inventory management
 class BarcodeService {
   static BarcodeService? _instance;
 
   BarcodeService._();
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static BarcodeService get instance {
     _instance ??= BarcodeService._();
     return _instance!;
@@ -109,8 +108,7 @@ class BarcodeService {
 
   // ==================== BARCODE GENERATION ====================
 
-  /// Generate a unique barcode for a product
-  /// Uses format: PROD-{productId}-{timestamp}
+  // Generate a unique barcode for a product Uses format: PROD-{productId}-{timestamp}
   String generateProductBarcode(String productId) {
     final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
     // Take last 8 digits of timestamp to keep it short
@@ -118,16 +116,14 @@ class BarcodeService {
     return 'P${productId.substring(0, productId.length.clamp(0, 6))}$shortTimestamp';
   }
 
-  /// Generate a unique barcode for a batch
-  /// Uses format: BATCH-{batchId}-{timestamp}
+  // Generate a unique barcode for a batch Uses format: BATCH-{batchId}-{timestamp}
   String generateBatchBarcode(String batchId) {
     final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
     final shortTimestamp = timestamp.substring(timestamp.length - 8);
     return 'B${batchId.substring(0, batchId.length.clamp(0, 6))}$shortTimestamp';
   }
 
-  /// Generate a custom barcode based on product info
-  /// Creates a readable code: IndexNo-CompanyCode-ProductCode
+  // Generate a custom barcode based on product info Creates a readable code: IndexNo-CompanyCode-ProductCode
   String generateCustomBarcode({
     required int productIndexNo,
     String? companyCode,
@@ -147,19 +143,13 @@ class BarcodeService {
     return parts.join('-');
   }
 
-  /// Generate EAN-13 compatible barcode (13 digits with check digit)
-  /// Includes batch information when available
+  // Generate EAN-13 compatible barcode (13 digits with check digit) Includes batch information when available
   String generateEAN13({
     required int productIndexNo,
     int? batchNo,
     int prefixCode = 200, // 200-299 is for internal use
   }) {
-    // Format: PPP-BB-NNNNNNN-C (total 13 digits)
-    // PPP = prefix (200-299 for internal use) - 3 digits
-    // BB = batch number (00-99, 00 if no batch) - 2 digits
-    // NNNNNNN = product index no (padded to 7 digits) - 7 digits
-    // C = check digit - 1 digit
-    // Total: 3 + 2 + 7 = 12 base digits + 1 check = 13
+    // Format: PPP-BB-NNNNNNN-C (total 13 digits) PPP = prefix (200-299 for internal use) - 3 digits BB = batch number (00-99, 00 if no batch) - 2 digits NNNNNNN = product index no (pa...
 
     final batchPart = (batchNo ?? 0).clamp(0, 99).toString().padLeft(2, '0');
     final productPart = (productIndexNo % 10000000).toString().padLeft(7, '0');
@@ -179,7 +169,7 @@ class BarcodeService {
     return '$base$checkDigit';
   }
 
-  /// Calculate EAN-13 check digit
+  // Calculate EAN-13 check digit
   int _calculateEAN13CheckDigit(String code12) {
     if (code12.length < 12) return 0;
     int sum = 0;
@@ -190,16 +180,12 @@ class BarcodeService {
     return (10 - (sum % 10)) % 10;
   }
 
-  /// Generate EAN-8 compatible barcode (8 digits with check digit)
+  // Generate EAN-8 compatible barcode (8 digits with check digit)
   String generateEAN8({
     required int productIndexNo,
     int prefixCode = 20, // 2-digit prefix for internal use
   }) {
-    // Format: PP-NNNNN-C (total 8 digits)
-    // PP = prefix (20-29 for internal use) - 2 digits
-    // NNNNN = product index no (padded to 5 digits) - 5 digits
-    // C = check digit - 1 digit
-    // Total: 2 + 5 = 7 base digits + 1 check = 8
+    // Format: PP-NNNNN-C (total 8 digits) PP = prefix (20-29 for internal use) - 2 digits NNNNN = product index no (padded to 5 digits) - 5 digits C = check digit - 1 digit Total: 2 +...
 
     final productPart = (productIndexNo % 100000).toString().padLeft(5, '0');
     final base = '$prefixCode$productPart';
@@ -217,7 +203,7 @@ class BarcodeService {
     return '$base$checkDigit';
   }
 
-  /// Calculate EAN-8 check digit
+  // Calculate EAN-8 check digit
   int _calculateEAN8CheckDigit(String code7) {
     if (code7.length < 7) return 0;
     int sum = 0;
@@ -228,19 +214,13 @@ class BarcodeService {
     return (10 - (sum % 10)) % 10;
   }
 
-  /// Generate UPC-A compatible barcode (12 digits with check digit)
-  /// Includes batch information when available
+  // Generate UPC-A compatible barcode (12 digits with check digit) Includes batch information when available
   String generateUPCA({
     required int productIndexNo,
     int? batchNo,
     int prefixCode = 0, // Number system digit (0 for regular UPC)
   }) {
-    // Format: P-MMMMM-NNNNN-C (total 12 digits)
-    // P = number system (0-9) - 1 digit
-    // MMMMM = manufacturer code (include batch info) - 5 digits
-    // NNNNN = product code - 5 digits
-    // C = check digit - 1 digit
-    // Total: 1 + 5 + 5 = 11 base digits + 1 check = 12
+    // Format: P-MMMMM-NNNNN-C (total 12 digits) P = number system (0-9) - 1 digit MMMMM = manufacturer code (include batch info) - 5 digits NNNNN = product code - 5 digits C = check d...
 
     final batchPart = (batchNo ?? 0).clamp(0, 99999).toString().padLeft(5, '0');
     final productPart = (productIndexNo % 100000).toString().padLeft(5, '0');
@@ -259,7 +239,7 @@ class BarcodeService {
     return '$base$checkDigit';
   }
 
-  /// Calculate UPC-A check digit
+  // Calculate UPC-A check digit
   int _calculateUPCACheckDigit(String code11) {
     if (code11.length < 11) return 0;
     int sum = 0;
@@ -270,7 +250,7 @@ class BarcodeService {
     return (10 - (sum % 10)) % 10;
   }
 
-  /// Generate QR Code data string with product and batch info
+  // Generate QR Code data string with product and batch info
   String generateQRData({
     required String productId,
     required String productName,
@@ -290,7 +270,7 @@ class BarcodeService {
     return parts.join('|');
   }
 
-  /// Get the barcode renderer for a given format
+  // Get the barcode renderer for a given format
   Barcode getBarcodeRenderer(BarcodeFormat format) {
     switch (format) {
       case BarcodeFormat.code128:
@@ -308,7 +288,7 @@ class BarcodeService {
     }
   }
 
-  /// Generate SVG string for barcode
+  // Generate SVG string for barcode
   String generateBarcodeSvg({
     required String data,
     BarcodeFormat format = BarcodeFormat.code128,
@@ -325,7 +305,7 @@ class BarcodeService {
     );
   }
 
-  /// Validate barcode data for format
+  // Validate barcode data for format
   bool validateBarcodeData(String data, BarcodeFormat format) {
     try {
       final barcode = getBarcodeRenderer(format);
@@ -336,7 +316,7 @@ class BarcodeService {
     }
   }
 
-  /// Get valid characters info for barcode format
+  // Get valid characters info for barcode format
   String getFormatInfo(BarcodeFormat format) {
     switch (format) {
       case BarcodeFormat.code128:
@@ -356,14 +336,7 @@ class BarcodeService {
 
   // ==================== BARCODE LOOKUP (FOR FAST BILLING) ====================
 
-  /// Look up product by barcode - primary method for fast billing
-  /// Supports:
-  /// - Direct barcode field match
-  /// - EAN-13 format (200BBNNNNNNC) - extracts product index
-  /// - EAN-8 format (20NNNNNC) - extracts product index
-  /// - UPC-A format (0BBBBBNNNNC) - extracts product index
-  /// - Code128 format (any alphanumeric)
-  /// - Batch-specific barcodes (B prefix)
+  // Look up product by barcode - primary method for fast billing Supports: - Direct barcode field match - EAN-13 format (200BBNNNNNNC) - extracts product index - EAN-8 format (20NNN...
   Future<BarcodeLookupResult> lookupByBarcode(String barcode) async {
     if (barcode.isEmpty) {
       return BarcodeLookupResult(
@@ -413,8 +386,7 @@ class BarcodeService {
 
       // If barcode starts with 'B', it might be a batch-specific barcode
       if (barcode.startsWith('B') && barcode.length > 9) {
-        // Try to parse batch ID from barcode
-        // Format: B{batchId}{timestamp} - timestamp is 8 chars
+        // Try to parse batch ID from barcode Format: B{batchId}{timestamp} - timestamp is 8 chars
         final batchIdPart = barcode.substring(1, barcode.length - 8);
         final batches = await PurchaseBatchOfflineController.instance
             .getAllBatches(includeConsumed: false);
@@ -467,7 +439,7 @@ class BarcodeService {
     }
   }
 
-  /// Build lookup result with batch info
+  // Build lookup result with batch info
   Future<BarcodeLookupResult> _buildLookupResult(ProductEntity product) async {
     final batches = await PurchaseBatchOfflineController.instance
         .getBatchesByProductId(
@@ -481,8 +453,7 @@ class BarcodeService {
     );
   }
 
-  /// Parse generated barcode to extract product index and batch number
-  /// Returns null if barcode format is not recognized
+  // Parse generated barcode to extract product index and batch number Returns null if barcode format is not recognized
   Map<String, dynamic>? _parseGeneratedBarcode(String barcode) {
     // Remove any whitespace
     final code = barcode.trim();
@@ -492,8 +463,7 @@ class BarcodeService {
     final isNumeric = RegExp(r'^\d+$').hasMatch(code);
 
     if (isNumeric) {
-      // EAN-13: 13 digits, format PPP-BB-NNNNNNN-C
-      // Our generated EAN-13 uses prefix 200-299
+      // EAN-13: 13 digits, format PPP-BB-NNNNNNN-C Our generated EAN-13 uses prefix 200-299
       if (code.length == 13 && code.startsWith('20')) {
         // Format: PPP(3) + BB(2) + NNNNNNN(7) + C(1)
         final batchStr = code.substring(3, 5);
@@ -505,8 +475,7 @@ class BarcodeService {
         }
       }
 
-      // EAN-8: 8 digits, format PP-NNNNN-C
-      // Our generated EAN-8 uses prefix 20-29
+      // EAN-8: 8 digits, format PP-NNNNN-C Our generated EAN-8 uses prefix 20-29
       if (code.length == 8 && code.startsWith('2')) {
         // Format: PP(2) + NNNNN(5) + C(1)
         final indexStr = code.substring(2, 7);
@@ -516,8 +485,7 @@ class BarcodeService {
         }
       }
 
-      // UPC-A: 12 digits, format P-BBBBB-NNNNN-C
-      // Our generated UPC-A uses prefix 0
+      // UPC-A: 12 digits, format P-BBBBB-NNNNN-C Our generated UPC-A uses prefix 0
       if (code.length == 12 && code.startsWith('0')) {
         // Format: P(1) + BBBBB(5) + NNNNN(5) + C(1)
         final batchStr = code.substring(1, 6);
@@ -533,8 +501,7 @@ class BarcodeService {
     return null;
   }
 
-  /// Scan and add to bill - convenience method for billing
-  /// Returns null if not found, otherwise returns product data for billing
+  // Scan and add to bill - convenience method for billing Returns null if not found, otherwise returns product data for billing
   Future<Map<String, dynamic>?> scanForBilling(String barcode) async {
     final result = await lookupByBarcode(barcode);
 
@@ -562,7 +529,7 @@ class BarcodeService {
 
   // ==================== BARCODE ASSIGNMENT ====================
 
-  /// Assign barcode to product
+  // Assign barcode to product
   Future<bool> assignBarcodeToProduct(String productId, String barcode) async {
     try {
       // Find product by server ID first
@@ -603,7 +570,7 @@ class BarcodeService {
     }
   }
 
-  /// Check if barcode is available (not assigned to any product)
+  // Check if barcode is available (not assigned to any product)
   Future<bool> isBarcodeAvailable(String barcode) async {
     final existing = await ProductOfflineController.instance
         .getProductByBarcode(barcode);

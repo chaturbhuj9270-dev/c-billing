@@ -8,7 +8,7 @@ import '../../../billing/offline/entities/bill_entity.dart';
 import '../entities/customer_transaction_entity.dart';
 import '../entities/customer_entity.dart';
 
-/// Controller for handling customer transaction CRUD operations
+// Controller for handling customer transaction CRUD operations
 class CustomerTransactionOfflineController extends ChangeNotifier {
   static CustomerTransactionOfflineController? _instance;
 
@@ -16,7 +16,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
 
   CustomerTransactionOfflineController._(this._db);
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static CustomerTransactionOfflineController get instance {
     _instance ??= CustomerTransactionOfflineController._(
       LocalDatabase.instance.db,
@@ -24,14 +24,14 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     return _instance!;
   }
 
-  /// Reset instance (for testing)
+  // Reset instance (for testing)
   static void resetInstance() {
     _instance = null;
   }
 
   // ==================== CREATE ====================
 
-  /// Add a payment transaction (customer paid money)
+  // Add a payment transaction (customer paid money)
   Future<CustomerTransactionEntity> addPaymentTransaction({
     required String customerId,
     required String customerName,
@@ -81,7 +81,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     return transaction;
   }
 
-  /// Add a bill transaction (customer owes money)
+  // Add a bill transaction (customer owes money)
   Future<CustomerTransactionEntity> addBillTransaction({
     required String customerId,
     required String customerName,
@@ -127,7 +127,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     return transaction;
   }
 
-  /// Apply a later payment to the oldest open bills so invoice balances match the ledger.
+  // Apply a later payment to the oldest open bills so invoice balances match the ledger.
   Future<void> _allocatePaymentToBills(
     CustomerEntity? customer,
     String customerId,
@@ -178,7 +178,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     }
   }
 
-  /// Reduce what the customer owes after a sale return.
+  // Reduce what the customer owes after a sale return.
   Future<CustomerTransactionEntity> addReturnTransaction({
     required String customerId,
     required String customerName,
@@ -224,7 +224,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     return transaction;
   }
 
-  /// Add manual adjustment transaction
+  // Add manual adjustment transaction
   Future<CustomerTransactionEntity> addAdjustmentTransaction({
     required String customerId,
     required String customerName,
@@ -270,7 +270,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
 
   // ==================== READ ====================
 
-  /// Get all transactions for a customer
+  // Get all transactions for a customer
   Future<List<CustomerTransactionEntity>> getTransactionsByCustomerId(
     String customerId,
   ) async {
@@ -287,7 +287,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     return transactions;
   }
 
-  /// Get transactions for a customer within date range
+  // Get transactions for a customer within date range
   Future<List<CustomerTransactionEntity>> getTransactionsByDateRange({
     required String customerId,
     required DateTime startDate,
@@ -307,7 +307,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     return transactions;
   }
 
-  /// Get transactions for this month
+  // Get transactions for this month
   Future<List<CustomerTransactionEntity>> getThisMonthTransactions(
     String customerId,
   ) async {
@@ -326,7 +326,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     );
   }
 
-  /// Get transactions for this year
+  // Get transactions for this year
   Future<List<CustomerTransactionEntity>> getThisYearTransactions(
     String customerId,
   ) async {
@@ -345,7 +345,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     );
   }
 
-  /// Get transactions for last year
+  // Get transactions for last year
   Future<List<CustomerTransactionEntity>> getLastYearTransactions(
     String customerId,
   ) async {
@@ -364,7 +364,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     );
   }
 
-  /// Watch transactions for a customer
+  // Watch transactions for a customer
   Stream<List<CustomerTransactionEntity>> watchTransactionsByCustomerId(
     String customerId,
   ) {
@@ -383,7 +383,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     });
   }
 
-  /// Get transaction by ID
+  // Get transaction by ID
   Future<CustomerTransactionEntity?> getTransactionById(int id) async {
     for (final transaction in await _db.loadTransactions()) {
       if (transaction.id == id) return transaction;
@@ -391,7 +391,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     return null;
   }
 
-  /// Get total payment received for a customer
+  // Get total payment received for a customer
   Future<double> getTotalPaymentsReceived(String customerId) async {
     final transactions = (await _db.loadTransactions()).where(
       (transaction) =>
@@ -407,7 +407,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     return total;
   }
 
-  /// Get total pending count (for summary)
+  // Get total pending count (for summary)
   Future<int> getTotalCount() async {
     return (await _db.loadTransactions())
         .where(
@@ -419,7 +419,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
 
   // ==================== UPDATE ====================
 
-  /// Update transaction description
+  // Update transaction description
   Future<void> updateTransactionDescription(int id, String description) async {
     final transaction = await getTransactionById(id);
     if (transaction == null) return;
@@ -435,7 +435,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
 
   // ==================== DELETE ====================
 
-  /// Soft delete a transaction
+  // Soft delete a transaction
   Future<void> deleteTransaction(int id) async {
     final transaction = await getTransactionById(id);
     if (transaction == null) return;
@@ -484,7 +484,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     return null;
   }
 
-  /// Get unsynced transactions count
+  // Get unsynced transactions count
   Future<int> getUnsyncedCount() async {
     return (await _db.loadTransactions())
         .where(
@@ -495,7 +495,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
 
   // ==================== SYNC METHODS ====================
 
-  /// Get transactions that need to be pushed to server
+  // Get transactions that need to be pushed to server
   Future<List<CustomerTransactionEntity>> getTransactionsNeedingPush() async {
     return (await _db.loadTransactions()).where((transaction) {
       return transaction.syncStatus == TransactionSyncStatus.newRecord ||
@@ -504,8 +504,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     }).toList();
   }
 
-  /// Import transactions from server
-  /// This will upsert based on serverId
+  // Import transactions from server This will upsert based on serverId
   Future<void> importFromServer(
     List<Map<String, dynamic>> serverTransactions,
   ) async {
@@ -515,8 +514,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
       '[TransactionOffline] Importing ${serverTransactions.length} transactions from server',
     );
 
-    // First, build a map of customer IDs to names
-    // This needs to be done outside the write transaction
+    // First, build a map of customer IDs to names This needs to be done outside the write transaction
     final customerNames = <String, String>{};
     final uniqueCustomerIds = serverTransactions
         .map((t) => t['customerId'] as String?)
@@ -574,7 +572,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Create entity from server data
+  // Create entity from server data
   CustomerTransactionEntity _createEntityFromServerData(
     Map<String, dynamic> data,
     int? existingId,
@@ -637,7 +635,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     return entity;
   }
 
-  /// Update local transaction with server response after successful push
+  // Update local transaction with server response after successful push
   Future<void> updateWithServerResponse(
     int localId,
     Map<String, dynamic> serverResponse,
@@ -656,7 +654,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     );
   }
 
-  /// Mark a transaction as synced
+  // Mark a transaction as synced
   Future<void> markAsSynced(int id) async {
     final transaction = await getTransactionById(id);
     if (transaction == null) return;
@@ -667,13 +665,13 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     await _db.saveTransaction(transaction);
   }
 
-  /// Permanently delete a transaction (after server confirms deletion)
+  // Permanently delete a transaction (after server confirms deletion)
   Future<void> permanentlyDelete(int id) async {
     await _db.deleteTransactionById(id);
     debugPrint('[TransactionOffline] Permanently deleted transaction: $id');
   }
 
-  /// Clear all synced deleted records
+  // Clear all synced deleted records
   Future<void> clearSyncedDeletedRecords() async {
     final deletedRecords = (await _db.loadTransactions())
         .where(

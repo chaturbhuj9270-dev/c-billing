@@ -5,10 +5,10 @@ import '../../offline/controllers/company_offline_controller.dart';
 import '../../offline/entities/company_entity.dart';
 import 'company_api_service.dart';
 
-/// Sync status for tracking sync state
+// Sync status for tracking sync state
 enum CompanySyncServiceStatus { idle, syncing, success, failed }
 
-/// Result of a sync operation
+// Result of a sync operation
 class CompanySyncResult {
   final bool success;
   final int createdCount;
@@ -41,8 +41,7 @@ class CompanySyncResult {
   }
 }
 
-/// Service for background synchronization of Company data
-/// Implements delta sync - only syncs NEW, UPDATED, or DELETED companies
+// Service for background synchronization of Company data Implements delta sync - only syncs NEW, UPDATED, or DELETED companies
 class CompanySyncService extends ChangeNotifier {
   static CompanySyncService? _instance;
 
@@ -56,7 +55,7 @@ class CompanySyncService extends ChangeNotifier {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _periodicSyncTimer;
 
-  /// Mutex to prevent concurrent sync operations
+  // Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
 
   CompanySyncService._({
@@ -68,25 +67,25 @@ class CompanySyncService extends ChangeNotifier {
        _apiService = apiService ?? CompanyApiService.instance,
        _connectivity = connectivity ?? Connectivity();
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static CompanySyncService get instance {
     _instance ??= CompanySyncService._();
     return _instance!;
   }
 
-  /// Current sync status
+  // Current sync status
   CompanySyncServiceStatus get status => _status;
 
-  /// Last successful sync time
+  // Last successful sync time
   DateTime? get lastSyncTime => _lastSyncTime;
 
-  /// Last error message
+  // Last error message
   String? get lastError => _lastError;
 
-  /// Check if currently syncing
+  // Check if currently syncing
   bool get isSyncing => _status == CompanySyncServiceStatus.syncing;
 
-  /// Initialize the sync service
+  // Initialize the sync service
   void initialize() {
     debugPrint('[CompanySync] Initializing...');
 
@@ -111,7 +110,7 @@ class CompanySyncService extends ChangeNotifier {
     debugPrint('[CompanySync] Initialized');
   }
 
-  /// Perform initial sync - download all companies if local database is empty
+  // Perform initial sync - download all companies if local database is empty
   Future<void> _initialSync() async {
     // Add a small delay to ensure authentication is fully ready
     await Future.delayed(const Duration(milliseconds: 500));
@@ -180,13 +179,13 @@ class CompanySyncService extends ChangeNotifier {
     }
   }
 
-  /// Check if device is online
+  // Check if device is online
   Future<bool> isOnline() async {
     final results = await _connectivity.checkConnectivity();
     return _isConnected(results);
   }
 
-  /// Perform delta sync - only sync changed records
+  // Perform delta sync - only sync changed records
   Future<CompanySyncResult> syncNow() async {
     // Prevent concurrent syncs
     if (_isSyncing) {
@@ -337,7 +336,7 @@ class CompanySyncService extends ChangeNotifier {
     }
   }
 
-  /// Pull changes from server
+  // Pull changes from server
   Future<int> _pullServerChanges() async {
     try {
       // Fetch all companies from server
@@ -358,7 +357,7 @@ class CompanySyncService extends ChangeNotifier {
     }
   }
 
-  /// Force a full sync (re-download all from server)
+  // Force a full sync (re-download all from server)
   Future<CompanySyncResult> forceFullSync() async {
     try {
       // First upload any local changes
@@ -390,7 +389,7 @@ class CompanySyncService extends ChangeNotifier {
     }
   }
 
-  /// Get count of pending syncs
+  // Get count of pending syncs
   Future<int> getPendingSyncCount() async {
     return await _offlineController.getUnsyncedCount();
   }

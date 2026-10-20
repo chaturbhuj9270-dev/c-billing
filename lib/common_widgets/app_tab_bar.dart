@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 import 'glass_bevel_frame.dart';
 
-/// In-page tabs that use the same selected chip as the dashboard bottom bar.
-///
-/// Light: frosted white pill, glassy green rim, green icon and label.
-/// Dark: transparent pill, glassy rim only, white icon and label.
+// In-page tabs that use the same selected chip as the dashboard bottom bar. Light: frosted white pill, glassy green rim, green icon and label. Dark: transparent pill, glassy rim o...
 class AppTabBar extends StatelessWidget {
   final TabController controller;
   final List<Widget> tabs;

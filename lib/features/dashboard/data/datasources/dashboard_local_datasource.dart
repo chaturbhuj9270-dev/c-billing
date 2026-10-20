@@ -17,14 +17,7 @@ import '../../../inventory_management/offline/entities/stock_ledger_entity.dart'
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/repositories/dashboard_repository_interface.dart';
 
-/// Ultra-fast local dashboard datasource
-/// All calculations are from local DB — instant, offline-capable, and accurate.
-///
-/// Key fixes over the old Firebase datasource:
-/// 1. Returns are properly deducted from sales/profit
-/// 2. Stock value uses batch quantityRemaining × purchasePrice (not product-level)
-/// 3. Pending amounts are tracked
-/// 4. Reactive streams via table update watches
+// Ultra-fast local dashboard datasource All calculations are from local DB — instant, offline-capable, and accurate. Key fixes over the old Firebase datasource: 1. Returns are pro...
 class DashboardLocalDataSource {
   static DashboardLocalDataSource? _instance;
 
@@ -35,8 +28,7 @@ class DashboardLocalDataSource {
     return _instance!;
   }
 
-  /// Fetch dashboard summary from local DB
-  /// All calculations are local — typically completes in < 5ms
+  // Fetch dashboard summary from local DB All calculations are local — typically completes in < 5ms
   Future<DashboardSummary> fetchDashboardSummary({
     required DashboardParams params,
   }) async {
@@ -142,12 +134,7 @@ class DashboardLocalDataSource {
     );
   }
 
-  /// Create a reactive stream that emits new DashboardSummary whenever
-  /// bills, purchases, or batches change in the local DB.
-  /// Uses table update watches + debounce to avoid excessive recalculations.
-  ///
-  /// Each stream manages its OWN debounce timer and subscriptions to prevent
-  /// race conditions when multiple streams are active (e.g., filter changes).
+  // Create a reactive stream that emits new DashboardSummary whenever bills, purchases, or batches change in the local DB. Uses table update watches + debounce to avoid excessive re...
   Stream<DashboardSummary> watchDashboardSummary({
     required DashboardParams params,
   }) {
@@ -186,8 +173,7 @@ class DashboardLocalDataSource {
           );
         }
 
-        // Watch ALL relevant collections for complete real-time updates
-        // Bills, purchases, and batches for financial data
+        // Watch ALL relevant collections for complete real-time updates Bills, purchases, and batches for financial data
         final db = LocalDatabase.instance.db;
         void watchTable(ResultSetImplementation<dynamic, dynamic> table) {
           localSubs.add(
@@ -222,11 +208,7 @@ class DashboardLocalDataSource {
 
   // ==================== SALES CALCULATION ====================
 
-  /// Calculate sales metrics for the given period.
-  /// CORRECTLY handles:
-  /// - Partial/full returns (deducts returnedQuantity from sold quantity)
-  /// - Discount proportioning per item
-  /// - Profit based on net sold items only
+  // Calculate sales metrics for the given period. CORRECTLY handles: - Partial/full returns (deducts returnedQuantity from sold quantity) - Discount proportioning per item - Profit...
   Future<_SalesResult> _getSalesDataForPeriod(
     DateTime? startDate,
     DateTime? endDate,
@@ -263,14 +245,11 @@ class DashboardLocalDataSource {
         totalReturnedItems += returnedQty
             .round(); // Round for dashboard display
 
-        // Return amount = returnedQty × sellingPrice × (1 - discountRatio)
-        // This accounts for the proportional discount that was applied at sale
+        // Return amount = returnedQty × sellingPrice × (1 - discountRatio) This accounts for the proportional discount that was applied at sale
         final returnAmount = returnedQty * sellingPrice * (1 - discountRatio);
         totalReturns += returnAmount;
 
-        // Profit from this item = revenue from NET sold items - cost of NET sold items
-        // Revenue = netSoldQty × sellingPrice × (1 - discountRatio)
-        // Cost = netSoldQty × purchasePrice
+        // Profit from this item = revenue from NET sold items - cost of NET sold items Revenue = netSoldQty × sellingPrice × (1 - discountRatio) Cost = netSoldQty × purchasePrice
         final netRevenue = netSoldQty * sellingPrice * (1 - discountRatio);
         final netCost = netSoldQty * purchasePrice;
         netProfit += (netRevenue - netCost);
@@ -289,9 +268,7 @@ class DashboardLocalDataSource {
 
   // ==================== PURCHASE CALCULATION ====================
 
-  /// Calculate purchase totals from PurchaseBatchEntity for real-time accuracy.
-  /// Using batches instead of PurchaseEntity ensures dashboard updates immediately
-  /// when users edit purchase records (which modify batch data).
+  // Calculate purchase totals from PurchaseBatchEntity for real-time accuracy. Using batches instead of PurchaseEntity ensures dashboard updates immediately when users edit purchase...
   Future<_PurchaseResult> _getPurchaseDataForPeriod(
     DateTime? startDate,
     DateTime? endDate,
@@ -321,8 +298,7 @@ class DashboardLocalDataSource {
 
   // ==================== PURCHASE RETURN CALCULATION ====================
 
-  /// Calculate purchase return totals from stock ledger PURCHASE_RETURN entries.
-  /// These entries are created by PurchaseReturnService when returning stock to suppliers.
+  // Calculate purchase return totals from stock ledger PURCHASE_RETURN entries. These entries are created by PurchaseReturnService when returning stock to suppliers.
   Future<_PurchaseReturnResult> _getPurchaseReturnData(
     DateTime? startDate,
     DateTime? endDate,
@@ -330,8 +306,7 @@ class DashboardLocalDataSource {
     final start = startDate ?? DateTime(2000);
     final end = endDate ?? DateTime.now().add(const Duration(days: 1));
 
-    // Query all PURCHASE_RETURN entries, then filter by date in-memory
-    // to avoid complex local database filter chain issues
+    // Query all PURCHASE_RETURN entries, then filter by date in-memory to avoid complex local database filter chain issues
     final allReturnEntries = (await LocalDatabase.instance.db.loadLedger())
         .where(
           (entry) =>
@@ -371,9 +346,7 @@ class DashboardLocalDataSource {
 
   // ==================== STOCK CALCULATION ====================
 
-  /// Stock value from BATCHES (not product-level currentStock).
-  /// Sum of (quantityRemaining × purchasePrice) for all unconsumed batches.
-  /// This is the accurate FIFO-based stock valuation.
+  // Stock value from BATCHES (not product-level currentStock). Sum of (quantityRemaining × purchasePrice) for all unconsumed batches. This is the accurate FIFO-based stock valuation.
   Future<_StockResult> _getStockDataFromBatches() async {
     // Query unconsumed batches directly from the local database
     final batches = (await LocalDatabase.instance.db.loadBatches())
@@ -410,9 +383,7 @@ class DashboardLocalDataSource {
 
   // ==================== PENDING AMOUNTS ====================
 
-  /// Total pending = exact sum of what customer list page shows per customer.
-  /// Per customer: entity.currentPendingAmount + event order remaining for that customer.
-  /// This mirrors enhanced_customer_page._entityToMap() logic exactly.
+  // Total pending = exact sum of what customer list page shows per customer. Per customer: entity.currentPendingAmount + event order remaining for that customer. This mirrors enhanc...
   Future<double> _getTotalPendingAmount() async {
     // 1. Get all customers
     final customers = (await LocalDatabase.instance.db.loadCustomers())
@@ -453,8 +424,7 @@ class DashboardLocalDataSource {
 
   // ==================== EVENT ORDER CALCULATION ====================
 
-  /// Get event/order statistics from the local database
-  /// Returns total count, upcoming events, pending orders, and financial totals
+  // Get event/order statistics from the local database Returns total count, upcoming events, pending orders, and financial totals
   Future<_EventOrderResult> _getEventOrderData() async {
     // Get all non-deleted event orders
     final allOrders = (await LocalDatabase.instance.db.loadEventOrders())
@@ -501,7 +471,7 @@ class DashboardLocalDataSource {
     );
   }
 
-  /// Dispose resources — no-op since streams manage their own lifecycle
+  // Dispose resources — no-op since streams manage their own lifecycle
   void dispose() {
     // Each stream's onCancel handles its own cleanup
   }

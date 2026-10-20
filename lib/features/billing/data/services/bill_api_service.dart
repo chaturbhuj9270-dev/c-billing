@@ -2,8 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
-/// API service for Bill Firebase operations
-/// Used by BillSyncService for server communication
+// API service for Bill Firebase operations Used by BillSyncService for server communication
 class BillApiService {
   static BillApiService? _instance;
 
@@ -14,16 +13,16 @@ class BillApiService {
     : _firestore = firestore ?? FirebaseFirestore.instance,
       _auth = auth ?? FirebaseAuth.instance;
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static BillApiService get instance {
     _instance ??= BillApiService._();
     return _instance!;
   }
 
-  /// Get current user ID
+  // Get current user ID
   String? get _userId => _auth.currentUser?.uid;
 
-  /// Get bills collection reference
+  // Get bills collection reference
   CollectionReference<Map<String, dynamic>> get _billsCollection {
     if (_userId == null) throw Exception('User not authenticated');
     return _firestore.collection('users').doc(_userId).collection('bills');
@@ -31,9 +30,7 @@ class BillApiService {
 
   // ==================== CREATE ====================
 
-  /// Create a new bill on server
-  /// Also tries to update product stock on server (decrements stock for each item)
-  /// Returns the server-generated ID
+  // Create a new bill on server Also tries to update product stock on server (decrements stock for each item) Returns the server-generated ID
   Future<String> createBill(Map<String, dynamic> data) async {
     try {
       final docRef = _billsCollection.doc();
@@ -95,7 +92,7 @@ class BillApiService {
 
   // ==================== READ ====================
 
-  /// Get all bills from server
+  // Get all bills from server
   Future<List<Map<String, dynamic>>> getBills({DateTime? updatedSince}) async {
     try {
       Query<Map<String, dynamic>> query = _billsCollection;
@@ -131,7 +128,7 @@ class BillApiService {
     }
   }
 
-  /// Get a single bill by ID
+  // Get a single bill by ID
   Future<Map<String, dynamic>?> getBillById(String id) async {
     try {
       final doc = await _billsCollection.doc(id).get();
@@ -146,7 +143,7 @@ class BillApiService {
     }
   }
 
-  /// Get bills by customer ID
+  // Get bills by customer ID
   Future<List<Map<String, dynamic>>> getBillsByCustomerId(
     String customerId,
   ) async {
@@ -169,7 +166,7 @@ class BillApiService {
 
   // ==================== UPDATE ====================
 
-  /// Update an existing bill on server
+  // Update an existing bill on server
   Future<void> updateBill(String id, Map<String, dynamic> data) async {
     try {
       await _billsCollection.doc(id).update(data);
@@ -182,7 +179,7 @@ class BillApiService {
 
   // ==================== DELETE ====================
 
-  /// Delete a bill from server
+  // Delete a bill from server
   Future<void> deleteBill(String id) async {
     try {
       await _billsCollection.doc(id).delete();
@@ -195,7 +192,7 @@ class BillApiService {
 
   // ==================== BATCH OPERATIONS ====================
 
-  /// Get bills updated since a specific time (for delta sync)
+  // Get bills updated since a specific time (for delta sync)
   Future<List<Map<String, dynamic>>> getBillsSince(DateTime since) async {
     try {
       final snapshot = await _billsCollection
@@ -213,6 +210,6 @@ class BillApiService {
     }
   }
 
-  /// Check if user is authenticated
+  // Check if user is authenticated
   bool get isAuthenticated => _userId != null;
 }

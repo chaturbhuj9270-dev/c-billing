@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
-/// Web, Windows, and macOS share the wide app canvas. Phones stay on their own layout.
+// Web, Windows, and macOS share the wide app canvas. Phones stay on their own layout.
 class DesktopCanvas {
   static bool get isDesktopPlatform =>
       kIsWeb ||

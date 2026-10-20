@@ -1,22 +1,14 @@
 import 'dart:io';
-import 'dart:typed_data';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../domain/models/report_result_model.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Professional PDF generator for inventory reports.
-/// Generates landscape PDF with:
-///   - Company header
-///   - Filter summary
-///   - Data table with colour-coded rows
-///   - Summary totals
-///   - Page numbers
+// Professional PDF generator for inventory reports. Generates landscape PDF with: - Company header - Filter summary - Data table with colour-coded rows - Summary totals - Page num...
 class ReportPdfGenerator {
   ReportPdfGenerator._();
 
@@ -26,7 +18,7 @@ class ReportPdfGenerator {
   static final _red = PdfColor.fromInt(AppTheme.red700.toARGB32());
   static final _amber = PdfColor.fromInt(AppTheme.yellow900.toARGB32());
 
-  /// Generate PDF document from report result.
+  // Generate PDF document from report result.
   static Future<Uint8List> generate(ReportResultModel report) async {
     final pdf = pw.Document(
       title: 'Inventory Report',
@@ -180,20 +172,7 @@ class ReportPdfGenerator {
     return pdf.save();
   }
 
-  /// Share / print / save the PDF.
-  static Future<void> shareOrPrint(
-    BuildContext context,
-    Uint8List pdfBytes,
-  ) async {
-    await Printing.layoutPdf(
-      onLayout: (_) => pdfBytes,
-      name:
-          'inventory_report_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.pdf',
-    );
-  }
-
-  /// Save PDF locally to Documents/Reports/ directory.
-  /// Returns the full file path on success, null on failure.
+  // Save PDF locally to Documents/Reports/ directory. Returns the full file path on success, null on failure.
   static Future<String?> saveLocally(Uint8List pdfBytes) async {
     try {
       final docsDir = await getApplicationDocumentsDirectory();
@@ -213,7 +192,7 @@ class ReportPdfGenerator {
     }
   }
 
-  /// Share the PDF via system share sheet using share_plus.
+  // Share the PDF via system share sheet using share_plus.
   static Future<void> shareReport(Uint8List pdfBytes) async {
     try {
       // Save to temp for sharing

@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 
-/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTimeHelper(dynamic value) {
   if (value == null) return null;
   if (value is Timestamp) return value.toDate();
@@ -9,34 +9,34 @@ DateTime? _parseDateTimeHelper(dynamic value) {
   return null;
 }
 
-/// Sync status for delta sync logic
+// Sync status for delta sync logic
 enum BillSyncStatus {
-  /// Newly created locally, not yet on server
+  // Newly created locally, not yet on server
   newRecord,
 
-  /// Modified locally after sync
+  // Modified locally after sync
   updated,
 
-  /// Marked for deletion, pending server delete
+  // Marked for deletion, pending server delete
   deleted,
 
-  /// Fully synced with server
+  // Fully synced with server
   synced,
 }
 
-/// Payment status of a bill
+// Payment status of a bill
 enum BillPaymentStatus {
-  /// Full amount received at time of sale
+  // Full amount received at time of sale
   paid,
 
-  /// Partial payment received, some amount pending
+  // Partial payment received, some amount pending
   partiallyPaid,
 
-  /// No payment received, full amount pending
+  // No payment received, full amount pending
   pending,
 }
 
-/// Embedded entity for bill items (stored within BillEntity)
+// Embedded entity for bill items (stored within BillEntity)
 class BillItemEmbedded {
   String? itemId;
   String? productId;
@@ -98,100 +98,99 @@ class BillItemEmbedded {
   }
 }
 
-/// Local record for Bill with offline-first support
+// Local record for Bill with offline-first support
 class BillEntity {
-  /// Local row id
+  // Local row id
   int id = 0;
 
-  /// Server-side ID (null for locally created, not yet synced records)
+  // Server-side ID (null for locally created, not yet synced records)
   String? serverId;
 
-  /// Customer ID (indexed for filtering)
+  // Customer ID (indexed for filtering)
   String? customerId;
 
-  /// Customer name (for display purposes)
+  // Customer name (for display purposes)
   String? customerName;
 
-  /// Customer contact
+  // Customer contact
   String? customerContact;
 
-  /// Bill items (embedded list)
+  // Bill items (embedded list)
   List<BillItemEmbedded> items;
 
-  /// Total quantity of all items
+  // Total quantity of all items
   int totalQuantity;
 
-  /// Total amount before discount
+  // Total amount before discount
   double totalAmount;
 
-  /// Discount amount
+  // Discount amount
   double discountAmount;
 
-  /// Discount percentage
+  // Discount percentage
   double discountPercent;
 
-  /// Final amount after discount
+  // Final amount after discount
   double finalAmount;
 
-  /// Bill date
+  // Bill date
   DateTime billDate;
 
-  /// Notes
+  // Notes
   String? notes;
 
-  /// Return status
+  // Return status
   bool returnStatus;
 
-  /// Return date
+  // Return date
   DateTime? returnDate;
 
-  /// Payment status
+  // Payment status
   BillPaymentStatus paymentStatus;
 
-  /// Amount already paid
+  // Amount already paid
   double paidAmount;
 
-  /// Amount still pending
+  // Amount still pending
   double pendingAmount;
 
-  // ═══════════════ GST Fields ═══════════════
-  /// Whether GST was applied to this bill
+  // ═══════════════ GST Fields ═══════════════ Whether GST was applied to this bill
   bool isGstApplied;
 
-  /// Whether GST is inclusive (true) or exclusive (false)
+  // Whether GST is inclusive (true) or exclusive (false)
   bool isTaxInclusive;
 
-  /// CGST percentage applied
+  // CGST percentage applied
   double cgstPercent;
 
-  /// SGST percentage applied
+  // SGST percentage applied
   double sgstPercent;
 
-  /// Other tax percentage applied
+  // Other tax percentage applied
   double otherTaxPercent;
 
-  /// Other tax name
+  // Other tax name
   String? otherTaxName;
 
-  /// Calculated CGST amount
+  // Calculated CGST amount
   double cgstAmount;
 
-  /// Calculated SGST amount
+  // Calculated SGST amount
   double sgstAmount;
 
-  /// Calculated other tax amount
+  // Calculated other tax amount
   double otherTaxAmount;
 
-  /// Total tax amount
+  // Total tax amount
   double totalTaxAmount;
 
-  /// Sync status for delta sync
+  // Sync status for delta sync
   BillSyncStatus syncStatus;
 
-  /// Created timestamp (indexed for sorting)
+  // Created timestamp (indexed for sorting)
   DateTime createdAt;
 
-  /// Last update timestamp
+  // Last update timestamp
   DateTime updatedAt;
 
   BillEntity({
@@ -227,7 +226,7 @@ class BillEntity {
     required this.updatedAt,
   });
 
-  /// Factory constructor for creating new bill with defaults
+  // Factory constructor for creating new bill with defaults
   factory BillEntity.create({
     String? serverId,
     String? customerId,
@@ -293,7 +292,7 @@ class BillEntity {
     );
   }
 
-  /// Create from server response (Firestore document)
+  // Create from server response (Firestore document)
   factory BillEntity.fromServer(Map<String, dynamic> data) {
     final now = DateTime.now();
 
@@ -340,7 +339,7 @@ class BillEntity {
     );
   }
 
-  /// Parse payment status from string
+  // Parse payment status from string
   static BillPaymentStatus _parsePaymentStatus(String? status) {
     switch (status) {
       case 'paid':
@@ -354,7 +353,7 @@ class BillEntity {
     }
   }
 
-  /// Convert to Map for Firestore
+  // Convert to Map for Firestore
   Map<String, dynamic> toBillMap() {
     return {
       'id': serverId ?? '',
@@ -379,7 +378,7 @@ class BillEntity {
     };
   }
 
-  /// Convert to sync payload (for creating/updating on server)
+  // Convert to sync payload (for creating/updating on server)
   Map<String, dynamic> toSyncPayload() {
     return {
       'customerId': customerId,
@@ -413,11 +412,11 @@ class BillEntity {
     };
   }
 
-  /// Helper getters for sync status
+  // Helper getters for sync status
   bool get needsSync => syncStatus != BillSyncStatus.synced;
   bool get isMarkedForDeletion => syncStatus == BillSyncStatus.deleted;
 
-  /// Copy with modifications
+  // Copy with modifications
   BillEntity copyWith({
     String? serverId,
     String? customerId,

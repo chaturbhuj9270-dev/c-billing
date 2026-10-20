@@ -7,7 +7,7 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Model representing a scanned invoice item
+// Model representing a scanned invoice item
 class ScannedInvoiceItem {
   String productName;
   String? companyName;
@@ -193,7 +193,7 @@ class ScannedInvoiceItem {
   }
 }
 
-/// Model representing scanned invoice metadata
+// Model representing scanned invoice metadata
 class ScannedInvoiceData {
   String? invoiceNumber;
   DateTime? invoiceDate;
@@ -261,7 +261,7 @@ class ScannedInvoiceData {
   }
 }
 
-/// Result of invoice scanning operation
+// Result of invoice scanning operation
 class InvoiceScanResult {
   final bool success;
   final ScannedInvoiceData? data;
@@ -291,7 +291,7 @@ class InvoiceScanResult {
   }
 }
 
-/// Service for scanning invoices using Google Gemini AI
+// Service for scanning invoices using Google Gemini AI
 class InvoiceScannerService {
   static const String _apiKeyPrefKey = 'gemini_api_key';
   static final InvoiceScannerService _instance =
@@ -302,7 +302,7 @@ class InvoiceScannerService {
 
   InvoiceScannerService._internal();
 
-  /// SHA-256 of the key that used to ship in the app. The key itself is not stored.
+  // SHA-256 of the key that used to ship in the app. The key itself is not stored.
   static const String _revokedKeyHash =
       '64fbad5a478a1b5c79753f8ce29b5cb7e51f88337de3280865f3ba6876a9b036';
 
@@ -324,9 +324,7 @@ class InvoiceScannerService {
   GenerativeModel? _model;
   String? _apiKey;
 
-  /// Initialize the service with the shop's own API key.
-  ///
-  /// There is no built-in key. Scanning stays available once a key is saved.
+  // Initialize the service with the shop's own API key. There is no built-in key. Scanning stays available once a key is saved.
   Future<void> initialize({String? apiKey}) async {
     if (apiKey != null && apiKey.isNotEmpty) {
       if (_isRevokedKey(apiKey)) {
@@ -393,16 +391,16 @@ class InvoiceScannerService {
     return stored;
   }
 
-  /// Check if API key is configured
+  // Check if API key is configured
   bool get isConfigured => _apiKey != null && _apiKey!.isNotEmpty;
 
-  /// Get current API key (masked)
+  // Get current API key (masked)
   String? get maskedApiKey {
     if (_apiKey == null || _apiKey!.length < 8) return null;
     return '${_apiKey!.substring(0, 4)}****${_apiKey!.substring(_apiKey!.length - 4)}';
   }
 
-  /// Update API key
+  // Update API key
   Future<void> setApiKey(String apiKey) async {
     if (_isRevokedKey(apiKey)) {
       await clearApiKey();
@@ -413,7 +411,7 @@ class InvoiceScannerService {
     _initializeModel();
   }
 
-  /// Clear API key
+  // Clear API key
   Future<void> clearApiKey() async {
     _apiKey = null;
     _model = null;
@@ -426,7 +424,7 @@ class InvoiceScannerService {
     await prefs.remove(_apiKeyPrefKey);
   }
 
-  /// Pick image from camera or gallery
+  // Pick image from camera or gallery
   Future<File?> pickImage({required ImageSource source}) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(
@@ -442,7 +440,7 @@ class InvoiceScannerService {
     return null;
   }
 
-  /// Scan invoice image and extract data using Gemini AI
+  // Scan invoice image and extract data using Gemini AI
   Future<InvoiceScanResult> scanInvoice(File imageFile) async {
     if (!isConfigured) {
       return InvoiceScanResult.error(
@@ -567,7 +565,7 @@ Important rules:
     }
   }
 
-  /// Scan invoice from bytes (for web or pre-loaded images)
+  // Scan invoice from bytes (for web or pre-loaded images)
   Future<InvoiceScanResult> scanInvoiceFromBytes(Uint8List imageBytes) async {
     if (!isConfigured) {
       return InvoiceScanResult.error(

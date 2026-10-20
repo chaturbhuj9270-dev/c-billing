@@ -4,8 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/repositories/dashboard_repository_interface.dart';
 
-/// Firebase datasource for dashboard data
-/// Optimized for minimal reads using parallel queries and Firestore caching
+// Firebase datasource for dashboard data Optimized for minimal reads using parallel queries and Firestore caching
 class DashboardFirebaseDataSource {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
@@ -16,19 +15,17 @@ class DashboardFirebaseDataSource {
   }) : _firestore = firestore ?? FirebaseFirestore.instance,
        _auth = auth ?? FirebaseAuth.instance;
 
-  /// Get current user ID
+  // Get current user ID
   String? get _userId => _auth.currentUser?.uid;
 
-  /// Get user's document reference
+  // Get user's document reference
   DocumentReference? get _userRef {
     final userId = _userId;
     if (userId == null) return null;
     return _firestore.collection('users').doc(userId);
   }
 
-  /// Fetch dashboard data from Firebase
-  /// Uses parallel queries for maximum performance
-  /// Leverages Firestore's built-in cache with Source.serverAndCache
+  // Fetch dashboard data from Firebase Uses parallel queries for maximum performance Leverages Firestore's built-in cache with Source.serverAndCache
   Future<DashboardSummary> fetchDashboardData({
     required DashboardParams params,
     bool forceNetwork = false,
@@ -47,8 +44,7 @@ class DashboardFirebaseDataSource {
     );
     debugPrint('[DashboardFirebaseDataSource] Date range: $startDate to $endDate');
 
-    // Use cache source unless forced to network
-    // Note: AggregateSource only supports server, but regular queries support cache
+    // Use cache source unless forced to network Note: AggregateSource only supports server, but regular queries support cache
     final source = forceNetwork ? Source.server : Source.serverAndCache;
 
     try {
@@ -154,7 +150,7 @@ class DashboardFirebaseDataSource {
     }
   }
 
-  /// Stream dashboard data using Firestore snapshots for real-time updates
+  // Stream dashboard data using Firestore snapshots for real-time updates
   Stream<DashboardSummary> watchDashboardData({
     required DashboardParams params,
   }) async* {
@@ -163,11 +159,9 @@ class DashboardFirebaseDataSource {
       throw Exception('User not authenticated');
     }
 
-    // First emit cached data if available (handled by repository)
-    // Then stream real-time updates
+    // First emit cached data if available (handled by repository) Then stream real-time updates
 
-    // For simplicity, we'll poll every 30 seconds
-    // In production, consider using Firestore snapshots for specific collections
+    // For simplicity, we'll poll every 30 seconds In production, consider using Firestore snapshots for specific collections
     while (true) {
       try {
         yield await fetchDashboardData(params: params);
@@ -179,8 +173,7 @@ class DashboardFirebaseDataSource {
     }
   }
 
-  /// Get bills with optional date filtering
-  /// Note: billDate is stored as ISO8601 string in Firestore
+  // Get bills with optional date filtering Note: billDate is stored as ISO8601 string in Firestore
   Future<QuerySnapshot> _getBillsForPeriod(
     DocumentReference userRef,
     DateTime? startDate,
@@ -205,8 +198,7 @@ class DashboardFirebaseDataSource {
     return query.get(GetOptions(source: source));
   }
 
-  /// Get purchases with optional date filtering
-  /// Note: createdAt is stored as ISO8601 string in Firestore
+  // Get purchases with optional date filtering Note: createdAt is stored as ISO8601 string in Firestore
   Future<QuerySnapshot> _getPurchasesForPeriod(
     DocumentReference userRef,
     DateTime? startDate,
@@ -231,7 +223,7 @@ class DashboardFirebaseDataSource {
     return query.get(GetOptions(source: source));
   }
 
-  /// Get products snapshot
+  // Get products snapshot
   Future<QuerySnapshot> _getProductsSnapshot(
     DocumentReference userRef,
     Source source,
@@ -239,9 +231,7 @@ class DashboardFirebaseDataSource {
     return userRef.collection('products').get(GetOptions(source: source));
   }
 
-  /// Calculate sales metrics from bills snapshot
-  /// CORRECTLY handles returns: deducts returnedQuantity from profit calculation
-  /// Uses finalAmount (after discount) for gross sales
+  // Calculate sales metrics from bills snapshot CORRECTLY handles returns: deducts returnedQuantity from profit calculation Uses finalAmount (after discount) for gross sales
   _SalesMetrics _calculateSalesMetrics(QuerySnapshot billsSnapshot) {
     double totalAmount = 0; // Total after discounts (finalAmount)
     double totalReturns = 0;
@@ -303,7 +293,7 @@ class DashboardFirebaseDataSource {
     );
   }
 
-  /// Calculate purchase metrics from purchases snapshot
+  // Calculate purchase metrics from purchases snapshot
   _PurchaseMetrics _calculatePurchaseMetrics(QuerySnapshot purchasesSnapshot) {
     double totalAmount = 0;
     int itemCount = 0;
@@ -323,7 +313,7 @@ class DashboardFirebaseDataSource {
     );
   }
 
-  /// Calculate stock metrics from products snapshot
+  // Calculate stock metrics from products snapshot
   _StockMetrics _calculateStockMetrics(QuerySnapshot productsSnapshot) {
     double stockValue = 0;
     int lowStockCount = 0;
@@ -342,7 +332,7 @@ class DashboardFirebaseDataSource {
   }
 }
 
-/// Internal class for sales metrics calculation
+// Internal class for sales metrics calculation
 class _SalesMetrics {
   final double totalAmount;
   final double totalReturns;
@@ -363,7 +353,7 @@ class _SalesMetrics {
   });
 }
 
-/// Internal class for purchase metrics calculation
+// Internal class for purchase metrics calculation
 class _PurchaseMetrics {
   final double totalAmount;
   final int count;
@@ -376,7 +366,7 @@ class _PurchaseMetrics {
   });
 }
 
-/// Internal class for stock metrics calculation
+// Internal class for stock metrics calculation
 class _StockMetrics {
   final double stockValue;
   final int lowStockCount;

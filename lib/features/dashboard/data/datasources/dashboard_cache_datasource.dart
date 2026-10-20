@@ -3,24 +3,23 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/repositories/dashboard_repository_interface.dart';
 
-/// Local cache datasource for dashboard data
-/// Uses SharedPreferences for persistent storage and in-memory cache for speed
+// Local cache datasource for dashboard data Uses SharedPreferences for persistent storage and in-memory cache for speed
 class DashboardCacheDataSource {
   static const String _cachePrefix = 'dashboard_cache_';
   static const Duration _defaultCacheDuration = Duration(minutes: 30);
 
   SharedPreferences? _prefs;
   
-  /// In-memory cache for instant access
+  // In-memory cache for instant access
   final Map<String, DashboardSummary> _memoryCache = {};
 
-  /// Initialize the datasource
+  // Initialize the datasource
   Future<void> init() async {
     _prefs ??= await SharedPreferences.getInstance();
     await _loadAllCachesToMemory();
   }
 
-  /// Load all dashboard caches from disk to memory
+  // Load all dashboard caches from disk to memory
   Future<void> _loadAllCachesToMemory() async {
     if (_prefs == null) return;
     
@@ -41,12 +40,12 @@ class DashboardCacheDataSource {
     }
   }
 
-  /// Get cached data from memory (instant, synchronous)
+  // Get cached data from memory (instant, synchronous)
   DashboardSummary? getCachedSync(DashboardParams params) {
     return _memoryCache[params.cacheKey];
   }
 
-  /// Get cached data (async, from memory or disk)
+  // Get cached data (async, from memory or disk)
   Future<DashboardSummary?> getCached(DashboardParams params) async {
     // First check memory cache
     final memoryCached = _memoryCache[params.cacheKey];
@@ -73,7 +72,7 @@ class DashboardCacheDataSource {
     }
   }
 
-  /// Save data to cache (both memory and disk)
+  // Save data to cache (both memory and disk)
   Future<void> saveToCache(DashboardParams params, DashboardSummary summary) async {
     // Immediately update memory cache
     _memoryCache[params.cacheKey] = summary;
@@ -84,7 +83,7 @@ class DashboardCacheDataSource {
     await _prefs!.setString('$_cachePrefix${params.cacheKey}', jsonStr);
   }
 
-  /// Check if cache is valid (exists and not expired)
+  // Check if cache is valid (exists and not expired)
   bool isCacheValid(DashboardParams params, {Duration? maxAge}) {
     final cached = _memoryCache[params.cacheKey];
     if (cached == null) return false;
@@ -93,7 +92,7 @@ class DashboardCacheDataSource {
     return !cached.isStale(threshold: age);
   }
 
-  /// Clear all cached data
+  // Clear all cached data
   Future<void> clearAll() async {
     _memoryCache.clear();
     
@@ -104,7 +103,7 @@ class DashboardCacheDataSource {
     }
   }
 
-  /// Clear specific cache entry
+  // Clear specific cache entry
   Future<void> clearCache(DashboardParams params) async {
     _memoryCache.remove(params.cacheKey);
     
@@ -116,7 +115,7 @@ class DashboardCacheDataSource {
     _prefs ??= await SharedPreferences.getInstance();
   }
 
-  /// Preload default dashboard cache on app start
+  // Preload default dashboard cache on app start
   Future<void> preloadDefaultCache() async {
     await init();
     // Load thisMonth filter by default as it's the most common

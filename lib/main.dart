@@ -34,10 +34,7 @@ Future<void> main() async {
   // Initialize error logging service early to capture all errors
   ErrorLoggingService.initialize();
 
-  // Firebase MUST be initialized before runApp because services
-  // like SubscriptionService access FirebaseFirestore.instance at construction time.
-  // Timeout avoids an indefinite blank screen when Play Services is slow/broken
-  // (common on some Android emulators, especially 16KB page-size images).
+  // Firebase MUST be initialized before runApp because services like SubscriptionService access FirebaseFirestore.instance at construction time. Timeout avoids an indefinite blank s...
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -46,9 +43,7 @@ Future<void> main() async {
     debugPrint('Firebase init error: $e');
   }
 
-  // Firestore's on-disk cache aborts the Mac process if that database is
-  // locked or unreadable. This app keeps its own offline database, so the
-  // Mac build uses memory only. This must run before any other Firestore call.
+  // Firestore's on-disk cache aborts the Mac process if that database is locked or unreadable. This app keeps its own offline database, so the Mac build uses memory only. This must...
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS) {
     try {
       FirebaseFirestore.instance.settings = const Settings(
@@ -66,7 +61,7 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
-/// Initialize non-Firebase services. Called from SplashPage so the UI is visible.
+// Initialize non-Firebase services. Called from SplashPage so the UI is visible.
 Future<void> initializeServices() async {
   // Run all independent initializations in parallel for faster startup
   await Future.wait([
@@ -105,7 +100,7 @@ Future<void> initializeServices() async {
   ]);
 }
 
-/// Safe initialization wrapper
+// Safe initialization wrapper
 Future<void> _safeInit(Future<void> Function() init, String name) async {
   try {
     await init();
@@ -114,7 +109,7 @@ Future<void> _safeInit(Future<void> Function() init, String name) async {
   }
 }
 
-/// Initialize sync services. Call ONLY after user is authenticated.
+// Initialize sync services. Call ONLY after user is authenticated.
 void initializeSyncServices() {
   CustomerSyncService.instance.initialize();
   CustomerTransactionSyncService.instance.initialize();

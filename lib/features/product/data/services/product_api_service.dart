@@ -2,8 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
-/// API Service for Product data operations with Firebase
-/// Handles all remote server communication for products
+// API Service for Product data operations with Firebase Handles all remote server communication for products
 class ProductApiService {
   static ProductApiService? _instance;
 
@@ -16,19 +15,19 @@ class ProductApiService {
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
         _auth = auth ?? FirebaseAuth.instance;
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static ProductApiService get instance {
     _instance ??= ProductApiService._();
     return _instance!;
   }
 
-  /// Get current user ID
+  // Get current user ID
   String? get _userId => _auth.currentUser?.uid;
 
-  /// Check if user is authenticated
+  // Check if user is authenticated
   bool get isAuthenticated => _userId != null;
 
-  /// Get products collection reference for current user
+  // Get products collection reference for current user
   CollectionReference<Map<String, dynamic>>? get _productsRef {
     final userId = _userId;
     if (userId == null) return null;
@@ -38,15 +37,14 @@ class ProductApiService {
         .collection('products');
   }
 
-  /// Ensure user is authenticated
+  // Ensure user is authenticated
   void _ensureAuthenticated() {
     if (_userId == null) {
       throw Exception('User not authenticated');
     }
   }
 
-  /// Fetch all products from server
-  /// If [updatedSince] is provided, only fetch products updated after that time
+  // Fetch all products from server If [updatedSince] is provided, only fetch products updated after that time
   Future<List<Map<String, dynamic>>> getProducts({
     DateTime? updatedSince,
   }) async {
@@ -79,7 +77,7 @@ class ProductApiService {
     }
   }
 
-  /// Get a single product by ID
+  // Get a single product by ID
   Future<Map<String, dynamic>?> getProduct(String id) async {
     _ensureAuthenticated();
     
@@ -96,8 +94,7 @@ class ProductApiService {
     }
   }
 
-  /// Create a new product on the server
-  /// Returns the server response with the new document ID
+  // Create a new product on the server Returns the server response with the new document ID
   Future<Map<String, dynamic>> createProduct(Map<String, dynamic> productData) async {
     _ensureAuthenticated();
     
@@ -129,7 +126,7 @@ class ProductApiService {
     }
   }
 
-  /// Update an existing product on the server
+  // Update an existing product on the server
   Future<Map<String, dynamic>> updateProduct(String id, Map<String, dynamic> productData) async {
     _ensureAuthenticated();
     
@@ -160,7 +157,7 @@ class ProductApiService {
     }
   }
 
-  /// Delete a product from the server
+  // Delete a product from the server
   Future<void> deleteProduct(String id) async {
     _ensureAuthenticated();
     
@@ -173,7 +170,7 @@ class ProductApiService {
     }
   }
 
-  /// Check if a product with the given barcode exists on server
+  // Check if a product with the given barcode exists on server
   Future<bool> barcodeExists(String barcode, {String? excludeId}) async {
     _ensureAuthenticated();
     
@@ -192,7 +189,7 @@ class ProductApiService {
     }
   }
 
-  /// Get products count on server
+  // Get products count on server
   Future<int> getProductsCount() async {
     _ensureAuthenticated();
     
@@ -205,13 +202,12 @@ class ProductApiService {
     }
   }
 
-  /// Search products by name (server-side)
+  // Search products by name (server-side)
   Future<List<Map<String, dynamic>>> searchProducts(String query) async {
     _ensureAuthenticated();
     
     try {
-      // Firebase doesn't support full-text search well
-      // This searches by exact prefix match on name
+      // Firebase doesn't support full-text search well This searches by exact prefix match on name
       final snapshot = await _productsRef!
           .where('name', isGreaterThanOrEqualTo: query)
           .where('name', isLessThanOrEqualTo: '$query\uf8ff')
@@ -229,7 +225,7 @@ class ProductApiService {
     }
   }
 
-  /// Get products by category
+  // Get products by category
   Future<List<Map<String, dynamic>>> getProductsByCategory(String category) async {
     _ensureAuthenticated();
     
@@ -250,7 +246,7 @@ class ProductApiService {
     }
   }
 
-  /// Batch create products (for bulk import)
+  // Batch create products (for bulk import)
   Future<List<String>> batchCreateProducts(List<Map<String, dynamic>> products) async {
     _ensureAuthenticated();
     
@@ -280,7 +276,7 @@ class ProductApiService {
     }
   }
 
-  /// Batch update products
+  // Batch update products
   Future<void> batchUpdateProducts(Map<String, Map<String, dynamic>> updates) async {
     _ensureAuthenticated();
     
@@ -305,7 +301,7 @@ class ProductApiService {
     }
   }
 
-  /// Batch delete products
+  // Batch delete products
   Future<void> batchDeleteProducts(List<String> ids) async {
     _ensureAuthenticated();
     

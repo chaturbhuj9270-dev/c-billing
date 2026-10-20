@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-/// Model class for dashboard data
+// Model class for dashboard data
 class DashboardData extends Equatable {
   final int invoicesCount;
   final int clientsCount;
@@ -62,7 +62,7 @@ class DashboardData extends Equatable {
     this.eventOrdersPending = 0,
   });
 
-  /// Empty dashboard data
+  // Empty dashboard data
   static const empty = DashboardData();
 
   DashboardData copyWith({

@@ -9,7 +9,7 @@ import '../cubit/biometric_state.dart';
 import '../../../../../../core/services/biometric_service.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 
-/// Settings card for enabling/disabling biometric authentication
+// Settings card for enabling/disabling biometric authentication
 class BiometricSettingsCard extends StatefulWidget {
   final String userId;
   final VoidCallback? onChanged;

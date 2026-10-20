@@ -3,7 +3,7 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 
-/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTime(dynamic value) {
   if (value == null) return null;
   if (value is Timestamp) return value.toDate();
@@ -12,118 +12,117 @@ DateTime? _parseDateTime(dynamic value) {
   return null;
 }
 
-/// Type of ledger transaction
+// Type of ledger transaction
 enum LedgerTransactionType {
-  /// Stock increased due to purchase
+  // Stock increased due to purchase
   PURCHASE,
 
-  /// Stock decreased due to sale
+  // Stock decreased due to sale
   SALE,
 
-  /// Stock adjustment (manual correction)
+  // Stock adjustment (manual correction)
   ADJUSTMENT,
 
-  /// Stock returned from customer
+  // Stock returned from customer
   SALE_RETURN,
 
-  /// Stock returned to supplier
+  // Stock returned to supplier
   PURCHASE_RETURN,
 
-  /// Stock transferred between locations
+  // Stock transferred between locations
   TRANSFER,
 
-  /// Initial stock entry
+  // Initial stock entry
   OPENING_STOCK,
 }
 
-/// Sync status for delta sync logic
+// Sync status for delta sync logic
 enum LedgerSyncStatus {
-  /// Newly created locally, not yet on server
+  // Newly created locally, not yet on server
   newRecord,
 
-  /// Modified locally after sync
+  // Modified locally after sync
   updated,
 
-  /// Marked for deletion, pending server delete
+  // Marked for deletion, pending server delete
   deleted,
 
-  /// Fully synced with server
+  // Fully synced with server
   synced,
 }
 
-/// Local record for Stock Ledger with offline-first support
-/// Tracks all stock movements with batch reference for COGS calculation
+// Local record for Stock Ledger with offline-first support Tracks all stock movements with batch reference for COGS calculation
 class StockLedgerEntity {
-  /// Local row id
+  // Local row id
   int id = 0;
 
-  /// Server-side ledger ID (null for locally created, not yet synced records)
+  // Server-side ledger ID (null for locally created, not yet synced records)
   String? serverId;
 
-  /// Product ID (indexed for fast lookup)
+  // Product ID (indexed for fast lookup)
   String productId;
 
-  /// Product name for quick reference
+  // Product name for quick reference
   String productName;
 
-  /// Company/Brand name
+  // Company/Brand name
   String companyName;
 
-  /// Model name or variant
+  // Model name or variant
   String modelName;
 
-  /// Unique key combining productName + companyName + modelName
+  // Unique key combining productName + companyName + modelName
   String productUniqueKey;
 
-  /// Batch ID this transaction belongs to (for FIFO tracking)
+  // Batch ID this transaction belongs to (for FIFO tracking)
   String batchId;
 
-  /// Local batch ID (local id of the batch)
+  // Local batch ID (local id of the batch)
   int? localBatchId;
 
-  /// Type of transaction
+  // Type of transaction
   LedgerTransactionType ledgerType;
 
-  /// Reference ID (e.g., Bill ID for sales, Purchase ID for purchases)
+  // Reference ID (e.g., Bill ID for sales, Purchase ID for purchases)
   String referenceId;
 
-  /// Reference type (BILL, PURCHASE, ADJUSTMENT, etc.)
+  // Reference type (BILL, PURCHASE, ADJUSTMENT, etc.)
   String referenceType;
 
-  /// Quantity moved in this transaction (always positive)
+  // Quantity moved in this transaction (always positive)
   int quantity;
 
-  /// Cost price per unit from the batch (for COGS calculation)
+  // Cost price per unit from the batch (for COGS calculation)
   double costPrice;
 
-  /// Selling price per unit (for sales transactions)
+  // Selling price per unit (for sales transactions)
   double sellingPrice;
 
-  /// Total cost = costPrice * quantity
+  // Total cost = costPrice * quantity
   double totalCost;
 
-  /// Total revenue = sellingPrice * quantity (for sales)
+  // Total revenue = sellingPrice * quantity (for sales)
   double totalRevenue;
 
-  /// Profit for this transaction (for sales)
+  // Profit for this transaction (for sales)
   double profit;
 
-  /// Balance quantity after this transaction
+  // Balance quantity after this transaction
   int balanceQuantity;
 
-  /// Balance value after this transaction
+  // Balance value after this transaction
   double balanceValue;
 
-  /// Date of transaction (indexed for sorting and filtering)
+  // Date of transaction (indexed for sorting and filtering)
   DateTime transactionDate;
 
-  /// Notes for this entry
+  // Notes for this entry
   String? notes;
 
-  /// Sync status for delta sync
+  // Sync status for delta sync
   LedgerSyncStatus syncStatus;
 
-  /// Created timestamp
+  // Created timestamp
   DateTime createdAt;
 
   StockLedgerEntity({
@@ -152,7 +151,7 @@ class StockLedgerEntity {
     required this.createdAt,
   });
 
-  /// Factory for creating a PURCHASE ledger entry
+  // Factory for creating a PURCHASE ledger entry
   factory StockLedgerEntity.forPurchase({
     String? serverId,
     required String productId,
@@ -200,7 +199,7 @@ class StockLedgerEntity {
     );
   }
 
-  /// Factory for creating a SALE ledger entry
+  // Factory for creating a SALE ledger entry
   factory StockLedgerEntity.forSale({
     String? serverId,
     required String productId,
@@ -251,7 +250,7 @@ class StockLedgerEntity {
     );
   }
 
-  /// Factory for creating a SALE_RETURN ledger entry
+  // Factory for creating a SALE_RETURN ledger entry
   factory StockLedgerEntity.forSaleReturn({
     String? serverId,
     required String productId,
@@ -302,7 +301,7 @@ class StockLedgerEntity {
     );
   }
 
-  /// Create from server response (Firestore document)
+  // Create from server response (Firestore document)
   factory StockLedgerEntity.fromServer(Map<String, dynamic> data) {
     final now = DateTime.now();
     final productName = data['productName'] as String? ?? '';
@@ -349,7 +348,7 @@ class StockLedgerEntity {
     );
   }
 
-  /// Convert to Map for API sync
+  // Convert to Map for API sync
   Map<String, dynamic> toSyncPayload() {
     return {
       'ledgerId': serverId,
@@ -377,7 +376,7 @@ class StockLedgerEntity {
     };
   }
 
-  /// Convert to Map for UI
+  // Convert to Map for UI
   Map<String, dynamic> toLedgerMap() {
     return {
       'ledgerId': serverId ?? 'local_$id',
@@ -415,7 +414,7 @@ class StockLedgerEntity {
     };
   }
 
-  /// Copy with modifications
+  // Copy with modifications
   StockLedgerEntity copyWith({
     int? id,
     String? serverId,
@@ -471,19 +470,19 @@ class StockLedgerEntity {
     return entity;
   }
 
-  /// Check if ledger entry needs sync
+  // Check if ledger entry needs sync
   bool get needsSync => syncStatus != LedgerSyncStatus.synced;
 
-  /// Check if ledger is marked for deletion
+  // Check if ledger is marked for deletion
   bool get isMarkedForDeletion => syncStatus == LedgerSyncStatus.deleted;
 
-  /// Check if this is an inbound transaction (increases stock)
+  // Check if this is an inbound transaction (increases stock)
   bool get isInbound =>
       ledgerType == LedgerTransactionType.PURCHASE ||
       ledgerType == LedgerTransactionType.SALE_RETURN ||
       ledgerType == LedgerTransactionType.OPENING_STOCK;
 
-  /// Check if this is an outbound transaction (decreases stock)
+  // Check if this is an outbound transaction (decreases stock)
   bool get isOutbound =>
       ledgerType == LedgerTransactionType.SALE ||
       ledgerType == LedgerTransactionType.PURCHASE_RETURN;

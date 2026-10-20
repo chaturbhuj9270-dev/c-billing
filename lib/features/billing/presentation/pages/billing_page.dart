@@ -6,14 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:c_billing/core/services/billing_service.dart';
 import 'package:c_billing/core/services/customer_transaction_service.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/features/billing/data/repositories/firebase_bill_repository.dart';
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_item.dart';
-import 'package:c_billing/features/inventory_management/data/repositories/firebase_product_repository.dart';
-import 'package:c_billing/features/inventory_management/data/repositories/firebase_stock_repository.dart';
 import 'package:c_billing/features/inventory_management/domain/entities/product.dart';
 import 'package:c_billing/features/billing/data/datasources/bill_cache_datasource.dart';
 import 'package:c_billing/core/printing/printing.dart';
@@ -74,8 +71,6 @@ class BillingPage extends StatefulWidget {
 }
 
 class _BillingPageState extends State<BillingPage> {
-  // ignore: unused_field
-  late BillingService _billingService;
   late CustomerTransactionService _customerTransactionService;
   late FirebaseFirestore _firestore;
   late ShopRepository _shopRepository;
@@ -152,7 +147,7 @@ class _BillingPageState extends State<BillingPage> {
   BillTaxSettings _taxSettings = BillTaxSettings.defaultSettings;
   GstMode _gstMode = GstMode.noGst;
 
-  /// Computed tax breakdown based on current subtotal and GST mode
+  // Computed tax breakdown based on current subtotal and GST mode
   TaxBreakdown? get _taxBreakdown {
     if (_gstMode == GstMode.noGst || !_taxSettings.hasAnyTaxEnabled) {
       return null;
@@ -181,13 +176,6 @@ class _BillingPageState extends State<BillingPage> {
       firestore: _firestore,
       customerRepository: _customerRepository,
       transactionRepository: customerTransactionRepository,
-    );
-
-    _billingService = BillingService(
-      billRepository: FirebaseBillRepository(firestore: _firestore),
-      productRepository: FirebaseProductRepository(firestore: _firestore),
-      stockRepository: FirebaseStockRepository(firestore: _firestore),
-      customerTransactionService: _customerTransactionService,
     );
 
     // Listen for customer phone number changes
@@ -254,7 +242,7 @@ class _BillingPageState extends State<BillingPage> {
     }
   }
 
-  /// Setup real-time product stream from the local database — auto-refreshes on any product/stock change
+  // Setup real-time product stream from the local database — auto-refreshes on any product/stock change
   void _setupProductStream() {
     _productStreamSubscription = ProductOfflineController.instance
         .watchAllProducts()
@@ -266,7 +254,7 @@ class _BillingPageState extends State<BillingPage> {
     _loadProducts();
   }
 
-  /// Setup real-time customer stream from the local database — auto-refreshes on any customer change
+  // Setup real-time customer stream from the local database — auto-refreshes on any customer change
   void _setupCustomerStream() {
     _customerStreamSubscription = CustomerOfflineController.instance
         .watchAllCustomers()
@@ -372,8 +360,7 @@ class _BillingPageState extends State<BillingPage> {
               batches.where((b) => b.quantityRemaining > 0).toList()..sort(
                 (a, b) => a.purchaseDate.compareTo(b.purchaseDate),
               ); // FIFO order
-          // Build index lookup map from ALL products (not just in-stock)
-          // so product code search works even when currentStock=0 but batches have stock
+          // Build index lookup map from ALL products (not just in-stock) so product code search works even when currentStock=0 but batches have stock
           _productByIndexNo = {
             for (final product in allMappedProducts)
               if (product.indexNo > 0) product.indexNo: product,
@@ -488,7 +475,7 @@ class _BillingPageState extends State<BillingPage> {
     }
   }
 
-  /// Listener for phone number changes - implements debounced search
+  // Listener for phone number changes - implements debounced search
   void _onPhoneNumberChanged() {
     if (!mounted) return;
     final phoneNumber = _customerContactController.text.trim();
@@ -526,7 +513,7 @@ class _BillingPageState extends State<BillingPage> {
     });
   }
 
-  /// Search for customer by phone number using local _customers list
+  // Search for customer by phone number using local _customers list
   Future<void> _searchCustomerByPhone(String phoneNumber) async {
     if (!mounted) return;
 
@@ -637,7 +624,7 @@ class _BillingPageState extends State<BillingPage> {
     }
   }
 
-  /// Show dialog to add new customer with optional phone number
+  // Show dialog to add new customer with optional phone number
   void _showAddCustomerDialog(String phoneNumber) {
     final firstNameController = TextEditingController();
     final lastNameController = TextEditingController();
@@ -836,7 +823,7 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  /// Save new customer and auto-attach to current bill
+  // Save new customer and auto-attach to current bill
   Future<void> _saveNewCustomer({
     required String firstName,
     required String lastName,
@@ -967,7 +954,7 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  /// Show the barcode scanner bottom sheet for fast billing
+  // Show the barcode scanner bottom sheet for fast billing
   void _showBarcodeScannerSheet() {
     BarcodeScannerSheet.show(
       context,
@@ -980,14 +967,14 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  /// Remove a scanned product from the bill
+  // Remove a scanned product from the bill
   void _removeScannedProductFromBill(String productKey) {
     setState(() {
       _billItems.removeWhere((item) => item.productId == productKey);
     });
   }
 
-  /// Add a scanned product to the bill
+  // Add a scanned product to the bill
   void _addScannedProductToBill(Map<String, dynamic> productData) {
     final productId = productData['productId'] as String;
     final batchId = productData['batchId'] as String?;
@@ -1138,8 +1125,7 @@ class _BillingPageState extends State<BillingPage> {
     setState(() => _isSavingBill = true);
 
     try {
-      // === INTEGRATED OFFLINE-FIRST APPROACH (FIFO) ===
-      // 1. Calculate payment status
+      // === INTEGRATED OFFLINE-FIRST APPROACH (FIFO) === 1. Calculate payment status
       final actualPaidAmount = _isFullPayment ? _finalAmount : _receivedAmount;
       final calculatedPendingAmount = _finalAmount - actualPaidAmount;
       BillPaymentStatus paymentStatus;
@@ -1151,9 +1137,7 @@ class _BillingPageState extends State<BillingPage> {
         paymentStatus = BillPaymentStatus.pending;
       }
 
-      // 2. Use InventoryIntegrationService for unified processing:
-      // Creates BillEntity + FIFO batch deductions + StockLedger entries + updates Product stock
-      // Transform bill items: extract real productId from batch-specific keys (e.g., "prodId_batch_123" → "prodId")
+      // 2. Use InventoryIntegrationService for unified processing: Creates BillEntity + FIFO batch deductions + StockLedger entries + updates Product stock Transform bill items: extract...
       final processableItems = _billItems.map((item) {
         final realProductId = item.productId.split('_batch_').first;
         return BillItem.create(
@@ -1378,7 +1362,7 @@ class _BillingPageState extends State<BillingPage> {
     });
   }
 
-  /// Create PrintBillData from bill — no network calls, uses bill data directly
+  // Create PrintBillData from bill — no network calls, uses bill data directly
   PrintBillData _createPrintBillData(Bill bill) {
     // Use bill's own pending amount as totalDueAmount (already computed at bill creation time)
     final double? totalDueAmount = bill.pendingAmount > 0
@@ -1387,7 +1371,7 @@ class _BillingPageState extends State<BillingPage> {
     return PrintBillData.fromBill(bill, totalDueAmount: totalDueAmount);
   }
 
-  /// Show bill PDF preview with share/print options (like purchase report)
+  // Show bill PDF preview with share/print options (like purchase report)
   static bool _pdfGenerationInProgress = false;
 
   Future<void> _showBillPdfPreview(Bill bill) async {
@@ -2670,8 +2654,7 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  /// Add product by index number directly from the Create Bill page
-  /// Uses FIFO: picks the oldest batch's selling price automatically
+  // Add product by index number directly from the Create Bill page Uses FIFO: picks the oldest batch's selling price automatically
   void _addProductByIndexNoOnPage() {
     final indexText = _indexNoController.text.trim();
     if (indexText.isEmpty) return;
@@ -3407,7 +3390,7 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  /// Build inline unit selector chips for kg/ltr products
+  // Build inline unit selector chips for kg/ltr products
   Widget _buildInlineUnitSelector({
     required int index,
     required BillItem item,
@@ -3607,7 +3590,7 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  /// Show custom unit entry dialog
+  // Show custom unit entry dialog
   void _showCustomUnitDialog({
     required int index,
     required BillItem item,
@@ -3759,7 +3742,7 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  /// Show dialog to edit sell price for a bill item
+  // Show dialog to edit sell price for a bill item
   void _showEditSellPriceDialog({required int index, required BillItem item}) {
     final priceController = TextEditingController(
       text: item.sellingPrice.toStringAsFixed(2),
@@ -4391,7 +4374,7 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  /// Helper widget for displaying a tax row in the summary
+  // Helper widget for displaying a tax row in the summary
   Widget _buildTaxRow(String label, double amount, {bool isBold = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -4421,7 +4404,7 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  /// GST mode selection section
+  // GST mode selection section
   Widget _buildGstModeSection() {
     return Container(
       margin: EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -5306,7 +5289,7 @@ class _BillingPageState extends State<BillingPage> {
     }
   }
 
-  /// Premium glass-morphism Quick Stats Panel
+  // Premium glass-morphism Quick Stats Panel
   Widget _buildQuickStatsPremiumPanel() {
     return Positioned(
       top: 0,
@@ -5353,7 +5336,7 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  /// Glassy card with shining border
+  // Glassy card with shining border
   Widget _buildGlassyQuickStatsCard() {
     return Container(
       decoration: BoxDecoration(
@@ -5423,7 +5406,7 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  /// Compact header for Quick Stats
+  // Compact header for Quick Stats
   Widget _buildCompactHeader() {
     return Row(
       children: [
@@ -5495,7 +5478,7 @@ class _BillingPageState extends State<BillingPage> {
     showAppPage(context, page).then((_) => _loadQuickStats());
   }
 
-  /// Premium compact 4-column stats grid (icon + name only)
+  // Premium compact 4-column stats grid (icon + name only)
   Widget _buildQuickStatsGrid() {
     final stats = [
       _QuickStatItem(
@@ -5614,7 +5597,7 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  /// Compact stat chip with glass effect and shining border
+  // Compact stat chip with glass effect and shining border
   Widget _buildCompactStatChip(_QuickStatItem stat, int index) {
     return GestureDetector(
       onTap: stat.onTap,
@@ -5710,7 +5693,7 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  /// Premium shimmer loading for compact stats grid
+  // Premium shimmer loading for compact stats grid
   Widget _buildQuickStatsPremiumShimmer() {
     return Wrap(
       spacing: 10,
@@ -6231,7 +6214,7 @@ class _CustomerPickerBottomSheetState
   }
 }
 
-/// Data class for Quick Stat items
+// Data class for Quick Stat items
 class _QuickStatItem {
   final IconData icon;
   final String value;
@@ -6250,7 +6233,7 @@ class _QuickStatItem {
   });
 }
 
-/// Inline editable quantity field for bill items
+// Inline editable quantity field for bill items
 class _InlineQuantityField extends StatefulWidget {
   final BillItem item;
   final int maxStock;
@@ -6319,7 +6302,7 @@ class _InlineQuantityFieldState extends State<_InlineQuantityField> {
     }
   }
 
-  /// Get the display value based on unit conversion
+  // Get the display value based on unit conversion
   String _getDisplayValue() {
     final item = widget.item;
     double displayQty = item.quantity;
@@ -6338,13 +6321,13 @@ class _InlineQuantityFieldState extends State<_InlineQuantityField> {
     return displayQty.toStringAsFixed(2);
   }
 
-  /// Get the unit suffix for display
+  // Get the unit suffix for display
   String _getUnitSuffix() {
     final item = widget.item;
     return item.sellUnit ?? item.unit ?? '';
   }
 
-  /// Convert display value back to base unit quantity
+  // Convert display value back to base unit quantity
   double _convertToBaseUnit(double displayQty) {
     final item = widget.item;
     if (item.sellUnit == 'gm' && item.unit == 'kg') {
@@ -6355,7 +6338,7 @@ class _InlineQuantityFieldState extends State<_InlineQuantityField> {
     return displayQty;
   }
 
-  /// Get max stock in display units
+  // Get max stock in display units
   double _getMaxStockInDisplayUnit() {
     final item = widget.item;
     if (item.sellUnit == 'gm' && item.unit == 'kg') {
@@ -6401,7 +6384,7 @@ class _InlineQuantityFieldState extends State<_InlineQuantityField> {
     _focusNode.unfocus();
   }
 
-  /// Update quantity in real-time as user types (without validation side effects)
+  // Update quantity in real-time as user types (without validation side effects)
   void _onTextChanged(String text) {
     final displayQty = double.tryParse(text.trim());
 

@@ -3,8 +3,7 @@ import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
-/// Summary widget for supplier statistics
-/// Displays: Total suppliers, Active suppliers, Synced status
+// Summary widget for supplier statistics Displays: Total suppliers, Active suppliers, Synced status
 class SupplierSummaryWidget extends StatelessWidget {
   final List<Map<String, dynamic>> suppliers;
   final String searchQuery;

@@ -1,21 +1,21 @@
-/// Represents a sub-event within a main event (e.g., Haldi, Sangeet, Reception)
+// Represents a sub-event within a main event (e.g., Haldi, Sangeet, Reception)
 class SubEvent {
-  /// Unique identifier
+  // Unique identifier
   final String id;
   
-  /// Name of the sub-event (e.g., "Haldi", "Sangeet", "Barat", "Reception")
+  // Name of the sub-event (e.g., "Haldi", "Sangeet", "Barat", "Reception")
   final String name;
   
-  /// Date of this sub-event
+  // Date of this sub-event
   final DateTime date;
   
-  /// Charges for this sub-event
+  // Charges for this sub-event
   final double charges;
   
-  /// Optional notes for this sub-event
+  // Optional notes for this sub-event
   final String? notes;
   
-  /// Custom column data (key: columnId, value: column value)
+  // Custom column data (key: columnId, value: column value)
   final Map<String, dynamic> customData;
   
   const SubEvent({
@@ -27,7 +27,7 @@ class SubEvent {
     this.customData = const {},
   });
   
-  /// Create a copy with updated fields
+  // Create a copy with updated fields
   SubEvent copyWith({
     String? id,
     String? name,
@@ -46,7 +46,7 @@ class SubEvent {
     );
   }
   
-  /// Convert to JSON
+  // Convert to JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -58,7 +58,7 @@ class SubEvent {
     };
   }
   
-  /// Create from JSON
+  // Create from JSON
   factory SubEvent.fromJson(Map<String, dynamic> json) {
     return SubEvent(
       id: json['id'] as String,
@@ -70,7 +70,7 @@ class SubEvent {
     );
   }
   
-  /// Create an empty sub-event
+  // Create an empty sub-event
   factory SubEvent.empty() {
     return SubEvent(
       id: '',

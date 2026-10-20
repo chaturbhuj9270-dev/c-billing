@@ -3,8 +3,7 @@ import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
-/// Summary widget for customer statistics
-/// Displays: Total customers, Pending amount, Synced status
+// Summary widget for customer statistics Displays: Total customers, Pending amount, Synced status
 class CustomerSummaryWidget extends StatelessWidget {
   final List<Map<String, dynamic>> customers;
   final String searchQuery;

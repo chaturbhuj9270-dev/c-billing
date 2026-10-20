@@ -21,7 +21,7 @@ import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
-/// Lets the desktop shell header open the add-company sheet.
+// Lets the desktop shell header open the add-company sheet.
 class CompanyScreenActions {
   static VoidCallback? add;
 }

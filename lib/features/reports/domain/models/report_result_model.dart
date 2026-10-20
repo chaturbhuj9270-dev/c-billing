@@ -1,4 +1,4 @@
-/// Result model for a single product row in the report
+// Result model for a single product row in the report
 class ReportProductRow {
   final String productId;
   final String productName;
@@ -43,11 +43,11 @@ class ReportProductRow {
   });
 }
 
-/// Complete report result with rows and summary
+// Complete report result with rows and summary
 class ReportResultModel {
   final List<ReportProductRow> rows;
 
-  /// Summary totals
+  // Summary totals
   final double totalPurchaseAmount;
   final double totalSalesAmount;
   final double totalProfit;
@@ -55,14 +55,14 @@ class ReportResultModel {
   final double expiredStockValue;
   final double returnedStockValue;
 
-  /// Counts
+  // Counts
   final int totalProducts;
   final int expiredCount;
   final int expiringThisWeekCount;
   final int lowStockCount;
   final int returnedCount;
 
-  /// Generation metadata
+  // Generation metadata
   final DateTime generatedAt;
   final String filterSummary;
 
@@ -83,10 +83,10 @@ class ReportResultModel {
     required this.filterSummary,
   });
 
-  /// Whether report has data
+  // Whether report has data
   bool get isEmpty => rows.isEmpty;
   bool get isNotEmpty => rows.isNotEmpty;
 
-  /// Net profit (total profit - total loss)
+  // Net profit (total profit - total loss)
   double get netProfit => totalProfit - totalLoss;
 }

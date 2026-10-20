@@ -3,8 +3,7 @@ import 'package:intl/intl.dart';
 import '../../offline/entities/purchase_batch_entity.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Modern card widget for displaying individual purchase items
-/// Features: Subtle shadows, proper spacing, responsive layout
+// Modern card widget for displaying individual purchase items Features: Subtle shadows, proper spacing, responsive layout
 class PurchaseCardWidget extends StatelessWidget {
   final PurchaseBatchEntity purchase;
   final VoidCallback? onTap;
@@ -19,7 +18,7 @@ class PurchaseCardWidget extends StatelessWidget {
     this.showSyncStatus = false,
   });
 
-  /// Calculate total amount for this batch
+  // Calculate total amount for this batch
   double get totalAmount => purchase.purchasePrice * purchase.quantityPurchased;
 
   @override
@@ -254,7 +253,7 @@ class PurchaseCardWidget extends StatelessWidget {
   }
 }
 
-/// Shimmer loading card placeholder
+// Shimmer loading card placeholder
 class PurchaseCardShimmer extends StatelessWidget {
   const PurchaseCardShimmer({super.key});
 

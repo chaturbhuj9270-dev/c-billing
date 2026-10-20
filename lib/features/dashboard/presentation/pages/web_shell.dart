@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../common_widgets/glass_bottom_sheet.dart';
 
-/// Switches the web app's content pane without pushing a new route.
+// Switches the web app's content pane without pushing a new route.
 class WebShell {
   static const int dashboard = 0;
   static const int customers = 1;
@@ -32,7 +32,7 @@ class WebShell {
     _select = select;
   }
 
-  /// Returns true when the web shell handled the section.
+  // Returns true when the web shell handled the section.
   static bool open(int index) {
     final select = _select;
     if (select == null) return false;
@@ -41,14 +41,14 @@ class WebShell {
     return true;
   }
 
-  /// Close any page opened inside the web content area.
+  // Close any page opened inside the web content area.
   static void popToRoot() {
     final navigator = navigatorKey.currentState;
     if (navigator == null) return;
     navigator.popUntil((route) => route.isFirst);
   }
 
-  /// Open [page] in the right-hand drawer. The sidebar stays put.
+  // Open [page] in the right-hand drawer. The sidebar stays put.
   static Future<T?> push<T>(Widget page) {
     final context = navigatorKey.currentContext;
     if (context == null) return Future<T?>.value();
@@ -78,7 +78,7 @@ class WebShellRouteObserver extends NavigatorObserver {
       onChanged();
 }
 
-/// Swaps web content in place, without a route slide.
+// Swaps web content in place, without a route slide.
 class InstantPageTransitionsBuilder extends PageTransitionsBuilder {
   const InstantPageTransitionsBuilder();
 

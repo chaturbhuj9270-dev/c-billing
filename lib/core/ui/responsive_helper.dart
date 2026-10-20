@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Responsive breakpoints and helpers for adaptive layouts.
-/// Mobile UI remains unchanged — desktop/tablet get enhanced layouts.
+// Responsive breakpoints and helpers for adaptive layouts. Mobile UI remains unchanged — desktop/tablet get enhanced layouts.
 class ResponsiveHelper {
   static const double mobileBreakpoint = 600;
   static const double tabletBreakpoint = 900;
@@ -21,7 +20,7 @@ class ResponsiveHelper {
   static bool isWide(BuildContext context) =>
       MediaQuery.of(context).size.width >= mobileBreakpoint;
 
-  /// Returns the number of grid columns for the current screen width.
+  // Returns the number of grid columns for the current screen width.
   static int gridColumns(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     if (w >= desktopBreakpoint) return 4;
@@ -30,7 +29,7 @@ class ResponsiveHelper {
     return 2; // mobile default (existing behavior)
   }
 
-  /// Max content width for centering on very wide screens.
+  // Max content width for centering on very wide screens.
   static double maxContentWidth(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     if (w >= desktopBreakpoint) return 1100;
@@ -39,8 +38,7 @@ class ResponsiveHelper {
   }
 }
 
-/// Wraps child in a centered constrained box on wide screens.
-/// On mobile, renders child as-is (no layout changes).
+// Wraps child in a centered constrained box on wide screens. On mobile, renders child as-is (no layout changes).
 class ResponsiveContent extends StatelessWidget {
   final Widget child;
   final double? maxWidth;

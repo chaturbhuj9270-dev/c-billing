@@ -6,19 +6,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:c_billing/core/services/billing_service.dart';
-import 'package:c_billing/features/billing/data/repositories/firebase_bill_repository.dart';
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_item.dart';
-import 'package:c_billing/features/inventory_management/data/repositories/firebase_product_repository.dart';
-import 'package:c_billing/features/inventory_management/data/repositories/firebase_stock_repository.dart';
-import 'package:c_billing/features/billing/data/datasources/bill_cache_datasource.dart';
 import 'package:c_billing/features/billing/presentation/pages/return_bill_page.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/printing/printing.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
 import 'package:c_billing/features/shop/domain/entities/shop.dart';
-import 'package:c_billing/features/customer/data/repositories/customer_repository.dart';
 import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
@@ -32,7 +26,7 @@ import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Quick date filter options for bill history
+// Quick date filter options for bill history
 enum _BillDateFilter { none, today, thisWeek, thisMonth, thisYear, custom }
 
 class BillsListPage extends StatefulWidget {
@@ -46,28 +40,20 @@ class BillsListPage extends StatefulWidget {
 
 class _BillsListPageState extends State<BillsListPage>
     with SingleTickerProviderStateMixin {
-  // ignore: unused_field
-  late BillingService _billingService;
   late FirebaseFirestore _firestore;
   final _auth = FirebaseAuth.instance;
   late AnimationController _animController;
   late Animation<Offset> _offsetAnimation;
   late Animation<double> _opacityAnimation;
-  // ignore: unused_field
-  final _cacheDataSource = BillCacheDataSource();
 
-  // Localization
   late AppLocalizations _localizations;
 
-  // Printing
   final _printerService = PosPrinterService();
   final _pdfService = PdfBillService();
   late ShopRepository _shopRepository;
-  // ignore: unused_field
-  late FirebaseCustomerRepository _customerRepository;
-  String? _printingBillId; // Track which bill is being printed
-  bool _isProcessingPdf = false; // Track PDF generation/share/save operations
-  bool _isGeneratingReport = false; // Track bill report generation
+  String? _printingBillId;
+  bool _isProcessingPdf = false;
+  bool _isGeneratingReport = false;
 
   List<Bill> _bills = [];
   List<Bill> _filteredBills = [];
@@ -97,17 +83,9 @@ class _BillsListPageState extends State<BillsListPage>
     super.initState();
     _firestore = FirebaseFirestore.instance;
     _shopRepository = ShopRepository(firestore: _firestore);
-    _customerRepository = FirebaseCustomerRepository(firestore: _firestore);
 
-    // Initialize localization
     _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
     LanguageService.instance.addListener(_onLanguageChanged);
-
-    _billingService = BillingService(
-      billRepository: FirebaseBillRepository(firestore: _firestore),
-      productRepository: FirebaseProductRepository(firestore: _firestore),
-      stockRepository: FirebaseStockRepository(firestore: _firestore),
-    );
 
     // Subscribe to bills stream for reactive updates
     _billsSubscription = BillOfflineController.instance.watchAllBills().listen((
@@ -156,7 +134,7 @@ class _BillsListPageState extends State<BillsListPage>
     _setupFirestoreStream();
   }
 
-  /// Setup real-time Firestore stream for cross-device bill synchronization
+  // Setup real-time Firestore stream for cross-device bill synchronization
   void _setupFirestoreStream() {
     final currentUser = _auth.currentUser;
     if (currentUser == null) return;
@@ -189,8 +167,7 @@ class _BillsListPageState extends State<BillsListPage>
   }
 
   Future<void> _setupInitialData() async {
-    // Load from the local database (offline-first) - data comes through stream subscription
-    // Initial data is already loaded via watchAllBills() in initState
+    // Load from the local database (offline-first) - data comes through stream subscription Initial data is already loaded via watchAllBills() in initState
 
     // Trigger background sync to fetch latest from server
     BillSyncService.instance.syncNow();
@@ -208,7 +185,7 @@ class _BillsListPageState extends State<BillsListPage>
     super.dispose();
   }
 
-  /// Called when sync status changes - forces UI refresh
+  // Called when sync status changes - forces UI refresh
   void _onSyncStatusChanged() {
     debugPrint(
       '[BillsListPage] Sync status changed: ${BillSyncService.instance.status}',
@@ -225,7 +202,7 @@ class _BillsListPageState extends State<BillsListPage>
     setState(() {}); // Rebuild UI with new language
   }
 
-  /// Create PrintBillData from bill — no network calls, uses bill data directly
+  // Create PrintBillData from bill — no network calls, uses bill data directly
   PrintBillData _createPrintBillData(Bill bill) {
     final double? totalDueAmount = bill.pendingAmount > 0
         ? bill.pendingAmount
@@ -430,7 +407,7 @@ class _BillsListPageState extends State<BillsListPage>
     }
   }
 
-  /// Build filter description for report header
+  // Build filter description for report header
   String _buildFilterDescription() {
     final parts = <String>[];
 
@@ -1624,10 +1601,10 @@ class _BillsListPageState extends State<BillsListPage>
 
 }
 
-/// Actions that can be triggered from the bill details dialog
+// Actions that can be triggered from the bill details dialog
 enum _BillDialogAction { billReturned, openReturn }
 
-/// Result returned from the bill details dialog
+// Result returned from the bill details dialog
 class _BillDialogResult {
   final _BillDialogAction action;
 
@@ -1697,8 +1674,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
     );
 
     if (result == true && mounted) {
-      // Don't update local state - let the list page refresh from data source
-      // which will correctly reflect partial vs full return status
+      // Don't update local state - let the list page refresh from data source which will correctly reflect partial vs full return status
       Navigator.pop(
         context,
         const _BillDialogResult(action: _BillDialogAction.billReturned),
@@ -1737,7 +1713,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
     }
   }
 
-  /// Calculated totals for display
+  // Calculated totals for display
   double get _returnDeduction => _bill.totalReturnedAmount;
   double get _finalPayable =>
       (_bill.finalAmount - _returnDeduction).clamp(0.0, double.infinity);

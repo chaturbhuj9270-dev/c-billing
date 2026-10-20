@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
-/// Sort options for product list
+// Sort options for product list
 enum ProductSortField { name, stock, price, category }
 
-/// Filter widget for product list
-/// Features: Search bar, Sort options, Category filter
+// Filter widget for product list Features: Search bar, Sort options, Category filter
 class ProductFilterWidget extends StatefulWidget {
   final String searchQuery;
   final ProductSortField sortField;

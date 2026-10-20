@@ -4,8 +4,7 @@ import '../core/printing/services/pos_printer_service.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
-/// Widget for discovering and selecting POS printers
-/// Shows a bottom sheet with available printers
+// Widget for discovering and selecting POS printers Shows a bottom sheet with available printers
 class PrinterSelectionWidget extends StatefulWidget {
   final Function(PosPrinterDevice)? onPrinterSelected;
   final VoidCallback? onDismiss;
@@ -16,7 +15,7 @@ class PrinterSelectionWidget extends StatefulWidget {
     this.onDismiss,
   });
 
-  /// Show printer selection as a bottom sheet
+  // Show printer selection as a bottom sheet
   static Future<PosPrinterDevice?> show(BuildContext context) async {
     return showAppBottomSheet<PosPrinterDevice>(
       context: context,

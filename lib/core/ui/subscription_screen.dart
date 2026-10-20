@@ -8,8 +8,7 @@ import '../services/subscription_service.dart';
 import 'payment_screen.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Subscription screen shown when user's subscription has expired
-/// Premium UI matching the app's elegant design language
+// Subscription screen shown when user's subscription has expired Premium UI matching the app's elegant design language
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});
 

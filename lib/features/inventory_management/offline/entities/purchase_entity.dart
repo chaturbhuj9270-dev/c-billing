@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 
-/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTime(dynamic value) {
   if (value == null) return null;
   if (value is Timestamp) return value.toDate();
@@ -9,83 +9,81 @@ DateTime? _parseDateTime(dynamic value) {
   return null;
 }
 
-/// Sync status for delta sync logic
-/// Only purchases with status != SYNCED will be pushed to server
+// Sync status for delta sync logic Only purchases with status != SYNCED will be pushed to server
 enum PurchaseSyncStatus {
-  /// Newly created locally, not yet on server
+  // Newly created locally, not yet on server
   newRecord,
 
-  /// Modified locally after sync
+  // Modified locally after sync
   updated,
 
-  /// Marked for deletion, pending server delete
+  // Marked for deletion, pending server delete
   deleted,
 
-  /// Fully synced with server
+  // Fully synced with server
   synced,
 }
 
-/// Local record for Purchase with offline-first support
-/// Optimized with proper indexes for high-performance queries
+// Local record for Purchase with offline-first support Optimized with proper indexes for high-performance queries
 class PurchaseEntity {
-  /// Local row id
+  // Local row id
   int id = 0;
 
-  /// Server-side ID (null for locally created, not yet synced records)
+  // Server-side ID (null for locally created, not yet synced records)
   String? serverId;
 
-  /// Product ID (indexed for fast lookup)
+  // Product ID (indexed for fast lookup)
   String productId;
 
-  /// Product name (for display purposes)
+  // Product name (for display purposes)
   String productName;
 
-  /// Supplier ID (indexed for filtering)
+  // Supplier ID (indexed for filtering)
   String? supplierId;
 
-  /// Supplier name (for display purposes)
+  // Supplier name (for display purposes)
   String? supplierName;
 
-  /// Company ID (indexed for filtering)
+  // Company ID (indexed for filtering)
   String? companyId;
 
-  /// Company name (for display purposes)
+  // Company name (for display purposes)
   String? companyName;
 
-  /// Quantity purchased
+  // Quantity purchased
   int quantity;
 
-  /// Unit of measurement
+  // Unit of measurement
   String unit;
 
-  /// Purchase price per unit
+  // Purchase price per unit
   double purchasePrice;
 
-  /// Sales price per unit
+  // Sales price per unit
   double salesPrice;
 
-  /// Total amount (quantity * purchasePrice)
+  // Total amount (quantity * purchasePrice)
   double totalAmount;
 
-  /// Production date (optional)
+  // Production date (optional)
   DateTime? productionDate;
 
-  /// Expiry date (optional)
+  // Expiry date (optional)
   DateTime? expiryDate;
 
-  /// Warranty in months (optional)
+  // Warranty in months (optional)
   int? warrantyMonths;
 
-  /// Notes
+  // Notes
   String? notes;
 
-  /// Sync status for delta sync
+  // Sync status for delta sync
   PurchaseSyncStatus syncStatus;
 
-  /// Created timestamp (indexed for sorting)
+  // Created timestamp (indexed for sorting)
   DateTime createdAt;
 
-  /// Last update timestamp for conflict resolution
+  // Last update timestamp for conflict resolution
   DateTime updatedAt;
 
   PurchaseEntity({
@@ -110,7 +108,7 @@ class PurchaseEntity {
     required this.updatedAt,
   });
 
-  /// Factory constructor for creating new purchase with defaults
+  // Factory constructor for creating new purchase with defaults
   factory PurchaseEntity.create({
     String? serverId,
     required String productId,
@@ -153,7 +151,7 @@ class PurchaseEntity {
     );
   }
 
-  /// Create from server response (Firestore document)
+  // Create from server response (Firestore document)
   factory PurchaseEntity.fromServer(Map<String, dynamic> data) {
     final now = DateTime.now();
     return PurchaseEntity(
@@ -179,7 +177,7 @@ class PurchaseEntity {
     );
   }
 
-  /// Convert to Map for API sync
+  // Convert to Map for API sync
   Map<String, dynamic> toSyncPayload() {
     return {
       'id': serverId,
@@ -203,7 +201,7 @@ class PurchaseEntity {
     };
   }
 
-  /// Convert to Map for UI (compatible with existing purchase page)
+  // Convert to Map for UI (compatible with existing purchase page)
   Map<String, dynamic> toPurchaseMap() {
     return {
       'id': serverId ?? 'local_$id',
@@ -230,7 +228,7 @@ class PurchaseEntity {
     };
   }
 
-  /// Copy with modifications
+  // Copy with modifications
   PurchaseEntity copyWith({
     int? id,
     String? serverId,
@@ -278,10 +276,10 @@ class PurchaseEntity {
     return entity;
   }
 
-  /// Check if purchase needs sync
+  // Check if purchase needs sync
   bool get needsSync => syncStatus != PurchaseSyncStatus.synced;
 
-  /// Check if purchase is marked for deletion
+  // Check if purchase is marked for deletion
   bool get isMarkedForDeletion => syncStatus == PurchaseSyncStatus.deleted;
 
   @override

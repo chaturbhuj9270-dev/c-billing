@@ -4,14 +4,7 @@ import '../../../../core/database/local_store.dart';
 import '../../../../core/services/local_database.dart';
 import '../entities/supplier_entity.dart';
 
-/// Controller for handling offline-first Supplier CRUD operations
-/// All UI reads should go through this controller (never directly from API)
-///
-/// Key features:
-/// - Immediate local saves (no network blocking)
-/// - Proper syncStatus management for delta sync
-/// - High-performance indexed queries
-/// - Reactive streams for UI updates
+// Controller for handling offline-first Supplier CRUD operations All UI reads should go through this controller (never directly from API) Key features: - Immediate local saves (no...
 class SupplierOfflineController extends ChangeNotifier {
   static SupplierOfflineController? _instance;
 
@@ -19,7 +12,7 @@ class SupplierOfflineController extends ChangeNotifier {
 
   SupplierOfflineController._(this._db);
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static SupplierOfflineController get instance {
     _instance ??= SupplierOfflineController._(LocalDatabase.instance.db);
     return _instance!;
@@ -27,8 +20,7 @@ class SupplierOfflineController extends ChangeNotifier {
 
   // ==================== CREATE ====================
 
-  /// Check if a supplier code already exists (for uniqueness validation)
-  /// Empty codes are allowed (not enforced as unique)
+  // Check if a supplier code already exists (for uniqueness validation) Empty codes are allowed (not enforced as unique)
   Future<bool> isSupplierCodeTaken(String code, {int? excludeId}) async {
     if (code.trim().isEmpty) return false; // Empty codes are allowed
 
@@ -44,8 +36,7 @@ class SupplierOfflineController extends ChangeNotifier {
     return existing.isNotEmpty;
   }
 
-  /// Add a new supplier locally (will be synced later)
-  /// Sets syncStatus = NEW, does NOT call API
+  // Add a new supplier locally (will be synced later) Sets syncStatus = NEW, does NOT call API
   Future<SupplierEntity> addSupplier({
     required String firstName,
     String middleName = '',
@@ -85,8 +76,7 @@ class SupplierOfflineController extends ChangeNotifier {
 
   // ==================== READ ====================
 
-  /// Get all active (non-deleted) suppliers
-  /// Uses indexed query for performance
+  // Get all active (non-deleted) suppliers Uses indexed query for performance
   Future<List<SupplierEntity>> getAllSuppliers() async {
     final suppliers = (await _db.loadSuppliers())
         .where((supplier) => supplier.syncStatus != SupplierSyncStatus.deleted)
@@ -95,8 +85,7 @@ class SupplierOfflineController extends ChangeNotifier {
     return suppliers;
   }
 
-  /// Watch all active suppliers (reactive stream for UI)
-  /// Fires immediately and on any changes
+  // Watch all active suppliers (reactive stream for UI) Fires immediately and on any changes
   Stream<List<SupplierEntity>> watchAllSuppliers() {
     return _db.watchSuppliers().map((rows) {
       final suppliers = rows
@@ -107,7 +96,7 @@ class SupplierOfflineController extends ChangeNotifier {
     });
   }
 
-  /// Get supplier by local id
+  // Get supplier by local id
   Future<SupplierEntity?> getSupplierById(int id) async {
     for (final supplier in await _db.loadSuppliers()) {
       if (supplier.id == id) return supplier;
@@ -115,7 +104,7 @@ class SupplierOfflineController extends ChangeNotifier {
     return null;
   }
 
-  /// Get supplier by server ID
+  // Get supplier by server ID
   Future<SupplierEntity?> getSupplierByServerId(String serverId) async {
     for (final supplier in await _db.loadSuppliers()) {
       if (supplier.serverId == serverId) return supplier;
@@ -123,7 +112,7 @@ class SupplierOfflineController extends ChangeNotifier {
     return null;
   }
 
-  /// Get supplier by contact number (fast indexed lookup)
+  // Get supplier by contact number (fast indexed lookup)
   Future<SupplierEntity?> getSupplierByContact(String contact) async {
     for (final supplier in await _db.loadSuppliers()) {
       if (supplier.contact == contact &&
@@ -134,7 +123,7 @@ class SupplierOfflineController extends ChangeNotifier {
     return null;
   }
 
-  /// Search suppliers by name
+  // Search suppliers by name
   Future<List<SupplierEntity>> searchByName(String query) async {
     if (query.isEmpty) return getAllSuppliers();
 
@@ -151,9 +140,7 @@ class SupplierOfflineController extends ChangeNotifier {
 
   // ==================== UPDATE ====================
 
-  /// Update an existing supplier
-  /// If syncStatus was SYNCED, changes to UPDATED
-  /// If syncStatus was NEW, keeps as NEW (not yet on server)
+  // Update an existing supplier If syncStatus was SYNCED, changes to UPDATED If syncStatus was NEW, keeps as NEW (not yet on server)
   Future<SupplierEntity?> updateSupplier({
     required int id,
     String? firstName,
@@ -218,7 +205,7 @@ class SupplierOfflineController extends ChangeNotifier {
 
   // ==================== DELETE ====================
 
-  /// Soft delete a supplier (marks for deletion, will be synced)
+  // Soft delete a supplier (marks for deletion, will be synced)
   Future<void> deleteSupplier(int id) async {
     final existing = await getSupplierById(id);
     if (existing == null) return;
@@ -241,7 +228,7 @@ class SupplierOfflineController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Hard delete after confirmed server deletion
+  // Hard delete after confirmed server deletion
   Future<void> permanentlyDelete(int id) async {
     await _db.deleteSupplierById(id);
     notifyListeners();
@@ -249,43 +236,42 @@ class SupplierOfflineController extends ChangeNotifier {
 
   // ==================== SYNC HELPERS ====================
 
-  /// Get all suppliers that need to be synced (delta sync)
-  /// Returns suppliers where syncStatus != SYNCED
+  // Get all suppliers that need to be synced (delta sync) Returns suppliers where syncStatus != SYNCED
   Future<List<SupplierEntity>> getSuppliersNeedingSync() async {
     return (await _db.loadSuppliers())
         .where((supplier) => supplier.syncStatus != SupplierSyncStatus.synced)
         .toList();
   }
 
-  /// Get NEW suppliers (need to POST)
+  // Get NEW suppliers (need to POST)
   Future<List<SupplierEntity>> getNewSuppliers() async {
     return (await _db.loadSuppliers())
         .where((supplier) => supplier.syncStatus == SupplierSyncStatus.newRecord)
         .toList();
   }
 
-  /// Get UPDATED suppliers (need to PUT)
+  // Get UPDATED suppliers (need to PUT)
   Future<List<SupplierEntity>> getUpdatedSuppliers() async {
     return (await _db.loadSuppliers())
         .where((supplier) => supplier.syncStatus == SupplierSyncStatus.updated)
         .toList();
   }
 
-  /// Get DELETED suppliers (need to DELETE on server)
+  // Get DELETED suppliers (need to DELETE on server)
   Future<List<SupplierEntity>> getDeletedSuppliers() async {
     return (await _db.loadSuppliers())
         .where((supplier) => supplier.syncStatus == SupplierSyncStatus.deleted)
         .toList();
   }
 
-  /// Get count of unsynced suppliers
+  // Get count of unsynced suppliers
   Future<int> getUnsyncedCount() async {
     return (await _db.loadSuppliers())
         .where((supplier) => supplier.syncStatus != SupplierSyncStatus.synced)
         .length;
   }
 
-  /// Mark supplier as synced (called after successful server sync)
+  // Mark supplier as synced (called after successful server sync)
   Future<void> markAsSynced(int id, {String? serverId}) async {
     final existing = await getSupplierById(id);
     if (existing == null) return;
@@ -298,8 +284,7 @@ class SupplierOfflineController extends ChangeNotifier {
     await _db.saveSupplier(updated);
   }
 
-  /// Import suppliers from server (for initial sync or refresh)
-  /// Merges by serverId, only updates if server version is newer
+  // Import suppliers from server (for initial sync or refresh) Merges by serverId, only updates if server version is newer
   Future<int> importFromServer(
     List<Map<String, dynamic>> serverSuppliers,
   ) async {
@@ -389,7 +374,7 @@ class SupplierOfflineController extends ChangeNotifier {
     return imported;
   }
 
-  /// Update supplier with server response (after successful create)
+  // Update supplier with server response (after successful create)
   Future<void> updateWithServerResponse(
     int localId,
     Map<String, dynamic> serverResponse,
@@ -405,7 +390,7 @@ class SupplierOfflineController extends ChangeNotifier {
     await _db.saveSupplier(updated);
   }
 
-  /// Get total supplier count
+  // Get total supplier count
   Future<int> getTotalCount() async {
     return (await _db.loadSuppliers())
         .where((supplier) => supplier.syncStatus != SupplierSyncStatus.deleted)

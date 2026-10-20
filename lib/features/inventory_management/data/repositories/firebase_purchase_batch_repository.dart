@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/purchase_batch.dart';
 import '../../domain/repositories/purchase_batch_repository.dart';
 
-/// Firebase implementation of PurchaseBatchRepository
+// Firebase implementation of PurchaseBatchRepository
 class FirebasePurchaseBatchRepository implements PurchaseBatchRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;

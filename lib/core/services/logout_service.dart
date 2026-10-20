@@ -4,8 +4,7 @@ import 'local_database.dart';
 import 'session_manager.dart';
 import 'credentials_manager.dart';
 
-/// Centralized logout service to ensure all local data is cleared
-/// when a user logs out or session expires
+// Centralized logout service to ensure all local data is cleared when a user logs out or session expires
 class LogoutService {
   static final LogoutService _instance = LogoutService._internal();
 
@@ -17,7 +16,7 @@ class LogoutService {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  /// Perform complete logout - clears all local data and signs out
+  // Perform complete logout - clears all local data and signs out
   Future<void> logout(BuildContext context) async {
     debugPrint('[LogoutService] Starting logout process...');
 
@@ -63,7 +62,7 @@ class LogoutService {
     }
   }
 
-  /// Clear all local database data
+  // Clear all local database data
   Future<void> _clearAllLocalData() async {
     try {
       if (LocalDatabase.instance.isInitialized) {
@@ -75,7 +74,7 @@ class LogoutService {
     }
   }
 
-  /// Called when session expires - clears data and signs out
+  // Called when session expires - clears data and signs out
   Future<void> onSessionExpired(BuildContext context) async {
     debugPrint('[LogoutService] Session expired - clearing data');
     
@@ -108,7 +107,7 @@ class LogoutService {
     }
   }
 
-  /// Clear data only (without signing out) - useful for data refresh
+  // Clear data only (without signing out) - useful for data refresh
   Future<void> clearLocalDataOnly() async {
     await _clearAllLocalData();
   }

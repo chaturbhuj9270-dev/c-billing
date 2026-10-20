@@ -6,7 +6,7 @@ import '../../offline/controllers/event_order_offline_controller.dart';
 import '../../offline/entities/event_order_entity.dart';
 import 'event_order_api_service.dart';
 
-/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTime(dynamic value) {
   if (value == null) return null;
   if (value is Timestamp) return value.toDate();
@@ -15,10 +15,10 @@ DateTime? _parseDateTime(dynamic value) {
   return null;
 }
 
-/// Sync status for tracking sync state
+// Sync status for tracking sync state
 enum EventOrderSyncStatusIndicator { idle, syncing, success, failed }
 
-/// Result of a sync operation
+// Result of a sync operation
 class EventOrderSyncResult {
   final bool success;
   final int uploadedCount;
@@ -45,8 +45,7 @@ class EventOrderSyncResult {
   }
 }
 
-/// Service for background synchronization of Event Order data
-/// Handles bidirectional sync between local and remote Firebase
+// Service for background synchronization of Event Order data Handles bidirectional sync between local and remote Firebase
 class EventOrderSyncService extends ChangeNotifier {
   static EventOrderSyncService? _instance;
 
@@ -60,7 +59,7 @@ class EventOrderSyncService extends ChangeNotifier {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _periodicSyncTimer;
 
-  /// Mutex to prevent concurrent sync operations
+  // Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
 
   EventOrderSyncService._({
@@ -72,26 +71,25 @@ class EventOrderSyncService extends ChangeNotifier {
        _apiService = apiService ?? EventOrderApiService.instance,
        _connectivity = connectivity ?? Connectivity();
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static EventOrderSyncService get instance {
     _instance ??= EventOrderSyncService._();
     return _instance!;
   }
 
-  /// Current sync status
+  // Current sync status
   EventOrderSyncStatusIndicator get status => _status;
 
-  /// Last successful sync time
+  // Last successful sync time
   DateTime? get lastSyncTime => _lastSyncTime;
 
-  /// Last error message
+  // Last error message
   String? get lastError => _lastError;
 
-  /// Check if currently syncing
+  // Check if currently syncing
   bool get isSyncing => _status == EventOrderSyncStatusIndicator.syncing;
 
-  /// Initialize the sync service
-  /// Call this after the local database is initialized
+  // Initialize the sync service Call this after the local database is initialized
   void initialize() {
     debugPrint('[EventOrderSync] Initializing...');
 
@@ -121,7 +119,7 @@ class EventOrderSyncService extends ChangeNotifier {
     debugPrint('[EventOrderSync] Initialized');
   }
 
-  /// Dispose resources
+  // Dispose resources
   @override
   void dispose() {
     _connectivitySubscription?.cancel();
@@ -140,14 +138,13 @@ class EventOrderSyncService extends ChangeNotifier {
     }
   }
 
-  /// Check if device is online
+  // Check if device is online
   Future<bool> isOnline() async {
     final results = await _connectivity.checkConnectivity();
     return _isConnected(results);
   }
 
-  /// Perform sync now
-  /// Returns SyncResult with details of the sync operation
+  // Perform sync now Returns SyncResult with details of the sync operation
   Future<EventOrderSyncResult> syncNow() async {
     // Prevent concurrent syncs
     if (_isSyncing) {
@@ -225,7 +222,7 @@ class EventOrderSyncService extends ChangeNotifier {
     }
   }
 
-  /// Push local changes to server
+  // Push local changes to server
   Future<Map<String, int>> _pushLocalChanges() async {
     int uploaded = 0;
     int failed = 0;
@@ -267,7 +264,7 @@ class EventOrderSyncService extends ChangeNotifier {
     return {'uploaded': uploaded, 'failed': failed};
   }
 
-  /// Convert EventOrderEntity to sync payload
+  // Convert EventOrderEntity to sync payload
   Map<String, dynamic> _toSyncPayload(EventOrderEntity order) {
     return {
       'orderType': order.orderType,
@@ -325,7 +322,7 @@ class EventOrderSyncService extends ChangeNotifier {
     };
   }
 
-  /// Pull changes from server
+  // Pull changes from server
   Future<int> _pullServerChanges() async {
     try {
       // Get last sync time for incremental sync
@@ -347,7 +344,7 @@ class EventOrderSyncService extends ChangeNotifier {
     }
   }
 
-  /// Import orders from server
+  // Import orders from server
   Future<void> _importFromServer(
     List<Map<String, dynamic>> serverOrders,
   ) async {
@@ -381,7 +378,7 @@ class EventOrderSyncService extends ChangeNotifier {
     }
   }
 
-  /// Create order from server data
+  // Create order from server data
   Future<void> _createFromServer(Map<String, dynamic> data) async {
     final subEvents =
         (data['subEvents'] as List<dynamic>?)
@@ -453,12 +450,12 @@ class EventOrderSyncService extends ChangeNotifier {
     await _offlineController.importEventOrder(entity);
   }
 
-  /// Update order from server data
+  // Update order from server data
   Future<void> _updateFromServer(int localId, Map<String, dynamic> data) async {
     await _offlineController.updateFromServer(localId, data);
   }
 
-  /// Force full refresh from server
+  // Force full refresh from server
   Future<EventOrderSyncResult> forceFullRefresh() async {
     if (_status == EventOrderSyncStatusIndicator.syncing) {
       return EventOrderSyncResult(
@@ -502,7 +499,7 @@ class EventOrderSyncService extends ChangeNotifier {
     }
   }
 
-  /// Get number of pending sync items
+  // Get number of pending sync items
   Future<int> getPendingSyncCount() async {
     final records = await _offlineController.getRecordsToSync();
     return records.length;

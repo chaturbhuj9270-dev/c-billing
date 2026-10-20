@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/event_order.dart';
 
-/// Base state for EventOrder
+// Base state for EventOrder
 abstract class EventOrderState extends Equatable {
   const EventOrderState();
 
@@ -9,12 +9,12 @@ abstract class EventOrderState extends Equatable {
   List<Object?> get props => [];
 }
 
-/// Initial state
+// Initial state
 class EventOrderInitial extends EventOrderState {
   const EventOrderInitial();
 }
 
-/// Loading event orders list
+// Loading event orders list
 class EventOrderLoading extends EventOrderState {
   final List<EventOrder>? previousOrders;
 
@@ -24,7 +24,7 @@ class EventOrderLoading extends EventOrderState {
   List<Object?> get props => [previousOrders];
 }
 
-/// Event orders loaded successfully
+// Event orders loaded successfully
 class EventOrderLoaded extends EventOrderState {
   final List<EventOrder> orders;
   final OrderType? filterType;
@@ -42,7 +42,7 @@ class EventOrderLoaded extends EventOrderState {
   List<Object?> get props => [orders, filterType, filterStatus, searchQuery];
 }
 
-/// Error loading event orders
+// Error loading event orders
 class EventOrderError extends EventOrderState {
   final String message;
   final List<EventOrder>? previousOrders;
@@ -56,12 +56,12 @@ class EventOrderError extends EventOrderState {
   List<Object?> get props => [message, previousOrders];
 }
 
-/// Creating/updating an event order
+// Creating/updating an event order
 class EventOrderSaving extends EventOrderState {
   const EventOrderSaving();
 }
 
-/// Event order saved successfully
+// Event order saved successfully
 class EventOrderSaved extends EventOrderState {
   final EventOrder order;
   final bool isNew;
@@ -75,12 +75,12 @@ class EventOrderSaved extends EventOrderState {
   List<Object?> get props => [order, isNew];
 }
 
-/// Event order deleted
+// Event order deleted
 class EventOrderDeleted extends EventOrderState {
   const EventOrderDeleted();
 }
 
-/// Single event order detail loaded
+// Single event order detail loaded
 class EventOrderDetailLoaded extends EventOrderState {
   final EventOrder order;
 

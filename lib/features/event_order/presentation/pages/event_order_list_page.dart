@@ -28,12 +28,12 @@ import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
-/// Lets the desktop shell header open a new event order.
+// Lets the desktop shell header open a new event order.
 class EventOrderScreenActions {
   static VoidCallback? add;
 }
 
-/// Date filter options for event/order list
+// Date filter options for event/order list
 enum DateFilter {
   all,
   thisWeek,
@@ -46,7 +46,7 @@ enum DateFilter {
   custom,
 }
 
-/// Event Orders List Page - Premium UI Design
+// Event Orders List Page - Premium UI Design
 class EventOrderListPage extends StatefulWidget {
   final OrderType? filterType;
   final bool isEmbedded;
@@ -1307,7 +1307,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     return amount.toStringAsFixed(0);
   }
 
-  /// Build date filter chips row
+  // Build date filter chips row
   Widget _buildDateFilterChips() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -1467,8 +1467,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     }
   }
 
-  /// Get date range based on selected filter
-  /// Returns null for 'all' and 'passed' filters which need special handling
+  // Get date range based on selected filter Returns null for 'all' and 'passed' filters which need special handling
   (DateTime start, DateTime end)? _getDateRange() {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -1528,7 +1527,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     }
   }
 
-  /// Filter orders by date range
+  // Filter orders by date range
   List<EventOrder> _filterOrdersByDate(List<EventOrder> orders) {
     // Handle 'all' filter - return all orders
     if (_selectedDateFilter == DateFilter.all) {
@@ -1620,7 +1619,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     }
   }
 
-  /// Open settings page
+  // Open settings page
   void _openSettings(BuildContext context) async {
     // Capture cubit reference before navigation
     final cubit = context.read<EventOrderCubit>();
@@ -1641,7 +1640,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     );
   }
 
-  /// Show invoice preview with share/print options
+  // Show invoice preview with share/print options
   Future<void> _showInvoicePreview(
     BuildContext context,
     EventOrder order,
@@ -1995,7 +1994,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     );
   }
 
-  /// Show report generation bottom sheet
+  // Show report generation bottom sheet
   void _showReportBottomSheet(
     BuildContext context,
     List<EventOrder> allOrders,

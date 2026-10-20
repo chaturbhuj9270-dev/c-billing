@@ -3,31 +3,27 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:c_billing/features/customer/domain/entities/customer.dart';
 
-/// Repository for customer data operations
-///
-/// Handles all CRUD operations and balance management for customers
-/// Uses Firebase Firestore for persistence
+// Repository for customer data operations Handles all CRUD operations and balance management for customers Uses Firebase Firestore for persistence
 abstract class CustomerRepository {
-  /// Get all customers for current user
+  // Get all customers for current user
   Future<List<Customer>> getAllCustomers();
 
-  /// Get a customer by ID
+  // Get a customer by ID
   Future<Customer?> getCustomerById(String customerId);
 
-  /// Get a customer by contact number
+  // Get a customer by contact number
   Future<Customer?> getCustomerByContact(String contact);
 
-  /// Create a new customer
+  // Create a new customer
   Future<String> createCustomer(Customer customer);
 
-  /// Update an existing customer
+  // Update an existing customer
   Future<void> updateCustomer(Customer customer);
 
-  /// Delete a customer (soft delete - sets isActive to false)
+  // Delete a customer (soft delete - sets isActive to false)
   Future<void> deleteCustomer(String customerId);
 
-  /// Update customer's pending balance
-  /// Used by transaction service for atomic updates
+  // Update customer's pending balance Used by transaction service for atomic updates
   Future<void> updatePendingBalance({
     required String customerId,
     required double newPendingAmount,
@@ -35,28 +31,28 @@ abstract class CustomerRepository {
     required double paidAmountDelta,
   });
 
-  /// Search customers by name or contact
+  // Search customers by name or contact
   Future<List<Customer>> searchCustomers(String query);
 
-  /// Get customers with pending balance
+  // Get customers with pending balance
   Future<List<Customer>> getCustomersWithPendingBalance();
 }
 
-/// Firebase implementation of CustomerRepository
+// Firebase implementation of CustomerRepository
 class FirebaseCustomerRepository implements CustomerRepository {
   final FirebaseFirestore firestore;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   FirebaseCustomerRepository({required this.firestore});
 
-  /// Get current user ID (public for use by services)
+  // Get current user ID (public for use by services)
   String get userId {
     final user = _auth.currentUser;
     if (user == null) throw Exception('User not authenticated');
     return user.uid;
   }
 
-  /// Get reference to customers collection
+  // Get reference to customers collection
   CollectionReference<Map<String, dynamic>> get _customersCollection =>
       firestore.collection('users').doc(userId).collection('customers');
 
@@ -191,8 +187,7 @@ class FirebaseCustomerRepository implements CustomerRepository {
   @override
   Future<List<Customer>> searchCustomers(String query) async {
     try {
-      // Firestore doesn't support full-text search, so we fetch all and filter
-      // For production, consider using Algolia or similar
+      // Firestore doesn't support full-text search, so we fetch all and filter For production, consider using Algolia or similar
       final customers = await getAllCustomers();
       final lowerQuery = query.toLowerCase();
 
@@ -230,8 +225,7 @@ class FirebaseCustomerRepository implements CustomerRepository {
     }
   }
 
-  /// Update customer balance using Firestore transaction (for atomicity)
-  /// This should be called from CustomerTransactionService
+  // Update customer balance using Firestore transaction (for atomicity) This should be called from CustomerTransactionService
   Future<void> updateBalanceInTransaction({
     required Transaction transaction,
     required String customerId,

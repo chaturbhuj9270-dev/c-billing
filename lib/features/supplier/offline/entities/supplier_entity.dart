@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 
-/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTime(dynamic value) {
   if (value == null) return null;
   if (value is Timestamp) return value.toDate();
@@ -9,59 +9,57 @@ DateTime? _parseDateTime(dynamic value) {
   return null;
 }
 
-/// Sync status for delta sync logic
-/// Only suppliers with status != SYNCED will be pushed to server
+// Sync status for delta sync logic Only suppliers with status != SYNCED will be pushed to server
 enum SupplierSyncStatus {
-  /// Newly created locally, not yet on server
+  // Newly created locally, not yet on server
   newRecord,
 
-  /// Modified locally after sync
+  // Modified locally after sync
   updated,
 
-  /// Marked for deletion, pending server delete
+  // Marked for deletion, pending server delete
   deleted,
 
-  /// Fully synced with server
+  // Fully synced with server
   synced,
 }
 
-/// Local record for Supplier with offline-first support
-/// Optimized with proper indexes for high-performance queries
+// Local record for Supplier with offline-first support Optimized with proper indexes for high-performance queries
 class SupplierEntity {
-  /// Local row id
+  // Local row id
   int id = 0;
 
-  /// Server-side ID (null for locally created, not yet synced records)
+  // Server-side ID (null for locally created, not yet synced records)
   String? serverId;
 
-  /// First name (indexed for fast search)
+  // First name (indexed for fast search)
   String firstName;
 
-  /// Middle name
+  // Middle name
   String middleName;
 
-  /// Last name
+  // Last name
   String lastName;
 
-  /// Supplier code (indexed for fast lookup)
+  // Supplier code (indexed for fast lookup)
   String supplierCode;
 
-  /// Contact number (indexed for fast lookup)
+  // Contact number (indexed for fast lookup)
   String contact;
 
-  /// Address
+  // Address
   String address;
 
-  /// Whether supplier is active
+  // Whether supplier is active
   bool isActive;
 
-  /// Sync status for delta sync
+  // Sync status for delta sync
   SupplierSyncStatus syncStatus;
 
-  /// Last update timestamp for conflict resolution
+  // Last update timestamp for conflict resolution
   DateTime updatedAt;
 
-  /// Created timestamp
+  // Created timestamp
   DateTime createdAt;
 
   SupplierEntity({
@@ -78,7 +76,7 @@ class SupplierEntity {
     required this.createdAt,
   });
 
-  /// Get full name
+  // Get full name
   String get fullName {
     final parts = [
       firstName,
@@ -88,7 +86,7 @@ class SupplierEntity {
     return parts.join(' ');
   }
 
-  /// Factory constructor for creating new supplier with defaults
+  // Factory constructor for creating new supplier with defaults
   factory SupplierEntity.create({
     String? serverId,
     required String firstName,
@@ -116,7 +114,7 @@ class SupplierEntity {
     );
   }
 
-  /// Create from server response (Firestore document)
+  // Create from server response (Firestore document)
   factory SupplierEntity.fromServer(Map<String, dynamic> data) {
     final now = DateTime.now();
     return SupplierEntity(
@@ -134,7 +132,7 @@ class SupplierEntity {
     );
   }
 
-  /// Convert to Map for API sync
+  // Convert to Map for API sync
   Map<String, dynamic> toSyncPayload() {
     return {
       'id': serverId,
@@ -150,7 +148,7 @@ class SupplierEntity {
     };
   }
 
-  /// Convert to Map for UI (compatible with existing supplier page)
+  // Convert to Map for UI (compatible with existing supplier page)
   Map<String, dynamic> toSupplierMap() {
     return {
       'id': serverId ?? 'local_$id',
@@ -169,7 +167,7 @@ class SupplierEntity {
     };
   }
 
-  /// Copy with modifications
+  // Copy with modifications
   SupplierEntity copyWith({
     int? id,
     String? serverId,
@@ -201,10 +199,10 @@ class SupplierEntity {
     return entity;
   }
 
-  /// Check if supplier needs sync
+  // Check if supplier needs sync
   bool get needsSync => syncStatus != SupplierSyncStatus.synced;
 
-  /// Check if supplier is marked for deletion
+  // Check if supplier is marked for deletion
   bool get isMarkedForDeletion => syncStatus == SupplierSyncStatus.deleted;
 
   @override

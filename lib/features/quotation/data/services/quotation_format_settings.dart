@@ -1,10 +1,10 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// SharedPreferences keys and helpers for quotation print/PDF format.
+// SharedPreferences keys and helpers for quotation print/PDF format.
 class QuotationFormatSettings {
   QuotationFormatSettings._();
 
-  /// `pos` = thermal receipt (standard), `normal` = tabular A4-style PDF.
+  // `pos` = thermal receipt (standard), `normal` = tabular A4-style PDF.
   static const String keyQuotationType = 'quotation_type';
 
   static Future<String> getFormatType() async {

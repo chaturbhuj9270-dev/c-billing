@@ -1,12 +1,6 @@
 import 'package:c_billing/features/inventory_management/domain/entities/product.dart';
 
-/// Model for report preview with selectable rows and editable order quantity.
-///
-/// - [isSelected] controls whether this item is included in the final report.
-///   Defaults to `true` (all items selected).
-/// - [orderQuantity] is nullable – `null` means the user has not entered a
-///   value and should be displayed as "-" in the UI and reports.
-/// - [expiryDate] is optional; shown as "-" when absent.
+// Model for report preview with selectable rows and editable order quantity. - [isSelected] controls whether this item is included in the final report. Defaults to `true` (all ite...
 class ReportItem {
   final Product product;
   final int availableQuantity;
@@ -22,8 +16,7 @@ class ReportItem {
     this.expiryDate,
   });
 
-  /// Create from Product entity.
-  /// [initialOrderQty] defaults to `null` (displayed as "-").
+  // Create from Product entity. [initialOrderQty] defaults to `null` (displayed as "-").
   factory ReportItem.fromProduct(
     Product product, {
     int? initialOrderQty,
@@ -38,8 +31,7 @@ class ReportItem {
     );
   }
 
-  /// Update order quantity with validation.
-  /// Negative values are rejected; `null` is accepted (means "not set").
+  // Update order quantity with validation. Negative values are rejected; `null` is accepted (means "not set").
   void updateOrderQuantity(int? newQuantity) {
     if (newQuantity != null && newQuantity < 0) {
       orderQuantity = null;
@@ -48,7 +40,7 @@ class ReportItem {
     }
   }
 
-  /// Get suggested reorder quantity based on stock status
+  // Get suggested reorder quantity based on stock status
   int getSuggestedReorderQuantity() {
     if (availableQuantity == 0) {
       return 50; // Default for out of stock
@@ -58,10 +50,10 @@ class ReportItem {
     return 0; // No reorder needed
   }
 
-  /// Formatted order quantity for display: shows "-" when null.
+  // Formatted order quantity for display: shows "-" when null.
   String get orderQtyDisplay => orderQuantity?.toString() ?? '-';
 
-  /// Formatted expiry date for display: shows "-" when null.
+  // Formatted expiry date for display: shows "-" when null.
   String get expiryDateDisplay {
     if (expiryDate == null) return '-';
     return '${expiryDate!.day.toString().padLeft(2, '0')}/'
@@ -69,7 +61,7 @@ class ReportItem {
         '${expiryDate!.year}';
   }
 
-  /// Copy with updated values
+  // Copy with updated values
   ReportItem copyWith({
     Product? product,
     int? availableQuantity,

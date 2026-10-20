@@ -3,7 +3,7 @@ import 'dart:collection';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
-/// Log entry level
+// Log entry level
 enum LogLevel {
   debug,
   info,
@@ -11,7 +11,7 @@ enum LogLevel {
   error,
 }
 
-/// A single log entry
+// A single log entry
 class LogEntry {
   final DateTime timestamp;
   final LogLevel level;
@@ -57,7 +57,7 @@ class LogEntry {
   }
 }
 
-/// Centralized app logger with in-memory storage
+// Centralized app logger with in-memory storage
 class AppLogger {
   static final AppLogger _instance = AppLogger._internal();
   factory AppLogger() => _instance;
@@ -67,23 +67,23 @@ class AppLogger {
   static const _maxLogs = 1000;
   final _controller = StreamController<LogEntry>.broadcast();
 
-  /// Stream of log entries
+  // Stream of log entries
   Stream<LogEntry> get logStream => _controller.stream;
 
-  /// Get all logs
+  // Get all logs
   List<LogEntry> get logs => _logs.toList();
 
-  /// Get logs filtered by level
+  // Get logs filtered by level
   List<LogEntry> getLogsByLevel(LogLevel level) {
     return _logs.where((log) => log.level == level).toList();
   }
 
-  /// Get logs filtered by tag
+  // Get logs filtered by tag
   List<LogEntry> getLogsByTag(String tag) {
     return _logs.where((log) => log.tag.toLowerCase().contains(tag.toLowerCase())).toList();
   }
 
-  /// Clear all logs
+  // Clear all logs
   void clear() {
     _logs.clear();
   }
@@ -101,7 +101,7 @@ class AppLogger {
     }
   }
 
-  /// Log debug message
+  // Log debug message
   void debug(String tag, String message) {
     _addLog(LogEntry(
       timestamp: DateTime.now(),
@@ -111,7 +111,7 @@ class AppLogger {
     ));
   }
 
-  /// Log info message
+  // Log info message
   void info(String tag, String message) {
     _addLog(LogEntry(
       timestamp: DateTime.now(),
@@ -121,7 +121,7 @@ class AppLogger {
     ));
   }
 
-  /// Log warning message
+  // Log warning message
   void warning(String tag, String message, {Object? error}) {
     _addLog(LogEntry(
       timestamp: DateTime.now(),
@@ -132,7 +132,7 @@ class AppLogger {
     ));
   }
 
-  /// Log error message
+  // Log error message
   void error(String tag, String message, {Object? error, StackTrace? stackTrace}) {
     _addLog(LogEntry(
       timestamp: DateTime.now(),
@@ -144,7 +144,7 @@ class AppLogger {
     ));
   }
 
-  /// Export logs as formatted text
+  // Export logs as formatted text
   String exportLogs() {
     final buffer = StringBuffer();
     buffer.writeln('='.padRight(80, '='));

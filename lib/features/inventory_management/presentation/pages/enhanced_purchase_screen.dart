@@ -32,7 +32,7 @@ import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/common_widgets/glass_icon_fab.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
-/// Lets the dashboard download button trigger the visible purchase report.
+// Lets the dashboard download button trigger the visible purchase report.
 class PurchaseScreenActions {
   static final List<VoidCallback> _downloads = [];
   static VoidCallback? add;
@@ -48,8 +48,7 @@ class PurchaseScreenActions {
   }
 }
 
-/// Enhanced Purchase Screen with purchase list as default view
-/// Features: Modern UI, filters, FAB for adding purchases, real-time updates
+// Enhanced Purchase Screen with purchase list as default view Features: Modern UI, filters, FAB for adding purchases, real-time updates
 class EnhancedPurchaseScreen extends StatefulWidget {
   final bool isEmbedded;
 
@@ -144,7 +143,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     super.dispose();
   }
 
-  /// Load purchases directly from the local database
+  // Load purchases directly from the local database
   Future<void> _loadPurchasesFromLocal() async {
     try {
       final controller = PurchaseBatchOfflineController.instance;
@@ -193,7 +192,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     }
   }
 
-  /// Setup real-time purchase stream from the local database (for updates after initial load)
+  // Setup real-time purchase stream from the local database (for updates after initial load)
   void _setupPurchaseStream() {
     _purchaseStreamSubscription?.cancel();
 
@@ -221,13 +220,13 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
         );
   }
 
-  /// Setup supplier stream for filter dropdown
+  // Setup supplier stream for filter dropdown
   void _setupSupplierStream() {
     // Load suppliers once instead of streaming to avoid rebuilds
     _loadSuppliers();
   }
 
-  /// Load suppliers once
+  // Load suppliers once
   Future<void> _loadSuppliers() async {
     try {
       final suppliers = await SupplierOfflineController.instance
@@ -252,7 +251,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     }
   }
 
-  /// Listen for purchase changes from other screens
+  // Listen for purchase changes from other screens
   void _setupCrossPageRefresh() {
     _purchaseChangeSubscription = DashboardRefreshService
         .instance
@@ -265,7 +264,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
         });
   }
 
-  /// Navigate to add purchase page
+  // Navigate to add purchase page
   void _navigateToAddPurchase() async {
     await showAppPage(
       context,
@@ -275,7 +274,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     _loadPurchasesFromLocal();
   }
 
-  /// Show purchase details bottom sheet
+  // Show purchase details bottom sheet
   void _showPurchaseDetails(PurchaseBatchEntity purchase) {
     showAppBottomSheet(
       context: context,
@@ -295,7 +294,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     );
   }
 
-  /// Show purchase context menu on long press
+  // Show purchase context menu on long press
   void _showPurchaseContextMenu(PurchaseBatchEntity purchase) {
     showAppBottomSheet(
       context: context,
@@ -407,7 +406,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     );
   }
 
-  /// Show edit purchase dialog
+  // Show edit purchase dialog
   void _showEditPurchaseDialog(PurchaseBatchEntity purchase) {
     final purchasePriceController = TextEditingController(
       text: purchase.purchasePrice.toStringAsFixed(2),
@@ -873,7 +872,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     );
   }
 
-  /// Build a text field for the edit dialog
+  // Build a text field for the edit dialog
   Widget _buildEditField({
     required TextEditingController controller,
     required String label,
@@ -915,7 +914,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     );
   }
 
-  /// Build a date display field for the edit dialog
+  // Build a date display field for the edit dialog
   Widget _buildDateField({
     required String label,
     required DateTime? date,
@@ -963,7 +962,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     );
   }
 
-  /// Load custom field values from the product
+  // Load custom field values from the product
   Future<Map<String, dynamic>> _loadProductCustomFields(
     String productId,
   ) async {
@@ -981,7 +980,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     return {};
   }
 
-  /// Build a read-only custom field display widget
+  // Build a read-only custom field display widget
   Widget _buildCustomFieldDisplay(CustomColumn column, dynamic value) {
     final primaryColor = AppColors.action(context);
     String displayValue = '';
@@ -1069,7 +1068,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     );
   }
 
-  /// Show supplier picker dialog
+  // Show supplier picker dialog
   Future<Map<String, dynamic>?> _showSupplierPickerDialog(
     BuildContext parentContext,
   ) async {
@@ -1176,7 +1175,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     );
   }
 
-  /// Confirm and delete a purchase batch
+  // Confirm and delete a purchase batch
   void _confirmDeletePurchase(PurchaseBatchEntity purchase) {
     showDialog(
       context: context,
@@ -1710,7 +1709,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   }
 }
 
-/// Purchase details bottom sheet
+// Purchase details bottom sheet
 class _PurchaseDetailsSheet extends StatefulWidget {
   final PurchaseBatchEntity purchase;
   final VoidCallback? onEdit;
@@ -1727,11 +1726,11 @@ class _PurchaseDetailsSheet extends StatefulWidget {
 }
 
 class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
-  /// Calculate total amount for this batch
+  // Calculate total amount for this batch
   double get totalAmount =>
       widget.purchase.purchasePrice * widget.purchase.quantityPurchased;
 
-  /// Load custom field values from the product
+  // Load custom field values from the product
   Future<Map<String, dynamic>> _loadProductCustomFields() async {
     try {
       final product = await ProductOfflineController.instance
@@ -2019,7 +2018,7 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
     );
   }
 
-  /// Format custom field value for display
+  // Format custom field value for display
   String _formatCustomFieldValue(CustomColumn column, dynamic value) {
     if (value == null) return '-';
 

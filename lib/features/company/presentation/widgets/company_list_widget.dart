@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'company_filter_widget.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Enhanced list widget for displaying companies
-/// Features: Shimmer loading, Enhanced cards with sync icons, Empty states
+// Enhanced list widget for displaying companies Features: Shimmer loading, Enhanced cards with sync icons, Empty states
 class CompanyListWidget extends StatelessWidget {
   final List<Map<String, dynamic>> companies;
   final bool isLoading;
@@ -198,7 +197,7 @@ class CompanyListWidget extends StatelessWidget {
   }
 }
 
-/// Enhanced company card widget
+// Enhanced company card widget
 class _CompanyCard extends StatelessWidget {
   final Map<String, dynamic> company;
   final VoidCallback onTap;
@@ -464,7 +463,7 @@ class _CompanyCard extends StatelessWidget {
   }
 }
 
-/// Shimmer loading card
+// Shimmer loading card
 class _ShimmerCard extends StatefulWidget {
   const _ShimmerCard();
 

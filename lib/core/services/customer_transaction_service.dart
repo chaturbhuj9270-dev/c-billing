@@ -5,7 +5,7 @@ import 'package:c_billing/features/customer/domain/entities/customer_transaction
 import 'package:c_billing/features/customer/data/repositories/customer_repository.dart';
 import 'package:c_billing/features/customer/data/repositories/customer_transaction_repository.dart';
 
-/// Result class for transaction operations
+// Result class for transaction operations
 class TransactionResult {
   final bool success;
   final String? transactionId;
@@ -35,13 +35,7 @@ class TransactionResult {
   }
 }
 
-/// Service for managing customer transactions and pending balances
-///
-/// This service implements all business logic for:
-/// - Recording payments received from customers
-/// - Recording bill generation (adding to pending balance)
-/// - Validating transactions
-/// - Maintaining atomicity using Firestore transactions
+// Service for managing customer transactions and pending balances This service implements all business logic for: - Recording payments received from customers - Recording bill gen...
 class CustomerTransactionService {
   final FirebaseFirestore firestore;
   final FirebaseCustomerRepository customerRepository;
@@ -53,13 +47,7 @@ class CustomerTransactionService {
     required this.transactionRepository,
   });
 
-  /// Record a payment received from a customer
-  ///
-  /// Business Rules:
-  /// - Amount must be positive
-  /// - Amount cannot exceed current pending balance
-  /// - Customer must exist
-  /// - Uses atomic transaction to update balance and create record
+  // Record a payment received from a customer Business Rules: - Amount must be positive - Amount cannot exceed current pending balance - Customer must exist - Uses atomic transactio...
   Future<TransactionResult> receivePayment({
     required String customerId,
     required double amount,
@@ -151,12 +139,7 @@ class CustomerTransactionService {
     }
   }
 
-  /// Record a bill generated for a customer (adds to pending balance)
-  ///
-  /// Business Rules:
-  /// - Bill amount must be positive
-  /// - Customer must exist
-  /// - Creates transaction record for audit trail
+  // Record a bill generated for a customer (adds to pending balance) Business Rules: - Bill amount must be positive - Customer must exist - Creates transaction record for audit trail
   Future<TransactionResult> recordBillGenerated({
     required String customerId,
     required String billId,
@@ -234,12 +217,7 @@ class CustomerTransactionService {
     }
   }
 
-  /// Record an adjustment to customer balance
-  ///
-  /// Used for:
-  /// - Write-offs
-  /// - Corrections
-  /// - Discounts applied after billing
+  // Record an adjustment to customer balance Used for: - Write-offs - Corrections - Discounts applied after billing
   Future<TransactionResult> recordAdjustment({
     required String customerId,
     required double amount,
@@ -322,9 +300,7 @@ class CustomerTransactionService {
     }
   }
 
-  /// Record a refund given to customer (for returns)
-  ///
-  /// Used when a bill is returned and refund is issued
+  // Record a refund given to customer (for returns) Used when a bill is returned and refund is issued
   Future<TransactionResult> recordRefund({
     required String customerId,
     required String billId,
@@ -359,8 +335,7 @@ class CustomerTransactionService {
         final currentPending =
             ((customerData['currentPendingAmount'] ?? 0) as num).toDouble();
 
-        // Refund reduces pending (if customer had pending balance)
-        // or creates a credit (negative balance not allowed, so just set to 0)
+        // Refund reduces pending (if customer had pending balance) or creates a credit (negative balance not allowed, so just set to 0)
         final newBalance = (currentPending - refundAmount).clamp(
           0.0,
           double.infinity,
@@ -410,7 +385,7 @@ class CustomerTransactionService {
     }
   }
 
-  /// Get customer with full transaction history
+  // Get customer with full transaction history
   Future<CustomerWithTransactions?> getCustomerWithTransactions(
     String customerId, {
     int transactionLimit = 50,
@@ -432,7 +407,7 @@ class CustomerTransactionService {
     }
   }
 
-  /// Get summary of all pending balances
+  // Get summary of all pending balances
   Future<PendingBalanceSummary> getPendingBalanceSummary() async {
     try {
       final customersWithPending = await customerRepository
@@ -455,7 +430,7 @@ class CustomerTransactionService {
   }
 }
 
-/// Helper class to hold customer with their transactions
+// Helper class to hold customer with their transactions
 class CustomerWithTransactions {
   final Customer customer;
   final List<CustomerTransaction> transactions;
@@ -466,7 +441,7 @@ class CustomerWithTransactions {
   });
 }
 
-/// Helper class for pending balance summary
+// Helper class for pending balance summary
 class PendingBalanceSummary {
   final double totalPendingAmount;
   final int customersWithPending;

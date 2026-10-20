@@ -1,18 +1,18 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// GST tax mode for billing
+// GST tax mode for billing
 enum GstMode {
-  /// No GST applied
+  // No GST applied
   noGst,
 
-  /// GST applied and added on top of subtotal
+  // GST applied and added on top of subtotal
   excludeGst,
 
-  /// GST is included in the item prices (extracted for display)
+  // GST is included in the item prices (extracted for display)
   includeGst,
 }
 
-/// Model for persisting GST/tax configuration in Bill Settings
+// Model for persisting GST/tax configuration in Bill Settings
 class BillTaxSettings {
   // SharedPreferences keys
   static const String _keyEnableCgst = 'tax_enable_cgst';
@@ -44,35 +44,35 @@ class BillTaxSettings {
     this.defaultIncludeTax = true,
   });
 
-  /// Default (all disabled)
+  // Default (all disabled)
   static const BillTaxSettings defaultSettings = BillTaxSettings();
 
-  /// Effective CGST percent (0 if disabled)
+  // Effective CGST percent (0 if disabled)
   double get effectiveCgstPercent =>
       (enableCgst && cgstPercent > 0) ? cgstPercent : 0.0;
 
-  /// Effective SGST percent (0 if disabled)
+  // Effective SGST percent (0 if disabled)
   double get effectiveSgstPercent =>
       (enableSgst && sgstPercent > 0) ? sgstPercent : 0.0;
 
-  /// Effective Other Tax percent (0 if disabled)
+  // Effective Other Tax percent (0 if disabled)
   double get effectiveOtherTaxPercent =>
       (enableOtherTax && otherTaxPercent > 0) ? otherTaxPercent : 0.0;
 
-  /// Total effective tax percentage (sum of all enabled taxes)
+  // Total effective tax percentage (sum of all enabled taxes)
   double get totalTaxPercent =>
       effectiveCgstPercent + effectiveSgstPercent + effectiveOtherTaxPercent;
 
-  /// Whether any tax is effectively enabled (enabled + percent > 0)
+  // Whether any tax is effectively enabled (enabled + percent > 0)
   bool get hasAnyTaxEnabled => totalTaxPercent > 0;
 
-  /// The default GST mode based on settings
+  // The default GST mode based on settings
   GstMode get defaultGstMode {
     if (!hasAnyTaxEnabled) return GstMode.noGst;
     return defaultIncludeTax ? GstMode.includeGst : GstMode.excludeGst;
   }
 
-  /// Load from SharedPreferences
+  // Load from SharedPreferences
   static Future<BillTaxSettings> load() async {
     final prefs = await SharedPreferences.getInstance();
     return BillTaxSettings(
@@ -87,7 +87,7 @@ class BillTaxSettings {
     );
   }
 
-  /// Save to SharedPreferences
+  // Save to SharedPreferences
   Future<void> save() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyEnableCgst, enableCgst);
@@ -100,7 +100,7 @@ class BillTaxSettings {
     await prefs.setBool(_keyDefaultIncludeTax, defaultIncludeTax);
   }
 
-  /// Calculate tax breakdown for a given subtotal and GST mode
+  // Calculate tax breakdown for a given subtotal and GST mode
   TaxBreakdown calculateTax({
     required double subtotal,
     required GstMode gstMode,
@@ -174,7 +174,7 @@ class BillTaxSettings {
   }
 }
 
-/// Computed tax breakdown for a specific bill
+// Computed tax breakdown for a specific bill
 class TaxBreakdown {
   final double taxableValue;
   final double cgstPercent;
@@ -202,7 +202,7 @@ class TaxBreakdown {
     required this.isInclusive,
   });
 
-  /// No-tax breakdown
+  // No-tax breakdown
   factory TaxBreakdown.zero({required double subtotal}) {
     return TaxBreakdown(
       taxableValue: subtotal,
@@ -218,7 +218,7 @@ class TaxBreakdown {
     );
   }
 
-  /// Grand total after tax and discount
+  // Grand total after tax and discount
   double grandTotal({double discount = 0.0}) {
     if (isInclusive) {
       // Inclusive: prices already include tax, just subtract discount

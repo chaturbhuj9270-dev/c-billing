@@ -3,8 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/repositories/dashboard_offline_repository.dart';
 import 'dashboard_state.dart';
 
-/// Cubit for managing dashboard state and data loading
-/// Uses offline-first repository for instant data loading
+// Cubit for managing dashboard state and data loading Uses offline-first repository for instant data loading
 class DashboardCubit extends Cubit<DashboardState> {
   final DashboardOfflineRepository _repository;
 
@@ -12,8 +11,7 @@ class DashboardCubit extends Cubit<DashboardState> {
     : _repository = repository ?? DashboardOfflineRepository.instance,
       super(const DashboardInitial());
 
-  /// Load dashboard data with the current filter
-  /// Uses local database for microsecond-level loading
+  // Load dashboard data with the current filter Uses local database for microsecond-level loading
   Future<void> loadDashboard() async {
     final stopwatch = Stopwatch()..start();
 
@@ -72,7 +70,7 @@ class DashboardCubit extends Cubit<DashboardState> {
     }
   }
 
-  /// Change the filter and reload data
+  // Change the filter and reload data
   Future<void> changeFilter(DashboardFilter filter) async {
     if (filter == state.filter && filter != DashboardFilter.custom) return;
 
@@ -92,7 +90,7 @@ class DashboardCubit extends Cubit<DashboardState> {
     await loadDashboard();
   }
 
-  /// Set custom date range and reload
+  // Set custom date range and reload
   Future<void> setCustomDateRange(DateTime start, DateTime end) async {
     final previousData = state is DashboardLoaded
         ? (state as DashboardLoaded).data
@@ -134,12 +132,12 @@ class DashboardCubit extends Cubit<DashboardState> {
     }
   }
 
-  /// Refresh dashboard data with current filter
+  // Refresh dashboard data with current filter
   Future<void> refresh() async {
     await loadDashboard();
   }
 
-  /// Get date range based on filter
+  // Get date range based on filter
   Map<String, DateTime?> _getDateRange(
     DashboardFilter filter,
     DateTime? customStart,

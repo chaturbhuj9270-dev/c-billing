@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Shared palette from the billing / purchase screens.
-///
-/// Dark surfaces are green-charcoal. Primary green is the action color.
-/// Icon tones (blue, amber, rose) mark categories.
+// Shared palette from the billing / purchase screens. Dark surfaces are green-charcoal. Primary green is the action color. Icon tones (blue, amber, rose) mark categories.
 class AppTheme {
   AppTheme._();
 
@@ -22,8 +19,7 @@ class AppTheme {
   // Light
   static const Color lightScaffold = Color(0xFFF3F6F4);
 
-  // Dark — sampled from the Add purchase screen.
-  // Page is near-black, cards sit one step above it, fields sink back to the page.
+  // Dark — sampled from the Add purchase screen. Page is near-black, cards sit one step above it, fields sink back to the page.
   static const Color darkScaffold = Color(0xFF080C0C);
   static const Color darkSurface = Color(0xFF101412);
   static const Color darkCard = Color(0xFF131715);
@@ -33,10 +29,10 @@ class AppTheme {
   static const Color darkTextSecondary = Color(0xFF87928C);
   static const Color darkTextMuted = Color(0xFF6A756F);
 
-  /// Filled buttons and selected chips in dark theme.
+  // Filled buttons and selected chips in dark theme.
   static const Color darkAction = Color(0xFF3B6C4F);
 
-  /// Icons and outline rings in dark theme (the green plus buttons).
+  // Icons and outline rings in dark theme (the green plus buttons).
   static const Color darkActionBright = Color(0xFF5CAF7F);
 
   // Shared palette. Every screen color is declared here.
@@ -499,7 +495,7 @@ class AppTheme {
   }
 }
 
-/// Convenience tokens that resolve from the current [BuildContext] theme.
+// Convenience tokens that resolve from the current [BuildContext] theme.
 class AppColors {
   AppColors._();
 
@@ -534,11 +530,11 @@ class AppColors {
       ? AppTheme.darkScaffold
       : AppTheme.grey.withValues(alpha: 0.08);
 
-  /// Filled green. Light theme keeps [AppTheme.primary]; dark uses the purchase-screen green.
+  // Filled green. Light theme keeps [AppTheme.primary]; dark uses the purchase-screen green.
   static Color action(BuildContext context) =>
       isDark(context) ? AppTheme.darkAction : AppTheme.primary;
 
-  /// Outline rings and green icons. Brighter on dark so they read on the black page.
+  // Outline rings and green icons. Brighter on dark so they read on the black page.
   static Color actionBright(BuildContext context) =>
       isDark(context) ? AppTheme.darkActionBright : AppTheme.primary;
 
@@ -559,39 +555,39 @@ class AppColors {
   static Color shadow(BuildContext context) =>
       AppTheme.black.withValues(alpha: isDark(context) ? 0.55 : 0.06);
 
-  /// Solid top-bar color from [AppBarTheme]. The same color on every screen.
+  // Solid top-bar color from [AppBarTheme]. The same color on every screen.
   static Color appBar(BuildContext context) =>
       Theme.of(context).appBarTheme.backgroundColor ??
       (isDark(context) ? AppTheme.darkScaffold : AppTheme.primary);
 
-  /// Deep green bar. Dark enough for light labels, tinted to match the screens.
+  // Deep green bar. Dark enough for light labels, tinted to match the screens.
   static List<Color> headerGradient(BuildContext context) => isDark(context)
       ? const [AppTheme.headerDarkStart, AppTheme.headerDarkMid, AppTheme.headerDarkEnd]
       : const [AppTheme.primary, AppTheme.primaryDark, AppTheme.headerLightEnd];
 
-  /// Selected chips and the active tab use the theme green in both themes.
+  // Selected chips and the active tab use the theme green in both themes.
   static Color selectedFill(BuildContext context) =>
       isDark(context) ? AppTheme.darkAction : AppTheme.primary;
 
   static Color selectedOnFill(BuildContext context) => AppTheme.white;
 
-  /// Emphasis color. Dark titles stay light; actions use [primary].
+  // Emphasis color. Dark titles stay light; actions use [primary].
   static Color accent(BuildContext context) =>
       isDark(context) ? AppTheme.darkTextPrimary : AppTheme.primary;
 
-  /// Soft accent wash behind icons/chips.
+  // Soft accent wash behind icons/chips.
   static Color accentSoft(BuildContext context, [double alpha = 0.12]) =>
       (isDark(context) ? AppTheme.darkActionBright : AppTheme.primary)
           .withValues(alpha: alpha);
 
-  /// On-gradient / on-colored-card text (always light for contrast).
+  // On-gradient / on-colored-card text (always light for contrast).
   static Color onAccent(BuildContext context) => AppTheme.white;
 
-  /// Subtle on-gradient secondary text.
+  // Subtle on-gradient secondary text.
   static Color onAccentMuted(BuildContext context) =>
       AppTheme.white.withValues(alpha: isDark(context) ? 0.72 : 0.85);
 
-  /// Metric-card gradients in the same green-charcoal family.
+  // Metric-card gradients in the same green-charcoal family.
   static List<Color> darkMetricGradient(int index) {
     const pairs = <List<Color>>[
       [AppTheme.metricGreenStart, AppTheme.metricGreenEnd],

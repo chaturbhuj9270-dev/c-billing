@@ -4,8 +4,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/services/invoice_scanner_service.dart';
 import '../../../../core/services/inventory_integration_service.dart';
-import '../../../../core/services/language_service.dart';
-import '../../../../core/localization/app_localizations.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
 import '../../../supplier/offline/entities/supplier_entity.dart';
 import '../../../company/offline/controllers/company_offline_controller.dart';
@@ -27,8 +25,6 @@ class InvoiceScannerPage extends StatefulWidget {
 
 class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
   final InvoiceScannerService _scannerService = InvoiceScannerService.instance;
-  // ignore: unused_field
-  late AppLocalizations _localizations;
 
   bool _isScanning = false;
   bool _isSaving = false;
@@ -50,19 +46,15 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
   @override
   void initState() {
     super.initState();
-    _localizations = AppLocalizations.of(
-      LanguageService.instance.currentLanguage,
-    );
     _initializeService();
     _loadData();
   }
 
   Future<void> _initializeService() async {
     await _scannerService.initialize();
-    // API key is pre-configured, no need to show input
     if (mounted) {
       setState(() {
-        _showApiKeyInput = false;
+        _showApiKeyInput = !_scannerService.isConfigured;
       });
     }
   }
@@ -1136,7 +1128,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
   }
 }
 
-/// Dialog for editing scanned item details
+// Dialog for editing scanned item details
 class _EditItemDialog extends StatefulWidget {
   final ScannedInvoiceItem item;
   final List<ProductEntity> products;

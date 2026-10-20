@@ -6,10 +6,10 @@ import '../../offline/controllers/bill_offline_controller.dart';
 import '../../offline/entities/bill_entity.dart';
 import 'bill_api_service.dart';
 
-/// Sync status for tracking sync state
+// Sync status for tracking sync state
 enum BillSyncServiceStatus { idle, syncing, success, failed }
 
-/// Result of a sync operation
+// Result of a sync operation
 class BillSyncResult {
   final bool success;
   final int createdCount;
@@ -42,8 +42,7 @@ class BillSyncResult {
   }
 }
 
-/// Service for background synchronization of Bill data
-/// Implements delta sync - only syncs NEW, UPDATED, or DELETED bills
+// Service for background synchronization of Bill data Implements delta sync - only syncs NEW, UPDATED, or DELETED bills
 class BillSyncService extends ChangeNotifier {
   static BillSyncService? _instance;
 
@@ -57,7 +56,7 @@ class BillSyncService extends ChangeNotifier {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _periodicSyncTimer;
 
-  /// Mutex to prevent concurrent sync operations
+  // Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
 
   BillSyncService._({
@@ -68,25 +67,25 @@ class BillSyncService extends ChangeNotifier {
        _apiService = apiService ?? BillApiService.instance,
        _connectivity = connectivity ?? Connectivity();
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static BillSyncService get instance {
     _instance ??= BillSyncService._();
     return _instance!;
   }
 
-  /// Current sync status
+  // Current sync status
   BillSyncServiceStatus get status => _status;
 
-  /// Last successful sync time
+  // Last successful sync time
   DateTime? get lastSyncTime => _lastSyncTime;
 
-  /// Last error message
+  // Last error message
   String? get lastError => _lastError;
 
-  /// Check if currently syncing
+  // Check if currently syncing
   bool get isSyncing => _status == BillSyncServiceStatus.syncing;
 
-  /// Initialize the sync service
+  // Initialize the sync service
   void initialize() {
     debugPrint('[BillSync] Initializing...');
 
@@ -111,7 +110,7 @@ class BillSyncService extends ChangeNotifier {
     debugPrint('[BillSync] Initialized');
   }
 
-  /// Check conditions and sync if appropriate
+  // Check conditions and sync if appropriate
   Future<void> _checkAndSync() async {
     try {
       final results = await _connectivity.checkConnectivity();
@@ -123,7 +122,7 @@ class BillSyncService extends ChangeNotifier {
     }
   }
 
-  /// Initial sync logic - downloads all bills if local DB is empty
+  // Initial sync logic - downloads all bills if local DB is empty
   Future<void> _initialSync() async {
     debugPrint('[BillSync] Starting initial sync...');
 
@@ -162,7 +161,7 @@ class BillSyncService extends ChangeNotifier {
     }
   }
 
-  /// Dispose resources
+  // Dispose resources
   @override
   void dispose() {
     _connectivitySubscription?.cancel();
@@ -170,7 +169,7 @@ class BillSyncService extends ChangeNotifier {
     super.dispose();
   }
 
-  /// Check if connected to network
+  // Check if connected to network
   bool _isConnected(List<ConnectivityResult> results) {
     return results.any(
       (r) =>
@@ -180,7 +179,7 @@ class BillSyncService extends ChangeNotifier {
     );
   }
 
-  /// Trigger immediate sync
+  // Trigger immediate sync
   Future<BillSyncResult> syncNow() async {
     // Check if user is authenticated
     if (!_apiService.isAuthenticated) {
@@ -321,7 +320,7 @@ class BillSyncService extends ChangeNotifier {
     }
   }
 
-  /// Pull changes from server
+  // Pull changes from server
   Future<int> _pullServerChanges() async {
     try {
       // Get last sync time for incremental sync
@@ -344,7 +343,7 @@ class BillSyncService extends ChangeNotifier {
     }
   }
 
-  /// Force full refresh from server (downloads all bills)
+  // Force full refresh from server (downloads all bills)
   Future<BillSyncResult> forceFullRefresh() async {
     if (_isSyncing) {
       return BillSyncResult(
@@ -453,7 +452,7 @@ class BillSyncService extends ChangeNotifier {
     }
   }
 
-  /// Get number of pending sync items
+  // Get number of pending sync items
   Future<int> getPendingSyncCount() async {
     return await _offlineController.getUnsyncedCount();
   }

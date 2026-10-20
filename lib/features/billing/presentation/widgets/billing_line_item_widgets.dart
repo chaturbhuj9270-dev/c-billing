@@ -6,7 +6,7 @@ import '../../../inventory_management/offline/entities/purchase_batch_entity.dar
 import '../../domain/entities/bill_item.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Max available stock for a bill line (batch-aware), same logic as billing page.
+// Max available stock for a bill line (batch-aware), same logic as billing page.
 int resolveBillItemMaxStock({
   required BillItem item,
   required List<Product> products,
@@ -52,7 +52,7 @@ int resolveBillItemMaxStock({
   return batchStock > 0 ? batchStock : product.currentStock;
 }
 
-/// Compact bill line list with +/- qty, inline qty edit, and tappable price — same as billing.
+// Compact bill line list with +/- qty, inline qty edit, and tappable price — same as billing.
 class BillItemsLineList extends StatelessWidget {
   final List<BillItem> items;
   final List<Product> products;
@@ -692,7 +692,7 @@ void showEditBillItemSellPriceDialog({
   );
 }
 
-/// Inline editable quantity field for bill items (billing page parity).
+// Inline editable quantity field for bill items (billing page parity).
 class InlineBillQuantityField extends StatefulWidget {
   final BillItem item;
   final int maxStock;

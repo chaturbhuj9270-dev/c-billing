@@ -5,7 +5,7 @@ import '../../../../core/database/local_store.dart';
 import '../../../../core/services/local_database.dart';
 import '../entities/customer_entity.dart';
 
-/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTime(dynamic value) {
   if (value == null) return null;
   if (value is Timestamp) return value.toDate();
@@ -14,8 +14,7 @@ DateTime? _parseDateTime(dynamic value) {
   return null;
 }
 
-/// Controller for handling offline-first Customer CRUD operations
-/// All UI reads should go through this controller (never directly from API)
+// Controller for handling offline-first Customer CRUD operations All UI reads should go through this controller (never directly from API)
 class CustomerOfflineController extends ChangeNotifier {
   static CustomerOfflineController? _instance;
 
@@ -23,7 +22,7 @@ class CustomerOfflineController extends ChangeNotifier {
 
   CustomerOfflineController._(this._db);
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static CustomerOfflineController get instance {
     _instance ??= CustomerOfflineController._(LocalDatabase.instance.db);
     return _instance!;
@@ -31,7 +30,7 @@ class CustomerOfflineController extends ChangeNotifier {
 
   // ==================== CREATE ====================
 
-  /// Add a new customer locally (will be synced later)
+  // Add a new customer locally (will be synced later)
   Future<CustomerEntity> addCustomer({
     required String name,
     required String mobile,
@@ -65,7 +64,7 @@ class CustomerOfflineController extends ChangeNotifier {
 
   // ==================== READ ====================
 
-  /// Get all active (non-deleted) customers
+  // Get all active (non-deleted) customers
   Future<List<CustomerEntity>> getAllCustomers() async {
     final customers = (await _db.loadCustomers())
         .where((customer) => customer.isDeleted == false)
@@ -74,7 +73,7 @@ class CustomerOfflineController extends ChangeNotifier {
     return customers;
   }
 
-  /// Watch all active customers (reactive stream for UI)
+  // Watch all active customers (reactive stream for UI)
   Stream<List<CustomerEntity>> watchAllCustomers() {
     return _db.watchCustomers().map((rows) {
       final customers = rows
@@ -85,7 +84,7 @@ class CustomerOfflineController extends ChangeNotifier {
     });
   }
 
-  /// Get customer by local id
+  // Get customer by local id
   Future<CustomerEntity?> getCustomerById(int id) async {
     for (final customer in await _db.loadCustomers()) {
       if (customer.id == id) return customer;
@@ -93,7 +92,7 @@ class CustomerOfflineController extends ChangeNotifier {
     return null;
   }
 
-  /// Get customer by server ID
+  // Get customer by server ID
   Future<CustomerEntity?> getCustomerByServerId(String serverId) async {
     for (final customer in await _db.loadCustomers()) {
       if (customer.serverId == serverId) return customer;
@@ -101,7 +100,7 @@ class CustomerOfflineController extends ChangeNotifier {
     return null;
   }
 
-  /// Get customer by mobile number
+  // Get customer by mobile number
   Future<CustomerEntity?> getCustomerByMobile(String mobile) async {
     final needle = mobile.toLowerCase();
     for (final customer in await _db.loadCustomers()) {
@@ -110,7 +109,7 @@ class CustomerOfflineController extends ChangeNotifier {
     return null;
   }
 
-  /// Search customers by name or mobile
+  // Search customers by name or mobile
   Future<List<CustomerEntity>> searchCustomers(String query) async {
     if (query.isEmpty) return getAllCustomers();
 
@@ -122,21 +121,21 @@ class CustomerOfflineController extends ChangeNotifier {
     }).toList();
   }
 
-  /// Get all customers pending sync
+  // Get all customers pending sync
   Future<List<CustomerEntity>> getUnsyncedCustomers() async {
     return (await _db.loadCustomers())
         .where((customer) => customer.isSynced == false)
         .toList();
   }
 
-  /// Get count of unsynced records
+  // Get count of unsynced records
   Future<int> getUnsyncedCount() async {
     return (await _db.loadCustomers())
         .where((customer) => customer.isSynced == false)
         .length;
   }
 
-  /// Get customers marked for deletion (need to delete on server)
+  // Get customers marked for deletion (need to delete on server)
   Future<List<CustomerEntity>> getDeletedCustomers() async {
     return (await _db.loadCustomers())
         .where(
@@ -147,7 +146,7 @@ class CustomerOfflineController extends ChangeNotifier {
 
   // ==================== UPDATE ====================
 
-  /// Update an existing customer
+  // Update an existing customer
   Future<CustomerEntity?> updateCustomer({
     required int id,
     String? name,
@@ -177,7 +176,7 @@ class CustomerOfflineController extends ChangeNotifier {
     return updated;
   }
 
-  /// Mark customer as synced (called after successful server sync)
+  // Mark customer as synced (called after successful server sync)
   Future<void> markAsSynced(int id, {String? serverId}) async {
     final existing = await getCustomerById(id);
     if (existing == null) return;
@@ -190,7 +189,7 @@ class CustomerOfflineController extends ChangeNotifier {
     await _db.saveCustomer(updated);
   }
 
-  /// Bulk mark as synced
+  // Bulk mark as synced
   Future<void> markAllAsSynced(List<int> ids) async {
     await _db.transaction(() async {
       for (final id in ids) {
@@ -206,7 +205,7 @@ class CustomerOfflineController extends ChangeNotifier {
 
   // ==================== DELETE ====================
 
-  /// Soft delete a customer (marks for deletion, will be synced)
+  // Soft delete a customer (marks for deletion, will be synced)
   Future<void> deleteCustomer(int id) async {
     final existing = await getCustomerById(id);
     if (existing == null) return;
@@ -228,13 +227,13 @@ class CustomerOfflineController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Hard delete after confirmed server deletion
+  // Hard delete after confirmed server deletion
   Future<void> permanentlyDelete(int id) async {
     await _db.deleteCustomerById(id);
     notifyListeners();
   }
 
-  /// Clear all deleted records that have been synced
+  // Clear all deleted records that have been synced
   Future<int> clearSyncedDeletedRecords() async {
     final deleted = (await _db.loadCustomers())
         .where(
@@ -256,7 +255,7 @@ class CustomerOfflineController extends ChangeNotifier {
 
   // ==================== SYNC HELPERS ====================
 
-  /// Import customers from server (for initial sync or refresh)
+  // Import customers from server (for initial sync or refresh)
   Future<void> importFromServer(
     List<Map<String, dynamic>> serverCustomers,
   ) async {
@@ -319,14 +318,14 @@ class CustomerOfflineController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Get customers that need to be pushed to server
+  // Get customers that need to be pushed to server
   Future<List<CustomerEntity>> getCustomersNeedingPush() async {
     return (await _db.loadCustomers())
         .where((customer) => customer.isSynced == false)
         .toList();
   }
 
-  /// Update customer with server response (after successful create/update)
+  // Update customer with server response (after successful create/update)
   Future<void> updateWithServerResponse(
     int localId,
     Map<String, dynamic> serverResponse,
@@ -344,14 +343,14 @@ class CustomerOfflineController extends ChangeNotifier {
 
   // ==================== STATISTICS ====================
 
-  /// Get total customer count
+  // Get total customer count
   Future<int> getTotalCount() async {
     return (await _db.loadCustomers())
         .where((customer) => customer.isDeleted == false)
         .length;
   }
 
-  /// Get total pending amount across all customers
+  // Get total pending amount across all customers
   Future<double> getTotalPendingAmount() async {
     final customers = await getAllCustomers();
     return customers.fold<double>(
@@ -360,7 +359,7 @@ class CustomerOfflineController extends ChangeNotifier {
     );
   }
 
-  /// Get customers with pending balance (for dashboard)
+  // Get customers with pending balance (for dashboard)
   Future<List<CustomerEntity>> getCustomersWithPendingBalance() async {
     final customers = (await _db.loadCustomers())
         .where(

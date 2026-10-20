@@ -3,7 +3,7 @@ import 'dart:async';
 
 import '../../features/dashboard/data/repositories/dashboard_repository.dart';
 
-/// Enum representing the type of data that changed
+// Enum representing the type of data that changed
 enum DataChangeType {
   customer,
   supplier,
@@ -16,20 +16,7 @@ enum DataChangeType {
   eventOrder,
 }
 
-/// Singleton service to notify screens to refresh when data changes.
-/// 
-/// This service acts as a communication bridge between data modification pages
-/// (Customer, Supplier, Company, Bill, Product pages) and other screens that
-/// need to refresh their data.
-/// 
-/// Usage:
-/// ```dart
-/// // After adding/updating/deleting data:
-/// DashboardRefreshService.instance.notifyDataChanged(DataChangeType.customer);
-/// 
-/// // Or for multiple types:
-/// DashboardRefreshService.instance.notifyDataChanged();
-/// ```
+// Singleton service to notify screens to refresh when data changes. This service acts as a communication bridge between data modification pages (Customer, Supplier, Company, Bill,...
 class DashboardRefreshService {
   static final DashboardRefreshService _instance = DashboardRefreshService._internal();
   
@@ -51,38 +38,37 @@ class DashboardRefreshService {
   final StreamController<void> _billSettingsChangeController = StreamController<void>.broadcast();
   final StreamController<void> _eventOrderChangeController = StreamController<void>.broadcast();
   
-  /// Stream that emits when any data changes (for dashboard)
+  // Stream that emits when any data changes (for dashboard)
   Stream<void> get onRefreshNeeded => _refreshController.stream;
   
-  /// Stream that emits when customer data changes
+  // Stream that emits when customer data changes
   Stream<void> get onCustomerChanged => _customerChangeController.stream;
   
-  /// Stream that emits when supplier data changes
+  // Stream that emits when supplier data changes
   Stream<void> get onSupplierChanged => _supplierChangeController.stream;
   
-  /// Stream that emits when company data changes
+  // Stream that emits when company data changes
   Stream<void> get onCompanyChanged => _companyChangeController.stream;
   
-  /// Stream that emits when product data changes
+  // Stream that emits when product data changes
   Stream<void> get onProductChanged => _productChangeController.stream;
   
-  /// Stream that emits when bill data changes
+  // Stream that emits when bill data changes
   Stream<void> get onBillChanged => _billChangeController.stream;
   
-  /// Stream that emits when purchase data changes
+  // Stream that emits when purchase data changes
   Stream<void> get onPurchaseChanged => _purchaseChangeController.stream;
   
-  /// Stream that emits when purchase return data changes
+  // Stream that emits when purchase return data changes
   Stream<void> get onPurchaseReturnChanged => _purchaseReturnChangeController.stream;
   
-  /// Stream that emits when bill settings change
+  // Stream that emits when bill settings change
   Stream<void> get onBillSettingsChanged => _billSettingsChangeController.stream;
   
-  /// Stream that emits when event/order data changes
+  // Stream that emits when event/order data changes
   Stream<void> get onEventOrderChanged => _eventOrderChangeController.stream;
   
-  /// Call this method when any data that affects dashboard stats changes.
-  /// Optionally specify the data type that changed for more granular notifications.
+  // Call this method when any data that affects dashboard stats changes. Optionally specify the data type that changed for more granular notifications.
   void notifyDataChanged([DataChangeType? dataType]) {
     // Invalidate the cache in dashboard repository
     DashboardRepository.invalidateCache();
@@ -137,7 +123,7 @@ class DashboardRefreshService {
     }
   }
   
-  /// Dispose the service (typically called when app closes)
+  // Dispose the service (typically called when app closes)
   void dispose() {
     _refreshController.close();
     _customerChangeController.close();

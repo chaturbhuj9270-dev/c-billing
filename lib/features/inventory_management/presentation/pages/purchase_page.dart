@@ -3,15 +3,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:c_billing/core/services/inventory_service.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/services/purchase_settings_service.dart';
 import 'package:c_billing/core/services/product_settings_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
-import '../../data/repositories/firebase_product_repository.dart';
-import '../../data/repositories/firebase_stock_repository.dart';
-import '../../data/repositories/firebase_purchase_repository.dart';
 import '../../data/datasources/purchase_cache_datasource.dart';
 import '../../domain/entities/product.dart';
 import '../../data/services/purchase_sync_service.dart';
@@ -46,8 +42,6 @@ class PurchasePage extends StatefulWidget {
 
 class _PurchasePageState extends State<PurchasePage>
     with SingleTickerProviderStateMixin {
-  // ignore: unused_field
-  late InventoryService _inventoryService;
   late FirebaseFirestore _firestore;
   late AnimationController _animController;
   late Animation<Offset> _offsetAnimation;
@@ -121,12 +115,6 @@ class _PurchasePageState extends State<PurchasePage>
     // Initialize selected warranty with default
     _selectedWarranty = PurchaseSettingsService.instance.defaultWarranty;
 
-    _inventoryService = InventoryService(
-      productRepository: FirebaseProductRepository(firestore: _firestore),
-      stockRepository: FirebaseStockRepository(firestore: _firestore),
-      purchaseRepository: FirebasePurchaseRepository(firestore: _firestore),
-    );
-
     // Initialize animations
     _animController = AnimationController(
       vsync: this,
@@ -181,8 +169,7 @@ class _PurchasePageState extends State<PurchasePage>
   void _onPurchaseSettingsChanged() {
     if (mounted) {
       setState(() {
-        // Always update to the new default unit when settings change
-        // This ensures immediate effect when user changes default unit in settings
+        // Always update to the new default unit when settings change This ensures immediate effect when user changes default unit in settings
         _selectedUnit = PurchaseSettingsService.instance.defaultUnit;
 
         // Always update to the new default warranty when settings change
@@ -191,7 +178,7 @@ class _PurchasePageState extends State<PurchasePage>
     }
   }
 
-  /// Setup real-time product stream from the local database
+  // Setup real-time product stream from the local database
   void _setupProductStream() {
     _productStreamSubscription = ProductOfflineController.instance
         .watchAllProducts()
@@ -224,7 +211,7 @@ class _PurchasePageState extends State<PurchasePage>
         }, onError: (e) => debugPrint('[ERROR] Product stream error: $e'));
   }
 
-  /// Setup real-time supplier stream from the local database
+  // Setup real-time supplier stream from the local database
   void _setupSupplierStream() {
     _supplierStreamSubscription = SupplierOfflineController.instance
         .watchAllSuppliers()
@@ -249,7 +236,7 @@ class _PurchasePageState extends State<PurchasePage>
         }, onError: (e) => debugPrint('[ERROR] Supplier stream error: $e'));
   }
 
-  /// Setup real-time company stream from the local database
+  // Setup real-time company stream from the local database
   void _setupCompanyStream() {
     _companyStreamSubscription = CompanyOfflineController.instance
         .watchAllCompanies()
@@ -687,7 +674,7 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  /// Save new product from bottom sheet
+  // Save new product from bottom sheet
   Future<void> _saveNewProduct(
     BuildContext sheetContext,
     TextEditingController nameController,
@@ -810,7 +797,7 @@ class _PurchasePageState extends State<PurchasePage>
     }
   }
 
-  /// Builds a selector field for company/supplier selection
+  // Builds a selector field for company/supplier selection
   Widget _buildSelectorField({
     required String label,
     required String? value,
@@ -890,7 +877,7 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  /// Build a custom field widget based on column type (for purchase page)
+  // Build a custom field widget based on column type (for purchase page)
   Widget _buildCustomFieldWidgetForPurchase(
     CustomColumn column,
     TextEditingController? textController,
@@ -1116,7 +1103,7 @@ class _PurchasePageState extends State<PurchasePage>
     }
   }
 
-  /// Inline company picker for use inside dialogs
+  // Inline company picker for use inside dialogs
   Future<Map<String, dynamic>?> _showInlineCompanyPicker(
     BuildContext parentContext,
   ) async {
@@ -1213,7 +1200,7 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  /// Inline supplier picker for use inside dialogs
+  // Inline supplier picker for use inside dialogs
   Future<Map<String, dynamic>?> _showInlineSupplierPicker(
     BuildContext parentContext,
   ) async {
@@ -2275,8 +2262,7 @@ class _PurchasePageState extends State<PurchasePage>
     setState(() => _isLoading = true);
 
     try {
-      // Use InventoryIntegrationService for unified processing:
-      // Creates PurchaseEntity + PurchaseBatch (FIFO) + StockLedger + updates Product stock/prices
+      // Use InventoryIntegrationService for unified processing: Creates PurchaseEntity + PurchaseBatch (FIFO) + StockLedger + updates Product stock/prices
       final integrationResult = await InventoryIntegrationService.instance
           .processPurchase(
             productId: _selectedProduct!.id,
@@ -2626,7 +2612,7 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  /// Reusable text field widget for bottom sheets
+  // Reusable text field widget for bottom sheets
   Widget _buildBottomSheetTextField({
     required TextEditingController controller,
     required String label,
@@ -3076,7 +3062,7 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  /// Sticky bottom submit button
+  // Sticky bottom submit button
   Widget _buildStickyBottomButton() {
     if (DesktopCanvas.isDesktopPlatform) {
       return Padding(
@@ -3219,7 +3205,7 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  /// Selection section with product, supplier, company cards
+  // Selection section with product, supplier, company cards
   Widget _buildSelectionSection() {
     final productSubtitle = _selectedProduct != null
         ? 'Stock: ${_selectedProduct!.currentStock} • ${_selectedProduct!.companyName}'
@@ -3373,7 +3359,7 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  /// Details section with dates, quantity, unit, warranty
+  // Details section with dates, quantity, unit, warranty
   Widget _buildDetailsSection() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -3451,7 +3437,7 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  /// Date field widget
+  // Date field widget
   Widget _buildDateField({
     required String label,
     DateTime? value,
@@ -3516,7 +3502,7 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  /// Date picker helper
+  // Date picker helper
   Future<void> _selectDate({required bool isProduction}) async {
     final selectedDate = await showDatePicker(
       context: context,
@@ -3554,7 +3540,7 @@ class _PurchasePageState extends State<PurchasePage>
     }
   }
 
-  /// Text field widget
+  // Text field widget
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -3619,7 +3605,7 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  /// Chip selector widget
+  // Chip selector widget
   Widget _buildChipSelector<T>({
     required String label,
     required List<T> options,
@@ -3702,7 +3688,7 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  /// Pricing section
+  // Pricing section
   Widget _buildPricingSection() {
     final quantity = int.tryParse(_quantityController.text) ?? 0;
     final price = double.tryParse(_priceController.text) ?? 0;
@@ -3814,7 +3800,7 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  /// Price field widget
+  // Price field widget
   Widget _buildPriceField({
     required TextEditingController controller,
     required String label,
@@ -3879,7 +3865,7 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  /// Notes section
+  // Notes section
   Widget _buildNotesSection() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -3938,7 +3924,7 @@ class _PurchasePageState extends State<PurchasePage>
   }
 }
 
-/// Sticky header delegate for pinned sections
+// Sticky header delegate for pinned sections
 class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
   final double height;

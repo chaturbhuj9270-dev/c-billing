@@ -746,8 +746,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   }
 }
 
-/// Forces a dialog or drawer onto the theme chosen in the app,
-/// including when that choice is not the device theme.
+// Forces a dialog or drawer onto the theme chosen in the app, including when that choice is not the device theme.
 class _SelectedTheme extends StatelessWidget {
   final Widget child;
 

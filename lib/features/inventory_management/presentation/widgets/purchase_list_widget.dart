@@ -8,8 +8,7 @@ import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
-/// Main list widget for displaying purchase history
-/// Features: Shimmer loading, empty state, smooth scrolling, real-time updates
+// Main list widget for displaying purchase history Features: Shimmer loading, empty state, smooth scrolling, real-time updates
 class PurchaseListWidget extends StatefulWidget {
   final List<PurchaseBatchEntity> purchases;
   final bool isLoading;
@@ -52,7 +51,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
     super.dispose();
   }
 
-  /// Filter purchases based on date and supplier
+  // Filter purchases based on date and supplier
   List<PurchaseBatchEntity> get _filteredPurchases {
     var filtered = widget.purchases;
 
@@ -322,7 +321,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
   }
 }
 
-/// Summary stats widget for purchase header
+// Summary stats widget for purchase header
 class PurchaseSummaryWidget extends StatelessWidget {
   final List<PurchaseBatchEntity> purchases;
   final PurchaseDateFilter dateFilter;

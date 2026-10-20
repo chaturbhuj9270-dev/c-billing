@@ -6,7 +6,7 @@ import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Page for managing which columns appear in bill prints/reports
+// Page for managing which columns appear in bill prints/reports
 class BillReportSettingsPage extends StatefulWidget {
   const BillReportSettingsPage({super.key});
 

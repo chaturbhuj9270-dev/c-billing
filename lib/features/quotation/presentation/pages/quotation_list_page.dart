@@ -16,7 +16,7 @@ import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
-/// Lets the desktop shell header open a new quotation.
+// Lets the desktop shell header open a new quotation.
 class QuotationScreenActions {
   static VoidCallback? add;
 }

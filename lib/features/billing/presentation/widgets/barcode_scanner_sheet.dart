@@ -10,21 +10,15 @@ import '../../../../core/services/barcode_service.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
-/// A beautiful bottom sheet for scanning barcodes for fast billing
-/// Features:
-/// - Camera preview with scan overlay
-/// - Flash toggle
-/// - Continuous scanning mode
-/// - Visual feedback on successful scan
-/// - Manual barcode entry option
+// A beautiful bottom sheet for scanning barcodes for fast billing Features: - Camera preview with scan overlay - Flash toggle - Continuous scanning mode - Visual feedback on succe...
 class BarcodeScannerSheet extends StatefulWidget {
-  /// Callback when a product is scanned successfully
+  // Callback when a product is scanned successfully
   final Function(Map<String, dynamic> productData) onProductScanned;
 
-  /// Callback when a product is removed from bill
+  // Callback when a product is removed from bill
   final Function(String productKey)? onProductRemoved;
 
-  /// Callback when scanner is closed
+  // Callback when scanner is closed
   final VoidCallback? onClose;
 
   const BarcodeScannerSheet({
@@ -34,7 +28,7 @@ class BarcodeScannerSheet extends StatefulWidget {
     this.onClose,
   });
 
-  /// Show the scanner as a bottom sheet
+  // Show the scanner as a bottom sheet
   static Future<void> show(
     BuildContext context, {
     required Function(Map<String, dynamic> productData) onProductScanned,
@@ -968,7 +962,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
   }
 }
 
-/// Internal class to track scanned items
+// Internal class to track scanned items
 class _ScannedItem {
   final String barcode;
   final String productName;
@@ -987,7 +981,7 @@ class _ScannedItem {
   }) : isRemoved = false;
 }
 
-/// Custom painter for the scan overlay (darkened corners)
+// Custom painter for the scan overlay (darkened corners)
 class _ScanOverlayPainter extends CustomPainter {
   final Rect scanAreaRect;
 

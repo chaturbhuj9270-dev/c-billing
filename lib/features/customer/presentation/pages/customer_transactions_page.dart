@@ -21,11 +21,10 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
-/// Date filter options for transactions
+// Date filter options for transactions
 enum TransactionDateFilter { thisMonth, thisYear, lastYear, custom, all }
 
-/// Premium Customer Transactions Page
-/// Allows viewing and settling customer payments
+// Premium Customer Transactions Page Allows viewing and settling customer payments
 class CustomerTransactionsPage extends StatefulWidget {
   final String customerId;
   final String customerLocalId;
@@ -91,7 +90,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
     }
   }
 
-  /// Sync transactions from server, then load from local storage
+  // Sync transactions from server, then load from local storage
   Future<void> _syncAndLoadTransactions() async {
     // First, trigger a sync to pull any missing transactions from server
     try {
@@ -278,8 +277,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
       // Sort by date descending (newest first)
       combined.sort((a, b) => b.date.compareTo(a.date));
 
-      // The header always shows the live ledger plus open event dues.
-      // A date filter only changes which rows are listed.
+      // The header always shows the live ledger plus open event dues. A date filter only changes which rows are listed.
       final ledgerPending = await _ledgerPending();
       final openEventPending = eventOrders
           .where(
@@ -290,8 +288,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
           .fold<double>(0, (total, order) => total + order.remainingAmount);
       _currentPending = ledgerPending + openEventPending;
 
-      // Compute running balance for each item (bank-statement style)
-      // Walk from newest to oldest, undoing each item's effect
+      // Compute running balance for each item (bank-statement style) Walk from newest to oldest, undoing each item's effect
       var balance = _currentPending;
       if (_selectedFilter != TransactionDateFilter.all &&
           transactions.isNotEmpty) {
@@ -741,7 +738,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
     }
   }
 
-  /// Map payment method string to PaymentMode enum
+  // Map payment method string to PaymentMode enum
   PaymentMode _mapPaymentMethod(String? method) {
     switch (method?.toLowerCase()) {
       case 'upi':
@@ -788,7 +785,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
   }
 }
 
-/// Summary Card Widget
+// Summary Card Widget
 class _SummaryCard extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -862,7 +859,7 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-/// Filter Chip Widget
+// Filter Chip Widget
 class _FilterChip extends StatelessWidget {
   final String label;
   final bool isSelected;
@@ -920,7 +917,7 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-/// Transaction Card Widget
+// Transaction Card Widget
 class _TransactionCard extends StatelessWidget {
   final CustomerTransactionEntity transaction;
   final double runningBalance;
@@ -1127,7 +1124,7 @@ class _TransactionCard extends StatelessWidget {
   }
 }
 
-/// Receive Payment Bottom Sheet
+// Receive Payment Bottom Sheet
 class _ReceivePaymentSheet extends StatefulWidget {
   final String customerName;
   final double pendingAmount;
@@ -1413,7 +1410,7 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
   }
 }
 
-/// Event order card widget for transaction list
+// Event order card widget for transaction list
 class _EventOrderCard extends StatelessWidget {
   final EventOrderEntity eventOrder;
   final double runningBalance;
@@ -1639,10 +1636,10 @@ class _EventOrderCard extends StatelessWidget {
   }
 }
 
-/// Combined item type for unified display
+// Combined item type for unified display
 enum _CombinedItemType { transaction, eventOrder }
 
-/// Combined item model for unified display
+// Combined item model for unified display
 class _CombinedItem {
   final _CombinedItemType type;
   final DateTime date;

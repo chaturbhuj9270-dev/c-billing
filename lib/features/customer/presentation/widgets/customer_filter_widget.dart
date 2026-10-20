@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
-/// Sort options for customer list
+// Sort options for customer list
 enum CustomerSortField { name, createdDate, pendingAmount }
 
-/// Filter widget for customer list
-/// Features: Search bar, Sort options
+// Filter widget for customer list Features: Search bar, Sort options
 class CustomerFilterWidget extends StatefulWidget {
   final String searchQuery;
   final CustomerSortField sortField;

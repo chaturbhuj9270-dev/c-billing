@@ -10,20 +10,20 @@ import 'package:c_billing/features/inventory_management/domain/entities/product.
 import 'stock_report_settings_service.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Report type enumeration
+// Report type enumeration
 enum ReportType { outOfStock, lowStock, allProducts }
 
-/// Report format enumeration
+// Report format enumeration
 enum ReportFormat { pdf, csv }
 
-/// Service for generating inventory reports
+// Service for generating inventory reports
 class InventoryReportService {
   static final InventoryReportService _instance =
       InventoryReportService._internal();
   factory InventoryReportService() => _instance;
   InventoryReportService._internal();
 
-  /// Filter products based on report type
+  // Filter products based on report type
   List<Product> filterProducts(List<Product> products, ReportType reportType) {
     switch (reportType) {
       case ReportType.outOfStock:
@@ -37,7 +37,7 @@ class InventoryReportService {
     }
   }
 
-  /// Get report type label
+  // Get report type label
   String getReportTypeLabel(ReportType type) {
     switch (type) {
       case ReportType.outOfStock:
@@ -49,7 +49,7 @@ class InventoryReportService {
     }
   }
 
-  /// Get stock status label
+  // Get stock status label
   String getStockStatus(int stock) {
     if (stock == 0) {
       return 'Out of Stock';
@@ -60,7 +60,7 @@ class InventoryReportService {
     }
   }
 
-  /// Generate PDF report
+  // Generate PDF report
   Future<File> generatePdfReport({
     required List<Product> products,
     required ReportType reportType,
@@ -236,7 +236,7 @@ class InventoryReportService {
     return _buildDynamicPdfTable(products, null);
   }
 
-  /// Build dynamic PDF table based on stock report settings
+  // Build dynamic PDF table based on stock report settings
   pw.Widget _buildDynamicPdfTable(List<Product> products, List<int?>? orderQuantities) {
     final settings = StockReportSettingsService.instance;
     
@@ -340,7 +340,7 @@ class InventoryReportService {
     return NumberFormat('#,##0.00').format(amount);
   }
 
-  /// Generate CSV report
+  // Generate CSV report
   Future<File> generateCsvReport({
     required List<Product> products,
     required ReportType reportType,
@@ -354,7 +354,7 @@ class InventoryReportService {
     );
   }
   
-  /// Internal method to generate CSV with dynamic columns based on settings
+  // Internal method to generate CSV with dynamic columns based on settings
   Future<File> _generateDynamicCsvReport({
     required List<Product> products,
     required ReportType reportType,
@@ -486,12 +486,12 @@ class InventoryReportService {
     return buffer.toString();
   }
 
-  /// Share the generated report
+  // Share the generated report
   Future<void> shareReport(File file) async {
     await Share.shareXFiles([XFile(file.path)], subject: 'Inventory Report');
   }
 
-  /// Generate PDF report with order quantities
+  // Generate PDF report with order quantities
   Future<File> generatePdfReportWithOrderQty({
     required List<Product> products,
     required List<int?> orderQuantities,
@@ -535,7 +535,7 @@ class InventoryReportService {
     return file;
   }
 
-  /// PDF bytes for the web report preview.
+  // PDF bytes for the web report preview.
   Future<Uint8List> buildPdfBytesWithOrderQty({
     required List<Product> products,
     required List<int?> orderQuantities,
@@ -587,7 +587,7 @@ class InventoryReportService {
     return Uint8List.fromList(utf8.encode(csv));
   }
 
-  /// Generate CSV report with order quantities
+  // Generate CSV report with order quantities
   Future<File> generateCsvReportWithOrderQty({
     required List<Product> products,
     required List<int?> orderQuantities,

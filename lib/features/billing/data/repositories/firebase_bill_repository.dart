@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/bill.dart';
 import '../../domain/repositories/bill_repository.dart';
 
-/// Firebase implementation of BillRepository
+// Firebase implementation of BillRepository
 class FirebaseBillRepository implements BillRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
@@ -247,9 +247,9 @@ class FirebaseBillRepository implements BillRepository {
     }
   }
 
-  /// Get Firestore instance for transaction operations
+  // Get Firestore instance for transaction operations
   FirebaseFirestore get firestore => _firestore;
 
-  /// Get user ID for transaction operations
+  // Get user ID for transaction operations
   String get userId => _userId;
 }

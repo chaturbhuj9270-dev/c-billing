@@ -14,8 +14,7 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
-/// Page to display customer details, pending balance, and transaction history
-/// Also provides functionality to receive payments
+// Page to display customer details, pending balance, and transaction history Also provides functionality to receive payments
 class CustomerDetailsPage extends StatefulWidget {
   final String customerId;
 
@@ -79,8 +78,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
         return;
       }
 
-      // Load event orders for this customer
-      // Try with the passed customerId first
+      // Load event orders for this customer Try with the passed customerId first
       debugPrint(
         '[CustomerDetails] Loading events for customerId: ${widget.customerId}',
       );
@@ -90,8 +88,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
         '[CustomerDetails] Events found with customerId: ${eventOrderEntities.length}',
       );
 
-      // If no results and customerId has 'local_' prefix, try with just the numeric ID
-      // This handles the mismatch where customer page uses 'local_123' but event orders store '123'
+      // If no results and customerId has 'local_' prefix, try with just the numeric ID This handles the mismatch where customer page uses 'local_123' but event orders store '123'
       if (eventOrderEntities.isEmpty &&
           widget.customerId.startsWith('local_')) {
         final localId = widget.customerId.substring(
@@ -639,7 +636,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
     );
   }
 
-  /// Build Events/Orders summary card
+  // Build Events/Orders summary card
   Widget _buildEventsSummaryCard() {
     if (_eventOrders.isEmpty) return const SizedBox.shrink();
 
@@ -793,7 +790,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
     );
   }
 
-  /// Build combined transaction item (bills + events/orders)
+  // Build combined transaction item (bills + events/orders)
   Widget _buildCombinedTransactionItem(_CombinedTransaction item) {
     if (item.type == _TransactionType.billTransaction &&
         item.transaction != null) {
@@ -805,7 +802,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
     return const SizedBox.shrink();
   }
 
-  /// Build event order item for transaction list
+  // Build event order item for transaction list
   Widget _buildEventOrderItem(EventOrder order) {
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
     final isEvent = order.orderType == OrderType.event;
@@ -969,7 +966,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
   }
 }
 
-/// Bottom sheet for receiving payment from customer
+// Bottom sheet for receiving payment from customer
 class ReceivePaymentSheet extends StatefulWidget {
   final Customer customer;
   final CustomerTransactionService transactionService;
@@ -1369,10 +1366,10 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
   }
 }
 
-/// Transaction type for combined list
+// Transaction type for combined list
 enum _TransactionType { billTransaction, eventOrder }
 
-/// Combined transaction model for unified display
+// Combined transaction model for unified display
 class _CombinedTransaction {
   final _TransactionType type;
   final DateTime date;

@@ -24,8 +24,7 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
-/// Event Management + Sales Order Screen
-/// Supports two modes: Event Mode (with sub-events) and Sales Order Mode (with products)
+// Event Management + Sales Order Screen Supports two modes: Event Mode (with sub-events) and Sales Order Mode (with products)
 class EventOrderScreen extends StatefulWidget {
   final EventOrder? existingOrder; // null for create, non-null for edit
   final OrderType? initialMode;
@@ -79,14 +78,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   // Customer search
   List<CustomerEntity> _customers = [];
   bool _isSearchingCustomers = false;
-  // ignore: unused_field
-  CustomerEntity? _selectedCustomer;
 
   // Product search for Sales Order
   List<ProductEntity> _products = [];
   Map<int, ProductEntity> _productByIndexNo = {};
-  // ignore: unused_field
-  bool _isLoadingProducts = false;
 
   // Custom fields for events
   final Map<String, TextEditingController> _customTextControllers = {};
@@ -190,7 +185,6 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       final customer = await controller.getCustomerById(int.parse(customerId));
       if (customer != null && mounted) {
         setState(() {
-          _selectedCustomer = customer;
           _customerContactController.text = customer.mobile;
           _customerAddressController.text = customer.address ?? '';
         });
@@ -201,7 +195,6 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   }
 
   Future<void> _loadProducts() async {
-    setState(() => _isLoadingProducts = true);
     try {
       final controller = ProductOfflineController.instance;
       final products = await controller.getAllProducts();
@@ -213,14 +206,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             for (final product in products)
               if (product.indexNo > 0) product.indexNo: product,
           };
-          _isLoadingProducts = false;
         });
       }
     } catch (e) {
       debugPrint('[EventOrderScreen] Error loading products: $e');
-      if (mounted) {
-        setState(() => _isLoadingProducts = false);
-      }
     }
   }
 
@@ -250,9 +239,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
 
   void _selectCustomer(CustomerEntity customer) {
     setState(() {
-      _selectedCustomer = customer;
-      // Use serverId if available, otherwise use 'local_<id>' format
-      // This matches how customer page identifies customers in _entityToMap
+      // Prefer serverId; otherwise use local_<id> like the customer page.
       _selectedCustomerId = customer.serverId ?? 'local_${customer.id}';
       debugPrint(
         '[EventOrderScreen] Selected customer - serverId: ${customer.serverId}, localId: ${customer.id}, using: $_selectedCustomerId',
@@ -312,7 +299,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     super.dispose();
   }
 
-  /// Collect custom field values into a single map
+  // Collect custom field values into a single map
   Map<String, dynamic> _collectCustomData() {
     final customData = <String, dynamic>{};
     final eventColumns = EventOrderSettingsService.instance.activeEventColumns;
@@ -777,7 +764,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     );
   }
 
-  /// Show customer picker bottom sheet
+  // Show customer picker bottom sheet
   Future<void> _showCustomerPickerSheet() async {
     // Load all customers
     final controller = CustomerOfflineController.instance;
@@ -1366,7 +1353,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     );
   }
 
-  /// Products section for Event type - allows adding products to events
+  // Products section for Event type - allows adding products to events
   Widget _buildEventProductsSection() {
     return _buildProductsWithInlineSearch(
       title: 'Event Products',
@@ -1375,7 +1362,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     );
   }
 
-  /// Grand total section showing breakdown of sub-events + products
+  // Grand total section showing breakdown of sub-events + products
   Widget _buildGrandTotalSection() {
     final hasSubEvents = _subEvents.isNotEmpty;
     final hasProducts = _orderItems.isNotEmpty;
@@ -1485,7 +1472,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     );
   }
 
-  /// Shared inline search box + products list widget
+  // Shared inline search box + products list widget
   Widget _buildProductsWithInlineSearch({
     required String title,
     required IconData icon,
@@ -1696,7 +1683,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     );
   }
 
-  /// Inline order item row with quantity stepper (like billing page)
+  // Inline order item row with quantity stepper (like billing page)
   Widget _buildInlineOrderItemRow(OrderItem item, int index) {
     return Dismissible(
       key: Key('${item.productId}_$index'),
@@ -2773,7 +2760,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     );
   }
 
-  /// Build a custom field widget for dialogs (sub-event dialog)
+  // Build a custom field widget for dialogs (sub-event dialog)
   Widget _buildDialogCustomField({
     required EventCustomColumn column,
     required Map<String, TextEditingController> textControllers,
@@ -3003,7 +2990,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     _showProductDialog(item: item, editIndex: index);
   }
 
-  /// Show product selection sheet with tabs: Search, Code, Barcode
+  // Show product selection sheet with tabs: Search, Code, Barcode
   void _showProductSelectionSheet() {
     showAppBottomSheet(
       context: context,
@@ -3028,7 +3015,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     );
   }
 
-  /// Add scanned product from barcode to order
+  // Add scanned product from barcode to order
   void _addScannedProductToOrder(Map<String, dynamic> productData) {
     final productId = productData['productId'] as String;
     final productName = productData['productName'] as String;
@@ -3066,7 +3053,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     GlassyToast.show(context, 'Added: $productName');
   }
 
-  /// Called when product code field changes - auto-submit on valid code
+  // Called when product code field changes - auto-submit on valid code
   void _onProductCodeChanged() {
     final codeText = _productCodeController.text.trim();
     if (codeText.isEmpty) return;
@@ -3083,7 +3070,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     }
   }
 
-  /// Lookup product by code (index number) and add to order
+  // Lookup product by code (index number) and add to order
   void _lookupProductByCode() {
     final codeText = _productCodeController.text.trim();
     if (codeText.isEmpty) return;
@@ -3560,7 +3547,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   }
 }
 
-/// Customer picker bottom sheet widget
+// Customer picker bottom sheet widget
 class _CustomerPickerSheet extends StatefulWidget {
   final List<CustomerEntity> customers;
   final Function(CustomerEntity customer) onCustomerSelected;
@@ -3863,7 +3850,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
   }
 }
 
-/// Product Selection Sheet - Billing page style
+// Product Selection Sheet - Billing page style
 class _ProductSelectionSheet extends StatefulWidget {
   final List<ProductEntity> products;
   final Map<int, ProductEntity> productByIndexNo;

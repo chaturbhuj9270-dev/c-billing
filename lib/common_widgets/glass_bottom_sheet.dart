@@ -6,7 +6,7 @@ import '../core/theme/app_theme.dart';
 import '../core/ui/desktop_canvas.dart';
 import 'glass_bevel_frame.dart';
 
-/// Side drawers fill the panel. Phone sheets keep their shorter height.
+// Side drawers fill the panel. Phone sheets keep their shorter height.
 double drawerSheetSize(double mobile) =>
     DesktopCanvas.isDesktopPlatform ? 1 : mobile;
 
@@ -14,7 +14,7 @@ const BorderRadius _sheetRadius = BorderRadius.vertical(
   top: Radius.circular(28),
 );
 
-/// Bottom drawer card with the same raised glass rim as the bottom tabs.
+// Bottom drawer card with the same raised glass rim as the bottom tabs.
 class GlassSheetCard extends StatelessWidget {
   final Widget child;
   final bool showClose;
@@ -97,7 +97,7 @@ class GlassSheetCard extends StatelessWidget {
   }
 }
 
-/// Modal bottom sheet whose card uses [GlassSheetCard].
+// Modal bottom sheet whose card uses [GlassSheetCard].
 Future<T?> showAppBottomSheet<T>({
   required BuildContext context,
   required WidgetBuilder builder,
@@ -137,7 +137,7 @@ Future<T?> showAppBottomSheet<T>({
   );
 }
 
-/// Floating panel on the right. The page behind stays visible and dimmed.
+// Floating panel on the right. The page behind stays visible and dimmed.
 Future<T?> _showDesktopSideDrawer<T>({
   required BuildContext context,
   required WidgetBuilder builder,
@@ -223,8 +223,7 @@ Future<T?> _showDesktopSideDrawer<T>({
   );
 }
 
-/// Opens a full page. Phones push a route. Web, Windows, and macOS use the
-/// same right-hand drawer as the customer sheet, without a top navigation bar.
+// Opens a full page. Phones push a route. Web, Windows, and macOS use the same right-hand drawer as the customer sheet, without a top navigation bar.
 Future<T?> showAppPage<T>(BuildContext context, Widget page) {
   if (!DesktopCanvas.isDesktopPlatform) {
     return Navigator.of(context).push<T>(

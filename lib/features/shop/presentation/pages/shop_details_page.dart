@@ -133,7 +133,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
     }
   }
 
-  /// Load images from local cache for instant display
+  // Load images from local cache for instant display
   Future<void> _loadImagesFromCache(String userId) async {
     try {
       final cachedImages = await ShopImageCacheController.instance
@@ -308,9 +308,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
     }
   }
 
-  // ═══════════════════════════════════════════════════
-  // Shop Logo Methods
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Shop Logo Methods ═══════════════════════════════════════════════════
 
   Future<void> _pickAndUploadLogo() async {
     try {
@@ -407,9 +405,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
     }
   }
 
-  // ═══════════════════════════════════════════════════
-  // Signature Methods
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Signature Methods ═══════════════════════════════════════════════════
 
   Future<void> _showSignaturePad() async {
     final SignatureController signatureController = SignatureController(

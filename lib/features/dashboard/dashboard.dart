@@ -1,7 +1,4 @@
-/// Dashboard Feature Exports
-///
-/// This file provides a clean public API for the dashboard feature
-/// following clean architecture principles.
+// Dashboard Feature Exports This file provides a clean public API for the dashboard feature following clean architecture principles.
 library;
 
 // Domain Layer

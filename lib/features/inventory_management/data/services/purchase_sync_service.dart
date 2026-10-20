@@ -6,10 +6,10 @@ import '../../offline/controllers/purchase_offline_controller.dart';
 import '../../offline/entities/purchase_entity.dart';
 import 'purchase_api_service.dart';
 
-/// Sync status for tracking sync state
+// Sync status for tracking sync state
 enum PurchaseSyncServiceStatus { idle, syncing, success, failed }
 
-/// Result of a sync operation
+// Result of a sync operation
 class PurchaseSyncResult {
   final bool success;
   final int createdCount;
@@ -42,8 +42,7 @@ class PurchaseSyncResult {
   }
 }
 
-/// Service for background synchronization of Purchase data
-/// Implements delta sync - only syncs NEW, UPDATED, or DELETED purchases
+// Service for background synchronization of Purchase data Implements delta sync - only syncs NEW, UPDATED, or DELETED purchases
 class PurchaseSyncService extends ChangeNotifier {
   static PurchaseSyncService? _instance;
 
@@ -58,7 +57,7 @@ class PurchaseSyncService extends ChangeNotifier {
   Timer? _periodicSyncTimer;
   Timer? _connectivityDebounceTimer;
 
-  /// Mutex to prevent concurrent sync operations
+  // Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
 
   PurchaseSyncService._({
@@ -70,25 +69,25 @@ class PurchaseSyncService extends ChangeNotifier {
        _apiService = apiService ?? PurchaseApiService.instance,
        _connectivity = connectivity ?? Connectivity();
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static PurchaseSyncService get instance {
     _instance ??= PurchaseSyncService._();
     return _instance!;
   }
 
-  /// Current sync status
+  // Current sync status
   PurchaseSyncServiceStatus get status => _status;
 
-  /// Last successful sync time
+  // Last successful sync time
   DateTime? get lastSyncTime => _lastSyncTime;
 
-  /// Last error message
+  // Last error message
   String? get lastError => _lastError;
 
-  /// Check if currently syncing
+  // Check if currently syncing
   bool get isSyncing => _status == PurchaseSyncServiceStatus.syncing;
 
-  /// Initialize the sync service
+  // Initialize the sync service
   void initialize() {
     debugPrint('[PurchaseSync] Initializing...');
 
@@ -142,13 +141,13 @@ class PurchaseSyncService extends ChangeNotifier {
     }
   }
 
-  /// Check if device is online
+  // Check if device is online
   Future<bool> isOnline() async {
     final results = await _connectivity.checkConnectivity();
     return _isConnected(results);
   }
 
-  /// Perform delta sync - only sync changed records
+  // Perform delta sync - only sync changed records
   Future<PurchaseSyncResult> syncNow() async {
     // Prevent concurrent syncs
     if (_isSyncing) {
@@ -293,7 +292,7 @@ class PurchaseSyncService extends ChangeNotifier {
     }
   }
 
-  /// Force a full sync (re-download all from server)
+  // Force a full sync (re-download all from server)
   Future<PurchaseSyncResult> forceFullSync() async {
     // First upload any local changes
     await syncNow();
@@ -316,7 +315,7 @@ class PurchaseSyncService extends ChangeNotifier {
     );
   }
 
-  /// Get count of pending syncs
+  // Get count of pending syncs
   Future<int> getPendingSyncCount() async {
     return await _offlineController.getUnsyncedCount();
   }

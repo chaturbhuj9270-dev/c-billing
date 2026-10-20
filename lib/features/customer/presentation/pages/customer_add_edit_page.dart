@@ -4,7 +4,7 @@ import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Add/Edit Customer Page for offline-first architecture
+// Add/Edit Customer Page for offline-first architecture
 class CustomerAddEditPage extends StatefulWidget {
   final Customer? customer; // null for add, non-null for edit
 

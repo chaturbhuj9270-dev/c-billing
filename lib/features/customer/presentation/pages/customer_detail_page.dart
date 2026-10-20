@@ -7,7 +7,7 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Customer detail page for offline-first architecture
+// Customer detail page for offline-first architecture
 class CustomerDetailPage extends StatefulWidget {
   final Customer customer;
 

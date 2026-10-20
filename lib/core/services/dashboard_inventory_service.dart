@@ -27,7 +27,7 @@ class DashboardInventoryService {
     );
   }
 
-  /// Get dashboard summary metrics
+  // Get dashboard summary metrics
   Future<Map<String, dynamic>> getDashboardSummary({
     DateTime? startDate,
     DateTime? endDate,
@@ -86,7 +86,7 @@ class DashboardInventoryService {
     }
   }
 
-  /// Get total purchases (amount and quantity)
+  // Get total purchases (amount and quantity)
   Future<Map<String, dynamic>> getTotalPurchases({
     DateTime? startDate,
     DateTime? endDate,
@@ -110,7 +110,7 @@ class DashboardInventoryService {
     }
   }
 
-  /// Get total sales (amount and quantity)
+  // Get total sales (amount and quantity)
   Future<Map<String, dynamic>> getTotalSales({
     DateTime? startDate,
     DateTime? endDate,
@@ -134,7 +134,7 @@ class DashboardInventoryService {
     }
   }
 
-  /// Get profit
+  // Get profit
   Future<double> getProfit({
     DateTime? startDate,
     DateTime? endDate,
@@ -149,7 +149,7 @@ class DashboardInventoryService {
     }
   }
 
-  /// Get current stock value
+  // Get current stock value
   Future<double> getCurrentStockValue() async {
     try {
       return await _inventoryService.getCurrentStockValue();
@@ -158,7 +158,7 @@ class DashboardInventoryService {
     }
   }
 
-  /// Get low stock products
+  // Get low stock products
   Future<List<Product>> getLowStockProducts({int threshold = 10}) async {
     try {
       return await _inventoryService.getLowStockProducts(threshold: threshold);
@@ -167,7 +167,7 @@ class DashboardInventoryService {
     }
   }
 
-  /// Get all products
+  // Get all products
   Future<List<Product>> getAllProducts() async {
     try {
       return await _inventoryService.getAllProducts();

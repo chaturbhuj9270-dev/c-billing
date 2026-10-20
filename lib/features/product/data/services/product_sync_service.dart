@@ -5,10 +5,10 @@ import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../offline/controllers/product_offline_controller.dart';
 import 'product_api_service.dart';
 
-/// Sync status for tracking sync state
+// Sync status for tracking sync state
 enum ProductSyncStatus { idle, syncing, success, failed }
 
-/// Result of a sync operation
+// Result of a sync operation
 class ProductSyncResult {
   final bool success;
   final int createdCount;
@@ -41,14 +41,7 @@ class ProductSyncResult {
   }
 }
 
-/// Service for background synchronization of Product data
-/// Implements delta sync - only syncs NEW, UPDATED, or DELETED products
-///
-/// Features:
-/// - Connectivity monitoring with auto-sync on reconnect
-/// - Periodic background sync
-/// - Mutex to prevent concurrent sync operations
-/// - Retry logic for failed syncs
+// Service for background synchronization of Product data Implements delta sync - only syncs NEW, UPDATED, or DELETED products Features: - Connectivity monitoring with auto-sync on...
 class ProductSyncService extends ChangeNotifier {
   static ProductSyncService? _instance;
 
@@ -63,7 +56,7 @@ class ProductSyncService extends ChangeNotifier {
   Timer? _periodicSyncTimer;
   Timer? _connectivityDebounceTimer;
 
-  /// Mutex to prevent concurrent sync operations
+  // Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
 
   ProductSyncService._({
@@ -75,26 +68,25 @@ class ProductSyncService extends ChangeNotifier {
        _apiService = apiService ?? ProductApiService.instance,
        _connectivity = connectivity ?? Connectivity();
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static ProductSyncService get instance {
     _instance ??= ProductSyncService._();
     return _instance!;
   }
 
-  /// Current sync status
+  // Current sync status
   ProductSyncStatus get status => _status;
 
-  /// Last successful sync time
+  // Last successful sync time
   DateTime? get lastSyncTime => _lastSyncTime;
 
-  /// Last error message
+  // Last error message
   String? get lastError => _lastError;
 
-  /// Check if currently syncing
+  // Check if currently syncing
   bool get isSyncing => _status == ProductSyncStatus.syncing;
 
-  /// Initialize the sync service
-  /// Call this after the local database is initialized
+  // Initialize the sync service Call this after the local database is initialized
   void initialize() {
     debugPrint('[ProductSync] Initializing...');
 
@@ -146,15 +138,13 @@ class ProductSyncService extends ChangeNotifier {
     }
   }
 
-  /// Check if device is online
+  // Check if device is online
   Future<bool> isOnline() async {
     final results = await _connectivity.checkConnectivity();
     return _isConnected(results);
   }
 
-  /// Perform delta sync now
-  /// Only syncs products with syncStatus != SYNCED
-  /// Returns SyncResult with details of the sync operation
+  // Perform delta sync now Only syncs products with syncStatus != SYNCED Returns SyncResult with details of the sync operation
   Future<ProductSyncResult> syncNow() async {
     // Prevent concurrent sync operations
     if (_isSyncing) {
@@ -259,8 +249,7 @@ class ProductSyncService extends ChangeNotifier {
     }
   }
 
-  /// Push local changes to server (delta sync)
-  /// Only pushes products where syncStatus != SYNCED
+  // Push local changes to server (delta sync) Only pushes products where syncStatus != SYNCED
   Future<Map<String, int>> _pushLocalChanges() async {
     int created = 0;
     int updated = 0;
@@ -344,8 +333,7 @@ class ProductSyncService extends ChangeNotifier {
     };
   }
 
-  /// Pull changes from server
-  /// Merges into the local database using serverId, only updates changed records
+  // Pull changes from server Merges into the local database using serverId, only updates changed records
   Future<int> _pullServerChanges() async {
     try {
       // Get last sync time for incremental sync
@@ -371,8 +359,7 @@ class ProductSyncService extends ChangeNotifier {
     }
   }
 
-  /// Force full refresh from server
-  /// Use with caution - may overwrite local changes that are synced
+  // Force full refresh from server Use with caution - may overwrite local changes that are synced
   Future<ProductSyncResult> forceFullRefresh() async {
     if (_isSyncing) {
       return ProductSyncResult(
@@ -426,7 +413,7 @@ class ProductSyncService extends ChangeNotifier {
     }
   }
 
-  /// Get number of pending sync items
+  // Get number of pending sync items
   Future<int> getPendingSyncCount() async {
     return await _offlineController.getUnsyncedCount();
   }

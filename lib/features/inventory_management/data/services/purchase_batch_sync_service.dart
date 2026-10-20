@@ -7,10 +7,10 @@ import '../../offline/entities/purchase_batch_entity.dart';
 import 'purchase_batch_api_service.dart';
 import 'purchase_sync_service.dart';
 
-/// Sync status for tracking sync state
+// Sync status for tracking sync state
 enum PurchaseBatchSyncServiceStatus { idle, syncing, success, failed }
 
-/// Result of a sync operation
+// Result of a sync operation
 class PurchaseBatchSyncResult {
   final bool success;
   final int createdCount;
@@ -43,8 +43,7 @@ class PurchaseBatchSyncResult {
   }
 }
 
-/// Service for background synchronization of Purchase Batch data
-/// Implements delta sync - only syncs NEW, UPDATED, or DELETED batches
+// Service for background synchronization of Purchase Batch data Implements delta sync - only syncs NEW, UPDATED, or DELETED batches
 class PurchaseBatchSyncService extends ChangeNotifier {
   static PurchaseBatchSyncService? _instance;
 
@@ -59,10 +58,10 @@ class PurchaseBatchSyncService extends ChangeNotifier {
   Timer? _periodicSyncTimer;
   Timer? _connectivityDebounceTimer;
 
-  /// Mutex to prevent concurrent sync operations
+  // Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
 
-  /// Mutex to prevent concurrent full sync operations
+  // Mutex to prevent concurrent full sync operations
   bool _isFullSyncing = false;
 
   PurchaseBatchSyncService._({
@@ -74,25 +73,25 @@ class PurchaseBatchSyncService extends ChangeNotifier {
        _apiService = apiService ?? PurchaseBatchApiService.instance,
        _connectivity = connectivity ?? Connectivity();
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static PurchaseBatchSyncService get instance {
     _instance ??= PurchaseBatchSyncService._();
     return _instance!;
   }
 
-  /// Current sync status
+  // Current sync status
   PurchaseBatchSyncServiceStatus get status => _status;
 
-  /// Last successful sync time
+  // Last successful sync time
   DateTime? get lastSyncTime => _lastSyncTime;
 
-  /// Last error message
+  // Last error message
   String? get lastError => _lastError;
 
-  /// Check if currently syncing
+  // Check if currently syncing
   bool get isSyncing => _status == PurchaseBatchSyncServiceStatus.syncing;
 
-  /// Initialize the sync service
+  // Initialize the sync service
   void initialize() {
     debugPrint('[PurchaseBatchSync] Initializing...');
 
@@ -127,7 +126,7 @@ class PurchaseBatchSyncService extends ChangeNotifier {
     debugPrint('[PurchaseBatchSync] Initialized');
   }
 
-  /// Perform initial sync - download all batches if local database is empty
+  // Perform initial sync - download all batches if local database is empty
   Future<void> _initialSync() async {
     try {
       var localBatches = await _offlineController.getAllBatches(
@@ -201,13 +200,13 @@ class PurchaseBatchSyncService extends ChangeNotifier {
     }
   }
 
-  /// Check if device is online
+  // Check if device is online
   Future<bool> isOnline() async {
     final results = await _connectivity.checkConnectivity();
     return _isConnected(results);
   }
 
-  /// Perform delta sync - only sync changed records
+  // Perform delta sync - only sync changed records
   Future<PurchaseBatchSyncResult> syncNow() async {
     // Prevent concurrent syncs
     if (_isSyncing) {
@@ -351,7 +350,7 @@ class PurchaseBatchSyncService extends ChangeNotifier {
     }
   }
 
-  /// Force a full sync (re-download all from server)
+  // Force a full sync (re-download all from server)
   Future<PurchaseBatchSyncResult> forceFullSync() async {
     // Prevent concurrent full syncs
     if (_isFullSyncing) {
@@ -415,13 +414,13 @@ class PurchaseBatchSyncService extends ChangeNotifier {
     }
   }
 
-  /// Get count of pending syncs
+  // Get count of pending syncs
   Future<int> getPendingSyncCount() async {
     final pending = await _offlineController.getBatchesNeedingSync();
     return pending.length;
   }
 
-  /// Trigger immediate sync (for manual refresh)
+  // Trigger immediate sync (for manual refresh)
   Future<void> triggerSync() async {
     if (!_isSyncing) {
       await syncNow();

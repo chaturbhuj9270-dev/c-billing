@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import '../core/theme/app_theme.dart';
 import 'glass_bevel_frame.dart';
 
-/// Item definition for [GlassyBottomNavBar].
+// Item definition for [GlassyBottomNavBar].
 class GlassyNavItem {
   final IconData icon;
   final String label;
@@ -20,8 +20,7 @@ class GlassyNavItem {
   });
 }
 
-/// Frosted bottom tab bar. The selected tab is a glass pill that slides
-/// between items.
+// Frosted bottom tab bar. The selected tab is a glass pill that slides between items.
 class GlassyBottomNavBar extends StatefulWidget {
   final int selectedIndex;
   final ValueChanged<int> onTap;

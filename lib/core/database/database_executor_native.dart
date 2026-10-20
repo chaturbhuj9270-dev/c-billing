@@ -5,12 +5,7 @@ import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
-/// Opens the local database on the calling isolate.
-///
-/// Drift's background-isolate connection never finishes when that isolate is
-/// paused (debug start) or dies during a restart. Every screen then waits on
-/// the first query and stays on its loading state, even though the sqlite
-/// file already has the records.
+// Opens the local database on the calling isolate. Drift's background-isolate connection never finishes when that isolate is paused (debug start) or dies during a restart. Every s...
 QueryExecutor openAppDatabase() {
   return LazyDatabase(() async {
     final directory = await getApplicationDocumentsDirectory();
@@ -29,9 +24,7 @@ QueryExecutor openAppDatabase() {
   });
 }
 
-/// Other accounts on this computer cannot read the shop file.
-/// The signed-in user still can. Replacing SQLite with an encrypted engine
-/// would require migrating the live shop file, so this stays a permission lock.
+// Other accounts on this computer cannot read the shop file. The signed-in user still can. Replacing SQLite with an encrypted engine would require migrating the live shop file, so...
 void _lockDatabaseFile(File file) {
   if (Platform.isWindows) return;
   try {

@@ -10,9 +10,7 @@ import '../../../inventory_management/offline/controllers/purchase_batch_offline
 import '../../../event_order/offline/controllers/event_order_offline_controller.dart';
 import '../../../event_order/domain/entities/event_order.dart';
 
-/// Ultra-fast offline-first dashboard repository
-/// Uses local database local database for microsecond-level data loading
-/// No network calls - all data is from local database
+// Ultra-fast offline-first dashboard repository Uses local database local database for microsecond-level data loading No network calls - all data is from local database
 class DashboardOfflineRepository {
   static DashboardOfflineRepository? _instance;
 
@@ -23,8 +21,7 @@ class DashboardOfflineRepository {
     return _instance!;
   }
 
-  /// Fetch dashboard data from local database
-  /// Returns data in microseconds since all queries are local
+  // Fetch dashboard data from local database Returns data in microseconds since all queries are local
   Future<DashboardData> fetchDashboardData({
     DateTime? startDate,
     DateTime? endDate,
@@ -131,8 +128,7 @@ class DashboardOfflineRepository {
     );
   }
 
-  /// Get sales data for the specified period
-  /// CORRECTLY handles returns: deducts returnedQuantity from sales and profit
+  // Get sales data for the specified period CORRECTLY handles returns: deducts returnedQuantity from sales and profit
   Future<Map<String, dynamic>> _getSalesDataForPeriod(
     DateTime? startDate,
     DateTime? endDate,
@@ -193,7 +189,7 @@ class DashboardOfflineRepository {
     };
   }
 
-  /// Get purchase data for the specified period
+  // Get purchase data for the specified period
   Future<Map<String, dynamic>> _getPurchaseDataForPeriod(
     DateTime? startDate,
     DateTime? endDate,
@@ -219,7 +215,7 @@ class DashboardOfflineRepository {
     };
   }
 
-  /// Get stock data from products
+  // Get stock data from products
   Future<Map<String, dynamic>> _getStockData() async {
     final products = await ProductOfflineController.instance.getAllProducts();
 
@@ -239,8 +235,7 @@ class DashboardOfflineRepository {
     return {'stockValue': stockValue, 'lowStockCount': lowStockCount};
   }
 
-  /// Get event/order data for the specified period
-  /// Calculates profit from sales orders and event charges
+  // Get event/order data for the specified period Calculates profit from sales orders and event charges
   Future<Map<String, dynamic>> _getEventOrderDataForPeriod(
     DateTime? startDate,
     DateTime? endDate,
@@ -297,8 +292,7 @@ class DashboardOfflineRepository {
 
       // Calculate profit based on order type
       if (order.orderType == OrderType.event.index) {
-        // For events: profit = eventCharges + sum of sub-event charges (service revenue)
-        // Events are service-based, so we count the full amount as profit
+        // For events: profit = eventCharges + sum of sub-event charges (service revenue) Events are service-based, so we count the full amount as profit
         profit += order.eventCharges;
         for (final subEvent in order.subEvents) {
           profit += subEvent.charges;
@@ -309,8 +303,7 @@ class DashboardOfflineRepository {
           final productId = item.productId ?? '';
           final purchasePrice = productPriceMap[productId] ?? 0.0;
 
-          // Calculate profit: (rate - purchasePrice) * quantity
-          // Note: Using subtotal before tax and after discount
+          // Calculate profit: (rate - purchasePrice) * quantity Note: Using subtotal before tax and after discount
           final itemProfit = (item.rate - purchasePrice) * item.quantity;
           profit += itemProfit;
         }
@@ -328,7 +321,7 @@ class DashboardOfflineRepository {
     };
   }
 
-  /// Get top selling products (by net quantity sold - excluding returns)
+  // Get top selling products (by net quantity sold - excluding returns)
   Future<List<Map<String, dynamic>>> getTopSellingProducts({
     int limit = 5,
   }) async {
@@ -375,8 +368,7 @@ class DashboardOfflineRepository {
     return sorted.take(limit).toList();
   }
 
-  /// Get low stock products (products below minimum stock level or below 10 if not set)
-  /// Uses batch-based stock calculation for accurate real-time stock levels
+  // Get low stock products (products below minimum stock level or below 10 if not set) Uses batch-based stock calculation for accurate real-time stock levels
   Future<List<Map<String, dynamic>>> getLowStockProducts({
     int limit = 5,
   }) async {
@@ -425,8 +417,7 @@ class DashboardOfflineRepository {
     return lowStockProducts.take(limit).toList();
   }
 
-  /// Get customers with pending payments
-  /// Mirrors enhanced_customer_page._entityToMap: bill pending + event order remaining
+  // Get customers with pending payments Mirrors enhanced_customer_page._entityToMap: bill pending + event order remaining
   Future<List<Map<String, dynamic>>> getCustomersWithPendingBalance({
     int limit = 5,
   }) async {
@@ -475,7 +466,7 @@ class DashboardOfflineRepository {
     return customersWithPending.take(limit).toList();
   }
 
-  /// Get recent bills with pending amount
+  // Get recent bills with pending amount
   Future<List<Map<String, dynamic>>> getRecentPendingBills({
     int limit = 5,
   }) async {
@@ -495,8 +486,7 @@ class DashboardOfflineRepository {
         .toList();
   }
 
-  /// Get upcoming payment dues - pending bills that need collection soonest
-  /// Returns bills sorted by oldest first (most overdue for collection)
+  // Get upcoming payment dues - pending bills that need collection soonest Returns bills sorted by oldest first (most overdue for collection)
   Future<List<Map<String, dynamic>>> getUpcomingPaymentDues({
     int limit = 5,
   }) async {
@@ -526,7 +516,7 @@ class DashboardOfflineRepository {
     }).toList();
   }
 
-  /// Get upcoming events with customer name and event date
+  // Get upcoming events with customer name and event date
   Future<List<Map<String, dynamic>>> getUpcomingEvents({int limit = 5}) async {
     final upcomingEvents = await EventOrderOfflineController.instance
         .getUpcomingEvents();

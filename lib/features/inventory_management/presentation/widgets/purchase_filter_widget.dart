@@ -7,11 +7,10 @@ import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
-/// Filter options for purchase list
+// Filter options for purchase list
 enum PurchaseDateFilter { all, today, thisMonth, thisYear, custom }
 
-/// Sticky filter widget for purchase list
-/// Features: All/Today toggle, Supplier searchable dropdown
+// Sticky filter widget for purchase list Features: All/Today toggle, Supplier searchable dropdown
 class PurchaseFilterWidget extends StatefulWidget {
   final PurchaseDateFilter selectedDateFilter;
   final String? selectedSupplierId;

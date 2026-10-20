@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Supported data types for custom product columns
+// Supported data types for custom product columns
 enum CustomColumnType {
   text,
   number,
@@ -14,7 +14,7 @@ enum CustomColumnType {
   boolean,
 }
 
-/// Model for a custom column definition
+// Model for a custom column definition
 class CustomColumn {
   final String id;
   final String name;
@@ -78,7 +78,7 @@ class CustomColumn {
     isActive: isActive ?? this.isActive,
   );
 
-  /// Get display name for column type
+  // Get display name for column type
   static String getTypeDisplayName(CustomColumnType type) {
     switch (type) {
       case CustomColumnType.text:
@@ -97,8 +97,7 @@ class CustomColumn {
   }
 }
 
-/// Service for managing product custom columns settings
-/// Stores in Firestore per user so data persists across app reinstalls
+// Service for managing product custom columns settings Stores in Firestore per user so data persists across app reinstalls
 class ProductSettingsService extends ChangeNotifier {
   static const String _localCacheKey = 'product_custom_columns_cache';
   static const String _firestoreCollection = 'product_settings';
@@ -117,20 +116,20 @@ class ProductSettingsService extends ChangeNotifier {
     return _instance!;
   }
   
-  /// Get all custom columns
+  // Get all custom columns
   List<CustomColumn> get customColumns => _customColumns;
   
-  /// Get only active custom columns
+  // Get only active custom columns
   List<CustomColumn> get activeCustomColumns => 
       _customColumns.where((c) => c.isActive).toList();
   
-  /// Check if loading
+  // Check if loading
   bool get isLoading => _isLoading;
   
-  /// Get current user ID
+  // Get current user ID
   String? get _userId => FirebaseAuth.instance.currentUser?.uid;
   
-  /// Get Firestore reference for user's custom columns
+  // Get Firestore reference for user's custom columns
   DocumentReference? get _userSettingsDoc {
     final uid = _userId;
     if (uid == null) return null;
@@ -141,7 +140,7 @@ class ProductSettingsService extends ChangeNotifier {
         .doc(_customColumnsDoc);
   }
   
-  /// Initialize service - load from Firestore (with local cache fallback)
+  // Initialize service - load from Firestore (with local cache fallback)
   Future<void> init() async {
     _isLoading = true;
     notifyListeners();
@@ -190,7 +189,7 @@ class ProductSettingsService extends ChangeNotifier {
     }
   }
   
-  /// Reload data (useful when user changes)
+  // Reload data (useful when user changes)
   Future<void> reload() async {
     final newUserId = _userId;
     if (newUserId != _currentUserId) {
@@ -200,7 +199,7 @@ class ProductSettingsService extends ChangeNotifier {
     await init();
   }
   
-  /// Load from local cache (SharedPreferences)
+  // Load from local cache (SharedPreferences)
   Future<void> _loadFromLocalCache() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -221,7 +220,7 @@ class ProductSettingsService extends ChangeNotifier {
     }
   }
   
-  /// Save to local cache
+  // Save to local cache
   Future<void> _saveToLocalCache() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -234,7 +233,7 @@ class ProductSettingsService extends ChangeNotifier {
     }
   }
   
-  /// Save to Firestore
+  // Save to Firestore
   Future<void> _saveToFirestore() async {
     try {
       final docRef = _userSettingsDoc;
@@ -255,7 +254,7 @@ class ProductSettingsService extends ChangeNotifier {
     }
   }
   
-  /// Save columns (to both Firestore and local cache)
+  // Save columns (to both Firestore and local cache)
   Future<void> _saveColumns() async {
     await Future.wait([
       _saveToFirestore(),
@@ -263,14 +262,14 @@ class ProductSettingsService extends ChangeNotifier {
     ]);
   }
   
-  /// Add a new custom column
+  // Add a new custom column
   Future<void> addColumn(CustomColumn column) async {
     _customColumns.add(column);
     await _saveColumns();
     notifyListeners();
   }
   
-  /// Update an existing column
+  // Update an existing column
   Future<void> updateColumn(String id, CustomColumn updatedColumn) async {
     final index = _customColumns.indexWhere((c) => c.id == id);
     if (index != -1) {
@@ -280,14 +279,14 @@ class ProductSettingsService extends ChangeNotifier {
     }
   }
   
-  /// Delete a column
+  // Delete a column
   Future<void> deleteColumn(String id) async {
     _customColumns.removeWhere((c) => c.id == id);
     await _saveColumns();
     notifyListeners();
   }
   
-  /// Toggle column active status
+  // Toggle column active status
   Future<void> toggleColumnActive(String id) async {
     final index = _customColumns.indexWhere((c) => c.id == id);
     if (index != -1) {
@@ -299,7 +298,7 @@ class ProductSettingsService extends ChangeNotifier {
     }
   }
   
-  /// Reorder columns
+  // Reorder columns
   Future<void> reorderColumns(int oldIndex, int newIndex) async {
     final column = _customColumns.removeAt(oldIndex);
     _customColumns.insert(newIndex, column);
@@ -307,12 +306,12 @@ class ProductSettingsService extends ChangeNotifier {
     notifyListeners();
   }
   
-  /// Generate unique ID for new column
+  // Generate unique ID for new column
   String generateColumnId() {
     return 'custom_${DateTime.now().millisecondsSinceEpoch}';
   }
   
-  /// Validate custom field value based on column type
+  // Validate custom field value based on column type
   String? validateFieldValue(CustomColumn column, String? value) {
     if (column.isRequired && (value == null || value.isEmpty)) {
       return '${column.name} is required';
@@ -342,7 +341,7 @@ class ProductSettingsService extends ChangeNotifier {
     return null;
   }
   
-  /// Clear all data (for logout)
+  // Clear all data (for logout)
   Future<void> clear() async {
     _customColumns = [];
     _currentUserId = null;

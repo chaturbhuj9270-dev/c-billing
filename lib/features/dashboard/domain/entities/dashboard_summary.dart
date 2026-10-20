@@ -1,12 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-/// Domain entity representing dashboard summary data
-/// This is the core business model for dashboard metrics
-///
-/// Key formulas:
-///   Net Sales = Total Sales (finalAmount) - Total Returns
-///   Profit = Net Sales - Purchase Cost of sold (non-returned) items
-///   Stock Value = Sum of (batch.quantityRemaining × batch.purchasePrice) for all unconsumed batches
+// Domain entity representing dashboard summary data This is the core business model for dashboard metrics Key formulas: Net Sales = Total Sales (finalAmount) - Total Returns Profi...
 class DashboardSummary extends Equatable {
   final int invoicesCount;
   final int clientsCount;
@@ -15,58 +9,57 @@ class DashboardSummary extends Equatable {
   final int purchasesCount;
   final int companiesCount;
 
-  /// Gross sales amount (sum of finalAmount from all bills in period)
+  // Gross sales amount (sum of finalAmount from all bills in period)
   final double totalSales;
   final int totalBillsCount;
   final int totalItemsSold;
 
-  /// Total returned amount (returnedQty × sellingPrice, proportional discount applied)
+  // Total returned amount (returnedQty × sellingPrice, proportional discount applied)
   final double totalReturns;
 
-  /// Total returned item count
+  // Total returned item count
   final int totalReturnedItems;
 
-  /// Net Sales = totalSales - totalReturns
+  // Net Sales = totalSales - totalReturns
   final double netSales;
 
   final double totalPurchases;
   final int purchaseOrders;
   final int purchaseQty;
 
-  /// Total purchase return amount (sum of quantity × purchasePrice from PURCHASE_RETURN ledger entries)
+  // Total purchase return amount (sum of quantity × purchasePrice from PURCHASE_RETURN ledger entries)
   final double totalPurchaseReturns;
 
-  /// Count of purchase return transactions
+  // Count of purchase return transactions
   final int purchaseReturnCount;
 
-  /// Profit = Net Sales - Purchase Cost of sold (non-returned) items
+  // Profit = Net Sales - Purchase Cost of sold (non-returned) items
   final double profit;
   final double profitPercentage;
 
-  /// Stock value computed from batch quantityRemaining × purchasePrice
+  // Stock value computed from batch quantityRemaining × purchasePrice
   final double stockValue;
   final int lowStockCount;
 
-  /// Total pending amount across all bills (unpaid / partially paid)
+  // Total pending amount across all bills (unpaid / partially paid)
   final double totalPendingAmount;
 
-  // Event/Order tracking fields
-  /// Total count of all events and orders
+  // Event/Order tracking fields Total count of all events and orders
   final int totalEventOrders;
 
-  /// Count of upcoming events (event date in future)
+  // Count of upcoming events (event date in future)
   final int upcomingEvents;
 
-  /// Count of pending orders (not delivered/cancelled)
+  // Count of pending orders (not delivered/cancelled)
   final int pendingOrders;
 
-  /// Total amount from all events/orders
+  // Total amount from all events/orders
   final double eventOrdersAmount;
 
-  /// Total advance collected
+  // Total advance collected
   final double eventOrdersAdvance;
 
-  /// Total pending/remaining amount
+  // Total pending/remaining amount
   final double eventOrdersPending;
 
   final DateTime lastUpdated;
@@ -105,11 +98,11 @@ class DashboardSummary extends Equatable {
     this.isFromCache = false,
   });
 
-  /// Empty dashboard summary for initial state
+  // Empty dashboard summary for initial state
   static DashboardSummary get empty =>
       DashboardSummary(lastUpdated: DateTime.now(), isFromCache: false);
 
-  /// Check if data is stale (older than threshold)
+  // Check if data is stale (older than threshold)
   bool isStale({Duration threshold = const Duration(minutes: 5)}) {
     return DateTime.now().difference(lastUpdated) > threshold;
   }
@@ -180,7 +173,7 @@ class DashboardSummary extends Equatable {
     );
   }
 
-  /// Convert to JSON for caching
+  // Convert to JSON for caching
   Map<String, dynamic> toJson() {
     return {
       'invoicesCount': invoicesCount,
@@ -215,7 +208,7 @@ class DashboardSummary extends Equatable {
     };
   }
 
-  /// Create from JSON
+  // Create from JSON
   factory DashboardSummary.fromJson(Map<String, dynamic> json) {
     return DashboardSummary(
       invoicesCount: json['invoicesCount'] as int? ?? 0,

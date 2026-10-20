@@ -4,7 +4,7 @@ import '../../offline/controllers/stock_ledger_offline_controller.dart';
 import '../../offline/entities/purchase_batch_entity.dart';
 import '../../offline/entities/stock_ledger_entity.dart';
 
-/// Result of a FIFO sale operation
+// Result of a FIFO sale operation
 class FifoSaleResult {
   final bool success;
   final String? errorMessage;
@@ -42,7 +42,7 @@ class FifoSaleResult {
   }
 }
 
-/// Information about a consumed batch during sale
+// Information about a consumed batch during sale
 class ConsumedBatchInfo {
   final String batchId;
   final int localBatchId;
@@ -90,7 +90,7 @@ class ConsumedBatchInfo {
   }
 }
 
-/// Result of a purchase operation
+// Result of a purchase operation
 class PurchaseResult {
   final bool success;
   final String? errorMessage;
@@ -120,8 +120,7 @@ class PurchaseResult {
   }
 }
 
-/// Service for FIFO-based inventory management
-/// Handles purchases, sales, and returns with proper batch tracking and COGS calculation
+// Service for FIFO-based inventory management Handles purchases, sales, and returns with proper batch tracking and COGS calculation
 class FifoInventoryService {
   static FifoInventoryService? _instance;
   
@@ -134,7 +133,7 @@ class FifoInventoryService {
   }) : _batchController = batchController,
        _ledgerController = ledgerController;
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static FifoInventoryService get instance {
     _instance ??= FifoInventoryService._(
       batchController: PurchaseBatchOfflineController.instance,
@@ -143,7 +142,7 @@ class FifoInventoryService {
     return _instance!;
   }
 
-  /// Reset instance (for testing)
+  // Reset instance (for testing)
   @visibleForTesting
   static void resetInstance() {
     _instance = null;
@@ -151,8 +150,7 @@ class FifoInventoryService {
 
   // ==================== PURCHASE OPERATIONS ====================
 
-  /// Process a purchase and create a new batch
-  /// Each purchase creates a separate batch even for the same product
+  // Process a purchase and create a new batch Each purchase creates a separate batch even for the same product
   Future<PurchaseResult> processPurchase({
     required String productId,
     required String productName,
@@ -238,8 +236,7 @@ class FifoInventoryService {
 
   // ==================== SALE OPERATIONS (FIFO) ====================
 
-  /// Process a FIFO sale for a product
-  /// Deducts from oldest batches first and creates ledger entries
+  // Process a FIFO sale for a product Deducts from oldest batches first and creates ledger entries
   Future<FifoSaleResult> processFifoSale({
     required String productId,
     required int quantity,
@@ -355,19 +352,18 @@ class FifoInventoryService {
     }
   }
 
-  /// Check if sufficient stock is available for a sale
+  // Check if sufficient stock is available for a sale
   Future<bool> hasAvailableStock(String productId, int requiredQuantity) async {
     final totalStock = await _batchController.getTotalStockByProductId(productId);
     return totalStock >= requiredQuantity;
   }
 
-  /// Get available stock for a product
+  // Get available stock for a product
   Future<int> getAvailableStock(String productId) async {
     return await _batchController.getTotalStockByProductId(productId);
   }
 
-  /// Validate stock availability for multiple products
-  /// Returns map of productId -> error message for products with insufficient stock
+  // Validate stock availability for multiple products Returns map of productId -> error message for products with insufficient stock
   Future<Map<String, String>> validateStockForSale(Map<String, int> productQuantities) async {
     final errors = <String, String>{};
     
@@ -387,8 +383,7 @@ class FifoInventoryService {
 
   // ==================== RETURN OPERATIONS ====================
 
-  /// Process a sale return
-  /// Adds quantity back to the original batch (if specified) or creates adjustment
+  // Process a sale return Adds quantity back to the original batch (if specified) or creates adjustment
   Future<bool> processSaleReturn({
     required String productId,
     required String productName,
@@ -443,22 +438,22 @@ class FifoInventoryService {
 
   // ==================== STOCK QUERIES ====================
 
-  /// Get total stock for a product across all batches
+  // Get total stock for a product across all batches
   Future<int> getTotalStock(String productId) async {
     return await _batchController.getTotalStockByProductId(productId);
   }
 
-  /// Get total stock value for a product
+  // Get total stock value for a product
   Future<double> getTotalStockValue(String productId) async {
     return await _batchController.getTotalStockValueByProductId(productId);
   }
 
-  /// Get weighted average cost for a product
+  // Get weighted average cost for a product
   Future<double> getWeightedAverageCost(String productId) async {
     return await _batchController.getWeightedAverageCost(productId);
   }
 
-  /// Get all batches for a product
+  // Get all batches for a product
   Future<List<PurchaseBatchEntity>> getBatchesForProduct(
     String productId, {
     bool onlyWithStock = true,
@@ -466,29 +461,29 @@ class FifoInventoryService {
     return await _batchController.getBatchesByProductId(productId, onlyWithStock: onlyWithStock);
   }
 
-  /// Get all products with their stock levels
+  // Get all products with their stock levels
   Future<Map<String, int>> getAllProductsWithStock() async {
     return await _batchController.getAllProductsWithStock();
   }
 
   // ==================== REPORTING ====================
 
-  /// Get COGS for a date range
+  // Get COGS for a date range
   Future<double> getTotalCOGS({DateTime? startDate, DateTime? endDate}) async {
     return await _ledgerController.getTotalCOGS(startDate: startDate, endDate: endDate);
   }
 
-  /// Get profit for a date range
+  // Get profit for a date range
   Future<double> getTotalProfit({DateTime? startDate, DateTime? endDate}) async {
     return await _ledgerController.getTotalProfit(startDate: startDate, endDate: endDate);
   }
 
-  /// Get revenue for a date range
+  // Get revenue for a date range
   Future<double> getTotalRevenue({DateTime? startDate, DateTime? endDate}) async {
     return await _ledgerController.getTotalRevenue(startDate: startDate, endDate: endDate);
   }
 
-  /// Get stock movement summary for a product
+  // Get stock movement summary for a product
   Future<Map<String, dynamic>> getStockMovementSummary(
     String productId, {
     DateTime? startDate,
@@ -501,12 +496,12 @@ class FifoInventoryService {
     );
   }
 
-  /// Get batches expiring soon
+  // Get batches expiring soon
   Future<List<PurchaseBatchEntity>> getBatchesExpiringSoon({int withinDays = 30}) async {
     return await _batchController.getBatchesExpiringSoon(withinDays: withinDays);
   }
 
-  /// Get expired batches
+  // Get expired batches
   Future<List<PurchaseBatchEntity>> getExpiredBatches() async {
     return await _batchController.getExpiredBatches();
   }

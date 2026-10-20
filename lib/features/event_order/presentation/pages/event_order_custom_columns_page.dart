@@ -6,7 +6,7 @@ import 'package:c_billing/common_widgets/app_tab_bar.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Settings page for managing custom columns for Events and Sub-Events
+// Settings page for managing custom columns for Events and Sub-Events
 class EventOrderCustomColumnsPage extends StatefulWidget {
   const EventOrderCustomColumnsPage({super.key});
 
@@ -121,8 +121,7 @@ class _EventOrderCustomColumnsPageState
           padding: const EdgeInsets.all(16),
           itemCount: columns.length,
           onReorderItem: (oldIndex, newIndex) {
-            // Restore the legacy drop index. onReorderItem already shifts it
-            // down when the item moves toward the end of the list.
+            // Restore the legacy drop index. onReorderItem already shifts it down when the item moves toward the end of the list.
             final legacyNewIndex = newIndex >= oldIndex ? newIndex + 1 : newIndex;
             // Find the actual indices in the full list
             final allColumns = EventOrderSettingsService.instance.customColumns;

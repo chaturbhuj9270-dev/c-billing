@@ -3,29 +3,29 @@ import '../../domain/entities/event_order.dart';
 import '../../domain/entities/sub_event.dart';
 import '../../domain/entities/order_item.dart';
 
-/// Sync status for delta sync logic
+// Sync status for delta sync logic
 enum EventOrderSyncStatus {
-  /// Newly created locally, not yet on server
+  // Newly created locally, not yet on server
   newRecord,
   
-  /// Modified locally after sync
+  // Modified locally after sync
   updated,
   
-  /// Marked for deletion, pending server delete
+  // Marked for deletion, pending server delete
   deleted,
   
-  /// Fully synced with server
+  // Fully synced with server
   synced,
 }
 
-/// Embedded entity for sub-events
+// Embedded entity for sub-events
 class SubEventEmbedded {
   String? id;
   String? name;
   DateTime? date;
   double charges;
   String? notes;
-  /// Custom data stored as JSON string
+  // Custom data stored as JSON string
   String? customDataJson;
   
   SubEventEmbedded({
@@ -66,7 +66,7 @@ class SubEventEmbedded {
   }
 }
 
-/// Embedded entity for order items
+// Embedded entity for order items
 class OrderItemEmbedded {
   String? id;
   String? productId;
@@ -143,78 +143,78 @@ class OrderItemEmbedded {
   }
 }
 
-/// Local record for Event/Sales Order with offline-first support
+// Local record for Event/Sales Order with offline-first support
 class EventOrderEntity {
-  /// Local row id
+  // Local row id
   int id = 0;
   
-  /// Server-side ID
+  // Server-side ID
   String? serverId;
   
-  /// Order type (0 = event, 1 = salesOrder)
+  // Order type (0 = event, 1 = salesOrder)
   int orderType;
   
-  /// Customer ID
+  // Customer ID
   String? customerId;
   
-  /// Customer name
+  // Customer name
   String customerName;
   
-  /// Customer contact
+  // Customer contact
   String customerContact;
   
-  /// Customer address
+  // Customer address
   String? customerAddress;
   
-  /// Order name
+  // Order name
   String orderName;
   
-  /// Description
+  // Description
   String? description;
   
-  /// Event/Delivery date
+  // Event/Delivery date
   DateTime eventDate;
   
-  /// Event/Order location
+  // Event/Order location
   String? eventLocation;
   
-  /// Sub-events (for event type)
+  // Sub-events (for event type)
   List<SubEventEmbedded> subEvents;
   
-  /// Order items (for sales order type)
+  // Order items (for sales order type)
   List<OrderItemEmbedded> items;
   
-  /// Event-level charges (separate from sub-events/products)
+  // Event-level charges (separate from sub-events/products)
   double eventCharges;
   
-  /// Total amount
+  // Total amount
   double totalAmount;
   
-  /// Advance amount
+  // Advance amount
   double advanceAmount;
   
-  /// Remaining amount
+  // Remaining amount
   double remainingAmount;
   
-  /// Notes
+  // Notes
   String? notes;
   
-  /// Status (0=pending, 1=confirmed, 2=inProgress, 3=delivered, 4=cancelled, 5=convertedToBill)
+  // Status (0=pending, 1=confirmed, 2=inProgress, 3=delivered, 4=cancelled, 5=convertedToBill)
   int status;
   
-  /// Converted bill ID
+  // Converted bill ID
   String? convertedBillId;
   
-  /// Custom data stored as JSON string
+  // Custom data stored as JSON string
   String? customDataJson;
   
-  /// Created timestamp
+  // Created timestamp
   DateTime createdAt;
   
-  /// Updated timestamp
+  // Updated timestamp
   DateTime updatedAt;
   
-  /// Sync status
+  // Sync status
   EventOrderSyncStatus syncStatus;
   
   EventOrderEntity({
@@ -243,7 +243,7 @@ class EventOrderEntity {
     this.syncStatus = EventOrderSyncStatus.newRecord,
   });
   
-  /// Default constructor for creating new entity
+  // Default constructor for creating new entity
   EventOrderEntity.create({
     this.serverId,
     this.orderType = 0,
@@ -274,7 +274,7 @@ class EventOrderEntity {
        createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
   
-  /// Convert to domain entity
+  // Convert to domain entity
   EventOrder toDomain() {
     Map<String, dynamic> customData = {};
     if (customDataJson != null && customDataJson!.isNotEmpty) {
@@ -309,7 +309,7 @@ class EventOrderEntity {
     );
   }
   
-  /// Create from domain entity
+  // Create from domain entity
   static EventOrderEntity fromDomain(EventOrder order) {
     return EventOrderEntity(
       serverId: order.id.startsWith('local_') ? null : order.id,

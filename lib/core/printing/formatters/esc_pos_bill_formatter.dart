@@ -6,7 +6,7 @@ import '../models/printer_models.dart';
 import '../../../features/shop/domain/entities/shop.dart';
 import '../../services/bill_report_settings_service.dart';
 
-/// ESC/POS Commands for thermal printer control
+// ESC/POS Commands for thermal printer control
 class EscPosCommands {
   // Initialize printer
   static final List<int> init = [0x1B, 0x40];
@@ -48,46 +48,45 @@ class EscPosCommands {
 
   // ══════════ BARCODE COMMANDS (ESC/POS GS k) ══════════
 
-  /// Set barcode height (1-255 dots, default 162)
+  // Set barcode height (1-255 dots, default 162)
   static List<int> setBarcodeHeight(int height) => [
     0x1D,
     0x68,
     height.clamp(1, 255),
   ];
 
-  /// Set barcode width (2-6, default 3)
+  // Set barcode width (2-6, default 3)
   static List<int> setBarcodeWidth(int width) => [
     0x1D,
     0x77,
     width.clamp(2, 6),
   ];
 
-  /// Set HRI (Human Readable Interpretation) position
-  /// 0 = not printed, 1 = above, 2 = below, 3 = both
+  // Set HRI (Human Readable Interpretation) position 0 = not printed, 1 = above, 2 = below, 3 = both
   static List<int> setHRIPosition(int position) => [
     0x1D,
     0x48,
     position.clamp(0, 3),
   ];
 
-  /// Set HRI font: 0 = Font A, 1 = Font B
+  // Set HRI font: 0 = Font A, 1 = Font B
   static List<int> setHRIFont(int font) => [0x1D, 0x66, font.clamp(0, 1)];
 
-  /// Print CODE128 barcode
+  // Print CODE128 barcode
   static List<int> printCode128(String data) {
     final bytes = <int>[0x1D, 0x6B, 73, data.length]; // GS k m n
     bytes.addAll(data.codeUnits);
     return bytes;
   }
 
-  /// Print CODE39 barcode (data must be uppercase alphanumeric)
+  // Print CODE39 barcode (data must be uppercase alphanumeric)
   static List<int> printCode39(String data) {
     final bytes = <int>[0x1D, 0x6B, 69, data.length]; // GS k m n
     bytes.addAll(data.toUpperCase().codeUnits);
     return bytes;
   }
 
-  /// Print EAN-13 barcode (13 digits)
+  // Print EAN-13 barcode (13 digits)
   static List<int> printEAN13(String data) {
     if (data.length != 13) return [];
     final bytes = <int>[0x1D, 0x6B, 67, 13]; // GS k m n
@@ -95,7 +94,7 @@ class EscPosCommands {
     return bytes;
   }
 
-  /// Print EAN-8 barcode (8 digits)
+  // Print EAN-8 barcode (8 digits)
   static List<int> printEAN8(String data) {
     if (data.length != 8) return [];
     final bytes = <int>[0x1D, 0x6B, 68, 8]; // GS k m n
@@ -103,7 +102,7 @@ class EscPosCommands {
     return bytes;
   }
 
-  /// Print UPC-A barcode (12 digits)
+  // Print UPC-A barcode (12 digits)
   static List<int> printUPCA(String data) {
     if (data.length != 12) return [];
     final bytes = <int>[0x1D, 0x6B, 65, 12]; // GS k m n
@@ -111,8 +110,7 @@ class EscPosCommands {
     return bytes;
   }
 
-  /// Print QR Code
-  /// PL, PH = (data.length + 3) as low/high byte
+  // Print QR Code PL, PH = (data.length + 3) as low/high byte
   static List<int> printQRCode(
     String data, {
     int moduleSize = 4,
@@ -157,10 +155,7 @@ class EscPosCommands {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Professional POS Receipt Formatter
-// Designed for 58 mm (32 char) & 80 mm (48 char) thermal printers
-// ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════ Professional POS Receipt Formatter Designed for 58 mm (32 char) & 80 mm (48 char) thermal printers ══...
 
 class EscPosBillFormatter {
   final PosPaperSize paperSize;
@@ -172,7 +167,7 @@ class EscPosBillFormatter {
 
   // ─────────────── PUBLIC API ───────────────
 
-  /// Generate complete bill bytes for printing
+  // Generate complete bill bytes for printing
   Future<List<int>> generateBillBytes({
     required PrintBillData billData,
     required Shop shopDetails,
@@ -209,17 +204,11 @@ class EscPosBillFormatter {
 
   // ─────────────── SECTION BUILDERS ───────────────
 
-  // ┌────────────────────────────────┐
-  // │        SHOP NAME (big)         │
-  // │     123 Main St, City-431001   │
-  // │       Tel: 9876543210          │
-  // │     GSTIN: 12ABCDE3456F       │
-  // ├════════════════════════════════┤
+  // ┌────────────────────────────────┐ │ SHOP NAME (big) │ │ 123 Main St, City-431001 │ │ Tel: 9876543210 │ │ GSTIN: 12ABCDE3456F │ ├════════════════════════════════┤
   List<int> _buildHeader(Shop shop) {
     final b = <int>[];
 
-    // Shop name — centered, bold, large
-    // Double-size text uses 2x width per char, so effective cols = _cols / 2
+    // Shop name — centered, bold, large Double-size text uses 2x width per char, so effective cols = _cols / 2
     final nameLines = _wrap(shop.shopName.toUpperCase(), maxWidth: _cols ~/ 2);
     for (final line in nameLines) {
       b.addAll(_center(line, bold: true, large: true));
@@ -252,14 +241,7 @@ class EscPosBillFormatter {
     return b;
   }
 
-  // ┌────────────────────────────────┐
-  // │     *** RETURN BILL ***        │
-  // │ Bill No     BILL-20260214-ABC  │
-  // │ Date          14/02/2026       │
-  // │ Time            02:30 PM       │
-  // │ Customer    Rahul Sharma       │
-  // │ Phone       9876543210         │
-  // ├────────────────────────────────┤
+  // ┌────────────────────────────────┐ │ *** RETURN BILL *** │ │ Bill No BILL-20260214-ABC │ │ Date 14/02/2026 │ │ Time 02:30 PM │ │ Customer Rahul Sharma │ │ Phone 9876543210 │ ├──...
   Future<List<int>> _buildBillInfo(PrintBillData d) async {
     final b = <int>[];
     final prefs = await SharedPreferences.getInstance();
@@ -312,12 +294,7 @@ class EscPosBillFormatter {
     return b;
   }
 
-  // ┌────────────────────────────────┐
-  // │ Item       Qty  Rate      Amt  │
-  // ├────────────────────────────────┤
-  // │ Rice 5kg     2   250   500.00  │
-  // │ Sugar 1kg    5    45   225.00  │
-  // ├────────────────────────────────┤
+  // ┌────────────────────────────────┐ │ Item Qty Rate Amt │ ├────────────────────────────────┤ │ Rice 5kg 2 250 500.00 │ │ Sugar 1kg 5 45 225.00 │ ├────────────────────────────────┤
   List<int> _buildItemsTable(PrintBillData d) {
     final b = <int>[];
     final settings = BillReportSettingsService.instance;
@@ -417,7 +394,7 @@ class EscPosBillFormatter {
     return b;
   }
 
-  /// Dynamic item row that only shows visible columns
+  // Dynamic item row that only shows visible columns
   List<int> _dynamicItemRow(
     String item,
     String? qty,
@@ -449,19 +426,7 @@ class EscPosBillFormatter {
     return b;
   }
 
-  // ┌────────────────────────────────┐
-  // │ Total Items           10 qty   │
-  // │ Subtotal          Rs.1250.00   │
-  // │ Discount(5%)       -Rs.62.50   │
-  // ├════════════════════════════════┤
-  // │ GRAND TOTAL       Rs.1187.50   │  ← big & bold
-  // ├════════════════════════════════┤
-  // │ Paid              Rs.1000.00   │
-  // │ Pending            Rs.187.50   │
-  // │ TOTAL DUE          Rs.500.00   │
-  // ├════════════════════════════════┤
-  // │       Payment: Cash            │
-  // └────────────────────────────────┘
+  // ┌────────────────────────────────┐ │ Total Items 10 qty │ │ Subtotal Rs.1250.00 │ │ Discount(5%) -Rs.62.50 │ ├════════════════════════════════┤ │ GRAND TOTAL Rs.1187.50 │ ← big...
   List<int> _buildTotals(PrintBillData d) {
     final b = <int>[];
 
@@ -534,7 +499,7 @@ class EscPosBillFormatter {
     return b;
   }
 
-  /// Footer — notes + thank-you
+  // Footer — notes + thank-you
   List<int> _buildFooter(PrintBillData d) {
     final b = <int>[];
     b.addAll(_lf());
@@ -555,7 +520,7 @@ class EscPosBillFormatter {
 
   // ─────────────── LOW-LEVEL PRIMITIVES ───────────────
 
-  /// Encode text to bytes (Latin-1 with UTF-8 fallback)
+  // Encode text to bytes (Latin-1 with UTF-8 fallback)
   List<int> _enc(String s) {
     try {
       return latin1.encode(s);
@@ -564,16 +529,16 @@ class EscPosBillFormatter {
     }
   }
 
-  /// Single line feed
+  // Single line feed
   List<int> _lf() => [...EscPosCommands.lineFeed];
 
-  /// Thin divider  --------------------------------
+  // Thin divider  --------------------------------
   List<int> _thinDiv() => _center('-' * _cols);
 
-  /// Thick divider  ================================
+  // Thick divider  ================================
   List<int> _thickDiv() => _center('=' * _cols);
 
-  /// Center-aligned line
+  // Center-aligned line
   List<int> _center(String text, {bool bold = false, bool large = false}) {
     final b = <int>[];
     b.addAll(EscPosCommands.alignCenter);
@@ -589,7 +554,7 @@ class EscPosBillFormatter {
     return b;
   }
 
-  /// Left-aligned line
+  // Left-aligned line
   List<int> _left(String text, {bool bold = false}) {
     final b = <int>[];
     b.addAll(EscPosCommands.alignLeft);
@@ -600,8 +565,7 @@ class EscPosBillFormatter {
     return b;
   }
 
-  /// Key–value row:  "Label          Value"
-  /// Left label, right-aligned value, space-padded to fill line width.
+  // Key–value row: "Label Value" Left label, right-aligned value, space-padded to fill line width.
   List<int> _kv(String label, String value, {bool boldLabel = false}) {
     final b = <int>[];
     if (boldLabel) b.addAll(EscPosCommands.boldOn);
@@ -626,17 +590,16 @@ class EscPosBillFormatter {
     return b;
   }
 
-  /// Format money — show decimals only when fractional
+  // Format money — show decimals only when fractional
   String _fmt(double v) {
     if (v == v.roundToDouble()) return v.toStringAsFixed(0);
     return v.toStringAsFixed(2);
   }
 
-  /// Null-safe non-empty check
+  // Null-safe non-empty check
   bool _notEmpty(String? s) => s != null && s.isNotEmpty;
 
-  /// Word-wrap text to fit within column width.
-  /// [maxWidth] overrides the default line width (useful for double-size text).
+  // Word-wrap text to fit within column width. [maxWidth] overrides the default line width (useful for double-size text).
   List<String> _wrap(String text, {int? maxWidth}) {
     final width = maxWidth ?? _cols;
     final lines = <String>[];

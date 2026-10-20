@@ -1,15 +1,15 @@
 import '../../../event_order/domain/entities/order_item.dart';
 import '../../../event_order/domain/entities/sub_event.dart';
 
-/// Type of quotation content
+// Type of quotation content
 enum QuotationType {
-  /// Product-only quotation
+  // Product-only quotation
   product,
 
-  /// Event quotation with sub-events
+  // Event quotation with sub-events
   event,
 
-  /// Both products and event items
+  // Both products and event items
   hybrid;
 
   String get displayName {
@@ -24,7 +24,7 @@ enum QuotationType {
   }
 }
 
-/// Lifecycle status of a quotation
+// Lifecycle status of a quotation
 enum QuotationStatus {
   draft,
   sent,
@@ -51,7 +51,7 @@ enum QuotationStatus {
   }
 }
 
-/// Customer quotation with optional products and/or event details
+// Customer quotation with optional products and/or event details
 class Quotation {
   final String id;
   final String quotationNumber;

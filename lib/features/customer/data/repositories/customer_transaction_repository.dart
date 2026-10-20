@@ -3,40 +3,37 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:c_billing/features/customer/domain/entities/customer_transaction.dart';
 
-/// Repository for customer transaction data operations
-///
-/// Handles all CRUD operations for customer transactions
-/// Uses Firebase Firestore for persistence
+// Repository for customer transaction data operations Handles all CRUD operations for customer transactions Uses Firebase Firestore for persistence
 abstract class CustomerTransactionRepository {
-  /// Get all transactions for a customer
+  // Get all transactions for a customer
   Future<List<CustomerTransaction>> getTransactionsByCustomerId(
     String customerId, {
     int? limit,
   });
 
-  /// Get a transaction by ID
+  // Get a transaction by ID
   Future<CustomerTransaction?> getTransactionById(String transactionId);
 
-  /// Get transactions for a specific bill
+  // Get transactions for a specific bill
   Future<List<CustomerTransaction>> getTransactionsByBillId(String billId);
 
-  /// Create a new transaction
+  // Create a new transaction
   Future<String> createTransaction(CustomerTransaction transaction);
 
-  /// Get recent transactions across all customers
+  // Get recent transactions across all customers
   Future<List<CustomerTransaction>> getRecentTransactions({int limit = 50});
 
-  /// Get total received amount for a date range
+  // Get total received amount for a date range
   Future<double> getTotalReceivedAmount({
     required DateTime startDate,
     required DateTime endDate,
   });
 
-  /// Get payment transactions for a customer (received type only)
+  // Get payment transactions for a customer (received type only)
   Future<List<CustomerTransaction>> getPaymentsByCustomerId(String customerId);
 }
 
-/// Firebase implementation of CustomerTransactionRepository
+// Firebase implementation of CustomerTransactionRepository
 class FirebaseCustomerTransactionRepository
     implements CustomerTransactionRepository {
   final FirebaseFirestore firestore;
@@ -44,14 +41,14 @@ class FirebaseCustomerTransactionRepository
 
   FirebaseCustomerTransactionRepository({required this.firestore});
 
-  /// Get current user ID
+  // Get current user ID
   String get _userId {
     final user = _auth.currentUser;
     if (user == null) throw Exception('User not authenticated');
     return user.uid;
   }
 
-  /// Get reference to customer_transactions collection
+  // Get reference to customer_transactions collection
   CollectionReference<Map<String, dynamic>> get _transactionsCollection =>
       firestore
           .collection('users')
@@ -208,8 +205,7 @@ class FirebaseCustomerTransactionRepository
     }
   }
 
-  /// Create transaction within a Firestore transaction (for atomicity)
-  /// This is called by CustomerTransactionService
+  // Create transaction within a Firestore transaction (for atomicity) This is called by CustomerTransactionService
   Future<void> createTransactionInTransaction({
     required Transaction transaction,
     required CustomerTransaction customerTransaction,

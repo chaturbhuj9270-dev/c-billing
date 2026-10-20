@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 
-/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTime(dynamic value) {
   if (value == null) return null;
   if (value is Timestamp) return value.toDate();
@@ -9,95 +9,93 @@ DateTime? _parseDateTime(dynamic value) {
   return null;
 }
 
-/// Sync status for delta sync logic
+// Sync status for delta sync logic
 enum BatchSyncStatus {
-  /// Newly created locally, not yet on server
+  // Newly created locally, not yet on server
   newRecord,
 
-  /// Modified locally after sync
+  // Modified locally after sync
   updated,
 
-  /// Marked for deletion, pending server delete
+  // Marked for deletion, pending server delete
   deleted,
 
-  /// Fully synced with server
+  // Fully synced with server
   synced,
 }
 
-/// Local record for Purchase Batch with offline-first support
-/// Implements FIFO inventory management where each purchase creates a unique batch
+// Local record for Purchase Batch with offline-first support Implements FIFO inventory management where each purchase creates a unique batch
 class PurchaseBatchEntity {
-  /// Local row id
+  // Local row id
   int id = 0;
 
-  /// Server-side batch ID (null for locally created, not yet synced records)
+  // Server-side batch ID (null for locally created, not yet synced records)
   String? serverId;
 
-  /// Product ID (indexed for fast lookup)
+  // Product ID (indexed for fast lookup)
   String productId;
 
-  /// Product name for quick reference
+  // Product name for quick reference
   String productName;
 
-  /// Company/Brand name
+  // Company/Brand name
   String companyName;
 
-  /// Model name or variant
+  // Model name or variant
   String modelName;
 
-  /// Product category
+  // Product category
   String category;
 
-  /// Unique key combining productName + companyName + modelName (lowercase, trimmed)
-  /// Used for identifying the same product across batches
+  // Unique key combining productName + companyName + modelName (lowercase, trimmed) Used for identifying the same product across batches
   String productUniqueKey;
 
-  /// Purchase price per unit for this batch
+  // Purchase price per unit for this batch
   double purchasePrice;
 
-  /// Selling price per unit for this batch
+  // Selling price per unit for this batch
   double sellingPrice;
 
-  /// Original quantity purchased in this batch
+  // Original quantity purchased in this batch
   int quantityPurchased;
 
-  /// Remaining quantity available for sale (FIFO tracking)
+  // Remaining quantity available for sale (FIFO tracking)
   int quantityRemaining;
 
-  /// Date when this batch was purchased (indexed for FIFO sorting)
+  // Date when this batch was purchased (indexed for FIFO sorting)
   DateTime purchaseDate;
 
-  /// Supplier ID (optional, indexed)
+  // Supplier ID (optional, indexed)
   String? supplierId;
 
-  /// Supplier name (optional)
+  // Supplier name (optional)
   String? supplierName;
 
-  /// Unit of measurement
+  // Unit of measurement
   String unit;
 
-  /// Expiry date (optional, indexed for expiry tracking)
+  // Expiry date (optional, indexed for expiry tracking)
   DateTime? expiryDate;
 
-  /// Production/Manufacturing date (optional)
+  // Production/Manufacturing date (optional)
   DateTime? productionDate;
 
-  /// Warranty in months (optional)
+  // Warranty in months (optional)
   int? warrantyMonths;
 
-  /// Notes for this batch
+  // Notes for this batch
   String? notes;
 
-  /// Whether this batch is fully consumed (quantityRemaining == 0)
+  // Whether this batch is fully consumed (quantityRemaining == 0)
   bool isConsumed;
 
-  /// Sync status for delta sync
+  // Sync status for delta sync
   BatchSyncStatus syncStatus;
 
-  /// Created timestamp
+  // Created timestamp
   DateTime createdAt;
 
-  /// Last update timestamp
+  // Last update timestamp
   DateTime updatedAt;
 
   PurchaseBatchEntity({
@@ -126,7 +124,7 @@ class PurchaseBatchEntity {
     required this.updatedAt,
   });
 
-  /// Factory constructor for creating new batch with defaults
+  // Factory constructor for creating new batch with defaults
   factory PurchaseBatchEntity.create({
     String? serverId,
     required String productId,
@@ -178,7 +176,7 @@ class PurchaseBatchEntity {
     );
   }
 
-  /// Create from server response (Firestore document)
+  // Create from server response (Firestore document)
   factory PurchaseBatchEntity.fromServer(Map<String, dynamic> data) {
     final now = DateTime.now();
     final productName = data['productName'] as String? ?? '';
@@ -214,7 +212,7 @@ class PurchaseBatchEntity {
     );
   }
 
-  /// Convert to Map for API sync
+  // Convert to Map for API sync
   Map<String, dynamic> toSyncPayload() {
     return {
       'batchId': serverId,
@@ -242,7 +240,7 @@ class PurchaseBatchEntity {
     };
   }
 
-  /// Convert to Map for UI
+  // Convert to Map for UI
   Map<String, dynamic> toBatchMap() {
     return {
       'batchId': serverId ?? 'local_$id',
@@ -276,7 +274,7 @@ class PurchaseBatchEntity {
     };
   }
 
-  /// Copy with modifications
+  // Copy with modifications
   PurchaseBatchEntity copyWith({
     int? id,
     String? serverId,
@@ -332,13 +330,13 @@ class PurchaseBatchEntity {
     return entity;
   }
 
-  /// Check if batch needs sync
+  // Check if batch needs sync
   bool get needsSync => syncStatus != BatchSyncStatus.synced;
 
-  /// Check if batch is marked for deletion
+  // Check if batch is marked for deletion
   bool get isMarkedForDeletion => syncStatus == BatchSyncStatus.deleted;
 
-  /// Check if batch has stock available
+  // Check if batch has stock available
   bool get hasStock => quantityRemaining > 0;
 
   @override

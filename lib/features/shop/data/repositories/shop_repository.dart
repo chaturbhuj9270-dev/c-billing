@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/shop.dart';
 
-/// Repository for fetching and managing shop details
+// Repository for fetching and managing shop details
 class ShopRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
@@ -16,7 +16,7 @@ class ShopRepository {
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
         _auth = auth ?? FirebaseAuth.instance;
 
-  /// Get shop details for the current user
+  // Get shop details for the current user
   Future<Shop> getShopDetails({bool forceRefresh = false}) async {
     // Return cached shop if available and not forcing refresh
     if (_cachedShop != null && !forceRefresh) {
@@ -49,7 +49,7 @@ class ShopRepository {
     }
   }
 
-  /// Save or update shop details
+  // Save or update shop details
   Future<bool> saveShopDetails(Shop shop) async {
     try {
       final currentUser = _auth.currentUser;
@@ -72,7 +72,7 @@ class ShopRepository {
     }
   }
 
-  /// Stream of shop details changes
+  // Stream of shop details changes
   Stream<Shop> watchShopDetails() {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
@@ -94,7 +94,7 @@ class ShopRepository {
     });
   }
 
-  /// Clear cached shop data
+  // Clear cached shop data
   void clearCache() {
     _cachedShop = null;
   }

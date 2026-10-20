@@ -12,9 +12,7 @@ import 'package:c_billing/core/ui/desktop_canvas.dart';
 import 'package:c_billing/common_widgets/app_pill_button.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
-/// Bottom sheet widget for adding multiple items to the bill
-/// Step 1: Shows products grouped by name with total stock
-/// Step 2: When tapping a product, shows batch selection for specific stock entry
+// Bottom sheet widget for adding multiple items to the bill Step 1: Shows products grouped by name with total stock Step 2: When tapping a product, shows batch selection for speci...
 class AddItemsBottomSheet extends StatefulWidget {
   final List<Product> products;
   final List<Product>
@@ -68,7 +66,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
     _buildGroupedProducts();
   }
 
-  /// Build grouped products: group by product name (lowercase), aggregate all batches
+  // Build grouped products: group by product name (lowercase), aggregate all batches
   void _buildGroupedProducts() {
     final Map<String, GroupedBillingProduct> groups = {};
     final productIdsWithBatches = <String>{};
@@ -159,7 +157,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
     });
   }
 
-  /// Count total items added to bill
+  // Count total items added to bill
   int get _totalItems {
     double count = 0;
     for (final item in widget.billItems) {
@@ -168,7 +166,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
     return count.round();
   }
 
-  /// Check if any batch from this product group is already in the bill
+  // Check if any batch from this product group is already in the bill
   int _getGroupQuantityInBill(GroupedBillingProduct group) {
     int total = 0;
     for (final billItem in widget.billItems) {
@@ -188,8 +186,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
     return total;
   }
 
-  /// Show dialog to adjust quantity or remove a product
-  /// Supports unit selection for kg/ltr products (can sell in gm/ml)
+  // Show dialog to adjust quantity or remove a product Supports unit selection for kg/ltr products (can sell in gm/ml)
   void _showProductQuantityDialog({
     required String productId,
     required String productName,
@@ -1270,9 +1267,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
   }
 }
 
-/// Represents a billable item in the Add Items sheet.
-/// Wraps product data with FIFO batch information.
-/// Groups products by name, aggregating all batches across companies/prices.
+// Represents a billable item in the Add Items sheet. Wraps product data with FIFO batch information. Groups products by name, aggregating all batches across companies/prices.
 class GroupedBillingProduct {
   final String productName;
   final int indexNo;
@@ -1300,11 +1295,11 @@ class GroupedBillingProduct {
     batches.sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
   }
 
-  /// Check if this product supports sub-unit selling (kg -> gm, ltr -> ml)
+  // Check if this product supports sub-unit selling (kg -> gm, ltr -> ml)
   bool get supportsSubUnit =>
       unit?.toLowerCase() == 'kg' || unit?.toLowerCase() == 'ltr';
 
-  /// Get the sub-unit for this product (gm for kg, ml for ltr)
+  // Get the sub-unit for this product (gm for kg, ml for ltr)
   String? get subUnit {
     final lowerUnit = unit?.toLowerCase();
     if (lowerUnit == 'kg') return 'gm';
@@ -1312,7 +1307,7 @@ class GroupedBillingProduct {
     return null;
   }
 
-  /// Total stock across all batches
+  // Total stock across all batches
   int get totalStock {
     if (batches.isNotEmpty) {
       return batches.fold<int>(0, (s, b) => s + b.quantityRemaining);
@@ -1320,7 +1315,7 @@ class GroupedBillingProduct {
     return fallbackProduct?.currentStock ?? 0;
   }
 
-  /// All unique company names across batches
+  // All unique company names across batches
   List<String> get allCompanyNames {
     final names = <String>{};
     for (final batch in batches) {
@@ -1336,7 +1331,7 @@ class GroupedBillingProduct {
     return names.toList();
   }
 
-  /// Price range display: single price or range
+  // Price range display: single price or range
   String get priceRangeDisplay {
     if (batches.isEmpty) {
       return '₹${fallbackProduct?.salesPrice.toStringAsFixed(0) ?? '0'}';
@@ -1349,8 +1344,7 @@ class GroupedBillingProduct {
   }
 }
 
-/// Bottom sheet for selecting a specific batch/stock entry from a product
-/// Step 2 of the billing flow: shows all available stock entries
+// Bottom sheet for selecting a specific batch/stock entry from a product Step 2 of the billing flow: shows all available stock entries
 class BatchSelectionSheet extends StatefulWidget {
   final String productName;
   final int productCode;
@@ -1380,11 +1374,11 @@ class BatchSelectionSheet extends StatefulWidget {
     this.unit,
   });
 
-  /// Check if this product supports sub-unit selling (kg -> gm, ltr -> ml)
+  // Check if this product supports sub-unit selling (kg -> gm, ltr -> ml)
   bool get supportsSubUnit =>
       unit?.toLowerCase() == 'kg' || unit?.toLowerCase() == 'ltr';
 
-  /// Get the sub-unit for this product (gm for kg, ml for ltr)
+  // Get the sub-unit for this product (gm for kg, ml for ltr)
   String? get subUnit {
     final lowerUnit = unit?.toLowerCase();
     if (lowerUnit == 'kg') return 'gm';
@@ -1457,7 +1451,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
         .fold<double>(0, (s, item) => s + item.quantity);
   }
 
-  /// Get max stock in display unit
+  // Get max stock in display unit
   double _getMaxStockInDisplayUnit(int maxStock) {
     if (_selectedSellUnit == 'gm' && widget.unit?.toLowerCase() == 'kg') {
       return maxStock * 1000.0;
@@ -1488,7 +1482,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
     });
   }
 
-  /// Show dialog to adjust quantity or remove a batch item
+  // Show dialog to adjust quantity or remove a batch item
   void _showBatchQuantityDialog({
     required PurchaseBatchEntity batch,
     required double existingQty,

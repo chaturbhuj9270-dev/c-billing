@@ -5,27 +5,15 @@ import '../../domain/repositories/dashboard_repository_interface.dart';
 import '../datasources/dashboard_cache_datasource.dart';
 import '../datasources/dashboard_local_datasource.dart';
 
-/// Repository implementation with offline-first reactive strategy
-///
-/// Loading strategy:
-/// 1. Return cached data immediately if available (instant)
-/// 2. Fetch fresh data from LOCAL local database (< 5ms)
-/// 3. Update cache and notify listeners
-/// 4. Reactive: table update watches auto-triggers recalculation on any data change
-///
-/// Key changes from old Firebase-based approach:
-/// - Primary datasource is now local database (local, instant, offline-capable)
-/// - Reactive streams via the local database collection watchers (bills, purchases, batches)
-/// - DashboardRefreshService events also trigger recalculation
-/// - Firebase datasource is no longer used for dashboard (sync is separate concern)
+// Repository implementation with offline-first reactive strategy Loading strategy: 1. Return cached data immediately if available (instant) 2. Fetch fresh data from LOCAL local da...
 class DashboardRepositoryImpl implements DashboardRepositoryInterface {
   final DashboardCacheDataSource _cacheDataSource;
   final DashboardLocalDataSource _localDataSource;
 
-  /// Stream controllers for each filter type (for manual refresh triggers)
+  // Stream controllers for each filter type (for manual refresh triggers)
   final Map<String, StreamController<DashboardSummary>> _controllers = {};
 
-  /// Active Local watch subscriptions per filter
+  // Active Local watch subscriptions per filter
   final Map<String, StreamSubscription<DashboardSummary>> _localWatchSubs = {};
 
   DashboardRepositoryImpl({
@@ -34,7 +22,7 @@ class DashboardRepositoryImpl implements DashboardRepositoryInterface {
   }) : _cacheDataSource = cacheDataSource ?? DashboardCacheDataSource(),
        _localDataSource = localDataSource ?? DashboardLocalDataSource.instance;
 
-  /// Initialize repository and cache
+  // Initialize repository and cache
   Future<void> init() async {
     await _cacheDataSource.init();
   }
@@ -51,8 +39,7 @@ class DashboardRepositoryImpl implements DashboardRepositoryInterface {
   }) async {
     final stopwatch = Stopwatch()..start();
 
-    // Fetch fresh data from local DB (instant, < 5ms)
-    // Always go to the local database for live calculations — cache is only for pre-render
+    // Fetch fresh data from local DB (instant, < 5ms) Always go to the local database for live calculations — cache is only for pre-render
     try {
       final freshData = await _localDataSource.fetchDashboardSummary(
         params: params,
@@ -128,7 +115,7 @@ class DashboardRepositoryImpl implements DashboardRepositoryInterface {
     }
   }
 
-  /// Clean up watcher and controller for a given cache key
+  // Clean up watcher and controller for a given cache key
   Future<void> _cleanupWatcher(String cacheKey) async {
     final oldSub = _localWatchSubs.remove(cacheKey);
     await oldSub?.cancel();
@@ -139,7 +126,7 @@ class DashboardRepositoryImpl implements DashboardRepositoryInterface {
     }
   }
 
-  /// Force refresh from the local database and push to stream listeners
+  // Force refresh from the local database and push to stream listeners
   Future<void> refreshAndNotify(DashboardParams params) async {
     try {
       final freshData = await _localDataSource.fetchDashboardSummary(
@@ -166,7 +153,7 @@ class DashboardRepositoryImpl implements DashboardRepositoryInterface {
     await _cacheDataSource.preloadDefaultCache();
   }
 
-  /// Dispose all stream controllers and Local watchers
+  // Dispose all stream controllers and Local watchers
   void dispose() {
     for (final sub in _localWatchSubs.values) {
       sub.cancel();

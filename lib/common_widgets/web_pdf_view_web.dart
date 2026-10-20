@@ -5,7 +5,7 @@ import 'dart:ui_web' as ui_web;
 import 'package:flutter/widgets.dart';
 import 'package:web/web.dart' as web;
 
-/// Shows a PDF with the browser viewer. Web has no native PDF rasterizer.
+// Shows a PDF with the browser viewer. Web has no native PDF rasterizer.
 Widget buildWebPdfView(Uint8List bytes) {
   final blob = web.Blob(
     [bytes.toJS].toJS,

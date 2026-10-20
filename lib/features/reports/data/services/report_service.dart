@@ -5,8 +5,7 @@ import '../../domain/models/report_filter_model.dart';
 import '../../domain/models/report_result_model.dart';
 import '../repositories/report_repository.dart';
 
-/// Service handling all report business logic and calculations.
-/// Uses optimized queries from ReportRepository — no full-table scans.
+// Service handling all report business logic and calculations. Uses optimized queries from ReportRepository — no full-table scans.
 class ReportService {
   final ReportRepository _repo;
 
@@ -18,8 +17,7 @@ class ReportService {
     return _instance!;
   }
 
-  /// Generate a complete report based on filters.
-  /// Uses parallel queries + aggregation for performance.
+  // Generate a complete report based on filters. Uses parallel queries + aggregation for performance.
   Future<ReportResultModel> generateReport(ReportFilterModel filter) async {
     try {
       // ── 1. Parallel data fetch ──
@@ -58,16 +56,12 @@ class ReportService {
         productIds.add(e.productId);
       }
 
-      // Include ALL batch products (not just remaining > 0) so that:
-      // - Products with zero stock still appear when they had transactions
-      // - Advanced filters (expired, low stock, etc.) work on all products
-      // - Product/supplier-specific filters show complete data
+      // Include ALL batch products (not just remaining > 0) so that: - Products with zero stock still appear when they had transactions - Advanced filters (expired, low stock, etc.) wor...
       for (final b in allBatches) {
         productIds.add(b.productId);
       }
 
-      // If still no data from ledger or batches, try loading products directly
-      // This handles cases where filters are set but no ledger/batch data exists yet
+      // If still no data from ledger or batches, try loading products directly This handles cases where filters are set but no ledger/batch data exists yet
       if (productIds.isEmpty && filter.hasAdvancedFilters) {
         final products = await _repo.getProducts(
           productId: filter.productId,
@@ -145,8 +139,7 @@ class ReportService {
         }
       }
 
-      // If supplier filter is active, restrict productIds to only supplier's products
-      // (ledger entries don't have supplierId, so we cross-reference with batches)
+      // If supplier filter is active, restrict productIds to only supplier's products (ledger entries don't have supplierId, so we cross-reference with batches)
       if (filter.supplierId != null && supplierProductIds.isNotEmpty) {
         productIds.retainAll(supplierProductIds);
         // Also re-add supplier's products in case they had no ledger entries in range
@@ -287,7 +280,7 @@ class ReportService {
     }
   }
 
-  /// Aggregate ledger entries by productId
+  // Aggregate ledger entries by productId
   Map<String, _LedgerAgg> _aggregateByProduct(List<StockLedgerEntity> entries) {
     final map = <String, _LedgerAgg>{};
     for (final e in entries) {
@@ -306,7 +299,7 @@ class ReportService {
   }
 }
 
-/// Internal aggregation helper
+// Internal aggregation helper
 class _LedgerAgg {
   int totalQty = 0;
   double totalCost = 0;
@@ -322,7 +315,7 @@ class _LedgerAgg {
   double get avgSellingPrice => _count > 0 ? _sellingPriceSum / _count : 0;
 }
 
-/// Internal product info helper
+// Internal product info helper
 class _ProductInfo {
   String productName = '';
   String companyName = '';

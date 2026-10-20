@@ -8,7 +8,7 @@ import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 
 import '../config/subscription_products.dart';
 
-/// Result of a Google Play / App Store subscription purchase.
+// Result of a Google Play / App Store subscription purchase.
 class PlayBillingResult {
   final bool success;
   final String status;
@@ -25,7 +25,7 @@ class PlayBillingResult {
   });
 }
 
-/// Google Play Billing (and StoreKit on iOS) for the yearly subscription.
+// Google Play Billing (and StoreKit on iOS) for the yearly subscription.
 class PlayBillingService {
   static final PlayBillingService _instance = PlayBillingService._internal();
   factory PlayBillingService() => _instance;
@@ -48,7 +48,7 @@ class PlayBillingService {
   String get displayPrice =>
       _yearlyProduct?.price ?? SubscriptionProducts.fallbackPriceLabel;
 
-  /// Initialize store connection and load the yearly subscription product.
+  // Initialize store connection and load the yearly subscription product.
   Future<void> initialize() async {
     if (_initialized) return;
 
@@ -96,7 +96,7 @@ class PlayBillingService {
     _yearlyProduct = response.productDetails.first;
   }
 
-  /// Starts Google Play / App Store purchase for the yearly plan.
+  // Starts Google Play / App Store purchase for the yearly plan.
   Future<PlayBillingResult> purchaseYearlySubscription() async {
     if (_pendingPurchase != null && !_pendingPurchase!.isCompleted) {
       throw StateError('A purchase is already in progress');
@@ -139,7 +139,7 @@ class PlayBillingService {
     );
   }
 
-  /// Restores prior store purchases and re-activates subscription when valid.
+  // Restores prior store purchases and re-activates subscription when valid.
   Future<PlayBillingResult> restorePurchases() async {
     if (_pendingPurchase != null && !_pendingPurchase!.isCompleted) {
       throw StateError('A purchase is already in progress');

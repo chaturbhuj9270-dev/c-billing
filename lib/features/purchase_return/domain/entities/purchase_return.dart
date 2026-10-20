@@ -1,6 +1,4 @@
-/// Represents a purchase return transaction.
-/// A return deducts stock from the latest available batches (reverse FIFO)
-/// and credits the supplier.
+// Represents a purchase return transaction. A return deducts stock from the latest available batches (reverse FIFO) and credits the supplier.
 class PurchaseReturn {
   final String id;
   final String supplierId;
@@ -97,7 +95,7 @@ class PurchaseReturn {
   }
 }
 
-/// Represents a single item in a purchase return.
+// Represents a single item in a purchase return.
 class PurchaseReturnItem {
   final String id;
   final String purchaseReturnId;

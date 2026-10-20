@@ -1,10 +1,10 @@
 import 'package:equatable/equatable.dart';
 import '../../data/models/dashboard_data.dart';
 
-/// Filter type for dashboard
+// Filter type for dashboard
 enum DashboardFilter { today, thisWeek, thisMonth, thisYear, custom, all }
 
-/// Base class for dashboard states
+// Base class for dashboard states
 sealed class DashboardState extends Equatable {
   final DashboardFilter filter;
   final DateTime? customStartDate;
@@ -20,12 +20,12 @@ sealed class DashboardState extends Equatable {
   List<Object?> get props => [filter, customStartDate, customEndDate];
 }
 
-/// Initial state when dashboard is first loaded
+// Initial state when dashboard is first loaded
 class DashboardInitial extends DashboardState {
   const DashboardInitial() : super();
 }
 
-/// Loading state while fetching data
+// Loading state while fetching data
 class DashboardLoading extends DashboardState {
   final DashboardData? previousData;
 
@@ -40,7 +40,7 @@ class DashboardLoading extends DashboardState {
   List<Object?> get props => [...super.props, previousData];
 }
 
-/// Loaded state with dashboard data
+// Loaded state with dashboard data
 class DashboardLoaded extends DashboardState {
   final DashboardData data;
 
@@ -55,7 +55,7 @@ class DashboardLoaded extends DashboardState {
   List<Object?> get props => [...super.props, data];
 }
 
-/// Error state when data fetching fails
+// Error state when data fetching fails
 class DashboardError extends DashboardState {
   final String message;
   final DashboardData? previousData;

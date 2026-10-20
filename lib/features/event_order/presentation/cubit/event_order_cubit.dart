@@ -8,8 +8,7 @@ import '../../domain/entities/order_item.dart';
 import '../../offline/controllers/event_order_offline_controller.dart';
 import 'event_order_state.dart';
 
-/// Cubit for managing Event/Sales Order operations
-/// Uses offline-first approach with local database
+// Cubit for managing Event/Sales Order operations Uses offline-first approach with local database
 class EventOrderCubit extends Cubit<EventOrderState> {
   final EventOrderOfflineController _controller;
 
@@ -17,7 +16,7 @@ class EventOrderCubit extends Cubit<EventOrderState> {
     : _controller = controller ?? EventOrderOfflineController.instance,
       super(const EventOrderInitial());
 
-  /// Load all event orders
+  // Load all event orders
   Future<void> loadEventOrders({
     OrderType? filterType,
     OrderStatus? filterStatus,
@@ -61,7 +60,7 @@ class EventOrderCubit extends Cubit<EventOrderState> {
     }
   }
 
-  /// Load event order by ID
+  // Load event order by ID
   Future<void> loadEventOrderById(int id) async {
     emit(const EventOrderLoading());
 
@@ -78,7 +77,7 @@ class EventOrderCubit extends Cubit<EventOrderState> {
     }
   }
 
-  /// Create a new event order
+  // Create a new event order
   Future<void> createEventOrder({
     required OrderType orderType,
     String? customerId,
@@ -136,7 +135,7 @@ class EventOrderCubit extends Cubit<EventOrderState> {
     }
   }
 
-  /// Update an existing event order
+  // Update an existing event order
   Future<void> updateEventOrder({
     required int id,
     OrderType? orderType,
@@ -204,7 +203,7 @@ class EventOrderCubit extends Cubit<EventOrderState> {
     }
   }
 
-  /// Delete an event order
+  // Delete an event order
   Future<void> deleteEventOrder(int id) async {
     emit(const EventOrderSaving());
 
@@ -230,12 +229,12 @@ class EventOrderCubit extends Cubit<EventOrderState> {
     }
   }
 
-  /// Update order status
+  // Update order status
   Future<void> updateOrderStatus(int id, OrderStatus status) async {
     await updateEventOrder(id: id, status: status);
   }
 
-  /// Get pending orders for customer
+  // Get pending orders for customer
   Future<List<EventOrder>> getCustomerPendingOrders(String customerId) async {
     final entities = await _controller.getEventOrdersByCustomerId(customerId);
     return entities
@@ -244,13 +243,13 @@ class EventOrderCubit extends Cubit<EventOrderState> {
         .toList();
   }
 
-  /// Get upcoming events
+  // Get upcoming events
   Future<List<EventOrder>> getUpcomingEvents() async {
     final entities = await _controller.getUpcomingEvents();
     return entities.map((e) => e.toDomain()).toList();
   }
 
-  /// Get statistics
+  // Get statistics
   Future<Map<String, dynamic>> getStatistics() async {
     final pendingAmount = await _controller.getTotalPendingAmount();
     final advanceAmount = await _controller.getTotalAdvanceAmount();

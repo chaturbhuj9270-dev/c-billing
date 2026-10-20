@@ -1,7 +1,6 @@
 import 'package:intl/intl.dart';
 
-/// Represents a single batch/variant entry for a grouped product
-/// Each sub-entry has distinct company, price, sell price, purchase date, etc.
+// Represents a single batch/variant entry for a grouped product Each sub-entry has distinct company, price, sell price, purchase date, etc.
 class ProductSubEntry {
   final String productId;
   final String productName;
@@ -31,13 +30,13 @@ class ProductSubEntry {
 
   String get formattedDate => DateFormat('dd MMM yyyy').format(purchaseDate);
 
-  /// Check if this batch is expired
+  // Check if this batch is expired
   bool get isExpired {
     if (expiryDate == null) return false;
     return expiryDate!.isBefore(DateTime.now());
   }
 
-  /// Check if this batch is expiring soon (within 30 days)
+  // Check if this batch is expiring soon (within 30 days)
   bool get isExpiringSoon {
     if (expiryDate == null) return false;
     final now = DateTime.now();
@@ -46,13 +45,12 @@ class ProductSubEntry {
   }
 }
 
-/// Represents a group of products that share the same name
-/// but differ in company, price, batch, etc.
+// Represents a group of products that share the same name but differ in company, price, batch, etc.
 class GroupedProduct {
-  /// The common product name (grouping key)
+  // The common product name (grouping key)
   final String productName;
 
-  /// All individual sub-entries (batches/variants) for this product name
+  // All individual sub-entries (batches/variants) for this product name
   final List<ProductSubEntry> subEntries;
 
   const GroupedProduct({
@@ -60,41 +58,41 @@ class GroupedProduct {
     required this.subEntries,
   });
 
-  /// Grand total stock across all sub-entries
+  // Grand total stock across all sub-entries
   int get totalStock =>
       subEntries.fold<int>(0, (total, e) => total + e.stockQuantity);
 
-  /// Number of distinct variants/batches
+  // Number of distinct variants/batches
   int get variantCount => subEntries.length;
 
-  /// Whether this group has multiple distinct sub-entries
+  // Whether this group has multiple distinct sub-entries
   bool get hasMultipleVariants => subEntries.length > 1;
 
-  /// Lowest purchase price among all sub-entries
+  // Lowest purchase price among all sub-entries
   double get minPurchasePrice =>
       subEntries.map((e) => e.purchasePrice).reduce((a, b) => a < b ? a : b);
 
-  /// Highest purchase price among all sub-entries
+  // Highest purchase price among all sub-entries
   double get maxPurchasePrice =>
       subEntries.map((e) => e.purchasePrice).reduce((a, b) => a > b ? a : b);
 
-  /// Lowest sales price among all sub-entries
+  // Lowest sales price among all sub-entries
   double get minSalesPrice =>
       subEntries.map((e) => e.salesPrice).reduce((a, b) => a < b ? a : b);
 
-  /// Highest sales price among all sub-entries
+  // Highest sales price among all sub-entries
   double get maxSalesPrice =>
       subEntries.map((e) => e.salesPrice).reduce((a, b) => a > b ? a : b);
 
-  /// Total stock value across all sub-entries (based on purchase price)
+  // Total stock value across all sub-entries (based on purchase price)
   double get totalStockValue => subEntries.fold<double>(
       0.0, (total, e) => total + (e.stockQuantity * e.purchasePrice));
 
-  /// Unique company names
+  // Unique company names
   Set<String> get companies =>
       subEntries.map((e) => e.companyName).where((c) => c.isNotEmpty).toSet();
 
-  /// Price range display string for purchase price
+  // Price range display string for purchase price
   String get purchasePriceRange {
     if (minPurchasePrice == maxPurchasePrice) {
       return '₹${minPurchasePrice.toStringAsFixed(2)}';
@@ -102,7 +100,7 @@ class GroupedProduct {
     return '₹${minPurchasePrice.toStringAsFixed(0)} - ₹${maxPurchasePrice.toStringAsFixed(0)}';
   }
 
-  /// Price range display string for sales price
+  // Price range display string for sales price
   String get salesPriceRange {
     if (minSalesPrice == maxSalesPrice) {
       return '₹${minSalesPrice.toStringAsFixed(2)}';
@@ -110,28 +108,25 @@ class GroupedProduct {
     return '₹${minSalesPrice.toStringAsFixed(0)} - ₹${maxSalesPrice.toStringAsFixed(0)}';
   }
 
-  /// Check if low stock (total)
+  // Check if low stock (total)
   bool isLowStock({int threshold = 10}) => totalStock <= threshold;
 
-  /// Count of expired batches with remaining stock
+  // Count of expired batches with remaining stock
   int get expiredBatchCount =>
       subEntries.where((e) => e.isExpired && e.stockQuantity > 0).length;
 
-  /// Total expired stock quantity
+  // Total expired stock quantity
   int get expiredStockCount =>
       subEntries.where((e) => e.isExpired).fold<int>(0, (total, e) => total + e.stockQuantity);
 
-  /// Count of batches expiring soon (within 30 days)
+  // Count of batches expiring soon (within 30 days)
   int get expiringSoonBatchCount =>
       subEntries.where((e) => e.isExpiringSoon && e.stockQuantity > 0).length;
 
-  /// Check if any batch has expired stock
+  // Check if any batch has expired stock
   bool get hasExpiredStock => expiredBatchCount > 0;
 
-  /// Build grouped products from a flat list of products + batch data.
-  ///
-  /// Groups by normalized product name (lowercase, trimmed).
-  /// Products without batch data appear as single-entry groups.
+  // Build grouped products from a flat list of products + batch data. Groups by normalized product name (lowercase, trimmed). Products without batch data appear as single-entry groups.
   static List<GroupedProduct> buildFromBatches(
     List<dynamic> batches, {
     List<dynamic>? productsWithoutBatches,

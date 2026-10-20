@@ -1,4 +1,4 @@
-/// Model representing a single item for printing on POS bill
+// Model representing a single item for printing on POS bill
 class PrintBillItem {
   final String name;
   final String? companyName; // Product company/brand name
@@ -26,25 +26,25 @@ class PrintBillItem {
     this.sellUnit,
   });
 
-  /// CGST amount computed from amount
+  // CGST amount computed from amount
   double get cgstAmount => amount * cgstPercent / 100;
 
-  /// SGST amount computed from amount
+  // SGST amount computed from amount
   double get sgstAmount => amount * sgstPercent / 100;
 
-  /// Whether this item has per-product GST
+  // Whether this item has per-product GST
   bool get hasItemGst => cgstPercent > 0 || sgstPercent > 0;
 
-  /// Whether some units of this item have been returned
+  // Whether some units of this item have been returned
   bool get hasReturns => returnedQuantity > 0;
 
-  /// Quantity still held by the customer
+  // Quantity still held by the customer
   double get effectiveQuantity => quantity - returnedQuantity;
 
-  /// Refund amount for the returned units
+  // Refund amount for the returned units
   double get returnedAmount => rate * returnedQuantity;
 
-  /// Get display quantity with unit conversion (for printing)
+  // Get display quantity with unit conversion (for printing)
   String get displayQuantity {
     if (sellUnit == 'gm' && unit == 'kg') {
       final gmQty = quantity * 1000;
@@ -59,7 +59,7 @@ class PrintBillItem {
     }
   }
 
-  /// Create from OrderItem (quotations / event orders).
+  // Create from OrderItem (quotations / event orders).
   factory PrintBillItem.fromOrderItem(dynamic orderItem) {
     return PrintBillItem(
       name: orderItem.productName as String,
@@ -72,7 +72,7 @@ class PrintBillItem {
     );
   }
 
-  /// Create from BillItem entity
+  // Create from BillItem entity
   factory PrintBillItem.fromBillItem(dynamic billItem) {
     return PrintBillItem(
       name: billItem.productName as String,
@@ -106,7 +106,7 @@ class PrintBillItem {
   }
 }
 
-/// Model representing complete bill data for POS printing
+// Model representing complete bill data for POS printing
 class PrintBillData {
   final String billNumber;
   final DateTime dateTime;
@@ -122,52 +122,51 @@ class PrintBillData {
   final String? paymentMethod;
   final String? notes;
   final bool isReturnBill;
-  /// When true, PDF/thermal output uses Quotation labels instead of Bill/Invoice.
+  // When true, PDF/thermal output uses Quotation labels instead of Bill/Invoice.
   final bool isQuotation;
   final DateTime? validUntil;
-  /// Event/order date for quotations (replaces valid-until on print).
+  // Event/order date for quotations (replaces valid-until on print).
   final DateTime? eventOrderDate;
   final String? quotationTitle;
   final double? refundAmount;
 
-  /// Amount paid for this bill
+  // Amount paid for this bill
   final double? paidAmount;
 
-  /// Amount pending for this bill
+  // Amount pending for this bill
   final double? pendingAmount;
 
-  /// Customer's total due amount (running balance)
+  // Customer's total due amount (running balance)
   final double? totalDueAmount;
 
-  // ═══════════════════ GST Fields ═══════════════════
-  /// Whether GST was applied
+  // ═══════════════════ GST Fields ═══════════════════ Whether GST was applied
   final bool isGstApplied;
 
-  /// Whether GST is inclusive
+  // Whether GST is inclusive
   final bool isTaxInclusive;
 
-  /// CGST percentage
+  // CGST percentage
   final double cgstPercent;
 
-  /// SGST percentage
+  // SGST percentage
   final double sgstPercent;
 
-  /// Other tax percentage
+  // Other tax percentage
   final double otherTaxPercent;
 
-  /// Other tax name
+  // Other tax name
   final String otherTaxName;
 
-  /// CGST amount
+  // CGST amount
   final double cgstAmount;
 
-  /// SGST amount
+  // SGST amount
   final double sgstAmount;
 
-  /// Other tax amount
+  // Other tax amount
   final double otherTaxAmount;
 
-  /// Total tax amount
+  // Total tax amount
   final double totalTaxAmount;
 
   const PrintBillData({
@@ -209,7 +208,7 @@ class PrintBillData {
 
   String get documentHeaderTitle => isQuotation ? 'QUOTATION' : 'INVOICE';
 
-  /// Create from Bill entity
+  // Create from Bill entity
   factory PrintBillData.fromBill(
     dynamic bill, {
     bool isReturn = false,
@@ -251,41 +250,41 @@ class PrintBillData {
     );
   }
 
-  /// Get total quantity of items (as double to support decimal quantities)
+  // Get total quantity of items (as double to support decimal quantities)
   double get totalQuantity =>
       items.fold(0.0, (total, item) => total + item.quantity);
 
-  /// Get total quantity as int (for backward compatibility)
+  // Get total quantity as int (for backward compatibility)
   int get totalQuantityInt => totalQuantity.round();
 
-  /// Total returned quantity across all items (as double)
+  // Total returned quantity across all items (as double)
   double get totalReturnedQuantity =>
       items.fold(0.0, (total, item) => total + item.returnedQuantity);
 
-  /// Total returned quantity as int (for backward compatibility)
+  // Total returned quantity as int (for backward compatibility)
   int get totalReturnedQuantityInt => totalReturnedQuantity.round();
 
-  /// Total refund amount for all returned items
+  // Total refund amount for all returned items
   double get totalReturnedAmount =>
       items.fold(0.0, (total, item) => total + item.returnedAmount);
 
-  /// Whether any item in this bill has returns
+  // Whether any item in this bill has returns
   bool get hasAnyReturns => items.any((item) => item.hasReturns);
 
-  /// Check if discount is applied
+  // Check if discount is applied
   bool get hasDiscount => discountAmount != null && discountAmount! > 0;
 
-  /// Check if tax is applied
+  // Check if tax is applied
   bool get hasTax => taxAmount != null && taxAmount! > 0;
 
-  /// Check if payment info is available
+  // Check if payment info is available
   bool get hasPaymentInfo =>
       !isQuotation && (paidAmount != null || pendingAmount != null);
 
-  /// Check if there's pending amount
+  // Check if there's pending amount
   bool get hasPendingAmount => pendingAmount != null && pendingAmount! > 0;
 
-  /// Whether GST breakdown should be displayed
+  // Whether GST breakdown should be displayed
   bool get hasGst => isGstApplied && totalTaxAmount > 0;
 
   Map<String, dynamic> toJson() {

@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 
-/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTime(dynamic value) {
   if (value == null) return null;
   if (value is Timestamp) return value.toDate();
@@ -9,96 +9,93 @@ DateTime? _parseDateTime(dynamic value) {
   return null;
 }
 
-/// Sync status for delta sync logic
-/// Only products with status != SYNCED will be pushed to server
+// Sync status for delta sync logic Only products with status != SYNCED will be pushed to server
 enum SyncStatus {
-  /// Newly created locally, not yet on server
+  // Newly created locally, not yet on server
   newRecord,
 
-  /// Modified locally after sync
+  // Modified locally after sync
   updated,
 
-  /// Marked for deletion, pending server delete
+  // Marked for deletion, pending server delete
   deleted,
 
-  /// Fully synced with server
+  // Fully synced with server
   synced,
 }
 
-/// Local record for Product with offline-first support
-/// Optimized with proper indexes for high-performance queries
+// Local record for Product with offline-first support Optimized with proper indexes for high-performance queries
 class ProductEntity {
-  /// Local row id
+  // Local row id
   int id = 0;
 
-  /// Server-side ID (null for locally created, not yet synced records)
+  // Server-side ID (null for locally created, not yet synced records)
   String? serverId;
 
-  /// Unique index number for quick lookup (e.g., 101, 102, 103)
+  // Unique index number for quick lookup (e.g., 101, 102, 103)
   int indexNo;
 
-  /// Product name (indexed for fast search)
+  // Product name (indexed for fast search)
   String name;
 
-  /// Company name
+  // Company name
   String companyName;
 
-  /// Product category
+  // Product category
   String category;
 
-  /// Barcode (indexed for fast lookup)
+  // Barcode (indexed for fast lookup)
   String? barcode;
 
-  /// Purchase price
+  // Purchase price
   double purchasePrice;
 
-  /// Sales price
+  // Sales price
   double salesPrice;
 
-  /// Current stock quantity (as int to match domain model)
+  // Current stock quantity (as int to match domain model)
   int currentStock;
 
-  /// Measurement unit (kg, pcs, ltr, etc.)
+  // Measurement unit (kg, pcs, ltr, etc.)
   String? unit;
 
-  /// Whether product is active/available
+  // Whether product is active/available
   bool isActive;
 
-  /// Sync status for delta sync
+  // Sync status for delta sync
   SyncStatus syncStatus;
 
-  /// Last update timestamp for conflict resolution
+  // Last update timestamp for conflict resolution
   DateTime updatedAt;
 
-  /// Created timestamp
+  // Created timestamp
   DateTime createdAt;
 
-  /// Optional: Minimum stock level for alerts
+  // Optional: Minimum stock level for alerts
   int? minStockLevel;
 
-  /// Optional: Product description
+  // Optional: Product description
   String? description;
 
-  /// Optional: Product image URL
+  // Optional: Product image URL
   String? imageUrl;
 
-  /// Default supplier ID (for auto-population on purchase page)
+  // Default supplier ID (for auto-population on purchase page)
   String? defaultSupplierId;
 
-  /// Default supplier name (for display)
+  // Default supplier name (for display)
   String? defaultSupplierName;
 
-  /// CGST percentage for this product
+  // CGST percentage for this product
   double cgstPercent;
 
-  /// SGST percentage for this product
+  // SGST percentage for this product
   double sgstPercent;
 
-  /// HSN code for GST compliance (nullable for backward compatibility)
+  // HSN code for GST compliance (nullable for backward compatibility)
   String? hsnCode;
 
-  /// Custom fields JSON string (stores dynamic custom column values)
-  /// Format: {"column_id": "value", ...}
+  // Custom fields JSON string (stores dynamic custom column values) Format: {"column_id": "value", ...}
   String? customFieldsJson;
 
   ProductEntity({
@@ -127,7 +124,7 @@ class ProductEntity {
     this.customFieldsJson,
   });
 
-  /// Factory constructor for creating new product with defaults
+  // Factory constructor for creating new product with defaults
   factory ProductEntity.create({
     String? serverId,
     int indexNo = 0,
@@ -179,7 +176,7 @@ class ProductEntity {
     );
   }
 
-  /// Create from server response (Firestore document)
+  // Create from server response (Firestore document)
   factory ProductEntity.fromServer(Map<String, dynamic> data) {
     final now = DateTime.now();
     return ProductEntity(
@@ -209,7 +206,7 @@ class ProductEntity {
     );
   }
 
-  /// Convert to Map for API sync
+  // Convert to Map for API sync
   Map<String, dynamic> toSyncPayload() {
     return {
       'id': serverId,
@@ -237,7 +234,7 @@ class ProductEntity {
     };
   }
 
-  /// Convert to domain Product map (for use with existing Product class)
+  // Convert to domain Product map (for use with existing Product class)
   Map<String, dynamic> toProductMap() {
     return {
       'id': serverId ?? 'local_$id',
@@ -267,7 +264,7 @@ class ProductEntity {
     };
   }
 
-  /// Copy with modifications (marks as updated if already synced)
+  // Copy with modifications (marks as updated if already synced)
   ProductEntity copyWith({
     int? id,
     String? serverId,
@@ -323,10 +320,10 @@ class ProductEntity {
     return entity;
   }
 
-  /// Check if product needs sync
+  // Check if product needs sync
   bool get needsSync => syncStatus != SyncStatus.synced;
 
-  /// Check if product is marked for deletion
+  // Check if product is marked for deletion
   bool get isMarkedForDeletion => syncStatus == SyncStatus.deleted;
 
   @override

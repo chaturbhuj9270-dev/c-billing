@@ -9,8 +9,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:barcode_widget/barcode_widget.dart' as bw;
 import '../../../../core/services/barcode_service.dart';
-import '../../../../core/services/language_service.dart';
-import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/printing/services/pos_printer_service.dart';
 import '../../../../core/printing/formatters/esc_pos_bill_formatter.dart';
 import '../../../../common_widgets/printer_selection_widget.dart';
@@ -67,10 +65,6 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
   final _barcodeKey = GlobalKey();
   final _printerService = PosPrinterService();
 
-  // Localization (for future i18n support)
-  // ignore: unused_field
-  late AppLocalizations _localizations;
-
   // Theme colors
   Color get _primaryColor => AppColors.action(context);
   static const Color _accentColor = AppTheme.paletteFF2E7D5A;
@@ -86,9 +80,6 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
   @override
   void initState() {
     super.initState();
-    _localizations = AppLocalizations.of(
-      LanguageService.instance.currentLanguage,
-    );
 
     // Initialize tab controller
     _tabController = TabController(length: 2, vsync: this);
@@ -209,8 +200,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     }
   }
 
-  /// Build a safe barcode widget that validates data before rendering
-  /// Returns a placeholder if data is invalid for the format
+  // Build a safe barcode widget that validates data before rendering Returns a placeholder if data is invalid for the format
   Widget _buildSafeBarcodeWidget({
     required String data,
     required BarcodeFormat format,
@@ -267,7 +257,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     );
   }
 
-  /// Quick validation without calling barcode library (prevents hangs)
+  // Quick validation without calling barcode library (prevents hangs)
   bool _quickValidateFormat(String data, BarcodeFormat format) {
     switch (format) {
       case BarcodeFormat.ean13:
@@ -295,7 +285,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     }
   }
 
-  /// Build a placeholder for invalid/empty barcode
+  // Build a placeholder for invalid/empty barcode
   Widget _buildBarcodePlaceholder({
     required double width,
     required double height,
@@ -451,7 +441,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     }
   }
 
-  /// Print barcode using POS thermal printer
+  // Print barcode using POS thermal printer
   Future<void> _printBarcodePos() async {
     if (_generatedBarcode.isEmpty) return;
 
@@ -484,7 +474,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     }
   }
 
-  /// Generate ESC/POS bytes for barcode label
+  // Generate ESC/POS bytes for barcode label
   List<int> _generateBarcodeLabelBytes(int quantity) {
     final bytes = <int>[];
 
@@ -555,7 +545,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     return bytes;
   }
 
-  /// Build top line: Product Name | Rs.Price | Batch (single line)
+  // Build top line: Product Name | Rs.Price | Batch (single line)
   String _buildTopLine() {
     final parts = <String>[];
 
@@ -1862,8 +1852,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     );
   }
 
-  /// Scales a preview down when the pane is shorter than its content,
-  /// so the yellow overflow strip never appears.
+  // Scales a preview down when the pane is shorter than its content, so the yellow overflow strip never appears.
   Widget _fitPreview(Widget child) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -2089,7 +2078,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
       );
   }
 
-  /// Build preview top line: Product Name | Rs.Price | Batch
+  // Build preview top line: Product Name | Rs.Price | Batch
   String _buildPreviewTopLine() {
     final parts = <String>[];
 
@@ -2578,7 +2567,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     );
   }
 
-  /// Build print button with popup menu for PDF and POS options
+  // Build print button with popup menu for PDF and POS options
   Widget _buildPrintButtonWithOptions({required bool isMobile}) {
     return GestureDetector(
       onTap: _showBarcodePreviewSheet,
@@ -2617,7 +2606,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     );
   }
 
-  /// Show barcode preview bottom sheet with share and print options
+  // Show barcode preview bottom sheet with share and print options
   void _showBarcodePreviewSheet() {
     if (_generatedBarcode.isEmpty || _selectedProduct == null) return;
 
@@ -2906,7 +2895,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     );
   }
 
-  /// Share barcode as PDF
+  // Share barcode as PDF
   Future<void> _shareBarcode() async {
     if (_generatedBarcode.isEmpty) return;
 

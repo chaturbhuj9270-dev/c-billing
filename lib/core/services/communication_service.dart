@@ -4,8 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Singleton service for handling communication actions
-/// Provides call, SMS, and WhatsApp functionality
+// Singleton service for handling communication actions Provides call, SMS, and WhatsApp functionality
 class CommunicationService {
   static final CommunicationService _instance =
       CommunicationService._internal();
@@ -15,8 +14,7 @@ class CommunicationService {
 
   CommunicationService._internal();
 
-  /// Format phone number for URL schemes
-  /// Removes spaces, dashes, and ensures proper format
+  // Format phone number for URL schemes Removes spaces, dashes, and ensures proper format
   String _formatPhoneNumber(String phone) {
     // Remove all non-digit characters except + at the beginning
     String cleaned = phone.replaceAll(RegExp(r'[^\d+]'), '');
@@ -33,8 +31,7 @@ class CommunicationService {
     return cleaned.replaceFirst('+', '');
   }
 
-  /// Make a phone call to the given number
-  /// Opens the device's phone dialer with the number pre-filled
+  // Make a phone call to the given number Opens the device's phone dialer with the number pre-filled
   Future<bool> makeCall(String phoneNumber, {BuildContext? context}) async {
     if (phoneNumber.isEmpty) {
       _showError(context, 'Phone number not available');
@@ -60,8 +57,7 @@ class CommunicationService {
     }
   }
 
-  /// Send an SMS to the given number
-  /// Opens the device's messaging app with the number pre-filled
+  // Send an SMS to the given number Opens the device's messaging app with the number pre-filled
   Future<bool> sendSms(
     String phoneNumber, {
     String? message,
@@ -101,8 +97,7 @@ class CommunicationService {
     }
   }
 
-  /// Open WhatsApp chat with the given number
-  /// Uses WhatsApp's URL scheme to open a chat
+  // Open WhatsApp chat with the given number Uses WhatsApp's URL scheme to open a chat
   Future<bool> openWhatsApp(
     String phoneNumber, {
     String? message,
@@ -127,9 +122,7 @@ class CommunicationService {
     final Uri uri = Uri.parse(url);
 
     try {
-      // Launch directly without canLaunchUrl check
-      // canLaunchUrl requires URL schemes to be declared in AndroidManifest/Info.plist
-      // and may return false even when WhatsApp is installed
+      // Launch directly without canLaunchUrl check canLaunchUrl requires URL schemes to be declared in AndroidManifest/Info.plist and may return false even when WhatsApp is installed
       final launched = await launchUrl(
         uri,
         mode: LaunchMode.externalApplication,
@@ -159,7 +152,7 @@ class CommunicationService {
     }
   }
 
-  /// Show error snackbar if context is available
+  // Show error snackbar if context is available
   void _showError(BuildContext? context, String message) {
     if (context != null && context.mounted) {
       GlassyToast.show(context, message);
@@ -167,8 +160,7 @@ class CommunicationService {
   }
 }
 
-/// Reusable widget showing call, message, and WhatsApp action buttons
-/// Can be used in any list item or detail page
+// Reusable widget showing call, message, and WhatsApp action buttons Can be used in any list item or detail page
 class CommunicationActionButtons extends StatelessWidget {
   final String phoneNumber;
   final double iconSize;
@@ -291,7 +283,7 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
-/// Compact horizontal action icons (for list items)
+// Compact horizontal action icons (for list items)
 class CommunicationActionIcons extends StatelessWidget {
   final String phoneNumber;
   final double iconSize;

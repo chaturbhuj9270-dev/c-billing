@@ -23,8 +23,7 @@ import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Return Bill Page for processing bill returns
-/// Allows searching by bill number or customer mobile and processing returns
+// Return Bill Page for processing bill returns Allows searching by bill number or customer mobile and processing returns
 class ReturnBillPage extends StatefulWidget {
   final Bill? initialBill;
 
@@ -58,8 +57,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
   bool _hasReturnProcessed =
       false; // Track if any return was successfully processed
 
-  // Track return quantities for each item (itemId -> quantity to return)
-  // Changed to double to support fractional quantities (e.g., 0.5 kg)
+  // Track return quantities for each item (itemId -> quantity to return) Changed to double to support fractional quantities (e.g., 0.5 kg)
   Map<String, double> _returnQuantities = {};
   late AppLocalizations _localizations;
 
@@ -113,12 +111,12 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     super.dispose();
   }
 
-  /// Get total quantity selected for return
+  // Get total quantity selected for return
   double get _totalReturnQuantity {
     return _returnQuantities.values.fold(0.0, (total, qty) => total + qty);
   }
 
-  /// Get total refund amount based on selected quantities
+  // Get total refund amount based on selected quantities
   double get _totalRefundAmount {
     if (_currentBill == null) return 0.0;
     double total = 0.0;
@@ -129,7 +127,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     return total;
   }
 
-  /// Check if any items are selected for return
+  // Check if any items are selected for return
   bool get _hasItemsToReturn =>
       _totalReturnQuantity > 0.001; // Small tolerance for floats
 
@@ -416,7 +414,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     }
   }
 
-  /// Create PrintBillData with proper return bill context
+  // Create PrintBillData with proper return bill context
   PrintBillData _createReturnPrintData() {
     final bill = _currentBill!;
     final hasReturns = bill.hasAnyReturns;
@@ -427,7 +425,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     );
   }
 
-  /// Handle printing the bill
+  // Handle printing the bill
   Future<void> _handlePrintBill() async {
     if (_currentBill == null) return;
 
@@ -470,7 +468,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     }
   }
 
-  /// Handle sharing the bill as PDF
+  // Handle sharing the bill as PDF
   Future<void> _handleShareBill() async {
     if (_currentBill == null) return;
 
@@ -1590,7 +1588,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
   }
 }
 
-/// Confirmation Dialog for Return Bill
+// Confirmation Dialog for Return Bill
 class _ReturnConfirmationDialog extends StatelessWidget {
   final Bill bill;
   final Map<String, double> returnQuantities; // Changed to double

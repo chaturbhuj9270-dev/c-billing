@@ -29,7 +29,7 @@ import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
-/// Lets the desktop shell header open the add-product sheet.
+// Lets the desktop shell header open the add-product sheet.
 class ProductScreenActions {
   static VoidCallback? add;
 }
@@ -190,7 +190,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     );
   }
 
-  /// Setup batch stream for grouped view
+  // Setup batch stream for grouped view
   void _setupBatchStream() {
     final batchController = PurchaseBatchOfflineController.instance;
     _batchStreamSub = batchController
@@ -208,7 +208,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         );
   }
 
-  /// Listen for purchase/product changes from other pages
+  // Listen for purchase/product changes from other pages
   void _setupCrossPageRefresh() {
     _purchaseChangeSubscription = DashboardRefreshService
         .instance
@@ -246,7 +246,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     }
   }
 
-  /// Rebuild grouped product list from batches + products
+  // Rebuild grouped product list from batches + products
   void _rebuildGroupedProducts() {
     // Find products that have NO batches (e.g., only initial stock)
     final productIdsInBatches = _allBatches.map((b) => b.productId).toSet();

@@ -2,27 +2,27 @@
 // ignore_for_file: constant_identifier_names
 
 import 'package:flutter/foundation.dart';
-/// Type of ledger transaction
+// Type of ledger transaction
 enum LedgerType {
-  /// Stock increased due to purchase
+  // Stock increased due to purchase
   PURCHASE,
   
-  /// Stock decreased due to sale
+  // Stock decreased due to sale
   SALE,
   
-  /// Stock adjustment (manual correction)
+  // Stock adjustment (manual correction)
   ADJUSTMENT,
   
-  /// Stock returned from customer
+  // Stock returned from customer
   SALE_RETURN,
   
-  /// Stock returned to supplier
+  // Stock returned to supplier
   PURCHASE_RETURN,
   
-  /// Stock transferred between locations
+  // Stock transferred between locations
   TRANSFER,
   
-  /// Initial stock entry
+  // Initial stock entry
   OPENING_STOCK,
 }
 
@@ -38,81 +38,80 @@ extension LedgerTypeExtension on LedgerType {
     );
   }
   
-  /// Returns true if this transaction type increases stock
+  // Returns true if this transaction type increases stock
   bool get isInbound {
     return this == LedgerType.PURCHASE || 
            this == LedgerType.SALE_RETURN || 
            this == LedgerType.OPENING_STOCK;
   }
   
-  /// Returns true if this transaction type decreases stock
+  // Returns true if this transaction type decreases stock
   bool get isOutbound {
     return this == LedgerType.SALE || 
            this == LedgerType.PURCHASE_RETURN;
   }
 }
 
-/// Represents a single ledger entry for tracking stock movements.
-/// Each entry is linked to a specific batch for accurate COGS calculation.
+// Represents a single ledger entry for tracking stock movements. Each entry is linked to a specific batch for accurate COGS calculation.
 class StockLedger {
-  /// Unique identifier for this ledger entry
+  // Unique identifier for this ledger entry
   final String ledgerId;
   
-  /// Product ID
+  // Product ID
   final String productId;
   
-  /// Product name for quick reference
+  // Product name for quick reference
   final String productName;
   
-  /// Company name
+  // Company name
   final String companyName;
   
-  /// Model name
+  // Model name
   final String modelName;
   
-  /// Batch ID this transaction belongs to (for FIFO tracking)
+  // Batch ID this transaction belongs to (for FIFO tracking)
   final String batchId;
   
-  /// Type of transaction
+  // Type of transaction
   final LedgerType ledgerType;
   
-  /// Reference ID (e.g., Bill ID for sales, Purchase ID for purchases)
+  // Reference ID (e.g., Bill ID for sales, Purchase ID for purchases)
   final String referenceId;
   
-  /// Reference type (BILL, PURCHASE, ADJUSTMENT, etc.)
+  // Reference type (BILL, PURCHASE, ADJUSTMENT, etc.)
   final String referenceType;
   
-  /// Quantity moved in this transaction (always positive)
+  // Quantity moved in this transaction (always positive)
   final int quantity;
   
-  /// Cost price per unit from the batch (for COGS calculation)
+  // Cost price per unit from the batch (for COGS calculation)
   final double costPrice;
   
-  /// Selling price per unit (for sales transactions)
+  // Selling price per unit (for sales transactions)
   final double sellingPrice;
   
-  /// Total cost = costPrice * quantity
+  // Total cost = costPrice * quantity
   final double totalCost;
   
-  /// Total revenue = sellingPrice * quantity (for sales)
+  // Total revenue = sellingPrice * quantity (for sales)
   final double totalRevenue;
   
-  /// Profit for this transaction (for sales)
+  // Profit for this transaction (for sales)
   final double profit;
   
-  /// Balance quantity after this transaction
+  // Balance quantity after this transaction
   final int balanceQuantity;
   
-  /// Balance value after this transaction
+  // Balance value after this transaction
   final double balanceValue;
   
-  /// Date of transaction
+  // Date of transaction
   final DateTime transactionDate;
   
-  /// Notes for this entry
+  // Notes for this entry
   final String? notes;
   
-  /// When the record was created
+  // When the record was created
   final DateTime createdAt;
 
   StockLedger({
@@ -138,11 +137,11 @@ class StockLedger {
     required this.createdAt,
   });
 
-  /// Generate unique product key based on name + company + model
+  // Generate unique product key based on name + company + model
   String get productUniqueKey => 
       '${productName.toLowerCase().trim()}_${companyName.toLowerCase().trim()}_${modelName.toLowerCase().trim()}';
 
-  /// Factory constructor to create from JSON (for Firebase)
+  // Factory constructor to create from JSON (for Firebase)
   factory StockLedger.fromJson(Map<String, dynamic> json) {
     try {
       return StockLedger(
@@ -194,7 +193,7 @@ class StockLedger {
     }
   }
 
-  /// Convert to JSON for Firebase
+  // Convert to JSON for Firebase
   Map<String, dynamic> toJson() {
     return {
       'ledgerId': ledgerId,
@@ -221,7 +220,7 @@ class StockLedger {
     };
   }
 
-  /// Copy with modifications
+  // Copy with modifications
   StockLedger copyWith({
     String? ledgerId,
     String? productId,
@@ -284,8 +283,7 @@ class StockLedger {
 }
 
 
-/// Represents a consumed batch entry during a sale transaction.
-/// Used for tracking which batches were used and their COGS.
+// Represents a consumed batch entry during a sale transaction. Used for tracking which batches were used and their COGS.
 class ConsumedBatchEntry {
   final String batchId;
   final String productId;

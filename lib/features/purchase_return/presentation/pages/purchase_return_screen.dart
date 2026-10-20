@@ -17,18 +17,7 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
-// ──────────────────────────────────────────────────────────
-// A premium Purchase Return screen with:
-//  - Tab bar: New Return | Return History
-//  - Searchable supplier dropdown
-//  - Date picker
-//  - Product data table with real-time validation
-//  - Return mode toggle (Full Batch / Partial)
-//  - Batch breakdown bottom sheet
-//  - Analytics impact preview
-//  - Swipe-to-remove
-//  - Sticky "Process Return" button
-// ──────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────── A premium Purchase Return screen with: - Tab bar: New Return | Return History - Searchable supplier dropdown - Date pi...
 
 class PurchaseReturnScreen extends StatefulWidget {
   final bool isEmbedded;

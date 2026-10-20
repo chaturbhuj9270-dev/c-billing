@@ -1,8 +1,7 @@
 import '../../offline/entities/product_entity.dart';
 import '../../offline/controllers/product_offline_controller.dart';
 
-/// Product model for domain layer
-/// Clean separation from the local database entity
+// Product model for domain layer Clean separation from the local database entity
 class Product {
   final int? localId;
   final String? serverId;
@@ -47,7 +46,7 @@ class Product {
   })  : updatedAt = updatedAt ?? DateTime.now(),
         createdAt = createdAt ?? DateTime.now();
 
-  /// Create from entity
+  // Create from entity
   factory Product.fromEntity(ProductEntity entity) {
     return Product(
       localId: entity.id,
@@ -72,7 +71,7 @@ class Product {
     );
   }
 
-  /// Copy with modifications
+  // Copy with modifications
   Product copyWith({
     int? localId,
     String? serverId,
@@ -117,22 +116,22 @@ class Product {
     );
   }
 
-  /// Get display ID (server ID if available, else local ID)
+  // Get display ID (server ID if available, else local ID)
   String get displayId => serverId ?? 'local_$localId';
 
-  /// Check if low stock
+  // Check if low stock
   bool get isLowStock {
     if (minStockLevel == null) return false;
     return currentStock <= minStockLevel!;
   }
 
-  /// Get stock value
+  // Get stock value
   double get stockValue => purchasePrice * currentStock;
 
-  /// Get formatted price
+  // Get formatted price
   String get formattedPrice => '₹${purchasePrice.toStringAsFixed(2)}';
 
-  /// Get formatted stock
+  // Get formatted stock
   String get formattedStock {
     if (unit != null && unit!.isNotEmpty) {
       return '$currentStock $unit';
@@ -141,9 +140,7 @@ class Product {
   }
 }
 
-/// Repository for Product data operations
-/// Acts as the single source of truth for Product data
-/// Always reads from local database (offline-first)
+// Repository for Product data operations Acts as the single source of truth for Product data Always reads from local database (offline-first)
 class ProductRepository {
   static ProductRepository? _instance;
   
@@ -151,7 +148,7 @@ class ProductRepository {
 
   ProductRepository._(this._offlineController);
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static ProductRepository get instance {
     _instance ??= ProductRepository._(ProductOfflineController.instance);
     return _instance!;
@@ -159,57 +156,57 @@ class ProductRepository {
 
   // ==================== READ ====================
 
-  /// Get all active products
+  // Get all active products
   Future<List<Product>> getAllProducts() async {
     final entities = await _offlineController.getAllProducts();
     return entities.map((e) => Product.fromEntity(e)).toList();
   }
 
-  /// Watch all products (reactive stream)
+  // Watch all products (reactive stream)
   Stream<List<Product>> watchAllProducts() {
     return _offlineController.watchAllProducts().map(
       (entities) => entities.map((e) => Product.fromEntity(e)).toList(),
     );
   }
 
-  /// Get product by local ID
+  // Get product by local ID
   Future<Product?> getProductById(int id) async {
     final entity = await _offlineController.getProductById(id);
     return entity != null ? Product.fromEntity(entity) : null;
   }
 
-  /// Get product by barcode
+  // Get product by barcode
   Future<Product?> getProductByBarcode(String barcode) async {
     final entity = await _offlineController.getProductByBarcode(barcode);
     return entity != null ? Product.fromEntity(entity) : null;
   }
 
-  /// Search products by name or barcode
+  // Search products by name or barcode
   Future<List<Product>> searchProducts(String query) async {
     final entities = await _offlineController.searchProducts(query);
     return entities.map((e) => Product.fromEntity(e)).toList();
   }
 
-  /// Get products by category
+  // Get products by category
   Future<List<Product>> getProductsByCategory(String category) async {
     final entities = await _offlineController.getProductsByCategory(category);
     return entities.map((e) => Product.fromEntity(e)).toList();
   }
 
-  /// Get low stock products
+  // Get low stock products
   Future<List<Product>> getLowStockProducts() async {
     final entities = await _offlineController.getLowStockProducts();
     return entities.map((e) => Product.fromEntity(e)).toList();
   }
 
-  /// Get all categories
+  // Get all categories
   Future<List<String>> getAllCategories() async {
     return await _offlineController.getAllCategories();
   }
 
   // ==================== CREATE ====================
 
-  /// Create a new product
+  // Create a new product
   Future<Product> createProduct({
     int indexNo = 0,
     required String name,
@@ -245,7 +242,7 @@ class ProductRepository {
 
   // ==================== UPDATE ====================
 
-  /// Update an existing product
+  // Update an existing product
   Future<Product?> updateProduct({
     required int id,
     int? indexNo,
@@ -281,13 +278,13 @@ class ProductRepository {
     return entity != null ? Product.fromEntity(entity) : null;
   }
 
-  /// Update stock quantity
+  // Update stock quantity
   Future<Product?> updateStock(int id, int newQuantity) async {
     final entity = await _offlineController.updateStock(id, newQuantity);
     return entity != null ? Product.fromEntity(entity) : null;
   }
 
-  /// Adjust stock (add/subtract)
+  // Adjust stock (add/subtract)
   Future<Product?> adjustStock(int id, int adjustment) async {
     final entity = await _offlineController.adjustStock(id, adjustment);
     return entity != null ? Product.fromEntity(entity) : null;
@@ -295,29 +292,29 @@ class ProductRepository {
 
   // ==================== DELETE ====================
 
-  /// Delete a product (soft delete)
+  // Delete a product (soft delete)
   Future<void> deleteProduct(int id) async {
     await _offlineController.deleteProduct(id);
   }
 
   // ==================== SYNC STATUS ====================
 
-  /// Get count of unsynced records
+  // Get count of unsynced records
   Future<int> getUnsyncedCount() async {
     return await _offlineController.getUnsyncedCount();
   }
 
-  /// Get total product count
+  // Get total product count
   Future<int> getTotalCount() async {
     return await _offlineController.getTotalCount();
   }
 
-  /// Get total stock value
+  // Get total stock value
   Future<double> getTotalStockValue() async {
     return await _offlineController.getTotalStockValue();
   }
 
-  /// Check if product with barcode exists
+  // Check if product with barcode exists
   Future<bool> barcodeExists(String barcode, {int? excludeId}) async {
     final existing = await _offlineController.getProductByBarcode(barcode);
     if (existing == null) return false;

@@ -10,11 +10,10 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 class ChangePasswordPage extends StatefulWidget {
-  /// If true, shows back button to return to previous screen
-  /// If false, navigates to login after success (for flyout flow)
+  // If true, shows back button to return to previous screen If false, navigates to login after success (for flyout flow)
   final bool showBackButton;
 
-  /// Shown inside the web shell. Skips the top bar and does not pop the shell.
+  // Shown inside the web shell. Skips the top bar and does not pop the shell.
   final bool isEmbedded;
 
   const ChangePasswordPage({

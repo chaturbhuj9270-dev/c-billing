@@ -11,7 +11,7 @@ import '../../../shop/data/repositories/shop_repository.dart';
 import '../../../shop/domain/entities/shop.dart';
 import '../../domain/entities/quotation.dart';
 
-/// Builds print/PDF data and preview for quotations (billing layout, quotation tag).
+// Builds print/PDF data and preview for quotations (billing layout, quotation tag).
 class QuotationPrintService {
   QuotationPrintService._();
   static final QuotationPrintService instance = QuotationPrintService._();

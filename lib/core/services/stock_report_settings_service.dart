@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'product_settings_service.dart';
 
-/// Model for a stock report column configuration
+// Model for a stock report column configuration
 class StockReportColumn {
   final String id;
   final String name;
@@ -41,8 +41,7 @@ class StockReportColumn {
   );
 }
 
-/// Service to manage stock report column visibility settings
-/// Stored in Firestore per user with SharedPreferences fallback
+// Service to manage stock report column visibility settings Stored in Firestore per user with SharedPreferences fallback
 class StockReportSettingsService {
   StockReportSettingsService._();
   static final StockReportSettingsService instance = StockReportSettingsService._();
@@ -70,14 +69,14 @@ class StockReportSettingsService {
   List<StockReportColumn> _columns = [];
   bool _initialized = false;
 
-  /// Get all report columns (default + custom)
+  // Get all report columns (default + custom)
   List<StockReportColumn> get columns => List.unmodifiable(_columns);
 
-  /// Get only visible columns
+  // Get only visible columns
   List<StockReportColumn> get visibleColumns => 
       _columns.where((c) => c.isVisible).toList();
 
-  /// Check if a column is visible by ID
+  // Check if a column is visible by ID
   bool isColumnVisible(String columnId) {
     // Return default visibility if not initialized
     if (!_initialized || _columns.isEmpty) {
@@ -95,21 +94,21 @@ class StockReportSettingsService {
     return column.isVisible;
   }
 
-  /// Initialize the service
+  // Initialize the service
   Future<void> init() async {
     if (_initialized) return;
     await _loadColumns();
     _initialized = true;
   }
 
-  /// Reload columns (call after login)
+  // Reload columns (call after login)
   Future<void> reload() async {
     _initialized = false;
     await _loadColumns();
     _initialized = true;
   }
 
-  /// Load columns from Firestore or SharedPreferences
+  // Load columns from Firestore or SharedPreferences
   Future<void> _loadColumns() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -170,7 +169,7 @@ class StockReportSettingsService {
     }
   }
 
-  /// Merge saved columns with defaults (to handle new columns added later)
+  // Merge saved columns with defaults (to handle new columns added later)
   List<StockReportColumn> _mergeWithDefaults(List<StockReportColumn> saved) {
     final result = <StockReportColumn>[];
     
@@ -196,7 +195,7 @@ class StockReportSettingsService {
     return result;
   }
 
-  /// Add custom columns from ProductSettingsService
+  // Add custom columns from ProductSettingsService
   void _addCustomColumns() {
     _addCustomColumnsToList(_columns);
   }
@@ -215,13 +214,13 @@ class StockReportSettingsService {
     }
   }
 
-  /// Refresh custom columns (call when custom columns change)
+  // Refresh custom columns (call when custom columns change)
   Future<void> refreshCustomColumns() async {
     _addCustomColumns();
     await _saveColumns();
   }
 
-  /// Update column visibility
+  // Update column visibility
   Future<void> setColumnVisibility(String columnId, bool isVisible) async {
     final index = _columns.indexWhere((c) => c.id == columnId);
     if (index != -1) {
@@ -230,7 +229,7 @@ class StockReportSettingsService {
     }
   }
 
-  /// Save columns to Firestore and SharedPreferences
+  // Save columns to Firestore and SharedPreferences
   Future<void> _saveColumns() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -264,7 +263,7 @@ class StockReportSettingsService {
     }
   }
 
-  /// Reset to defaults
+  // Reset to defaults
   Future<void> resetToDefaults() async {
     _columns = _defaultColumns
         .map((e) => StockReportColumn.fromJson(e))

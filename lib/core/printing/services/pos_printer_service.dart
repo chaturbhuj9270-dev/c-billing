@@ -7,8 +7,7 @@ import '../models/print_bill_data.dart';
 import '../formatters/esc_pos_bill_formatter.dart';
 import '../../../features/shop/domain/entities/shop.dart';
 
-/// Service class for managing POS thermal printer connections and printing
-/// Supports Bluetooth ESC/POS printers with 58mm and 80mm paper sizes
+// Service class for managing POS thermal printer connections and printing Supports Bluetooth ESC/POS printers with 58mm and 80mm paper sizes
 class PosPrinterService {
   static final PosPrinterService _instance = PosPrinterService._internal();
   factory PosPrinterService() => _instance;
@@ -26,30 +25,30 @@ class PosPrinterService {
   
   StreamSubscription<List<ScanResult>>? _scanSubscription;
 
-  /// Stream of printer status changes
+  // Stream of printer status changes
   Stream<PrinterStatus> get statusStream => _statusController.stream;
   
-  /// Stream of discovered devices
+  // Stream of discovered devices
   Stream<List<PosPrinterDevice>> get devicesStream => _devicesController.stream;
   
-  /// Current printer status
+  // Current printer status
   PrinterStatus get status => _status;
   
-  /// Currently connected printer
+  // Currently connected printer
   PosPrinterDevice? get connectedPrinter => _connectedPrinter;
   
-  /// Current printer configuration
+  // Current printer configuration
   PrinterConfig get config => _config;
 
-  /// Check if printer is connected
+  // Check if printer is connected
   bool get isConnected => _status == PrinterStatus.connected && _connectedDevice != null;
 
-  /// Update printer configuration
+  // Update printer configuration
   void updateConfig(PrinterConfig config) {
     _config = config;
   }
 
-  /// Request necessary permissions for Bluetooth
+  // Request necessary permissions for Bluetooth
   Future<PrinterResult> requestPermissions() async {
     try {
       if (Platform.isAndroid) {
@@ -76,7 +75,7 @@ class PosPrinterService {
     }
   }
 
-  /// Check if Bluetooth is available and on
+  // Check if Bluetooth is available and on
   Future<bool> _checkBluetoothState() async {
     try {
       if (await FlutterBluePlus.isSupported == false) {
@@ -90,7 +89,7 @@ class PosPrinterService {
     }
   }
 
-  /// Start scanning for Bluetooth printers
+  // Start scanning for Bluetooth printers
   Future<PrinterResult> startScan({Duration timeout = const Duration(seconds: 10)}) async {
     try {
       _updateStatus(PrinterStatus.connecting);
@@ -117,8 +116,7 @@ class PosPrinterService {
       _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
         discoveredDevices.clear();
         for (final result in results) {
-          // Filter for devices that might be printers
-          // Many Bluetooth printers have names containing 'print', 'pos', 'thermal', etc.
+          // Filter for devices that might be printers Many Bluetooth printers have names containing 'print', 'pos', 'thermal', etc.
           final name = result.device.platformName;
           if (name.isNotEmpty) {
             discoveredDevices.add(PosPrinterDevice(
@@ -152,13 +150,13 @@ class PosPrinterService {
     }
   }
 
-  /// Stop scanning for printers
+  // Stop scanning for printers
   Future<void> stopScan() async {
     await _scanSubscription?.cancel();
     await FlutterBluePlus.stopScan();
   }
 
-  /// Connect to a Bluetooth printer
+  // Connect to a Bluetooth printer
   Future<PrinterResult> connectPrinter(PosPrinterDevice device) async {
     try {
       _updateStatus(PrinterStatus.connecting);
@@ -212,7 +210,7 @@ class PosPrinterService {
     }
   }
 
-  /// Disconnect from current printer
+  // Disconnect from current printer
   Future<PrinterResult> disconnectPrinter() async {
     try {
       if (_connectedDevice != null) {
@@ -228,7 +226,7 @@ class PosPrinterService {
     }
   }
 
-  /// Print bill using the connected printer
+  // Print bill using the connected printer
   Future<PrinterResult> printBill({
     required PrintBillData billData,
     required Shop shopDetails,
@@ -262,7 +260,7 @@ class PosPrinterService {
     }
   }
 
-  /// Print raw bytes (for custom printing)
+  // Print raw bytes (for custom printing)
   Future<PrinterResult> printRaw(List<int> bytes) async {
     if (_connectedDevice == null || _writeCharacteristic == null) {
       return PrinterResult.failure('No printer connected');
@@ -281,7 +279,7 @@ class PosPrinterService {
     }
   }
 
-  /// Send bytes to printer in chunks
+  // Send bytes to printer in chunks
   Future<void> _sendBytes(List<int> bytes) async {
     if (_writeCharacteristic == null) {
       throw Exception('No write characteristic available');
@@ -305,7 +303,7 @@ class PosPrinterService {
     }
   }
 
-  /// Test print - prints a simple test page
+  // Test print - prints a simple test page
   Future<PrinterResult> printTest() async {
     if (_connectedDevice == null || _writeCharacteristic == null) {
       return PrinterResult.failure('No printer connected');
@@ -352,13 +350,13 @@ class PosPrinterService {
     }
   }
 
-  /// Update internal status and notify listeners
+  // Update internal status and notify listeners
   void _updateStatus(PrinterStatus newStatus) {
     _status = newStatus;
     _statusController.add(newStatus);
   }
 
-  /// Dispose resources
+  // Dispose resources
   void dispose() {
     _scanSubscription?.cancel();
     FlutterBluePlus.stopScan();
@@ -368,7 +366,7 @@ class PosPrinterService {
   }
 }
 
-/// Extension to get user-friendly status messages
+// Extension to get user-friendly status messages
 extension PrinterStatusExtension on PrinterStatus {
   String get message {
     switch (this) {

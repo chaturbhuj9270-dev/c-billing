@@ -1,26 +1,25 @@
 
-/// Local entity for caching shop images locally
-/// Stores base64 encoded images for fast loading without network calls
+// Local entity for caching shop images locally Stores base64 encoded images for fast loading without network calls
 class ShopImageCacheEntity {
-  /// Local row id
+  // Local row id
   int id = 0;
 
-  /// User ID (Firebase UID) - indexed for quick lookup
+  // User ID (Firebase UID) - indexed for quick lookup
   String userId;
 
-  /// Shop logo as base64 encoded string
+  // Shop logo as base64 encoded string
   String? shopLogoBase64;
 
-  /// Signature as base64 encoded string
+  // Signature as base64 encoded string
   String? signatureBase64;
 
-  /// Payment QR code as base64 encoded string
+  // Payment QR code as base64 encoded string
   String? qrCodeBase64;
 
-  /// Last sync timestamp from Firebase
+  // Last sync timestamp from Firebase
   DateTime? lastSyncedAt;
 
-  /// Local update timestamp
+  // Local update timestamp
   DateTime updatedAt;
 
   ShopImageCacheEntity({
@@ -32,13 +31,13 @@ class ShopImageCacheEntity {
     required this.updatedAt,
   });
 
-  /// Check if any images are cached
+  // Check if any images are cached
   bool get hasAnyImages =>
       (shopLogoBase64 != null && shopLogoBase64!.isNotEmpty) ||
       (signatureBase64 != null && signatureBase64!.isNotEmpty) ||
       (qrCodeBase64 != null && qrCodeBase64!.isNotEmpty);
 
-  /// Create a copy with updated fields
+  // Create a copy with updated fields
   ShopImageCacheEntity copyWith({
     String? userId,
     String? shopLogoBase64,

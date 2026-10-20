@@ -20,7 +20,7 @@ class InventoryService {
 
   // ==================== Purchase Operations ====================
 
-  /// Process a purchase and update inventory
+  // Process a purchase and update inventory
   Future<String> processPurchase({
     required String productId,
     required int quantity,
@@ -87,7 +87,7 @@ class InventoryService {
 
   // ==================== Sales Operations ====================
 
-  /// Process a sale and update inventory
+  // Process a sale and update inventory
   Future<String> processSale({
     required String productId,
     required int quantity,
@@ -140,7 +140,7 @@ class InventoryService {
 
   // ==================== Dashboard Metrics ====================
 
-  /// Get total purchases amount
+  // Get total purchases amount
   Future<double> getTotalPurchasesAmount({
     DateTime? startDate,
     DateTime? endDate,
@@ -155,7 +155,7 @@ class InventoryService {
     }
   }
 
-  /// Get total purchases quantity
+  // Get total purchases quantity
   Future<int> getTotalPurchasesQuantity({
     DateTime? startDate,
     DateTime? endDate,
@@ -170,7 +170,7 @@ class InventoryService {
     }
   }
 
-  /// Get total sales amount (from sales stock entries)
+  // Get total sales amount (from sales stock entries)
   Future<double> getTotalSalesAmount({
     DateTime? startDate,
     DateTime? endDate,
@@ -202,7 +202,7 @@ class InventoryService {
     }
   }
 
-  /// Get total sales quantity (from sales stock entries)
+  // Get total sales quantity (from sales stock entries)
   Future<int> getTotalSalesQuantity({
     DateTime? startDate,
     DateTime? endDate,
@@ -228,7 +228,7 @@ class InventoryService {
     }
   }
 
-  /// Get profit (total sales - total purchases)
+  // Get profit (total sales - total purchases)
   Future<double> getProfit({DateTime? startDate, DateTime? endDate}) async {
     try {
       final salesAmount = await getTotalSalesAmount(
@@ -245,7 +245,7 @@ class InventoryService {
     }
   }
 
-  /// Get current stock value (based on purchase price)
+  // Get current stock value (based on purchase price)
   Future<double> getCurrentStockValue() async {
     try {
       final products = await _productRepository.getAllProducts();
@@ -259,7 +259,7 @@ class InventoryService {
     }
   }
 
-  /// Get low stock products
+  // Get low stock products
   Future<List<Product>> getLowStockProducts({int threshold = 10}) async {
     try {
       return await _productRepository.getLowStockProducts(threshold: threshold);
@@ -270,7 +270,7 @@ class InventoryService {
 
   // ==================== Product Management ====================
 
-  /// Create a new product
+  // Create a new product
   Future<String> createProduct({
     required String name,
     String companyName = '',
@@ -312,7 +312,7 @@ class InventoryService {
     }
   }
 
-  /// Generate a unique index number for products
+  // Generate a unique index number for products
   Future<int> _generateUniqueIndexNo() async {
     try {
       final products = await _productRepository.getAllProducts();
@@ -331,7 +331,7 @@ class InventoryService {
     }
   }
 
-  /// Get all products
+  // Get all products
   Future<List<Product>> getAllProducts() async {
     try {
       return await _productRepository.getAllProducts();
@@ -340,7 +340,7 @@ class InventoryService {
     }
   }
 
-  /// Get product by ID
+  // Get product by ID
   Future<Product?> getProductById(String id) async {
     try {
       return await _productRepository.getProductById(id);
@@ -349,7 +349,7 @@ class InventoryService {
     }
   }
 
-  /// Update product
+  // Update product
   Future<void> updateProduct(Product product) async {
     try {
       final updatedProduct = product.copyWith(updatedAt: DateTime.now());
@@ -359,7 +359,7 @@ class InventoryService {
     }
   }
 
-  /// Delete product
+  // Delete product
   Future<void> deleteProduct(String productId) async {
     try {
       await _productRepository.deleteProduct(productId);
@@ -368,7 +368,7 @@ class InventoryService {
     }
   }
 
-  /// Get stock history for a product
+  // Get stock history for a product
   Future<List<Stock>> getProductStockHistory(String productId) async {
     try {
       return await _stockRepository.getStockByProductId(productId);

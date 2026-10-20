@@ -460,9 +460,7 @@ class HindiLocalization {
   static const String productCode = 'उत्पाद कोड';
   static const String noBatchesFound = 'कोई बैच नहीं मिला';
 
-  // ═══════════════════════════════════════════════════
-  // Bill Details Dialog (Bills History)
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Bill Details Dialog (Bills History) ═══════════════════════════════════════════════════
   static const String billDetails = 'बिल विवरण';
   static const String soldItems = 'बेचे गए आइटम';
   static const String billNo = 'बिल नं.';
@@ -493,9 +491,7 @@ class HindiLocalization {
   static const String errorPrintingBill = 'बिल प्रिंट करने में त्रुटि';
   static const String totalReturns = 'कुल वापसी';
 
-  // ═══════════════════════════════════════════════════
-  // Dashboard Page
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Dashboard Page ═══════════════════════════════════════════════════
   static const String exitApp = 'ऐप बंद करें';
   static const String exitAppConfirm = 'क्या आप वाकई ऐप बंद करना चाहते हैं?';
   static const String exit = 'बंद करें';
@@ -524,9 +520,7 @@ class HindiLocalization {
   static const String noDataAvailableDashboard = 'कोई डेटा उपलब्ध नहीं';
   static const String year = 'वर्ष';
 
-  // ═══════════════════════════════════════════════════
-  // Return Bill Page
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Return Bill Page ═══════════════════════════════════════════════════
   static const String returnBill = 'वापसी बिल';
   static const String processBillReturns = 'बिल वापसी प्रक्रिया';
   static const String searchBill = 'बिल खोजें';
@@ -567,9 +561,7 @@ class HindiLocalization {
   static const String returnedOn = 'वापसी की तिथि';
   static const String refund = 'रिफंड';
 
-  // ═══════════════════════════════════════════════════
-  // Billing Page (additional)
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Billing Page (additional) ═══════════════════════════════════════════════════
   static const String enterPhoneNumber = 'फोन नंबर दर्ज करें';
   static const String enterCustomerPhone = 'ग्राहक फोन नंबर दर्ज करें';
   static const String firstNameRequired2 = 'पहला नाम आवश्यक है';
@@ -588,9 +580,7 @@ class HindiLocalization {
   static const String customerColon = 'ग्राहक:';
   static const String discountWithPercent = 'छूट';
 
-  // ═══════════════════════════════════════════════════
-  // Bill Settings Page
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Bill Settings Page ═══════════════════════════════════════════════════
   static const String billingSettings = 'बिलिंग सेटिंग्स';
   static const String billType = 'बिल प्रकार';
   static const String selectDefaultBillType =
@@ -611,9 +601,7 @@ class HindiLocalization {
       'जब "संपर्क नंबर से बिल बनाएं" सक्षम हो, तो बिल सहेजने से पहले वैध फोन नंबर आवश्यक है।';
   static const String settingsSaved = 'सेटिंग्स सफलतापूर्वक सहेजी गईं';
 
-  // ═══════════════════════════════════════════════════
-  // Shop Details Page
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Shop Details Page ═══════════════════════════════════════════════════
   static const String shopDetails = 'दुकान विवरण';
   static const String shopInformation = 'दुकान जानकारी';
   static const String shopName = 'दुकान का नाम';
@@ -655,9 +643,7 @@ class HindiLocalization {
   static const String errorUploadingSignature =
       'हस्ताक्षर अपलोड करने में त्रुटि';
 
-  // ═══════════════════════════════════════════════════
-  // Flyout Menu
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Flyout Menu ═══════════════════════════════════════════════════
   static const String profile = 'प्रोफ़ाइल';
   static const String settings = 'सेटिंग्स';
   static const String inventory = 'इन्वेंटरी';
@@ -680,9 +666,7 @@ class HindiLocalization {
   static const String user = 'उपयोगकर्ता';
   static const String logs = 'लॉग';
 
-  // ═══════════════════════════════════════════════════
-  // Profile Page
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Profile Page ═══════════════════════════════════════════════════
   static const String myProfile = 'मेरी प्रोफ़ाइल';
   static const String fullName = 'पूरा नाम';
   static const String enterFullName = 'अपना पूरा नाम दर्ज करें';
@@ -699,9 +683,7 @@ class HindiLocalization {
   static const String errorSavingProfile = 'प्रोफ़ाइल सहेजने में त्रुटि';
   static const String failedToPickImage = 'छवि चुनने में विफल';
 
-  // ═══════════════════════════════════════════════════
-  // Auth Pages (Login/Signup/Change Password)
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Auth Pages (Login/Signup/Change Password) ═══════════════════════════════════════════════════
   static const String welcomeBackLogin = 'वापसी पर स्वागत है';
   static const String signInToAccount = 'अपने खाते में साइन इन करें';
   static const String backboneOfBusiness = 'आपके व्यवसाय की रीढ़';
@@ -764,9 +746,7 @@ class HindiLocalization {
   static const String addNumbersSpecial = 'नंबर और विशेष अक्षर जोड़ें';
   static const String avoidPersonalInfo = 'व्यक्तिगत जानकारी का उपयोग न करें';
 
-  // ═══════════════════════════════════════════════════
-  // Logs Viewer Page
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Logs Viewer Page ═══════════════════════════════════════════════════
   static const String appLogs = 'ऐप लॉग';
   static const String searchLogs = 'लॉग खोजें...';
   static const String clearLogs = 'लॉग साफ करें';
@@ -787,9 +767,7 @@ class HindiLocalization {
   static const String level = 'स्तर';
   static const String stackTrace = 'स्टैक ट्रेस';
 
-  // ═══════════════════════════════════════════════════
-  // GST / Tax Settings
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ GST / Tax Settings ═══════════════════════════════════════════════════
   static const String taxSettings = 'कर / GST सेटिंग्स';
   static const String taxConfiguration = 'कर कॉन्फ़िगरेशन';
   static const String enableCgst = 'CGST सक्रिय करें';
@@ -828,9 +806,7 @@ class HindiLocalization {
   static const String noPurchasesFound = 'कोई खरीद नहीं मिली';
   static const String addNewPurchase = 'नई खरीद जोड़ें';
 
-  // ═══════════════════════════════════════════════════
-  // Billing Module Extended
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Billing Module Extended ═══════════════════════════════════════════════════
   static const String linkCustomerToBill = 'इस बिल से ग्राहक जोड़ें';
   static const String autoLinkByPhone = 'फोन द्वारा ऑटो-लिंक ग्राहक';
   static const String quickAddByCodeOrSearch = 'कोड या खोज से जल्दी जोड़ें';
@@ -872,9 +848,7 @@ class HindiLocalization {
   static const String failedToGeneratePdf = 'PDF बनाने में विफल';
   static const String partial = 'आंशिक';
 
-  // ═══════════════════════════════════════════════════
-  // Availability Module Extended
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Availability Module Extended ═══════════════════════════════════════════════════
   static const String exporting = 'निर्यात हो रहा है:';
   static const String productsWillBeIncluded = 'उत्पाद शामिल होंगे';
   static const String previewAndGenerate = 'पूर्वावलोकन और उत्पन्न करें';
@@ -909,9 +883,7 @@ class HindiLocalization {
       'कृपया कम से कम एक आइटम चुनें';
   static const String selling = 'बिक्री';
 
-  // ═══════════════════════════════════════════════════
-  // Purchase Module Extended
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════ Purchase Module Extended ═══════════════════════════════════════════════════
   static const String createNewProductRecord = 'एक नया उत्पाद रिकॉर्ड बनाएं';
   static const String hsnCodeRequired = 'GST लागू होने पर HSN कोड आवश्यक है';
   static const String hsnCode = 'HSN कोड';
@@ -1097,9 +1069,7 @@ class HindiLocalization {
   static const String addCustomFieldsDesc =
       'कार्यक्रम और उप-कार्यक्रम के लिए कस्टम फील्ड जोड़ें';
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // Bill History Extended
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════ Bill History Extended ═══════════════════════════════════════════════════════════════════════════
 
   // Error Messages
   static const String errorGeneratingPdf = 'PDF बनाने में त्रुटि';

@@ -12,7 +12,7 @@ import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Google Play Billing payment screen for yearly subscription (₹3999).
+// Google Play Billing payment screen for yearly subscription (₹3999).
 class PaymentScreen extends StatefulWidget {
   const PaymentScreen({super.key});
 

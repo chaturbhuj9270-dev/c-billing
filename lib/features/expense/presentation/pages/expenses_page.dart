@@ -13,16 +13,15 @@ import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
-/// Lets the desktop shell header open the add-expense sheet.
+// Lets the desktop shell header open the add-expense sheet.
 class ExpenseScreenActions {
   static VoidCallback? add;
 }
 
-/// Date filter options for expenses
+// Date filter options for expenses
 enum ExpenseDateFilter { all, thisMonth, thisYear, lastYear, custom }
 
-/// Premium Expenses Page
-/// Features: Category filtering, date filtering, summary cards, beautiful UI
+// Premium Expenses Page Features: Category filtering, date filtering, summary cards, beautiful UI
 class ExpensesPage extends StatefulWidget {
   final bool isEmbedded;
 
@@ -933,7 +932,7 @@ class _ExpensesPageState extends State<ExpensesPage>
   }
 }
 
-/// Date Filter Chip Widget
+// Date Filter Chip Widget
 class _DateFilterChip extends StatelessWidget {
   final String label;
   final bool isSelected;
@@ -991,7 +990,7 @@ class _DateFilterChip extends StatelessWidget {
   }
 }
 
-/// Category Filter Chip Widget
+// Category Filter Chip Widget
 class _CategoryFilterChip extends StatelessWidget {
   final String label;
   final String icon;
@@ -1043,7 +1042,7 @@ class _CategoryFilterChip extends StatelessWidget {
   }
 }
 
-/// Expense Card Widget
+// Expense Card Widget
 class _ExpenseCard extends StatelessWidget {
   final ExpenseEntity expense;
   final VoidCallback onTap;
@@ -1204,7 +1203,7 @@ class _ExpenseCard extends StatelessWidget {
   }
 }
 
-/// Add/Edit Expense Bottom Sheet
+// Add/Edit Expense Bottom Sheet
 class _AddExpenseSheet extends StatefulWidget {
   final ExpenseEntity? expense;
 
@@ -1654,7 +1653,7 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
   }
 }
 
-/// Expense Details Bottom Sheet
+// Expense Details Bottom Sheet
 class _ExpenseDetailsSheet extends StatelessWidget {
   final ExpenseEntity expense;
 

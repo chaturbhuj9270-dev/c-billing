@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Sort field options for suppliers
+// Sort field options for suppliers
 enum SupplierSortField {
   name,
   createdDate,
@@ -9,8 +9,7 @@ enum SupplierSortField {
   supplierCode,
 }
 
-/// Filter widget for suppliers
-/// Features: Search bar, Sort options, Sort direction toggle
+// Filter widget for suppliers Features: Search bar, Sort options, Sort direction toggle
 class SupplierFilterWidget extends StatelessWidget {
   final String searchQuery;
   final ValueChanged<String> onSearchChanged;

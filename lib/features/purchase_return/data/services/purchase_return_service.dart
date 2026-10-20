@@ -7,7 +7,7 @@ import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../domain/entities/purchase_return.dart';
 import '../repositories/firebase_purchase_return_repository.dart';
 
-/// Result of validating a return item
+// Result of validating a return item
 class ReturnValidation {
   final bool isValid;
   final String? errorMessage;
@@ -15,7 +15,7 @@ class ReturnValidation {
   ReturnValidation.invalid(this.errorMessage) : isValid = false;
 }
 
-/// Batch info for display in the UI
+// Batch info for display in the UI
 class ReturnableBatchInfo {
   final int localBatchId;
   final String batchId;
@@ -46,7 +46,7 @@ class ReturnableBatchInfo {
   });
 }
 
-/// Result of processing a purchase return
+// Result of processing a purchase return
 class PurchaseReturnResult {
   final bool success;
   final String? errorMessage;
@@ -60,7 +60,7 @@ class PurchaseReturnResult {
         purchaseReturn = null;
 }
 
-/// Impact preview before confirming a return
+// Impact preview before confirming a return
 class ReturnImpactPreview {
   final Map<String, int> stockAfterReturn; // productId -> new stock
   final double supplierCreditAdjustment;
@@ -73,10 +73,7 @@ class ReturnImpactPreview {
   });
 }
 
-/// Service for processing purchase returns with reverse-FIFO logic.
-///
-/// Reverse FIFO = deduct from the NEWEST batches first (latest purchase date).
-/// This ensures older stock remains for sales while returning recently acquired stock.
+// Service for processing purchase returns with reverse-FIFO logic. Reverse FIFO = deduct from the NEWEST batches first (latest purchase date). This ensures older stock remains for...
 class PurchaseReturnService {
   static PurchaseReturnService? _instance;
 
@@ -108,8 +105,7 @@ class PurchaseReturnService {
 
   // ──────────────── QUERIES ────────────────
 
-  /// Get all products with stock for a specific supplier.
-  /// Groups batches by productId and sums remaining quantities.
+  // Get all products with stock for a specific supplier. Groups batches by productId and sums remaining quantities.
   Future<List<ReturnableBatchInfo>> getReturnableProductsForSupplier(
       String supplierId) async {
     final batches =
@@ -146,8 +142,7 @@ class PurchaseReturnService {
       ..sort((a, b) => b.quantityRemaining.compareTo(a.quantityRemaining));
   }
 
-  /// Get individual batch breakdown for a product from a supplier.
-  /// Sorted newest first (reverse FIFO).
+  // Get individual batch breakdown for a product from a supplier. Sorted newest first (reverse FIFO).
   Future<List<ReturnableBatchInfo>> getBatchBreakdownForProduct(
       String productId, String supplierId) async {
     final batches =
@@ -178,12 +173,12 @@ class PurchaseReturnService {
         .toList();
   }
 
-  /// Get all return history
+  // Get all return history
   Future<List<PurchaseReturn>> getReturnHistory() async {
     return await _repository.getAllReturns();
   }
 
-  /// Get return history for a supplier
+  // Get return history for a supplier
   Future<List<PurchaseReturn>> getReturnHistoryForSupplier(
       String supplierId) async {
     return await _repository.getReturnsBySupplierId(supplierId);
@@ -191,7 +186,7 @@ class PurchaseReturnService {
 
   // ──────────────── VALIDATION ────────────────
 
-  /// Validate a return item quantity against available stock
+  // Validate a return item quantity against available stock
   ReturnValidation validateReturnQuantity({
     required int returnQty,
     required int availableQty,
@@ -206,7 +201,7 @@ class PurchaseReturnService {
     return ReturnValidation.valid();
   }
 
-  /// Validate the entire return before processing
+  // Validate the entire return before processing
   ReturnValidation validateReturn({
     required String supplierId,
     required List<PurchaseReturnItem> items,
@@ -227,7 +222,7 @@ class PurchaseReturnService {
 
   // ──────────────── IMPACT PREVIEW ────────────────
 
-  /// Preview the impact of a return before processing
+  // Preview the impact of a return before processing
   Future<ReturnImpactPreview> previewReturnImpact(
       List<PurchaseReturnItem> items) async {
     final stockAfter = <String, int>{};
@@ -252,13 +247,7 @@ class PurchaseReturnService {
 
   // ──────────────── PROCESS RETURN (Reverse FIFO) ────────────────
 
-  /// Process a purchase return.
-  ///
-  /// For each item:
-  ///  1. Get batches for the product from that supplier (newest first)
-  ///  2. Deduct from newest batches first (reverse FIFO)
-  ///  3. Create PURCHASE_RETURN ledger entries
-  ///  4. Save PurchaseReturn document to Firebase
+  // Process a purchase return. For each item: 1. Get batches for the product from that supplier (newest first) 2. Deduct from newest batches first (reverse FIFO) 3. Create PURCHASE_...
   Future<PurchaseReturnResult> processReturn({
     required String supplierId,
     required String supplierName,

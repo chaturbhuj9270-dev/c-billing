@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Model for a bill report column configuration
+// Model for a bill report column configuration
 class BillReportColumn {
   final String id;
   final String name;
@@ -41,8 +41,7 @@ class BillReportColumn {
   );
 }
 
-/// Service to manage bill print/report column visibility settings
-/// Stored in Firestore per user with SharedPreferences fallback
+// Service to manage bill print/report column visibility settings Stored in Firestore per user with SharedPreferences fallback
 class BillReportSettingsService {
   BillReportSettingsService._();
   static final BillReportSettingsService instance =
@@ -90,10 +89,10 @@ class BillReportSettingsService {
       .toList();
   bool _initialized = false;
 
-  /// Get all report columns
+  // Get all report columns
   List<BillReportColumn> get columns => List.unmodifiable(_columns);
 
-  /// Get only visible columns - always returns defaults if not yet loaded
+  // Get only visible columns - always returns defaults if not yet loaded
   List<BillReportColumn> get visibleColumns {
     if (_columns.isEmpty) {
       // Fallback to defaults if columns somehow got cleared
@@ -105,7 +104,7 @@ class BillReportSettingsService {
     return _columns.where((c) => c.isVisible).toList();
   }
 
-  /// Check if a column is visible by ID
+  // Check if a column is visible by ID
   bool isColumnVisible(String columnId) {
     // If not initialized or columns are empty, use default visibility
     if (!_initialized || _columns.isEmpty) {
@@ -124,21 +123,21 @@ class BillReportSettingsService {
     return column.isVisible;
   }
 
-  /// Initialize the service
+  // Initialize the service
   Future<void> init() async {
     if (_initialized) return;
     await _loadColumns();
     _initialized = true;
   }
 
-  /// Reload columns (call after login)
+  // Reload columns (call after login)
   Future<void> reload() async {
     _initialized = false;
     await _loadColumns();
     _initialized = true;
   }
 
-  /// Load columns from Firestore or SharedPreferences
+  // Load columns from Firestore or SharedPreferences
   Future<void> _loadColumns() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -218,7 +217,7 @@ class BillReportSettingsService {
     }
   }
 
-  /// Merge saved columns with defaults (to handle new columns added later)
+  // Merge saved columns with defaults (to handle new columns added later)
   List<BillReportColumn> _mergeWithDefaults(List<BillReportColumn> saved) {
     final result = <BillReportColumn>[];
 
@@ -241,7 +240,7 @@ class BillReportSettingsService {
     return result;
   }
 
-  /// Update column visibility
+  // Update column visibility
   Future<void> setColumnVisibility(String columnId, bool isVisible) async {
     final index = _columns.indexWhere((c) => c.id == columnId);
     if (index != -1) {
@@ -250,7 +249,7 @@ class BillReportSettingsService {
     }
   }
 
-  /// Save columns to Firestore and SharedPreferences
+  // Save columns to Firestore and SharedPreferences
   Future<void> _saveColumns() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -285,7 +284,7 @@ class BillReportSettingsService {
     }
   }
 
-  /// Reset to defaults
+  // Reset to defaults
   Future<void> resetToDefaults() async {
     _columns = _defaultColumns
         .map((e) => BillReportColumn.fromJson(e))

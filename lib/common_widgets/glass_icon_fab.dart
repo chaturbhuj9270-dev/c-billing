@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 import 'glass_bevel_frame.dart';
 
-/// Round + button with the same frosted fill and 3D glass rim as the tabs.
+// Round + button with the same frosted fill and 3D glass rim as the tabs.
 class GlassIconFab extends StatelessWidget {
   final VoidCallback onPressed;
   final String tooltip;

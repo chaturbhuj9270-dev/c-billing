@@ -1,4 +1,4 @@
-/// Enum representing different paper sizes for POS printers
+// Enum representing different paper sizes for POS printers
 enum PosPaperSize {
   mm58(32, 384),  // 58mm paper: 32 chars, 384 dots
   mm80(48, 576);  // 80mm paper: 48 chars, 576 dots
@@ -9,14 +9,14 @@ enum PosPaperSize {
   const PosPaperSize(this.charsPerLine, this.dotsPerLine);
 }
 
-/// Enum representing printer connection type
+// Enum representing printer connection type
 enum PrinterConnectionType {
   bluetooth,
   usb,
   network,
 }
 
-/// Enum representing printer status
+// Enum representing printer status
 enum PrinterStatus {
   connected,
   disconnected,
@@ -25,7 +25,7 @@ enum PrinterStatus {
   error,
 }
 
-/// Model representing a discovered POS printer
+// Model representing a discovered POS printer
 class PosPrinterDevice {
   final String id;
   final String name;
@@ -72,7 +72,7 @@ class PosPrinterDevice {
   int get hashCode => id.hashCode;
 }
 
-/// Result class for printer operations
+// Result class for printer operations
 class PrinterResult {
   final bool success;
   final String? message;
@@ -93,7 +93,7 @@ class PrinterResult {
   }
 }
 
-/// Configuration options for printing
+// Configuration options for printing
 class PrinterConfig {
   final PosPaperSize paperSize;
   final bool cutPaper;

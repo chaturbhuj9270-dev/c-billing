@@ -2,12 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Stores remembered login credentials in platform secure storage.
-///
-/// Android uses encrypted storage, Apple platforms use the Keychain, desktop
-/// uses the OS secret store, and web uses encrypted browser storage.
-/// SharedPreferences is only read once to move any older saved password out
-/// of plain storage, then those keys are deleted.
+// Stores remembered login credentials in platform secure storage. Android uses encrypted storage, Apple platforms use the Keychain, desktop uses the OS secret store, and web uses...
 class CredentialsManager {
   static final CredentialsManager _instance = CredentialsManager._internal();
 
@@ -46,7 +41,7 @@ class CredentialsManager {
 
   bool _initialized = false;
 
-  /// Prepare storage and move any legacy plain-text credentials across.
+  // Prepare storage and move any legacy plain-text credentials across.
   Future<void> init() async {
     if (_initialized) return;
     await _migrateLegacyPreferences();
@@ -54,11 +49,7 @@ class CredentialsManager {
     debugPrint('[DEBUG] CredentialsManager initialized');
   }
 
-  /// Save credentials after the user signs in with Remember me checked.
-  ///
-  /// Web keeps the email and the remember flag only. The password is not
-  /// stored there because the web encryption key ships inside the app.
-  /// Firebase Auth persistence keeps that session instead.
+  // Save credentials after the user signs in with Remember me checked. Web keeps the email and the remember flag only. The password is not stored there because the web encryption ke...
   Future<void> saveCredentials({
     required String email,
     required String password,
@@ -74,7 +65,7 @@ class CredentialsManager {
     debugPrint('[DEBUG] Remembered login saved in secure storage');
   }
 
-  /// Replace the stored password after a successful password change.
+  // Replace the stored password after a successful password change.
   Future<void> updateStoredPassword(String password) async {
     if (!await isRemembered()) return;
     if (kIsWeb) {
@@ -91,7 +82,7 @@ class CredentialsManager {
 
   Future<String?> getEmail() => _storage.read(key: _emailKey);
 
-  /// True when the user chose Remember me and credentials are still stored.
+  // True when the user chose Remember me and credentials are still stored.
   Future<bool> isRemembered() async {
     try {
       return await _storage.read(key: _rememberKey) == 'true';
@@ -101,10 +92,7 @@ class CredentialsManager {
     }
   }
 
-  /// Credentials for automatic sign-in. Null when Remember me is off.
-  ///
-  /// Web never returns a password. The splash screen uses the Firebase
-  /// session that Remember me already persisted.
+  // Credentials for automatic sign-in. Null when Remember me is off. Web never returns a password. The splash screen uses the Firebase session that Remember me already persisted.
   Future<Map<String, String>?> getStoredCredentials() async {
     try {
       if (kIsWeb) return null;
@@ -125,7 +113,7 @@ class CredentialsManager {
     }
   }
 
-  /// Remove remembered credentials. Used on logout and when Remember me is off.
+  // Remove remembered credentials. Used on logout and when Remember me is off.
   Future<void> clearCredentials() async {
     try {
       await _storage.delete(key: _emailKey);
@@ -168,7 +156,7 @@ class CredentialsManager {
     );
   }
 
-  /// One-time move from SharedPreferences, then delete the plain-text copies.
+  // One-time move from SharedPreferences, then delete the plain-text copies.
   Future<void> _migrateLegacyPreferences() async {
     try {
       final prefs = await SharedPreferences.getInstance();

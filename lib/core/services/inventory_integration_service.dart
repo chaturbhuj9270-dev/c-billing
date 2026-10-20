@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import '../../features/inventory_management/data/services/fifo_inventory_service.dart';
 import '../../features/inventory_management/offline/controllers/purchase_offline_controller.dart';
 import '../../features/inventory_management/offline/controllers/purchase_batch_offline_controller.dart';
-import '../../features/inventory_management/offline/controllers/stock_ledger_offline_controller.dart';
 import '../../features/inventory_management/offline/entities/purchase_batch_entity.dart';
 import '../../features/product/offline/controllers/product_offline_controller.dart';
 import '../../features/billing/offline/controllers/bill_offline_controller.dart';
@@ -11,20 +10,13 @@ import '../../features/billing/domain/entities/bill_item.dart';
 import '../../features/customer/offline/controllers/customer_transaction_offline_controller.dart';
 import '../services/dashboard_refresh_service.dart';
 
-/// Unified service that orchestrates the integration between:
-/// - Old modules: Product, Supplier, Company, Purchase, Bill
-/// - New FIFO system: PurchaseBatch, StockLedger, FifoInventoryService
-///
-/// This ensures all data stays in sync across the entire system.
-/// UI pages should call this service instead of individual controllers directly.
+// Ties product, purchase, bill, and FIFO stock updates together for UI pages.
 class InventoryIntegrationService {
   static InventoryIntegrationService? _instance;
 
   final FifoInventoryService _fifoService;
   final PurchaseOfflineController _purchaseController;
   final PurchaseBatchOfflineController _batchController;
-  // ignore: unused_field
-  final StockLedgerOfflineController _ledgerController;
   final ProductOfflineController _productController;
   final BillOfflineController _billController;
 
@@ -32,45 +24,31 @@ class InventoryIntegrationService {
     required FifoInventoryService fifoService,
     required PurchaseOfflineController purchaseController,
     required PurchaseBatchOfflineController batchController,
-    required StockLedgerOfflineController ledgerController,
     required ProductOfflineController productController,
     required BillOfflineController billController,
   }) : _fifoService = fifoService,
        _purchaseController = purchaseController,
        _batchController = batchController,
-       _ledgerController = ledgerController,
        _productController = productController,
        _billController = billController;
 
-  /// Get the singleton instance
   static InventoryIntegrationService get instance {
     _instance ??= InventoryIntegrationService._(
       fifoService: FifoInventoryService.instance,
       purchaseController: PurchaseOfflineController.instance,
       batchController: PurchaseBatchOfflineController.instance,
-      ledgerController: StockLedgerOfflineController.instance,
       productController: ProductOfflineController.instance,
       billController: BillOfflineController.instance,
     );
     return _instance!;
   }
 
-  /// Reset instance (for testing)
   @visibleForTesting
   static void resetInstance() {
     _instance = null;
   }
 
-  // ==================== PURCHASE INTEGRATION ====================
-
-  /// Process a complete purchase with all integrations:
-  /// 1. Creates PurchaseEntity (old system record)
-  /// 2. Creates PurchaseBatchEntity (FIFO tracking)
-  /// 3. Creates StockLedgerEntity (audit trail)
-  /// 4. Updates ProductEntity.currentStock
-  /// 5. Updates ProductEntity prices
-  ///
-  /// Returns [IntegratedPurchaseResult] with all created entities
+  // Creates purchase, FIFO batch, ledger, and product stock/price updates.
   Future<IntegratedPurchaseResult> processPurchase({
     required String productId,
     required String productName,
@@ -145,9 +123,7 @@ class InventoryIntegrationService {
         '[Integration] PurchaseBatch created: ${fifoResult.batch?.id}',
       );
 
-      // 3. Update ProductEntity stock and prices
-      // Only update purchasePrice to latest cost; keep salesPrice from product creation
-      // Try by serverId first, then by local ID
+      // 3. Update ProductEntity stock and prices Only update purchasePrice to latest cost; keep salesPrice from product creation Try by serverId first, then by local ID
       final isValidServerId =
           productId.isNotEmpty &&
           !productId.startsWith('local_') &&
@@ -197,13 +173,7 @@ class InventoryIntegrationService {
 
   // ==================== BILLING / SALE INTEGRATION ====================
 
-  /// Process a complete bill/sale with all integrations:
-  /// 1. Creates BillEntity (bill record)
-  /// 2. For each item: FIFO deduction from oldest batches
-  /// 3. Creates StockLedger entries for each consumed batch
-  /// 4. Updates ProductEntity.currentStock for each product
-  ///
-  /// Returns [IntegratedBillResult] with COGS and profit data
+  // Process a complete bill/sale with all integrations: 1. Creates BillEntity (bill record) 2. For each item: FIFO deduction from oldest batches 3. Creates StockLedger entries for e...
   Future<IntegratedBillResult> processBill({
     String? customerId,
     String? customerName,
@@ -304,8 +274,7 @@ class InventoryIntegrationService {
           debugPrint(
             '[Integration] Warning: FIFO sale failed for ${item.productName}: ${saleResult.errorMessage}',
           );
-          // Continue even if FIFO fails - the bill is already created
-          // The stock inconsistency can be resolved later
+          // Continue even if FIFO fails - the bill is already created The stock inconsistency can be resolved later
         } else {
           allConsumedBatches.addAll(saleResult.consumedBatches);
           totalCOGS += saleResult.totalCOGS;
@@ -341,13 +310,7 @@ class InventoryIntegrationService {
 
   // ==================== RETURN INTEGRATION ====================
 
-  /// Process a sale return with all integrations:
-  /// 1. Updates BillEntity with return info
-  /// 2. Adds stock back to FIFO batches
-  /// 3. Creates StockLedger entries for return
-  /// 4. Increments ProductEntity.currentStock
-  ///
-  /// Returns true if successful
+  // Process a sale return with all integrations: 1. Updates BillEntity with return info 2. Adds stock back to FIFO batches 3. Creates StockLedger entries for return 4. Increments Pr...
   Future<IntegratedReturnResult> processReturn({
     required String billId,
     required int billLocalId,
@@ -433,8 +396,7 @@ class InventoryIntegrationService {
           (item) => item.returnedQuantity >= item.quantity,
         );
 
-        // Refund follows what the customer was charged, including discount
-        // and exclusive tax, then only the unpaid part changes the ledger.
+        // Refund follows what the customer was charged, including discount and exclusive tax, then only the unpaid part changes the ledger.
         final chargeRatio = bill.totalAmount > 0
             ? bill.finalAmount / bill.totalAmount
             : 1.0;
@@ -493,13 +455,12 @@ class InventoryIntegrationService {
 
   // ==================== STOCK QUERY HELPERS ====================
 
-  /// Get accurate stock for a product from FIFO batches
-  /// This is the source of truth for stock levels
+  // Get accurate stock for a product from FIFO batches This is the source of truth for stock levels
   Future<int> getAccurateStock(String productId) async {
     return await _fifoService.getAvailableStock(productId);
   }
 
-  /// Validate stock availability for bill items using FIFO data
+  // Validate stock availability for bill items using FIFO data
   Future<Map<String, String>> validateStockForBill(List<BillItem> items) async {
     // Use rounded quantities for stock validation since stock is tracked in integers
     return await _fifoService.validateStockForSale({
@@ -507,12 +468,12 @@ class InventoryIntegrationService {
     });
   }
 
-  /// Check if a product has sufficient stock
+  // Check if a product has sufficient stock
   Future<bool> hasStock(String productId, int requiredQuantity) async {
     return await _fifoService.hasAvailableStock(productId, requiredQuantity);
   }
 
-  /// Get all batches for a product (for viewing batch details)
+  // Get all batches for a product (for viewing batch details)
   Future<List<PurchaseBatchEntity>> getProductBatches(
     String productId, {
     bool onlyWithStock = true,
@@ -523,14 +484,14 @@ class InventoryIntegrationService {
     );
   }
 
-  /// Get weighted average cost for a product
+  // Get weighted average cost for a product
   Future<double> getWeightedAverageCost(String productId) async {
     return await _batchController.getWeightedAverageCost(productId);
   }
 
   // ==================== REPORTING HELPERS ====================
 
-  /// Get profit summary for a date range
+  // Get profit summary for a date range
   Future<Map<String, dynamic>> getProfitSummary({
     DateTime? startDate,
     DateTime? endDate,
@@ -560,7 +521,7 @@ class InventoryIntegrationService {
     };
   }
 
-  /// Get stock movement summary for a product
+  // Get stock movement summary for a product
   Future<Map<String, dynamic>> getStockMovementSummary(
     String productId, {
     DateTime? startDate,
@@ -573,8 +534,7 @@ class InventoryIntegrationService {
     );
   }
 
-  /// Sync ProductEntity.currentStock with FIFO batch data
-  /// Use this to fix any stock inconsistencies
+  // Sync ProductEntity.currentStock with FIFO batch data Use this to fix any stock inconsistencies
   Future<int> syncAllProductStock() async {
     int fixedCount = 0;
     try {
@@ -605,7 +565,7 @@ class InventoryIntegrationService {
 
   // ==================== PRIVATE HELPERS ====================
 
-  /// Decrement product stock by server ID or local ID
+  // Decrement product stock by server ID or local ID
   Future<void> _decrementProductStock(String productId, int quantity) async {
     final isValidServerId =
         productId.isNotEmpty &&
@@ -629,7 +589,7 @@ class InventoryIntegrationService {
     }
   }
 
-  /// Increment product stock by server ID or local ID
+  // Increment product stock by server ID or local ID
   Future<void> _incrementProductStock(String productId, int quantity) async {
     final isValidServerId =
         productId.isNotEmpty &&
@@ -656,7 +616,7 @@ class InventoryIntegrationService {
 
 // ==================== RESULT CLASSES ====================
 
-/// Result of an integrated purchase operation
+// Result of an integrated purchase operation
 class IntegratedPurchaseResult {
   final bool success;
   final String? errorMessage;
@@ -690,7 +650,7 @@ class IntegratedPurchaseResult {
   }
 }
 
-/// Result of an integrated bill/sale operation
+// Result of an integrated bill/sale operation
 class IntegratedBillResult {
   final bool success;
   final String? errorMessage;
@@ -736,7 +696,7 @@ class IntegratedBillResult {
   }
 }
 
-/// Result of an integrated return operation
+// Result of an integrated return operation
 class IntegratedReturnResult {
   final bool success;
   final String? errorMessage;
@@ -757,7 +717,7 @@ class IntegratedReturnResult {
   }
 }
 
-/// Detail for a return item
+// Detail for a return item
 class ReturnItemDetail {
   final String productId;
   final String productName;

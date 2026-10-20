@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/dashboard_data.dart';
 
-/// Repository for fetching dashboard data from Firestore
+// Repository for fetching dashboard data from Firestore
 class DashboardRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
@@ -18,17 +18,17 @@ class DashboardRepository {
     : _firestore = firestore ?? FirebaseFirestore.instance,
       _auth = auth ?? FirebaseAuth.instance;
 
-  /// Get current user ID or null if not authenticated
+  // Get current user ID or null if not authenticated
   String? get _userId => _auth.currentUser?.uid;
 
-  /// Get user's collection reference
+  // Get user's collection reference
   DocumentReference? get _userRef {
     final userId = _userId;
     if (userId == null) return null;
     return _firestore.collection('users').doc(userId);
   }
 
-  /// Generate cache key based on date range
+  // Generate cache key based on date range
   String _getCacheKey(DateTime? startDate, DateTime? endDate) {
     final userId = _userId ?? 'unknown';
     final start = startDate?.toIso8601String() ?? 'null';
@@ -36,7 +36,7 @@ class DashboardRepository {
     return '$userId-$start-$end';
   }
 
-  /// Check if cached data is still valid
+  // Check if cached data is still valid
   bool _isCacheValid(String cacheKey) {
     if (_cachedData == null ||
         _cachedKey != cacheKey ||
@@ -46,16 +46,14 @@ class DashboardRepository {
     return DateTime.now().difference(_cacheTimestamp!) < _cacheDuration;
   }
 
-  /// Clear the cache (call after data changes)
+  // Clear the cache (call after data changes)
   static void invalidateCache() {
     _cachedData = null;
     _cachedKey = null;
     _cacheTimestamp = null;
   }
 
-  /// Fetch dashboard data with optional date filtering
-  /// Uses parallel queries for maximum performance
-  /// Implements in-memory caching for faster repeated loads
+  // Fetch dashboard data with optional date filtering Uses parallel queries for maximum performance Implements in-memory caching for faster repeated loads
   Future<DashboardData> fetchDashboardData({
     DateTime? startDate,
     DateTime? endDate,
@@ -210,7 +208,7 @@ class DashboardRepository {
     return data;
   }
 
-  /// Get bills with optional date filtering
+  // Get bills with optional date filtering
   Future<QuerySnapshot> _getBillsForPeriod(
     DocumentReference userRef,
     DateTime? startDate,
@@ -234,7 +232,7 @@ class DashboardRepository {
     return query.get();
   }
 
-  /// Get purchases with optional date filtering
+  // Get purchases with optional date filtering
   Future<QuerySnapshot> _getPurchasesForPeriod(
     DocumentReference userRef,
     DateTime? startDate,
@@ -258,7 +256,7 @@ class DashboardRepository {
     return query.get();
   }
 
-  /// Get customers with pending balance (for pending payments section)
+  // Get customers with pending balance (for pending payments section)
   Future<List<Map<String, dynamic>>> getCustomersWithPendingBalance({
     int limit = 5,
   }) async {
@@ -293,7 +291,7 @@ class DashboardRepository {
     }
   }
 
-  /// Get recent bills with pending amount (for last dues section)
+  // Get recent bills with pending amount (for last dues section)
   Future<List<Map<String, dynamic>>> getRecentPendingBills({
     int limit = 5,
   }) async {
@@ -340,7 +338,7 @@ class DashboardRepository {
     }
   }
 
-  /// Get top selling products (for top products section)
+  // Get top selling products (for top products section)
   Future<List<Map<String, dynamic>>> getTopSellingProducts({
     int limit = 5,
   }) async {
@@ -403,7 +401,7 @@ class DashboardRepository {
     }
   }
 
-  /// Get low stock products (for order now section)
+  // Get low stock products (for order now section)
   Future<List<Map<String, dynamic>>> getLowStockProducts({
     int limit = 5,
     int threshold = 10,
@@ -455,7 +453,7 @@ class DashboardRepository {
     }
   }
 
-  /// Get upcoming payment dues (bills due in next 7 days)
+  // Get upcoming payment dues (bills due in next 7 days)
   Future<List<Map<String, dynamic>>> getUpcomingPaymentDues({
     int limit = 5,
   }) async {
@@ -463,8 +461,7 @@ class DashboardRepository {
     if (userRef == null) return [];
 
     try {
-      // Get all pending bills and filter by customer's payment pattern
-      // For now, get recent pending bills as "upcoming"
+      // Get all pending bills and filter by customer's payment pattern For now, get recent pending bills as "upcoming"
       final snapshot = await userRef
           .collection('bills')
           .where('paymentStatus', whereIn: ['pending', 'partiallyPaid'])

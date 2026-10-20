@@ -6,10 +6,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../offline/controllers/expense_offline_controller.dart';
 import '../../offline/entities/expense_entity.dart';
 
-/// Sync status for tracking sync state
+// Sync status for tracking sync state
 enum ExpenseSyncServiceStatus { idle, syncing, success, failed }
 
-/// Result of a sync operation
+// Result of a sync operation
 class ExpenseSyncResult {
   final bool success;
   final int createdCount;
@@ -42,8 +42,7 @@ class ExpenseSyncResult {
   }
 }
 
-/// Service for background synchronization of Expense data
-/// Implements delta sync - only syncs NEW, UPDATED, or DELETED expenses
+// Service for background synchronization of Expense data Implements delta sync - only syncs NEW, UPDATED, or DELETED expenses
 class ExpenseSyncService extends ChangeNotifier {
   static ExpenseSyncService? _instance;
 
@@ -58,7 +57,7 @@ class ExpenseSyncService extends ChangeNotifier {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _periodicSyncTimer;
 
-  /// Mutex to prevent concurrent sync operations
+  // Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
 
   ExpenseSyncService._({
@@ -72,28 +71,28 @@ class ExpenseSyncService extends ChangeNotifier {
        _auth = auth ?? FirebaseAuth.instance,
        _connectivity = connectivity ?? Connectivity();
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static ExpenseSyncService get instance {
     _instance ??= ExpenseSyncService._();
     return _instance!;
   }
 
-  /// Current sync status
+  // Current sync status
   ExpenseSyncServiceStatus get status => _status;
 
-  /// Last successful sync time
+  // Last successful sync time
   DateTime? get lastSyncTime => _lastSyncTime;
 
-  /// Last error message
+  // Last error message
   String? get lastError => _lastError;
 
-  /// Check if currently syncing
+  // Check if currently syncing
   bool get isSyncing => _status == ExpenseSyncServiceStatus.syncing;
 
-  /// Get the current user ID
+  // Get the current user ID
   String? get _userId => _auth.currentUser?.uid;
 
-  /// Get expenses collection reference
+  // Get expenses collection reference
   CollectionReference get _expensesCollection {
     if (_userId == null) {
       throw Exception('User not authenticated');
@@ -101,7 +100,7 @@ class ExpenseSyncService extends ChangeNotifier {
     return _firestore.collection('users').doc(_userId).collection('expenses');
   }
 
-  /// Initialize the sync service
+  // Initialize the sync service
   void initialize() {
     debugPrint('[ExpenseSync] Initializing...');
 
@@ -124,7 +123,7 @@ class ExpenseSyncService extends ChangeNotifier {
     syncNow();
   }
 
-  /// Dispose resources
+  // Dispose resources
   @override
   void dispose() {
     _connectivitySubscription?.cancel();
@@ -141,7 +140,7 @@ class ExpenseSyncService extends ChangeNotifier {
     );
   }
 
-  /// Trigger immediate sync
+  // Trigger immediate sync
   Future<ExpenseSyncResult> syncNow() async {
     // Prevent concurrent syncs
     if (_isSyncing) {
@@ -318,7 +317,7 @@ class ExpenseSyncService extends ChangeNotifier {
     }
   }
 
-  /// Force full sync (download all from server)
+  // Force full sync (download all from server)
   Future<void> forceFullSync() async {
     if (_userId == null) return;
 

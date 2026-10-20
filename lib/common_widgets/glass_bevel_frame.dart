@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
 
-/// Raised glass rim: bright along the top, theme color through the middle,
-/// and a darker edge along the bottom.
+// Raised glass rim: bright along the top, theme color through the middle, and a darker edge along the bottom.
 LinearGradient glassBevelGradient(bool isDark, Color themeColor) {
   return LinearGradient(
     begin: Alignment.topCenter,

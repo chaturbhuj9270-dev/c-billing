@@ -20,7 +20,7 @@ class SessionManager {
 
   User? get currentUser => _currentUser;
 
-  /// Initialize session with a user and callback for expiration
+  // Initialize session with a user and callback for expiration
   void initializeSession(User user, VoidCallback onSessionExpired) {
     debugPrint('[DEBUG] Session initialized for user: ${user.uid}');
     _currentUser = user;
@@ -28,7 +28,7 @@ class SessionManager {
     _resetSessionTimer();
   }
 
-  /// Reset the session timer (called on every user activity)
+  // Reset the session timer (called on every user activity)
   void resetSession() {
     if (_currentUser != null) {
       debugPrint('[DEBUG] Session reset for user: ${_currentUser!.uid}');
@@ -36,7 +36,7 @@ class SessionManager {
     }
   }
 
-  /// Internal method to reset the timer
+  // Internal method to reset the timer
   void _resetSessionTimer() {
     // Cancel existing timer
     _sessionTimer?.cancel();
@@ -48,7 +48,7 @@ class SessionManager {
     });
   }
 
-  /// Called when session expires
+  // Called when session expires
   void _sessionExpired() {
     debugPrint('[CRITICAL] Session timeout triggered');
     _currentUser = null;
@@ -56,14 +56,14 @@ class SessionManager {
     _onSessionExpired();
   }
 
-  /// Manually end the session (e.g., on logout)
+  // Manually end the session (e.g., on logout)
   void endSession() {
     debugPrint('[DEBUG] Session ended for user: ${_currentUser?.uid}');
     _currentUser = null;
     _sessionTimer?.cancel();
   }
 
-  /// Check if user is still authenticated
+  // Check if user is still authenticated
   Future<bool> isSessionValid() async {
     if (_currentUser == null) {
       debugPrint('[ERROR] No user in session');
@@ -80,7 +80,7 @@ class SessionManager {
     }
   }
 
-  /// Get remaining session time in minutes
+  // Get remaining session time in minutes
   Duration? getRemainingSessionTime() {
     if (_sessionTimer == null || !_sessionTimer!.isActive) {
       return null;

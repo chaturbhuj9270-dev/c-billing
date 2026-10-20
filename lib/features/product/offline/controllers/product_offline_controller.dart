@@ -5,7 +5,7 @@ import '../../../../core/database/local_store.dart';
 import '../../../../core/services/local_database.dart';
 import '../entities/product_entity.dart';
 
-/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTime(dynamic value) {
   if (value == null) return null;
   if (value is Timestamp) return value.toDate();
@@ -14,13 +14,7 @@ DateTime? _parseDateTime(dynamic value) {
   return null;
 }
 
-/// Controller for handling offline-first Product CRUD operations
-/// All UI reads should go through this controller (never directly from API)
-///
-/// Key features:
-/// - Immediate local saves (no network blocking)
-/// - Proper syncStatus management for delta sync
-/// - Reactive streams for UI updates
+// Controller for handling offline-first Product CRUD operations All UI reads should go through this controller (never directly from API) Key features: - Immediate local saves (no...
 class ProductOfflineController extends ChangeNotifier {
   static ProductOfflineController? _instance;
 

@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/purchase_return.dart';
 
-/// Firebase repository for Purchase Return CRUD operations
+// Firebase repository for Purchase Return CRUD operations
 class FirebasePurchaseReturnRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
@@ -27,7 +27,7 @@ class FirebasePurchaseReturnRepository {
         .collection(_collection);
   }
 
-  /// Create a new purchase return
+  // Create a new purchase return
   Future<String> createReturn(PurchaseReturn purchaseReturn) async {
     try {
       final docRef = await _returnsCollection.add(purchaseReturn.toJson());
@@ -38,7 +38,7 @@ class FirebasePurchaseReturnRepository {
     }
   }
 
-  /// Get all purchase returns (sorted by date desc)
+  // Get all purchase returns (sorted by date desc)
   Future<List<PurchaseReturn>> getAllReturns() async {
     try {
       final snapshot = await _returnsCollection
@@ -60,7 +60,7 @@ class FirebasePurchaseReturnRepository {
     }
   }
 
-  /// Get returns by supplier
+  // Get returns by supplier
   Future<List<PurchaseReturn>> getReturnsBySupplierId(
       String supplierId) async {
     try {
@@ -78,7 +78,7 @@ class FirebasePurchaseReturnRepository {
     }
   }
 
-  /// Get returns by date range
+  // Get returns by date range
   Future<List<PurchaseReturn>> getReturnsByDateRange(
       DateTime startDate, DateTime endDate) async {
     try {
@@ -105,7 +105,7 @@ class FirebasePurchaseReturnRepository {
     }
   }
 
-  /// Get a single return by ID
+  // Get a single return by ID
   Future<PurchaseReturn?> getReturnById(String id) async {
     try {
       final doc = await _returnsCollection.doc(id).get();
@@ -118,7 +118,7 @@ class FirebasePurchaseReturnRepository {
     }
   }
 
-  /// Delete a purchase return
+  // Delete a purchase return
   Future<void> deleteReturn(String id) async {
     try {
       await _returnsCollection.doc(id).delete();
@@ -127,7 +127,7 @@ class FirebasePurchaseReturnRepository {
     }
   }
 
-  /// Get total return amount for a supplier
+  // Get total return amount for a supplier
   Future<double> getTotalReturnAmount({String? supplierId}) async {
     final returns = supplierId != null
         ? await getReturnsBySupplierId(supplierId)

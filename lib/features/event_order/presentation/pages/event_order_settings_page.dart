@@ -9,7 +9,7 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Settings page for Event/Order list configuration
+// Settings page for Event/Order list configuration
 class EventOrderSettingsPage extends StatefulWidget {
   final OrderType? currentType;
   final Function(OrderType?) onTypeChanged;
@@ -45,8 +45,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
       final savedMode = prefs.getBool(_prefsKey);
 
       setState(() {
-        // If we have a saved preference, use it
-        // Otherwise, infer from current type
+        // If we have a saved preference, use it Otherwise, infer from current type
         if (savedMode != null) {
           _showEventMode = savedMode;
         } else if (widget.currentType != null) {

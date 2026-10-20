@@ -1,91 +1,91 @@
 
-/// Expense category enum for filtering
+// Expense category enum for filtering
 enum ExpenseCategory {
-  /// Utility bills (electricity, water, etc.)
+  // Utility bills (electricity, water, etc.)
   utilities,
 
-  /// Shop maintenance and tools
+  // Shop maintenance and tools
   shopMaintenance,
 
-  /// Employee salaries and wages
+  // Employee salaries and wages
   salary,
 
-  /// Rent payments
+  // Rent payments
   rent,
 
-  /// Transportation and logistics
+  // Transportation and logistics
   transport,
 
-  /// Marketing and advertising
+  // Marketing and advertising
   marketing,
 
-  /// Office supplies
+  // Office supplies
   supplies,
 
-  /// Miscellaneous expenses
+  // Miscellaneous expenses
   other,
 }
 
-/// Sync status for delta sync logic
+// Sync status for delta sync logic
 enum ExpenseSyncStatus {
-  /// Newly created locally, not yet on server
+  // Newly created locally, not yet on server
   newRecord,
 
-  /// Modified locally after sync
+  // Modified locally after sync
   updated,
 
-  /// Marked for deletion, pending server delete
+  // Marked for deletion, pending server delete
   deleted,
 
-  /// Fully synced with server
+  // Fully synced with server
   synced,
 }
 
-/// Local record for Expense with offline-first support
+// Local record for Expense with offline-first support
 class ExpenseEntity {
-  /// Local row id
+  // Local row id
   int id = 0;
 
-  /// Server-side ID (null for locally created, not yet synced records)
+  // Server-side ID (null for locally created, not yet synced records)
   String? serverId;
 
-  /// Expense title/name
+  // Expense title/name
   String title;
 
-  /// Expense description
+  // Expense description
   String? description;
 
-  /// Expense category (indexed for filtering)
+  // Expense category (indexed for filtering)
   ExpenseCategory category;
 
-  /// Amount spent
+  // Amount spent
   double amount;
 
-  /// Payment method (cash, upi, bank, card, etc.)
+  // Payment method (cash, upi, bank, card, etc.)
   String? paymentMethod;
 
-  /// Vendor/payee name
+  // Vendor/payee name
   String? vendorName;
 
-  /// Receipt/invoice number
+  // Receipt/invoice number
   String? receiptNumber;
 
-  /// Is this a recurring expense?
+  // Is this a recurring expense?
   bool isRecurring;
 
-  /// Expense date (indexed for filtering)
+  // Expense date (indexed for filtering)
   DateTime expenseDate;
 
-  /// Notes/remarks
+  // Notes/remarks
   String? notes;
 
-  /// Sync status for delta sync
+  // Sync status for delta sync
   ExpenseSyncStatus syncStatus;
 
-  /// Created timestamp (indexed for sorting)
+  // Created timestamp (indexed for sorting)
   DateTime createdAt;
 
-  /// Last update timestamp for conflict resolution
+  // Last update timestamp for conflict resolution
   DateTime updatedAt;
 
   ExpenseEntity({
@@ -105,7 +105,7 @@ class ExpenseEntity {
     required this.updatedAt,
   });
 
-  /// Factory for creating a new expense
+  // Factory for creating a new expense
   factory ExpenseEntity.create({
     required String title,
     String? description,
@@ -136,7 +136,7 @@ class ExpenseEntity {
     );
   }
 
-  /// Convert to JSON for API
+  // Convert to JSON for API
   Map<String, dynamic> toJson() {
     return {
       'id': serverId,
@@ -156,7 +156,7 @@ class ExpenseEntity {
     };
   }
 
-  /// Create from API response
+  // Create from API response
   static ExpenseEntity fromJson(Map<String, dynamic> json) {
     return ExpenseEntity(
       serverId: json['id'] as String?,
@@ -182,7 +182,7 @@ class ExpenseEntity {
     );
   }
 
-  /// Copy with modifications
+  // Copy with modifications
   ExpenseEntity copyWith({
     String? serverId,
     String? title,
@@ -218,7 +218,7 @@ class ExpenseEntity {
   }
 }
 
-/// Extension for category display names and icons
+// Extension for category display names and icons
 extension ExpenseCategoryExtension on ExpenseCategory {
   String get displayName {
     switch (this) {

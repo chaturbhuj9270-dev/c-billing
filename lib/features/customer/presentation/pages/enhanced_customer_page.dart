@@ -27,7 +27,7 @@ import 'package:c_billing/common_widgets/app_pill_button.dart';
 import 'package:c_billing/common_widgets/glass_icon_fab.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
-/// Lets the desktop shell header open the add-customer sheet.
+// Lets the desktop shell header open the add-customer sheet.
 class CustomerScreenActions {
   static VoidCallback? add;
 }
@@ -190,7 +190,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     );
   }
 
-  /// Watch event orders to compute per-customer event pending amounts
+  // Watch event orders to compute per-customer event pending amounts
   void _setupEventOrderStream() {
     final eventCtrl = EventOrderOfflineController.instance;
     _eventOrderStreamSub = eventCtrl.watchAllEventOrders().listen(
@@ -221,7 +221,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     );
   }
 
-  /// Rebuild _customers list from raw entities + event pending data
+  // Rebuild _customers list from raw entities + event pending data
   void _rebuildCustomerList() {
     final mapped = _customerEntities.map(_entityToMap).toList();
     setState(() {
@@ -230,7 +230,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     });
   }
 
-  /// Convert CustomerEntity -> Map for UI
+  // Convert CustomerEntity -> Map for UI
   Map<String, dynamic> _entityToMap(CustomerEntity entity) {
     final nameParts = entity.name.split(' ');
     final firstName = nameParts.isNotEmpty ? nameParts.first : '';
@@ -334,7 +334,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     }
   }
 
-  /// Setup real-time Firestore stream for cross-device synchronization
+  // Setup real-time Firestore stream for cross-device synchronization
   void _setupFirestoreStream() {
     final currentUser = _auth.currentUser;
     if (currentUser == null) return;
@@ -1235,9 +1235,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   }
 }
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// CUSTOMER DETAILS BOTTOM SHEET
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ CUSTOMER DETAILS BOTTOM SHEET ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━...
 
 class _CustomerDetailsSheet extends StatelessWidget {
   final Map<String, dynamic> customer;

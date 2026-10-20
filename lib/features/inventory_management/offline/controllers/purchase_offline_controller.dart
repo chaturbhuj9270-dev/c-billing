@@ -4,8 +4,7 @@ import '../../../../core/database/local_store.dart';
 import '../../../../core/services/local_database.dart';
 import '../entities/purchase_entity.dart';
 
-/// Offline-first controller for Purchase CRUD operations.
-/// All operations go to the local database first, then sync in the background.
+// Offline-first controller for Purchase CRUD operations. All operations go to the local database first, then sync in the background.
 class PurchaseOfflineController extends ChangeNotifier {
   static PurchaseOfflineController? _instance;
 

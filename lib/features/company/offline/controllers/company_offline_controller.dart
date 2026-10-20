@@ -4,8 +4,7 @@ import '../../../../core/database/local_store.dart';
 import '../../../../core/services/local_database.dart';
 import '../entities/company_entity.dart';
 
-/// Offline-first controller for Company CRUD operations.
-/// All operations go to the local database first, then sync in the background.
+// Offline-first controller for Company CRUD operations. All operations go to the local database first, then sync in the background.
 class CompanyOfflineController extends ChangeNotifier {
   static CompanyOfflineController? _instance;
 

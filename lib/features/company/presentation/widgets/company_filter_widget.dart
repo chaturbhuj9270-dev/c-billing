@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Sort field options for companies
+// Sort field options for companies
 enum CompanySortField {
   name,
   createdDate,
   companyCode,
 }
 
-/// Filter widget for companies
-/// Features: Search bar, Sort options, Sort direction toggle
+// Filter widget for companies Features: Search bar, Sort options, Sort direction toggle
 class CompanyFilterWidget extends StatelessWidget {
   final String searchQuery;
   final ValueChanged<String> onSearchChanged;

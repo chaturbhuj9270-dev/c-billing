@@ -1,7 +1,7 @@
 import '../../offline/entities/customer_entity.dart';
 import '../../offline/controllers/customer_offline_controller.dart';
 
-/// Customer model for domain layer
+// Customer model for domain layer
 class Customer {
   final int? localId;
   final String? serverId;
@@ -32,7 +32,7 @@ class Customer {
   })  : updatedAt = updatedAt ?? DateTime.now(),
         createdAt = createdAt ?? DateTime.now();
 
-  /// Create from entity
+  // Create from entity
   factory Customer.fromEntity(CustomerEntity entity) {
     return Customer(
       localId: entity.id,
@@ -50,7 +50,7 @@ class Customer {
     );
   }
 
-  /// Copy with modifications
+  // Copy with modifications
   Customer copyWith({
     int? localId,
     String? serverId,
@@ -81,13 +81,11 @@ class Customer {
     );
   }
 
-  /// Get display ID (server ID if available, else local ID)
+  // Get display ID (server ID if available, else local ID)
   String get displayId => serverId ?? 'local_$localId';
 }
 
-/// Repository for Customer data operations
-/// Acts as the single source of truth for Customer data
-/// Always reads from local database (offline-first)
+// Repository for Customer data operations Acts as the single source of truth for Customer data Always reads from local database (offline-first)
 class CustomerRepository {
   static CustomerRepository? _instance;
   
@@ -95,7 +93,7 @@ class CustomerRepository {
 
   CustomerRepository._(this._offlineController);
 
-  /// Get the singleton instance
+  // Get the singleton instance
   static CustomerRepository get instance {
     _instance ??= CustomerRepository._(CustomerOfflineController.instance);
     return _instance!;
@@ -103,32 +101,32 @@ class CustomerRepository {
 
   // ==================== READ ====================
 
-  /// Get all active customers
+  // Get all active customers
   Future<List<Customer>> getAllCustomers() async {
     final entities = await _offlineController.getAllCustomers();
     return entities.map((e) => Customer.fromEntity(e)).toList();
   }
 
-  /// Watch all customers (reactive stream)
+  // Watch all customers (reactive stream)
   Stream<List<Customer>> watchAllCustomers() {
     return _offlineController.watchAllCustomers().map(
       (entities) => entities.map((e) => Customer.fromEntity(e)).toList(),
     );
   }
 
-  /// Get customer by local ID
+  // Get customer by local ID
   Future<Customer?> getCustomerById(int id) async {
     final entity = await _offlineController.getCustomerById(id);
     return entity != null ? Customer.fromEntity(entity) : null;
   }
 
-  /// Get customer by mobile
+  // Get customer by mobile
   Future<Customer?> getCustomerByMobile(String mobile) async {
     final entity = await _offlineController.getCustomerByMobile(mobile);
     return entity != null ? Customer.fromEntity(entity) : null;
   }
 
-  /// Search customers
+  // Search customers
   Future<List<Customer>> searchCustomers(String query) async {
     final entities = await _offlineController.searchCustomers(query);
     return entities.map((e) => Customer.fromEntity(e)).toList();
@@ -136,7 +134,7 @@ class CustomerRepository {
 
   // ==================== CREATE ====================
 
-  /// Create a new customer
+  // Create a new customer
   Future<Customer> createCustomer({
     required String name,
     required String mobile,
@@ -158,7 +156,7 @@ class CustomerRepository {
 
   // ==================== UPDATE ====================
 
-  /// Update an existing customer
+  // Update an existing customer
   Future<Customer?> updateCustomer({
     required int id,
     String? name,
@@ -182,29 +180,29 @@ class CustomerRepository {
 
   // ==================== DELETE ====================
 
-  /// Delete a customer (soft delete)
+  // Delete a customer (soft delete)
   Future<void> deleteCustomer(int id) async {
     await _offlineController.deleteCustomer(id);
   }
 
   // ==================== SYNC STATUS ====================
 
-  /// Get count of unsynced records
+  // Get count of unsynced records
   Future<int> getUnsyncedCount() async {
     return await _offlineController.getUnsyncedCount();
   }
 
-  /// Get total customer count
+  // Get total customer count
   Future<int> getTotalCount() async {
     return await _offlineController.getTotalCount();
   }
 
-  /// Get total pending amount
+  // Get total pending amount
   Future<double> getTotalPendingAmount() async {
     return await _offlineController.getTotalPendingAmount();
   }
 
-  /// Check if customer with mobile exists
+  // Check if customer with mobile exists
   Future<bool> mobileExists(String mobile, {int? excludeId}) async {
     final existing = await _offlineController.getCustomerByMobile(mobile);
     if (existing == null) return false;

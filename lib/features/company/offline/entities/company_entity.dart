@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 
-/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTime(dynamic value) {
   if (value == null) return null;
   if (value is Timestamp) return value.toDate();
@@ -9,56 +9,54 @@ DateTime? _parseDateTime(dynamic value) {
   return null;
 }
 
-/// Sync status for delta sync logic
-/// Only companies with status != SYNCED will be pushed to server
+// Sync status for delta sync logic Only companies with status != SYNCED will be pushed to server
 enum CompanySyncStatus {
-  /// Newly created locally, not yet on server
+  // Newly created locally, not yet on server
   newRecord,
 
-  /// Modified locally after sync
+  // Modified locally after sync
   updated,
 
-  /// Marked for deletion, pending server delete
+  // Marked for deletion, pending server delete
   deleted,
 
-  /// Fully synced with server
+  // Fully synced with server
   synced,
 }
 
-/// Local record for Company with offline-first support
-/// Optimized with proper indexes for high-performance queries
+// Local record for Company with offline-first support Optimized with proper indexes for high-performance queries
 class CompanyEntity {
-  /// Local row id
+  // Local row id
   int id = 0;
 
-  /// Server-side ID (null for locally created, not yet synced records)
+  // Server-side ID (null for locally created, not yet synced records)
   String? serverId;
 
-  /// Company name (indexed for fast search)
+  // Company name (indexed for fast search)
   String companyName;
 
-  /// Company code (indexed for fast lookup)
+  // Company code (indexed for fast lookup)
   String companyCode;
 
-  /// GST code
+  // GST code
   String gstCode;
 
-  /// Contact number (indexed for fast lookup)
+  // Contact number (indexed for fast lookup)
   String contact;
 
-  /// Address
+  // Address
   String address;
 
-  /// Whether company is active
+  // Whether company is active
   bool isActive;
 
-  /// Sync status for delta sync
+  // Sync status for delta sync
   CompanySyncStatus syncStatus;
 
-  /// Last update timestamp for conflict resolution
+  // Last update timestamp for conflict resolution
   DateTime updatedAt;
 
-  /// Created timestamp
+  // Created timestamp
   DateTime createdAt;
 
   CompanyEntity({
@@ -74,7 +72,7 @@ class CompanyEntity {
     required this.createdAt,
   });
 
-  /// Factory constructor for creating new company with defaults
+  // Factory constructor for creating new company with defaults
   factory CompanyEntity.create({
     String? serverId,
     required String companyName,
@@ -100,7 +98,7 @@ class CompanyEntity {
     );
   }
 
-  /// Create from server response (Firestore document)
+  // Create from server response (Firestore document)
   factory CompanyEntity.fromServer(Map<String, dynamic> data) {
     final now = DateTime.now();
     return CompanyEntity(
@@ -117,7 +115,7 @@ class CompanyEntity {
     );
   }
 
-  /// Convert to Map for API sync
+  // Convert to Map for API sync
   Map<String, dynamic> toSyncPayload() {
     return {
       'id': serverId,
@@ -132,7 +130,7 @@ class CompanyEntity {
     };
   }
 
-  /// Convert to Map for UI (compatible with existing company page)
+  // Convert to Map for UI (compatible with existing company page)
   Map<String, dynamic> toCompanyMap() {
     return {
       'id': serverId ?? 'local_$id',
@@ -150,7 +148,7 @@ class CompanyEntity {
     };
   }
 
-  /// Copy with modifications
+  // Copy with modifications
   CompanyEntity copyWith({
     int? id,
     String? serverId,
@@ -180,10 +178,10 @@ class CompanyEntity {
     return entity;
   }
 
-  /// Check if company needs sync
+  // Check if company needs sync
   bool get needsSync => syncStatus != CompanySyncStatus.synced;
 
-  /// Check if company is marked for deletion
+  // Check if company is marked for deletion
   bool get isMarkedForDeletion => syncStatus == CompanySyncStatus.deleted;
 
   @override

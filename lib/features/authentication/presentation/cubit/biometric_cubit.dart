@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/services/biometric_service.dart';
 import 'biometric_state.dart';
 
-/// Cubit for managing biometric authentication
+// Cubit for managing biometric authentication
 class BiometricCubit extends Cubit<BiometricState> {
   final BiometricService _biometricService;
   final String userId;
@@ -14,7 +14,7 @@ class BiometricCubit extends Cubit<BiometricState> {
   })  : _biometricService = biometricService,
         super(const BiometricInitial());
 
-  /// Check if biometric authentication is available
+  // Check if biometric authentication is available
   Future<void> checkBiometricAvailability() async {
     try {
       final canUseBiometrics = await _biometricService.canUseBiometrics();
@@ -40,7 +40,7 @@ class BiometricCubit extends Cubit<BiometricState> {
     }
   }
 
-  /// Authenticate using biometrics
+  // Authenticate using biometrics
   Future<bool> authenticate({
     String reason = 'Authenticate to access your account',
   }) async {
@@ -80,7 +80,7 @@ class BiometricCubit extends Cubit<BiometricState> {
     }
   }
 
-  /// Enable biometric authentication for user
+  // Enable biometric authentication for user
   Future<void> enableBiometric() async {
     try {
       await _biometricService.enableBiometricAuth(userId);
@@ -90,7 +90,7 @@ class BiometricCubit extends Cubit<BiometricState> {
     }
   }
 
-  /// Disable biometric authentication for user
+  // Disable biometric authentication for user
   Future<void> disableBiometric() async {
     try {
       await _biometricService.disableBiometricAuth(userId);
@@ -100,7 +100,7 @@ class BiometricCubit extends Cubit<BiometricState> {
     }
   }
 
-  /// Reset to initial state
+  // Reset to initial state
   void reset() {
     emit(const BiometricInitial());
   }

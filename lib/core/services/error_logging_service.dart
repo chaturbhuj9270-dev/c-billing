@@ -8,7 +8,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 
-/// Service for logging and collecting UI/Flutter errors
+// Service for logging and collecting UI/Flutter errors
 class ErrorLoggingService {
   static final ErrorLoggingService _instance = ErrorLoggingService._internal();
 
@@ -18,16 +18,16 @@ class ErrorLoggingService {
 
   static ErrorLoggingService get instance => _instance;
 
-  /// List of collected error logs
+  // List of collected error logs
   final List<ErrorLog> _errorLogs = [];
 
-  /// Maximum number of logs to keep
+  // Maximum number of logs to keep
   static const int _maxLogs = 100;
 
-  /// Get all error logs
+  // Get all error logs
   List<ErrorLog> get errorLogs => List.unmodifiable(_errorLogs);
 
-  /// Get logs as a formatted string
+  // Get logs as a formatted string
   String getLogsAsString() {
     if (_errorLogs.isEmpty) {
       return 'No errors logged.';
@@ -55,7 +55,7 @@ class ErrorLoggingService {
     return buffer.toString();
   }
 
-  /// Log a Flutter error
+  // Log a Flutter error
   void logFlutterError(FlutterErrorDetails details) {
     final log = ErrorLog(
       timestamp: DateTime.now(),
@@ -72,7 +72,7 @@ class ErrorLoggingService {
     }
   }
 
-  /// Log a general error
+  // Log a general error
   void logError(String errorType, dynamic error, [StackTrace? stackTrace]) {
     final log = ErrorLog(
       timestamp: DateTime.now(),
@@ -87,7 +87,7 @@ class ErrorLoggingService {
     }
   }
 
-  /// Log a UI overflow or rendering error
+  // Log a UI overflow or rendering error
   void logUIError(String message, [String? details]) {
     final log = ErrorLog(
       timestamp: DateTime.now(),
@@ -111,18 +111,18 @@ class ErrorLoggingService {
     }
   }
 
-  /// Clear all logs
+  // Clear all logs
   void clearLogs() {
     _errorLogs.clear();
   }
 
-  /// Copy logs to clipboard
+  // Copy logs to clipboard
   Future<void> copyLogsToClipboard() async {
     final logsString = getLogsAsString();
     await Clipboard.setData(ClipboardData(text: logsString));
   }
 
-  /// Share logs as a .txt file
+  // Share logs as a .txt file
   Future<void> shareLogsAsFile() async {
     try {
       final logsString = getLogsAsString();
@@ -148,7 +148,7 @@ class ErrorLoggingService {
     }
   }
 
-  /// Initialize global error handling
+  // Initialize global error handling
   static void initialize() {
     // Capture Flutter framework errors
     FlutterError.onError = (FlutterErrorDetails details) {
@@ -167,7 +167,7 @@ class ErrorLoggingService {
     debugPrint('[ErrorLogging] Error logging service initialized');
   }
 
-  /// Show a dialog to view and copy logs
+  // Show a dialog to view and copy logs
   static void showLogsDialog(BuildContext context) {
     final logs = ErrorLoggingService.instance.getLogsAsString();
 

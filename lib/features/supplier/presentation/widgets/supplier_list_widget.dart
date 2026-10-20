@@ -3,8 +3,7 @@ import '../../../../core/services/communication_service.dart';
 import 'supplier_filter_widget.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Enhanced list widget for displaying suppliers
-/// Features: Shimmer loading, Enhanced cards with sync icons, Empty states
+// Enhanced list widget for displaying suppliers Features: Shimmer loading, Enhanced cards with sync icons, Empty states
 class SupplierListWidget extends StatelessWidget {
   final List<Map<String, dynamic>> suppliers;
   final bool isLoading;
@@ -208,7 +207,7 @@ class SupplierListWidget extends StatelessWidget {
   }
 }
 
-/// Enhanced supplier card widget
+// Enhanced supplier card widget
 class _SupplierCard extends StatelessWidget {
   final Map<String, dynamic> supplier;
   final VoidCallback onTap;
@@ -477,7 +476,7 @@ class _SupplierCard extends StatelessWidget {
   }
 }
 
-/// Shimmer loading card
+// Shimmer loading card
 class _ShimmerCard extends StatefulWidget {
   const _ShimmerCard();
 

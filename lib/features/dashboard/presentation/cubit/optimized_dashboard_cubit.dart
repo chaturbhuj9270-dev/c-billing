@@ -7,23 +7,16 @@ import '../../domain/repositories/dashboard_repository_interface.dart';
 import '../../data/repositories/dashboard_repository_impl.dart';
 import 'optimized_dashboard_state.dart';
 
-/// High-performance Dashboard Cubit with offline-first reactive strategy
-///
-/// Key features:
-/// 1. Synchronously loads cached data before any async operations (instant UI)
-/// 2. Fetches fresh data from local DB (< 5ms)
-/// 3. Reactive: auto-refreshes when bills/purchases/batches change in the local database
-/// 4. DashboardRefreshService events trigger recalculation too
-/// 5. Debounced updates prevent excessive rebuilds
+// High-performance Dashboard Cubit with offline-first reactive strategy Key features: 1. Synchronously loads cached data before any async operations (instant UI) 2. Fetches fresh...
 class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
   final DashboardRepositoryImpl _repository;
   StreamSubscription<DashboardSummary>? _realtimeSubscription;
   StreamSubscription<void>? _refreshServiceSubscription;
 
-  /// Track if initial load has completed
+  // Track if initial load has completed
   bool _isInitialized = false;
 
-  /// Debounce timer for rapid successive updates
+  // Debounce timer for rapid successive updates
   Timer? _debounceTimer;
 
   OptimizedDashboardCubit({DashboardRepositoryImpl? repository})
@@ -33,8 +26,7 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
     _loadCachedDataSync();
   }
 
-  /// Load cached data synchronously on cubit creation
-  /// This ensures UI renders instantly with cached data
+  // Load cached data synchronously on cubit creation This ensures UI renders instantly with cached data
   void _loadCachedDataSync() {
     final cachedData = _repository.getCachedSummary(params: state.params);
     if (cachedData != null) {
@@ -49,8 +41,7 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
     }
   }
 
-  /// Initialize the dashboard - call this after widget is built
-  /// Fetches fresh data from the local database and starts reactive subscription
+  // Initialize the dashboard - call this after widget is built Fetches fresh data from the local database and starts reactive subscription
   Future<void> initialize() async {
     if (_isInitialized) return;
     _isInitialized = true;
@@ -95,7 +86,7 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
     }
   }
 
-  /// Load dashboard with current parameters
+  // Load dashboard with current parameters
   Future<void> loadDashboard() async {
     // If we have cached data, show it immediately with refreshing indicator
     if (state.hasData) {
@@ -122,8 +113,7 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
     }
   }
 
-  /// Force refresh from the local database (called by pull-to-refresh or DashboardRefreshService)
-  /// Debounced to coalesce rapid successive data changes
+  // Force refresh from the local database (called by pull-to-refresh or DashboardRefreshService) Debounced to coalesce rapid successive data changes
   Completer<void>? _refreshCompleter;
 
   Future<void> refresh() async {
@@ -151,7 +141,7 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
     return completer.future;
   }
 
-  /// Change filter and reload data
+  // Change filter and reload data
   Future<void> changeFilter(DashboardFilter filter) async {
     if (filter == state.params.filter && filter != DashboardFilter.custom) {
       return; // No change needed
@@ -191,7 +181,7 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
     _subscribeToRealtimeUpdates();
   }
 
-  /// Set custom date range
+  // Set custom date range
   Future<void> setCustomDateRange(DateTime start, DateTime end) async {
     final newParams = DashboardParams(
       filter: DashboardFilter.custom,
@@ -228,7 +218,7 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
     _subscribeToRealtimeUpdates();
   }
 
-  /// Internal method to refresh data from the local database
+  // Internal method to refresh data from the local database
   Future<void> _refreshData({required bool showRefreshIndicator}) async {
     try {
       final data = await _repository.getDashboardSummary(
@@ -249,8 +239,7 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
     }
   }
 
-  /// Subscribe to real-time local database updates
-  /// table update watches fires whenever bills/purchases/batches change locally
+  // Subscribe to real-time local database updates table update watches fires whenever bills/purchases/batches change locally
   void _subscribeToRealtimeUpdates() {
     _realtimeSubscription?.cancel();
     _realtimeSubscription = _repository
@@ -275,8 +264,7 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
         );
   }
 
-  /// Subscribe to DashboardRefreshService for external refresh requests
-  /// This catches refreshes triggered from other parts of the app
+  // Subscribe to DashboardRefreshService for external refresh requests This catches refreshes triggered from other parts of the app
   void _subscribeToRefreshService() {
     _refreshServiceSubscription?.cancel();
     _refreshServiceSubscription = DashboardRefreshService
@@ -290,7 +278,7 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
         });
   }
 
-  /// Handle errors gracefully
+  // Handle errors gracefully
   void _handleError(Object error) {
     final message = error.toString();
 

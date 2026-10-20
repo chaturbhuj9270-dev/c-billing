@@ -6,7 +6,7 @@ import '../core/theme/app_theme.dart';
 import '../core/ui/desktop_canvas.dart';
 import 'glass_bevel_frame.dart';
 
-/// Top bar used on the availability tab and every other screen.
+// Top bar used on the availability tab and every other screen.
 class AppTopBar extends StatelessWidget {
   final String title;
   final String? subtitle;
@@ -77,13 +77,13 @@ class AppTopBar extends StatelessWidget {
     );
   }
 
-  /// Foreground used by chips that sit in the page heading.
+  // Foreground used by chips that sit in the page heading.
   static Color onBar(BuildContext context) =>
       DesktopCanvas.isDesktopPlatform
       ? AppColors.primaryText(context)
       : AppTheme.white;
 
-  /// Chip fill used by badges that sit in the page heading.
+  // Chip fill used by badges that sit in the page heading.
   static Color chipFill(BuildContext context) =>
       DesktopCanvas.isDesktopPlatform
       ? AppColors.accentSoft(context, 0.12)

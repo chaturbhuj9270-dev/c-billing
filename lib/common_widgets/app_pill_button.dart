@@ -4,14 +4,14 @@ import '../core/theme/app_theme.dart';
 import '../core/ui/desktop_canvas.dart';
 import 'glass_bevel_frame.dart';
 
-/// Green pill used by the billing Print button.
+// Green pill used by the billing Print button.
 class AppPillButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final VoidCallback? onPressed;
   final bool loading;
 
-  /// Stretches across the row when this is the only button.
+  // Stretches across the row when this is the only button.
   final bool expanded;
 
   const AppPillButton({
@@ -109,7 +109,7 @@ class AppPillButton extends StatelessWidget {
   }
 }
 
-/// Pins [action] to the bottom-right of a drawer, matching the billing bar.
+// Pins [action] to the bottom-right of a drawer, matching the billing bar.
 class DrawerBottomBar extends StatelessWidget {
   final Widget? leading;
   final Widget action;
@@ -138,8 +138,7 @@ class DrawerBottomBar extends StatelessWidget {
   }
 }
 
-/// On desktop the action stays at the bottom of the panel. On a phone the
-/// sheet keeps its own height and the action sits under the fields.
+// On desktop the action stays at the bottom of the panel. On a phone the sheet keeps its own height and the action sits under the fields.
 Widget dockDrawerAction({
   required BuildContext context,
   required Widget body,
