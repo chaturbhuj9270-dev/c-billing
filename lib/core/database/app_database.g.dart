@@ -7481,6 +7481,18 @@ class $BillRecordsTable extends BillRecords
     requiredDuringInsert: false,
     defaultValue: const Constant('[]'),
   );
+  static const VerificationMeta _paymentModeMeta = const VerificationMeta(
+    'paymentMode',
+  );
+  @override
+  late final GeneratedColumn<String> paymentMode = GeneratedColumn<String>(
+    'payment_mode',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('CASH'),
+  );
   static const VerificationMeta _syncStatusMeta = const VerificationMeta(
     'syncStatus',
   );
@@ -7545,6 +7557,7 @@ class $BillRecordsTable extends BillRecords
     otherTaxAmount,
     totalTaxAmount,
     extraChargesJson,
+    paymentMode,
     syncStatus,
     createdAt,
     updatedAt,
@@ -7793,6 +7806,15 @@ class $BillRecordsTable extends BillRecords
         ),
       );
     }
+    if (data.containsKey('payment_mode')) {
+      context.handle(
+        _paymentModeMeta,
+        paymentMode.isAcceptableOrUnknown(
+          data['payment_mode']!,
+          _paymentModeMeta,
+        ),
+      );
+    }
     if (data.containsKey('sync_status')) {
       context.handle(
         _syncStatusMeta,
@@ -7942,6 +7964,10 @@ class $BillRecordsTable extends BillRecords
         DriftSqlType.string,
         data['${effectivePrefix}extra_charges_json'],
       )!,
+      paymentMode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payment_mode'],
+      )!,
       syncStatus: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}sync_status'],
@@ -7993,6 +8019,7 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
   final double otherTaxAmount;
   final double totalTaxAmount;
   final String extraChargesJson;
+  final String paymentMode;
   final int syncStatus;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -8026,6 +8053,7 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
     required this.otherTaxAmount,
     required this.totalTaxAmount,
     required this.extraChargesJson,
+    required this.paymentMode,
     required this.syncStatus,
     required this.createdAt,
     required this.updatedAt,
@@ -8076,6 +8104,7 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
     map['other_tax_amount'] = Variable<double>(otherTaxAmount);
     map['total_tax_amount'] = Variable<double>(totalTaxAmount);
     map['extra_charges_json'] = Variable<String>(extraChargesJson);
+    map['payment_mode'] = Variable<String>(paymentMode);
     map['sync_status'] = Variable<int>(syncStatus);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -8127,6 +8156,7 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
       otherTaxAmount: Value(otherTaxAmount),
       totalTaxAmount: Value(totalTaxAmount),
       extraChargesJson: Value(extraChargesJson),
+      paymentMode: Value(paymentMode),
       syncStatus: Value(syncStatus),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -8168,6 +8198,7 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
       otherTaxAmount: serializer.fromJson<double>(json['otherTaxAmount']),
       totalTaxAmount: serializer.fromJson<double>(json['totalTaxAmount']),
       extraChargesJson: serializer.fromJson<String>(json['extraChargesJson']),
+      paymentMode: serializer.fromJson<String>(json['paymentMode']),
       syncStatus: serializer.fromJson<int>(json['syncStatus']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -8206,6 +8237,7 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
       'otherTaxAmount': serializer.toJson<double>(otherTaxAmount),
       'totalTaxAmount': serializer.toJson<double>(totalTaxAmount),
       'extraChargesJson': serializer.toJson<String>(extraChargesJson),
+      'paymentMode': serializer.toJson<String>(paymentMode),
       'syncStatus': serializer.toJson<int>(syncStatus),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -8242,6 +8274,7 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
     double? otherTaxAmount,
     double? totalTaxAmount,
     String? extraChargesJson,
+    String? paymentMode,
     int? syncStatus,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -8277,6 +8310,7 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
     otherTaxAmount: otherTaxAmount ?? this.otherTaxAmount,
     totalTaxAmount: totalTaxAmount ?? this.totalTaxAmount,
     extraChargesJson: extraChargesJson ?? this.extraChargesJson,
+    paymentMode: paymentMode ?? this.paymentMode,
     syncStatus: syncStatus ?? this.syncStatus,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -8360,6 +8394,9 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
       extraChargesJson: data.extraChargesJson.present
           ? data.extraChargesJson.value
           : this.extraChargesJson,
+      paymentMode: data.paymentMode.present
+          ? data.paymentMode.value
+          : this.paymentMode,
       syncStatus: data.syncStatus.present
           ? data.syncStatus.value
           : this.syncStatus,
@@ -8400,6 +8437,7 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
           ..write('otherTaxAmount: $otherTaxAmount, ')
           ..write('totalTaxAmount: $totalTaxAmount, ')
           ..write('extraChargesJson: $extraChargesJson, ')
+          ..write('paymentMode: $paymentMode, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -8438,6 +8476,7 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
     otherTaxAmount,
     totalTaxAmount,
     extraChargesJson,
+    paymentMode,
     syncStatus,
     createdAt,
     updatedAt,
@@ -8475,6 +8514,7 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
           other.otherTaxAmount == this.otherTaxAmount &&
           other.totalTaxAmount == this.totalTaxAmount &&
           other.extraChargesJson == this.extraChargesJson &&
+          other.paymentMode == this.paymentMode &&
           other.syncStatus == this.syncStatus &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -8510,6 +8550,7 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
   final Value<double> otherTaxAmount;
   final Value<double> totalTaxAmount;
   final Value<String> extraChargesJson;
+  final Value<String> paymentMode;
   final Value<int> syncStatus;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -8543,6 +8584,7 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
     this.otherTaxAmount = const Value.absent(),
     this.totalTaxAmount = const Value.absent(),
     this.extraChargesJson = const Value.absent(),
+    this.paymentMode = const Value.absent(),
     this.syncStatus = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -8577,6 +8619,7 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
     this.otherTaxAmount = const Value.absent(),
     this.totalTaxAmount = const Value.absent(),
     this.extraChargesJson = const Value.absent(),
+    this.paymentMode = const Value.absent(),
     required int syncStatus,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -8615,6 +8658,7 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
     Expression<double>? otherTaxAmount,
     Expression<double>? totalTaxAmount,
     Expression<String>? extraChargesJson,
+    Expression<String>? paymentMode,
     Expression<int>? syncStatus,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -8649,6 +8693,7 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
       if (otherTaxAmount != null) 'other_tax_amount': otherTaxAmount,
       if (totalTaxAmount != null) 'total_tax_amount': totalTaxAmount,
       if (extraChargesJson != null) 'extra_charges_json': extraChargesJson,
+      if (paymentMode != null) 'payment_mode': paymentMode,
       if (syncStatus != null) 'sync_status': syncStatus,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -8685,6 +8730,7 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
     Value<double>? otherTaxAmount,
     Value<double>? totalTaxAmount,
     Value<String>? extraChargesJson,
+    Value<String>? paymentMode,
     Value<int>? syncStatus,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -8719,6 +8765,7 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
       otherTaxAmount: otherTaxAmount ?? this.otherTaxAmount,
       totalTaxAmount: totalTaxAmount ?? this.totalTaxAmount,
       extraChargesJson: extraChargesJson ?? this.extraChargesJson,
+      paymentMode: paymentMode ?? this.paymentMode,
       syncStatus: syncStatus ?? this.syncStatus,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -8815,6 +8862,9 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
     if (extraChargesJson.present) {
       map['extra_charges_json'] = Variable<String>(extraChargesJson.value);
     }
+    if (paymentMode.present) {
+      map['payment_mode'] = Variable<String>(paymentMode.value);
+    }
     if (syncStatus.present) {
       map['sync_status'] = Variable<int>(syncStatus.value);
     }
@@ -8859,6 +8909,7 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
           ..write('otherTaxAmount: $otherTaxAmount, ')
           ..write('totalTaxAmount: $totalTaxAmount, ')
           ..write('extraChargesJson: $extraChargesJson, ')
+          ..write('paymentMode: $paymentMode, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -18462,6 +18513,7 @@ typedef $$BillRecordsTableCreateCompanionBuilder =
       Value<double> otherTaxAmount,
       Value<double> totalTaxAmount,
       Value<String> extraChargesJson,
+      Value<String> paymentMode,
       required int syncStatus,
       required DateTime createdAt,
       required DateTime updatedAt,
@@ -18497,6 +18549,7 @@ typedef $$BillRecordsTableUpdateCompanionBuilder =
       Value<double> otherTaxAmount,
       Value<double> totalTaxAmount,
       Value<String> extraChargesJson,
+      Value<String> paymentMode,
       Value<int> syncStatus,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -18653,6 +18706,11 @@ class $$BillRecordsTableFilterComposer
 
   ColumnFilters<String> get extraChargesJson => $composableBuilder(
     column: $table.extraChargesJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get paymentMode => $composableBuilder(
+    column: $table.paymentMode,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -18826,6 +18884,11 @@ class $$BillRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get paymentMode => $composableBuilder(
+    column: $table.paymentMode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get syncStatus => $composableBuilder(
     column: $table.syncStatus,
     builder: (column) => ColumnOrderings(column),
@@ -18986,6 +19049,11 @@ class $$BillRecordsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get paymentMode => $composableBuilder(
+    column: $table.paymentMode,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<int> get syncStatus => $composableBuilder(
     column: $table.syncStatus,
     builder: (column) => column,
@@ -19058,6 +19126,7 @@ class $$BillRecordsTableTableManager
                 Value<double> otherTaxAmount = const Value.absent(),
                 Value<double> totalTaxAmount = const Value.absent(),
                 Value<String> extraChargesJson = const Value.absent(),
+                Value<String> paymentMode = const Value.absent(),
                 Value<int> syncStatus = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -19091,6 +19160,7 @@ class $$BillRecordsTableTableManager
                 otherTaxAmount: otherTaxAmount,
                 totalTaxAmount: totalTaxAmount,
                 extraChargesJson: extraChargesJson,
+                paymentMode: paymentMode,
                 syncStatus: syncStatus,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -19126,6 +19196,7 @@ class $$BillRecordsTableTableManager
                 Value<double> otherTaxAmount = const Value.absent(),
                 Value<double> totalTaxAmount = const Value.absent(),
                 Value<String> extraChargesJson = const Value.absent(),
+                Value<String> paymentMode = const Value.absent(),
                 required int syncStatus,
                 required DateTime createdAt,
                 required DateTime updatedAt,
@@ -19159,6 +19230,7 @@ class $$BillRecordsTableTableManager
                 otherTaxAmount: otherTaxAmount,
                 totalTaxAmount: totalTaxAmount,
                 extraChargesJson: extraChargesJson,
+                paymentMode: paymentMode,
                 syncStatus: syncStatus,
                 createdAt: createdAt,
                 updatedAt: updatedAt,

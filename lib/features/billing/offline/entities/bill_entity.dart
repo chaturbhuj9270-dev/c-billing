@@ -196,6 +196,9 @@ class BillEntity {
   // Extra charges (labour, service, etc.)
   List<BillExtraCharge> extraCharges;
 
+  // How the customer paid (CASH / UPI / CARD / …) — see PaymentMode.value
+  String paymentMode;
+
   // Sync status for delta sync
   BillSyncStatus syncStatus;
 
@@ -234,6 +237,7 @@ class BillEntity {
     this.otherTaxAmount = 0.0,
     this.totalTaxAmount = 0.0,
     this.extraCharges = const [],
+    this.paymentMode = 'CASH',
     this.syncStatus = BillSyncStatus.newRecord,
     required this.createdAt,
     required this.updatedAt,
@@ -272,6 +276,7 @@ class BillEntity {
     double otherTaxAmount = 0.0,
     double totalTaxAmount = 0.0,
     List<BillExtraCharge> extraCharges = const [],
+    String paymentMode = 'CASH',
     BillSyncStatus syncStatus = BillSyncStatus.newRecord,
   }) {
     final now = DateTime.now();
@@ -304,6 +309,7 @@ class BillEntity {
       otherTaxAmount: otherTaxAmount,
       totalTaxAmount: totalTaxAmount,
       extraCharges: extraCharges,
+      paymentMode: paymentMode,
       syncStatus: syncStatus,
       createdAt: now,
       updatedAt: now,
@@ -362,6 +368,9 @@ class BillEntity {
       otherTaxAmount: (data['otherTaxAmount'] as num?)?.toDouble() ?? 0.0,
       totalTaxAmount: (data['totalTaxAmount'] as num?)?.toDouble() ?? 0.0,
       extraCharges: charges,
+      paymentMode: (data['paymentMode'] as String?)?.trim().isNotEmpty == true
+          ? (data['paymentMode'] as String).trim().toUpperCase()
+          : 'CASH',
       syncStatus: BillSyncStatus.synced,
       createdAt: _parseDateTimeHelper(data['createdAt']) ?? now,
       updatedAt: _parseDateTimeHelper(data['updatedAt']) ?? now,
@@ -402,6 +411,7 @@ class BillEntity {
       'paymentStatus': paymentStatus.name,
       'paidAmount': paidAmount,
       'pendingAmount': pendingAmount,
+      'paymentMode': paymentMode,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -437,6 +447,7 @@ class BillEntity {
       'otherTaxAmount': otherTaxAmount,
       'totalTaxAmount': totalTaxAmount,
       'extraCharges': extraCharges.map((c) => c.toJson()).toList(),
+      'paymentMode': paymentMode,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': DateTime.now().toIso8601String(),
     };
@@ -476,6 +487,7 @@ class BillEntity {
     double? otherTaxAmount,
     double? totalTaxAmount,
     List<BillExtraCharge>? extraCharges,
+    String? paymentMode,
     BillSyncStatus? syncStatus,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -509,6 +521,7 @@ class BillEntity {
       otherTaxAmount: otherTaxAmount ?? this.otherTaxAmount,
       totalTaxAmount: totalTaxAmount ?? this.totalTaxAmount,
       extraCharges: extraCharges ?? this.extraCharges,
+      paymentMode: paymentMode ?? this.paymentMode,
       syncStatus: syncStatus ?? this.syncStatus,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? DateTime.now(),

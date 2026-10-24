@@ -258,6 +258,7 @@ class PrintBillData {
           : null,
       grandTotal: bill.finalAmount as double,
       notes: bill.notes as String?,
+      paymentMethod: _paymentModeLabel(bill),
       isReturnBill: isReturn,
       refundAmount: refund,
       paidAmount: paidAmount,
@@ -300,6 +301,31 @@ class PrintBillData {
       }
     } catch (_) {}
     return const [];
+  }
+
+  static String? _paymentModeLabel(dynamic bill) {
+    try {
+      final raw = bill.paymentMode;
+      if (raw is! String || raw.trim().isEmpty) return null;
+      switch (raw.trim().toUpperCase()) {
+        case 'CASH':
+          return 'Cash';
+        case 'UPI':
+          return 'UPI';
+        case 'CARD':
+          return 'Card';
+        case 'ONLINE':
+          return 'Online Transfer';
+        case 'CHEQUE':
+          return 'Cheque';
+        case 'OTHER':
+          return 'Other';
+        default:
+          return raw.trim();
+      }
+    } catch (_) {
+      return null;
+    }
   }
 
   // Get total quantity of items (as double to support decimal quantities)

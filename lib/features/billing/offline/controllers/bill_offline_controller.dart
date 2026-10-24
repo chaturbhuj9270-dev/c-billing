@@ -54,6 +54,7 @@ class BillOfflineController extends ChangeNotifier {
     double otherTaxAmount = 0.0,
     double totalTaxAmount = 0.0,
     List<BillExtraCharge> extraCharges = const [],
+    String paymentMode = 'CASH',
   }) async {
     final bill = BillEntity.create(
       customerId: customerId,
@@ -81,6 +82,7 @@ class BillOfflineController extends ChangeNotifier {
       otherTaxAmount: otherTaxAmount,
       totalTaxAmount: totalTaxAmount,
       extraCharges: extraCharges,
+      paymentMode: paymentMode,
       syncStatus: BillSyncStatus.newRecord,
     );
 

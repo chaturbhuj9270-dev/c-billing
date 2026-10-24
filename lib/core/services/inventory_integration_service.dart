@@ -201,6 +201,7 @@ class InventoryIntegrationService {
     double otherTaxAmount = 0.0,
     double totalTaxAmount = 0.0,
     List<BillExtraCharge> extraCharges = const [],
+    String paymentMode = 'CASH',
   }) async {
     try {
       debugPrint(
@@ -255,6 +256,7 @@ class InventoryIntegrationService {
         otherTaxAmount: otherTaxAmount,
         totalTaxAmount: totalTaxAmount,
         extraCharges: extraCharges,
+        paymentMode: paymentMode,
       );
 
       final billId = billEntity.serverId ?? 'local_${billEntity.id}';

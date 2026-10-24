@@ -116,6 +116,7 @@ class _BillingPageState extends State<BillingPage> {
   // Payment state
   double _receivedAmount = 0.0;
   bool _isFullPayment = true;
+  PaymentMode _billPaymentMode = PaymentMode.cash;
 
   Map<String, dynamic>? _selectedCustomer;
   List<Map<String, dynamic>> _customers = [];
@@ -1439,6 +1440,7 @@ class _BillingPageState extends State<BillingPage> {
             otherTaxAmount: _taxBreakdown?.otherTaxAmount ?? 0.0,
             totalTaxAmount: _taxBreakdown?.totalTaxAmount ?? 0.0,
             extraCharges: _validExtraCharges,
+            paymentMode: _billPaymentMode.value,
           );
 
       if (!integrationResult.success) {
@@ -1486,10 +1488,9 @@ class _BillingPageState extends State<BillingPage> {
                   customerId: customerId,
                   customerName: customerName,
                   amount: actualPaidAmount,
-                  paymentMethod: _isFullPayment
-                      ? 'Full Payment'
-                      : 'Partial Payment',
-                  description: 'Payment for Bill #$billId',
+                  paymentMethod: _billPaymentMode.displayName,
+                  description:
+                      'Payment for Bill #$billId (${_isFullPayment ? 'Full' : 'Partial'})',
                 );
             debugPrint(
               '[Billing] Payment transaction recorded offline: $actualPaidAmount',
@@ -1516,11 +1517,11 @@ class _BillingPageState extends State<BillingPage> {
                   .receivePayment(
                     customerId: customerId,
                     amount: actualPaidAmount,
-                    paymentMode: PaymentMode.cash, // Default to cash
+                    paymentMode: _billPaymentMode,
                     billId: billId,
                     billNumber: billId,
                     notes:
-                        'Payment during billing - ${_isFullPayment ? _localizations.full : _localizations.partial}',
+                        'Payment during billing - ${_isFullPayment ? _localizations.full : _localizations.partial} (${_billPaymentMode.displayName})',
                   );
 
               if (paymentResult.success) {
@@ -1638,6 +1639,7 @@ class _BillingPageState extends State<BillingPage> {
       _autoFoundCustomerName = null;
       _receivedAmount = 0.0;
       _isFullPayment = true;
+      _billPaymentMode = PaymentMode.cash;
       _showAddCustomerPrompt = false;
       _hasPhoneText = false;
       // Reset GST mode to default from settings
@@ -2144,6 +2146,38 @@ class _BillingPageState extends State<BillingPage> {
                   }
                 },
               ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Paid via',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: muted,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final mode in const [
+                PaymentMode.cash,
+                PaymentMode.upi,
+                PaymentMode.card,
+                PaymentMode.online,
+                PaymentMode.cheque,
+              ])
+                _summaryPayChip(
+                  label: mode.displayName,
+                  selected: _billPaymentMode == mode,
+                  onTap: () => setState(() => _billPaymentMode = mode),
+                ),
             ],
           ),
           const SizedBox(height: 14),
@@ -5601,6 +5635,39 @@ class _BillingPageState extends State<BillingPage> {
                       ),
                     ],
                   ),
+                ),
+
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Paid via',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.secondaryText(context),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final mode in const [
+                      PaymentMode.cash,
+                      PaymentMode.upi,
+                      PaymentMode.card,
+                      PaymentMode.online,
+                      PaymentMode.cheque,
+                    ])
+                      _summaryPayChip(
+                        label: mode.displayName,
+                        selected: _billPaymentMode == mode,
+                        onTap: () => setState(() => _billPaymentMode = mode),
+                      ),
+                  ],
                 ),
 
                 // Received amount input (only show for partial payment)

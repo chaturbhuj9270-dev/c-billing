@@ -366,6 +366,7 @@ BillEntity billFromRecord(BillRecord row) {
     otherTaxAmount: row.otherTaxAmount,
     totalTaxAmount: row.totalTaxAmount,
     extraCharges: decodeExtraCharges(row.extraChargesJson),
+    paymentMode: row.paymentMode.trim().isEmpty ? 'CASH' : row.paymentMode,
     syncStatus: enumAt(BillSyncStatus.values, row.syncStatus),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -403,6 +404,9 @@ BillRecordsCompanion billCompanion(BillEntity entity) {
     otherTaxAmount: Value(entity.otherTaxAmount),
     totalTaxAmount: Value(entity.totalTaxAmount),
     extraChargesJson: Value(encodeExtraCharges(entity.extraCharges)),
+    paymentMode: Value(
+      entity.paymentMode.trim().isEmpty ? 'CASH' : entity.paymentMode,
+    ),
     syncStatus: Value(entity.syncStatus.index),
     createdAt: Value(entity.createdAt),
     updatedAt: Value(entity.updatedAt),

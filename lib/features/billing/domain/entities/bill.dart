@@ -76,6 +76,9 @@ class Bill {
   // Extra charges (labour, service, etc.)
   final List<BillExtraCharge> extraCharges;
 
+  // How the customer paid (CASH / UPI / CARD / …)
+  final String paymentMode;
+
   // Whether the bill is synced with the server
   final bool isSynced;
 
@@ -110,6 +113,7 @@ class Bill {
     this.otherTaxAmount = 0.0,
     this.totalTaxAmount = 0.0,
     this.extraCharges = const [],
+    this.paymentMode = 'CASH',
     this.isSynced = true,
   });
 
@@ -182,6 +186,9 @@ class Bill {
         otherTaxAmount: ((json['otherTaxAmount'] ?? 0) as num).toDouble(),
         totalTaxAmount: ((json['totalTaxAmount'] ?? 0) as num).toDouble(),
         extraCharges: charges,
+        paymentMode: (json['paymentMode'] as String?)?.trim().isNotEmpty == true
+            ? (json['paymentMode'] as String).trim().toUpperCase()
+            : 'CASH',
       );
     } catch (e) {
       debugPrint('[ERROR] Failed to parse Bill from JSON: $json');
@@ -278,6 +285,7 @@ class Bill {
       otherTaxAmount: entity.otherTaxAmount,
       totalTaxAmount: entity.totalTaxAmount,
       extraCharges: entity.extraCharges,
+      paymentMode: entity.paymentMode,
       isSynced: entity.syncStatus == BillSyncStatus.synced,
     );
   }
@@ -329,6 +337,7 @@ class Bill {
       'otherTaxAmount': otherTaxAmount,
       'totalTaxAmount': totalTaxAmount,
       'extraCharges': extraCharges.map((c) => c.toJson()).toList(),
+      'paymentMode': paymentMode,
     };
   }
 
@@ -364,6 +373,7 @@ class Bill {
     double? otherTaxAmount,
     double? totalTaxAmount,
     List<BillExtraCharge>? extraCharges,
+    String? paymentMode,
     bool? isSynced,
   }) {
     return Bill(
@@ -397,6 +407,7 @@ class Bill {
       otherTaxAmount: otherTaxAmount ?? this.otherTaxAmount,
       totalTaxAmount: totalTaxAmount ?? this.totalTaxAmount,
       extraCharges: extraCharges ?? this.extraCharges,
+      paymentMode: paymentMode ?? this.paymentMode,
       isSynced: isSynced ?? this.isSynced,
     );
   }

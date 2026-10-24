@@ -218,6 +218,9 @@ class BillRecords extends Table {
   // JSON list of {id, label, amount} - labour / service / other bill charges
   TextColumn get extraChargesJson =>
       text().withDefault(const Constant('[]'))();
+  // CASH / UPI / CARD / ONLINE / CHEQUE / OTHER — how the customer paid
+  TextColumn get paymentMode =>
+      text().withDefault(const Constant('CASH'))();
   IntColumn get syncStatus => integer()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
@@ -396,7 +399,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? openAppDatabase());
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -423,6 +426,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 6) {
         await m.addColumn(billRecords, billRecords.extraChargesJson);
+      }
+      if (from < 7) {
+        await m.addColumn(billRecords, billRecords.paymentMode);
       }
     },
   );
