@@ -23,11 +23,13 @@ class _BillSettingsPageState extends State<BillSettingsPage>
   static const String _keyShowCustomerOnBill = 'bill_show_customer_details';
   static const String _keyGenerateViaContact = 'bill_generate_via_contact';
   static const String _keyEnableEmployeeToken = 'bill_enable_employee_token';
+  static const String _keyEnableHoldBill = 'bill_enable_hold';
   static const String _keyBillType = 'bill_type'; // 'pos' or 'normal'
 
   bool _showCustomerDetails = true;
   bool _generateViaContact = false;
   bool _enableEmployeeToken = false;
+  bool _enableHoldBill = false;
   String _billType = 'pos'; // Default to POS printer
   bool _isLoading = true;
   late AppLocalizations _localizations;
@@ -75,6 +77,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
       _showCustomerDetails = prefs.getBool(_keyShowCustomerOnBill) ?? true;
       _generateViaContact = prefs.getBool(_keyGenerateViaContact) ?? false;
       _enableEmployeeToken = prefs.getBool(_keyEnableEmployeeToken) ?? false;
+      _enableHoldBill = prefs.getBool(_keyEnableHoldBill) ?? false;
       _billType = prefs.getString(_keyBillType) ?? 'pos';
       _taxSettings = taxSettings;
       _cgstController.text = taxSettings.cgstPercent > 0
@@ -97,6 +100,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
     await prefs.setBool(_keyShowCustomerOnBill, _showCustomerDetails);
     await prefs.setBool(_keyGenerateViaContact, _generateViaContact);
     await prefs.setBool(_keyEnableEmployeeToken, _enableEmployeeToken);
+    await prefs.setBool(_keyEnableHoldBill, _enableHoldBill);
     await prefs.setString(_keyBillType, _billType);
     await _taxSettings.save();
 
@@ -175,6 +179,21 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                                   onChanged: (value) async {
                                     setState(() {
                                       _generateViaContact = value;
+                                    });
+                                    await _saveSettings();
+                                  },
+                                ),
+                                const SizedBox(height: 14),
+                                _buildModernToggle(
+                                  icon: Icons.pause_circle_outline_rounded,
+                                  iconColor: AppTheme.orange700,
+                                  title: 'Enable hold bill',
+                                  subtitle:
+                                      'Park a cart and resume later — no stock cut until Print',
+                                  value: _enableHoldBill,
+                                  onChanged: (value) async {
+                                    setState(() {
+                                      _enableHoldBill = value;
                                     });
                                     await _saveSettings();
                                   },

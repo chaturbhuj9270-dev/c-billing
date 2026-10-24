@@ -58,6 +58,7 @@ import 'package:c_billing/features/billing/presentation/widgets/barcode_scanner_
 import 'package:c_billing/features/billing/presentation/widgets/billing_add_items_widgets.dart';
 import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
 import 'package:c_billing/features/customer/domain/entities/customer_transaction.dart';
+import 'package:c_billing/features/billing/offline/held_bill_store.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
@@ -147,6 +148,8 @@ class _BillingPageState extends State<BillingPage> {
   bool _showCustomerOnBill = true;
   bool _generateBillViaContact = false;
   bool _enableEmployeeToken = false;
+  bool _enableHoldBill = false;
+  int _heldBillCount = 0;
   final _employeeRepo = EmployeeRepository();
   // Per-line employee token inputs (keyed by bill item productId).
   final Map<String, TextEditingController> _itemTokenControllers = {};
@@ -268,6 +271,7 @@ class _BillingPageState extends State<BillingPage> {
       _generateBillViaContact =
           prefs.getBool('bill_generate_via_contact') ?? false;
       _enableEmployeeToken = tokenOn;
+      _enableHoldBill = prefs.getBool('bill_enable_hold') ?? false;
       _taxSettings = taxSettings;
       _gstMode = taxSettings.gstFeatureEnabled
           ? taxSettings.defaultGstMode
@@ -290,6 +294,12 @@ class _BillingPageState extends State<BillingPage> {
     if (!tokenOn) {
       _disposeItemTokenInputs();
     }
+    await _refreshHeldBillCount();
+  }
+
+  Future<void> _refreshHeldBillCount() async {
+    final n = await HeldBillStore.count();
+    if (mounted) setState(() => _heldBillCount = n);
   }
 
   TextEditingController _tokenControllerFor(String productId, int? token) {
@@ -1647,6 +1657,440 @@ class _BillingPageState extends State<BillingPage> {
     });
   }
 
+  PaymentMode _paymentModeFromValue(String raw) {
+    return PaymentModeExtension.fromString(raw);
+  }
+
+  Future<void> _holdCurrentBill() async {
+    if (!_enableHoldBill || _billItems.isEmpty || _isSavingBill) return;
+    final draft = HeldBillDraft(
+      id: 'hold_${DateTime.now().microsecondsSinceEpoch}',
+      heldAt: DateTime.now(),
+      customerId: _selectedCustomer?['id'] as String?,
+      customerName: _customerNameController.text.trim().isEmpty
+          ? (_selectedCustomer?['fullName'] as String?)
+          : _customerNameController.text.trim(),
+      customerContact: _customerContactController.text.trim().isEmpty
+          ? (_selectedCustomer?['contact'] as String?)
+          : _customerContactController.text.trim(),
+      items: List<BillItem>.from(_billItems),
+      discountValue: _discountValue,
+      isPercentageDiscount: _isPercentageDiscount,
+      extraChargesEnabled: _extraChargesEnabled,
+      extraCharges: _extraChargeDrafts
+          .map(
+            (d) => {
+              'label': d.labelController.text.trim(),
+              'amount':
+                  double.tryParse(d.amountController.text.trim()) ?? 0.0,
+            },
+          )
+          .where(
+            (m) =>
+                (m['label'] as String).isNotEmpty ||
+                ((m['amount'] as double) > 0),
+          )
+          .toList(),
+      gstMode: _gstMode,
+      isFullPayment: _isFullPayment,
+      receivedAmount: _receivedAmount,
+      paymentMode: _billPaymentMode.value,
+      notes: _billNotesText(),
+    );
+    try {
+      await HeldBillStore.add(draft);
+      if (!mounted) return;
+      _clearBill();
+      await _refreshHeldBillCount();
+      _showSnackbar(
+        'Bill held · $_heldBillCount parked',
+        isError: false,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      _showSnackbar('Could not hold bill: $e', isError: true);
+    }
+  }
+
+  Future<void> _showHeldBillsSheet() async {
+    if (!_enableHoldBill) return;
+    final drafts = await HeldBillStore.loadAll();
+    if (!mounted) return;
+    if (drafts.isEmpty) {
+      _showSnackbar('No held bills', isError: false);
+      await _refreshHeldBillCount();
+      return;
+    }
+    await showAppBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.transparent,
+      builder: (ctx) {
+        final side = DesktopCanvas.isDesktopPlatform;
+        return DraggableScrollableSheet(
+          initialChildSize: drawerSheetSize(0.58),
+          minChildSize: drawerSheetSize(0.4),
+          maxChildSize: drawerSheetSize(0.92),
+          builder: (_, scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: AppColors.card(context),
+                borderRadius: side
+                    ? BorderRadius.zero
+                    : const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (!side) ...[
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: AppColors.mutedText(context)
+                              .withValues(alpha: 0.45),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+                  ] else
+                    const SizedBox(height: 8),
+                  // Title only — desktop drawer already has the close control
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      20,
+                      side ? 12 : 16,
+                      side ? 52 : 20,
+                      8,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppColors.accentSoft(context, 0.12),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.pause_circle_outline_rounded,
+                            color: AppColors.action(context),
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Held bills (${drafts.length})',
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.primaryText(context),
+                                ),
+                              ),
+                              Text(
+                                'Continue to restore, or discard',
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 12,
+                                  color: AppColors.mutedText(context),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.separated(
+                      controller: scrollController,
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                      itemCount: drafts.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
+                      itemBuilder: (_, i) {
+                        final d = drafts[i];
+                        final when = DateFormat(
+                          'dd MMM, hh:mm a',
+                        ).format(d.heldAt);
+                        return Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: AppColors.inputFill(context),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: AppColors.border(context),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      d.displayTitle,
+                                      style: TextStyle(
+                                        fontFamily: 'Literata',
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 15,
+                                        color: AppColors.primaryText(context),
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    '₹${d.itemsTotal.toStringAsFixed(2)}',
+                                    style: TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.action(context),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${d.items.length} items · $when',
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 12,
+                                  color: AppColors.mutedText(context),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () async {
+                                        Navigator.pop(ctx);
+                                        await _discardHeldBill(d.id);
+                                      },
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: AppTheme.toneRose,
+                                        side: BorderSide(
+                                          color: AppTheme.toneRose.withValues(
+                                            alpha: 0.5,
+                                          ),
+                                        ),
+                                      ),
+                                      child: const Text('Discard'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: FilledButton(
+                                      onPressed: () async {
+                                        Navigator.pop(ctx);
+                                        await _resumeHeldBill(d);
+                                      },
+                                      style: FilledButton.styleFrom(
+                                        backgroundColor: AppColors.action(
+                                          context,
+                                        ),
+                                      ),
+                                      child: const Text('Continue'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+    await _refreshHeldBillCount();
+  }
+
+  Future<void> _discardHeldBill(String id) async {
+    await HeldBillStore.remove(id);
+    await _refreshHeldBillCount();
+    if (mounted) {
+      _showSnackbar('Held bill discarded', isError: false);
+    }
+  }
+
+  Future<void> _resumeHeldBill(HeldBillDraft draft) async {
+    if (_billItems.isNotEmpty) {
+      final replace = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Replace current bill?'),
+          content: const Text(
+            'Your open cart has items. Continuing a held bill will replace them.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Replace'),
+            ),
+          ],
+        ),
+      );
+      if (replace != true) return;
+    }
+
+    _disposeItemTokenInputs();
+    _disposeExtraChargeDrafts();
+
+    Map<String, dynamic>? customer;
+    final cid = draft.customerId;
+    if (cid != null && cid.isNotEmpty) {
+      for (final c in _customers) {
+        if (c['id'] == cid) {
+          customer = c;
+          break;
+        }
+      }
+      customer ??= {
+        'id': cid,
+        'fullName': draft.customerName ?? '',
+        'contact': draft.customerContact ?? '',
+      };
+    }
+
+    final restoredCharges = <_ExtraChargeDraft>[];
+    for (final m in draft.extraCharges) {
+      restoredCharges.add(
+        _ExtraChargeDraft.restored(
+          label: (m['label'] ?? '').toString(),
+          amount: (m['amount'] as num?)?.toDouble() ?? 0,
+        ),
+      );
+    }
+
+    setState(() {
+      _billItems
+        ..clear()
+        ..addAll(draft.items);
+      _selectedCustomer = customer;
+      _customerNameController.text = draft.customerName ?? '';
+      _customerContactController.text = draft.customerContact ?? '';
+      _autoFoundCustomerName = draft.customerName;
+      _showAddCustomerPrompt = false;
+      _hasPhoneText = (draft.customerContact ?? '').trim().isNotEmpty;
+      _discountValue = draft.discountValue;
+      _isPercentageDiscount = draft.isPercentageDiscount;
+      _discountController.text = draft.discountValue > 0
+          ? (draft.isPercentageDiscount
+                ? draft.discountValue.toStringAsFixed(
+                    draft.discountValue == draft.discountValue.roundToDouble()
+                        ? 0
+                        : 1,
+                  )
+                : draft.discountValue.toStringAsFixed(2))
+          : '';
+      _extraChargesEnabled =
+          draft.extraChargesEnabled && _taxSettings.enableExtraCharges;
+      if (_extraChargesEnabled) {
+        _extraChargeDrafts.addAll(restoredCharges);
+      } else {
+        for (final c in restoredCharges) {
+          c.dispose();
+        }
+      }
+      _gstMode = _taxSettings.gstFeatureEnabled
+          ? draft.gstMode
+          : GstMode.noGst;
+      _isFullPayment = draft.isFullPayment;
+      _receivedAmount = draft.receivedAmount;
+      _receivedAmountController.text = draft.receivedAmount > 0
+          ? draft.receivedAmount.toStringAsFixed(2)
+          : '';
+      _billPaymentMode = _paymentModeFromValue(draft.paymentMode);
+      _notesController.text = draft.notes ?? '';
+    });
+
+    if (_enableEmployeeToken) {
+      for (final item in draft.items) {
+        if (item.employeeToken != null) {
+          _tokenControllerFor(item.productId, item.employeeToken);
+        }
+      }
+    }
+
+    await HeldBillStore.remove(draft.id);
+    await _refreshHeldBillCount();
+    if (mounted) {
+      _showSnackbar('Held bill restored — continue & Print when ready');
+    }
+  }
+
+  Widget _holdActionsRow({bool compact = false}) {
+    if (!_enableHoldBill) return const SizedBox.shrink();
+    final showHold = _billItems.isNotEmpty;
+    final showHeld = _heldBillCount > 0;
+    if (!showHold && !showHeld) return const SizedBox.shrink();
+    final action = AppColors.action(context);
+    return Row(
+      children: [
+        if (showHold)
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: _isSavingBill ? null : _holdCurrentBill,
+              icon: const Icon(Icons.pause_circle_outline_rounded, size: 18),
+              label: Text(
+                compact ? 'Hold' : 'Hold bill',
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primaryText(context),
+                side: BorderSide(color: AppColors.border(context)),
+                padding: EdgeInsets.symmetric(vertical: compact ? 12 : 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        if (showHold && showHeld) const SizedBox(width: 8),
+        if (showHeld)
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: _showHeldBillsSheet,
+              icon: Icon(Icons.inbox_outlined, size: 18, color: action),
+              label: Text(
+                'Held ($_heldBillCount)',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w700,
+                  color: action,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: action,
+                side: BorderSide(color: action.withValues(alpha: 0.45)),
+                padding: EdgeInsets.symmetric(vertical: compact ? 12 : 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
   String? _billNotesText() {
     final typed = _notesController.text.trim();
     return typed.isNotEmpty ? typed : null;
@@ -1883,6 +2327,36 @@ class _BillingPageState extends State<BillingPage> {
                             color: AppTopBar.onBar(context),
                             fontWeight: FontWeight.w700,
                             fontFamily: 'Literata',
+                          ),
+                        ),
+                      ),
+                    if (_enableHoldBill && _heldBillCount > 0)
+                      Material(
+                        color: AppTheme.transparent,
+                        child: InkWell(
+                          onTap: _showHeldBillsSheet,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTopBar.chipFill(context),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: AppTopBar.chipBorder(context),
+                              ),
+                            ),
+                            child: Text(
+                              'Held $_heldBillCount',
+                              style: TextStyle(
+                                color: AppTopBar.onBar(context),
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'Literata',
+                                fontSize: 12,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -2181,6 +2655,11 @@ class _BillingPageState extends State<BillingPage> {
             ],
           ),
           const SizedBox(height: 14),
+          if (_enableHoldBill &&
+              (_billItems.isNotEmpty || _heldBillCount > 0)) ...[
+            _holdActionsRow(),
+            const SizedBox(height: 10),
+          ],
           FilledButton.icon(
             onPressed: _isSavingBill || _billItems.isEmpty ? null : _saveBill,
             style: FilledButton.styleFrom(
@@ -2329,6 +2808,14 @@ class _BillingPageState extends State<BillingPage> {
                   ),
                 ),
               ),
+              if (_enableHoldBill && _heldBillCount > 0) ...[
+                const SizedBox(height: 16),
+                TextButton.icon(
+                  onPressed: _showHeldBillsSheet,
+                  icon: const Icon(Icons.inbox_outlined, size: 18),
+                  label: Text('Continue held bill ($_heldBillCount)'),
+                ),
+              ],
             ],
           ),
         ),
@@ -2372,6 +2859,14 @@ class _BillingPageState extends State<BillingPage> {
               color: muted,
             ),
           ),
+          if (_enableHoldBill && _heldBillCount > 0) ...[
+            const SizedBox(height: 16),
+            TextButton.icon(
+              onPressed: _showHeldBillsSheet,
+              icon: const Icon(Icons.inbox_outlined, size: 18),
+              label: Text('Continue held bill ($_heldBillCount)'),
+            ),
+          ],
         ],
       ),
     );
@@ -6643,6 +7138,46 @@ class _BillingPageState extends State<BillingPage> {
             ),
           ),
           const SizedBox(width: 12),
+          if (_enableHoldBill) ...[
+            Material(
+              color: AppTheme.transparent,
+              child: InkWell(
+                onTap: _isSavingBill ? null : _holdCurrentBill,
+                borderRadius: BorderRadius.circular(28),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(color: AppColors.border(context)),
+                    color: AppColors.inputFill(context),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.pause_circle_outline_rounded,
+                        size: 18,
+                        color: AppColors.primaryText(context),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Hold',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryText(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
           AppPillButton(
             label: _localizations.print,
             icon: Icons.print_rounded,
@@ -7337,6 +7872,13 @@ class _ExtraChargeDraft {
     : id = 'chg_${DateTime.now().microsecondsSinceEpoch}',
       labelController = TextEditingController(),
       amountController = TextEditingController();
+
+  _ExtraChargeDraft.restored({required String label, required double amount})
+    : id = 'chg_${DateTime.now().microsecondsSinceEpoch}',
+      labelController = TextEditingController(text: label),
+      amountController = TextEditingController(
+        text: amount > 0 ? amount.toStringAsFixed(2) : '',
+      );
 
   BillExtraCharge toCharge() {
     return BillExtraCharge(
