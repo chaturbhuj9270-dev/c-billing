@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-// Responsive breakpoints and helpers for adaptive layouts. Mobile UI remains unchanged — desktop/tablet get enhanced layouts.
+// Responsive breakpoints and helpers for adaptive layouts. Mobile UI remains unchanged - desktop/tablet get enhanced layouts.
 class ResponsiveHelper {
   static const double mobileBreakpoint = 600;
   static const double tabletBreakpoint = 900;

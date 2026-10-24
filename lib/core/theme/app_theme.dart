@@ -19,7 +19,7 @@ class AppTheme {
   // Light
   static const Color lightScaffold = Color(0xFFF3F6F4);
 
-  // Dark — sampled from the Add purchase screen. Page is near-black, cards sit one step above it, fields sink back to the page.
+  // Dark - sampled from the Add purchase screen. Page is near-black, cards sit one step above it, fields sink back to the page.
   static const Color darkScaffold = Color(0xFF080C0C);
   static const Color darkSurface = Color(0xFF101412);
   static const Color darkCard = Color(0xFF131715);
@@ -265,7 +265,7 @@ class AppTheme {
   }
 
   static ThemeData get dark {
-    // Explicit neutral ColorScheme — avoids green-tinted surfaces from seed.
+    // Explicit neutral ColorScheme - avoids green-tinted surfaces from seed.
     const scheme = ColorScheme(
       brightness: Brightness.dark,
       primary: darkAction,

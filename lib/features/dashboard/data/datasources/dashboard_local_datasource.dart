@@ -17,7 +17,7 @@ import '../../../inventory_management/offline/entities/stock_ledger_entity.dart'
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/repositories/dashboard_repository_interface.dart';
 
-// Ultra-fast local dashboard datasource All calculations are from local DB — instant, offline-capable, and accurate. Key fixes over the old Firebase datasource: 1. Returns are pro...
+// Ultra-fast local dashboard datasource All calculations are from local DB - instant, offline-capable, and accurate. Key fixes over the old Firebase datasource: 1. Returns are pro...
 class DashboardLocalDataSource {
   static DashboardLocalDataSource? _instance;
 
@@ -28,7 +28,7 @@ class DashboardLocalDataSource {
     return _instance!;
   }
 
-  // Fetch dashboard summary from local DB All calculations are local — typically completes in < 5ms
+  // Fetch dashboard summary from local DB All calculations are local - typically completes in < 5ms
   Future<DashboardSummary> fetchDashboardSummary({
     required DashboardParams params,
   }) async {
@@ -37,7 +37,7 @@ class DashboardLocalDataSource {
 
     // Execute ALL local queries in parallel for maximum speed
     final results = await Future.wait([
-      // Counts — instant from the local database (0-5)
+      // Counts - instant from the local database (0-5)
       CustomerOfflineController.instance.getTotalCount(),
       ProductOfflineController.instance.getTotalCount(),
       SupplierOfflineController.instance.getTotalCount(),
@@ -155,7 +155,7 @@ class DashboardLocalDataSource {
           debugPrint('[DashboardLocal] Error fetching initial data: $e');
         }
 
-        // Watch local tables for changes — uses local timer
+        // Watch local tables for changes - uses local timer
         void onCollectionChanged() {
           localDebounceTimer?.cancel();
           localDebounceTimer = Timer(
@@ -471,7 +471,7 @@ class DashboardLocalDataSource {
     );
   }
 
-  // Dispose resources — no-op since streams manage their own lifecycle
+  // Dispose resources - no-op since streams manage their own lifecycle
   void dispose() {
     // Each stream's onCancel handles its own cleanup
   }

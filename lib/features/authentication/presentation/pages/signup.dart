@@ -165,7 +165,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
               'email': email,
               'contact': contact,
               'createdAt': FieldValue.serverTimestamp(),
-              // No free access — user must subscribe via Cashfree after login
+              // No free access - user must subscribe via Cashfree after login
               'subscriptionDate': null,
               'subscriptionStatus': 'inactive',
             });

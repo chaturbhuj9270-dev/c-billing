@@ -175,26 +175,26 @@ class EscPosBillFormatter {
   }) async {
     final b = <int>[];
 
-    // 1 — Initialise & set tight line spacing for readability
+    // 1 - Initialise & set tight line spacing for readability
     b.addAll(EscPosCommands.init);
     b.addAll(EscPosCommands.setLineSpacing(26));
 
-    // 2 — Shop header
+    // 2 - Shop header
     b.addAll(_buildHeader(shopDetails));
 
-    // 3 — Bill meta (number, date/time, customer)
+    // 3 - Bill meta (number, date/time, customer)
     b.addAll(await _buildBillInfo(billData));
 
-    // 4 — Items table
+    // 4 - Items table
     b.addAll(_buildItemsTable(billData));
 
-    // 5 — Totals & payment
+    // 5 - Totals & payment
     b.addAll(_buildTotals(billData));
 
-    // 6 — Footer
+    // 6 - Footer
     b.addAll(_buildFooter(billData));
 
-    // 7 — Feed & cut
+    // 7 - Feed & cut
     b.addAll(EscPosCommands.feedLines(config.feedLines));
     if (config.cutPaper) b.addAll(EscPosCommands.cutPaperPartial);
     if (config.openCashDrawer) b.addAll(EscPosCommands.openDrawer);
@@ -204,11 +204,11 @@ class EscPosBillFormatter {
 
   // ─────────────── SECTION BUILDERS ───────────────
 
-  // Header: large shop name, address, Prop / Ph, GST — matches POS PDF receipt
+  // Header: large shop name, address, Prop / Ph, GST - matches POS PDF receipt
   List<int> _buildHeader(Shop shop) {
     final b = <int>[];
 
-    // Shop name — bold, large (double-size uses 2x width, so wrap at cols/2)
+    // Shop name - bold, large (double-size uses 2x width, so wrap at cols/2)
     final nameLines = _wrap(shop.shopName.toUpperCase(), maxWidth: _cols ~/ 2);
     for (final line in nameLines) {
       b.addAll(_center(line, bold: true, large: true));
@@ -378,7 +378,7 @@ class EscPosBillFormatter {
       }
     }
 
-    // Extra charge lines — directly below product items (no section label)
+    // Extra charge lines - directly below product items (no section label)
     if (d.hasExtraCharges) {
       for (final charge in d.extraCharges) {
         if (charge.amount <= 0) continue;
@@ -465,7 +465,7 @@ class EscPosBillFormatter {
       b.addAll(_kv(lbl, 'Rs.${_fmt(d.taxAmount!)}'));
     }
 
-    // Grand Total — bold + double height
+    // Grand Total - bold + double height
     b.addAll(_thickDiv());
     b.addAll(EscPosCommands.boldOn);
     b.addAll(EscPosCommands.textDoubleHeight);
@@ -511,7 +511,7 @@ class EscPosBillFormatter {
     return b;
   }
 
-  // Footer — notes + thank-you
+  // Footer - notes + thank-you
   List<int> _buildFooter(PrintBillData d) {
     final b = <int>[];
     b.addAll(_lf());
@@ -602,7 +602,7 @@ class EscPosBillFormatter {
     return b;
   }
 
-  // Format money — show decimals only when fractional
+  // Format money - show decimals only when fractional
   String _fmt(double v) {
     if (v == v.roundToDouble()) return v.toStringAsFixed(0);
     return v.toStringAsFixed(2);

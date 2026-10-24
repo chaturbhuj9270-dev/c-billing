@@ -418,7 +418,7 @@ class EnglishLocalization {
   static const String subscriptionActivatedSuccess =
       'Subscription activated! Welcome to C-Billing.';
   static const String paymentReceivedActivatingSoon =
-      'Payment received. Activation may take a moment — please reopen the app shortly.';
+      'Payment received. Activation may take a moment - please reopen the app shortly.';
   static const String paymentFailedTryAgain =
       'Payment failed or cancelled. Please try again.';
   static const String securePaymentPoweredByCashfree =

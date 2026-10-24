@@ -421,7 +421,7 @@ class MarathiLocalization {
   static const String subscriptionActivatedSuccess =
       'सदस्यता सक्रिय! C-Billing मध्ये स्वागत आहे.';
   static const String paymentReceivedActivatingSoon =
-      'पेमेंट प्राप्त झाले. सक्रियकरणास थोडा वेळ लागू शकतो — कृपया लवकरच अॅप पुन्हा उघडा.';
+      'पेमेंट प्राप्त झाले. सक्रियकरणास थोडा वेळ लागू शकतो - कृपया लवकरच अॅप पुन्हा उघडा.';
   static const String paymentFailedTryAgain =
       'पेमेंट अयशस्वी किंवा रद्द. कृपया पुन्हा प्रयत्न करा.';
   static const String securePaymentPoweredByCashfree =

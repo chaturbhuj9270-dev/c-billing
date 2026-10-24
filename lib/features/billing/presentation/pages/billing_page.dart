@@ -415,7 +415,7 @@ class _BillingPageState extends State<BillingPage> {
     }
   }
 
-  // Setup real-time product stream from the local database — auto-refreshes on any product/stock change
+  // Setup real-time product stream from the local database - auto-refreshes on any product/stock change
   void _setupProductStream() {
     _productStreamSubscription = ProductOfflineController.instance
         .watchAllProducts()
@@ -427,7 +427,7 @@ class _BillingPageState extends State<BillingPage> {
     _loadProducts();
   }
 
-  // Setup real-time customer stream from the local database — auto-refreshes on any customer change
+  // Setup real-time customer stream from the local database - auto-refreshes on any customer change
   void _setupCustomerStream() {
     _customerStreamSubscription = CustomerOfflineController.instance
         .watchAllCustomers()
@@ -1010,7 +1010,7 @@ class _BillingPageState extends State<BillingPage> {
     required String phoneNumber,
   }) async {
     try {
-      // Save to the local database via offline controller — syncs to Firestore in background
+      // Save to the local database via offline controller - syncs to Firestore in background
       final offlineCtrl = CustomerOfflineController.instance;
       final entity = await offlineCtrl.addCustomer(
         name: '$firstName $lastName'.trim(),
@@ -1616,7 +1616,7 @@ class _BillingPageState extends State<BillingPage> {
     return typed.isNotEmpty ? typed : null;
   }
 
-  // Create PrintBillData from bill — no network calls, uses bill data directly
+  // Create PrintBillData from bill - no network calls, uses bill data directly
   // Employee token is intentionally omitted from printed bills.
   PrintBillData _createPrintBillData(Bill bill) {
     // Use bill's own pending amount as totalDueAmount (already computed at bill creation time)
@@ -2577,7 +2577,7 @@ class _BillingPageState extends State<BillingPage> {
                   // Show only phone number field when generate via contact is enabled
                   _buildPhoneInputField(),
                 ] else ...[
-                  // Normal customer section — tap to pick or enter manually
+                  // Normal customer section - tap to pick or enter manually
                   _buildCustomerPickerSection(isCustomerRequired),
                 ],
               ],
@@ -3114,12 +3114,12 @@ class _BillingPageState extends State<BillingPage> {
       return;
     }
 
-    // No batches — fallback to product-level data
+    // No batches - fallback to product-level data
     final fifoPrice = resolved.salesPrice;
     final fifoPurchasePrice = resolved.purchasePrice;
     final uniqueKey = resolved.id;
 
-    // Add product — increment quantity if already in cart
+    // Add product - increment quantity if already in cart
     final existingIndex = _billItems.indexWhere(
       (item) => item.productId == uniqueKey,
     );
@@ -4927,7 +4927,7 @@ class _BillingPageState extends State<BillingPage> {
                     _buildQuickDiscountChip('20%', 20, true),
                   ],
                 ),
-                // Nested summary (mobile layout only — desktop already has Bill summary)
+                // Nested summary (mobile layout only - desktop already has Bill summary)
                 if (showNestedSummary &&
                     (_discountAmount > 0 || _taxBreakdown != null)) ...[
                   const SizedBox(height: 12),
@@ -6884,7 +6884,7 @@ class _CustomerPickerBottomSheetState
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
-                                            customer['contact'] ?? '—',
+                                            customer['contact'] ?? '-',
                                             style: TextStyle(
                                               fontFamily: 'Literata',
                                               color: AppTheme.grey600,

@@ -424,7 +424,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       }
     } catch (e) {
       debugPrint('[ERROR] Error checking subscription: $e');
-      // Fail closed — block access until subscription can be confirmed
+      // Fail closed - block access until subscription can be confirmed
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const SubscriptionScreen()),

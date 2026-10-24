@@ -92,7 +92,7 @@ service cloud.firestore {
         allow write: if false;
       }
 
-      // Employee roster — members can read (token lookup on bills);
+      // Employee roster - members can read (token lookup on bills);
       // owners full write; members may only increment points.
       match /employees/{employeeId} {
         allow read: if isOwnerOrMember(userId);

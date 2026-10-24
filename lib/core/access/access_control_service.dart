@@ -123,7 +123,7 @@ class AccessControlService {
         return;
       }
 
-      // Default: shop owner / admin — full access (backward compatible)
+      // Default: shop owner / admin - full access (backward compatible)
       _isOwner = true;
       _dataOwnerId = user.uid;
       _allowedModules = AppModule.allKeys;

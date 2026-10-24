@@ -21,7 +21,7 @@ class PdfBillService {
 
   static final Set<String> _generatingBills = <String>{};
 
-  // POS (`pos`) or normal/tabular (`normal`) — uses quotation_type for quotations.
+  // POS (`pos`) or normal/tabular (`normal`) - uses quotation_type for quotations.
   Future<String> resolvePdfFormat(PrintBillData billData) async {
     final prefs = await SharedPreferences.getInstance();
     if (billData.isQuotation) {
@@ -73,7 +73,7 @@ class PdfBillService {
     return pdf;
   }
 
-  // Generate a Normal/Tabular A4 bill PDF (Krushi Seva Kendra style — half A4 page, compact)
+  // Generate a Normal/Tabular A4 bill PDF (Krushi Seva Kendra style - half A4 page, compact)
   Future<pw.Document> generateNormalBillPdf({
     required PrintBillData billData,
     required Shop shopDetails,
@@ -84,7 +84,7 @@ class PdfBillService {
     final prefs = await SharedPreferences.getInstance();
     final showCustomer = prefs.getBool('bill_show_customer_details') ?? true;
 
-    // Use standard A4 — content will naturally occupy half page for small bills
+    // Use standard A4 - content will naturally occupy half page for small bills
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
@@ -118,7 +118,7 @@ class PdfBillService {
       child: pw.Column(
         mainAxisSize: pw.MainAxisSize.min,
         children: [
-          // ═══════════════════════════════════════════ HEADER — Logo, Shop Name, Contact Details ═══════════════════════════════════════════
+          // ═══════════════════════════════════════════ HEADER - Logo, Shop Name, Contact Details ═══════════════════════════════════════════
           pw.Container(
             width: double.infinity,
             padding: const pw.EdgeInsets.symmetric(
@@ -405,7 +405,7 @@ class PdfBillService {
             pw.BorderSide(color: primaryColor, width: 0.5),
           ),
 
-          // ═══════════════════════════════════════════ SUMMARY SECTION — Amounts & Amount in Words ═══════════════════════════════════════════
+          // ═══════════════════════════════════════════ SUMMARY SECTION - Amounts & Amount in Words ═══════════════════════════════════════════
           pw.Container(
             decoration: pw.BoxDecoration(
               border: pw.Border(
@@ -632,7 +632,7 @@ class PdfBillService {
               ),
             ),
 
-          // ═══════════════════════════════════════════ FOOTER — Bank Details, QR Code, Signatures ═══════════════════════════════════════════
+          // ═══════════════════════════════════════════ FOOTER - Bank Details, QR Code, Signatures ═══════════════════════════════════════════
           pw.Container(
             padding: const pw.EdgeInsets.all(12),
             child: pw.Row(
@@ -1650,7 +1650,7 @@ class PdfBillService {
           ],
         ),
 
-        // Extra charge lines — directly below product items (no section label)
+        // Extra charge lines - directly below product items (no section label)
         if (billData.hasExtraCharges) ...[
           for (final charge in billData.extraCharges)
             if (charge.amount > 0)
@@ -2303,7 +2303,7 @@ class PdfBillService {
       final bytes = await pdf.save();
       debugPrint('[PdfBillService] PDF bytes saved, size: ${bytes.length}');
 
-      // Write to a temp file first — XFile.fromData is unreliable on some devices
+      // Write to a temp file first - XFile.fromData is unreliable on some devices
       final dir = await getTemporaryDirectory();
       final prefix = billData.isQuotation ? 'quotation' : 'bill';
       final fileName =

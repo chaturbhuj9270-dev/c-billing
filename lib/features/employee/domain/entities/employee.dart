@@ -121,7 +121,7 @@ class Employee {
     };
   }
 
-  // Profile fields only — used when merging into Firestore writes.
+  // Profile fields only - used when merging into Firestore writes.
   Map<String, dynamic> profileToJson() {
     return {
       'dateOfBirth': dateOfBirth?.toIso8601String(),

@@ -203,7 +203,7 @@ class ReportPdfGenerator {
 
       await Share.shareXFiles(
         [XFile(tempFile.path, mimeType: 'application/pdf')],
-        text: 'Inventory Report — C-Billing',
+        text: 'Inventory Report - C-Billing',
         subject: 'Inventory Report',
       );
     } catch (e) {

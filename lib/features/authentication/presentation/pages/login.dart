@@ -278,7 +278,7 @@ class _LoginPageV2State extends State<LoginPageV2>
         await LogoutService.instance.logout(context);
         return;
       }
-      // Fail closed — require subscription screen on errors
+      // Fail closed - require subscription screen on errors
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
       );
@@ -320,7 +320,7 @@ class _LoginPageV2State extends State<LoginPageV2>
               if (isDesktop) {
                 return Row(
                   children: [
-                    // Left panel — branding
+                    // Left panel - branding
                     Expanded(
                       flex: 5,
                       child: Container(
@@ -403,7 +403,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                         ),
                       ),
                     ),
-                    // Right panel — form
+                    // Right panel - form
                     Expanded(
                       flex: 4,
                       child: SingleChildScrollView(

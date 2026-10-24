@@ -157,7 +157,7 @@ class _BillsListPageState extends State<BillsListPage>
               return <String, dynamic>{...doc.data(), 'id': doc.id};
             }).toList();
 
-            // Import to the local database — the local stream listener auto-updates the UI
+            // Import to the local database - the local stream listener auto-updates the UI
             await BillOfflineController.instance.importFromServer(serverBills);
           },
           onError: (e) {
@@ -202,7 +202,7 @@ class _BillsListPageState extends State<BillsListPage>
     setState(() {}); // Rebuild UI with new language
   }
 
-  // Create PrintBillData from bill — no network calls, uses bill data directly
+  // Create PrintBillData from bill - no network calls, uses bill data directly
   PrintBillData _createPrintBillData(Bill bill) {
     final double? totalDueAmount = bill.pendingAmount > 0
         ? bill.pendingAmount

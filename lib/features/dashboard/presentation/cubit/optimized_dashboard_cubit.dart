@@ -70,7 +70,7 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
       // Fetch fresh data from the local database (instant)
       await _refreshData(showRefreshIndicator: state.hasData);
 
-      // Start reactive Local watchers — auto-refresh on any data change
+      // Start reactive Local watchers - auto-refresh on any data change
       _subscribeToRealtimeUpdates();
 
       // Also subscribe to DashboardRefreshService for external refresh requests

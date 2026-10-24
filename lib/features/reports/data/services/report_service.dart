@@ -5,7 +5,7 @@ import '../../domain/models/report_filter_model.dart';
 import '../../domain/models/report_result_model.dart';
 import '../repositories/report_repository.dart';
 
-// Service handling all report business logic and calculations. Uses optimized queries from ReportRepository — no full-table scans.
+// Service handling all report business logic and calculations. Uses optimized queries from ReportRepository - no full-table scans.
 class ReportService {
   final ReportRepository _repo;
 

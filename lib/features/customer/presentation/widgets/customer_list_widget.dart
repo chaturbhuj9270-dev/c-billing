@@ -290,7 +290,7 @@ class CustomerListWidget extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      fullName.isEmpty ? '—' : fullName,
+                      fullName.isEmpty ? '-' : fullName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -306,12 +306,12 @@ class CustomerListWidget extends StatelessWidget {
             ),
             Expanded(
               flex: 2,
-              child: Text(contact.isEmpty ? '—' : contact, style: cell),
+              child: Text(contact.isEmpty ? '-' : contact, style: cell),
             ),
             Expanded(
               flex: 2,
               child: Text(
-                address.isEmpty || address == 'N/A' ? '—' : address,
+                address.isEmpty || address == 'N/A' ? '-' : address,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: cell,
@@ -581,7 +581,7 @@ class _CustomerCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              fullName.isNotEmpty ? fullName : '—',
+                              fullName.isNotEmpty ? fullName : '-',
                               style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w700,
@@ -602,7 +602,7 @@ class _CustomerCard extends StatelessWidget {
                                 const SizedBox(width: 4),
                                 Expanded(
                                   child: Text(
-                                    contact.isNotEmpty ? contact : '—',
+                                    contact.isNotEmpty ? contact : '-',
                                     style: TextStyle(
                                       fontFamily: 'Literata',
                                       fontSize: 12,

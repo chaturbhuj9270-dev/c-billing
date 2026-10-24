@@ -2357,7 +2357,7 @@ class _PurchasePageState extends State<PurchasePage>
           _expiryDateController.clear();
         });
 
-        // Reload products to show updated stock — stream auto-handles this
+        // Reload products to show updated stock - stream auto-handles this
       }
     } catch (e) {
       debugPrint('[ERROR] Failed to process purchase: $e');

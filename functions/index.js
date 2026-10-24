@@ -342,7 +342,7 @@ exports.createSubscriptionOrder = onCall(
       order_tags: {
         uid,
         plan: "yearly",
-        checkout_context: "C-Billing Premium — 1 Year",
+        checkout_context: "C-Billing Premium - 1 Year",
       },
     };
 

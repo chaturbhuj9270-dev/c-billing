@@ -1016,7 +1016,7 @@ class _ScanOverlayPainter extends CustomPainter {
   }
 }
 
-// Desktop / USB barcode-reader (keyboard wedge) dialog. Scanners type digits into the focused field and usually send Enter — works with manufacturer EAN/UPC barcodes and app-generated codes.
+// Desktop / USB barcode-reader (keyboard wedge) dialog. Scanners type digits into the focused field and usually send Enter - works with manufacturer EAN/UPC barcodes and app-generated codes.
 class HardwareBarcodeReaderDialog extends StatefulWidget {
   final Function(Map<String, dynamic> productData) onProductScanned;
   final Function(String productKey)? onProductRemoved;
@@ -1196,7 +1196,7 @@ class _HardwareBarcodeReaderDialogState
               ),
               const SizedBox(height: 16),
               Text(
-                'Scan manufacturer barcodes or your printed labels. Keep this field focused — the reader types the code automatically.',
+                'Scan manufacturer barcodes or your printed labels. Keep this field focused - the reader types the code automatically.',
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 13,

@@ -3790,7 +3790,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                                               Text(
                                                 customer.mobile.isNotEmpty
                                                     ? customer.mobile
-                                                    : '—',
+                                                    : '-',
                                                 style: TextStyle(
                                                   fontFamily: 'Literata',
                                                   color: AppTheme.grey600,

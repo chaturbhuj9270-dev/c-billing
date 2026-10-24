@@ -1020,7 +1020,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                           Text(
                             entry.companyName.isNotEmpty
                                 ? entry.companyName
-                                : '—',
+                                : '-',
                             style: const TextStyle(
                               fontSize: 12,
                               fontFamily: 'Literata',

@@ -63,7 +63,7 @@ enum AppModule {
     AppModule.password,
   ];
 
-  // Always owner-only — never grantable to employees.
+  // Always owner-only - never grantable to employees.
   static const List<AppModule> ownerOnly = [
     AppModule.shop,
     AppModule.profile,

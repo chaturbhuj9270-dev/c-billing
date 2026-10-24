@@ -668,7 +668,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
   }
 
   void _showBatchSelection(GroupedBillingProduct group) {
-    // Fallback product with no batches — toggle add/remove
+    // Fallback product with no batches - toggle add/remove
     if (group.batches.isEmpty && group.fallbackProduct != null) {
       final product = group.fallbackProduct!;
       final existingItem = widget.billItems.cast<BillItem?>().firstWhere(
@@ -722,7 +722,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
         return;
       }
 
-      // Not in bill — add with quantity 1 (for non kg/ltr products)
+      // Not in bill - add with quantity 1 (for non kg/ltr products)
       if (existingQty < product.currentStock) {
         widget.onBatchItemAdded(
           product.id,
@@ -753,7 +753,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
       return;
     }
 
-    // Has batches (1 or more) — always show batch selection bottom sheet
+    // Has batches (1 or more) - always show batch selection bottom sheet
     showAppBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -2116,7 +2116,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                           Text(
                             batch.companyName.isNotEmpty
                                 ? batch.companyName
-                                : '—',
+                                : '-',
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontWeight: FontWeight.w700,

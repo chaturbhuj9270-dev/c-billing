@@ -39,7 +39,7 @@ class DashboardRepositoryImpl implements DashboardRepositoryInterface {
   }) async {
     final stopwatch = Stopwatch()..start();
 
-    // Fetch fresh data from local DB (instant, < 5ms) Always go to the local database for live calculations — cache is only for pre-render
+    // Fetch fresh data from local DB (instant, < 5ms) Always go to the local database for live calculations - cache is only for pre-render
     try {
       final freshData = await _localDataSource.fetchDashboardSummary(
         params: params,

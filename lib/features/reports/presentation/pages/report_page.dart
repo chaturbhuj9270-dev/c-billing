@@ -17,7 +17,7 @@ import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/file_preview_page.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
-// ────────────────────────────────────────────────────────── Premium Report Page — v2 ✅ Date presets (Today / This Week / This Month / This Year / Custom) ✅ Advanced filters: prod...
+// ────────────────────────────────────────────────────────── Premium Report Page - v2 ✅ Date presets (Today / This Week / This Month / This Year / Custom) ✅ Advanced filters: prod...
 
 class ReportPage extends StatefulWidget {
   const ReportPage({super.key});
@@ -30,7 +30,7 @@ class _ReportPageState extends State<ReportPage>
     with SingleTickerProviderStateMixin {
   final _sessionManager = SessionManager();
 
-  // Lazy access — won't crash if the local database is still warming up
+  // Lazy access - won't crash if the local database is still warming up
   late final ReportService _reportService;
   late final ReportRepository _repo;
 
@@ -486,7 +486,7 @@ class _ReportPageState extends State<ReportPage>
                 Icon(Icons.event, size: 14, color: AppTheme.grey600),
                 const SizedBox(width: 6),
                 Text(
-                  '${DateFormat('dd MMM yyyy').format(_filter.startDate)} — ${DateFormat('dd MMM yyyy').format(_filter.endDate)}',
+                  '${DateFormat('dd MMM yyyy').format(_filter.startDate)} - ${DateFormat('dd MMM yyyy').format(_filter.endDate)}',
                   style: TextStyle(
                     fontSize: 12,
                     fontFamily: 'Literata',
@@ -744,7 +744,7 @@ class _ReportPageState extends State<ReportPage>
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 8),
                 child: Text(
-                  '—',
+                  '-',
                   style: TextStyle(color: AppTheme.grey, fontFamily: 'Literata'),
                 ),
               ),

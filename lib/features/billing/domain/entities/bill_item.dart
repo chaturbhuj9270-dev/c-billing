@@ -19,7 +19,7 @@ class BillItem {
   final String? hsnCode; // HSN code for GST compliance
   final String? unit; // Base unit (kg, ltr, pcs, etc.)
   final String? sellUnit; // Unit used for sale (kg, gm, ltr, ml, pcs)
-  // Salesperson token for this line (cloth collection — per product).
+  // Salesperson token for this line (cloth collection - per product).
   final int? employeeToken;
 
   BillItem({

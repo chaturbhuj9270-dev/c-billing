@@ -215,7 +215,7 @@ class BillRecords extends Table {
   RealColumn get sgstAmount => real().withDefault(const Constant(0))();
   RealColumn get otherTaxAmount => real().withDefault(const Constant(0))();
   RealColumn get totalTaxAmount => real().withDefault(const Constant(0))();
-  // JSON list of {id, label, amount} — labour / service / other bill charges
+  // JSON list of {id, label, amount} - labour / service / other bill charges
   TextColumn get extraChargesJson =>
       text().withDefault(const Constant('[]'))();
   IntColumn get syncStatus => integer()();

@@ -311,7 +311,7 @@ class _SupplierCard extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                fullName.isNotEmpty ? fullName : '—',
+                                fullName.isNotEmpty ? fullName : '-',
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
@@ -349,7 +349,7 @@ class _SupplierCard extends StatelessWidget {
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                contact.isNotEmpty ? contact : '—',
+                                contact.isNotEmpty ? contact : '-',
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: AppColors.secondaryText(context),

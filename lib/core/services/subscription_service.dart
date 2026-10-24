@@ -75,7 +75,7 @@ class SubscriptionService {
       return isValid;
     } catch (e) {
       debugPrint('[SubscriptionService] Error checking subscription: $e');
-      // Fail closed — do not unlock the app on network/read errors.
+      // Fail closed - do not unlock the app on network/read errors.
       return false;
     }
   }

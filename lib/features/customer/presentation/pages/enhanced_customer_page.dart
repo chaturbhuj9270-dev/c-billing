@@ -310,7 +310,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
           })
           .toList();
 
-      // Import into the local database — the stream listener auto-updates the UI
+      // Import into the local database - the stream listener auto-updates the UI
       await CustomerOfflineController.instance.importFromServer(serverList);
 
       // Trigger background sync for any local-only records
@@ -396,7 +396,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                 })
                 .toList();
 
-            // Import into the local database — the stream listener auto-updates the UI
+            // Import into the local database - the stream listener auto-updates the UI
             await CustomerOfflineController.instance.importFromServer(
               serverList,
             );
@@ -1344,7 +1344,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      fullName.isNotEmpty ? fullName : '—',
+                                      fullName.isNotEmpty ? fullName : '-',
                                       style: TextStyle(
                                         fontFamily: 'Literata',
                                         fontWeight: FontWeight.w700,

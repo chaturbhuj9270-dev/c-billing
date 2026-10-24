@@ -52,7 +52,7 @@ int resolveBillItemMaxStock({
   return batchStock > 0 ? batchStock : product.currentStock;
 }
 
-// Compact bill line list with +/- qty, inline qty edit, and tappable price — same as billing.
+// Compact bill line list with +/- qty, inline qty edit, and tappable price - same as billing.
 class BillItemsLineList extends StatelessWidget {
   final List<BillItem> items;
   final List<Product> products;

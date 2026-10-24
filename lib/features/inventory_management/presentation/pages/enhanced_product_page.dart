@@ -303,7 +303,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
               return <String, dynamic>{...data, 'id': doc.id};
             }).toList();
 
-            // Import to the local database — the local stream listener auto-updates the UI
+            // Import to the local database - the local stream listener auto-updates the UI
             await ProductOfflineController.instance.importFromServer(
               serverProducts,
             );
@@ -844,7 +844,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     Expanded(
                       flex: 3,
                       child: Text(
-                        entry.companyName.isNotEmpty ? entry.companyName : '—',
+                        entry.companyName.isNotEmpty ? entry.companyName : '-',
                         style: const TextStyle(
                           fontSize: 12,
                           fontFamily: 'Literata',
@@ -1104,19 +1104,19 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                         label: _localizations.company,
                         value: product.companyName.isNotEmpty
                             ? product.companyName
-                            : '—',
+                            : '-',
                       ),
                       _buildInfoCard(
                         icon: Icons.category_rounded,
                         label: _localizations.category,
                         value: product.category.isNotEmpty
                             ? product.category
-                            : '—',
+                            : '-',
                       ),
                       _buildInfoCard(
                         icon: Icons.qr_code_rounded,
                         label: 'Barcode',
-                        value: product.barcode ?? '—',
+                        value: product.barcode ?? '-',
                       ),
 
                       const SizedBox(height: 16),

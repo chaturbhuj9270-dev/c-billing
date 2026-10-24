@@ -420,7 +420,7 @@ class HindiLocalization {
   static const String subscriptionActivatedSuccess =
       'सदस्यता सक्रिय! C-Billing में आपका स्वागत है।';
   static const String paymentReceivedActivatingSoon =
-      'भुगतान प्राप्त हुआ। सक्रियण में कुछ समय लग सकता है — कृपया जल्द ऐप फिर खोलें।';
+      'भुगतान प्राप्त हुआ। सक्रियण में कुछ समय लग सकता है - कृपया जल्द ऐप फिर खोलें।';
   static const String paymentFailedTryAgain =
       'भुगतान विफल या रद्द। कृपया पुनः प्रयास करें।';
   static const String securePaymentPoweredByCashfree =

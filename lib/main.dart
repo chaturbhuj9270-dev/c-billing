@@ -57,7 +57,7 @@ Future<void> main() async {
   // Theme preference before first frame so the correct mode is used immediately.
   await _safeInit(() => ThemeService.instance.init(), 'ThemeService');
 
-  // Run app — splash screen renders while remaining services init
+  // Run app - splash screen renders while remaining services init
   runApp(const MyApp());
 }
 

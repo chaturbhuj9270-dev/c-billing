@@ -299,7 +299,7 @@ class _CompanyCard extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                companyName.isNotEmpty ? companyName : '—',
+                                companyName.isNotEmpty ? companyName : '-',
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
