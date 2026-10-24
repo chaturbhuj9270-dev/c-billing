@@ -1,3 +1,5 @@
+import 'package:c_billing/features/billing/domain/entities/bill_extra_charge.dart';
+
 // Model representing a single item for printing on POS bill
 class PrintBillItem {
   final String name;
@@ -169,6 +171,9 @@ class PrintBillData {
   // Total tax amount
   final double totalTaxAmount;
 
+  // Extra charges (labour, service, etc.)
+  final List<BillExtraCharge> extraCharges;
+
   // Employee counter token printed on the bill (1, 2, 3…).
   final int? employeeToken;
 
@@ -206,7 +211,13 @@ class PrintBillData {
     this.sgstAmount = 0.0,
     this.otherTaxAmount = 0.0,
     this.totalTaxAmount = 0.0,
+    this.extraCharges = const [],
   });
+
+  double get extraChargesTotal =>
+      extraCharges.fold(0.0, (sum, c) => sum + c.amount);
+
+  bool get hasExtraCharges => extraCharges.any((c) => c.amount > 0);
 
   String get numberLabel => isQuotation ? 'Quotation No' : 'Bill No';
 
@@ -235,6 +246,16 @@ class PrintBillData {
       subtotal: bill.totalAmount as double,
       discountAmount: bill.discountAmount as double?,
       discountPercent: bill.discountPercent as double?,
+      taxAmount: ((bill.totalTaxAmount as num?)?.toDouble() ?? 0) > 0
+          ? (bill.totalTaxAmount as num).toDouble()
+          : null,
+      taxPercent:
+          (((bill.cgstPercent as num?)?.toDouble() ?? 0) +
+                  ((bill.sgstPercent as num?)?.toDouble() ?? 0)) >
+              0
+          ? (((bill.cgstPercent as num?)?.toDouble() ?? 0) +
+                ((bill.sgstPercent as num?)?.toDouble() ?? 0))
+          : null,
       grandTotal: bill.finalAmount as double,
       notes: bill.notes as String?,
       isReturnBill: isReturn,
@@ -253,7 +274,32 @@ class PrintBillData {
       sgstAmount: (bill.sgstAmount as double?) ?? 0.0,
       otherTaxAmount: (bill.otherTaxAmount as double?) ?? 0.0,
       totalTaxAmount: (bill.totalTaxAmount as double?) ?? 0.0,
+      extraCharges: _extraChargesFrom(bill),
     );
+  }
+
+  static List<BillExtraCharge> _extraChargesFrom(dynamic bill) {
+    try {
+      final raw = bill.extraCharges;
+      if (raw is List<BillExtraCharge>) {
+        return List<BillExtraCharge>.from(raw)
+            .where((c) => c.label.trim().isNotEmpty && c.amount > 0)
+            .toList();
+      }
+      if (raw is List) {
+        final out = <BillExtraCharge>[];
+        for (final e in raw) {
+          if (e is BillExtraCharge) {
+            if (e.label.trim().isNotEmpty && e.amount > 0) out.add(e);
+          } else if (e is Map) {
+            final c = BillExtraCharge.fromJson(Map<String, dynamic>.from(e));
+            if (c.label.trim().isNotEmpty && c.amount > 0) out.add(c);
+          }
+        }
+        return out;
+      }
+    } catch (_) {}
+    return const [];
   }
 
   // Get total quantity of items (as double to support decimal quantities)
@@ -281,7 +327,8 @@ class PrintBillData {
   bool get hasDiscount => discountAmount != null && discountAmount! > 0;
 
   // Check if tax is applied
-  bool get hasTax => taxAmount != null && taxAmount! > 0;
+  bool get hasTax =>
+      (taxAmount != null && taxAmount! > 0) || totalTaxAmount > 0;
 
   // Check if payment info is available
   bool get hasPaymentInfo =>
@@ -291,7 +338,9 @@ class PrintBillData {
   bool get hasPendingAmount => pendingAmount != null && pendingAmount! > 0;
 
   // Whether GST breakdown should be displayed
-  bool get hasGst => isGstApplied && totalTaxAmount > 0;
+  bool get hasGst =>
+      totalTaxAmount > 0 ||
+      (isGstApplied && (cgstAmount > 0 || sgstAmount > 0 || otherTaxAmount > 0));
 
   Map<String, dynamic> toJson() {
     return {

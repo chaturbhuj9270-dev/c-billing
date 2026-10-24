@@ -7,6 +7,7 @@ import '../../features/product/offline/controllers/product_offline_controller.da
 import '../../features/billing/offline/controllers/bill_offline_controller.dart';
 import '../../features/billing/offline/entities/bill_entity.dart';
 import '../../features/billing/domain/entities/bill_item.dart';
+import '../../features/billing/domain/entities/bill_extra_charge.dart';
 import '../../features/customer/offline/controllers/customer_transaction_offline_controller.dart';
 import '../services/dashboard_refresh_service.dart';
 
@@ -199,6 +200,7 @@ class InventoryIntegrationService {
     double sgstAmount = 0.0,
     double otherTaxAmount = 0.0,
     double totalTaxAmount = 0.0,
+    List<BillExtraCharge> extraCharges = const [],
   }) async {
     try {
       debugPrint(
@@ -252,6 +254,7 @@ class InventoryIntegrationService {
         sgstAmount: sgstAmount,
         otherTaxAmount: otherTaxAmount,
         totalTaxAmount: totalTaxAmount,
+        extraCharges: extraCharges,
       );
 
       final billId = billEntity.serverId ?? 'local_${billEntity.id}';

@@ -151,6 +151,65 @@ class BillTaxSettings {
     );
   }
 
+  // Build tax from per-product CGST/SGST (set at purchase / product master). Prefer this over flat bill settings when line items carry rates.
+  static TaxBreakdown fromItemTaxes({
+    required List<({double subtotal, double cgstPercent, double sgstPercent})>
+        items,
+    required double discountAmount,
+    required GstMode gstMode,
+  }) {
+    final subtotal = items.fold<double>(0, (s, i) => s + i.subtotal);
+    if (subtotal <= 0 || gstMode == GstMode.noGst) {
+      return TaxBreakdown.zero(subtotal: subtotal);
+    }
+
+    final discountRatio =
+        (discountAmount > 0 && subtotal > 0) ? (discountAmount / subtotal) : 0.0;
+    double taxableValue = 0;
+    double cgstAmount = 0;
+    double sgstAmount = 0;
+    final cgstRates = <double>{};
+    final sgstRates = <double>{};
+
+    for (final item in items) {
+      if (item.subtotal <= 0) continue;
+      final net = item.subtotal * (1 - discountRatio);
+      final itemRate = item.cgstPercent + item.sgstPercent;
+      if (itemRate <= 0) {
+        taxableValue += net;
+        continue;
+      }
+      if (item.cgstPercent > 0) cgstRates.add(item.cgstPercent);
+      if (item.sgstPercent > 0) sgstRates.add(item.sgstPercent);
+
+      if (gstMode == GstMode.includeGst) {
+        final base = net / (1 + itemRate / 100);
+        taxableValue += base;
+        cgstAmount += base * (item.cgstPercent / 100);
+        sgstAmount += base * (item.sgstPercent / 100);
+      } else {
+        // Exclusive: tax on discounted taxable value
+        taxableValue += net;
+        cgstAmount += net * (item.cgstPercent / 100);
+        sgstAmount += net * (item.sgstPercent / 100);
+      }
+    }
+
+    final totalTax = cgstAmount + sgstAmount;
+    return TaxBreakdown(
+      taxableValue: taxableValue,
+      cgstPercent: cgstRates.length == 1 ? cgstRates.first : 0,
+      sgstPercent: sgstRates.length == 1 ? sgstRates.first : 0,
+      otherTaxPercent: 0,
+      cgstAmount: cgstAmount,
+      sgstAmount: sgstAmount,
+      otherTaxAmount: 0,
+      totalTaxAmount: totalTax,
+      subtotal: subtotal,
+      isInclusive: gstMode == GstMode.includeGst,
+    );
+  }
+
   BillTaxSettings copyWith({
     bool? enableCgst,
     bool? enableSgst,

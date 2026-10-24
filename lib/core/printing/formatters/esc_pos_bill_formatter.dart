@@ -378,6 +378,21 @@ class EscPosBillFormatter {
       }
     }
 
+    // Extra charge lines — directly below product items (no section label)
+    if (d.hasExtraCharges) {
+      for (final charge in d.extraCharges) {
+        if (charge.amount <= 0) continue;
+        b.addAll(
+          _dynamicItemRow(
+            charge.label,
+            effectiveShowQty ? '-' : null,
+            effectiveShowRate ? _fmt(charge.amount) : null,
+            effectiveShowAmount ? _fmt(charge.amount) : null,
+          ),
+        );
+      }
+    }
+
     b.addAll(_thinDiv());
 
     // Aggregate return summary

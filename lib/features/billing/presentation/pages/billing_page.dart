@@ -11,6 +11,9 @@ import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/features/billing/data/repositories/firebase_bill_repository.dart';
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_item.dart';
+import 'package:c_billing/features/billing/domain/entities/bill_extra_charge.dart';
+import 'package:c_billing/features/billing/domain/utils/bill_ledger_description.dart';
+import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
 import 'package:c_billing/features/inventory_management/domain/entities/product.dart';
 import 'package:c_billing/features/billing/data/datasources/bill_cache_datasource.dart';
 import 'package:c_billing/core/printing/printing.dart';
@@ -108,6 +111,10 @@ class _BillingPageState extends State<BillingPage> {
   bool _isPercentageDiscount = true;
   double _discountValue = 0.0;
 
+  // Extra charges (labour / service / etc.)
+  bool _extraChargesEnabled = false;
+  final List<_ExtraChargeDraft> _extraChargeDrafts = [];
+
   // Payment state
   double _receivedAmount = 0.0;
   bool _isFullPayment = true;
@@ -157,12 +164,48 @@ class _BillingPageState extends State<BillingPage> {
   BillTaxSettings _taxSettings = BillTaxSettings.defaultSettings;
   GstMode _gstMode = GstMode.noGst;
 
-  // Computed tax breakdown based on current subtotal and GST mode
+  // Product master tax (CGST/SGST saved at purchase) present on any line item
+  bool get _hasItemLevelTax =>
+      _billItems.any((i) => i.cgstPercent > 0 || i.sgstPercent > 0);
+
+  // Prefer per-product rates from purchase; fall back to flat Bill Settings rates
   TaxBreakdown? get _taxBreakdown {
-    if (_gstMode == GstMode.noGst || !_taxSettings.hasAnyTaxEnabled) {
-      return null;
+    if (_gstMode == GstMode.noGst) return null;
+
+    if (_hasItemLevelTax) {
+      final breakdown = BillTaxSettings.fromItemTaxes(
+        items: _billItems
+            .map(
+              (i) => (
+                subtotal: i.subtotal,
+                cgstPercent: i.cgstPercent,
+                sgstPercent: i.sgstPercent,
+              ),
+            )
+            .toList(),
+        discountAmount: _discountAmount,
+        gstMode: _gstMode,
+      );
+      return breakdown.hasAnyTax ? breakdown : null;
     }
-    return _taxSettings.calculateTax(subtotal: _totalAmount, gstMode: _gstMode);
+
+    if (!_taxSettings.hasAnyTaxEnabled) return null;
+    return _taxSettings.calculateTax(
+      subtotal: _totalAmount,
+      gstMode: _gstMode,
+    );
+  }
+
+  // When a purchased product carries CGST/SGST, auto-enable sale tax if currently off
+  void _ensureGstModeForProductTax({
+    required double cgstPercent,
+    required double sgstPercent,
+  }) {
+    if (_gstMode != GstMode.noGst) return;
+    if (cgstPercent <= 0 && sgstPercent <= 0) return;
+    _gstMode = _taxSettings.defaultIncludeTax
+        ? GstMode.includeGst
+        : GstMode.excludeGst;
   }
 
   @override
@@ -323,8 +366,43 @@ class _BillingPageState extends State<BillingPage> {
     _notesController.dispose();
     _discountController.dispose();
     _receivedAmountController.dispose();
+    _disposeExtraChargeDrafts();
     _printerService.dispose();
     super.dispose();
+  }
+
+  void _disposeExtraChargeDrafts() {
+    for (final draft in _extraChargeDrafts) {
+      draft.dispose();
+    }
+    _extraChargeDrafts.clear();
+  }
+
+  List<BillExtraCharge> get _validExtraCharges {
+    if (!_extraChargesEnabled) return const [];
+    return _extraChargeDrafts
+        .map((d) => d.toCharge())
+        .where((c) => c.isValid)
+        .toList();
+  }
+
+  double get _extraChargesTotal =>
+      _validExtraCharges.fold(0.0, (total, c) => total + c.amount);
+
+  void _addExtraChargeRow() {
+    setState(() {
+      _extraChargeDrafts.add(_ExtraChargeDraft());
+    });
+  }
+
+  void _removeExtraChargeRow(String id) {
+    setState(() {
+      final idx = _extraChargeDrafts.indexWhere((d) => d.id == id);
+      if (idx >= 0) {
+        _extraChargeDrafts[idx].dispose();
+        _extraChargeDrafts.removeAt(idx);
+      }
+    });
   }
 
   void _onLanguageChanged() {
@@ -1013,6 +1091,10 @@ class _BillingPageState extends State<BillingPage> {
                 (item) => item.productId == uniqueKey,
               );
               setState(() {
+                _ensureGstModeForProductTax(
+                  cgstPercent: cgstPercent,
+                  sgstPercent: sgstPercent,
+                );
                 if (existingIndex != -1) {
                   final prev = _billItems[existingIndex];
                   _billItems[existingIndex] = BillItem.create(
@@ -1102,6 +1184,7 @@ class _BillingPageState extends State<BillingPage> {
         : productId;
 
     setState(() {
+      _ensureGstModeForProductTax(cgstPercent: cgst, sgstPercent: sgst);
       final existingIndex = _billItems.indexWhere(
         (item) => item.productId == uniqueKey,
       );
@@ -1190,6 +1273,8 @@ class _BillingPageState extends State<BillingPage> {
       // For inclusive GST or no GST, price already contains tax or no tax
       amount = subtotalAfterDiscount;
     }
+    // Extra charges (labour / service) always add on top
+    amount += _extraChargesTotal;
     // Round up to nearest rupee
     return amount.ceilToDouble();
   }
@@ -1319,6 +1404,7 @@ class _BillingPageState extends State<BillingPage> {
             sgstAmount: _taxBreakdown?.sgstAmount ?? 0.0,
             otherTaxAmount: _taxBreakdown?.otherTaxAmount ?? 0.0,
             totalTaxAmount: _taxBreakdown?.totalTaxAmount ?? 0.0,
+            extraCharges: _validExtraCharges,
           );
 
       if (!integrationResult.success) {
@@ -1344,13 +1430,16 @@ class _BillingPageState extends State<BillingPage> {
               'local_${integrationResult.billEntity?.id}';
 
           // 3a. Record bill creation transaction (adds to pending amount) - Offline
+          final chargeSummary = _validExtraCharges.isEmpty
+              ? ''
+              : '; Extra: ${_validExtraCharges.map((c) => '${c.label} ₹${c.amount.toStringAsFixed(0)}').join(', ')}';
           await CustomerTransactionOfflineController.instance
               .addBillTransaction(
                 customerId: customerId,
                 customerName: customerName,
                 amount: _finalAmount,
                 billId: billId,
-                description: 'Bill #$billId',
+                description: 'Bill #$billId$chargeSummary',
               );
           debugPrint(
             '[Billing] Bill transaction recorded offline: $_finalAmount',
@@ -1500,6 +1589,7 @@ class _BillingPageState extends State<BillingPage> {
 
   void _clearBill() {
     _disposeItemTokenInputs();
+    _disposeExtraChargeDrafts();
     setState(() {
       _billItems.clear();
       _customerNameController.clear();
@@ -1509,6 +1599,7 @@ class _BillingPageState extends State<BillingPage> {
       _receivedAmountController.clear();
       _discountValue = 0.0;
       _isPercentageDiscount = true;
+      _extraChargesEnabled = false;
       _selectedCustomer = null;
       _autoFoundCustomerName = null;
       _receivedAmount = 0.0;
@@ -1826,7 +1917,8 @@ class _BillingPageState extends State<BillingPage> {
                           _buildCustomerSection(),
                         _buildAddItemsSection(),
                         _buildBillItemsSection(),
-                        if (_taxSettings.hasAnyTaxEnabled)
+                        _buildExtraChargesSection(compact: false),
+                        if (_taxSettings.hasAnyTaxEnabled || _hasItemLevelTax)
                           _buildGstModeSection(),
                         const SizedBox(height: 12),
                       ],
@@ -1861,7 +1953,9 @@ class _BillingPageState extends State<BillingPage> {
     final taxed = _gstMode == GstMode.excludeGst && _taxBreakdown != null
         ? base + _taxBreakdown!.totalTaxAmount
         : base;
-    final roundOff = _finalAmount - taxed;
+    final withCharges = taxed + _extraChargesTotal;
+    final roundOff = _finalAmount - withCharges;
+    final tax = _taxBreakdown;
     Widget line(String label, String value, {Color? valueColor}) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 5),
@@ -1921,6 +2015,35 @@ class _BillingPageState extends State<BillingPage> {
               '-₹${_discountAmount.toStringAsFixed(2)}',
               valueColor: AppTheme.toneRose,
             ),
+          if (tax != null && tax.hasAnyTax) ...[
+            if (tax.cgstAmount > 0)
+              line(
+                tax.cgstPercent > 0
+                    ? 'CGST (${tax.cgstPercent.toStringAsFixed(1)}%)'
+                    : 'CGST',
+                '₹${tax.cgstAmount.toStringAsFixed(2)}',
+              ),
+            if (tax.sgstAmount > 0)
+              line(
+                tax.sgstPercent > 0
+                    ? 'SGST (${tax.sgstPercent.toStringAsFixed(1)}%)'
+                    : 'SGST',
+                '₹${tax.sgstAmount.toStringAsFixed(2)}',
+              ),
+            if (tax.otherTaxAmount > 0)
+              line(
+                tax.otherTaxName.isNotEmpty ? tax.otherTaxName : 'Tax',
+                '₹${tax.otherTaxAmount.toStringAsFixed(2)}',
+              ),
+            line(
+              'Total tax',
+              '₹${tax.totalTaxAmount.toStringAsFixed(2)}',
+            ),
+          ],
+          if (_extraChargesTotal > 0) ...[
+            for (final charge in _validExtraCharges)
+              line(charge.label, '₹${charge.amount.toStringAsFixed(2)}'),
+          ],
           if (roundOff.abs() >= 0.01)
             line('Round off', '₹${roundOff.toStringAsFixed(2)}'),
           Divider(height: 20, color: AppColors.border(context)),
@@ -2055,8 +2178,10 @@ class _BillingPageState extends State<BillingPage> {
   List<Widget> _billExtras() {
     return [
       if (_billItems.isNotEmpty) _buildBillItemsSection(),
+      if (_billItems.isNotEmpty) _buildExtraChargesSection(compact: false),
       if (_billItems.isNotEmpty) _buildDiscountSection(),
-      if (_billItems.isNotEmpty && _taxSettings.hasAnyTaxEnabled)
+      if (_billItems.isNotEmpty &&
+          (_taxSettings.hasAnyTaxEnabled || _hasItemLevelTax))
         _buildGstModeSection(),
       if (_billItems.isNotEmpty) _buildPaymentSection(),
       if (_billItems.isNotEmpty) const SizedBox(height: 16),
@@ -2929,6 +3054,10 @@ class _BillingPageState extends State<BillingPage> {
               (item) => item.productId == uniqueKey,
             );
             setState(() {
+              _ensureGstModeForProductTax(
+                cgstPercent: resolved.cgstPercent,
+                sgstPercent: resolved.sgstPercent,
+              );
               if (existingIndex != -1) {
                 final prev = _billItems[existingIndex];
                 _billItems[existingIndex] = BillItem.create(
@@ -2940,6 +3069,8 @@ class _BillingPageState extends State<BillingPage> {
                   sellingPrice: batch.sellingPrice,
                   purchasePrice: batch.purchasePrice,
                   quantity: quantity,
+                  cgstPercent: resolved.cgstPercent,
+                  sgstPercent: resolved.sgstPercent,
                   hsnCode: resolved.hsnCode,
                   unit: resolved.unit,
                   sellUnit: sellUnit,
@@ -2956,6 +3087,8 @@ class _BillingPageState extends State<BillingPage> {
                     sellingPrice: batch.sellingPrice,
                     purchasePrice: batch.purchasePrice,
                     quantity: quantity,
+                    cgstPercent: resolved.cgstPercent,
+                    sgstPercent: resolved.sgstPercent,
                     hsnCode: resolved.hsnCode,
                     unit: resolved.unit,
                     sellUnit: sellUnit,
@@ -2991,6 +3124,10 @@ class _BillingPageState extends State<BillingPage> {
       (item) => item.productId == uniqueKey,
     );
     setState(() {
+      _ensureGstModeForProductTax(
+        cgstPercent: resolved.cgstPercent,
+        sgstPercent: resolved.sgstPercent,
+      );
       if (existingIndex != -1) {
         final existing = _billItems[existingIndex];
         // Determine step based on current sellUnit
@@ -3007,6 +3144,8 @@ class _BillingPageState extends State<BillingPage> {
             sellingPrice: existing.sellingPrice,
             purchasePrice: fifoPurchasePrice,
             quantity: existing.quantity + step,
+            cgstPercent: resolved.cgstPercent,
+            sgstPercent: resolved.sgstPercent,
             hsnCode: resolved.hsnCode,
             unit: existing.unit ?? resolved.unit,
             sellUnit: existing.sellUnit ?? resolved.unit,
@@ -3031,6 +3170,8 @@ class _BillingPageState extends State<BillingPage> {
             sellingPrice: fifoPrice,
             purchasePrice: fifoPurchasePrice,
             quantity: 1,
+            cgstPercent: resolved.cgstPercent,
+            sgstPercent: resolved.sgstPercent,
             hsnCode: resolved.hsnCode,
             unit: resolved.unit,
             sellUnit: resolved.unit,
@@ -4374,6 +4515,244 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
+  Widget _buildExtraChargesSection({bool compact = false}) {
+    final action = AppColors.action(context);
+    return Container(
+      margin: compact
+          ? const EdgeInsets.fromLTRB(0, 0, 0, 12)
+          : const EdgeInsets.fromLTRB(16, 6, 16, 6),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 8, 8),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AppTheme.headerDarkStart,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.add_card_rounded,
+                    color: AppTheme.white,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Other charges',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: AppColors.primaryText(context),
+                        ),
+                      ),
+                      Text(
+                        'Labour, loading, service…',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 12,
+                          color: AppColors.mutedText(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: _extraChargesEnabled,
+                  onChanged: (v) {
+                    setState(() {
+                      _extraChargesEnabled = v;
+                      if (v && _extraChargeDrafts.isEmpty) {
+                        _extraChargeDrafts.add(_ExtraChargeDraft());
+                      }
+                      if (!v) {
+                        _disposeExtraChargeDrafts();
+                      }
+                    });
+                  },
+                  activeThumbColor: AppTheme.white,
+                  activeTrackColor: action,
+                  inactiveThumbColor: AppColors.isDark(context)
+                      ? AppTheme.grey
+                      : AppTheme.white,
+                  inactiveTrackColor: AppColors.isDark(context)
+                      ? AppTheme.white24
+                      : AppTheme.grey300,
+                  trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return AppTheme.transparent;
+                    }
+                    return AppColors.border(context);
+                  }),
+                ),
+              ],
+            ),
+          ),
+          if (_extraChargesEnabled) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: Column(
+                children: [
+                  for (final draft in _extraChargeDrafts) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: TextField(
+                            controller: draft.labelController,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primaryText(context),
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Charge name',
+                              hintStyle: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 12,
+                                color: AppColors.mutedText(context),
+                              ),
+                              filled: true,
+                              fillColor: AppColors.inputFill(context),
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 10,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: AppColors.border(context),
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: AppColors.border(context),
+                                ),
+                              ),
+                            ),
+                            onChanged: (_) => setState(() {}),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 2,
+                          child: TextField(
+                            controller: draft.amountController,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'^\d*\.?\d{0,2}'),
+                              ),
+                            ],
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primaryText(context),
+                            ),
+                            decoration: InputDecoration(
+                              hintText: '0.00',
+                              prefixText: '₹ ',
+                              hintStyle: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 12,
+                                color: AppColors.mutedText(context),
+                              ),
+                              filled: true,
+                              fillColor: AppColors.inputFill(context),
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 10,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: AppColors.border(context),
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: AppColors.border(context),
+                                ),
+                              ),
+                            ),
+                            onChanged: (_) => setState(() {}),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: _extraChargeDrafts.length <= 1
+                              ? null
+                              : () => _removeExtraChargeRow(draft.id),
+                          icon: Icon(
+                            Icons.close_rounded,
+                            size: 18,
+                            color: AppColors.mutedText(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: _addExtraChargeRow,
+                      icon: Icon(Icons.add_rounded, size: 18, color: action),
+                      label: Text(
+                        'Add charge',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w700,
+                          color: action,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (_extraChargesTotal > 0)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        'Other charges: ₹${_extraChargesTotal.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                          color: AppColors.primaryText(context),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildDiscountSection({bool showNestedSummary = true}) {
     return Container(
       margin: showNestedSummary
@@ -4603,19 +4982,27 @@ class _BillingPageState extends State<BillingPage> {
                   ),
                 ),
               ),
-            if (_taxBreakdown!.cgstPercent > 0)
+            if (_taxBreakdown!.cgstAmount > 0)
               _buildTaxRow(
-                '${_localizations.cgst} (${_taxBreakdown!.cgstPercent.toStringAsFixed(1)}%)',
+                _taxBreakdown!.cgstPercent > 0
+                    ? '${_localizations.cgst} (${_taxBreakdown!.cgstPercent.toStringAsFixed(1)}%)'
+                    : _localizations.cgst,
                 _taxBreakdown!.cgstAmount,
               ),
-            if (_taxBreakdown!.sgstPercent > 0)
+            if (_taxBreakdown!.sgstAmount > 0)
               _buildTaxRow(
-                '${_localizations.sgst} (${_taxBreakdown!.sgstPercent.toStringAsFixed(1)}%)',
+                _taxBreakdown!.sgstPercent > 0
+                    ? '${_localizations.sgst} (${_taxBreakdown!.sgstPercent.toStringAsFixed(1)}%)'
+                    : _localizations.sgst,
                 _taxBreakdown!.sgstAmount,
               ),
-            if (_taxBreakdown!.otherTaxPercent > 0)
+            if (_taxBreakdown!.otherTaxAmount > 0)
               _buildTaxRow(
-                '${_taxBreakdown!.otherTaxName.isNotEmpty ? _taxBreakdown!.otherTaxName : _localizations.totalTax} (${_taxBreakdown!.otherTaxPercent.toStringAsFixed(1)}%)',
+                _taxBreakdown!.otherTaxPercent > 0
+                    ? '${_taxBreakdown!.otherTaxName.isNotEmpty ? _taxBreakdown!.otherTaxName : _localizations.totalTax} (${_taxBreakdown!.otherTaxPercent.toStringAsFixed(1)}%)'
+                    : (_taxBreakdown!.otherTaxName.isNotEmpty
+                          ? _taxBreakdown!.otherTaxName
+                          : _localizations.totalTax),
                 _taxBreakdown!.otherTaxAmount,
               ),
             const SizedBox(height: 4),
@@ -4637,6 +5024,16 @@ class _BillingPageState extends State<BillingPage> {
                   ),
                 ),
               ),
+          ],
+          if (_extraChargesTotal > 0) ...[
+            const SizedBox(height: 10),
+            for (final charge in _validExtraCharges) ...[
+              _buildSummaryRow(
+                charge.label,
+                '₹${charge.amount.toStringAsFixed(2)}',
+              ),
+              const SizedBox(height: 6),
+            ],
           ],
           SizedBox(height: 12),
           Divider(color: AppTheme.grey300, height: 1),
@@ -6790,5 +7187,29 @@ class _InlineQuantityFieldState extends State<_InlineQuantityField> {
         ],
       ),
     );
+  }
+}
+
+class _ExtraChargeDraft {
+  final String id;
+  final TextEditingController labelController;
+  final TextEditingController amountController;
+
+  _ExtraChargeDraft()
+    : id = 'chg_${DateTime.now().microsecondsSinceEpoch}',
+      labelController = TextEditingController(),
+      amountController = TextEditingController();
+
+  BillExtraCharge toCharge() {
+    return BillExtraCharge(
+      id: id,
+      label: labelController.text.trim(),
+      amount: double.tryParse(amountController.text.trim()) ?? 0.0,
+    );
+  }
+
+  void dispose() {
+    labelController.dispose();
+    amountController.dispose();
   }
 }

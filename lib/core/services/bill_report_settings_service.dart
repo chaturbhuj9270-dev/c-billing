@@ -79,7 +79,7 @@ class BillReportSettingsService {
       'isDefault': true,
       'isVisible': false,
     },
-    {'id': 'tax', 'name': 'Tax', 'isDefault': true, 'isVisible': false},
+    {'id': 'tax', 'name': 'Tax', 'isDefault': true, 'isVisible': true},
     {'id': 'amount', 'name': 'Amount', 'isDefault': true, 'isVisible': true},
   ];
 

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
+import 'package:c_billing/features/billing/domain/entities/bill_extra_charge.dart';
 
 // Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTimeHelper(dynamic value) {
@@ -192,6 +193,9 @@ class BillEntity {
   // Total tax amount
   double totalTaxAmount;
 
+  // Extra charges (labour, service, etc.)
+  List<BillExtraCharge> extraCharges;
+
   // Sync status for delta sync
   BillSyncStatus syncStatus;
 
@@ -229,10 +233,14 @@ class BillEntity {
     this.sgstAmount = 0.0,
     this.otherTaxAmount = 0.0,
     this.totalTaxAmount = 0.0,
+    this.extraCharges = const [],
     this.syncStatus = BillSyncStatus.newRecord,
     required this.createdAt,
     required this.updatedAt,
   });
+
+  double get extraChargesTotal =>
+      extraCharges.fold(0.0, (sum, c) => sum + c.amount);
 
   // Factory constructor for creating new bill with defaults
   factory BillEntity.create({
@@ -263,6 +271,7 @@ class BillEntity {
     double sgstAmount = 0.0,
     double otherTaxAmount = 0.0,
     double totalTaxAmount = 0.0,
+    List<BillExtraCharge> extraCharges = const [],
     BillSyncStatus syncStatus = BillSyncStatus.newRecord,
   }) {
     final now = DateTime.now();
@@ -294,6 +303,7 @@ class BillEntity {
       sgstAmount: sgstAmount,
       otherTaxAmount: otherTaxAmount,
       totalTaxAmount: totalTaxAmount,
+      extraCharges: extraCharges,
       syncStatus: syncStatus,
       createdAt: now,
       updatedAt: now,
@@ -310,6 +320,16 @@ class BillEntity {
           .map(
             (item) => BillItemEmbedded.fromJson(item as Map<String, dynamic>),
           )
+          .toList();
+    }
+
+    List<BillExtraCharge> charges = [];
+    final rawCharges = data['extraCharges'];
+    if (rawCharges is List) {
+      charges = rawCharges
+          .whereType<Map>()
+          .map((e) => BillExtraCharge.fromJson(Map<String, dynamic>.from(e)))
+          .where((c) => c.label.trim().isNotEmpty)
           .toList();
     }
 
@@ -341,6 +361,7 @@ class BillEntity {
       sgstAmount: (data['sgstAmount'] as num?)?.toDouble() ?? 0.0,
       otherTaxAmount: (data['otherTaxAmount'] as num?)?.toDouble() ?? 0.0,
       totalTaxAmount: (data['totalTaxAmount'] as num?)?.toDouble() ?? 0.0,
+      extraCharges: charges,
       syncStatus: BillSyncStatus.synced,
       createdAt: _parseDateTimeHelper(data['createdAt']) ?? now,
       updatedAt: _parseDateTimeHelper(data['updatedAt']) ?? now,
@@ -415,6 +436,7 @@ class BillEntity {
       'sgstAmount': sgstAmount,
       'otherTaxAmount': otherTaxAmount,
       'totalTaxAmount': totalTaxAmount,
+      'extraCharges': extraCharges.map((c) => c.toJson()).toList(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': DateTime.now().toIso8601String(),
     };
@@ -453,6 +475,7 @@ class BillEntity {
     double? sgstAmount,
     double? otherTaxAmount,
     double? totalTaxAmount,
+    List<BillExtraCharge>? extraCharges,
     BillSyncStatus? syncStatus,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -485,6 +508,7 @@ class BillEntity {
       sgstAmount: sgstAmount ?? this.sgstAmount,
       otherTaxAmount: otherTaxAmount ?? this.otherTaxAmount,
       totalTaxAmount: totalTaxAmount ?? this.totalTaxAmount,
+      extraCharges: extraCharges ?? this.extraCharges,
       syncStatus: syncStatus ?? this.syncStatus,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? DateTime.now(),

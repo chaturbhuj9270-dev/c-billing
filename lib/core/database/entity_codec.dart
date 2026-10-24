@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../../features/billing/domain/entities/bill_extra_charge.dart';
 import '../../features/billing/offline/entities/bill_entity.dart';
 import '../../features/event_order/offline/entities/event_order_entity.dart';
 
@@ -23,6 +24,25 @@ List<BillItemEmbedded> decodeBillItems(String raw) {
       .whereType<Map>()
       .map((item) => BillItemEmbedded.fromJson(Map<String, dynamic>.from(item)))
       .toList();
+}
+
+String encodeExtraCharges(List<BillExtraCharge> charges) {
+  return jsonEncode(charges.map((c) => c.toJson()).toList());
+}
+
+List<BillExtraCharge> decodeExtraCharges(String? raw) {
+  if (raw == null || raw.trim().isEmpty) return [];
+  try {
+    final decoded = jsonDecode(raw);
+    if (decoded is! List) return [];
+    return decoded
+        .whereType<Map>()
+        .map((e) => BillExtraCharge.fromJson(Map<String, dynamic>.from(e)))
+        .where((c) => c.label.trim().isNotEmpty)
+        .toList();
+  } catch (_) {
+    return [];
+  }
 }
 
 String encodeSubEvents(List<SubEventEmbedded> events) {

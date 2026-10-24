@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/local_store.dart';
 import '../../../../core/services/local_database.dart';
+import '../../domain/entities/bill_extra_charge.dart';
 import '../entities/bill_entity.dart';
 
 // Offline-first controller for Bill CRUD operations. All operations go to the local database first, then sync in the background.
@@ -52,6 +53,7 @@ class BillOfflineController extends ChangeNotifier {
     double sgstAmount = 0.0,
     double otherTaxAmount = 0.0,
     double totalTaxAmount = 0.0,
+    List<BillExtraCharge> extraCharges = const [],
   }) async {
     final bill = BillEntity.create(
       customerId: customerId,
@@ -78,6 +80,7 @@ class BillOfflineController extends ChangeNotifier {
       sgstAmount: sgstAmount,
       otherTaxAmount: otherTaxAmount,
       totalTaxAmount: totalTaxAmount,
+      extraCharges: extraCharges,
       syncStatus: BillSyncStatus.newRecord,
     );
 

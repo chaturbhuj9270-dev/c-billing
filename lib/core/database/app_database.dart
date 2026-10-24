@@ -215,6 +215,9 @@ class BillRecords extends Table {
   RealColumn get sgstAmount => real().withDefault(const Constant(0))();
   RealColumn get otherTaxAmount => real().withDefault(const Constant(0))();
   RealColumn get totalTaxAmount => real().withDefault(const Constant(0))();
+  // JSON list of {id, label, amount} — labour / service / other bill charges
+  TextColumn get extraChargesJson =>
+      text().withDefault(const Constant('[]'))();
   IntColumn get syncStatus => integer()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
@@ -393,7 +396,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? openAppDatabase());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -417,6 +420,9 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(employeeRecords, employeeRecords.govIdType);
         await m.addColumn(employeeRecords, employeeRecords.salary);
         await m.addColumn(employeeRecords, employeeRecords.dateOfJoining);
+      }
+      if (from < 6) {
+        await m.addColumn(billRecords, billRecords.extraChargesJson);
       }
     },
   );

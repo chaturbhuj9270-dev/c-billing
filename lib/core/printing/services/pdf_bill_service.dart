@@ -536,6 +536,14 @@ class PdfBillService {
                           ),
                         ],
                         _buildSummaryRow('Sub Total', billData.subtotal),
+                        if (billData.hasExtraCharges) ...[
+                          for (final charge in billData.extraCharges)
+                            if (charge.amount > 0)
+                              _buildSummaryRow(
+                                charge.label,
+                                charge.amount,
+                              ),
+                        ],
                         pw.Container(
                           margin: const pw.EdgeInsets.only(top: 4),
                           padding: const pw.EdgeInsets.symmetric(
@@ -1202,6 +1210,41 @@ class PdfBillService {
       }
     }
 
+    // Other charges as rows directly below product items
+    if (billData.hasExtraCharges) {
+      for (final charge in billData.extraCharges) {
+        if (charge.amount <= 0) continue;
+        final cells = visibleColumnIds.map((colId) {
+          switch (colId) {
+            case 'sr_no':
+              return _buildCompactCell('', align: pw.TextAlign.center);
+            case 'product_name':
+              return pw.Padding(
+                padding: const pw.EdgeInsets.all(4),
+                child: pw.Text(
+                  charge.label,
+                  style: pw.TextStyle(
+                    fontSize: 9,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              );
+            case 'quantity':
+              return _buildCompactCell('-', align: pw.TextAlign.center);
+            case 'rate':
+            case 'amount':
+              return _buildCompactCell(
+                charge.amount.toStringAsFixed(2),
+                align: pw.TextAlign.right,
+              );
+            default:
+              return _buildCompactCell('-');
+          }
+        }).toList();
+        itemRows.add(pw.TableRow(children: cells));
+      }
+    }
+
     return pw.Table(
       border: pw.TableBorder(horizontalInside: thinBorder, bottom: borderSide),
       columnWidths: columnWidths,
@@ -1606,6 +1649,54 @@ class PdfBillService {
               ),
           ],
         ),
+
+        // Extra charge lines — directly below product items (no section label)
+        if (billData.hasExtraCharges) ...[
+          for (final charge in billData.extraCharges)
+            if (charge.amount > 0)
+              pw.Container(
+                width: receiptWidth,
+                padding: const pw.EdgeInsets.only(bottom: 2),
+                child: pw.Row(
+                  children: [
+                    pw.Expanded(
+                      flex: 5,
+                      child: pw.Text(
+                        charge.label,
+                        style: pw.TextStyle(
+                          fontSize: 8,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    pw.SizedBox(
+                      width: 28,
+                      child: pw.Text(
+                        '-',
+                        style: const pw.TextStyle(fontSize: 8),
+                        textAlign: pw.TextAlign.center,
+                      ),
+                    ),
+                    pw.SizedBox(
+                      width: 44,
+                      child: pw.Text(
+                        charge.amount.toStringAsFixed(2),
+                        style: const pw.TextStyle(fontSize: 8),
+                        textAlign: pw.TextAlign.right,
+                      ),
+                    ),
+                    pw.SizedBox(
+                      width: 48,
+                      child: pw.Text(
+                        charge.amount.toStringAsFixed(2),
+                        style: const pw.TextStyle(fontSize: 8),
+                        textAlign: pw.TextAlign.right,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+        ],
 
         pw.SizedBox(height: 2),
         _buildDashedDivider(),

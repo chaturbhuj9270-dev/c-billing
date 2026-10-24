@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'bill_item.dart';
+import 'bill_extra_charge.dart';
 import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
 
 // Payment status of a bill
@@ -72,6 +73,9 @@ class Bill {
   // Total tax amount (CGST + SGST + Other)
   final double totalTaxAmount;
 
+  // Extra charges (labour, service, etc.)
+  final List<BillExtraCharge> extraCharges;
+
   // Whether the bill is synced with the server
   final bool isSynced;
 
@@ -105,8 +109,12 @@ class Bill {
     this.sgstAmount = 0.0,
     this.otherTaxAmount = 0.0,
     this.totalTaxAmount = 0.0,
+    this.extraCharges = const [],
     this.isSynced = true,
   });
+
+  double get extraChargesTotal =>
+      extraCharges.fold(0.0, (sum, c) => sum + c.amount);
 
   // Factory constructor to create from JSON (for Firebase)
   factory Bill.fromJson(Map<String, dynamic> json) {
@@ -124,6 +132,16 @@ class Bill {
           .toDouble();
       final finalAmount = ((json['finalAmount'] ?? totalAmount) as num)
           .toDouble();
+
+      List<BillExtraCharge> charges = [];
+      final rawCharges = json['extraCharges'];
+      if (rawCharges is List) {
+        charges = rawCharges
+            .whereType<Map>()
+            .map((e) => BillExtraCharge.fromJson(Map<String, dynamic>.from(e)))
+            .where((c) => c.label.trim().isNotEmpty)
+            .toList();
+      }
 
       return Bill(
         id: (json['id'] ?? '') as String,
@@ -163,6 +181,7 @@ class Bill {
         sgstAmount: ((json['sgstAmount'] ?? 0) as num).toDouble(),
         otherTaxAmount: ((json['otherTaxAmount'] ?? 0) as num).toDouble(),
         totalTaxAmount: ((json['totalTaxAmount'] ?? 0) as num).toDouble(),
+        extraCharges: charges,
       );
     } catch (e) {
       debugPrint('[ERROR] Failed to parse Bill from JSON: $json');
@@ -258,6 +277,7 @@ class Bill {
       sgstAmount: entity.sgstAmount,
       otherTaxAmount: entity.otherTaxAmount,
       totalTaxAmount: entity.totalTaxAmount,
+      extraCharges: entity.extraCharges,
       isSynced: entity.syncStatus == BillSyncStatus.synced,
     );
   }
@@ -308,6 +328,7 @@ class Bill {
       'sgstAmount': sgstAmount,
       'otherTaxAmount': otherTaxAmount,
       'totalTaxAmount': totalTaxAmount,
+      'extraCharges': extraCharges.map((c) => c.toJson()).toList(),
     };
   }
 
@@ -342,6 +363,7 @@ class Bill {
     double? sgstAmount,
     double? otherTaxAmount,
     double? totalTaxAmount,
+    List<BillExtraCharge>? extraCharges,
     bool? isSynced,
   }) {
     return Bill(
@@ -374,6 +396,7 @@ class Bill {
       sgstAmount: sgstAmount ?? this.sgstAmount,
       otherTaxAmount: otherTaxAmount ?? this.otherTaxAmount,
       totalTaxAmount: totalTaxAmount ?? this.totalTaxAmount,
+      extraCharges: extraCharges ?? this.extraCharges,
       isSynced: isSynced ?? this.isSynced,
     );
   }
