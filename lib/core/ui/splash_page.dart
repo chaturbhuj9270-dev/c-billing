@@ -36,8 +36,6 @@ class SplashPage extends StatefulWidget {
 
 class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   static const _contactPhone = '+91 99706 62978';
-  static const _website = 'www.c-billing.com';
-  static const _versionLabel = 'version 1.0.0';
 
   static const _stepLabels = [
     'Checking license',
@@ -55,14 +53,13 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
 
   /// Index of the step currently running (0..3). Steps below are done.
   int _activeStep = 0;
-  double _progress = 0.0;
   double _creepCeiling = 0.12;
 
   late final AnimationController _introController;
   late final AnimationController _pulseController;
   late final AnimationController _ringController;
+  late final AnimationController _bgRingController;
   late final AnimationController _progressController;
-  late final AnimationController _panelController;
 
   late final Animation<double> _logoFade;
   late final Animation<double> _logoScale;
@@ -73,9 +70,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   late final Animation<double> _footerFade;
   late final Animation<Offset> _footerSlide;
   late final Animation<double> _pulseScale;
-  late final Animation<Offset> _leftSlide;
-  late final Animation<Offset> _rightSlide;
-  late final Animation<double> _panelFade;
 
   @override
   void initState() {
@@ -92,14 +86,14 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       vsync: this,
       duration: const Duration(milliseconds: 3200),
     );
+    _bgRingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 8400),
+    );
     _progressController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
       value: 0,
-    );
-    _panelController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
     );
 
     _logoFade = CurvedAnimation(
@@ -145,29 +139,11 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     _pulseScale = Tween<double>(begin: 1, end: 1.05).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
-    _leftSlide = Tween<Offset>(begin: const Offset(-0.06, 0), end: Offset.zero)
-        .animate(
-          CurvedAnimation(
-            parent: _panelController,
-            curve: const Interval(0.0, 0.7, curve: Curves.easeOutCubic),
-          ),
-        );
-    _rightSlide = Tween<Offset>(begin: const Offset(0.06, 0), end: Offset.zero)
-        .animate(
-          CurvedAnimation(
-            parent: _panelController,
-            curve: const Interval(0.1, 0.85, curve: Curves.easeOutCubic),
-          ),
-        );
-    _panelFade = CurvedAnimation(
-      parent: _panelController,
-      curve: const Interval(0.0, 0.55, curve: Curves.easeOut),
-    );
 
     _introController.forward();
-    _panelController.forward();
     _pulseController.repeat(reverse: true);
     _ringController.repeat();
+    _bgRingController.repeat();
 
     _credentialsManager = CredentialsManager();
     _localizations = AppLocalizations.of(
@@ -192,7 +168,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       if (cur >= _creepCeiling) return;
       final next = (cur + 0.01).clamp(0.0, _creepCeiling);
       _progressController.value = next;
-      _progress = next;
       setState(() {});
     });
   }
@@ -211,7 +186,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     _stopCreep();
     setState(() {
       _activeStep = step.clamp(0, _stepLabels.length - 1);
-      _progress = next;
     });
     await _progressController.animateTo(
       next,
@@ -548,8 +522,8 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     _introController.dispose();
     _pulseController.dispose();
     _ringController.dispose();
+    _bgRingController.dispose();
     _progressController.dispose();
-    _panelController.dispose();
     super.dispose();
   }
 
@@ -568,330 +542,133 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final wide =
-        DesktopCanvas.isDesktopPlatform &&
-        MediaQuery.sizeOf(context).width >= 860;
-    if (wide) return _buildDesktopSplash(context);
+    if (DesktopCanvas.isDesktopPlatform) return _buildDesktopSplash(context);
     return _buildMobileSplash(context);
   }
 
-  // —— Desktop / Web split splash ——
-
+  // Desktop and web compact splash. Phones keep the centered mobile layout.
   Widget _buildDesktopSplash(BuildContext context) {
     final isDark = AppColors.isDark(context);
-    final action = AppColors.actionBright(context);
-    return Scaffold(
-      backgroundColor: isDark ? AppTheme.paletteFF070908 : AppTheme.white,
-      body: Row(
-        children: [
-          Expanded(
-            child: FadeTransition(
-              opacity: _panelFade,
-              child: SlideTransition(
-                position: _leftSlide,
-                child: _buildBrandPanel(action),
-              ),
-            ),
-          ),
-          Expanded(
-            child: FadeTransition(
-              opacity: _panelFade,
-              child: SlideTransition(
-                position: _rightSlide,
-                child: _buildProgressPanel(
-                  context,
-                  isDark: isDark,
-                  accent: action,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+    final accent = isDark ? const Color(0xFF3DDC84) : const Color(0xFF1E9A62);
+    final titleColor = isDark ? AppTheme.white : const Color(0xFF161A18);
+    final muted = isDark ? const Color(0xFF9AA59E) : const Color(0xFF6A756F);
+    final ring = isDark
+        ? AppTheme.white.withValues(alpha: 0.10)
+        : const Color(0xFFD5DED8);
+    const loading = 'Loading your workspace...';
 
-  Widget _buildBrandPanel(Color accent) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppTheme.headerDarkStart,
-            AppTheme.headerDarkMid,
-            AppTheme.headerDarkEnd,
-            AppTheme.paletteFF070908,
-          ],
-          stops: [0.0, 0.35, 0.72, 1.0],
-        ),
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          AnimatedBuilder(
-            animation: _ringController,
-            builder: (context, _) {
-              return CustomPaint(
-                painter: _BrandRingsPainter(
-                  progress: _ringController.value,
-                  color: accent.withValues(alpha: 0.28),
-                ),
-              );
-            },
+    return Scaffold(
+      backgroundColor: isDark
+          ? const Color(0xFF07110D)
+          : const Color(0xFFF4F7F5),
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            center: const Alignment(0.08, -0.12),
+            radius: 1.15,
+            colors: isDark
+                ? const [
+                    Color(0xFF173528),
+                    Color(0xFF0C1A14),
+                    Color(0xFF07110D),
+                  ]
+                : const [
+                    Color(0xFFF7FBF8),
+                    Color(0xFFF3F6F4),
+                    Color(0xFFE7EEEA),
+                  ],
+            stops: const [0.0, 0.46, 1],
           ),
-          Center(
-            child: AnimatedBuilder(
-              animation: Listenable.merge([
-                _introController,
-                _pulseController,
-              ]),
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            AnimatedBuilder(
+              animation: _bgRingController,
               builder: (context, _) {
-                final introScale = _logoScale.value;
-                final pulse = _pulseScale.value;
-                return Opacity(
-                  opacity: _logoFade.value,
-                  child: Transform.scale(
-                    scale: introScale * pulse,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 112,
-                          height: 112,
-                          decoration: BoxDecoration(
-                            color: AppTheme.white,
-                            borderRadius: BorderRadius.circular(28),
-                            boxShadow: [
-                              BoxShadow(
-                                color: accent.withValues(alpha: 0.4),
-                                blurRadius: 36,
-                                offset: const Offset(0, 14),
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(14),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: Image.asset(
-                              'assets/images/app_logo.png',
-                              fit: BoxFit.cover,
-                              gaplessPlayback: true,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 28),
-                        Text(
-                          _appTitle,
-                          style: const TextStyle(
-                            fontFamily: 'Literata',
-                            fontSize: 42,
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.white,
-                            letterSpacing: -0.6,
-                            height: 1,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        Opacity(
-                          opacity: _taglineFade.value,
-                          child: Text(
-                            _tagline.toUpperCase(),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.white.withValues(alpha: 0.72),
-                              letterSpacing: 2.2,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                return CustomPaint(
+                  painter: _CompactSplashRingsPainter(
+                    color: ring,
+                    progress: _bgRingController.value,
                   ),
                 );
               },
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProgressPanel(
-    BuildContext context, {
-    required bool isDark,
-    required Color accent,
-  }) {
-    final bg = isDark ? AppTheme.paletteFF070908 : AppTheme.white;
-    final title = isDark ? AppTheme.white : AppTheme.headerDarkEnd;
-    final muted = isDark ? AppTheme.paletteFF8E9892 : AppTheme.paletteFF5E6B64;
-    final track = isDark ? AppTheme.paletteFF2A3330 : const Color(0xFFE6EBE8);
-
-    return ColoredBox(
-      color: bg,
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(48, 40, 48, 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              FadeTransition(
-                opacity: _nameFade,
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(36, 24, 36, 28),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Starting $_appTitle',
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: title,
-                        letterSpacing: -0.3,
+                    const Spacer(),
+                    FadeTransition(
+                      opacity: _logoFade,
+                      child: SlideTransition(
+                        position: _nameSlide,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: _DesktopBrandLockup(
+                            title: _appTitle,
+                            tagline: _tagline.toUpperCase(),
+                            titleColor: titleColor,
+                            muted: muted,
+                            accent: accent,
+                            line: _lineProgress,
+                            taglineFade: _taglineFade,
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'This only takes a moment.',
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: muted,
-                      ),
+                    const Spacer(),
+                    FadeTransition(
+                      opacity: _footerFade,
+                      child: _showUnlockButton
+                          ? Center(
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 420),
+                                child: _buildUnlockButton(accent),
+                              ),
+                            )
+                          : Row(
+                              children: [
+                                SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 1.6,
+                                    color: muted,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    loading,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: muted,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  _localizations.version,
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: muted,
+                                  ),
+                                ),
+                              ],
+                            ),
                     ),
                   ],
                 ),
               ),
-              const Spacer(flex: 2),
-              ...List.generate(_stepLabels.length, (i) {
-                final done = i < _activeStep ||
-                    (_progress >= 0.98 && i <= _activeStep);
-                final active =
-                    i == _activeStep && !_showUnlockButton && !done;
-                final pending = i > _activeStep && !done;
-                final label = active
-                    ? '${_stepLabels[i]}...'
-                    : _stepLabels[i];
-                final start = 0.25 + (i * 0.12);
-                final end = (start + 0.28).clamp(0.0, 1.0);
-                return Padding(
-                  padding: EdgeInsets.only(
-                    bottom: i == _stepLabels.length - 1 ? 0 : 18,
-                  ),
-                  child: AnimatedBuilder(
-                    animation: _panelController,
-                    builder: (context, child) {
-                      final raw =
-                          ((_panelController.value - start) / (end - start))
-                              .clamp(0.0, 1.0);
-                      final t = Curves.easeOut.transform(raw);
-                      return Opacity(
-                        opacity: t,
-                        child: Transform.translate(
-                          offset: Offset(16 * (1 - t), 0),
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: _SplashChecklistRow(
-                      label: label,
-                      done: done,
-                      active: active,
-                      pending: pending,
-                      accent: accent,
-                      titleColor: title,
-                      mutedColor: muted,
-                    ),
-                  ),
-                );
-              }),
-              const Spacer(flex: 2),
-              if (_showUnlockButton)
-                _buildUnlockButton(accent)
-              else
-                AnimatedBuilder(
-                  animation: _progressController,
-                  builder: (context, _) {
-                    final value = _progressController.value.clamp(0.0, 1.0);
-                    final pct = (value * 100).round().clamp(0, 100);
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              'Loading',
-                              style: TextStyle(
-                                fontFamily: 'Literata',
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: muted,
-                              ),
-                            ),
-                            const Spacer(),
-                            AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 180),
-                              child: Text(
-                                '$pct%',
-                                key: ValueKey(pct),
-                                style: TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: title,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        _SplashProgressBar(
-                          value: value,
-                          trackColor: track,
-                          fillColor: accent,
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              const Spacer(flex: 3),
-              FadeTransition(
-                opacity: _footerFade,
-                child: SlideTransition(
-                  position: _footerSlide,
-                  child: Wrap(
-                    spacing: 20,
-                    runSpacing: 10,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      _FooterChip(
-                        icon: Icons.language_rounded,
-                        label: _website,
-                        color: muted,
-                      ),
-                      _FooterChip(
-                        icon: Icons.phone_outlined,
-                        label: _contactPhone,
-                        color: muted,
-                      ),
-                      Text(
-                        _versionLabel,
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: muted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -1237,131 +1014,132 @@ class _SplashProgressBar extends StatelessWidget {
   }
 }
 
-class _SplashChecklistRow extends StatelessWidget {
-  final String label;
-  final bool done;
-  final bool active;
-  final bool pending;
-  final Color accent;
+class _DesktopBrandLockup extends StatelessWidget {
+  final String title;
+  final String tagline;
   final Color titleColor;
-  final Color mutedColor;
+  final Color muted;
+  final Color accent;
+  final Animation<double> line;
+  final Animation<double> taglineFade;
 
-  const _SplashChecklistRow({
-    required this.label,
-    required this.done,
-    required this.active,
-    required this.pending,
-    required this.accent,
+  const _DesktopBrandLockup({
+    required this.title,
+    required this.tagline,
     required this.titleColor,
-    required this.mutedColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = done || active ? titleColor : mutedColor.withValues(alpha: 0.55);
-    return Row(
-      children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 280),
-          curve: Curves.easeOutCubic,
-          width: 26,
-          height: 26,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: done ? accent : AppTheme.transparent,
-            border: Border.all(
-              color: done
-                  ? accent
-                  : active
-                      ? accent
-                      : mutedColor.withValues(alpha: 0.4),
-              width: 2,
-            ),
-          ),
-          child: done
-              ? const Icon(Icons.check_rounded, size: 16, color: AppTheme.white)
-              : active
-                  ? Padding(
-                      padding: const EdgeInsets.all(5),
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: accent,
-                      ),
-                    )
-                  : null,
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: AnimatedDefaultTextStyle(
-            duration: const Duration(milliseconds: 220),
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontSize: 16,
-              fontWeight: done || active ? FontWeight.w700 : FontWeight.w500,
-              color: color,
-            ),
-            child: Text(label),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _FooterChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  const _FooterChip({
-    required this.icon,
-    required this.label,
-    required this.color,
+    required this.muted,
+    required this.accent,
+    required this.line,
+    required this.taglineFade,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Icon(icon, size: 14, color: color),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Literata',
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: color,
+        Container(
+          width: 92,
+          height: 92,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: accent.withValues(alpha: 0.28),
+                blurRadius: 22,
+                spreadRadius: 1,
+              ),
+            ],
           ),
+          child: ClipOval(
+            child: Image.asset(
+              'assets/images/app_logo.png',
+              fit: BoxFit.cover,
+              gaplessPlayback: true,
+            ),
+          ),
+        ),
+        const SizedBox(width: 22),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 48,
+                fontWeight: FontWeight.w800,
+                color: titleColor,
+                letterSpacing: -0.8,
+                height: 1,
+              ),
+            ),
+            const SizedBox(height: 8),
+            FadeTransition(
+              opacity: taglineFade,
+              child: Text(
+                tagline,
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: muted,
+                  letterSpacing: 1.7,
+                  height: 1,
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            AnimatedBuilder(
+              animation: line,
+              builder: (context, _) {
+                return Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    width: 220 * line.value,
+                    height: 2.5,
+                    decoration: BoxDecoration(
+                      color: accent,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
       ],
     );
   }
 }
 
-class _BrandRingsPainter extends CustomPainter {
-  final double progress;
+class _CompactSplashRingsPainter extends CustomPainter {
   final Color color;
+  final double progress;
 
-  _BrandRingsPainter({required this.progress, required this.color});
+  const _CompactSplashRingsPainter({
+    required this.color,
+    required this.progress,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2 - 20);
+    final center = Offset(size.width * 0.52, size.height * 0.46);
+    final base = math.min(size.width, size.height);
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
-      ..color = color;
-
-    final base = math.min(size.width, size.height) * 0.22;
+      ..strokeWidth = 1;
     for (var i = 0; i < 3; i++) {
-      final pulse = math.sin((progress * math.pi * 2) + i) * 6;
-      canvas.drawCircle(center, base + (i * 48) + pulse, paint);
+      final t = (progress + (i / 3)) % 1.0;
+      final fade = math.sin(t * math.pi);
+      paint.color = color.withValues(alpha: color.a * fade);
+      canvas.drawCircle(center, base * (0.16 + (t * 0.74)), paint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _BrandRingsPainter oldDelegate) =>
-      oldDelegate.progress != progress || oldDelegate.color != color;
+  bool shouldRepaint(covariant _CompactSplashRingsPainter oldDelegate) =>
+      oldDelegate.color != color || oldDelegate.progress != progress;
 }
