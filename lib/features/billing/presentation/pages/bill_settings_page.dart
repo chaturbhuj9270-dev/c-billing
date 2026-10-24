@@ -27,7 +27,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
 
   bool _showCustomerDetails = true;
   bool _generateViaContact = false;
-  bool _enableEmployeeToken = true;
+  bool _enableEmployeeToken = false;
   String _billType = 'pos'; // Default to POS printer
   bool _isLoading = true;
   late AppLocalizations _localizations;
@@ -74,7 +74,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
     setState(() {
       _showCustomerDetails = prefs.getBool(_keyShowCustomerOnBill) ?? true;
       _generateViaContact = prefs.getBool(_keyGenerateViaContact) ?? false;
-      _enableEmployeeToken = prefs.getBool(_keyEnableEmployeeToken) ?? true;
+      _enableEmployeeToken = prefs.getBool(_keyEnableEmployeeToken) ?? false;
       _billType = prefs.getString(_keyBillType) ?? 'pos';
       _taxSettings = taxSettings;
       _cgstController.text = taxSettings.cgstPercent > 0
@@ -175,21 +175,6 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                                   onChanged: (value) async {
                                     setState(() {
                                       _generateViaContact = value;
-                                    });
-                                    await _saveSettings();
-                                  },
-                                ),
-                                const SizedBox(height: 14),
-                                _buildModernToggle(
-                                  icon: Icons.confirmation_number_rounded,
-                                  iconColor: AppTheme.paletteFF7B68EE,
-                                  title: 'Employee token on bill',
-                                  subtitle:
-                                      'Per-product token; 1 point per ₹1000 of that item’s sale',
-                                  value: _enableEmployeeToken,
-                                  onChanged: (value) async {
-                                    setState(() {
-                                      _enableEmployeeToken = value;
                                     });
                                     await _saveSettings();
                                   },
@@ -437,6 +422,33 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                                       _taxSettings = _taxSettings.copyWith(
                                         enableExtraCharges: value,
                                       );
+                                    });
+                                    await _saveSettings();
+                                  },
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // Employee token — same pattern as other charges
+                            _buildSectionCard(
+                              icon: Icons.confirmation_number_rounded,
+                              iconColor: AppTheme.paletteFF7B68EE,
+                              title: 'Employee token',
+                              subtitle:
+                                  'Per-item token on Generate Invoice when enabled',
+                              children: [
+                                _buildModernToggle(
+                                  icon: Icons.confirmation_number_rounded,
+                                  iconColor: AppTheme.paletteFF7B68EE,
+                                  title: 'Enable employee token',
+                                  subtitle:
+                                      'Show Emp token on bill lines; 1 point per ₹1000 of that item’s sale',
+                                  value: _enableEmployeeToken,
+                                  onChanged: (value) async {
+                                    setState(() {
+                                      _enableEmployeeToken = value;
                                     });
                                     await _saveSettings();
                                   },

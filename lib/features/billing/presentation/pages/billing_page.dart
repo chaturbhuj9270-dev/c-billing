@@ -145,7 +145,7 @@ class _BillingPageState extends State<BillingPage> {
   // Bill settings
   bool _showCustomerOnBill = true;
   bool _generateBillViaContact = false;
-  bool _enableEmployeeToken = true;
+  bool _enableEmployeeToken = false;
   final _employeeRepo = EmployeeRepository();
   // Per-line employee token inputs (keyed by bill item productId).
   final Map<String, TextEditingController> _itemTokenControllers = {};
@@ -260,13 +260,13 @@ class _BillingPageState extends State<BillingPage> {
     final taxSettings = await BillTaxSettings.load();
     if (!mounted) return;
     final clearExtra = !taxSettings.enableExtraCharges;
+    final tokenOn = prefs.getBool('bill_enable_employee_token') ?? false;
     setState(() {
       _showCustomerOnBill =
           prefs.getBool('bill_show_customer_details') ?? true;
       _generateBillViaContact =
           prefs.getBool('bill_generate_via_contact') ?? false;
-      _enableEmployeeToken =
-          prefs.getBool('bill_enable_employee_token') ?? true;
+      _enableEmployeeToken = tokenOn;
       _taxSettings = taxSettings;
       _gstMode = taxSettings.gstFeatureEnabled
           ? taxSettings.defaultGstMode
@@ -274,9 +274,20 @@ class _BillingPageState extends State<BillingPage> {
       if (clearExtra) {
         _extraChargesEnabled = false;
       }
+      if (!tokenOn && _billItems.isNotEmpty) {
+        for (var i = 0; i < _billItems.length; i++) {
+          if (_billItems[i].employeeToken != null) {
+            _billItems[i] = _billItems[i].copyWith(employeeToken: null);
+          }
+        }
+        _itemTokenNames.clear();
+      }
     });
     if (clearExtra) {
       _disposeExtraChargeDrafts();
+    }
+    if (!tokenOn) {
+      _disposeItemTokenInputs();
     }
   }
 
@@ -338,13 +349,17 @@ class _BillingPageState extends State<BillingPage> {
     setState(() => _itemTokenNames[productId] = emp?.displayName);
   }
 
-  // After adding a product: focus that line's token if empty.
+  // After adding a product: focus that line's token if empty (only when enabled in Bill Settings).
   void _focusAfterProductAdded([String? productId]) {
     final id =
         productId ??
         (_billItems.isNotEmpty ? _billItems.last.productId : null);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || id == null) return;
+      if (!_enableEmployeeToken) {
+        _indexNoFocusNode.requestFocus();
+        return;
+      }
       BillItem? item;
       for (final i in _billItems) {
         if (i.productId == id) {
