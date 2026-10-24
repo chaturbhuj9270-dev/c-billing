@@ -568,31 +568,79 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
 
     setState(() => _isPrinting = true);
     try {
-      if (widget.fileType == FilePreviewType.pdf) {
-        final bytes = _pdfBytes ?? await widget.file!.readAsBytes();
-        await Printing.layoutPdf(
-          onLayout: (format) async => bytes,
-          name: widget.fileName,
-        );
+      final Uint8List bytes = widget.fileType == FilePreviewType.pdf
+          ? (_pdfBytes ??
+                widget.bytes ??
+                await widget.file!.readAsBytes())
+          : await _generateCsvPdfForPrint();
+
+      // Stop the spinner before opening system print UI.
+      // Printing.layoutPdf often never completes when this preview is a
+      // desktop dialog (macOS), which left the Print button spinning forever.
+      if (mounted) setState(() => _isPrinting = false);
+
+      if (!kIsWeb && DesktopCanvas.isDesktopPlatform) {
+        final message = await _printPdfOnDesktop(bytes);
+        if (mounted) _showSnackBar(message);
       } else {
-        // For CSV, generate a simple PDF for printing
         await Printing.layoutPdf(
-          onLayout: (format) async => await _generateCsvPdfForPrint(),
+          onLayout: (_) async => bytes,
           name: widget.fileName,
         );
-      }
-      if (mounted) {
-        _showSnackBar('Print job sent successfully');
+        if (mounted) _showSnackBar('Print job sent successfully');
       }
     } catch (e) {
       if (mounted) {
+        setState(() => _isPrinting = false);
         _showSnackBar('Error printing: $e', isError: true);
       }
-    } finally {
-      if (mounted) {
-        setState(() => _isPrinting = false);
-      }
     }
+  }
+
+  /// Desktop print that does not rely on [Printing.layoutPdf] (hangs under dialogs).
+  /// Returns a short status message for the toast.
+  Future<String> _printPdfOnDesktop(Uint8List bytes) async {
+    File pdfFile;
+    final existing = widget.file;
+    if (existing != null && existing.existsSync()) {
+      pdfFile = existing;
+    } else {
+      pdfFile = File(
+        '${Directory.systemTemp.path}/c_billing_print_${DateTime.now().millisecondsSinceEpoch}.pdf',
+      );
+      await pdfFile.writeAsBytes(bytes, flush: true);
+    }
+
+    if (Platform.isMacOS) {
+      final lp = await Process.run('lp', [pdfFile.path]);
+      if (lp.exitCode == 0) {
+        return 'Print job sent successfully';
+      }
+      await Process.run('open', ['-a', 'Preview', pdfFile.path]);
+      return 'Opened in Preview — press ⌘P to print';
+    }
+
+    if (Platform.isWindows) {
+      final printed = await Process.run('cmd', [
+        '/c',
+        'start',
+        '',
+        '/PRINT',
+        pdfFile.path,
+      ]);
+      if (printed.exitCode == 0) {
+        return 'Print job sent successfully';
+      }
+      await Process.run('cmd', ['/c', 'start', '', pdfFile.path]);
+      return 'Opened PDF — use Print from the viewer';
+    }
+
+    final lp = await Process.run('lp', [pdfFile.path]);
+    if (lp.exitCode == 0) {
+      return 'Print job sent successfully';
+    }
+    await Process.run('xdg-open', [pdfFile.path]);
+    return 'Opened PDF — use Print from the viewer';
   }
 
   Future<Uint8List> _generateCsvPdfForPrint() async {
@@ -644,7 +692,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
-    GlassyToast.show(context, message, isError: true);
+    GlassyToast.show(context, message, isError: isError);
   }
 
   @override

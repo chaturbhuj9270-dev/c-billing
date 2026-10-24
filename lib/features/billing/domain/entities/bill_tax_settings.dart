@@ -18,6 +18,7 @@ class BillTaxSettings {
   static const String _keyEnableCgst = 'tax_enable_cgst';
   static const String _keyEnableSgst = 'tax_enable_sgst';
   static const String _keyEnableOtherTax = 'tax_enable_other_tax';
+  static const String _keyEnableExtraCharges = 'bill_enable_extra_charges';
   static const String _keyCgstPercent = 'tax_cgst_percent';
   static const String _keySgstPercent = 'tax_sgst_percent';
   static const String _keyOtherTaxName = 'tax_other_tax_name';
@@ -27,6 +28,8 @@ class BillTaxSettings {
   final bool enableCgst;
   final bool enableSgst;
   final bool enableOtherTax;
+  /// Master switch: Extra charges section on Generate Invoice (Bill Settings only).
+  final bool enableExtraCharges;
   final double cgstPercent;
   final double sgstPercent;
   final String otherTaxName;
@@ -37,6 +40,7 @@ class BillTaxSettings {
     this.enableCgst = false,
     this.enableSgst = false,
     this.enableOtherTax = false,
+    this.enableExtraCharges = false,
     this.cgstPercent = 0.0,
     this.sgstPercent = 0.0,
     this.otherTaxName = '',
@@ -66,9 +70,12 @@ class BillTaxSettings {
   // Whether any tax is effectively enabled (enabled + percent > 0)
   bool get hasAnyTaxEnabled => totalTaxPercent > 0;
 
+  /// GST feature toggled on in Bill Settings (CGST / SGST / Other), even if % is still 0.
+  bool get gstFeatureEnabled => enableCgst || enableSgst || enableOtherTax;
+
   // The default GST mode based on settings
   GstMode get defaultGstMode {
-    if (!hasAnyTaxEnabled) return GstMode.noGst;
+    if (!gstFeatureEnabled || !hasAnyTaxEnabled) return GstMode.noGst;
     return defaultIncludeTax ? GstMode.includeGst : GstMode.excludeGst;
   }
 
@@ -79,6 +86,7 @@ class BillTaxSettings {
       enableCgst: prefs.getBool(_keyEnableCgst) ?? false,
       enableSgst: prefs.getBool(_keyEnableSgst) ?? false,
       enableOtherTax: prefs.getBool(_keyEnableOtherTax) ?? false,
+      enableExtraCharges: prefs.getBool(_keyEnableExtraCharges) ?? false,
       cgstPercent: prefs.getDouble(_keyCgstPercent) ?? 0.0,
       sgstPercent: prefs.getDouble(_keySgstPercent) ?? 0.0,
       otherTaxName: prefs.getString(_keyOtherTaxName) ?? '',
@@ -93,6 +101,7 @@ class BillTaxSettings {
     await prefs.setBool(_keyEnableCgst, enableCgst);
     await prefs.setBool(_keyEnableSgst, enableSgst);
     await prefs.setBool(_keyEnableOtherTax, enableOtherTax);
+    await prefs.setBool(_keyEnableExtraCharges, enableExtraCharges);
     await prefs.setDouble(_keyCgstPercent, cgstPercent);
     await prefs.setDouble(_keySgstPercent, sgstPercent);
     await prefs.setString(_keyOtherTaxName, otherTaxName);
@@ -214,6 +223,7 @@ class BillTaxSettings {
     bool? enableCgst,
     bool? enableSgst,
     bool? enableOtherTax,
+    bool? enableExtraCharges,
     double? cgstPercent,
     double? sgstPercent,
     String? otherTaxName,
@@ -224,6 +234,7 @@ class BillTaxSettings {
       enableCgst: enableCgst ?? this.enableCgst,
       enableSgst: enableSgst ?? this.enableSgst,
       enableOtherTax: enableOtherTax ?? this.enableOtherTax,
+      enableExtraCharges: enableExtraCharges ?? this.enableExtraCharges,
       cgstPercent: cgstPercent ?? this.cgstPercent,
       sgstPercent: sgstPercent ?? this.sgstPercent,
       otherTaxName: otherTaxName ?? this.otherTaxName,

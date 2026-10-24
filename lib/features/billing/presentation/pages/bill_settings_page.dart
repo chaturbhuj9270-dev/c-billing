@@ -373,7 +373,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                               ],
                             ),
 
-                            if (_taxSettings.hasAnyTaxEnabled) ...[
+                            if (_taxSettings.gstFeatureEnabled) ...[
                               const SizedBox(height: 20),
                               // Default GST Mode
                               _buildSectionCard(
@@ -414,6 +414,35 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                                 ],
                               ),
                             ],
+
+                            const SizedBox(height: 20),
+
+                            // Extra charges (labour / loading / service)
+                            _buildSectionCard(
+                              icon: Icons.add_card_rounded,
+                              iconColor: AppTheme.teal,
+                              title: 'Other charges',
+                              subtitle:
+                                  'Labour, loading, service — show on Generate Invoice when enabled',
+                              children: [
+                                _buildModernToggle(
+                                  icon: Icons.add_card_rounded,
+                                  iconColor: AppTheme.teal,
+                                  title: 'Enable other charges',
+                                  subtitle:
+                                      'Allow named charges on the bill (below items)',
+                                  value: _taxSettings.enableExtraCharges,
+                                  onChanged: (value) async {
+                                    setState(() {
+                                      _taxSettings = _taxSettings.copyWith(
+                                        enableExtraCharges: value,
+                                      );
+                                    });
+                                    await _saveSettings();
+                                  },
+                                ),
+                              ],
+                            ),
 
                             const SizedBox(height: 24),
 

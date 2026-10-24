@@ -167,9 +167,14 @@ class _BillingPageState extends State<BillingPage> {
   bool get _hasItemLevelTax =>
       _billItems.any((i) => i.cgstPercent > 0 || i.sgstPercent > 0);
 
-  // Prefer per-product rates from purchase; fall back to flat Bill Settings rates
+  // GST / Other charges only when turned on in Bill Settings.
+  bool get _showGstOnBill => _taxSettings.gstFeatureEnabled;
+  bool get _showExtraChargesOnBill => _taxSettings.enableExtraCharges;
+
+  // Prefer per-product rates from purchase; fall back to flat Bill Settings rates.
+  // Never apply GST unless Bill Settings has GST enabled.
   TaxBreakdown? get _taxBreakdown {
-    if (_gstMode == GstMode.noGst) return null;
+    if (!_showGstOnBill || _gstMode == GstMode.noGst) return null;
 
     if (_hasItemLevelTax) {
       final breakdown = BillTaxSettings.fromItemTaxes(
@@ -195,11 +200,12 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  // When a purchased product carries CGST/SGST, auto-enable sale tax if currently off
+  // When a purchased product carries CGST/SGST, auto-enable sale tax only if GST is on in Bill Settings
   void _ensureGstModeForProductTax({
     required double cgstPercent,
     required double sgstPercent,
   }) {
+    if (!_showGstOnBill) return;
     if (_gstMode != GstMode.noGst) return;
     if (cgstPercent <= 0 && sgstPercent <= 0) return;
     _gstMode = _taxSettings.defaultIncludeTax
@@ -252,17 +258,25 @@ class _BillingPageState extends State<BillingPage> {
   Future<void> _loadBillSettings() async {
     final prefs = await SharedPreferences.getInstance();
     final taxSettings = await BillTaxSettings.load();
-    if (mounted) {
-      setState(() {
-        _showCustomerOnBill =
-            prefs.getBool('bill_show_customer_details') ?? true;
-        _generateBillViaContact =
-            prefs.getBool('bill_generate_via_contact') ?? false;
-        _enableEmployeeToken =
-            prefs.getBool('bill_enable_employee_token') ?? true;
-        _taxSettings = taxSettings;
-        _gstMode = taxSettings.defaultGstMode;
-      });
+    if (!mounted) return;
+    final clearExtra = !taxSettings.enableExtraCharges;
+    setState(() {
+      _showCustomerOnBill =
+          prefs.getBool('bill_show_customer_details') ?? true;
+      _generateBillViaContact =
+          prefs.getBool('bill_generate_via_contact') ?? false;
+      _enableEmployeeToken =
+          prefs.getBool('bill_enable_employee_token') ?? true;
+      _taxSettings = taxSettings;
+      _gstMode = taxSettings.gstFeatureEnabled
+          ? taxSettings.defaultGstMode
+          : GstMode.noGst;
+      if (clearExtra) {
+        _extraChargesEnabled = false;
+      }
+    });
+    if (clearExtra) {
+      _disposeExtraChargeDrafts();
     }
   }
 
@@ -380,7 +394,7 @@ class _BillingPageState extends State<BillingPage> {
   }
 
   List<BillExtraCharge> get _validExtraCharges {
-    if (!_extraChargesEnabled) return const [];
+    if (!_showExtraChargesOnBill || !_extraChargesEnabled) return const [];
     return _extraChargeDrafts
         .map((d) => d.toCharge())
         .where((c) => c.isValid)
@@ -1922,9 +1936,9 @@ class _BillingPageState extends State<BillingPage> {
                           _buildCustomerSection(),
                         _buildAddItemsSection(),
                         _buildBillItemsSection(),
-                        _buildExtraChargesSection(compact: false),
-                        if (_taxSettings.hasAnyTaxEnabled || _hasItemLevelTax)
-                          _buildGstModeSection(),
+                        if (_showExtraChargesOnBill)
+                          _buildExtraChargesSection(compact: false),
+                        if (_showGstOnBill) _buildGstModeSection(),
                         const SizedBox(height: 12),
                       ],
                     ),
@@ -2183,11 +2197,10 @@ class _BillingPageState extends State<BillingPage> {
   List<Widget> _billExtras() {
     return [
       if (_billItems.isNotEmpty) _buildBillItemsSection(),
-      if (_billItems.isNotEmpty) _buildExtraChargesSection(compact: false),
+      if (_billItems.isNotEmpty && _showExtraChargesOnBill)
+        _buildExtraChargesSection(compact: false),
       if (_billItems.isNotEmpty) _buildDiscountSection(),
-      if (_billItems.isNotEmpty &&
-          (_taxSettings.hasAnyTaxEnabled || _hasItemLevelTax))
-        _buildGstModeSection(),
+      if (_billItems.isNotEmpty && _showGstOnBill) _buildGstModeSection(),
       if (_billItems.isNotEmpty) _buildPaymentSection(),
       if (_billItems.isNotEmpty) const SizedBox(height: 16),
     ];
