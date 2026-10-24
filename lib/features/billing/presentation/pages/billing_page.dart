@@ -12,8 +12,6 @@ import 'package:c_billing/features/billing/data/repositories/firebase_bill_repos
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_item.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_extra_charge.dart';
-import 'package:c_billing/features/billing/domain/utils/bill_ledger_description.dart';
-import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
 import 'package:c_billing/features/inventory_management/domain/entities/product.dart';
 import 'package:c_billing/features/billing/data/datasources/bill_cache_datasource.dart';
 import 'package:c_billing/core/printing/printing.dart';
@@ -125,6 +123,7 @@ class _BillingPageState extends State<BillingPage> {
   // Quick add by index number / barcode (USB wedge scanners type into this field)
   final _indexNoController = TextEditingController();
   final _indexNoFocusNode = FocusNode();
+  bool _addItemsSearchHovered = false;
   Timer? _debounceTimer;
   Map<int, Product> _productByIndexNo = {};
   Map<String, Product> _productByBarcode = {};
@@ -233,6 +232,7 @@ class _BillingPageState extends State<BillingPage> {
 
     // Listen for customer phone number changes
     _customerContactController.addListener(_onPhoneNumberChanged);
+    _indexNoFocusNode.addListener(_onAddItemsFocusChanged);
 
     // Setup real-time local streams for instant data updates
     _setupProductStream();
@@ -358,6 +358,7 @@ class _BillingPageState extends State<BillingPage> {
     _debounceTimer?.cancel();
     _phoneSearchDebounceTimer?.cancel();
     _customerContactController.removeListener(_onPhoneNumberChanged);
+    _indexNoFocusNode.removeListener(_onAddItemsFocusChanged);
     _disposeItemTokenInputs();
     _indexNoController.dispose();
     _indexNoFocusNode.dispose();
@@ -413,6 +414,10 @@ class _BillingPageState extends State<BillingPage> {
         );
       });
     }
+  }
+
+  void _onAddItemsFocusChanged() {
+    if (mounted) setState(() {});
   }
 
   // Setup real-time product stream from the local database - auto-refreshes on any product/stock change
@@ -3199,6 +3204,10 @@ class _BillingPageState extends State<BillingPage> {
   }
 
   Widget _buildAddItemsSection({bool nested = false}) {
+    // Hover and focus share the same highlight so the field never “flashes” a different color.
+    final highlighted =
+        _indexNoFocusNode.hasFocus || _addItemsSearchHovered;
+    final accent = AppColors.actionBright(context);
     return Container(
       margin: nested
           ? EdgeInsets.zero
@@ -3260,76 +3269,110 @@ class _BillingPageState extends State<BillingPage> {
             child: Row(
               children: [
                 Expanded(
-                  child: Container(
-                    height: 48,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: AppColors.inputFill(context),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.border(context)),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _indexNoController,
-                            focusNode: _indexNoFocusNode,
-                            keyboardType: TextInputType.text,
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.primaryText(context),
-                            ),
-                            decoration: InputDecoration(
-                              hintText: DesktopCanvas.isDesktopPlatform
-                                  ? 'Scan barcode or enter product code'
-                                  : 'Product code or barcode',
-                              hintStyle: TextStyle(
-                                color: AppColors.mutedText(context),
-                                fontWeight: FontWeight.w400,
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.text,
+                    onEnter: (_) {
+                      if (!_addItemsSearchHovered) {
+                        setState(() => _addItemsSearchHovered = true);
+                      }
+                    },
+                    onExit: (_) {
+                      if (_addItemsSearchHovered) {
+                        setState(() => _addItemsSearchHovered = false);
+                      }
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 120),
+                      curve: Curves.easeOut,
+                      height: 48,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: highlighted
+                            ? accent.withValues(alpha: 0.08)
+                            : AppColors.inputFill(context),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: highlighted
+                              ? accent
+                              : AppColors.border(context),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.qr_code_2_rounded,
+                            size: 18,
+                            color: highlighted
+                                ? accent
+                                : AppColors.mutedText(context),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextField(
+                              controller: _indexNoController,
+                              focusNode: _indexNoFocusNode,
+                              keyboardType: TextInputType.text,
+                              cursorColor: accent,
+                              mouseCursor: SystemMouseCursors.text,
+                              style: TextStyle(
+                                fontFamily: 'Literata',
                                 fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primaryText(context),
                               ),
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              isDense: true,
-                              contentPadding: EdgeInsets.zero,
+                              decoration: InputDecoration(
+                                hintText: DesktopCanvas.isDesktopPlatform
+                                    ? 'Scan barcode or enter product code'
+                                    : 'Product code or barcode',
+                                hintStyle: TextStyle(
+                                  color: AppColors.mutedText(context),
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 14,
+                                ),
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                hoverColor: AppTheme.transparent,
+                                fillColor: AppTheme.transparent,
+                                filled: true,
+                                isDense: true,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                              onChanged: (_) => _onPageIndexNoChanged(),
+                              onSubmitted: (_) =>
+                                  _addProductByIndexNoOnPage(),
                             ),
-                            onChanged: (_) => _onPageIndexNoChanged(),
-                            onSubmitted: (_) => _addProductByIndexNoOnPage(),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: _showAddItemsPopup,
-                          child: Icon(
-                            Icons.search_rounded,
-                            color: AppColors.mutedText(context),
-                            size: 20,
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: _showAddItemsPopup,
+                            child: Icon(
+                              Icons.search_rounded,
+                              color: highlighted
+                                  ? accent
+                                  : AppColors.mutedText(context),
+                              size: 20,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Material(
-                  color: AppColors.isDark(context)
-                      ? AppColors.action(context)
-                      : AppColors.action(context),
+                  color: AppColors.action(context),
                   borderRadius: BorderRadius.circular(14),
                   child: InkWell(
                     onTap: _showBarcodeScannerSheet,
                     borderRadius: BorderRadius.circular(14),
-                    child: SizedBox(
+                    child: const SizedBox(
                       width: 48,
                       height: 48,
                       child: Icon(
                         Icons.qr_code_scanner_rounded,
-                        color: AppColors.isDark(context)
-                            ? AppTheme.white
-                            : AppTheme.white,
+                        color: AppTheme.white,
                         size: 22,
                       ),
                     ),
