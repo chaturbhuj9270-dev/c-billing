@@ -43,8 +43,10 @@ Future<void> main() async {
     debugPrint('Firebase init error: $e');
   }
 
-  // Firestore's on-disk cache aborts the Mac process if that database is locked or unreadable. This app keeps its own offline database, so the Mac build uses memory only. This must...
-  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS) {
+  // Firestore's on-disk cache aborts the desktop process if that database is locked or unreadable. This app keeps its own offline database, so Windows and macOS use memory only. Apply this before any other Firestore call.
+  if (!kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.macOS ||
+          defaultTargetPlatform == TargetPlatform.windows)) {
     try {
       FirebaseFirestore.instance.settings = const Settings(
         persistenceEnabled: false,

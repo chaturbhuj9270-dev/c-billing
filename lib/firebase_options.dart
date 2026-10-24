@@ -14,6 +14,9 @@ class DefaultFirebaseOptions {
     if (identical(defaultTargetPlatform, TargetPlatform.macOS)) {
       return macos;
     }
+    if (identical(defaultTargetPlatform, TargetPlatform.windows)) {
+      return windows;
+    }
     throw UnsupportedError(
       'DefaultFirebaseOptions are not supported for this platform.',
     );
@@ -42,5 +45,16 @@ class DefaultFirebaseOptions {
     projectId: 'c-billing-4744a',
     storageBucket: 'c-billing-4744a.firebasestorage.app',
     iosBundleId: 'com.example.cBilling',
+  );
+
+  // Same Firebase project as the phone apps. Email sign-in uses this API key,
+  // which already accepts desktop Identity Toolkit and Installations calls.
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyBx6NEyMZJOhPTjt9lGav26BtE_q2h1-kc',
+    appId: '1:101710107051:android:04892d75d50610af46c2ee',
+    messagingSenderId: '101710107051',
+    projectId: 'c-billing-4744a',
+    authDomain: 'c-billing-4744a.firebaseapp.com',
+    storageBucket: 'c-billing-4744a.firebasestorage.app',
   );
 }
