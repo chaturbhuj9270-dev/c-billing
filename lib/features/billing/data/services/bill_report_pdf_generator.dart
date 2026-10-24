@@ -4,6 +4,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../../../core/services/bill_report_settings_service.dart';
 import '../../domain/entities/bill.dart';
+import '../../domain/entities/bill_item.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 // Fast PDF generator for Bill Reports. Generates reports with columns based on user's Bill Report Settings.
@@ -324,10 +325,10 @@ class BillReportPdfGenerator {
   }
 
   // Get cell value for a column
-  static String _getCellValue(String columnId, Bill bill, dynamic item) {
+  static String _getCellValue(String columnId, Bill bill, BillItem item) {
     switch (columnId) {
       case 'product_name':
-        return _truncate(item.productName ?? '-', 20);
+        return _truncate(item.productName, 20);
       case 'hsn_code':
         return item.hsnCode ?? '-';
       case 'company':
@@ -335,22 +336,48 @@ class BillReportPdfGenerator {
       case 'quantity':
         return '${item.quantity}';
       case 'unit':
-        return '-'; // Unit not stored in bill items
+        return item.displayUnit.isNotEmpty ? item.displayUnit : '-';
       case 'rate':
-        return '${item.sellingPrice.toStringAsFixed(2)}';
+        return item.sellingPrice.toStringAsFixed(2);
       case 'discount':
         // Item-level discount not directly available, show bill discount
         return bill.discountPercent > 0
             ? '${bill.discountPercent.toStringAsFixed(1)}%'
             : '-';
       case 'tax':
-        final itemTax = item.cgstPercent + item.sgstPercent;
-        return itemTax > 0 ? '${itemTax.toStringAsFixed(1)}%' : '-';
+        // Settings label: "Tax amount per item" — never show % here.
+        // Prefer product-line GST; otherwise allocate bill-level tax by share.
+        return _formatItemTaxAmount(bill, item);
       case 'amount':
-        return '${item.subtotal.toStringAsFixed(2)}';
+        return item.subtotal.toStringAsFixed(2);
       default:
         return '-';
     }
+  }
+
+  // Line tax in Rs. Matches footer [bill.totalTaxAmount] semantics.
+  // Root cause of empty Tax column: code used item CGST+SGST % only; many
+  // bills store tax on the bill (settings GST / other tax) with 0% on lines.
+  static String _formatItemTaxAmount(Bill bill, BillItem item) {
+    final lineGst = item.totalGstAmount;
+    final itemsLineGst =
+        bill.items.fold<double>(0, (s, i) => s + i.totalGstAmount);
+
+    // Product-level GST present on the bill → show this line’s GST amount.
+    if (itemsLineGst > 0.005) {
+      return lineGst > 0.005 ? lineGst.toStringAsFixed(2) : '-';
+    }
+
+    // Bill-level tax only (settings GST / other tax; lines have 0%).
+    // Allocate by line share of subtotal so column totals match the footer.
+    final billTax = bill.totalTaxAmount;
+    if (billTax <= 0.005) return '-';
+
+    final itemsTotal = bill.items.fold<double>(0, (s, i) => s + i.subtotal);
+    if (itemsTotal <= 0.005 || item.subtotal <= 0) return '-';
+
+    final share = billTax * (item.subtotal / itemsTotal);
+    return share > 0.005 ? share.toStringAsFixed(2) : '-';
   }
 
   // Calculate column widths based on visible columns

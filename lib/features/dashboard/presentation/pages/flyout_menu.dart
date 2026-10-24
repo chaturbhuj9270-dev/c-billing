@@ -13,16 +13,13 @@ import '../../../../core/theme/app_theme.dart';
 import 'profile_page.dart';
 import 'web_shell.dart';
 import '../../../../common_widgets/glass_bottom_sheet.dart';
-import '../../../supplier/presentation/pages/enhanced_supplier_page.dart';
-import '../../../customer/presentation/pages/enhanced_customer_page.dart';
-import '../../../company/presentation/pages/enhanced_company_page.dart';
-import '../../../inventory_management/presentation/pages/enhanced_purchase_screen.dart';
-import '../../../inventory_management/presentation/pages/enhanced_product_page.dart';
 import '../../../shop/presentation/pages/shop_details_page.dart';
 import '../../../expense/presentation/pages/expenses_page.dart';
+import '../../../reports/presentation/pages/unified_reports_page.dart';
 import 'package:c_billing/common_widgets/glass_bevel_frame.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/access/access_control_service.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 import '../../../employee/presentation/pages/employees_page.dart';
 
 class FlyoutMenu extends StatefulWidget {
@@ -44,35 +41,44 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   // Animation controllers
   late AnimationController _slideController;
   late AnimationController _staggerController;
-  late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
   late List<Animation<Offset>> _menuItemAnimations;
   late List<Animation<double>> _menuItemFadeAnimations;
 
-  // Menu items with icons and colors (filtered by AccessControlService at build)
-  List<_MenuItem> get _menuItems {
+  // Account / business / preference destinations — gated by access.
+  // Primary day-to-day modules live in the side rail / bottom nav, not here.
+  List<_MenuSection> get _menuSections {
     final access = AccessControlService.instance;
-    final items = <_MenuItem>[
+    final account = <_MenuItem>[
       if (access.canAccessShellIndex(WebShell.profile))
         _MenuItem(
           icon: Icons.person_rounded,
-          label: 'Profile',
+          label: _localizations.profile,
           route: 'Profile',
           color: AppTheme.primary,
         ),
+      if (access.canAccessShellIndex(WebShell.password))
+        _MenuItem(
+          icon: Icons.lock_outline_rounded,
+          label: _localizations.changePassword,
+          route: 'ChangePassword',
+          color: AppTheme.toneAmber,
+        ),
+    ];
+    final business = <_MenuItem>[
+      // Always show — kinds inside the hub are access-filtered.
+      _MenuItem(
+        icon: Icons.assessment_outlined,
+        label: 'Business reports',
+        route: 'Reports',
+        color: AppTheme.primary,
+      ),
       if (access.canAccessShellIndex(WebShell.shop))
         _MenuItem(
           icon: Icons.storefront_outlined,
-          label: 'Shop details',
+          label: _localizations.shopDetails,
           route: 'ShopDetails',
           color: AppTheme.toneBlue,
-        ),
-      if (access.isOwner)
-        _MenuItem(
-          icon: Icons.groups_rounded,
-          label: 'Employees',
-          route: 'Employees',
-          color: AppTheme.toneViolet,
         ),
       if (access.canAccessShellIndex(WebShell.expenses))
         _MenuItem(
@@ -81,27 +87,39 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           route: 'Expenses',
           color: AppTheme.toneRose,
         ),
-      if (access.canAccessShellIndex(WebShell.password))
+    ];
+    // Employees live under Manage on the side rail; keep a flyout shortcut for phone.
+    final manage = <_MenuItem>[
+      if (access.isOwner)
         _MenuItem(
-          icon: Icons.key_rounded,
-          label: 'Change password',
-          route: 'ChangePassword',
-          color: AppTheme.toneAmber,
+          icon: Icons.groups_rounded,
+          label: 'Employees',
+          route: 'Employees',
+          color: AppTheme.toneViolet,
         ),
+    ];
+    final preferences = <_MenuItem>[
       _MenuItem(
         icon: Icons.language_rounded,
-        label: 'Language',
+        label: _localizations.language,
         route: 'Language',
         color: AppTheme.toneCyan,
+        trailing: _selectedLanguage,
       ),
       _MenuItem(
-        icon: Icons.dark_mode_outlined,
+        icon: Icons.brightness_6_rounded,
         label: 'Theme',
         route: 'Theme',
         color: AppTheme.toneViolet,
+        trailing: ThemeService.instance.modeLabel,
       ),
     ];
-    return items;
+    return [
+      if (account.isNotEmpty) _MenuSection(title: 'Account', items: account),
+      _MenuSection(title: 'Business', items: business),
+      if (manage.isNotEmpty) _MenuSection(title: 'Manage', items: manage),
+      _MenuSection(title: _localizations.settings, items: preferences),
+    ];
   }
 
   @override
@@ -119,15 +137,10 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       vsync: this,
     );
 
-    _slideAnimation =
-        Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero).animate(
-          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
-        );
-
     _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(
         parent: _slideController,
-        curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+        curve: const Interval(0.15, 1.0, curve: Curves.easeOut),
       ),
     );
 
@@ -241,111 +254,71 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
     LogoutService.instance.logout(context);
   }
 
-  void _navigateToPage(String pageName, int index) {
+  void _navigateToPage(String pageName) {
     HapticFeedback.lightImpact();
-    if (index < 0) return;
 
     final navigator = Navigator.of(context, rootNavigator: true);
-      final overlayContext = navigator.overlay?.context;
-      Navigator.pop(context);
+    final overlayContext = navigator.overlay?.context;
+    Navigator.pop(context);
 
-      void afterClose(void Function(BuildContext ctx) action) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          final ctx = overlayContext;
-          if (ctx == null || !ctx.mounted) return;
-          action(ctx);
+    void afterClose(void Function(BuildContext ctx) action) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ctx = overlayContext;
+        if (ctx == null || !ctx.mounted) return;
+        action(ctx);
+      });
+    }
+
+    switch (pageName) {
+      case 'Profile':
+        afterClose((ctx) {
+          if (WebShell.open(WebShell.profile)) return;
+          showAppPage(ctx, const ProfilePage());
         });
-      }
-
-      switch (pageName) {
-        case 'Home':
-          afterClose((_) => WebShell.open(WebShell.dashboard));
-          break;
-        case 'Invoices':
-          afterClose((ctx) {
-            if (!WebShell.open(WebShell.invoices)) {
-              GlassyToast.show(ctx, 'Invoices page coming soon');
-            }
-          });
-          break;
-        case 'Clients':
-          afterClose((ctx) {
-            if (WebShell.open(WebShell.customers)) return;
-            showAppPage(ctx, const EnhancedCustomerPage());
-          });
-          break;
-        case 'Suppliers':
-          afterClose((ctx) {
-            if (WebShell.open(WebShell.suppliers)) return;
-            showAppPage(ctx, const EnhancedSupplierPage());
-          });
-          break;
-        case 'Companies':
-          afterClose((ctx) {
-            if (WebShell.open(WebShell.companies)) return;
-            showAppPage(ctx, const EnhancedCompanyPage());
-          });
-          break;
-        case 'Purchases':
-          afterClose((ctx) {
-            if (WebShell.open(WebShell.purchase)) return;
-            showAppPage(ctx, const EnhancedPurchaseScreen());
-          });
-          break;
-        case 'Inventory':
-          afterClose((ctx) {
-            if (WebShell.open(WebShell.products)) return;
-            showAppPage(ctx, const EnhancedProductPage());
-          });
-          break;
-        case 'Reports':
-          afterClose(
-            (ctx) => GlassyToast.show(ctx, 'Reports page coming soon'),
+        break;
+      case 'ShopDetails':
+        afterClose((ctx) {
+          if (WebShell.open(WebShell.shop)) return;
+          showAppPage(ctx, const ShopDetailsPage());
+        });
+        break;
+      case 'Expenses':
+        afterClose((ctx) {
+          if (WebShell.open(WebShell.expenses)) return;
+          showAppPage(ctx, const ExpensesPage());
+        });
+        break;
+      case 'Reports':
+        afterClose((ctx) {
+          if (WebShell.open(WebShell.reports)) return;
+          showAppPage(ctx, const UnifiedReportsPage());
+        });
+        break;
+      case 'Employees':
+        afterClose((ctx) {
+          if (WebShell.open(WebShell.employees)) return;
+          showAppPage(ctx, const EmployeesPage());
+        });
+        break;
+      case 'ChangePassword':
+        afterClose((ctx) {
+          if (WebShell.open(WebShell.password)) return;
+          showAppPage(
+            ctx,
+            const _SelectedTheme(child: ChangePasswordPage()),
           );
-          break;
-        case 'Profile':
-          afterClose((ctx) {
-            if (WebShell.open(WebShell.profile)) return;
-            showAppPage(ctx, const ProfilePage());
-          });
-          break;
-        case 'ShopDetails':
-          afterClose((ctx) {
-            if (WebShell.open(WebShell.shop)) return;
-            showAppPage(ctx, const ShopDetailsPage());
-          });
-          break;
-        case 'Expenses':
-          afterClose((ctx) {
-            if (WebShell.open(WebShell.expenses)) return;
-            showAppPage(ctx, const ExpensesPage());
-          });
-          break;
-        case 'Employees':
-          afterClose((ctx) {
-            if (WebShell.open(WebShell.employees)) return;
-            showAppPage(ctx, const EmployeesPage());
-          });
-          break;
-        case 'ChangePassword':
-          afterClose((ctx) {
-            if (WebShell.open(WebShell.password)) return;
-            showAppPage(
-              ctx,
-              const _SelectedTheme(child: ChangePasswordPage()),
-            );
-          });
-          break;
-        case 'Language':
-          afterClose(_showLanguageDialog);
-          break;
-        case 'Theme':
-          afterClose(_showThemeDialog);
-          break;
-        case 'Settings':
-          afterClose(_showSettingsDialog);
-          break;
-      }
+        });
+        break;
+      case 'Language':
+        afterClose(_showLanguageDialog);
+        break;
+      case 'Theme':
+        afterClose(_showThemeDialog);
+        break;
+      case 'Settings':
+        afterClose(_showSettingsDialog);
+        break;
+    }
   }
 
   void _showThemeDialog(BuildContext dialogContext) {
@@ -404,10 +377,16 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final isDark = ThemeService.instance.isDark;
-    return SlideTransition(
-      position: _slideAnimation,
+    // Dialog already slides the panel in — avoid a second slide fight.
+    return FadeTransition(
+      opacity: _fadeAnimation,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
+        padding: EdgeInsets.fromLTRB(
+          DesktopCanvas.isDesktopPlatform ? 10 : 12,
+          16,
+          DesktopCanvas.isDesktopPlatform ? 8 : 12,
+          16,
+        ),
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(28),
@@ -430,7 +409,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
               filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
               child: CustomPaint(
                 foregroundPainter: GlassBevelBorderPainter(
-                  isDark: false,
+                  isDark: isDark,
                   themeColor: AppColors.action(context),
                   radius: 28,
                   strokeWidth: 1.4,
@@ -456,73 +435,57 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                     child: Material(
                       type: MaterialType.transparency,
                       child: Column(
-                      children: [
-                        _buildHeader(),
-                        Expanded(
-                          child: FadeTransition(
-                            opacity: _fadeAnimation,
+                        children: [
+                          _buildHeader(),
+                          Expanded(
                             child: ListView(
                               padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
                               children: [
-                                _sectionLabel('Account'),
                                 ...() {
-                                  final items = _menuItems;
-                                  final account = items
-                                      .where(
-                                        (i) =>
-                                            i.route != 'Language' &&
-                                            i.route != 'Theme',
-                                      )
-                                      .toList();
-                                  final settings = items
-                                      .where(
-                                        (i) =>
-                                            i.route == 'Language' ||
-                                            i.route == 'Theme',
-                                      )
-                                      .toList();
                                   var animIndex = 0;
-                                  final widgets = <Widget>[
-                                    ...account.map((item) {
+                                  final widgets = <Widget>[];
+                                  for (final section in _menuSections) {
+                                    widgets.add(_sectionLabel(section.title));
+                                    for (final item in section.items) {
                                       final i = animIndex++;
-                                      return SlideTransition(
-                                        position: _menuItemAnimations[i],
-                                        child: FadeTransition(
-                                          opacity: _menuItemFadeAnimations[i],
-                                          child: _buildMenuItem(
-                                            item: item,
-                                            index: i,
+                                      final slot = i.clamp(
+                                        0,
+                                        _menuItemAnimations.length - 1,
+                                      );
+                                      widgets.add(
+                                        SlideTransition(
+                                          position: _menuItemAnimations[slot],
+                                          child: FadeTransition(
+                                            opacity:
+                                                _menuItemFadeAnimations[slot],
+                                            child: _buildMenuItem(item: item),
                                           ),
                                         ),
                                       );
-                                    }),
-                                    _sectionLabel(_localizations.settings),
-                                    ...settings.map((item) {
-                                      final i = animIndex++;
-                                      return SlideTransition(
+                                    }
+                                  }
+                                  if (_canUseBiometrics) {
+                                    final i = animIndex.clamp(
+                                      0,
+                                      _menuItemAnimations.length - 1,
+                                    );
+                                    widgets.add(
+                                      SlideTransition(
                                         position: _menuItemAnimations[i],
                                         child: FadeTransition(
                                           opacity: _menuItemFadeAnimations[i],
-                                          child: _buildMenuItem(
-                                            item: item,
-                                            index: i,
-                                          ),
+                                          child: _buildBiometricToggle(),
                                         ),
-                                      );
-                                    }),
-                                  ];
+                                      ),
+                                    );
+                                  }
                                   return widgets;
                                 }(),
-                                if (_canUseBiometrics) _buildBiometricToggle(),
                               ],
                             ),
                           ),
-                        ),
-                        FadeTransition(
-                          opacity: _fadeAnimation,
-                          child: _buildBottomSection(),
-                        ),
-                      ],
+                          _buildBottomSection(),
+                        ],
                       ),
                     ),
                   ),
@@ -566,6 +529,8 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
 
   Widget _buildHeader() {
     final initial = _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U';
+    final role = AccessControlService.instance.isOwner ? 'Owner' : 'Staff';
+    final email = _currentUser?.email?.trim();
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 8, 4),
       child: SafeArea(
@@ -610,40 +575,28 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (email != null && email.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      email,
+                      style: TextStyle(
+                        color: AppColors.mutedText(context),
+                        fontSize: 12,
+                        fontFamily: 'Literata',
+                        decoration: TextDecoration.none,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                   const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.headerDarkStart,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppTheme.white,
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          _localizations.online,
-                          style: const TextStyle(
-                            color: AppTheme.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Literata',
-                            decoration: TextDecoration.none,
-                          ),
-                        ),
-                      ],
-                    ),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: [
+                      _headerChip(role, AppColors.action(context)),
+                      _headerChip(_localizations.online, AppTheme.headerDarkStart),
+                    ],
                   ),
                 ],
               ),
@@ -662,39 +615,75 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildMenuItem({required _MenuItem item, required int index}) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => _navigateToPage(item.route, index),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: Row(
-          children: [
-            _iconWell(
-              item.icon,
-              item.color == AppTheme.primary
-                  ? AppColors.action(context)
-                  : item.color,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                item.label,
-                style: TextStyle(
-                  color: AppColors.primaryText(context),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Literata',
-                  decoration: TextDecoration.none,
+  Widget _headerChip(String label, Color bg) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: AppTheme.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          fontFamily: 'Literata',
+          decoration: TextDecoration.none,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuItem({required _MenuItem item}) {
+    return Material(
+      color: AppTheme.transparent,
+      child: InkWell(
+        onTap: () => _navigateToPage(item.route),
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: [
+              _iconWell(
+                item.icon,
+                item.color == AppTheme.primary
+                    ? AppColors.action(context)
+                    : item.color,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  item.label,
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Literata',
+                    decoration: TextDecoration.none,
+                  ),
                 ),
               ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.mutedText(context),
-              size: 22,
-            ),
-          ],
+              if (item.trailing != null) ...[
+                Text(
+                  item.trailing!,
+                  style: TextStyle(
+                    color: AppColors.mutedText(context),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Literata',
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+                const SizedBox(width: 4),
+              ],
+              Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.mutedText(context),
+                size: 22,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -752,29 +741,29 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                     color: AppTheme.toneRose.withValues(alpha: 0.7),
                   ),
                 ),
-                child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.logout_rounded,
-                          color: AppTheme.toneRose,
-                          size: 18,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Log out',
-                          style: TextStyle(
-                            color: AppTheme.toneRose,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Literata',
-                            decoration: TextDecoration.none,
-                          ),
-                        ),
-                      ],
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.logout_rounded,
+                      color: AppTheme.toneRose,
+                      size: 18,
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _localizations.logout,
+                      style: const TextStyle(
+                        color: AppTheme.toneRose,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Literata',
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+            ),
             const SizedBox(height: 14),
             Text(
               _localizations.version,
@@ -812,16 +801,25 @@ class _SelectedTheme extends StatelessWidget {
   }
 }
 
+class _MenuSection {
+  final String title;
+  final List<_MenuItem> items;
+
+  const _MenuSection({required this.title, required this.items});
+}
+
 class _MenuItem {
   final IconData icon;
   final String label;
   final String route;
   final Color color;
+  final String? trailing;
 
   const _MenuItem({
     required this.icon,
     required this.label,
     required this.route,
+    this.trailing,
     required this.color,
   });
 }

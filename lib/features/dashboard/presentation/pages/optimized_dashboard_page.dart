@@ -49,6 +49,7 @@ import '../../../../common_widgets/quick_actions_overlay.dart';
 import '../../../../core/services/theme_service.dart';
 import '../../../../core/access/access_control_service.dart';
 import '../../../employee/presentation/pages/employees_page.dart';
+import '../../../reports/presentation/pages/unified_reports_page.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 
@@ -560,6 +561,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         return _localizations.changePasswordTitle;
       case WebShell.employees:
         return 'Employees';
+      case WebShell.reports:
+        return 'Business reports';
       default:
         return 'Billing';
     }
@@ -581,6 +584,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         return _localizations.manageYourEvents;
       case WebShell.employees:
         return 'Manage staff and their access.';
+      case WebShell.reports:
+        return 'PDF and Excel for every module';
       default:
         return '';
     }
@@ -624,6 +629,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         return Icons.key_rounded;
       case WebShell.employees:
         return Icons.groups_rounded;
+      case WebShell.reports:
+        return Icons.assessment_outlined;
       default:
         return Icons.dashboard_rounded;
     }
@@ -667,6 +674,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         return const ChangePasswordPage(isEmbedded: true);
       case WebShell.employees:
         return const EmployeesPage(isEmbedded: true);
+      case WebShell.reports:
+        return const UnifiedReportsPage(isEmbedded: true);
       default:
         return const SizedBox.shrink();
     }
@@ -779,13 +788,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             ),
           ),
           if (shell) _webNavSection('SYSTEM', isExpanded),
-          if (shell && AccessControlService.instance.isOwner)
-            _buildSideNavItem(
-              WebShell.employees,
-              Icons.groups_rounded,
-              'Employees',
-              isExpanded,
-            ),
           if (shell) ..._webPageTools(isExpanded, showDivider: !darkWeb),
           _buildSideNavItem(
             -1,
@@ -1157,6 +1159,16 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     add(WebShell.quotations, Icons.description_outlined, _localizations.quotations);
     add(WebShell.barcode, Icons.qr_code_scanner_rounded, _localizations.barcode);
     add(WebShell.expenses, Icons.account_balance_wallet_outlined, 'Expenses');
+    add(WebShell.reports, Icons.assessment_outlined, 'Business reports');
+    if (access.isOwner) {
+      items.add(
+        item(
+          WebShell.employees,
+          Icons.groups_rounded,
+          'Employees',
+        ),
+      );
+    }
     return items;
   }
 
@@ -2256,6 +2268,10 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         },
       ),
       transitionBuilder: (context, animation, _, child) {
+        final screenW = MediaQuery.of(context).size.width;
+        final panelW = DesktopCanvas.isDesktopPlatform
+            ? (screenW * 0.32).clamp(320.0, 400.0)
+            : screenW * 0.86;
         return SlideTransition(
           position: Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero)
               .animate(
@@ -2263,10 +2279,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               ),
           child: Align(
             alignment: Alignment.centerLeft,
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.78,
-              child: child,
-            ),
+            child: SizedBox(width: panelW, child: child),
           ),
         );
       },

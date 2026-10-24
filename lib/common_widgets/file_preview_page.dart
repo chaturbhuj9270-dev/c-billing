@@ -177,7 +177,11 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   void initState() {
     super.initState();
     _pdfScrollController.addListener(_onPdfScroll);
-    _loadFile();
+    // Load after the first frame — PDF raster uses MediaQuery, which is not
+    // safe to depend on during initState (causes "Unable to load preview").
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadFile();
+    });
   }
 
   void _onPdfScroll() {
@@ -370,11 +374,10 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     try {
       debugPrint('[FilePreviewPage] Starting PDF page rendering...');
 
-      // Get screen width for optimal DPI calculation
-      final screenWidth = MediaQuery.of(context).size.width;
-      final dpi = (screenWidth * 1.5)
-          .clamp(150, 300)
-          .toDouble(); // Adaptive DPI
+      // Prefer MediaQuery when available; fall back so rendering never crashes.
+      final screenWidth =
+          MediaQuery.maybeOf(context)?.size.width ?? 1024.0;
+      final dpi = (screenWidth * 1.5).clamp(150.0, 300.0);
 
       // Collect all pages first to know total count
       final pages = <Uint8List>[];

@@ -36,6 +36,8 @@ class AccessControlService {
 
   bool canAccess(AppModule module) {
     if (!_loaded || _isOwner) return true;
+    // Hub filters report kinds by module; always allow opening the page.
+    if (module == AppModule.reports) return true;
     if (AppModule.ownerOnly.contains(module)) return false;
     if (module == AppModule.billing && !counterAccess) return false;
     return _allowedModules.contains(module.key);

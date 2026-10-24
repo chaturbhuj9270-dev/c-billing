@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +20,7 @@ import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_logo_mark.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/access/access_control_service.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 
 class SplashPage extends StatefulWidget {
   final Duration duration;
@@ -33,15 +35,34 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
+  static const _contactPhone = '+91 99706 62978';
+  static const _website = 'www.c-billing.com';
+  static const _versionLabel = 'version 1.0.0';
+
+  static const _stepLabels = [
+    'Checking license',
+    'Connecting to cloud sync',
+    'Loading your workspace',
+    'Preparing dashboard',
+  ];
+
   Timer? _timer;
+  Timer? _creepTimer;
   late CredentialsManager _credentialsManager;
   late AppLocalizations _localizations;
   final SubscriptionService _subscriptionService = SubscriptionService();
   bool _showUnlockButton = false;
 
+  /// Index of the step currently running (0..3). Steps below are done.
+  int _activeStep = 0;
+  double _progress = 0.0;
+  double _creepCeiling = 0.12;
+
   late final AnimationController _introController;
   late final AnimationController _pulseController;
   late final AnimationController _ringController;
+  late final AnimationController _progressController;
+  late final AnimationController _panelController;
 
   late final Animation<double> _logoFade;
   late final Animation<double> _logoScale;
@@ -52,6 +73,9 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   late final Animation<double> _footerFade;
   late final Animation<Offset> _footerSlide;
   late final Animation<double> _pulseScale;
+  late final Animation<Offset> _leftSlide;
+  late final Animation<Offset> _rightSlide;
+  late final Animation<double> _panelFade;
 
   @override
   void initState() {
@@ -66,7 +90,16 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     );
     _ringController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2800),
+      duration: const Duration(milliseconds: 3200),
+    );
+    _progressController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+      value: 0,
+    );
+    _panelController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
     );
 
     _logoFade = CurvedAnimation(
@@ -109,11 +142,30 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
             curve: const Interval(0.68, 1, curve: Curves.easeOutCubic),
           ),
         );
-    _pulseScale = Tween<double>(begin: 1, end: 1.045).animate(
+    _pulseScale = Tween<double>(begin: 1, end: 1.05).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+    _leftSlide = Tween<Offset>(begin: const Offset(-0.06, 0), end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: _panelController,
+            curve: const Interval(0.0, 0.7, curve: Curves.easeOutCubic),
+          ),
+        );
+    _rightSlide = Tween<Offset>(begin: const Offset(0.06, 0), end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: _panelController,
+            curve: const Interval(0.1, 0.85, curve: Curves.easeOutCubic),
+          ),
+        );
+    _panelFade = CurvedAnimation(
+      parent: _panelController,
+      curve: const Interval(0.0, 0.55, curve: Curves.easeOut),
     );
 
     _introController.forward();
+    _panelController.forward();
     _pulseController.repeat(reverse: true);
     _ringController.repeat();
 
@@ -122,23 +174,66 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       LanguageService.instance.currentLanguage,
     );
 
-    // Precache logo for instant display
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         precacheImage(const AssetImage('assets/images/app_logo.png'), context);
       }
     });
 
-    // Defer initialization until after first frame is rendered This ensures splash screen shows immediately
     Future.microtask(() => _initializeApp());
+  }
+
+  void _startCreep(double ceiling) {
+    _creepCeiling = ceiling.clamp(0.0, 1.0);
+    _creepTimer?.cancel();
+    _creepTimer = Timer.periodic(const Duration(milliseconds: 90), (_) {
+      if (!mounted || _showUnlockButton) return;
+      final cur = _progressController.value;
+      if (cur >= _creepCeiling) return;
+      final next = (cur + 0.01).clamp(0.0, _creepCeiling);
+      _progressController.value = next;
+      _progress = next;
+      setState(() {});
+    });
+  }
+
+  void _stopCreep() {
+    _creepTimer?.cancel();
+    _creepTimer = null;
+  }
+
+  Future<void> _setLoadState({
+    required int step,
+    required double progress,
+  }) async {
+    if (!mounted) return;
+    final next = progress.clamp(0.0, 1.0);
+    _stopCreep();
+    setState(() {
+      _activeStep = step.clamp(0, _stepLabels.length - 1);
+      _progress = next;
+    });
+    await _progressController.animateTo(
+      next,
+      duration: const Duration(milliseconds: 520),
+      curve: Curves.easeOutCubic,
+    );
+    if (!mounted) return;
+    // Keep the bar alive between milestones.
+    final ceiling = (next + 0.14).clamp(0.0, 0.96);
+    if (next < 0.96) _startCreep(ceiling);
   }
 
   Future<void> _initializeApp() async {
     try {
-      // Initialize all services FIRST (splash screen is visible during this)
-      await initializeServices();
+      await _setLoadState(step: 0, progress: 0.08);
+      // Let the first fill paint before heavy work.
+      await Future<void>.delayed(const Duration(milliseconds: 220));
+      await _setLoadState(step: 0, progress: 0.18);
 
-      // Re-initialize after services are ready
+      await initializeServices();
+      await _setLoadState(step: 1, progress: 0.36);
+
       _credentialsManager = CredentialsManager();
       await _credentialsManager.init();
       if (mounted) {
@@ -150,9 +245,11 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       }
 
       debugPrint('[DEBUG] Splash page - checking for remembered login');
+      await _setLoadState(step: 1, progress: 0.45);
 
       if (await _credentialsManager.isRemembered()) {
         debugPrint('[DEBUG] Remembered login found, attempting auto-login');
+        await _setLoadState(step: 2, progress: 0.58);
 
         final currentUser = await _restoredUser();
         if (currentUser != null) {
@@ -174,14 +271,15 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
             _goToLogin();
             return;
           }
+          await _setLoadState(step: 3, progress: 0.92);
           _reloadSettingsInBackground();
           _goToDashboard();
           return;
         }
 
-        // Web does not keep the password. Without a Firebase session, sign in.
         if (kIsWeb) {
           debugPrint('[DEBUG] No web session to restore, going to login');
+          await _setLoadState(step: 3, progress: 1);
           _goToLogin();
           return;
         }
@@ -196,15 +294,16 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         } catch (e) {
           debugPrint('[ERROR] Sign out before login failed: $e');
         }
+        await _setLoadState(step: 3, progress: 1);
         _timer = Timer(widget.duration, _goToLogin);
       }
     } catch (e) {
       debugPrint('[ERROR] Error during initialization: $e');
+      await _setLoadState(step: 3, progress: 1);
       _timer = Timer(widget.duration, _goToLogin);
     }
   }
 
-  // Waits until Firebase has restored a persisted session, if there is one.
   Future<User?> _restoredUser() async {
     final existing = FirebaseAuth.instance.currentUser;
     if (existing != null) return existing;
@@ -224,6 +323,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
 
       if (credentials == null) {
         debugPrint('[DEBUG] Stored credentials are invalid');
+        await _setLoadState(step: 3, progress: 1);
         _timer = Timer(const Duration(seconds: 1), _goToLogin);
         return;
       }
@@ -232,14 +332,16 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       final password = credentials['password'] as String;
 
       debugPrint('[DEBUG] Attempting auto-login with email: ***');
+      await _setLoadState(step: 2, progress: 0.7);
 
-      // Attempt Firebase login with stored credentials (with timeout)
       final userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password)
           .timeout(const Duration(seconds: 8));
 
       if (userCredential.user != null) {
-        debugPrint('[DEBUG] Auto-login successful for: ${userCredential.user!.uid}');
+        debugPrint(
+          '[DEBUG] Auto-login successful for: ${userCredential.user!.uid}',
+        );
         try {
           await AccessControlService.instance.loadForCurrentUser();
           initializeSyncServices();
@@ -255,7 +357,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
           _goToLogin();
           return;
         }
-        // Reload settings in background - don't wait
+        await _setLoadState(step: 3, progress: 0.95);
         _reloadSettingsInBackground();
         _goToDashboard();
       } else {
@@ -264,19 +366,22 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       }
     } on FirebaseAuthException catch (e) {
       debugPrint('[ERROR] Auto-login failed: ${e.code} - ${e.message}');
-      // Clear invalid credentials
       await _credentialsManager.clearCredentials();
+      await _setLoadState(step: 3, progress: 1);
       _timer = Timer(const Duration(seconds: 1), _goToLogin);
     } on TimeoutException catch (_) {
       debugPrint('[ERROR] Auto-login timed out - going to login');
+      await _setLoadState(step: 3, progress: 1);
       _timer = Timer(const Duration(milliseconds: 500), _goToLogin);
     } catch (e) {
       debugPrint('[ERROR] Unexpected error during auto-login: $e');
+      await _setLoadState(step: 3, progress: 1);
       _timer = Timer(const Duration(seconds: 1), _goToLogin);
     }
   }
 
   void _goToLogin() {
+    _stopCreep();
     if (mounted) {
       Navigator.of(
         context,
@@ -284,15 +389,15 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     }
   }
 
-  // Reload settings in background without blocking navigation
   void _reloadSettingsInBackground() {
-    // Fire and forget - don't await these
     Future.microtask(() async {
       try {
         await BillReportSettingsService.instance.reload();
         await StockReportSettingsService.instance.reload();
       } catch (e) {
-        debugPrint('[DEBUG] Background settings reload error (non-critical): $e');
+        debugPrint(
+          '[DEBUG] Background settings reload error (non-critical): $e',
+        );
       }
     });
   }
@@ -300,7 +405,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   void _goToDashboard() {
     if (mounted) {
       debugPrint('[DEBUG] User logged in, checking biometric lock status');
-      // Navigate immediately without waiting for splash animation
       _checkBiometricLockAndNavigate();
     }
   }
@@ -313,17 +417,14 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       debugPrint('[DEBUG] Biometric lock enabled: $isLockEnabled');
 
       if (isLockEnabled && mounted) {
-        // Show unlock button instead of auto-prompting
         setState(() {
           _showUnlockButton = true;
         });
       } else {
-        // Biometric lock is disabled, go directly to dashboard
         _navigateToDashboard();
       }
     } catch (e) {
       debugPrint('[ERROR] Error checking biometric lock: $e');
-      // Don't open the shop when the lock state can't be read. Devices without biometrics still continue, because the lock cannot be turned on there.
       final canUse = await BiometricService.instance.canUseBiometrics();
       if (!mounted) return;
       if (canUse) {
@@ -357,7 +458,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         _navigateToDashboard();
       } else {
         debugPrint('[DEBUG] Fingerprint authentication cancelled/failed');
-        // Stay on splash screen - user can tap unlock again
         if (mounted) {
           GlassyToast.show(
             context,
@@ -367,7 +467,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       }
     } catch (e) {
       debugPrint('[ERROR] Error during fingerprint authentication: $e');
-      // Show error but stay on splash screen
       if (mounted) {
         GlassyToast.show(
           context,
@@ -381,7 +480,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   Future<void> _navigateToDashboard() async {
     if (!mounted) return;
 
-    // Resolve owner vs employee before sync / subscription (tenant data root).
     try {
       await AccessControlService.instance.loadForCurrentUser();
     } catch (e) {
@@ -397,9 +495,9 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       return;
     }
 
-    // Check subscription status before navigating to dashboard
     try {
       debugPrint('[DEBUG] Checking subscription status...');
+      await _setLoadState(step: 3, progress: 0.98);
       final isSubscriptionValid = await _subscriptionService
           .isSubscriptionValid()
           .timeout(const Duration(seconds: 8), onTimeout: () => false);
@@ -424,7 +522,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       }
     } catch (e) {
       debugPrint('[ERROR] Error checking subscription: $e');
-      // Fail closed - block access until subscription can be confirmed
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
@@ -447,21 +544,366 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   @override
   void dispose() {
     _timer?.cancel();
+    _stopCreep();
     _introController.dispose();
     _pulseController.dispose();
     _ringController.dispose();
+    _progressController.dispose();
+    _panelController.dispose();
     super.dispose();
+  }
+
+  String get _appTitle {
+    final name = _localizations.appName;
+    return name == 'C-BILLING' ? 'C-Billing' : name;
+  }
+
+  String get _tagline {
+    final t = _localizations.tagline;
+    if (t == 'THE BACKBONE FOR YOUR\nBUSINESS') {
+      return 'THE BACKBONE OF YOUR BUSINESS';
+    }
+    return t.replaceAll('\n', ' ');
   }
 
   @override
   Widget build(BuildContext context) {
+    final wide =
+        DesktopCanvas.isDesktopPlatform &&
+        MediaQuery.sizeOf(context).width >= 860;
+    if (wide) return _buildDesktopSplash(context);
+    return _buildMobileSplash(context);
+  }
+
+  // —— Desktop / Web split splash ——
+
+  Widget _buildDesktopSplash(BuildContext context) {
+    final isDark = AppColors.isDark(context);
+    final action = AppColors.actionBright(context);
+    return Scaffold(
+      backgroundColor: isDark ? AppTheme.paletteFF070908 : AppTheme.white,
+      body: Row(
+        children: [
+          Expanded(
+            child: FadeTransition(
+              opacity: _panelFade,
+              child: SlideTransition(
+                position: _leftSlide,
+                child: _buildBrandPanel(action),
+              ),
+            ),
+          ),
+          Expanded(
+            child: FadeTransition(
+              opacity: _panelFade,
+              child: SlideTransition(
+                position: _rightSlide,
+                child: _buildProgressPanel(
+                  context,
+                  isDark: isDark,
+                  accent: action,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBrandPanel(Color accent) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppTheme.headerDarkStart,
+            AppTheme.headerDarkMid,
+            AppTheme.headerDarkEnd,
+            AppTheme.paletteFF070908,
+          ],
+          stops: [0.0, 0.35, 0.72, 1.0],
+        ),
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          AnimatedBuilder(
+            animation: _ringController,
+            builder: (context, _) {
+              return CustomPaint(
+                painter: _BrandRingsPainter(
+                  progress: _ringController.value,
+                  color: accent.withValues(alpha: 0.28),
+                ),
+              );
+            },
+          ),
+          Center(
+            child: AnimatedBuilder(
+              animation: Listenable.merge([
+                _introController,
+                _pulseController,
+              ]),
+              builder: (context, _) {
+                final introScale = _logoScale.value;
+                final pulse = _pulseScale.value;
+                return Opacity(
+                  opacity: _logoFade.value,
+                  child: Transform.scale(
+                    scale: introScale * pulse,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 112,
+                          height: 112,
+                          decoration: BoxDecoration(
+                            color: AppTheme.white,
+                            borderRadius: BorderRadius.circular(28),
+                            boxShadow: [
+                              BoxShadow(
+                                color: accent.withValues(alpha: 0.4),
+                                blurRadius: 36,
+                                offset: const Offset(0, 14),
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(14),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.asset(
+                              'assets/images/app_logo.png',
+                              fit: BoxFit.cover,
+                              gaplessPlayback: true,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 28),
+                        Text(
+                          _appTitle,
+                          style: const TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 42,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.white,
+                            letterSpacing: -0.6,
+                            height: 1,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Opacity(
+                          opacity: _taglineFade.value,
+                          child: Text(
+                            _tagline.toUpperCase(),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.white.withValues(alpha: 0.72),
+                              letterSpacing: 2.2,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressPanel(
+    BuildContext context, {
+    required bool isDark,
+    required Color accent,
+  }) {
+    final bg = isDark ? AppTheme.paletteFF070908 : AppTheme.white;
+    final title = isDark ? AppTheme.white : AppTheme.headerDarkEnd;
+    final muted = isDark ? AppTheme.paletteFF8E9892 : AppTheme.paletteFF5E6B64;
+    final track = isDark ? AppTheme.paletteFF2A3330 : const Color(0xFFE6EBE8);
+
+    return ColoredBox(
+      color: bg,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(48, 40, 48, 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              FadeTransition(
+                opacity: _nameFade,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Starting $_appTitle',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color: title,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'This only takes a moment.',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(flex: 2),
+              ...List.generate(_stepLabels.length, (i) {
+                final done = i < _activeStep ||
+                    (_progress >= 0.98 && i <= _activeStep);
+                final active =
+                    i == _activeStep && !_showUnlockButton && !done;
+                final pending = i > _activeStep && !done;
+                final label = active
+                    ? '${_stepLabels[i]}...'
+                    : _stepLabels[i];
+                final start = 0.25 + (i * 0.12);
+                final end = (start + 0.28).clamp(0.0, 1.0);
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: i == _stepLabels.length - 1 ? 0 : 18,
+                  ),
+                  child: AnimatedBuilder(
+                    animation: _panelController,
+                    builder: (context, child) {
+                      final raw =
+                          ((_panelController.value - start) / (end - start))
+                              .clamp(0.0, 1.0);
+                      final t = Curves.easeOut.transform(raw);
+                      return Opacity(
+                        opacity: t,
+                        child: Transform.translate(
+                          offset: Offset(16 * (1 - t), 0),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: _SplashChecklistRow(
+                      label: label,
+                      done: done,
+                      active: active,
+                      pending: pending,
+                      accent: accent,
+                      titleColor: title,
+                      mutedColor: muted,
+                    ),
+                  ),
+                );
+              }),
+              const Spacer(flex: 2),
+              if (_showUnlockButton)
+                _buildUnlockButton(accent)
+              else
+                AnimatedBuilder(
+                  animation: _progressController,
+                  builder: (context, _) {
+                    final value = _progressController.value.clamp(0.0, 1.0);
+                    final pct = (value * 100).round().clamp(0, 100);
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'Loading',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: muted,
+                              ),
+                            ),
+                            const Spacer(),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 180),
+                              child: Text(
+                                '$pct%',
+                                key: ValueKey(pct),
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: title,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        _SplashProgressBar(
+                          value: value,
+                          trackColor: track,
+                          fillColor: accent,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              const Spacer(flex: 3),
+              FadeTransition(
+                opacity: _footerFade,
+                child: SlideTransition(
+                  position: _footerSlide,
+                  child: Wrap(
+                    spacing: 20,
+                    runSpacing: 10,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      _FooterChip(
+                        icon: Icons.language_rounded,
+                        label: _website,
+                        color: muted,
+                      ),
+                      _FooterChip(
+                        icon: Icons.phone_outlined,
+                        label: _contactPhone,
+                        color: muted,
+                      ),
+                      Text(
+                        _versionLabel,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: muted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // —— Mobile / narrow splash (existing centered layout) ——
+
+  Widget _buildMobileSplash(BuildContext context) {
     final isDark = AppColors.isDark(context);
     final titleColor = isDark ? AppTheme.white : AppTheme.headerDarkEnd;
     final muted = isDark ? AppTheme.paletteFF8E9892 : AppTheme.paletteFF5E6B64;
     final themeColor = AppColors.action(context);
-    final appTitle = _localizations.appName == 'C-BILLING'
-        ? 'C-Billing'
-        : _localizations.appName;
     final tagline = _localizations.tagline == 'THE BACKBONE FOR YOUR\nBUSINESS'
         ? 'THE BACKBONE FOR\nYOUR BUSINESS'
         : _localizations.tagline;
@@ -512,7 +954,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                   child: SlideTransition(
                     position: _nameSlide,
                     child: Text(
-                      appTitle,
+                      _appTitle,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: titleColor,
@@ -560,7 +1002,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                   opacity: _footerFade,
                   child: _showUnlockButton
                       ? _buildUnlockButton(themeColor)
-                      : _buildReadyBar(isDark, muted, themeColor),
+                      : _buildMobileProgress(isDark, muted, themeColor),
                 ),
                 const SizedBox(height: 28),
                 FadeTransition(
@@ -632,7 +1074,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '+91 99706 62978',
+                                _contactPhone,
                                 style: TextStyle(
                                   color: themeColor,
                                   fontSize: 13,
@@ -655,42 +1097,27 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildReadyBar(bool isDark, Color muted, Color themeColor) {
+  Widget _buildMobileProgress(bool isDark, Color muted, Color themeColor) {
     return AnimatedBuilder(
-      animation: Listenable.merge([_introController, _pulseController]),
+      animation: _progressController,
       builder: (context, _) {
-        final fill =
-            (0.22 +
-                    (_introController.value * 0.28) +
-                    (_pulseController.value * 0.06))
-                .clamp(0.18, 0.62);
+        final value = _progressController.value.clamp(0.0, 1.0);
         return Column(
           children: [
-            Container(
-              width: 168,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark
+            SizedBox(
+              width: 200,
+              child: _SplashProgressBar(
+                value: value < 0.08 ? 0.08 : value,
+                trackColor: isDark
                     ? AppTheme.paletteFF2A3330
                     : AppTheme.paletteFFD7E0DB,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              alignment: Alignment.centerLeft,
-              child: FractionallySizedBox(
-                widthFactor: fill,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: themeColor,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
+                fillColor: themeColor,
+                height: 4,
               ),
             ),
             const SizedBox(height: 12),
             Text(
-              _localizations.loadingData == 'Loading data...'
-                  ? 'Getting things ready'
-                  : _localizations.loadingData,
+              _stepLabels[_activeStep.clamp(0, _stepLabels.length - 1)],
               style: TextStyle(
                 color: muted,
                 fontSize: 13,
@@ -756,4 +1183,185 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       ),
     );
   }
+}
+
+class _SplashProgressBar extends StatelessWidget {
+  final double value;
+  final Color trackColor;
+  final Color fillColor;
+  final double height;
+
+  const _SplashProgressBar({
+    required this.value,
+    required this.trackColor,
+    required this.fillColor,
+    this.height = 8,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final clamped = value.clamp(0.0, 1.0);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final fillWidth = constraints.maxWidth * clamped;
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(height),
+          child: SizedBox(
+            height: height,
+            width: constraints.maxWidth,
+            child: Stack(
+              children: [
+                Positioned.fill(child: ColoredBox(color: trackColor)),
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: fillWidth,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          fillColor,
+                          Color.lerp(fillColor, AppTheme.greenAccent, 0.35)!,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SplashChecklistRow extends StatelessWidget {
+  final String label;
+  final bool done;
+  final bool active;
+  final bool pending;
+  final Color accent;
+  final Color titleColor;
+  final Color mutedColor;
+
+  const _SplashChecklistRow({
+    required this.label,
+    required this.done,
+    required this.active,
+    required this.pending,
+    required this.accent,
+    required this.titleColor,
+    required this.mutedColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = done || active ? titleColor : mutedColor.withValues(alpha: 0.55);
+    return Row(
+      children: [
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOutCubic,
+          width: 26,
+          height: 26,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: done ? accent : AppTheme.transparent,
+            border: Border.all(
+              color: done
+                  ? accent
+                  : active
+                      ? accent
+                      : mutedColor.withValues(alpha: 0.4),
+              width: 2,
+            ),
+          ),
+          child: done
+              ? const Icon(Icons.check_rounded, size: 16, color: AppTheme.white)
+              : active
+                  ? Padding(
+                      padding: const EdgeInsets.all(5),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: accent,
+                      ),
+                    )
+                  : null,
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 220),
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 16,
+              fontWeight: done || active ? FontWeight.w700 : FontWeight.w500,
+              color: color,
+            ),
+            child: Text(label),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FooterChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _FooterChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BrandRingsPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+
+  _BrandRingsPainter({required this.progress, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2 - 20);
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..color = color;
+
+    final base = math.min(size.width, size.height) * 0.22;
+    for (var i = 0; i < 3; i++) {
+      final pulse = math.sin((progress * math.pi * 2) + i) * 6;
+      canvas.drawCircle(center, base + (i * 48) + pulse, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _BrandRingsPainter oldDelegate) =>
+      oldDelegate.progress != progress || oldDelegate.color != color;
 }

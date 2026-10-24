@@ -19,7 +19,8 @@ enum AppModule {
   shop('shop', WebShell.shop, 'Shop details'),
   profile('profile', WebShell.profile, 'Profile'),
   password('password', WebShell.password, 'Change password'),
-  employees('employees', WebShell.employees, 'Employees');
+  employees('employees', WebShell.employees, 'Employees'),
+  reports('reports', WebShell.reports, 'Business reports');
 
   const AppModule(this.key, this.shellIndex, this.label);
 
