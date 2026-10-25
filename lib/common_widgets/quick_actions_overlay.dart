@@ -43,16 +43,21 @@ Future<void> showQuickActionsSheet(BuildContext context) {
     isScrollControlled: true,
     showClose: true,
     builder: (sheetContext) {
-      return GlassFixedSheet(
-        heightFactor: 0.55,
+      return GlassDraggableSheet(
+        initialChildSize: 0.62,
+        minChildSize: 0.42,
+        maxChildSize: 0.92,
         showClose: true,
         onClose: () => Navigator.pop(sheetContext),
-        child: QuickActionsPanel(
-          actions: buildQuickActionItems(
-            context,
-            beforeNavigate: () => Navigator.pop(sheetContext),
-          ),
-        ),
+        builder: (_, scrollController) {
+          return QuickActionsPanel(
+            scrollController: scrollController,
+            actions: buildQuickActionItems(
+              context,
+              beforeNavigate: () => Navigator.pop(sheetContext),
+            ),
+          );
+        },
       );
     },
   );
@@ -206,66 +211,60 @@ List<QuickActionItem> buildQuickActionItems(
 // Bottom sheet grid: "Quick actions" / "Jump to any section".
 class QuickActionsPanel extends StatelessWidget {
   final List<QuickActionItem> actions;
+  final ScrollController? scrollController;
 
-  const QuickActionsPanel({super.key, required this.actions});
+  const QuickActionsPanel({
+    super.key,
+    required this.actions,
+    this.scrollController,
+  });
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
     final bottom = MediaQuery.paddingOf(context).bottom;
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 10, 16, bottom + 20),
+      padding: EdgeInsets.fromLTRB(16, 4, 16, bottom + 12),
       child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                        child: Container(
-                          width: 36,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: AppColors.mutedText(context).withValues(
-                              alpha: 0.45,
-                            ),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        l10n.quickActions,
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontWeight: FontWeight.w800,
-                          fontSize: 20,
-                          color: AppColors.primaryText(context),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Jump to any section',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 13,
-                          color: AppColors.mutedText(context),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: actions.length,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              mainAxisSpacing: 12,
-                              crossAxisSpacing: 12,
-                              childAspectRatio: 1.05,
-                            ),
-                        itemBuilder: (context, index) =>
-                            _ActionTile(item: actions[index]),
-                      ),
-                    ],
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const GlassSheetHandle(),
+          const SizedBox(height: 12),
+          Text(
+            l10n.quickActions,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w800,
+              fontSize: 20,
+              color: AppColors.primaryText(context),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Jump to any section',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 13,
+              color: AppColors.mutedText(context),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Expanded(
+            child: GridView.builder(
+              controller: scrollController,
+              physics: const BouncingScrollPhysics(),
+              itemCount: actions.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 1.05,
+              ),
+              itemBuilder: (context, index) =>
+                  _ActionTile(item: actions[index]),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -384,13 +383,17 @@ class _GlobalQuickActionsFABState extends State<GlobalQuickActionsFAB>
                 alignment: Alignment.bottomCenter,
                 child: GestureDetector(
                   onTap: () {},
-                  child: GlassSheetCard(
-                    showClose: true,
-                    onClose: _close,
-                    child: QuickActionsPanel(
-                      actions: buildQuickActionItems(
-                        context,
-                        beforeNavigate: _close,
+                  child: SizedBox(
+                    height: MediaQuery.sizeOf(context).height * 0.62,
+                    width: double.infinity,
+                    child: GlassSheetCard(
+                      showClose: true,
+                      onClose: _close,
+                      child: QuickActionsPanel(
+                        actions: buildQuickActionItems(
+                          context,
+                          beforeNavigate: _close,
+                        ),
                       ),
                     ),
                   ),
