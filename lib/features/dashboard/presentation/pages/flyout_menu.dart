@@ -8,7 +8,9 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/biometric_service.dart';
 import '../../../../core/services/logout_service.dart';
 import '../../../../features/authentication/presentation/pages/change_password_page.dart';
+import '../../../../features/authentication/presentation/pages/two_step_verification_page.dart';
 import '../../../../core/services/theme_service.dart';
+import '../../../../core/services/two_step_verification_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'profile_page.dart';
 import 'web_shell.dart';
@@ -36,6 +38,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   String _selectedLanguage = 'English'; // Default language
   bool _biometricLockEnabled = false;
   bool _canUseBiometrics = false;
+  bool _twoStepEnabled = false;
   late AppLocalizations _localizations;
 
   // Animation controllers
@@ -64,6 +67,13 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           route: 'ChangePassword',
           color: AppTheme.toneAmber,
         ),
+      _MenuItem(
+        icon: Icons.verified_user_outlined,
+        label: _localizations.twoStepVerification,
+        route: 'TwoStepVerification',
+        color: AppTheme.toneCyan,
+        trailing: _twoStepEnabled ? 'On' : 'Off',
+      ),
     ];
     final business = <_MenuItem>[
       // Always show — kinds inside the hub are access-filtered.
@@ -130,6 +140,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
     _userName = _resolveUserName(_currentUser);
     _selectedLanguage = LanguageService.instance.currentLanguage;
     _loadBiometricStatus();
+    _loadTwoStepStatus();
 
     // Main slide animation
     _slideController = AnimationController(
@@ -233,6 +244,16 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
     }
   }
 
+  Future<void> _loadTwoStepStatus() async {
+    try {
+      final enabled =
+          await TwoStepVerificationService.instance.isEnabledForCurrentUser();
+      if (mounted) setState(() => _twoStepEnabled = enabled);
+    } catch (e) {
+      debugPrint('[ERROR] Failed to load 2-step status: $e');
+    }
+  }
+
   Future<void> _toggleBiometricLock(bool enabled) async {
     final biometricService = BiometricService.instance;
     await biometricService.setBiometricLockEnabled(enabled);
@@ -306,6 +327,14 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           showAppPage(
             ctx,
             const _SelectedTheme(child: ChangePasswordPage()),
+          );
+        });
+        break;
+      case 'TwoStepVerification':
+        afterClose((ctx) {
+          showAppPage(
+            ctx,
+            const _SelectedTheme(child: TwoStepVerificationPage()),
           );
         });
         break;

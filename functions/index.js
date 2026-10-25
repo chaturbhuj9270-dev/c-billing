@@ -820,3 +820,240 @@ exports.updateEmployee = onCall(async (request) => {
 
   return { uid: employeeUid, ok: true };
 });
+
+
+// ---------------------------------------------------------------------------
+// Two-step verification (email OTP on login)
+// Delivery:
+ // 1) Always queues to Firestore `mail` (use Firebase "Trigger Email" extension)
+ // 2) Optionally sends via SMTP if params are set:
+ //      firebase functions:config is not used; set params / .env:
+ //      SMTP_USER, SMTP_PASS, SMTP_FROM, SMTP_HOST, SMTP_PORT
+// ---------------------------------------------------------------------------
+
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
+
+const SMTP_USER = defineString("SMTP_USER", { default: "" });
+const SMTP_PASS = defineString("SMTP_PASS", { default: "" });
+const SMTP_FROM = defineString("SMTP_FROM", { default: "" });
+const SMTP_HOST = defineString("SMTP_HOST", { default: "smtp.gmail.com" });
+const SMTP_PORT = defineString("SMTP_PORT", { default: "465" });
+
+const OTP_TTL_MS = 10 * 60 * 1000;
+const OTP_MAX_ATTEMPTS = 5;
+
+function hashOtp(otp) {
+  return crypto.createHash("sha256").update(String(otp)).digest("hex");
+}
+
+function generateOtp() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+async function sendOtpEmail({ to, otp }) {
+  const subject = "C-Billing login verification code";
+  const text =
+    `Your C-Billing login code is ${otp}. It expires in 10 minutes. ` +
+    "If you did not try to sign in, ignore this email.";
+  const html =
+    `<p>Your C-Billing login code is:</p>` +
+    `<p style="font-size:28px;font-weight:700;letter-spacing:4px;">${otp}</p>` +
+    `<p>It expires in 10 minutes.</p>` +
+    `<p>If you did not try to sign in, ignore this email.</p>`;
+
+  // Queue for Firebase "Trigger Email from Firestore" extension.
+  await db.collection("mail").add({
+    to: [to],
+    message: { subject, text, html },
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  const user = String(SMTP_USER.value() || "").trim();
+  const pass = String(SMTP_PASS.value() || "").trim();
+  const from = String(SMTP_FROM.value() || user).trim();
+  if (!user || !pass) {
+    return { queued: true, smtp: false };
+  }
+
+  const port = Number(SMTP_PORT.value() || 465);
+  const transporter = nodemailer.createTransport({
+    host: SMTP_HOST.value() || "smtp.gmail.com",
+    port,
+    secure: port === 465,
+    auth: { user, pass },
+  });
+
+  await transporter.sendMail({
+    from: from || user,
+    to,
+    subject,
+    text,
+    html,
+  });
+
+  return { queued: true, smtp: true };
+}
+
+exports.sendLoginOtp = onCall({ region: "asia-south1" }, async (request) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "Sign in required");
+  }
+
+  const uid = request.auth.uid;
+  const force = request.data?.force === true;
+  const userRef = db.collection("users").doc(uid);
+  const snap = await userRef.get();
+  const enabled = snap.data()?.twoStepVerificationEnabled === true;
+
+  if (!force && !enabled) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Two-step verification is not enabled"
+    );
+  }
+
+  const authUser = await admin.auth().getUser(uid);
+  const email = authUser.email;
+  if (!email) {
+    throw new HttpsError("failed-precondition", "No email on this account");
+  }
+
+  const otp = generateOtp();
+  const expiresAt = admin.firestore.Timestamp.fromMillis(Date.now() + OTP_TTL_MS);
+
+  await userRef.collection("security").doc("loginOtp").set({
+    hash: hashOtp(otp),
+    expiresAt,
+    attempts: 0,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  try {
+    const result = await sendOtpEmail({ to: email, otp });
+    return {
+      ok: true,
+      email,
+      expiresInSeconds: Math.floor(OTP_TTL_MS / 1000),
+      delivery: result,
+    };
+  } catch (e) {
+    console.error("sendLoginOtp email failed", e);
+    throw new HttpsError(
+      "internal",
+      "Failed to send verification email. Install the Trigger Email extension or set SMTP_USER/SMTP_PASS."
+    );
+  }
+});
+
+exports.verifyLoginOtp = onCall({ region: "asia-south1" }, async (request) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "Sign in required");
+  }
+
+  const uid = request.auth.uid;
+  const otp = String(request.data?.otp || "").trim();
+  if (!/^\d{6}$/.test(otp)) {
+    throw new HttpsError("invalid-argument", "Enter the 6-digit code");
+  }
+
+  const otpRef = db
+    .collection("users")
+    .doc(uid)
+    .collection("security")
+    .doc("loginOtp");
+
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(otpRef);
+    if (!snap.exists) {
+      throw new HttpsError(
+        "failed-precondition",
+        "No code pending. Request a new one."
+      );
+    }
+
+    const data = snap.data() || {};
+    const attempts = Number(data.attempts || 0);
+    if (attempts >= OTP_MAX_ATTEMPTS) {
+      tx.delete(otpRef);
+      throw new HttpsError(
+        "resource-exhausted",
+        "Too many attempts. Request a new code."
+      );
+    }
+
+    const expiresAt = data.expiresAt?.toMillis?.() ?? 0;
+    if (!expiresAt || Date.now() > expiresAt) {
+      tx.delete(otpRef);
+      throw new HttpsError(
+        "deadline-exceeded",
+        "Code expired. Request a new one."
+      );
+    }
+
+    if (hashOtp(otp) !== data.hash) {
+      tx.update(otpRef, { attempts: attempts + 1 });
+      throw new HttpsError("permission-denied", "Invalid code");
+    }
+
+    tx.delete(otpRef);
+  });
+
+  return { ok: true };
+});
+
+exports.setTwoStepVerification = onCall(
+  { region: "asia-south1" },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "Sign in required");
+    }
+
+    const uid = request.auth.uid;
+    const enabled = request.data?.enabled === true;
+    const otp = String(request.data?.otp || "").trim();
+
+    if (enabled) {
+      if (!/^\d{6}$/.test(otp)) {
+        throw new HttpsError(
+          "invalid-argument",
+          "Verify with the 6-digit email code first"
+        );
+      }
+
+      const otpRef = db
+        .collection("users")
+        .doc(uid)
+        .collection("security")
+        .doc("loginOtp");
+      const snap = await otpRef.get();
+      if (!snap.exists) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Request a verification code first"
+        );
+      }
+      const data = snap.data() || {};
+      const expiresAt = data.expiresAt?.toMillis?.() ?? 0;
+      if (!expiresAt || Date.now() > expiresAt) {
+        await otpRef.delete();
+        throw new HttpsError("deadline-exceeded", "Code expired");
+      }
+      if (hashOtp(otp) !== data.hash) {
+        throw new HttpsError("permission-denied", "Invalid code");
+      }
+      await otpRef.delete();
+    }
+
+    await db.collection("users").doc(uid).set(
+      {
+        twoStepVerificationEnabled: enabled,
+        twoStepVerificationUpdatedAt:
+          admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    return { ok: true, enabled };
+  }
+);

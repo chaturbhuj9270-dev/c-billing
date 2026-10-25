@@ -10,6 +10,7 @@ import '../../features/inventory_management/data/services/purchase_batch_sync_se
 import '../../features/inventory_management/data/services/purchase_sync_service.dart';
 import '../../features/product/data/services/product_sync_service.dart';
 import '../../features/supplier/data/services/supplier_sync_service.dart';
+import 'local_user_data_guard.dart';
 
 // Boots sync services after auth and forces a full server pull so mobile
 // starts with complete local data. Also clears in-memory sync cursors on logout
@@ -55,6 +56,9 @@ class SyncBootstrap {
     debugPrint('[SyncBootstrap] Starting full post-login sync...');
 
     try {
+      // Wipe previous account's offline data before pulling this user's data.
+      await LocalUserDataGuard.ensureBoundToCurrentUser();
+
       // Clear cursors before wiring so the first initialize sync is a full pull.
       resetSyncCursors();
       initializeServices();
@@ -96,6 +100,8 @@ class SyncBootstrap {
     debugPrint('[SyncBootstrap] Resetting sync state for logout');
     resetSyncCursors();
     _syncInFlight = false;
+    // Fire-and-forget binding clear; logout already awaits DB wipe.
+    LocalUserDataGuard.clearBinding();
   }
 
   static void resetSyncCursors() {

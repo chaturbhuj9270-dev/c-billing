@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/access/access_control_service.dart';
-import 'local_database.dart';
+import 'local_user_data_guard.dart';
 import 'session_manager.dart';
 import 'credentials_manager.dart';
 import 'sync_bootstrap.dart';
@@ -35,7 +35,8 @@ class LogoutService {
       debugPrint('[LogoutService] Credentials cleared');
 
       // 4. Clear ALL local database data - THIS IS CRITICAL FOR SECURITY
-      await _clearAllLocalData();
+      await LocalUserDataGuard.clearAllUserData();
+      await LocalUserDataGuard.clearBinding();
       debugPrint('[LogoutService] Local data cleared');
 
       // 5. Clear in-memory sync cursors so next login does a full pull
@@ -70,25 +71,14 @@ class LogoutService {
     }
   }
 
-  // Clear all local database data
-  Future<void> _clearAllLocalData() async {
-    try {
-      if (LocalDatabase.instance.isInitialized) {
-        await LocalDatabase.instance.clearAllData();
-        debugPrint('[LogoutService] Local data cleared successfully');
-      }
-    } catch (e) {
-      debugPrint('[LogoutService] Error clearing local data: $e');
-    }
-  }
-
   // Called when session expires - clears data and signs out
   Future<void> onSessionExpired(BuildContext context) async {
     debugPrint('[LogoutService] Session expired - clearing data');
     
     try {
       AccessControlService.instance.clear();
-      await _clearAllLocalData();
+      await LocalUserDataGuard.clearAllUserData();
+      await LocalUserDataGuard.clearBinding();
       SyncBootstrap.resetOnLogout();
 
       await _auth.signOut();
@@ -102,6 +92,8 @@ class LogoutService {
     } catch (e) {
       debugPrint('[LogoutService] Error during session expiry: $e');
       try {
+        await LocalUserDataGuard.clearAllUserData();
+        await LocalUserDataGuard.clearBinding();
         SyncBootstrap.resetOnLogout();
         await _auth.signOut();
       } catch (_) {}
@@ -117,6 +109,6 @@ class LogoutService {
 
   // Clear data only (without signing out) - useful for data refresh
   Future<void> clearLocalDataOnly() async {
-    await _clearAllLocalData();
+    await LocalUserDataGuard.clearAllUserData();
   }
 }

@@ -17,10 +17,14 @@ import '../../../../core/services/logout_service.dart';
 import '../../../../core/ui/subscription_screen.dart';
 import 'signup.dart';
 import 'change_password_page.dart';
+import 'email_verification_page.dart';
+import 'login_otp_page.dart';
 import 'package:c_billing/common_widgets/app_logo_mark.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/access/access_control_service.dart';
+import 'package:c_billing/core/services/two_step_verification_service.dart';
+import 'package:c_billing/core/services/local_user_data_guard.dart';
 
 class LoginPageV2 extends StatefulWidget {
   const LoginPageV2({super.key});
@@ -184,6 +188,83 @@ class _LoginPageV2State extends State<LoginPageV2>
           if (!mounted) return;
           debugPrint('[DEBUG] Login successful for user: ${cred.user?.uid}');
 
+          final user = cred.user;
+          if (user == null) {
+            setState(() => _loading = false);
+            GlassyToast.show(context, _localizations.authError, isError: true);
+            return;
+          }
+
+          // Require email verification before granting app access.
+          try {
+            await user.reload();
+          } catch (e) {
+            debugPrint('[ERROR] User reload failed: $e');
+          }
+          final refreshed = FirebaseAuth.instance.currentUser ?? user;
+          if (!refreshed.emailVerified) {
+            if (!mounted) return;
+            setState(() => _loading = false);
+            GlassyToast.show(
+              context,
+              _localizations.verifyEmailBeforeLogin,
+              isError: true,
+            );
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => EmailVerificationPage(
+                  email: refreshed.email ?? emailOrPhone,
+                ),
+              ),
+            );
+            return;
+          }
+
+          // Optional email OTP second factor (flyout setting).
+          final twoStepOn = await TwoStepVerificationService.instance
+              .isEnabledForUid(refreshed.uid);
+          if (twoStepOn) {
+            final credentialsManager = CredentialsManager();
+            try {
+              if (_rememberMe) {
+                await credentialsManager.saveCredentials(
+                  email: emailOrPhone,
+                  password: password,
+                  userId: refreshed.uid,
+                );
+              } else {
+                await credentialsManager.clearCredentials();
+              }
+            } catch (e) {
+              debugPrint('[ERROR] Failed to update remembered login: $e');
+            }
+
+            try {
+              await TwoStepVerificationService.instance.sendLoginOtp();
+            } catch (e) {
+              debugPrint('[ERROR] Failed to send login OTP: $e');
+              if (!mounted) return;
+              setState(() => _loading = false);
+              GlassyToast.show(
+                context,
+                TwoStepVerificationService.instance
+                    .messageFromFunctionsError(e),
+                isError: true,
+              );
+              return;
+            }
+            if (!mounted) return;
+            setState(() => _loading = false);
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => LoginOtpPage(
+                  email: refreshed.email ?? emailOrPhone,
+                ),
+              ),
+            );
+            return;
+          }
+
           // Reload product settings to fetch custom columns for this user
           ProductSettingsService.instance.reload();
           PurchaseReportSettingsService.instance.reload();
@@ -192,7 +273,7 @@ class _LoginPageV2State extends State<LoginPageV2>
 
           // Initialize session with 2-hour timeout
           final sessionManager = SessionManager();
-          sessionManager.initializeSession(cred.user!, () {
+          sessionManager.initializeSession(refreshed, () {
             debugPrint('[CRITICAL] Session expired - clearing data and logging out');
             // Use LogoutService to ensure all local data is cleared on session expiry
             if (mounted) {
@@ -207,7 +288,7 @@ class _LoginPageV2State extends State<LoginPageV2>
               await credentialsManager.saveCredentials(
                 email: emailOrPhone,
                 password: password,
-                userId: cred.user!.uid,
+                userId: refreshed.uid,
               );
             } else {
               await credentialsManager.clearCredentials();
@@ -239,6 +320,8 @@ class _LoginPageV2State extends State<LoginPageV2>
     try {
       // Tenant context must be ready before sync hits Firestore paths.
       await AccessControlService.instance.loadForCurrentUser();
+      // Drop previous account's offline data before UI opens.
+      await LocalUserDataGuard.ensureBoundToCurrentUser();
       // Full server → local sync in background; do not block navigation.
       syncAfterLogin().catchError((e) {
         debugPrint('[ERROR] Post-login sync failed: $e');

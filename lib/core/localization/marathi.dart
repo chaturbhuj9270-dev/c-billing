@@ -711,6 +711,36 @@ class MarathiLocalization {
   static const String accountCreationFailed = 'खाते तयार करणे अपयशी';
   static const String passwordsDoNotMatch = 'पासवर्ड जुळत नाहीत';
   static const String pleaseFillAllFields = 'कृपया सर्व फील्ड भरा';
+  static const String verifyYourEmail = 'तुमचा ईमेल सत्यापित करा';
+  static const String verificationEmailSentTo =
+      'आम्ही सत्यापन लिंक पाठवला आहे';
+  static const String clickLinkInEmail =
+      'ईमेल उघडा आणि खाते सत्यापित करण्यासाठी लिंकवर टॅप करा. नंतर येथे परत येऊन सुरू ठेवा.';
+  static const String iHaveVerified = 'मी सत्यापित केले';
+  static const String resendVerificationEmail = 'सत्यापन ईमेल पुन्हा पाठवा';
+  static const String resendIn = 'पुन्हा पाठवा';
+  static const String verificationEmailSent = 'सत्यापन ईमेल पाठवला';
+  static const String failedToSendVerificationEmail =
+      'सत्यापन ईमेल पाठवणे अयशस्वी';
+  static const String emailNotVerifiedYet =
+      'ईमेल अद्याप सत्यापित नाही. कृपया इनबॉक्स तपासा.';
+  static const String emailVerifiedSuccess = 'ईमेल यशस्वीरीत्या सत्यापित';
+  static const String backToLogin = 'लॉगिनकडे परत जा';
+  static const String verifyEmailBeforeLogin =
+      'पुढे जाण्यापूर्वी कृपया तुमचा ईमेल सत्यापित करा.';
+  static const String twoStepVerification = '2-चरण सत्यापन';
+  static const String twoStepDescription =
+      'सक्षम केल्यावर, प्रत्येक लॉगिनसाठी तुमच्या ईमेलवर पाठवलेला वन-टाइम कोडही आवश्यक असेल.';
+  static const String twoStepEnabled = '2-चरण सत्यापन सक्षम';
+  static const String twoStepDisabled = '2-चरण सत्यापन अक्षम';
+  static const String enterCodeSentToEmail =
+      'तुमच्या ईमेलवर पाठवलेला 6-अंकी कोड प्रविष्ट करा';
+  static const String confirmAndEnable = 'पुष्टी करा आणि सक्षम करा';
+  static const String enterSixDigitCode = '6-अंकी कोड प्रविष्ट करा';
+  static const String enterLoginCode = 'लॉगिन कोड प्रविष्ट करा';
+  static const String codeSentTo = 'आम्ही कोड पाठवला आहे';
+  static const String verifyAndContinue = 'सत्यापित करा आणि सुरू ठेवा';
+  static const String resendCode = 'कोड पुन्हा पाठवा';
   static const String enterValid10DigitPhone =
       'वैध 10-अंकी फोन क्रमांक प्रविष्ट करा';
   static const String changePasswordTitle = 'पासवर्ड बदला';

@@ -6380,6 +6380,259 @@ class AppLocalizations {
     }
   }
 
+  String get verifyYourEmail {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.verifyYourEmail;
+      case 'Marathi':
+        return MarathiLocalization.verifyYourEmail;
+      default:
+        return EnglishLocalization.verifyYourEmail;
+    }
+  }
+
+  String get verificationEmailSentTo {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.verificationEmailSentTo;
+      case 'Marathi':
+        return MarathiLocalization.verificationEmailSentTo;
+      default:
+        return EnglishLocalization.verificationEmailSentTo;
+    }
+  }
+
+  String get clickLinkInEmail {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.clickLinkInEmail;
+      case 'Marathi':
+        return MarathiLocalization.clickLinkInEmail;
+      default:
+        return EnglishLocalization.clickLinkInEmail;
+    }
+  }
+
+  String get iHaveVerified {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.iHaveVerified;
+      case 'Marathi':
+        return MarathiLocalization.iHaveVerified;
+      default:
+        return EnglishLocalization.iHaveVerified;
+    }
+  }
+
+  String get resendVerificationEmail {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.resendVerificationEmail;
+      case 'Marathi':
+        return MarathiLocalization.resendVerificationEmail;
+      default:
+        return EnglishLocalization.resendVerificationEmail;
+    }
+  }
+
+  String get resendIn {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.resendIn;
+      case 'Marathi':
+        return MarathiLocalization.resendIn;
+      default:
+        return EnglishLocalization.resendIn;
+    }
+  }
+
+  String get verificationEmailSent {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.verificationEmailSent;
+      case 'Marathi':
+        return MarathiLocalization.verificationEmailSent;
+      default:
+        return EnglishLocalization.verificationEmailSent;
+    }
+  }
+
+  String get failedToSendVerificationEmail {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.failedToSendVerificationEmail;
+      case 'Marathi':
+        return MarathiLocalization.failedToSendVerificationEmail;
+      default:
+        return EnglishLocalization.failedToSendVerificationEmail;
+    }
+  }
+
+  String get emailNotVerifiedYet {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.emailNotVerifiedYet;
+      case 'Marathi':
+        return MarathiLocalization.emailNotVerifiedYet;
+      default:
+        return EnglishLocalization.emailNotVerifiedYet;
+    }
+  }
+
+  String get emailVerifiedSuccess {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.emailVerifiedSuccess;
+      case 'Marathi':
+        return MarathiLocalization.emailVerifiedSuccess;
+      default:
+        return EnglishLocalization.emailVerifiedSuccess;
+    }
+  }
+
+  String get backToLogin {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.backToLogin;
+      case 'Marathi':
+        return MarathiLocalization.backToLogin;
+      default:
+        return EnglishLocalization.backToLogin;
+    }
+  }
+
+  String get verifyEmailBeforeLogin {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.verifyEmailBeforeLogin;
+      case 'Marathi':
+        return MarathiLocalization.verifyEmailBeforeLogin;
+      default:
+        return EnglishLocalization.verifyEmailBeforeLogin;
+    }
+  }
+
+  String get twoStepVerification {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.twoStepVerification;
+      case 'Marathi':
+        return MarathiLocalization.twoStepVerification;
+      default:
+        return EnglishLocalization.twoStepVerification;
+    }
+  }
+
+  String get twoStepDescription {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.twoStepDescription;
+      case 'Marathi':
+        return MarathiLocalization.twoStepDescription;
+      default:
+        return EnglishLocalization.twoStepDescription;
+    }
+  }
+
+  String get twoStepEnabled {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.twoStepEnabled;
+      case 'Marathi':
+        return MarathiLocalization.twoStepEnabled;
+      default:
+        return EnglishLocalization.twoStepEnabled;
+    }
+  }
+
+  String get twoStepDisabled {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.twoStepDisabled;
+      case 'Marathi':
+        return MarathiLocalization.twoStepDisabled;
+      default:
+        return EnglishLocalization.twoStepDisabled;
+    }
+  }
+
+  String get enterCodeSentToEmail {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.enterCodeSentToEmail;
+      case 'Marathi':
+        return MarathiLocalization.enterCodeSentToEmail;
+      default:
+        return EnglishLocalization.enterCodeSentToEmail;
+    }
+  }
+
+  String get confirmAndEnable {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.confirmAndEnable;
+      case 'Marathi':
+        return MarathiLocalization.confirmAndEnable;
+      default:
+        return EnglishLocalization.confirmAndEnable;
+    }
+  }
+
+  String get enterSixDigitCode {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.enterSixDigitCode;
+      case 'Marathi':
+        return MarathiLocalization.enterSixDigitCode;
+      default:
+        return EnglishLocalization.enterSixDigitCode;
+    }
+  }
+
+  String get enterLoginCode {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.enterLoginCode;
+      case 'Marathi':
+        return MarathiLocalization.enterLoginCode;
+      default:
+        return EnglishLocalization.enterLoginCode;
+    }
+  }
+
+  String get codeSentTo {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.codeSentTo;
+      case 'Marathi':
+        return MarathiLocalization.codeSentTo;
+      default:
+        return EnglishLocalization.codeSentTo;
+    }
+  }
+
+  String get verifyAndContinue {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.verifyAndContinue;
+      case 'Marathi':
+        return MarathiLocalization.verifyAndContinue;
+      default:
+        return EnglishLocalization.verifyAndContinue;
+    }
+  }
+
+  String get resendCode {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.resendCode;
+      case 'Marathi':
+        return MarathiLocalization.resendCode;
+      default:
+        return EnglishLocalization.resendCode;
+    }
+  }
+
   String get accountCreationFailed {
     switch (languageCode) {
       case 'Hindi':

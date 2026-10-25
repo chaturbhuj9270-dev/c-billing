@@ -708,6 +708,36 @@ class HindiLocalization {
   static const String accountCreationFailed = 'खाता बनाने में विफल';
   static const String passwordsDoNotMatch = 'पासवर्ड मेल नहीं खाते';
   static const String pleaseFillAllFields = 'कृपया सभी फ़ील्ड भरें';
+  static const String verifyYourEmail = 'अपना ईमेल सत्यापित करें';
+  static const String verificationEmailSentTo =
+      'हमने सत्यापन लिंक भेजा है';
+  static const String clickLinkInEmail =
+      'ईमेल खोलें और खाता सत्यापित करने के लिए लिंक पर टैप करें। फिर यहाँ वापस आकर जारी रखें।';
+  static const String iHaveVerified = 'मैंने सत्यापित कर लिया';
+  static const String resendVerificationEmail = 'सत्यापन ईमेल पुनः भेजें';
+  static const String resendIn = 'पुनः भेजें';
+  static const String verificationEmailSent = 'सत्यापन ईमेल भेजा गया';
+  static const String failedToSendVerificationEmail =
+      'सत्यापन ईमेल भेजने में विफल';
+  static const String emailNotVerifiedYet =
+      'ईमेल अभी सत्यापित नहीं है। कृपया अपना इनबॉक्स जांचें।';
+  static const String emailVerifiedSuccess = 'ईमेल सफलतापूर्वक सत्यापित';
+  static const String backToLogin = 'लॉगिन पर वापस जाएं';
+  static const String verifyEmailBeforeLogin =
+      'जारी रखने से पहले कृपया अपना ईमेल सत्यापित करें।';
+  static const String twoStepVerification = '2-चरण सत्यापन';
+  static const String twoStepDescription =
+      'सक्षम होने पर, प्रत्येक लॉगिन पर आपके ईमेल पर भेजा गया वन-टाइम कोड भी आवश्यक होगा।';
+  static const String twoStepEnabled = '2-चरण सत्यापन सक्षम';
+  static const String twoStepDisabled = '2-चरण सत्यापन अक्षम';
+  static const String enterCodeSentToEmail =
+      'अपने ईमेल पर भेजा गया 6-अंकीय कोड दर्ज करें';
+  static const String confirmAndEnable = 'पुष्टि करें और सक्षम करें';
+  static const String enterSixDigitCode = '6-अंकीय कोड दर्ज करें';
+  static const String enterLoginCode = 'लॉगिन कोड दर्ज करें';
+  static const String codeSentTo = 'हमने कोड भेजा है';
+  static const String verifyAndContinue = 'सत्यापित करें और जारी रखें';
+  static const String resendCode = 'कोड पुनः भेजें';
   static const String enterValid10DigitPhone =
       'वैध 10-अंकीय फोन नंबर दर्ज करें';
   static const String changePasswordTitle = 'पासवर्ड बदलें';

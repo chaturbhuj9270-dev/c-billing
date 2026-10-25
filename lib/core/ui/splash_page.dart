@@ -7,7 +7,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../main.dart' show initializeServices, syncAfterLogin;
 import '../../features/authentication/presentation/pages/login.dart';
+import '../../features/authentication/presentation/pages/email_verification_page.dart';
+import '../../features/authentication/presentation/pages/login_otp_page.dart';
 import '../../features/dashboard/presentation/pages/optimized_dashboard_page.dart';
+import '../services/two_step_verification_service.dart';
+import '../services/local_user_data_guard.dart';
 import '../services/bill_report_settings_service.dart';
 import '../services/stock_report_settings_service.dart';
 import '../../core/services/biometric_service.dart';
@@ -231,7 +235,23 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
             '[DEBUG] Firebase user already authenticated: ${currentUser.uid}',
           );
           try {
+            await currentUser.reload();
+          } catch (e) {
+            debugPrint('[ERROR] User reload on splash failed: $e');
+          }
+          final refreshed = FirebaseAuth.instance.currentUser ?? currentUser;
+          if (!refreshed.emailVerified) {
+            debugPrint('[DEBUG] Email not verified — opening verification page');
+            await _setLoadState(step: 3, progress: 1);
+            _goToEmailVerification(refreshed.email ?? '');
+            return;
+          }
+          if (await _requireLoginOtpIfEnabled(refreshed)) {
+            return;
+          }
+          try {
             await AccessControlService.instance.loadForCurrentUser();
+            await LocalUserDataGuard.ensureBoundToCurrentUser();
             syncAfterLogin().catchError((e) {
               debugPrint('[ERROR] Post-login sync failed: $e');
             });
@@ -319,7 +339,23 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
           '[DEBUG] Auto-login successful for: ${userCredential.user!.uid}',
         );
         try {
+          await userCredential.user!.reload();
+        } catch (e) {
+          debugPrint('[ERROR] Auto-login user reload failed: $e');
+        }
+        final refreshed =
+            FirebaseAuth.instance.currentUser ?? userCredential.user!;
+        if (!refreshed.emailVerified) {
+          await _setLoadState(step: 3, progress: 1);
+          _goToEmailVerification(refreshed.email ?? email);
+          return;
+        }
+        if (await _requireLoginOtpIfEnabled(refreshed, emailHint: email)) {
+          return;
+        }
+        try {
           await AccessControlService.instance.loadForCurrentUser();
+          await LocalUserDataGuard.ensureBoundToCurrentUser();
           syncAfterLogin().catchError((e) {
             debugPrint('[ERROR] Post-login sync failed: $e');
           });
@@ -365,6 +401,54 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         context,
       ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginPageV2()));
     }
+  }
+
+  void _goToEmailVerification(String email) {
+    _stopCreep();
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => EmailVerificationPage(email: email),
+        ),
+      );
+    }
+  }
+
+  // Returns true when navigation to OTP page was started (caller should return).
+  Future<bool> _requireLoginOtpIfEnabled(
+    User user, {
+    String? emailHint,
+  }) async {
+    final enabled =
+        await TwoStepVerificationService.instance.isEnabledForUid(user.uid);
+    if (!enabled) return false;
+
+    try {
+      await TwoStepVerificationService.instance.sendLoginOtp();
+    } catch (e) {
+      debugPrint('[ERROR] Splash login OTP send failed: $e');
+      if (mounted) {
+        GlassyToast.show(
+          context,
+          TwoStepVerificationService.instance.messageFromFunctionsError(e),
+          isError: true,
+        );
+      }
+      _goToLogin();
+      return true;
+    }
+
+    await _setLoadState(step: 3, progress: 1);
+    _stopCreep();
+    if (!mounted) return true;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => LoginOtpPage(
+          email: user.email ?? emailHint ?? '',
+        ),
+      ),
+    );
+    return true;
   }
 
   void _reloadSettingsInBackground() {
@@ -460,6 +544,10 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
 
     try {
       await AccessControlService.instance.loadForCurrentUser();
+      await LocalUserDataGuard.ensureBoundToCurrentUser();
+      syncAfterLogin().catchError((e) {
+        debugPrint('[ERROR] Post-login sync failed: $e');
+      });
     } catch (e) {
       debugPrint('[ERROR] Access control load failed: $e');
       if (mounted) {

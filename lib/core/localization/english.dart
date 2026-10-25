@@ -706,6 +706,36 @@ class EnglishLocalization {
   static const String accountCreationFailed = 'Account creation failed';
   static const String passwordsDoNotMatch = 'Passwords do not match';
   static const String pleaseFillAllFields = 'Please fill in all fields';
+  static const String verifyYourEmail = 'Verify your email';
+  static const String verificationEmailSentTo =
+      'We sent a verification link to';
+  static const String clickLinkInEmail =
+      'Open the email and tap the link to verify your account. Then return here and continue.';
+  static const String iHaveVerified = "I've verified";
+  static const String resendVerificationEmail = 'Resend verification email';
+  static const String resendIn = 'Resend in';
+  static const String verificationEmailSent = 'Verification email sent';
+  static const String failedToSendVerificationEmail =
+      'Failed to send verification email';
+  static const String emailNotVerifiedYet =
+      'Email not verified yet. Please check your inbox.';
+  static const String emailVerifiedSuccess = 'Email verified successfully';
+  static const String backToLogin = 'Back to login';
+  static const String verifyEmailBeforeLogin =
+      'Please verify your email before continuing.';
+  static const String twoStepVerification = '2-step verification';
+  static const String twoStepDescription =
+      'When enabled, each login also requires a one-time code sent to your email.';
+  static const String twoStepEnabled = '2-step verification enabled';
+  static const String twoStepDisabled = '2-step verification disabled';
+  static const String enterCodeSentToEmail =
+      'Enter the 6-digit code sent to your email';
+  static const String confirmAndEnable = 'Confirm & enable';
+  static const String enterSixDigitCode = 'Enter the 6-digit code';
+  static const String enterLoginCode = 'Enter login code';
+  static const String codeSentTo = 'We sent a code to';
+  static const String verifyAndContinue = 'Verify & continue';
+  static const String resendCode = 'Resend code';
   static const String enterValid10DigitPhone =
       'Enter a valid 10-digit phone number';
   static const String changePasswordTitle = 'Change Password';

@@ -3,10 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/language_service.dart';
-import '../../../../core/services/session_manager.dart';
-import '../../../../core/services/logout_service.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'email_verification_page.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -165,31 +164,31 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
               'email': email,
               'contact': contact,
               'createdAt': FieldValue.serverTimestamp(),
-              // No free access - user must subscribe via Cashfree after login
+              // 1-month free trial; after that Cashfree / Play subscription is required
               'subscriptionDate': null,
-              'subscriptionStatus': 'inactive',
+              'subscriptionStatus': 'trial',
+              'trialStartedAt': FieldValue.serverTimestamp(),
+              'emailVerifiedAtSignup': false,
             });
             debugPrint(
               '[DEBUG] Firestore write successful for UID: ${currentUser.uid}',
             );
 
-            // Initialize session for new user
-            final sessionManager = SessionManager();
-            sessionManager.initializeSession(currentUser, () {
-              debugPrint(
-                '[CRITICAL] Session expired - clearing data and logging out',
-              );
-              // Use LogoutService to ensure all local data is cleared on session expiry
-              if (mounted) {
-                GlassyToast.show(context, _localizations.sessionExpired);
-                LogoutService.instance.onSessionExpired(context);
-              }
-            });
-            debugPrint('[DEBUG] Session initialized with 2-hour timeout');
+            // Free Firebase email verification — must complete before app access.
+            try {
+              await currentUser.sendEmailVerification();
+              debugPrint('[DEBUG] Verification email sent to $email');
+            } catch (e) {
+              debugPrint('[ERROR] Failed to send verification email: $e');
+            }
 
             if (mounted) {
-              GlassyToast.show(context, _localizations.accountCreated);
-              Navigator.of(context).pop();
+              GlassyToast.show(context, _localizations.verificationEmailSent);
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => EmailVerificationPage(email: email),
+                ),
+              );
             }
           } catch (e) {
             debugPrint('[ERROR] Account setup error: $e');

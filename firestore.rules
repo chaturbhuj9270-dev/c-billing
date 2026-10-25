@@ -27,7 +27,8 @@ service cloud.firestore {
       return isOwner(userId) || isEmployeeOf(userId);
     }
 
-    // Clients must not self-activate subscription fields.
+    // Clients must not self-activate / extend paid subscription fields.
+    // One-time free-trial start is allowed separately via startingFreeTrialOnly().
     function subscriptionFieldsUnchanged() {
       return !request.resource.data
         .diff(resource.data)
@@ -37,21 +38,59 @@ service cloud.firestore {
           'lastSubscriptionUpdate',
           'lastSubscriptionOrderId',
           'subscriptionStatus',
-          'subscriptionProvider'
+          'subscriptionProvider',
+          'trialStartedAt'
         ]);
     }
 
-    function creatingInactiveSubscription() {
-      return (!('subscriptionDate' in request.resource.data)
-          || request.resource.data.subscriptionDate == null)
-        && (!('subscriptionStatus' in request.resource.data)
-          || request.resource.data.subscriptionStatus == 'inactive');
+    // Allow existing unpaid accounts to receive trialStartedAt exactly once.
+    function startingFreeTrialOnly() {
+      let wasUnpaid = !('subscriptionDate' in resource.data)
+        || resource.data.subscriptionDate == null;
+      let hadNoTrial = !('trialStartedAt' in resource.data)
+        || !(resource.data.trialStartedAt is timestamp);
+      let staysUnpaid = !('subscriptionDate' in request.resource.data)
+        || request.resource.data.subscriptionDate == null;
+      let setsTrial = request.resource.data.trialStartedAt is timestamp
+        && request.resource.data.subscriptionStatus == 'trial';
+      let onlyTrialKeys = request.resource.data
+        .diff(resource.data)
+        .affectedKeys()
+        .hasOnly(['trialStartedAt', 'subscriptionStatus']);
+      return wasUnpaid && hadNoTrial && staysUnpaid && setsTrial && onlyTrialKeys;
     }
 
+    // New shop owners may start inactive or on a 30-day free trial (no paid date).
+    function creatingInactiveSubscription() {
+      let noPaid = (!('subscriptionDate' in request.resource.data)
+          || request.resource.data.subscriptionDate == null);
+      let statusOk = (!('subscriptionStatus' in request.resource.data)
+          || request.resource.data.subscriptionStatus == 'inactive'
+          || request.resource.data.subscriptionStatus == 'trial');
+      return noPaid && statusOk;
+    }
+
+    function isUnpaid(data) {
+      return !('subscriptionDate' in data) || data.subscriptionDate == null;
+    }
+
+    // Paid year OR free trial (trialStartedAt / createdAt / subscriptionStatus=trial).
     function hasActiveSubscription(userId) {
       let data = get(/databases/$(database)/documents/users/$(userId)).data;
-      return data.subscriptionDate is timestamp
+      let paidActive = data.subscriptionDate is timestamp
         && request.time < data.subscriptionDate + duration.value(365, 'd');
+      let trialByField = data.trialStartedAt is timestamp
+        && request.time < data.trialStartedAt + duration.value(30, 'd');
+      let trialByCreated = isUnpaid(data)
+        && data.createdAt is timestamp
+        && request.time < data.createdAt + duration.value(30, 'd');
+      // Explicit trial flag with no paid date and no usable timestamps yet
+      // (first moments after signup before serverTimestamp resolves).
+      let trialByStatus = isUnpaid(data)
+        && data.subscriptionStatus == 'trial'
+        && !(data.trialStartedAt is timestamp)
+        && !(data.createdAt is timestamp);
+      return paidActive || trialByField || trialByCreated || trialByStatus;
     }
 
     // Employee profile docs: owner create/update via Admin SDK preferred;
@@ -69,7 +108,14 @@ service cloud.firestore {
           && !('subscriptionDate' in request.resource.data)
         );
 
-      allow update: if (isOwner(userId) && subscriptionFieldsUnchanged())
+      allow update: if (isOwner(userId) && (
+            subscriptionFieldsUnchanged() || startingFreeTrialOnly()
+          ))
+        || (
+          isSignedIn()
+          && request.auth.uid == userId
+          && startingFreeTrialOnly()
+        )
         || (
           isSignedIn()
           && resource.data.role == 'employee'
@@ -77,7 +123,7 @@ service cloud.firestore {
           && request.resource.data.role == 'employee'
           && request.resource.data.tenantOwnerId == resource.data.tenantOwnerId
           && !request.resource.data.diff(resource.data).affectedKeys()
-            .hasAny(['subscriptionDate', 'subscriptionStatus', 'subscriptionProvider'])
+            .hasAny(['subscriptionDate', 'subscriptionStatus', 'subscriptionProvider', 'trialStartedAt'])
         );
 
       allow delete: if isOwner(userId)
@@ -153,6 +199,10 @@ service cloud.firestore {
         allow write: if isOwner(userId) && hasActiveSubscription(userId);
       }
       match /settings/{document=**} {
+        allow read: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
+        allow write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+      match /product_settings/{document=**} {
         allow read: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
         allow write: if isOwner(userId) && hasActiveSubscription(userId);
       }
