@@ -1,13 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../models/dashboard_data.dart';
 import 'package:c_billing/core/access/tenant_context.dart';
 
 // Repository for fetching dashboard data from Firestore
 class DashboardRepository {
   final FirebaseFirestore _firestore;
-  final FirebaseAuth _auth;
 
   // In-memory cache for dashboard data
   static DashboardData? _cachedData;
@@ -15,9 +13,8 @@ class DashboardRepository {
   static DateTime? _cacheTimestamp;
   static const Duration _cacheDuration = Duration(seconds: 30);
 
-  DashboardRepository({FirebaseFirestore? firestore, FirebaseAuth? auth})
-    : _firestore = firestore ?? FirebaseFirestore.instance,
-      _auth = auth ?? FirebaseAuth.instance;
+  DashboardRepository({FirebaseFirestore? firestore})
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   // Get current user ID or null if not authenticated
   String? get _userId => TenantContext.dataOwnerIdOrNull;

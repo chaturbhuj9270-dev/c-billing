@@ -1,20 +1,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
 import 'package:c_billing/core/access/tenant_context.dart';
 
 class FirebaseProductRepository implements ProductRepository {
   final FirebaseFirestore _firestore;
-  final FirebaseAuth _auth;
   final String _collection = 'products';
 
   FirebaseProductRepository({
     required FirebaseFirestore firestore,
-    FirebaseAuth? auth,
-  }) : _firestore = firestore,
-       _auth = auth ?? FirebaseAuth.instance;
+  }) : _firestore = firestore;
 
   String get _userId => TenantContext.dataOwnerId;
 

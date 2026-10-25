@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../offline/controllers/expense_offline_controller.dart';
 import '../../offline/entities/expense_entity.dart';
 import 'package:c_billing/core/access/tenant_context.dart';
@@ -49,7 +48,6 @@ class ExpenseSyncService extends ChangeNotifier {
 
   final ExpenseOfflineController _offlineController;
   final FirebaseFirestore _firestore;
-  final FirebaseAuth _auth;
   final Connectivity _connectivity;
 
   ExpenseSyncServiceStatus _status = ExpenseSyncServiceStatus.idle;
@@ -65,12 +63,10 @@ class ExpenseSyncService extends ChangeNotifier {
   ExpenseSyncService._({
     ExpenseOfflineController? offlineController,
     FirebaseFirestore? firestore,
-    FirebaseAuth? auth,
     Connectivity? connectivity,
   }) : _offlineController =
            offlineController ?? ExpenseOfflineController.instance,
        _firestore = firestore ?? FirebaseFirestore.instance,
-       _auth = auth ?? FirebaseAuth.instance,
        _connectivity = connectivity ?? Connectivity();
 
   // Get the singleton instance

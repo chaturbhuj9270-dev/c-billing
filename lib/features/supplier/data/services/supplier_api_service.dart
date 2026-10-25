@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:c_billing/core/access/tenant_context.dart';
 
@@ -8,13 +7,10 @@ class SupplierApiService {
   static SupplierApiService? _instance;
 
   final FirebaseFirestore _firestore;
-  final FirebaseAuth _auth;
 
   SupplierApiService._({
     FirebaseFirestore? firestore,
-    FirebaseAuth? auth,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+  }) : _firestore = firestore ?? FirebaseFirestore.instance;
 
   // Get the singleton instance
   static SupplierApiService get instance {

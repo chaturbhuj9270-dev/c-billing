@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:c_billing/core/access/tenant_context.dart';
 
@@ -8,11 +7,9 @@ class BillApiService {
   static BillApiService? _instance;
 
   final FirebaseFirestore _firestore;
-  final FirebaseAuth _auth;
 
-  BillApiService._({FirebaseFirestore? firestore, FirebaseAuth? auth})
-    : _firestore = firestore ?? FirebaseFirestore.instance,
-      _auth = auth ?? FirebaseAuth.instance;
+  BillApiService._({FirebaseFirestore? firestore})
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   // Get the singleton instance
   static BillApiService get instance {

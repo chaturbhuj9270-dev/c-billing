@@ -1,19 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:c_billing/core/access/tenant_context.dart';
 import '../../domain/entities/purchase_return.dart';
 
 // Firebase repository for Purchase Return CRUD operations
 class FirebasePurchaseReturnRepository {
   final FirebaseFirestore _firestore;
-  final FirebaseAuth _auth;
   final String _collection = 'purchaseReturns';
 
   FirebasePurchaseReturnRepository({
     FirebaseFirestore? firestore,
-    FirebaseAuth? auth,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+  }) : _firestore = firestore ?? FirebaseFirestore.instance;
 
   String get _userId => TenantContext.dataOwnerId;
 

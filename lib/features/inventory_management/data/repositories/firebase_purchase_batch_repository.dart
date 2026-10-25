@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/purchase_batch.dart';
 import '../../domain/repositories/purchase_batch_repository.dart';
 import 'package:c_billing/core/access/tenant_context.dart';
@@ -7,14 +6,11 @@ import 'package:c_billing/core/access/tenant_context.dart';
 // Firebase implementation of PurchaseBatchRepository
 class FirebasePurchaseBatchRepository implements PurchaseBatchRepository {
   final FirebaseFirestore _firestore;
-  final FirebaseAuth _auth;
   final String _collection = 'purchaseBatches';
 
   FirebasePurchaseBatchRepository({
     required FirebaseFirestore firestore,
-    FirebaseAuth? auth,
-  }) : _firestore = firestore,
-       _auth = auth ?? FirebaseAuth.instance;
+  }) : _firestore = firestore;
 
   String get _userId => TenantContext.dataOwnerId;
 

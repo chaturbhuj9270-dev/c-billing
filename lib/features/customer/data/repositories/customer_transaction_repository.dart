@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:c_billing/core/access/tenant_context.dart';
 import 'package:c_billing/features/customer/domain/entities/customer_transaction.dart';
 
@@ -38,7 +37,6 @@ abstract class CustomerTransactionRepository {
 class FirebaseCustomerTransactionRepository
     implements CustomerTransactionRepository {
   final FirebaseFirestore firestore;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   FirebaseCustomerTransactionRepository({required this.firestore});
 
