@@ -110,11 +110,10 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: drawerSheetSize(0.6),
-      minChildSize: drawerSheetSize(0.4),
-      maxChildSize: drawerSheetSize(0.9),
-      expand: false,
+    return GlassDraggableSheet(
+      initialChildSize: 0.55,
+      minChildSize: 0.38,
+      maxChildSize: 0.9,
       builder: (context, scrollController) {
         return Column(
           children: [

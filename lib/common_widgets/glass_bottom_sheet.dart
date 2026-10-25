@@ -132,7 +132,128 @@ class GlassSheetCard extends StatelessWidget {
   }
 }
 
-// Modal bottom sheet whose card uses [GlassSheetCard].
+/// True bottom drawer: sizes to [initialChildSize] of the screen (not full page).
+/// Put this as the root returned from [showAppBottomSheet] builders on mobile.
+class GlassDraggableSheet extends StatefulWidget {
+  final ScrollableWidgetBuilder builder;
+  final double initialChildSize;
+  final double minChildSize;
+  final double maxChildSize;
+  final bool showClose;
+  final VoidCallback? onClose;
+
+  const GlassDraggableSheet({
+    super.key,
+    required this.builder,
+    this.initialChildSize = 0.58,
+    this.minChildSize = 0.38,
+    this.maxChildSize = 0.92,
+    this.showClose = false,
+    this.onClose,
+  });
+
+  @override
+  State<GlassDraggableSheet> createState() => _GlassDraggableSheetState();
+}
+
+class _GlassDraggableSheetState extends State<GlassDraggableSheet> {
+  ScrollController? _desktopScroll;
+
+  @override
+  void initState() {
+    super.initState();
+    if (DesktopCanvas.isDesktopPlatform) {
+      _desktopScroll = ScrollController();
+    }
+  }
+
+  @override
+  void dispose() {
+    _desktopScroll?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Side drawer already provides the panel chrome — fill it.
+    if (DesktopCanvas.isDesktopPlatform) {
+      return widget.builder(context, _desktopScroll!);
+    }
+
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: widget.initialChildSize,
+      minChildSize: widget.minChildSize,
+      maxChildSize: widget.maxChildSize,
+      builder: (context, controller) {
+        return GlassSheetCard(
+          showClose: widget.showClose,
+          onClose: widget.onClose,
+          child: SafeArea(
+            top: false,
+            child: widget.builder(context, controller),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Fixed-height glass drawer anchored to the bottom (non-draggable).
+class GlassFixedSheet extends StatelessWidget {
+  final Widget child;
+  final double heightFactor;
+  final bool showClose;
+  final VoidCallback? onClose;
+
+  const GlassFixedSheet({
+    super.key,
+    required this.child,
+    this.heightFactor = 0.62,
+    this.showClose = false,
+    this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (DesktopCanvas.isDesktopPlatform) return child;
+    final h = MediaQuery.sizeOf(context).height * heightFactor;
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: GlassSheetCard(
+        showClose: showClose,
+        onClose: onClose,
+        child: SizedBox(
+          height: h,
+          child: SafeArea(top: false, child: child),
+        ),
+      ),
+    );
+  }
+}
+
+/// Backward-compatible helper for [GlassFixedSheet].
+Widget glassFixedSheet({
+  required BuildContext context,
+  required Widget child,
+  double heightFactor = 0.62,
+  bool showClose = false,
+  VoidCallback? onClose,
+}) {
+  return GlassFixedSheet(
+    heightFactor: heightFactor,
+    showClose: showClose,
+    onClose: onClose,
+    child: child,
+  );
+}
+
+bool _isGlassDrawerRoot(Widget content) =>
+    content is GlassDraggableSheet || content is GlassFixedSheet;
+
+// Modal bottom sheet. Prefer returning [GlassDraggableSheet] /
+// [GlassFixedSheet] from scroll-controlled builders so the panel is a
+// bottom drawer, not a full-page sheet.
 Future<T?> showAppBottomSheet<T>({
   required BuildContext context,
   required WidgetBuilder builder,
@@ -163,20 +284,34 @@ Future<T?> showAppBottomSheet<T>({
     backgroundColor: AppTheme.transparent,
     barrierColor: AppTheme.black.withValues(alpha: 0.45),
     elevation: 0,
-    shape: const RoundedRectangleBorder(borderRadius: kGlassSheetRadius),
-    clipBehavior: Clip.antiAlias,
+    // No shape/clip on the modal itself — glass card owns the radius.
     builder: (sheetContext) {
       final bottomInset = MediaQuery.viewInsetsOf(sheetContext).bottom;
-      return Padding(
-        padding: EdgeInsets.only(bottom: bottomInset),
-        child: GlassSheetCard(
+      final content = builder(sheetContext);
+      final Widget sheet;
+      if (!isScrollControlled) {
+        sheet = GlassSheetCard(
           showClose: showClose,
           onClose: onClose,
-          child: SafeArea(
-            top: false,
-            child: builder(sheetContext),
+          child: SafeArea(top: false, child: content),
+        );
+      } else if (_isGlassDrawerRoot(content)) {
+        sheet = content;
+      } else {
+        // Legacy builders: wrap as a bottom-anchored glass drawer so they
+        // don't expand into a full-page panel.
+        sheet = Align(
+          alignment: Alignment.bottomCenter,
+          child: GlassSheetCard(
+            showClose: showClose,
+            onClose: onClose,
+            child: SafeArea(top: false, child: content),
           ),
-        ),
+        );
+      }
+      return Padding(
+        padding: EdgeInsets.only(bottom: bottomInset),
+        child: sheet,
       );
     },
   );

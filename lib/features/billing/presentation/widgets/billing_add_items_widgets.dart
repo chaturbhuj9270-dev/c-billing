@@ -753,59 +753,99 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
       return;
     }
 
-    // Has batches (1 or more) - always show batch selection bottom sheet
-    showAppBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppTheme.transparent,
-      builder: (ctx) => BatchSelectionSheet(
-        productName: group.productName,
-        productCode: group.indexNo,
-        batches: group.batches,
-        localizations: widget.localizations,
-        existingBillItems: widget.billItems,
+    // Has batches — add FIFO batch directly (no second drawer).
+    final lowerUnit = group.unit?.toLowerCase();
+    final supportsSubUnit = lowerUnit == 'kg' || lowerUnit == 'ltr';
+
+    PurchaseBatchEntity? batchAlreadyOnBill;
+    for (final b in group.batches) {
+      final key = '${b.productId}_batch_${b.id}';
+      final qty = widget.billItems
+          .where((item) => item.productId == key)
+          .fold<double>(0, (s, item) => s + item.quantity);
+      if (qty > 0) {
+        batchAlreadyOnBill = b;
+        break;
+      }
+    }
+
+    final PurchaseBatchEntity? batch = batchAlreadyOnBill ??
+        group.batches.cast<PurchaseBatchEntity?>().firstWhere(
+              (b) => (b?.quantityRemaining ?? 0) > 0,
+              orElse: () =>
+                  group.batches.isNotEmpty ? group.batches.first : null,
+            );
+
+    if (batch == null) {
+      widget.showSnackbar(
+        widget.localizations.noProductsFound,
+        isError: true,
+      );
+      return;
+    }
+
+    final uniqueKey = '${batch.productId}_batch_${batch.id}';
+    final existingItem = widget.billItems.cast<BillItem?>().firstWhere(
+          (item) => item!.productId == uniqueKey,
+          orElse: () => null,
+        );
+    final existingQty = existingItem?.quantity ?? 0.0;
+
+    if (existingQty > 0 || supportsSubUnit) {
+      _showProductQuantityDialog(
+        productId: batch.productId,
+        productName: batch.productName,
+        companyName: batch.companyName,
+        batchLocalId: batch.id,
+        sellingPrice: batch.sellingPrice,
+        purchasePrice: batch.purchasePrice,
+        currentQty: existingQty,
+        maxStock: batch.quantityRemaining,
         cgstPercent: group.cgstPercent,
         sgstPercent: group.sgstPercent,
         hsnCode: group.hsnCode,
         unit: group.unit,
-        onBatchSelected: (batch, quantity, sellUnit) {
-          widget.onBatchItemAdded(
-            batch.productId,
-            batch.productName,
-            batch.companyName,
-            batch.id,
-            batch.sellingPrice,
-            batch.purchasePrice,
-            quantity,
-            batch.quantityRemaining,
-            group.cgstPercent,
-            group.sgstPercent,
-            group.hsnCode,
-            group.unit,
-            sellUnit,
-          );
-          setState(() {});
-          Navigator.pop(ctx);
-          widget.showSnackbar(
-            '${widget.localizations.added}: ${batch.productName}',
-            isError: false,
-          );
-        },
-        onItemRemoved: (uniqueKey) {
-          widget.onItemRemoved(uniqueKey);
-          setState(() {});
-        },
-      ),
-    );
+        currentSellUnit: existingItem?.sellUnit,
+      );
+      return;
+    }
+
+    if (batch.quantityRemaining > 0) {
+      widget.onBatchItemAdded(
+        batch.productId,
+        batch.productName,
+        batch.companyName,
+        batch.id,
+        batch.sellingPrice,
+        batch.purchasePrice,
+        1.0,
+        batch.quantityRemaining,
+        group.cgstPercent,
+        group.sgstPercent,
+        group.hsnCode,
+        group.unit,
+        group.unit,
+      );
+      setState(() {});
+      widget.showSnackbar(
+        '${widget.localizations.added}: ${batch.productName}',
+        isError: false,
+      );
+    } else {
+      widget.showSnackbar(
+        '${widget.localizations.maxStock}: 0',
+        isError: true,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final side = DesktopCanvas.isDesktopPlatform;
-    return DraggableScrollableSheet(
-      initialChildSize: drawerSheetSize(0.85),
-      maxChildSize: drawerSheetSize(0.95),
-      minChildSize: drawerSheetSize(0.5),
+    return GlassDraggableSheet(
+      initialChildSize: 0.68,
+      maxChildSize: 0.92,
+      minChildSize: 0.42,
       builder: (_, controller) => Column(
           children: [
             if (!side) const GlassSheetHandle() else const SizedBox(height: 8),
@@ -1195,24 +1235,15 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                       Container(
                                         padding: const EdgeInsets.all(8),
                                         decoration: BoxDecoration(
-                                          color: hasMultipleBatches
-                                              ? AppTheme.toneBlue.withValues(
-                                                  alpha: 0.16,
-                                                )
-                                              : AppColors.action(context).withValues(
-                                                  alpha: 0.16,
-                                                ),
+                                          color: AppColors.action(context)
+                                              .withValues(alpha: 0.16),
                                           borderRadius: BorderRadius.circular(
                                             8,
                                           ),
                                         ),
                                         child: Icon(
-                                          hasMultipleBatches
-                                              ? Icons.expand_more
-                                              : Icons.add,
-                                          color: hasMultipleBatches
-                                              ? AppTheme.toneBlue
-                                              : AppColors.action(context),
+                                          Icons.add,
+                                          color: AppColors.action(context),
                                           size: 20,
                                         ),
                                       ),
@@ -1752,10 +1783,10 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
         ? _filteredBatches[_selectedBatchIndex!]
         : null;
 
-    return DraggableScrollableSheet(
-      initialChildSize: drawerSheetSize(0.72),
-      maxChildSize: drawerSheetSize(0.92),
-      minChildSize: drawerSheetSize(0.45),
+    return GlassDraggableSheet(
+      initialChildSize: 0.58,
+      maxChildSize: 0.88,
+      minChildSize: 0.4,
       builder: (_, controller) => Column(
           children: [
             const GlassSheetHandle(),

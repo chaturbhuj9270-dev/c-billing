@@ -1797,10 +1797,10 @@ class _BillingPageState extends State<BillingPage> {
       backgroundColor: AppTheme.transparent,
       builder: (ctx) {
         final side = DesktopCanvas.isDesktopPlatform;
-        return DraggableScrollableSheet(
-          initialChildSize: drawerSheetSize(0.58),
-          minChildSize: drawerSheetSize(0.4),
-          maxChildSize: drawerSheetSize(0.92),
+        return GlassDraggableSheet(
+          initialChildSize: 0.55,
+          minChildSize: 0.38,
+          maxChildSize: 0.9,
           builder: (_, scrollController) {
             return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -7378,10 +7378,10 @@ class _CustomerPickerBottomSheetState
 
   @override
   Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: drawerSheetSize(0.6),
-      maxChildSize: drawerSheetSize(0.9),
-      minChildSize: drawerSheetSize(0.4),
+    return GlassDraggableSheet(
+      initialChildSize: 0.55,
+      maxChildSize: 0.9,
+      minChildSize: 0.38,
       builder: (_, controller) => Column(
           children: [
             const GlassSheetHandle(),

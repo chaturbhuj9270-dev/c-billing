@@ -43,10 +43,15 @@ Future<void> showQuickActionsSheet(BuildContext context) {
     isScrollControlled: true,
     showClose: true,
     builder: (sheetContext) {
-      return QuickActionsPanel(
-        actions: buildQuickActionItems(
-          context,
-          beforeNavigate: () => Navigator.pop(sheetContext),
+      return GlassFixedSheet(
+        heightFactor: 0.55,
+        showClose: true,
+        onClose: () => Navigator.pop(sheetContext),
+        child: QuickActionsPanel(
+          actions: buildQuickActionItems(
+            context,
+            beforeNavigate: () => Navigator.pop(sheetContext),
+          ),
         ),
       );
     },

@@ -1523,7 +1523,7 @@ class _BillsListPageState extends State<BillsListPage>
                               children: [
                                 Text(
                                   customerName,
-                                  maxLines: 1,
+                                  maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontFamily: 'Literata',
@@ -1759,8 +1759,10 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
       body: Column(
         children: [
           AppTopBar(
-            title: _localizations.billDetails,
-            subtitle: _bill.billNumber,
+            title: (_bill.customerName?.trim().isNotEmpty ?? false)
+                ? _bill.customerName!.trim()
+                : _localizations.walkInCustomer,
+            subtitle: '${_localizations.billDetails} · ${_bill.billNumber}',
           ),
           Expanded(
             child: CustomScrollView(
@@ -1778,6 +1780,17 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // ══════════ Bill & Customer Info Row ══════════
+                      _buildInfoCard(
+                        icon: Icons.person_rounded,
+                        iconColor: AppColors.action(context),
+                        title: _localizations.customerName,
+                        value: (_bill.customerName?.trim().isNotEmpty ?? false)
+                            ? _bill.customerName!.trim()
+                            : _localizations.walkInCustomer,
+                        fullWidth: true,
+                        maxLines: 4,
+                      ),
+                      const SizedBox(height: 12),
                       Row(
                         children: [
                           Expanded(
@@ -1788,29 +1801,19 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                               value: dateFormat.format(_bill.billDate),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildInfoCard(
-                              icon: Icons.person_rounded,
-                              iconColor: AppColors.action(context),
-                              title: _localizations.customerName,
-                              value:
-                                  _bill.customerName ??
-                                  _localizations.walkInCustomer,
+                          if (_bill.customerContact != null) ...[
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildInfoCard(
+                                icon: Icons.phone_rounded,
+                                iconColor: AppTheme.green,
+                                title: _localizations.mobile,
+                                value: _bill.customerContact!,
+                              ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
-                      if (_bill.customerContact != null) ...[
-                        const SizedBox(height: 12),
-                        _buildInfoCard(
-                          icon: Icons.phone_rounded,
-                          iconColor: AppTheme.green,
-                          title: _localizations.mobile,
-                          value: _bill.customerContact!,
-                          fullWidth: true,
-                        ),
-                      ],
                       const SizedBox(height: 20),
 
                       // ══════════ Items Section ══════════
@@ -1899,8 +1902,10 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
     required String title,
     required String value,
     bool fullWidth = false,
+    int maxLines = 2,
   }) {
     return Container(
+      width: fullWidth ? double.infinity : null,
       padding: EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.card(context),
@@ -1944,10 +1949,11 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                     fontFamily: 'Literata',
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.paletteFF2D3436,
+                    color: AppColors.primaryText(context),
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  maxLines: maxLines,
+                  overflow: TextOverflow.visible,
+                  softWrap: true,
                 ),
               ],
             ),

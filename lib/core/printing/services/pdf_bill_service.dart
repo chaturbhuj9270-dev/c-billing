@@ -300,11 +300,14 @@ class PdfBillService {
                           showCustomer &&
                                   billData.customerName != null &&
                                   billData.customerName!.isNotEmpty
-                              ? billData.customerName!.toUpperCase()
+                              ? billData.customerName!.trim().toUpperCase()
                               : 'CASH',
+                          maxLines: 4,
+                          softWrap: true,
                           style: pw.TextStyle(
                             fontSize: 11,
                             fontWeight: pw.FontWeight.bold,
+                            height: 1.2,
                           ),
                         ),
                         if (billData.customerPhone != null &&
@@ -1295,89 +1298,73 @@ class PdfBillService {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: [
-        // Header: logo | title + address (1 line each), Prop/Ph right under address
+        // Header: centered logo, shop title, address, prop/phone, GSTIN
         pw.Container(
           width: receiptWidth,
-          child: pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
               if (hasLogo) ...[
                 pw.Container(
-                  width: 36,
-                  height: 36,
-                  margin: const pw.EdgeInsets.only(right: 6),
+                  width: 40,
+                  height: 40,
                   child: pw.Image(
                     pw.MemoryImage(base64Decode(shopDetails.shopLogoBase64!)),
                     fit: pw.BoxFit.contain,
                   ),
                 ),
+                pw.SizedBox(height: 4),
               ],
-              pw.Expanded(
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text(
-                      shopDetails.shopName.isNotEmpty
-                          ? shopDetails.shopName.toUpperCase()
-                          : 'STORE',
-                      maxLines: 1,
-                      softWrap: false,
-                      overflow: pw.TextOverflow.clip,
-                      style: pw.TextStyle(
-                        fontSize: 11,
-                        fontWeight: pw.FontWeight.bold,
-                        letterSpacing: 0.2,
-                        height: 1.1,
-                      ),
-                    ),
-                    if (shopDetails.address.isNotEmpty) ...[
-                      pw.SizedBox(height: 1),
-                      pw.Text(
-                        shopDetails.address.replaceAll('\n', ' ').trim(),
-                        maxLines: 1,
-                        softWrap: false,
-                        overflow: pw.TextOverflow.clip,
-                        style: const pw.TextStyle(fontSize: 7, height: 1.1),
-                      ),
-                    ],
-                    if (hasProp || shopDetails.phone.isNotEmpty) ...[
-                      pw.SizedBox(height: 1),
-                      pw.Align(
-                        alignment: pw.Alignment.centerRight,
-                        child: pw.Column(
-                          crossAxisAlignment: pw.CrossAxisAlignment.end,
-                          children: [
-                            if (hasProp)
-                              pw.Text(
-                                'Prop: ${shopDetails.ownerName}',
-                                maxLines: 1,
-                                style: const pw.TextStyle(fontSize: 7),
-                              ),
-                            if (shopDetails.phone.isNotEmpty)
-                              pw.Text(
-                                'Ph: ${shopDetails.phone}',
-                                maxLines: 1,
-                                style: const pw.TextStyle(fontSize: 7),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                    if (shopDetails.gstNumber != null &&
-                        shopDetails.gstNumber!.isNotEmpty) ...[
-                      pw.SizedBox(height: 1),
-                      pw.Text(
-                        'GSTIN: ${shopDetails.gstNumber}',
-                        maxLines: 1,
-                        style: pw.TextStyle(
-                          fontSize: 6,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ],
+              pw.Text(
+                shopDetails.shopName.isNotEmpty
+                    ? shopDetails.shopName.toUpperCase()
+                    : 'STORE',
+                textAlign: pw.TextAlign.center,
+                maxLines: 3,
+                softWrap: true,
+                style: pw.TextStyle(
+                  fontSize: 11,
+                  fontWeight: pw.FontWeight.bold,
+                  letterSpacing: 0.2,
+                  height: 1.2,
                 ),
               ),
+              if (shopDetails.address.isNotEmpty) ...[
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  shopDetails.address.replaceAll('\n', ' ').trim(),
+                  textAlign: pw.TextAlign.center,
+                  maxLines: 3,
+                  softWrap: true,
+                  style: const pw.TextStyle(fontSize: 7, height: 1.2),
+                ),
+              ],
+              if (hasProp || shopDetails.phone.isNotEmpty) ...[
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  [
+                    if (hasProp) 'Prop: ${shopDetails.ownerName}',
+                    if (shopDetails.phone.isNotEmpty) 'Ph: ${shopDetails.phone}',
+                  ].join('  ·  '),
+                  textAlign: pw.TextAlign.center,
+                  maxLines: 2,
+                  softWrap: true,
+                  style: const pw.TextStyle(fontSize: 7, height: 1.2),
+                ),
+              ],
+              if (shopDetails.gstNumber != null &&
+                  shopDetails.gstNumber!.isNotEmpty) ...[
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  'GSTIN: ${shopDetails.gstNumber}',
+                  textAlign: pw.TextAlign.center,
+                  maxLines: 1,
+                  style: pw.TextStyle(
+                    fontSize: 6,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

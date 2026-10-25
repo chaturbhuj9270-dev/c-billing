@@ -3597,10 +3597,10 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: drawerSheetSize(0.6),
-      maxChildSize: drawerSheetSize(0.9),
-      minChildSize: drawerSheetSize(0.4),
+    return GlassDraggableSheet(
+      initialChildSize: 0.55,
+      maxChildSize: 0.9,
+      minChildSize: 0.38,
       builder: (_, controller) => Column(
           children: [
             const GlassSheetHandle(),
@@ -3953,8 +3953,9 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
               )
               .toList();
 
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.85,
+    return glassFixedSheet(
+      context: context,
+      heightFactor: 0.65,
       child: Column(
         children: [
           const GlassSheetHandle(),

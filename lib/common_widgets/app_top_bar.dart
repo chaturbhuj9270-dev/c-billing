@@ -179,8 +179,9 @@ class AppTopBar extends StatelessWidget {
                               children: [
                                 Text(
                                   title,
-                                  maxLines: 1,
+                                  maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
+                                  softWrap: true,
                                   style: const TextStyle(
                                     color: AppTheme.white,
                                     fontSize: 18,
