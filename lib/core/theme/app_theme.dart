@@ -347,10 +347,12 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: isDark ? darkCard : card,
-        modalBackgroundColor: isDark ? darkCard : card,
+        backgroundColor: AppTheme.transparent,
+        modalBackgroundColor: AppTheme.transparent,
+        surfaceTintColor: AppTheme.transparent,
+        elevation: 0,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
       ),
       snackBarTheme: SnackBarThemeData(

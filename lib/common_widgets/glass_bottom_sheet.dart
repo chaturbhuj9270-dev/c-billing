@@ -10,11 +10,36 @@ import 'glass_bevel_frame.dart';
 double drawerSheetSize(double mobile) =>
     DesktopCanvas.isDesktopPlatform ? 1 : mobile;
 
-const BorderRadius _sheetRadius = BorderRadius.vertical(
+const BorderRadius kGlassSheetRadius = BorderRadius.vertical(
   top: Radius.circular(28),
 );
 
-// Bottom drawer card with the same raised glass rim as the bottom tabs.
+/// Drag handle used at the top of mobile drawers.
+class GlassSheetHandle extends StatelessWidget {
+  const GlassSheetHandle({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 10),
+        Center(
+          child: Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.mutedText(context).withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Bottom drawer card with a raised green 3D glass rim (shared by all sheets).
 class GlassSheetCard extends StatelessWidget {
   final Widget child;
   final bool showClose;
@@ -30,27 +55,38 @@ class GlassSheetCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
+    final green = AppColors.actionBright(context);
+    final card = AppColors.card(context);
+    final tintedTop = Color.lerp(card, green, isDark ? 0.14 : 0.07)!;
+    final tintedBottom = Color.lerp(card, green, isDark ? 0.06 : 0.03)!;
+
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: _sheetRadius,
+        borderRadius: kGlassSheetRadius,
         boxShadow: [
           BoxShadow(
-            color: AppTheme.black.withValues(alpha: isDark ? 0.35 : 0.12),
-            blurRadius: 24,
-            offset: const Offset(0, -8),
+            color: green.withValues(alpha: isDark ? 0.22 : 0.14),
+            blurRadius: 22,
+            offset: const Offset(0, -4),
+          ),
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: isDark ? 0.4 : 0.12),
+            blurRadius: 28,
+            offset: const Offset(0, -10),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: _sheetRadius,
+        borderRadius: kGlassSheetRadius,
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: CustomPaint(
             foregroundPainter: GlassBevelBorderPainter(
               isDark: isDark,
-              themeColor: Theme.of(context).primaryColor,
+              themeColor: green,
               radius: 28,
-              borderRadius: _sheetRadius,
+              borderRadius: kGlassSheetRadius,
+              strokeWidth: 1.7,
             ),
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -58,13 +94,12 @@ class GlassSheetCard extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    AppColors.card(context).withValues(
-                      alpha: isDark ? 0.62 : 0.78,
-                    ),
-                    AppColors.card(context).withValues(
-                      alpha: isDark ? 0.82 : 0.92,
-                    ),
+                    Color.lerp(AppTheme.white, tintedTop, isDark ? 0.85 : 0.55)!
+                        .withValues(alpha: isDark ? 0.72 : 0.88),
+                    tintedTop.withValues(alpha: isDark ? 0.78 : 0.92),
+                    tintedBottom.withValues(alpha: isDark ? 0.9 : 0.96),
                   ],
+                  stops: const [0.0, 0.35, 1.0],
                 ),
               ),
               child: Material(
@@ -74,8 +109,8 @@ class GlassSheetCard extends StatelessWidget {
                     child,
                     if (showClose)
                       Positioned(
-                        top: 0,
-                        right: 0,
+                        top: 4,
+                        right: 4,
                         child: IconButton(
                           onPressed:
                               onClose ?? () => Navigator.of(context).maybePop(),
@@ -126,14 +161,24 @@ Future<T?> showAppBottomSheet<T>({
     enableDrag: enableDrag,
     useRootNavigator: useRootNavigator,
     backgroundColor: AppTheme.transparent,
+    barrierColor: AppTheme.black.withValues(alpha: 0.45),
     elevation: 0,
-    shape: const RoundedRectangleBorder(borderRadius: _sheetRadius),
+    shape: const RoundedRectangleBorder(borderRadius: kGlassSheetRadius),
     clipBehavior: Clip.antiAlias,
-    builder: (sheetContext) => GlassSheetCard(
-      showClose: showClose,
-      onClose: onClose,
-      child: builder(sheetContext),
-    ),
+    builder: (sheetContext) {
+      final bottomInset = MediaQuery.viewInsetsOf(sheetContext).bottom;
+      return Padding(
+        padding: EdgeInsets.only(bottom: bottomInset),
+        child: GlassSheetCard(
+          showClose: showClose,
+          onClose: onClose,
+          child: SafeArea(
+            top: false,
+            child: builder(sheetContext),
+          ),
+        ),
+      );
+    },
   );
 }
 
@@ -166,6 +211,8 @@ Future<T?> _showDesktopSideDrawer<T>({
           media.padding.vertical -
           media.viewInsets.bottom -
           24;
+      final isDark = AppColors.isDark(dialogContext);
+      final green = AppColors.actionBright(dialogContext);
       return Padding(
         padding: EdgeInsets.only(
           top: media.padding.top + 12,
@@ -174,36 +221,63 @@ Future<T?> _showDesktopSideDrawer<T>({
         ),
         child: Align(
           alignment: Alignment.centerRight,
-          child: Material(
-            color: AppColors.card(dialogContext),
-            elevation: 8,
-            shadowColor: AppTheme.black.withValues(alpha: 0.08),
-            shape: RoundedRectangleBorder(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              side: BorderSide(color: AppColors.border(dialogContext)),
+              boxShadow: [
+                BoxShadow(
+                  color: green.withValues(alpha: isDark ? 0.2 : 0.12),
+                  blurRadius: 18,
+                  offset: const Offset(-4, 4),
+                ),
+                BoxShadow(
+                  color: AppTheme.black.withValues(alpha: isDark ? 0.35 : 0.1),
+                  blurRadius: 20,
+                  offset: const Offset(-6, 8),
+                ),
+              ],
             ),
-            clipBehavior: Clip.antiAlias,
-            child: SizedBox(
-              width: width,
-              height: height < 240 ? 240 : height,
-              child: Column(
-                children: [
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: IconButton(
-                      onPressed: isDismissible
-                          ? () => Navigator.of(dialogContext).maybePop()
-                          : null,
-                      tooltip: 'Close',
-                      icon: Icon(
-                        Icons.close_rounded,
-                        size: 20,
-                        color: AppColors.secondaryText(dialogContext),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                child: CustomPaint(
+                  foregroundPainter: GlassBevelBorderPainter(
+                    isDark: isDark,
+                    themeColor: green,
+                    radius: 20,
+                    strokeWidth: 1.5,
+                  ),
+                  child: Material(
+                    color: AppColors.card(dialogContext).withValues(
+                      alpha: isDark ? 0.92 : 0.96,
+                    ),
+                    child: SizedBox(
+                      width: width,
+                      height: height < 240 ? 240 : height,
+                      child: Column(
+                        children: [
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: IconButton(
+                              onPressed: isDismissible
+                                  ? () =>
+                                      Navigator.of(dialogContext).maybePop()
+                                  : null,
+                              tooltip: 'Close',
+                              icon: Icon(
+                                Icons.close_rounded,
+                                size: 20,
+                                color: AppColors.secondaryText(dialogContext),
+                              ),
+                            ),
+                          ),
+                          Expanded(child: builder(dialogContext)),
+                        ],
                       ),
                     ),
                   ),
-                  Expanded(child: builder(dialogContext)),
-                ],
+                ),
               ),
             ),
           ),

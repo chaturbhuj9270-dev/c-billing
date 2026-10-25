@@ -806,27 +806,9 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
       initialChildSize: drawerSheetSize(0.85),
       maxChildSize: drawerSheetSize(0.95),
       minChildSize: drawerSheetSize(0.5),
-      builder: (_, controller) => Container(
-        decoration: BoxDecoration(
-          color: AppColors.card(context),
-          borderRadius: side
-              ? BorderRadius.zero
-              : const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
+      builder: (_, controller) => Column(
           children: [
-            if (!side) ...[
-              const SizedBox(height: 12),
-              Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.mutedText(context).withValues(alpha: 0.45),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-            ] else
-              const SizedBox(height: 8),
+            if (!side) const GlassSheetHandle() else const SizedBox(height: 8),
             // Header
             Padding(
               padding: EdgeInsets.fromLTRB(20, side ? 16 : 20, side ? 52 : 20, 12),
@@ -1261,7 +1243,6 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
               ),
             ),
           ],
-        ),
       ),
     );
   }
@@ -1775,25 +1756,9 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
       initialChildSize: drawerSheetSize(0.72),
       maxChildSize: drawerSheetSize(0.92),
       minChildSize: drawerSheetSize(0.45),
-      builder: (_, controller) => Container(
-        decoration: BoxDecoration(
-          color: AppColors.isDark(context)
-              ? AppTheme.darkSurface
-              : AppColors.card(context),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          border: Border(top: BorderSide(color: AppColors.border(context))),
-        ),
-        child: Column(
+      builder: (_, controller) => Column(
           children: [
-            const SizedBox(height: 10),
-            Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.mutedText(context).withValues(alpha: 0.45),
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
+            const GlassSheetHandle(),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Row(
@@ -2001,7 +1966,6 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
             if (selected != null)
               _buildQuantityBar(selected, _getExistingQtyForBatch(selected)),
           ],
-        ),
       ),
     );
   }

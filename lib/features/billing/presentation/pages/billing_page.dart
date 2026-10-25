@@ -1802,30 +1802,12 @@ class _BillingPageState extends State<BillingPage> {
           minChildSize: drawerSheetSize(0.4),
           maxChildSize: drawerSheetSize(0.92),
           builder: (_, scrollController) {
-            return Container(
-              decoration: BoxDecoration(
-                color: AppColors.card(context),
-                borderRadius: side
-                    ? BorderRadius.zero
-                    : const BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: Column(
+            return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (!side) ...[
-                    const SizedBox(height: 12),
-                    Center(
-                      child: Container(
-                        width: 36,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: AppColors.mutedText(context)
-                              .withValues(alpha: 0.45),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                    ),
-                  ] else
+                  if (!side)
+                    const GlassSheetHandle()
+                  else
                     const SizedBox(height: 8),
                   // Title only — desktop drawer already has the close control
                   Padding(
@@ -1976,7 +1958,6 @@ class _BillingPageState extends State<BillingPage> {
                     ),
                   ),
                 ],
-              ),
             );
           },
         );
@@ -7401,23 +7382,9 @@ class _CustomerPickerBottomSheetState
       initialChildSize: drawerSheetSize(0.6),
       maxChildSize: drawerSheetSize(0.9),
       minChildSize: drawerSheetSize(0.4),
-      builder: (_, controller) => Container(
-        decoration: BoxDecoration(
-          color: AppColors.card(context),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
+      builder: (_, controller) => Column(
           children: [
-            // Handle bar
-            const SizedBox(height: 12),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppTheme.grey300,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+            const GlassSheetHandle(),
             // Header
             Padding(
               padding: EdgeInsets.all(20),
@@ -7690,7 +7657,6 @@ class _CustomerPickerBottomSheetState
                     ),
             ),
           ],
-        ),
       ),
     );
   }

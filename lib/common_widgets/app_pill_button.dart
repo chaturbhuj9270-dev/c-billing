@@ -134,8 +134,12 @@ class DrawerBottomBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
-        color: AppColors.card(context),
-        border: Border(top: BorderSide(color: AppColors.border(context))),
+        color: AppTheme.transparent,
+        border: Border(
+          top: BorderSide(
+            color: AppColors.action(context).withValues(alpha: 0.18),
+          ),
+        ),
       ),
       child: leading == null
           ? action

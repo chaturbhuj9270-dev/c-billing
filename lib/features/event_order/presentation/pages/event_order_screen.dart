@@ -3601,23 +3601,9 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
       initialChildSize: drawerSheetSize(0.6),
       maxChildSize: drawerSheetSize(0.9),
       minChildSize: drawerSheetSize(0.4),
-      builder: (_, controller) => Container(
-        decoration: BoxDecoration(
-          color: AppColors.card(context),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
+      builder: (_, controller) => Column(
           children: [
-            // Handle bar
-            const SizedBox(height: 12),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppTheme.grey300,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+            const GlassSheetHandle(),
             // Header
             Padding(
               padding: EdgeInsets.all(20),
@@ -3844,7 +3830,6 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                     ),
             ),
           ],
-        ),
       ),
     );
   }
@@ -3968,24 +3953,11 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
               )
               .toList();
 
-    return Container(
+    return SizedBox(
       height: MediaQuery.of(context).size.height * 0.85,
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       child: Column(
         children: [
-          // Handle bar
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppTheme.grey300,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
+          const GlassSheetHandle(),
           // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
@@ -4333,15 +4305,12 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -4),
+        color: AppTheme.transparent,
+        border: Border(
+          top: BorderSide(
+            color: AppColors.action(context).withValues(alpha: 0.18),
           ),
-        ],
+        ),
       ),
       child: SafeArea(
         top: false,

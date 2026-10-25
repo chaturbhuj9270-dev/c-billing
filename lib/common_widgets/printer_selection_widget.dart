@@ -110,26 +110,21 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: DraggableScrollableSheet(
-        initialChildSize: drawerSheetSize(0.6),
-        minChildSize: drawerSheetSize(0.4),
-        maxChildSize: drawerSheetSize(0.9),
-        expand: false,
-        builder: (context, scrollController) {
-          return Column(
-            children: [
-              _buildHeader(),
-              _buildPaperSizeSelector(),
-              Expanded(child: _buildDeviceList(scrollController)),
-            ],
-          );
-        },
-      ),
+    return DraggableScrollableSheet(
+      initialChildSize: drawerSheetSize(0.6),
+      minChildSize: drawerSheetSize(0.4),
+      maxChildSize: drawerSheetSize(0.9),
+      expand: false,
+      builder: (context, scrollController) {
+        return Column(
+          children: [
+            const GlassSheetHandle(),
+            _buildHeader(),
+            _buildPaperSizeSelector(),
+            Expanded(child: _buildDeviceList(scrollController)),
+          ],
+        );
+      },
     );
   }
 
