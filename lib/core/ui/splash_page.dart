@@ -22,6 +22,7 @@ import '../localization/app_localizations.dart';
 import 'subscription_screen.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_logo_mark.dart';
+import 'package:c_billing/common_widgets/twinkling_slogan.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/access/access_control_service.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
@@ -39,8 +40,6 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
-  static const _contactPhone = '+91 99706 62978';
-
   static const _stepLabels = [
     'Checking license',
     'Connecting to cloud sync',
@@ -625,11 +624,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   }
 
   String get _tagline {
-    final t = _localizations.tagline;
-    if (t == 'THE BACKBONE FOR YOUR\nBUSINESS') {
-      return 'THE BACKBONE OF YOUR BUSINESS';
-    }
-    return t.replaceAll('\n', ' ');
+    return _localizations.tagline.replaceAll('\n', ' ');
   }
 
   @override
@@ -773,9 +768,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     final titleColor = isDark ? AppTheme.white : AppTheme.headerDarkEnd;
     final muted = isDark ? AppTheme.paletteFF8E9892 : AppTheme.paletteFF5E6B64;
     final themeColor = AppColors.action(context);
-    final tagline = _localizations.tagline == 'THE BACKBONE FOR YOUR\nBUSINESS'
-        ? 'THE BACKBONE FOR\nYOUR BUSINESS'
-        : _localizations.tagline;
+    final tagline = _localizations.tagline;
 
     return Scaffold(
       backgroundColor: isDark
@@ -853,9 +846,10 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                 const SizedBox(height: 16),
                 FadeTransition(
                   opacity: _taglineFade,
-                  child: Text(
-                    tagline,
+                  child: TwinklingSlogan(
+                    text: tagline,
                     textAlign: TextAlign.center,
+                    glowColor: themeColor,
                     style: TextStyle(
                       color: muted,
                       fontSize: 13,
@@ -905,54 +899,15 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        if (kIsWeb ||
-                            defaultTargetPlatform == TargetPlatform.windows)
-                          Text(
-                            'Version 1.0.0',
-                            style: TextStyle(
-                              color: muted,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'Literata',
-                            ),
-                          )
-                        else
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.location_on_outlined,
-                                size: 14,
-                                color: themeColor,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Newasa',
-                                style: TextStyle(
-                                  color: themeColor,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Literata',
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Icon(
-                                Icons.phone_outlined,
-                                size: 14,
-                                color: themeColor,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                _contactPhone,
-                                style: TextStyle(
-                                  color: themeColor,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Literata',
-                                ),
-                              ),
-                            ],
+                        Text(
+                          'Version 1.0.0',
+                          style: TextStyle(
+                            color: muted,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Literata',
                           ),
+                        ),
                       ],
                     ),
                   ),
@@ -1171,8 +1126,9 @@ class _DesktopBrandLockup extends StatelessWidget {
             const SizedBox(height: 8),
             FadeTransition(
               opacity: taglineFade,
-              child: Text(
-                tagline,
+              child: TwinklingSlogan(
+                text: tagline,
+                glowColor: accent,
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 12,

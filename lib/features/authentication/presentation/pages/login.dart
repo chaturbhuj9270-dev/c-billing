@@ -20,6 +20,7 @@ import 'change_password_page.dart';
 import 'email_verification_page.dart';
 import 'login_otp_page.dart';
 import 'package:c_billing/common_widgets/app_logo_mark.dart';
+import 'package:c_billing/common_widgets/twinkling_slogan.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/access/access_control_service.dart';
@@ -437,15 +438,17 @@ class _LoginPageV2State extends State<LoginPageV2>
                                     ),
                                   ),
                                   const SizedBox(height: 12),
-                                  Text(
-                                    _localizations.backboneOfBusiness,
+                                  TwinklingSlogan(
+                                    text: _localizations.backboneOfBusiness,
+                                    textAlign: TextAlign.center,
+                                    glowColor: AppTheme.white,
                                     style: TextStyle(
                                       fontFamily: 'Literata',
                                       fontSize: 16,
                                       fontWeight: FontWeight.w400,
                                       fontStyle: FontStyle.italic,
                                       color: AppTheme.white.withValues(
-                                        alpha: 0.7,
+                                        alpha: 0.85,
                                       ),
                                     ),
                                   ),
@@ -541,8 +544,10 @@ class _LoginPageV2State extends State<LoginPageV2>
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                Text(
-                                  _localizations.backboneOfBusiness,
+                                TwinklingSlogan(
+                                  text: _localizations.backboneOfBusiness,
+                                  textAlign: TextAlign.center,
+                                  glowColor: AppColors.action(context),
                                   style: TextStyle(
                                     fontFamily: 'Literata',
                                     fontSize: 14,

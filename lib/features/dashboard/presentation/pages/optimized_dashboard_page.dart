@@ -2255,9 +2255,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       context: context,
       barrierDismissible: true,
       // Softer scrim so the glassy flyout reads as translucent.
-      barrierColor: AppTheme.black.withValues(alpha: 0.35),
+      barrierColor: AppTheme.black.withValues(alpha: 0.42),
       barrierLabel: 'Flyout Menu',
-      transitionDuration: const Duration(milliseconds: 300),
+      transitionDuration: const Duration(milliseconds: 340),
       pageBuilder: (_, _, _) => ListenableBuilder(
         listenable: ThemeService.instance,
         builder: (context, _) {

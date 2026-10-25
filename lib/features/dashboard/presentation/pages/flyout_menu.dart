@@ -21,7 +21,6 @@ import '../../../reports/presentation/pages/unified_reports_page.dart';
 import 'package:c_billing/common_widgets/glass_bevel_frame.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/access/access_control_service.dart';
-import 'package:c_billing/core/ui/desktop_canvas.dart';
 import '../../../employee/presentation/pages/employees_page.dart';
 
 class FlyoutMenu extends StatefulWidget {
@@ -117,7 +116,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
         trailing: _selectedLanguage,
       ),
       _MenuItem(
-        icon: Icons.brightness_6_rounded,
+        icon: Icons.dark_mode_outlined,
         label: 'Theme',
         route: 'Theme',
         color: AppTheme.toneViolet,
@@ -403,119 +402,108 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
     );
   }
 
+  static const Color _panelGold = Color(0xFFC9A84C);
+
   @override
   Widget build(BuildContext context) {
     final isDark = ThemeService.instance.isDark;
-    // Dialog already slides the panel in — avoid a second slide fight.
+    const radius = 28.0;
+    const panelRadius = BorderRadius.only(
+      topRight: Radius.circular(radius),
+      bottomRight: Radius.circular(radius),
+    );
+    // Flush to the left edge; theme fill + golden 3D glass rim only.
     return FadeTransition(
       opacity: _fadeAnimation,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          DesktopCanvas.isDesktopPlatform ? 10 : 12,
-          16,
-          DesktopCanvas.isDesktopPlatform ? 8 : 12,
-          16,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: panelRadius,
+          boxShadow: [
+            BoxShadow(
+              color: _panelGold.withValues(alpha: isDark ? 0.22 : 0.16),
+              blurRadius: 18,
+              offset: const Offset(4, 0),
+            ),
+            BoxShadow(
+              color: AppTheme.black.withValues(alpha: isDark ? 0.35 : 0.1),
+              blurRadius: 16,
+              offset: const Offset(6, 0),
+            ),
+          ],
         ),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.black.withValues(alpha: isDark ? 0.35 : 0.12),
-                blurRadius: 24,
-                offset: const Offset(6, 8),
+        child: ClipRRect(
+          borderRadius: panelRadius,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: CustomPaint(
+              foregroundPainter: GlassBevelBorderPainter(
+                isDark: isDark,
+                themeColor: _panelGold,
+                radius: radius,
+                borderRadius: panelRadius,
+                strokeWidth: 1.6,
+                paintLeft: false,
               ),
-              BoxShadow(
-                color: AppTheme.black.withValues(alpha: isDark ? 0.2 : 0.06),
-                blurRadius: 8,
-                offset: const Offset(2, 2),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-              child: CustomPaint(
-                foregroundPainter: GlassBevelBorderPainter(
-                  isDark: isDark,
-                  themeColor: AppColors.action(context),
-                  radius: 28,
-                  strokeWidth: 1.4,
-                ),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: isDark
-                            ? const [
-                                AppTheme.darkElevated,
-                                AppTheme.darkCard,
-                              ]
-                            : [
-                                AppColors.card(context).withValues(alpha: 0.78),
-                                AppColors.card(context).withValues(alpha: 0.92),
-                              ],
-                      ),
-                    ),
-                    child: Material(
-                      type: MaterialType.transparency,
-                      child: Column(
-                        children: [
-                          _buildHeader(),
-                          Expanded(
-                            child: ListView(
-                              padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
-                              children: [
-                                ...() {
-                                  var animIndex = 0;
-                                  final widgets = <Widget>[];
-                                  for (final section in _menuSections) {
-                                    widgets.add(_sectionLabel(section.title));
-                                    for (final item in section.items) {
-                                      final i = animIndex++;
-                                      final slot = i.clamp(
-                                        0,
-                                        _menuItemAnimations.length - 1,
-                                      );
-                                      widgets.add(
-                                        SlideTransition(
-                                          position: _menuItemAnimations[slot],
-                                          child: FadeTransition(
-                                            opacity:
-                                                _menuItemFadeAnimations[slot],
-                                            child: _buildMenuItem(item: item),
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  }
-                                  if (_canUseBiometrics) {
-                                    final i = animIndex.clamp(
+              child: SizedBox(
+                width: double.infinity,
+                height: double.infinity,
+                child: ColoredBox(
+                  color: AppColors.scaffold(context),
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: Column(
+                      children: [
+                        _buildHeader(),
+                        Expanded(
+                          child: ListView(
+                            padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+                            physics: const BouncingScrollPhysics(),
+                            children: [
+                              ...() {
+                                var animIndex = 0;
+                                final widgets = <Widget>[];
+                                for (final section in _menuSections) {
+                                  widgets.add(_sectionLabel(section.title));
+                                  for (final item in section.items) {
+                                    final i = animIndex++;
+                                    final slot = i.clamp(
                                       0,
                                       _menuItemAnimations.length - 1,
                                     );
                                     widgets.add(
                                       SlideTransition(
-                                        position: _menuItemAnimations[i],
+                                        position: _menuItemAnimations[slot],
                                         child: FadeTransition(
-                                          opacity: _menuItemFadeAnimations[i],
-                                          child: _buildBiometricToggle(),
+                                          opacity:
+                                              _menuItemFadeAnimations[slot],
+                                          child: _buildMenuItem(item: item),
                                         ),
                                       ),
                                     );
                                   }
-                                  return widgets;
-                                }(),
-                              ],
-                            ),
+                                }
+                                if (_canUseBiometrics) {
+                                  final i = animIndex.clamp(
+                                    0,
+                                    _menuItemAnimations.length - 1,
+                                  );
+                                  widgets.add(
+                                    SlideTransition(
+                                      position: _menuItemAnimations[i],
+                                      child: FadeTransition(
+                                        opacity: _menuItemFadeAnimations[i],
+                                        child: _buildBiometricToggle(),
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return widgets;
+                              }(),
+                            ],
                           ),
-                          _buildBottomSection(),
-                        ],
-                      ),
+                        ),
+                        _buildBottomSection(),
+                      ],
                     ),
                   ),
                 ),
@@ -528,16 +516,19 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   }
 
   Widget _sectionLabel(String text) {
+    final isDark = ThemeService.instance.isDark;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
+      padding: const EdgeInsets.fromLTRB(14, 18, 14, 8),
       child: Text(
         text.toUpperCase(),
         style: TextStyle(
           fontFamily: 'Literata',
-          fontSize: 11,
+          fontSize: 10.5,
           fontWeight: FontWeight.w700,
-          letterSpacing: 1.1,
-          color: AppColors.mutedText(context),
+          letterSpacing: 1.35,
+          color: isDark
+              ? AppTheme.darkTextMuted
+              : AppTheme.grey600.withValues(alpha: 0.85),
           decoration: TextDecoration.none,
         ),
       ),
@@ -545,110 +536,160 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   }
 
   Widget _iconWell(IconData icon, Color color) {
+    final isDark = ThemeService.instance.isDark;
     return Container(
-      width: 40,
-      height: 40,
+      width: 42,
+      height: 42,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(12),
+        color: color.withValues(alpha: isDark ? 0.22 : 0.14),
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(
+          color: color.withValues(alpha: isDark ? 0.28 : 0.12),
+        ),
       ),
-      child: Icon(icon, color: color, size: 20),
+      child: Icon(icon, color: color, size: 21),
     );
   }
 
   Widget _buildHeader() {
+    final isDark = AppColors.isDark(context);
+    final bar = AppColors.appBar(context);
     final initial = _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U';
     final role = AccessControlService.instance.isOwner ? 'Owner' : 'Staff';
     final email = _currentUser?.email?.trim();
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 8, 4),
+    // Same green glass bar treatment as [AppTopBar].
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color.lerp(AppTheme.white, bar, isDark ? 0.78 : 0.55)!,
+            bar,
+            Color.lerp(bar, AppTheme.black, isDark ? 0.34 : 0.2)!,
+          ],
+          stops: const [0.0, 0.46, 1.0],
+        ),
+      ),
       child: SafeArea(
         bottom: false,
-        child: Row(
-          children: [
-            Container(
-              width: 52,
-              height: 52,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.headerDarkStart,
-                border: Border.all(color: AppColors.action(context), width: 1.6),
-              ),
-              child: Text(
-                initial,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.white,
-                  fontFamily: 'Literata',
-                  decoration: TextDecoration.none,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 12, 12, 16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppTheme.white.withValues(alpha: 0.15),
+                  border: Border.all(
+                    color: AppTheme.white.withValues(alpha: 0.35),
+                    width: 1.6,
+                  ),
+                ),
+                child: Text(
+                  initial,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.white,
+                    fontFamily: 'Literata',
+                    decoration: TextDecoration.none,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _userName,
-                    style: TextStyle(
-                      color: AppColors.primaryText(context),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      fontFamily: 'Literata',
-                      decoration: TextDecoration.none,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (email != null && email.isNotEmpty) ...[
-                    const SizedBox(height: 2),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Text(
-                      email,
-                      style: TextStyle(
-                        color: AppColors.mutedText(context),
-                        fontSize: 12,
+                      _userName,
+                      style: const TextStyle(
+                        color: AppTheme.white,
+                        fontSize: 17.5,
+                        fontWeight: FontWeight.w800,
                         fontFamily: 'Literata',
+                        height: 1.15,
                         decoration: TextDecoration.none,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                  ],
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 4,
-                    children: [
-                      _headerChip(role, AppColors.action(context)),
-                      _headerChip(_localizations.online, AppTheme.headerDarkStart),
+                    if (email != null && email.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        email,
+                        style: TextStyle(
+                          color: AppTheme.white.withValues(alpha: 0.72),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Literata',
+                          decoration: TextDecoration.none,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        _roleChip(role),
+                        _onlineChip(_localizations.online),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: Icon(
-                Icons.close_rounded,
-                color: AppColors.secondaryText(context),
-                size: 20,
-              ),
-            ),
-          ],
+              const SizedBox(width: 4),
+              _closeButton(),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _headerChip(String label, Color bg) {
+  Widget _closeButton() {
+    return Material(
+      color: AppTheme.transparent,
+      child: InkWell(
+        onTap: () => Navigator.of(context).pop(),
+        borderRadius: BorderRadius.circular(12),
+        splashColor: AppTheme.white.withValues(alpha: 0.15),
+        highlightColor: AppTheme.white.withValues(alpha: 0.08),
+        child: Container(
+          width: 40,
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppTheme.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.white.withValues(alpha: 0.2),
+            ),
+          ),
+          child: const Icon(
+            Icons.close_rounded,
+            color: AppTheme.white,
+            size: 20,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _roleChip(String label) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: bg,
+        color: AppTheme.white.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -664,54 +705,94 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
     );
   }
 
+  Widget _onlineChip(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppTheme.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: const BoxDecoration(
+              color: AppTheme.green300,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: AppTheme.white.withValues(alpha: 0.95),
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'Literata',
+              decoration: TextDecoration.none,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMenuItem({required _MenuItem item}) {
-    return Material(
-      color: AppTheme.transparent,
-      child: InkWell(
-        onTap: () => _navigateToPage(item.route),
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            children: [
-              _iconWell(
-                item.icon,
-                item.color == AppTheme.primary
-                    ? AppColors.action(context)
-                    : item.color,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  item.label,
-                  style: TextStyle(
-                    color: AppColors.primaryText(context),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'Literata',
-                    decoration: TextDecoration.none,
+    final isDark = ThemeService.instance.isDark;
+    final iconColor = item.color == AppTheme.primary
+        ? AppColors.actionBright(context)
+        : item.color;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Material(
+        color: AppTheme.transparent,
+        child: InkWell(
+          onTap: () => _navigateToPage(item.route),
+          borderRadius: BorderRadius.circular(16),
+          splashColor: iconColor.withValues(alpha: 0.12),
+          highlightColor: iconColor.withValues(alpha: 0.06),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+            child: Row(
+              children: [
+                _iconWell(item.icon, iconColor),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    item.label,
+                    style: TextStyle(
+                      color: AppColors.primaryText(context),
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Literata',
+                      decoration: TextDecoration.none,
+                    ),
                   ),
                 ),
-              ),
-              if (item.trailing != null) ...[
-                Text(
-                  item.trailing!,
-                  style: TextStyle(
-                    color: AppColors.mutedText(context),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'Literata',
-                    decoration: TextDecoration.none,
+                if (item.trailing != null) ...[
+                  Text(
+                    item.trailing!,
+                    style: TextStyle(
+                      color: AppColors.mutedText(context),
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Literata',
+                      decoration: TextDecoration.none,
+                    ),
                   ),
+                  const SizedBox(width: 6),
+                ],
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: isDark
+                      ? AppTheme.darkTextMuted
+                      : AppTheme.grey400,
+                  size: 22,
                 ),
-                const SizedBox(width: 4),
               ],
-              Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.mutedText(context),
-                size: 22,
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -720,76 +801,84 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
 
   Widget _buildBiometricToggle() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       child: Row(
-            children: [
-              _iconWell(Icons.fingerprint_rounded, AppColors.action(context)),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  _localizations.biometricLock,
-                  style: TextStyle(
-                    color: AppColors.primaryText(context),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'Literata',
-                    decoration: TextDecoration.none,
-                  ),
-                ),
+        children: [
+          _iconWell(Icons.fingerprint_rounded, AppColors.actionBright(context)),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              _localizations.biometricLock,
+              style: TextStyle(
+                color: AppColors.primaryText(context),
+                fontSize: 15.5,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Literata',
+                decoration: TextDecoration.none,
               ),
-              Switch(
-                value: _biometricLockEnabled,
-                onChanged: _toggleBiometricLock,
-                activeThumbColor: AppTheme.white,
-                activeTrackColor: AppColors.action(context),
-                inactiveThumbColor: AppColors.mutedText(context),
-                inactiveTrackColor: AppColors.chipFill(context),
-              ),
-            ],
+            ),
           ),
+          Switch(
+            value: _biometricLockEnabled,
+            onChanged: _toggleBiometricLock,
+            activeThumbColor: AppTheme.white,
+            activeTrackColor: AppColors.action(context),
+            inactiveThumbColor: AppColors.mutedText(context),
+            inactiveTrackColor: AppColors.chipFill(context),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildBottomSection() {
+    final isDark = ThemeService.instance.isDark;
+    final logoutColor = isDark ? AppTheme.toneRose : const Color(0xFFE57373);
     return SafeArea(
       top: false,
-      minimum: const EdgeInsets.only(bottom: 12),
+      minimum: const EdgeInsets.only(bottom: 10),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        padding: const EdgeInsets.fromLTRB(18, 6, 18, 10),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            GestureDetector(
-              onTap: _logout,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: AppTheme.toneRose.withValues(alpha: 0.7),
+            Material(
+              color: AppTheme.transparent,
+              child: InkWell(
+                onTap: _logout,
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: logoutColor.withValues(alpha: 0.75),
+                      width: 1.4,
+                    ),
+                    color: logoutColor.withValues(alpha: isDark ? 0.08 : 0.04),
                   ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.logout_rounded,
-                      color: AppTheme.toneRose,
-                      size: 18,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _localizations.logout,
-                      style: const TextStyle(
-                        color: AppTheme.toneRose,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'Literata',
-                        decoration: TextDecoration.none,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.logout_rounded,
+                        color: logoutColor,
+                        size: 18,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 8),
+                      Text(
+                        _localizations.logout,
+                        style: TextStyle(
+                          color: logoutColor,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Literata',
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -798,7 +887,9 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
               _localizations.version,
               style: TextStyle(
                 color: AppColors.mutedText(context),
-                fontSize: 12,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 0.2,
                 fontFamily: 'Literata',
                 decoration: TextDecoration.none,
               ),
