@@ -5,8 +5,8 @@ import 'package:c_billing/common_widgets/glass_bevel_frame.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
-// Premium glass toast. Mobile: top banner. Web/desktop: top-right with a bold
-// spring entrance, glow pulse, icon pop, lifetime bar, and sharp exit.
+// Premium glass toast. Mobile: bottom-right. Web/desktop: top-right.
+// Spring entrance, glow pulse, icon pop, lifetime bar, and sharp exit.
 class GlassyToast {
   static OverlayEntry? _currentEntry;
 
@@ -31,7 +31,7 @@ class GlassyToast {
         );
 
     final isDark = AppColors.isDark(context);
-    final corner = DesktopCanvas.isDesktopPlatform;
+    final isDesktop = DesktopCanvas.isDesktopPlatform;
     late OverlayEntry entry;
     entry = OverlayEntry(
       builder: (_) => _GlassyToastWidget(
@@ -41,7 +41,9 @@ class GlassyToast {
         icon: icon,
         duration: duration,
         topPadding: mediaQuery.padding.top,
-        cornerStyle: corner,
+        bottomPadding: mediaQuery.padding.bottom,
+        // Desktop/web: top-right. Mobile: bottom-right corner toast.
+        anchorBottom: !isDesktop,
         onDismiss: () {
           entry.remove();
           if (_currentEntry == entry) _currentEntry = null;
@@ -66,7 +68,9 @@ class _GlassyToastWidget extends StatefulWidget {
   final IconData? icon;
   final Duration duration;
   final double topPadding;
-  final bool cornerStyle;
+  final double bottomPadding;
+  /// When true, toast anchors bottom-right (mobile). Else top-right (desktop).
+  final bool anchorBottom;
   final VoidCallback onDismiss;
 
   const _GlassyToastWidget({
@@ -76,7 +80,8 @@ class _GlassyToastWidget extends StatefulWidget {
     this.icon,
     required this.duration,
     required this.topPadding,
-    required this.cornerStyle,
+    required this.bottomPadding,
+    required this.anchorBottom,
     required this.onDismiss,
   });
 
@@ -131,24 +136,19 @@ class _GlassyToastWidgetState extends State<_GlassyToastWidget>
       reverseCurve: Curves.easeIn,
     );
 
+    // Enter from the right; slightly up (desktop) or down (mobile bottom).
     _slide = Tween<Offset>(
-      begin: widget.cornerStyle
-          ? const Offset(1.15, -0.15)
-          : const Offset(0, -1.35),
+      begin: widget.anchorBottom
+          ? const Offset(1.15, 0.35)
+          : const Offset(1.15, -0.15),
       end: Offset.zero,
     ).animate(spring);
 
     _fade = Tween<double>(begin: 0, end: 1).animate(soft);
 
-    _scale = Tween<double>(
-      begin: widget.cornerStyle ? 0.72 : 0.88,
-      end: 1,
-    ).animate(spring);
+    _scale = Tween<double>(begin: 0.72, end: 1).animate(spring);
 
-    _tilt = Tween<double>(
-      begin: widget.cornerStyle ? 0.06 : -0.04,
-      end: 0,
-    ).animate(spring);
+    _tilt = Tween<double>(begin: 0.06, end: 0).animate(spring);
 
     _iconPop = Tween<double>(begin: 0.2, end: 1).animate(iconCurve);
 
@@ -195,7 +195,7 @@ class _GlassyToastWidgetState extends State<_GlassyToastWidget>
         isError ? AppTheme.error : AppTheme.paletteFF2D6A4F;
     final iconData = widget.icon ??
         (isError ? Icons.error_outline_rounded : Icons.check_rounded);
-    final radius = widget.cornerStyle ? 16.0 : 18.0;
+    const radius = 16.0;
 
     final card = AnimatedBuilder(
       animation: Listenable.merge([_enter, _glow, _life]),
@@ -204,9 +204,7 @@ class _GlassyToastWidgetState extends State<_GlassyToastWidget>
         final life = 1.0 - _life.value;
 
         return Transform(
-          alignment: widget.cornerStyle
-              ? Alignment.centerRight
-              : Alignment.topCenter,
+          alignment: Alignment.centerRight,
           transform: Matrix4.identity()
             ..setEntry(3, 2, 0.001)
             ..rotateZ(_tilt.value)
@@ -275,12 +273,7 @@ class _GlassyToastWidgetState extends State<_GlassyToastWidget>
                             ),
                           ),
                           child: Padding(
-                            padding: EdgeInsets.fromLTRB(
-                              widget.cornerStyle ? 18 : 18,
-                              widget.cornerStyle ? 16 : 14,
-                              widget.cornerStyle ? 20 : 18,
-                              widget.cornerStyle ? 16 : 14,
-                            ),
+                            padding: const EdgeInsets.fromLTRB(18, 16, 20, 16),
                             child: Row(
                               children: [
                                 Transform.scale(
@@ -288,8 +281,8 @@ class _GlassyToastWidgetState extends State<_GlassyToastWidget>
                                   child: Transform.rotate(
                                     angle: (1 - _iconPop.value) * -0.4,
                                     child: Container(
-                                      width: widget.cornerStyle ? 42 : 40,
-                                      height: widget.cornerStyle ? 42 : 40,
+                                      width: 42,
+                                      height: 42,
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
                                         gradient: LinearGradient(
@@ -310,17 +303,17 @@ class _GlassyToastWidgetState extends State<_GlassyToastWidget>
                                       child: Icon(
                                         iconData,
                                         color: AppTheme.white,
-                                        size: widget.cornerStyle ? 22 : 22,
+                                        size: 22,
                                       ),
                                     ),
                                   ),
                                 ),
-                                SizedBox(width: widget.cornerStyle ? 16 : 12),
+                                const SizedBox(width: 16),
                                 Expanded(
                                   child: _ToastText(
                                     message: widget.message,
                                     color: isDark ? AppTheme.white : accent,
-                                    size: widget.cornerStyle ? 15 : 14,
+                                    size: 15,
                                   ),
                                 ),
                               ],
@@ -407,38 +400,37 @@ class _GlassyToastWidgetState extends State<_GlassyToastWidget>
     );
 
     final interactive = GestureDetector(
-      onHorizontalDragUpdate: widget.cornerStyle
+      onHorizontalDragUpdate: (d) {
+        if ((d.primaryDelta ?? 0) > 8) _autoDismiss();
+      },
+      onVerticalDragUpdate: widget.anchorBottom
           ? (d) {
               if ((d.primaryDelta ?? 0) > 8) _autoDismiss();
             }
           : null,
-      onVerticalDragUpdate: widget.cornerStyle
-          ? null
-          : (d) {
-              if ((d.primaryDelta ?? 0) < -5) _autoDismiss();
-            },
       onTap: _autoDismiss,
       child: SlideTransition(position: _slide, child: card),
     );
 
-    if (widget.cornerStyle) {
-      final screenW = MediaQuery.sizeOf(context).width;
-      // Wide corner toast — solid horizontal presence on desktop/web.
-      final toastW = screenW < 720
-          ? (screenW - 40).clamp(280.0, 420.0)
-          : (screenW * 0.32).clamp(380.0, 480.0);
+    final screenW = MediaQuery.sizeOf(context).width;
+    final toastW = widget.anchorBottom
+        ? (screenW - 32).clamp(260.0, 360.0)
+        : screenW < 720
+        ? (screenW - 40).clamp(280.0, 420.0)
+        : (screenW * 0.32).clamp(380.0, 480.0);
+
+    if (widget.anchorBottom) {
       return Positioned(
-        top: widget.topPadding + 18,
-        right: 22,
+        bottom: widget.bottomPadding + 20,
+        right: 16,
         child: SizedBox(width: toastW, child: interactive),
       );
     }
 
     return Positioned(
-      top: widget.topPadding + 8,
-      left: 20,
-      right: 20,
-      child: interactive,
+      top: widget.topPadding + 18,
+      right: 22,
+      child: SizedBox(width: toastW, child: interactive),
     );
   }
 
