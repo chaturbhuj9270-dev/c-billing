@@ -67,74 +67,78 @@ class _TwinklingSloganState extends State<TwinklingSlogan>
         final glowBlur = 4.0 + (12.0 * t);
         final glowAlpha = 0.18 + (0.45 * t);
 
-        return Opacity(
-          opacity: opacity,
-          child: Stack(
-            alignment: switch (widget.textAlign) {
-              TextAlign.center => Alignment.center,
-              TextAlign.end || TextAlign.right => Alignment.centerRight,
-              _ => Alignment.centerLeft,
-            },
-            children: [
-              Transform.translate(
-                offset: const Offset(0.6, 1.1),
-                child: Text(
-                  widget.text,
-                  textAlign: widget.textAlign,
-                  style: baseStyle.copyWith(
-                    color: TwinklingSlogan.goldDeep.withValues(alpha: 0.75),
-                  ),
-                ),
-              ),
-              Text(
+        final stack = Stack(
+          alignment: switch (widget.textAlign) {
+            TextAlign.center => Alignment.center,
+            TextAlign.end || TextAlign.right => Alignment.centerRight,
+            _ => Alignment.centerLeft,
+          },
+          children: [
+            Transform.translate(
+              offset: const Offset(0.6, 1.1),
+              child: Text(
                 widget.text,
                 textAlign: widget.textAlign,
                 style: baseStyle.copyWith(
-                  color: TwinklingSlogan.gold.withValues(alpha: 0.01),
-                  shadows: [
-                    Shadow(
-                      color: TwinklingSlogan.gold.withValues(alpha: glowAlpha),
-                      blurRadius: glowBlur,
-                    ),
-                    Shadow(
-                      color: TwinklingSlogan.goldHighlight
-                          .withValues(alpha: glowAlpha * 0.55),
-                      blurRadius: glowBlur * 1.6,
-                    ),
-                  ],
+                  color: TwinklingSlogan.goldDeep.withValues(alpha: 0.75),
                 ),
               ),
-              ShaderMask(
-                blendMode: BlendMode.srcIn,
-                shaderCallback: (bounds) {
-                  return LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color.lerp(
-                        TwinklingSlogan.goldHighlight,
-                        AppTheme.white,
-                        0.35 + 0.25 * t,
-                      )!,
-                      TwinklingSlogan.goldMid,
+            ),
+            Text(
+              widget.text,
+              textAlign: widget.textAlign,
+              style: baseStyle.copyWith(
+                color: TwinklingSlogan.gold.withValues(alpha: 0.01),
+                shadows: [
+                  Shadow(
+                    color: TwinklingSlogan.gold.withValues(alpha: glowAlpha),
+                    blurRadius: glowBlur,
+                  ),
+                  Shadow(
+                    color: TwinklingSlogan.goldHighlight
+                        .withValues(alpha: glowAlpha * 0.55),
+                    blurRadius: glowBlur * 1.6,
+                  ),
+                ],
+              ),
+            ),
+            ShaderMask(
+              blendMode: BlendMode.srcIn,
+              shaderCallback: (bounds) {
+                return LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color.lerp(
+                      TwinklingSlogan.goldHighlight,
+                      AppTheme.white,
+                      0.35 + 0.25 * t,
+                    )!,
+                    TwinklingSlogan.goldMid,
+                    TwinklingSlogan.gold,
+                    Color.lerp(
                       TwinklingSlogan.gold,
-                      Color.lerp(
-                        TwinklingSlogan.gold,
-                        TwinklingSlogan.goldDeep,
-                        0.55,
-                      )!,
-                    ],
-                    stops: const [0.0, 0.28, 0.62, 1.0],
-                  ).createShader(bounds);
-                },
-                child: Text(
-                  widget.text,
-                  textAlign: widget.textAlign,
-                  style: baseStyle,
-                ),
+                      TwinklingSlogan.goldDeep,
+                      0.55,
+                    )!,
+                  ],
+                  stops: const [0.0, 0.28, 0.62, 1.0],
+                ).createShader(bounds);
+              },
+              child: Text(
+                widget.text,
+                textAlign: widget.textAlign,
+                style: baseStyle,
               ),
-            ],
-          ),
+            ),
+          ],
+        );
+
+        return Opacity(
+          opacity: opacity,
+          child: widget.textAlign == TextAlign.center
+              ? SizedBox(width: double.infinity, child: stack)
+              : stack,
         );
       },
     );

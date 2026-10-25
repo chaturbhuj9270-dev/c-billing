@@ -691,16 +691,18 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                       opacity: _logoFade,
                       child: SlideTransition(
                         position: _nameSlide,
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: _DesktopBrandLockup(
-                            title: _appTitle,
-                            tagline: _tagline.toUpperCase(),
-                            titleColor: titleColor,
-                            muted: muted,
-                            accent: accent,
-                            line: _lineProgress,
-                            taglineFade: _taglineFade,
+                        child: Center(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: _DesktopBrandLockup(
+                              title: _appTitle,
+                              tagline: _tagline.toUpperCase(),
+                              titleColor: titleColor,
+                              muted: muted,
+                              accent: accent,
+                              line: _lineProgress,
+                              taglineFade: _taglineFade,
+                            ),
                           ),
                         ),
                       ),
@@ -796,124 +798,146 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 28),
-            child: Column(
-              children: [
-                const Spacer(flex: 3),
-                FadeTransition(
-                  opacity: _logoFade,
-                  child: ScaleTransition(
-                    scale: _logoScale,
-                    child: AppLogoMark(
-                      isDark: isDark,
-                      rings: _ringController,
-                      pulse: _pulseScale,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 36),
-                FadeTransition(
-                  opacity: _nameFade,
-                  child: SlideTransition(
-                    position: _nameSlide,
-                    child: Text(
-                      _appTitle,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: titleColor,
-                        fontSize: 40,
-                        fontWeight: FontWeight.w800,
-                        fontFamily: 'Literata',
-                        letterSpacing: -0.4,
-                        height: 1,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                AnimatedBuilder(
-                  animation: _lineProgress,
-                  builder: (context, _) {
-                    return Container(
-                      width: 42 * _lineProgress.value,
-                      height: 3,
-                      decoration: BoxDecoration(
-                        color: themeColor,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-                FadeTransition(
-                  opacity: _taglineFade,
-                  child: TwinklingSlogan(
-                    text: tagline,
-                    textAlign: TextAlign.center,
-                    glowColor: themeColor,
-                    style: TextStyle(
-                      color: muted,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Literata',
-                      letterSpacing: 1.6,
-                      height: 1.45,
-                    ),
-                  ),
-                ),
-                const Spacer(flex: 2),
-                FadeTransition(
-                  opacity: _footerFade,
-                  child: _showUnlockButton
-                      ? _buildUnlockButton(themeColor)
-                      : _buildMobileProgress(isDark, muted, themeColor),
-                ),
-                const SizedBox(height: 28),
-                FadeTransition(
-                  opacity: _footerFade,
-                  child: SlideTransition(
-                    position: _footerSlide,
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                              color: isDark
-                                  ? AppTheme.darkOutline
-                                  : AppTheme.paletteFFD3DDD7,
-                            ),
-                          ),
-                          child: Text(
-                            'PREMIUM FINANCIAL SOLUTIONS',
-                            style: TextStyle(
-                              color: muted,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Literata',
-                              letterSpacing: 1.3,
-                            ),
-                          ),
+            child: SizedBox(
+              width: double.infinity,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Spacer(flex: 3),
+                  FadeTransition(
+                    opacity: _logoFade,
+                    child: ScaleTransition(
+                      scale: _logoScale,
+                      child: Center(
+                        child: AppLogoMark(
+                          isDark: isDark,
+                          rings: _ringController,
+                          pulse: _pulseScale,
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Version 1.0.0',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 36),
+                  FadeTransition(
+                    opacity: _nameFade,
+                    child: SlideTransition(
+                      position: _nameSlide,
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: Text(
+                          _appTitle,
+                          textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: muted,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                            color: titleColor,
+                            fontSize: 40,
+                            fontWeight: FontWeight.w800,
                             fontFamily: 'Literata',
+                            letterSpacing: -0.4,
+                            height: 1,
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 18),
-              ],
+                  const SizedBox(height: 14),
+                  AnimatedBuilder(
+                    animation: _lineProgress,
+                    builder: (context, _) {
+                      return Center(
+                        child: Container(
+                          width: 42 * _lineProgress.value,
+                          height: 3,
+                          decoration: BoxDecoration(
+                            color: themeColor,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  FadeTransition(
+                    opacity: _taglineFade,
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: TwinklingSlogan(
+                        text: tagline,
+                        textAlign: TextAlign.center,
+                        glowColor: themeColor,
+                        style: TextStyle(
+                          color: muted,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Literata',
+                          letterSpacing: 1.6,
+                          height: 1.45,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Spacer(flex: 2),
+                  FadeTransition(
+                    opacity: _footerFade,
+                    child: Center(
+                      child: _showUnlockButton
+                          ? _buildUnlockButton(themeColor)
+                          : _buildMobileProgress(isDark, muted, themeColor),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  FadeTransition(
+                    opacity: _footerFade,
+                    child: SlideTransition(
+                      position: _footerSlide,
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: isDark
+                                      ? AppTheme.darkOutline
+                                      : AppTheme.paletteFFD3DDD7,
+                                ),
+                              ),
+                              child: Text(
+                                'PREMIUM FINANCIAL SOLUTIONS',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: muted,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Literata',
+                                  letterSpacing: 1.3,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Version 1.0.0',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: muted,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Literata',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                ],
+              ),
             ),
           ),
         ),
@@ -927,6 +951,8 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       builder: (context, _) {
         final value = _progressController.value.clamp(0.0, 1.0);
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
               width: 200,
@@ -942,6 +968,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
             const SizedBox(height: 12),
             Text(
               _stepLabels[_activeStep.clamp(0, _stepLabels.length - 1)],
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: muted,
                 fontSize: 13,
