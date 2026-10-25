@@ -40,6 +40,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     String? paymentMethod,
     DateTime? transactionDate,
     bool allocateToBills = false,
+    String? billId,
   }) async {
     debugPrint(
       '[TransactionOffline] Adding payment: $amount for customer: $customerId',
@@ -50,14 +51,20 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     final currentPending = customer?.currentPendingAmount ?? 0.0;
     final newPending = currentPending - amount;
 
-    final transaction = CustomerTransactionEntity.payment(
+    final now = DateTime.now();
+    final transaction = CustomerTransactionEntity(
       customerId: customerId,
       customerName: customerName,
+      transactionType: TransactionType.payment,
       amount: amount,
       balanceAfter: newPending,
+      referenceId: billId,
+      referenceType: billId != null ? 'bill' : null,
       description: description,
       paymentMethod: paymentMethod,
-      transactionDate: transactionDate,
+      transactionDate: transactionDate ?? now,
+      createdAt: now,
+      updatedAt: now,
     );
 
     await _db.transaction(() async {
@@ -448,12 +455,22 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
       transaction.updatedAt = DateTime.now();
       await _db.saveTransaction(transaction);
 
-      // Reverse the transaction effect
+      // Reverse the original effect:
+      // - billCreated / positive adjustment increased pending → subtract
+      // - payment / billReturn decreased pending → add back
+      // - signed adjustment: reverse by subtracting the signed amount
       if (customer != null) {
-        if (transaction.transactionType == TransactionType.payment) {
-          customer.currentPendingAmount += transaction.amount;
-        } else {
-          customer.currentPendingAmount -= transaction.amount;
+        switch (transaction.transactionType) {
+          case TransactionType.payment:
+          case TransactionType.billReturn:
+            customer.currentPendingAmount += transaction.amount;
+            break;
+          case TransactionType.billCreated:
+            customer.currentPendingAmount -= transaction.amount;
+            break;
+          case TransactionType.adjustment:
+            customer.currentPendingAmount -= transaction.amount;
+            break;
         }
         customer.updatedAt = DateTime.now();
         customer.isSynced = false;
@@ -463,6 +480,44 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
 
     notifyListeners();
     DashboardRefreshService.instance.notifyDataChanged(DataChangeType.customer);
+  }
+
+  /// Reverse all ledger rows tied to a bill (on bill delete).
+  Future<void> reverseTransactionsForBill(String billId) async {
+    if (billId.isEmpty) return;
+    final keys = <String>{billId};
+    if (billId.startsWith('local_')) {
+      keys.add(billId.substring(6));
+    } else {
+      keys.add('local_$billId');
+    }
+
+    final matches = (await _db.loadTransactions()).where((tx) {
+      if (tx.syncStatus == TransactionSyncStatus.deleted) return false;
+      final ref = tx.referenceId;
+      if (ref != null && keys.contains(ref)) return true;
+      final desc = tx.description ?? '';
+      for (final key in keys) {
+        if (desc.contains('Bill #$key') || desc.contains('bill $key')) {
+          return true;
+        }
+      }
+      return false;
+    }).toList();
+
+    for (final tx in matches) {
+      await deleteTransaction(tx.id);
+    }
+  }
+
+  /// After a Firebase write, stamp the local row so sync will not create a duplicate.
+  Future<void> markSyncedWithServerId(int localId, String serverId) async {
+    final transaction = await getTransactionById(localId);
+    if (transaction == null) return;
+    transaction.serverId = serverId;
+    transaction.syncStatus = TransactionSyncStatus.synced;
+    transaction.updatedAt = DateTime.now();
+    await _db.saveTransaction(transaction);
   }
 
   // ==================== HELPERS ====================

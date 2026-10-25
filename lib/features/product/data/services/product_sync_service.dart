@@ -58,6 +58,7 @@ class ProductSyncService extends ChangeNotifier {
 
   // Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
+  bool _initialized = false;
 
   ProductSyncService._({
     ProductOfflineController? offlineController,
@@ -88,6 +89,8 @@ class ProductSyncService extends ChangeNotifier {
 
   // Initialize the sync service Call this after the local database is initialized
   void initialize() {
+    if (_initialized) return;
+    _initialized = true;
     debugPrint('[ProductSync] Initializing...');
 
     // Listen for connectivity changes with debouncing
@@ -117,6 +120,13 @@ class ProductSyncService extends ChangeNotifier {
     _checkAndSync();
 
     debugPrint('[ProductSync] Initialized');
+  }
+
+  void resetSyncState() {
+    _lastSyncTime = null;
+    _lastError = null;
+    _isSyncing = false;
+    _status = ProductSyncStatus.idle;
   }
 
   @override
@@ -361,6 +371,9 @@ class ProductSyncService extends ChangeNotifier {
 
   // Force full refresh from server Use with caution - may overwrite local changes that are synced
   Future<ProductSyncResult> forceFullRefresh() async {
+    for (var i = 0; i < 25 && _isSyncing; i++) {
+      await Future.delayed(const Duration(milliseconds: 200));
+    }
     if (_isSyncing) {
       return ProductSyncResult(
         success: false,
@@ -370,6 +383,7 @@ class ProductSyncService extends ChangeNotifier {
     }
 
     _isSyncing = true;
+    _lastSyncTime = null;
     final startTime = DateTime.now();
     _status = ProductSyncStatus.syncing;
     _lastError = null;

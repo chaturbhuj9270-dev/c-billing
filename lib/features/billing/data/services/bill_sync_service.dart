@@ -58,6 +58,7 @@ class BillSyncService extends ChangeNotifier {
 
   // Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
+  bool _initialized = false;
 
   BillSyncService._({
     BillOfflineController? offlineController,
@@ -87,6 +88,8 @@ class BillSyncService extends ChangeNotifier {
 
   // Initialize the sync service
   void initialize() {
+    if (_initialized) return;
+    _initialized = true;
     debugPrint('[BillSync] Initializing...');
 
     // Listen for connectivity changes
@@ -108,6 +111,13 @@ class BillSyncService extends ChangeNotifier {
     _initialSync();
 
     debugPrint('[BillSync] Initialized');
+  }
+
+  void resetSyncState() {
+    _lastSyncTime = null;
+    _lastError = null;
+    _isSyncing = false;
+    _status = BillSyncServiceStatus.idle;
   }
 
   // Check conditions and sync if appropriate
@@ -345,6 +355,9 @@ class BillSyncService extends ChangeNotifier {
 
   // Force full refresh from server (downloads all bills)
   Future<BillSyncResult> forceFullRefresh() async {
+    for (var i = 0; i < 25 && _isSyncing; i++) {
+      await Future.delayed(const Duration(milliseconds: 200));
+    }
     if (_isSyncing) {
       return BillSyncResult(
         success: false,
@@ -354,6 +367,7 @@ class BillSyncService extends ChangeNotifier {
     }
 
     _isSyncing = true;
+    _lastSyncTime = null;
     final startTime = DateTime.now();
     _status = BillSyncServiceStatus.syncing;
     _lastError = null;

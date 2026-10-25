@@ -59,6 +59,7 @@ class PurchaseSyncService extends ChangeNotifier {
 
   // Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
+  bool _initialized = false;
 
   PurchaseSyncService._({
     PurchaseOfflineController? offlineController,
@@ -89,6 +90,8 @@ class PurchaseSyncService extends ChangeNotifier {
 
   // Initialize the sync service
   void initialize() {
+    if (_initialized) return;
+    _initialized = true;
     debugPrint('[PurchaseSync] Initializing...');
 
     // Listen for connectivity changes with debouncing
@@ -115,6 +118,13 @@ class PurchaseSyncService extends ChangeNotifier {
     });
 
     debugPrint('[PurchaseSync] Initialized');
+  }
+
+  void resetSyncState() {
+    _lastSyncTime = null;
+    _lastError = null;
+    _isSyncing = false;
+    _status = PurchaseSyncServiceStatus.idle;
   }
 
   @override

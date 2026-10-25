@@ -1020,46 +1020,54 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
     setState(() => _isProcessing = true);
 
     try {
+      final notes = _notesController.text.trim().isNotEmpty
+          ? _notesController.text.trim()
+          : 'Payment received';
+      final txCtrl = CustomerTransactionOfflineController.instance;
+
+      // Offline-first: always update local ledger / bill allocation.
+      final localTx = await txCtrl.addPaymentTransaction(
+        customerId: widget.customer.id,
+        customerName: widget.customer.fullName,
+        amount: _enteredAmount,
+        description: notes,
+        paymentMethod: _selectedPaymentMode.name,
+        allocateToBills: true,
+      );
+
       final result = await widget.transactionService.receivePayment(
         customerId: widget.customer.id,
         amount: _enteredAmount,
         paymentMode: _selectedPaymentMode,
-        notes: _notesController.text.trim().isNotEmpty
-            ? _notesController.text.trim()
-            : null,
+        notes: notes,
         referenceNumber: _referenceController.text.trim().isNotEmpty
             ? _referenceController.text.trim()
             : null,
       );
 
-      // Also update local so dashboard refreshes
-      await CustomerTransactionOfflineController.instance.addPaymentTransaction(
-        customerId: widget.customer.id,
-        customerName: widget.customer.fullName,
-        amount: _enteredAmount,
-        description: _notesController.text.trim().isNotEmpty
-            ? _notesController.text.trim()
-            : 'Payment received',
-        paymentMethod: _selectedPaymentMode.name,
-        allocateToBills: true,
-      );
+      if (result.success && result.transactionId != null) {
+        await txCtrl.markSyncedWithServerId(
+          localTx.id,
+          result.transactionId!,
+        );
+      }
 
       if (!mounted) return;
 
+      Navigator.pop(context);
       if (result.success) {
-        Navigator.pop(context);
         GlassyToast.show(
           context,
           'Payment of ₹${_enteredAmount.toStringAsFixed(2)} recorded',
         );
-        widget.onPaymentReceived();
       } else {
+        // Local ledger already applied; sync will push when online.
         GlassyToast.show(
           context,
-          result.errorMessage ?? 'Failed to process payment',
-          isError: true,
+          'Payment saved locally. Cloud sync pending: ${result.errorMessage ?? 'offline'}',
         );
       }
+      widget.onPaymentReceived();
     } finally {
       if (mounted) {
         setState(() => _isProcessing = false);

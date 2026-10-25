@@ -57,6 +57,7 @@ class CompanySyncService extends ChangeNotifier {
 
   // Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
+  bool _initialized = false;
 
   CompanySyncService._({
     CompanyOfflineController? offlineController,
@@ -87,6 +88,8 @@ class CompanySyncService extends ChangeNotifier {
 
   // Initialize the sync service
   void initialize() {
+    if (_initialized) return;
+    _initialized = true;
     debugPrint('[CompanySync] Initializing...');
 
     // Listen for connectivity changes
@@ -108,6 +111,13 @@ class CompanySyncService extends ChangeNotifier {
     _initialSync();
 
     debugPrint('[CompanySync] Initialized');
+  }
+
+  void resetSyncState() {
+    _lastSyncTime = null;
+    _lastError = null;
+    _isSyncing = false;
+    _status = CompanySyncServiceStatus.idle;
   }
 
   // Perform initial sync - download all companies if local database is empty

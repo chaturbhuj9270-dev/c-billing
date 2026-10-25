@@ -61,6 +61,7 @@ class EventOrderSyncService extends ChangeNotifier {
 
   // Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
+  bool _initialized = false;
 
   EventOrderSyncService._({
     EventOrderOfflineController? offlineController,
@@ -91,6 +92,8 @@ class EventOrderSyncService extends ChangeNotifier {
 
   // Initialize the sync service Call this after the local database is initialized
   void initialize() {
+    if (_initialized) return;
+    _initialized = true;
     debugPrint('[EventOrderSync] Initializing...');
 
     // Listen for connectivity changes
@@ -117,6 +120,13 @@ class EventOrderSyncService extends ChangeNotifier {
     _checkAndSync();
 
     debugPrint('[EventOrderSync] Initialized');
+  }
+
+  void resetSyncState() {
+    _lastSyncTime = null;
+    _lastError = null;
+    _isSyncing = false;
+    _status = EventOrderSyncStatusIndicator.idle;
   }
 
   // Dispose resources

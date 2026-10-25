@@ -8,7 +8,7 @@ import '../../../../core/services/product_settings_service.dart';
 import '../../../../core/services/purchase_report_settings_service.dart';
 import '../../../../core/services/bill_report_settings_service.dart';
 import '../../../../core/services/stock_report_settings_service.dart';
-import '../../../../main.dart' show initializeSyncServices;
+import '../../../../main.dart' show syncAfterLogin;
 import '../../../dashboard/presentation/pages/optimized_dashboard_page.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
@@ -184,13 +184,6 @@ class _LoginPageV2State extends State<LoginPageV2>
           if (!mounted) return;
           debugPrint('[DEBUG] Login successful for user: ${cred.user?.uid}');
 
-          // Start sync services now that user is authenticated. A local-database problem must not cancel a successful sign-in.
-          try {
-            initializeSyncServices();
-          } catch (e) {
-            debugPrint('[ERROR] Sync services failed to start: $e');
-          }
-
           // Reload product settings to fetch custom columns for this user
           ProductSettingsService.instance.reload();
           PurchaseReportSettingsService.instance.reload();
@@ -244,12 +237,12 @@ class _LoginPageV2State extends State<LoginPageV2>
 
   Future<void> _checkSubscriptionAndNavigate() async {
     try {
+      // Tenant context must be ready before sync hits Firestore paths.
       await AccessControlService.instance.loadForCurrentUser();
-      try {
-        initializeSyncServices();
-      } catch (e) {
-        debugPrint('[ERROR] Sync services failed to start: $e');
-      }
+      // Full server → local sync in background; do not block navigation.
+      syncAfterLogin().catchError((e) {
+        debugPrint('[ERROR] Post-login sync failed: $e');
+      });
 
       final subscriptionService = SubscriptionService();
       final isValid = await subscriptionService.isSubscriptionValid();

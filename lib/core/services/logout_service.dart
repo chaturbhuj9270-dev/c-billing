@@ -4,6 +4,7 @@ import 'package:c_billing/core/access/access_control_service.dart';
 import 'local_database.dart';
 import 'session_manager.dart';
 import 'credentials_manager.dart';
+import 'sync_bootstrap.dart';
 
 // Centralized logout service to ensure all local data is cleared when a user logs out or session expires
 class LogoutService {
@@ -37,11 +38,14 @@ class LogoutService {
       await _clearAllLocalData();
       debugPrint('[LogoutService] Local data cleared');
 
-      // 5. Sign out from Firebase
+      // 5. Clear in-memory sync cursors so next login does a full pull
+      SyncBootstrap.resetOnLogout();
+
+      // 6. Sign out from Firebase
       await _auth.signOut();
       debugPrint('[LogoutService] Firebase sign out complete');
 
-      // 5. Navigate to login screen
+      // 7. Navigate to login screen
       if (context.mounted) {
         Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
           '/',
@@ -83,13 +87,12 @@ class LogoutService {
     debugPrint('[LogoutService] Session expired - clearing data');
     
     try {
-      // Clear all local data
+      AccessControlService.instance.clear();
       await _clearAllLocalData();
-      
-      // Sign out from Firebase
+      SyncBootstrap.resetOnLogout();
+
       await _auth.signOut();
-      
-      // Navigate to login
+
       if (context.mounted) {
         Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
           '/',
@@ -99,9 +102,10 @@ class LogoutService {
     } catch (e) {
       debugPrint('[LogoutService] Error during session expiry: $e');
       try {
+        SyncBootstrap.resetOnLogout();
         await _auth.signOut();
       } catch (_) {}
-      
+
       if (context.mounted) {
         Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
           '/',

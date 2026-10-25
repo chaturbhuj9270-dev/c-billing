@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:c_billing/core/services/billing_service.dart';
+import 'package:c_billing/core/services/customer_transaction_service.dart';
 import 'package:c_billing/core/printing/printing.dart';
 import 'package:printing/printing.dart' as printing_pkg;
 import 'package:pdf/widgets.dart' as pw;
@@ -9,6 +10,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:c_billing/features/billing/data/repositories/firebase_bill_repository.dart';
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_item.dart';
+import 'package:c_billing/features/customer/data/repositories/customer_repository.dart';
+import 'package:c_billing/features/customer/data/repositories/customer_transaction_repository.dart';
+import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_product_repository.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_stock_repository.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
@@ -69,10 +73,18 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
     _firestore = FirebaseFirestore.instance;
 
+    final customerRepo = FirebaseCustomerRepository(firestore: _firestore);
     _billingService = BillingService(
       billRepository: FirebaseBillRepository(firestore: _firestore),
       productRepository: FirebaseProductRepository(firestore: _firestore),
       stockRepository: FirebaseStockRepository(firestore: _firestore),
+      customerTransactionService: CustomerTransactionService(
+        firestore: _firestore,
+        customerRepository: customerRepo,
+        transactionRepository: FirebaseCustomerTransactionRepository(
+          firestore: _firestore,
+        ),
+      ),
     );
 
     // Initialize animations
@@ -225,6 +237,31 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     });
   }
 
+  /// When the offline bill row is missing, still reduce local receivable for unpaid portion.
+  Future<void> _applyLedgerReturnWithoutLocalBill(double customerRefund) async {
+    final bill = _currentBill;
+    if (bill == null || customerRefund <= 0.009) return;
+    final customerId = bill.customerId;
+    if (customerId == null || customerId.isEmpty) return;
+
+    final appliedToDue = customerRefund > bill.pendingAmount
+        ? bill.pendingAmount
+        : customerRefund;
+    if (appliedToDue <= 0.009) return;
+
+    try {
+      await CustomerTransactionOfflineController.instance.addReturnTransaction(
+        customerId: customerId,
+        customerName: bill.customerName ?? '',
+        amount: appliedToDue,
+        billId: bill.id,
+        description: 'Return for bill ${bill.billNumber}',
+      );
+    } catch (e) {
+      debugPrint('[ReturnBill] Offline ledger return failed: $e');
+    }
+  }
+
   Future<void> _showReturnConfirmationDialog() async {
     if (_currentBill == null || !_hasItemsToReturn) return;
 
@@ -353,7 +390,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
               );
             } else {
               debugPrint(
-                '[ReturnBill] Warning: Could not find local bill for FIFO return - updating local product stock',
+                '[ReturnBill] Warning: Could not find local bill for FIFO return - updating local product stock + ledger',
               );
               // Still restore local product stock so availability/ledger UIs update immediately
               for (final detail in returnItemDetails) {
@@ -362,6 +399,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                   detail.returnQuantity,
                 );
               }
+              await _applyLedgerReturnWithoutLocalBill(result.refundAmount ?? 0);
             }
           }
         } catch (e) {

@@ -722,23 +722,66 @@ class BillingService {
               item.quantity - 0.001; // Tolerance for floats
         });
 
-        // Step 8: Update the bill
+        // Refund follows what the customer was charged (discount/tax ratio),
+        // and only the unpaid portion reduces bill pending / receivable.
+        final chargeRatio =
+            bill.totalAmount > 0 ? bill.finalAmount / bill.totalAmount : 1.0;
+        final customerRefund = totalRefundAmount * chargeRatio;
+        final appliedToDue = customerRefund > bill.pendingAmount
+            ? bill.pendingAmount
+            : customerRefund;
+        final pendingAfterReturn = (bill.pendingAmount - appliedToDue)
+            .clamp(0.0, double.infinity);
+        final paymentStatus = pendingAfterReturn <= 0.009
+            ? 'paid'
+            : (bill.paidAmount > 0 ? 'partiallyPaid' : 'pending');
+
+        // Step 8: Update the bill (items + pending)
         transaction.update(billRef, {
           'items': updatedItems,
           'returnStatus': willBeFullyReturned,
           'returnDate': willBeFullyReturned
               ? now.toIso8601String()
               : bill.returnDate?.toIso8601String(),
+          'pendingAmount': pendingAfterReturn,
+          'paymentStatus': paymentStatus,
           'updatedAt': now.toIso8601String(),
         });
 
         return {
           'billId': billId,
           'returnDate': now.toIso8601String(),
-          'refundAmount': totalRefundAmount,
+          'refundAmount': customerRefund,
+          'appliedToDue': appliedToDue,
           'isFullyReturned': willBeFullyReturned,
+          'customerId': bill.customerId,
+          'billNumber': bill.billNumber,
         };
       });
+
+      final appliedToDue = (result['appliedToDue'] as num?)?.toDouble() ?? 0.0;
+      final customerId = result['customerId'] as String?;
+      final billNumber =
+          (result['billNumber'] as String?) ?? (result['billId'] as String);
+
+      // Keep Firebase customer ledger in sync with the unpaid portion returned.
+      if (appliedToDue > 0.009 &&
+          customerId != null &&
+          customerId.isNotEmpty &&
+          _customerTransactionService != null) {
+        final refundResult = await _customerTransactionService.recordRefund(
+          customerId: customerId,
+          billId: billId,
+          billNumber: billNumber,
+          refundAmount: appliedToDue,
+          notes: 'Return for bill $billNumber',
+        );
+        if (!refundResult.success) {
+          debugPrint(
+            '[BillingService] recordRefund failed: ${refundResult.errorMessage}',
+          );
+        }
+      }
 
       return ReturnBillResult.success(
         result['billId'] as String,

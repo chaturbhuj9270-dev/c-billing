@@ -17,15 +17,7 @@ import 'core/services/stock_report_settings_service.dart';
 import 'core/services/local_database.dart';
 import 'core/services/error_logging_service.dart';
 import 'core/theme/app_theme.dart';
-import 'features/customer/data/services/customer_sync_service.dart';
-import 'features/customer/data/services/customer_transaction_sync_service.dart';
-import 'features/product/data/services/product_sync_service.dart';
-import 'features/supplier/data/services/supplier_sync_service.dart';
-import 'features/company/data/services/company_sync_service.dart';
-import 'features/inventory_management/data/services/purchase_sync_service.dart';
-import 'features/inventory_management/data/services/purchase_batch_sync_service.dart';
-import 'features/billing/data/services/bill_sync_service.dart';
-import 'features/event_order/data/services/event_order_sync_service.dart';
+import 'core/services/sync_bootstrap.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -111,18 +103,14 @@ Future<void> _safeInit(Future<void> Function() init, String name) async {
   }
 }
 
-// Initialize sync services. Call ONLY after user is authenticated.
+// Initialize sync services. Call ONLY after user is authenticated
+// and AccessControlService.loadForCurrentUser() has completed.
 void initializeSyncServices() {
-  CustomerSyncService.instance.initialize();
-  CustomerTransactionSyncService.instance.initialize();
-  ProductSyncService.instance.initialize();
-  SupplierSyncService.instance.initialize();
-  CompanySyncService.instance.initialize();
-  PurchaseSyncService.instance.initialize();
-  PurchaseBatchSyncService.instance.initialize();
-  BillSyncService.instance.initialize();
-  EventOrderSyncService.instance.initialize();
+  SyncBootstrap.initializeServices();
 }
+
+// Full server → local pull right after login / session restore.
+Future<void> syncAfterLogin() => SyncBootstrap.startAfterLogin();
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

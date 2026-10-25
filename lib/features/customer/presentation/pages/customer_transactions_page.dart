@@ -677,13 +677,25 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
   }
 
   Future<void> _showReceivePaymentSheet() async {
+    // Payments settle the customer AR ledger only — event dues are separate.
+    final ledgerPending = await _ledgerPending();
+    if (!mounted) return;
+    if (ledgerPending <= 0.009) {
+      GlassyToast.show(
+        context,
+        'No invoice balance to collect. Event advances are settled on the order.',
+        isError: true,
+      );
+      return;
+    }
+
     final result = await showAppBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
       builder: (context) => _ReceivePaymentSheet(
         customerName: widget.customerName,
-        pendingAmount: _currentPending,
+        pendingAmount: ledgerPending,
       ),
     );
 
@@ -695,9 +707,10 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
       final customerId = widget.customerId.isNotEmpty
           ? widget.customerId
           : widget.customerLocalId;
+      final txCtrl = CustomerTransactionOfflineController.instance;
 
       // Save offline first
-      await CustomerTransactionOfflineController.instance.addPaymentTransaction(
+      final localTx = await txCtrl.addPaymentTransaction(
         customerId: customerId,
         customerName: widget.customerName,
         amount: amount,
@@ -706,22 +719,32 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
         allocateToBills: true,
       );
 
-      // Sync to Firebase (online)
+      // Sync to Firebase (online) and stamp server id to avoid duplicate sync rows.
       try {
         final paymentMode = _mapPaymentMethod(paymentMethod);
-        final firebaseResult = await _transactionService.receivePayment(
-          customerId: customerId,
-          amount: amount,
-          paymentMode: paymentMode,
-          notes: description ?? 'Payment received',
-        );
-
-        if (firebaseResult.success) {
-          debugPrint('[Transactions] Payment synced to Firebase: $amount');
-        } else {
-          debugPrint(
-            '[Transactions] Firebase sync failed: ${firebaseResult.errorMessage}',
+        final firebaseCustomerId = widget.customerId.isNotEmpty
+            ? widget.customerId
+            : null;
+        if (firebaseCustomerId != null) {
+          final firebaseResult = await _transactionService.receivePayment(
+            customerId: firebaseCustomerId,
+            amount: amount,
+            paymentMode: paymentMode,
+            notes: description ?? 'Payment received',
           );
+
+          if (firebaseResult.success &&
+              firebaseResult.transactionId != null) {
+            await txCtrl.markSyncedWithServerId(
+              localTx.id,
+              firebaseResult.transactionId!,
+            );
+            debugPrint('[Transactions] Payment synced to Firebase: $amount');
+          } else {
+            debugPrint(
+              '[Transactions] Firebase sync failed: ${firebaseResult.errorMessage}',
+            );
+          }
         }
       } catch (e) {
         debugPrint('[Transactions] Firebase sync error (non-blocking): $e');
@@ -744,6 +767,8 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
       case 'upi':
         return PaymentMode.upi;
       case 'bank transfer':
+      case 'online transfer':
+      case 'online':
         return PaymentMode.online;
       case 'card':
         return PaymentMode.card;

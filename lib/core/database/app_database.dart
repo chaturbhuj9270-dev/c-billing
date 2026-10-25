@@ -401,34 +401,91 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 7;
 
+  Future<bool> _hasTable(String table) async {
+    final rows = await customSelect(
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+      variables: [Variable.withString(table)],
+    ).get();
+    return rows.isNotEmpty;
+  }
+
+  Future<bool> _hasColumn(String table, String column) async {
+    final rows = await customSelect('PRAGMA table_info("$table")').get();
+    return rows.any((row) => row.read<String>('name') == column);
+  }
+
+  Future<void> _addColumnIfMissing(
+    Migrator m,
+    TableInfo table,
+    GeneratedColumn column,
+  ) async {
+    final name = table.actualTableName;
+    if (!await _hasTable(name)) return;
+    if (await _hasColumn(name, column.name)) return;
+    await m.addColumn(table, column);
+  }
+
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async => m.createAll(),
     onUpgrade: (m, from, to) async {
       if (from < 2) {
-        await m.createTable(employeeRecords);
+        if (!await _hasTable(employeeRecords.actualTableName)) {
+          await m.createTable(employeeRecords);
+        }
       }
+      // createTable above uses the current schema (already includes later
+      // columns). Skip any addColumn that already exists so re-upgrades
+      // and partial upgrades do not fail with "duplicate column name".
       if (from < 3) {
-        await m.addColumn(employeeRecords, employeeRecords.tokenNumber);
-        await m.addColumn(employeeRecords, employeeRecords.counterAccess);
+        await _addColumnIfMissing(
+          m,
+          employeeRecords,
+          employeeRecords.tokenNumber,
+        );
+        await _addColumnIfMissing(
+          m,
+          employeeRecords,
+          employeeRecords.counterAccess,
+        );
       }
       if (from < 4) {
-        await m.addColumn(employeeRecords, employeeRecords.points);
+        await _addColumnIfMissing(m, employeeRecords, employeeRecords.points);
       }
       if (from < 5) {
-        await m.addColumn(employeeRecords, employeeRecords.dateOfBirth);
-        await m.addColumn(employeeRecords, employeeRecords.address);
-        await m.addColumn(employeeRecords, employeeRecords.pinCode);
-        await m.addColumn(employeeRecords, employeeRecords.govIdNumber);
-        await m.addColumn(employeeRecords, employeeRecords.govIdType);
-        await m.addColumn(employeeRecords, employeeRecords.salary);
-        await m.addColumn(employeeRecords, employeeRecords.dateOfJoining);
+        await _addColumnIfMissing(
+          m,
+          employeeRecords,
+          employeeRecords.dateOfBirth,
+        );
+        await _addColumnIfMissing(m, employeeRecords, employeeRecords.address);
+        await _addColumnIfMissing(m, employeeRecords, employeeRecords.pinCode);
+        await _addColumnIfMissing(
+          m,
+          employeeRecords,
+          employeeRecords.govIdNumber,
+        );
+        await _addColumnIfMissing(
+          m,
+          employeeRecords,
+          employeeRecords.govIdType,
+        );
+        await _addColumnIfMissing(m, employeeRecords, employeeRecords.salary);
+        await _addColumnIfMissing(
+          m,
+          employeeRecords,
+          employeeRecords.dateOfJoining,
+        );
       }
       if (from < 6) {
-        await m.addColumn(billRecords, billRecords.extraChargesJson);
+        await _addColumnIfMissing(
+          m,
+          billRecords,
+          billRecords.extraChargesJson,
+        );
       }
       if (from < 7) {
-        await m.addColumn(billRecords, billRecords.paymentMode);
+        await _addColumnIfMissing(m, billRecords, billRecords.paymentMode);
       }
     },
   );

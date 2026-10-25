@@ -99,13 +99,17 @@ class BillApiService {
       Query<Map<String, dynamic>> query = _billsCollection;
 
       if (updatedSince != null) {
-        query = query.where(
-          'updatedAt',
-          isGreaterThan: updatedSince.toIso8601String(),
-        );
+        query = query
+            .where(
+              'updatedAt',
+              isGreaterThan: updatedSince.toIso8601String(),
+            )
+            .orderBy('updatedAt', descending: true);
+      } else {
+        query = query.orderBy('createdAt', descending: true);
       }
 
-      final snapshot = await query.orderBy('createdAt', descending: true).get();
+      final snapshot = await query.get();
 
       return snapshot.docs.map((doc) {
         final data = doc.data();

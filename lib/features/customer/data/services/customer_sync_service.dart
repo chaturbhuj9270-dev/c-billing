@@ -51,6 +51,7 @@ class CustomerSyncService extends ChangeNotifier {
 
   // Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
+  bool _initialized = false;
 
   CustomerSyncService._({
     CustomerOfflineController? offlineController,
@@ -81,6 +82,8 @@ class CustomerSyncService extends ChangeNotifier {
 
   // Initialize the sync service Call this after the local database is initialized
   void initialize() {
+    if (_initialized) return;
+    _initialized = true;
     debugPrint('[CustomerSync] Initializing...');
 
     // Listen for connectivity changes
@@ -107,6 +110,14 @@ class CustomerSyncService extends ChangeNotifier {
     _checkAndSync();
 
     debugPrint('[CustomerSync] Initialized');
+  }
+
+  // Clear incremental cursor after local DB wipe (logout / session expiry).
+  void resetSyncState() {
+    _lastSyncTime = null;
+    _lastError = null;
+    _isSyncing = false;
+    _status = SyncStatus.idle;
   }
 
   // Dispose resources
@@ -286,7 +297,10 @@ class CustomerSyncService extends ChangeNotifier {
 
   // Force full refresh from server Use with caution - may overwrite local changes
   Future<SyncResult> forceFullRefresh() async {
-    if (_status == SyncStatus.syncing) {
+    for (var i = 0; i < 25 && _isSyncing; i++) {
+      await Future.delayed(const Duration(milliseconds: 200));
+    }
+    if (_isSyncing) {
       return SyncResult(
         success: false,
         errorMessage: 'Sync already in progress',
@@ -294,6 +308,8 @@ class CustomerSyncService extends ChangeNotifier {
       );
     }
 
+    _isSyncing = true;
+    _lastSyncTime = null;
     final startTime = DateTime.now();
     _status = SyncStatus.syncing;
     _lastError = null;
@@ -332,6 +348,8 @@ class CustomerSyncService extends ChangeNotifier {
         errorMessage: e.toString(),
         duration: DateTime.now().difference(startTime),
       );
+    } finally {
+      _isSyncing = false;
     }
   }
 

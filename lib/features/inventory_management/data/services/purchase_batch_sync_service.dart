@@ -52,6 +52,7 @@ class PurchaseBatchSyncService extends ChangeNotifier {
   final Connectivity _connectivity;
 
   PurchaseBatchSyncServiceStatus _status = PurchaseBatchSyncServiceStatus.idle;
+  bool _initialized = false;
   DateTime? _lastSyncTime;
   String? _lastError;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
@@ -93,6 +94,8 @@ class PurchaseBatchSyncService extends ChangeNotifier {
 
   // Initialize the sync service
   void initialize() {
+    if (_initialized) return;
+    _initialized = true;
     debugPrint('[PurchaseBatchSync] Initializing...');
 
     // Listen for connectivity changes with debouncing
@@ -124,6 +127,14 @@ class PurchaseBatchSyncService extends ChangeNotifier {
     _initialSync();
 
     debugPrint('[PurchaseBatchSync] Initialized');
+  }
+
+  void resetSyncState() {
+    _lastSyncTime = null;
+    _lastError = null;
+    _isSyncing = false;
+    _isFullSyncing = false;
+    _status = PurchaseBatchSyncServiceStatus.idle;
   }
 
   // Perform initial sync - download all batches if local database is empty

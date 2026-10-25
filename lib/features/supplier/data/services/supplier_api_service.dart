@@ -56,14 +56,14 @@ class SupplierApiService {
 
       // Filter by updatedSince for incremental sync
       if (updatedSince != null) {
-        query = query.where(
-          'updatedAt',
-          isGreaterThan: updatedSince.toIso8601String(),
-        );
+        query = query
+            .where(
+              'updatedAt',
+              isGreaterThan: updatedSince.toIso8601String(),
+            )
+            .orderBy('updatedAt', descending: true);
       }
-
-      // Order by updatedAt for consistent results
-      query = query.orderBy('updatedAt', descending: true);
+      // Full pull: no orderBy (avoids index/field requirements on first sync)
 
       final snapshot = await query.get();
 

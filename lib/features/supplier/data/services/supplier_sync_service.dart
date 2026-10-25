@@ -56,6 +56,7 @@ class SupplierSyncService extends ChangeNotifier {
 
   // Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
+  bool _initialized = false;
 
   SupplierSyncService._({
     SupplierOfflineController? offlineController,
@@ -86,6 +87,8 @@ class SupplierSyncService extends ChangeNotifier {
 
   // Initialize the sync service
   void initialize() {
+    if (_initialized) return;
+    _initialized = true;
     debugPrint('[SupplierSync] Initializing...');
 
     // Listen for connectivity changes
@@ -107,6 +110,13 @@ class SupplierSyncService extends ChangeNotifier {
     _initialSync();
 
     debugPrint('[SupplierSync] Initialized');
+  }
+
+  void resetSyncState() {
+    _lastSyncTime = null;
+    _lastError = null;
+    _isSyncing = false;
+    _status = SupplierSyncServiceStatus.idle;
   }
 
   // Perform initial sync - download all suppliers if local database is empty

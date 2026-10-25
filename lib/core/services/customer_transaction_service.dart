@@ -84,8 +84,8 @@ class CustomerTransactionService {
         customerData['id'] = customerDoc.id;
         final customer = Customer.fromJson(customerData);
 
-        // Step 2: Validate amount against pending balance
-        if (amount > customer.currentPendingAmount) {
+        // Step 2: Validate amount against pending balance (allow tiny float slack)
+        if (amount > customer.currentPendingAmount + 0.009) {
           throw Exception(
             'Amount (₹${amount.toStringAsFixed(2)}) exceeds pending balance '
             '(₹${customer.currentPendingAmount.toStringAsFixed(2)})',
@@ -93,7 +93,8 @@ class CustomerTransactionService {
         }
 
         // Step 3: Calculate new balance
-        final newBalance = customer.currentPendingAmount - amount;
+        final newBalance =
+            (customer.currentPendingAmount - amount).clamp(0.0, double.infinity);
 
         // Step 4: Create transaction record
         final now = DateTime.now();

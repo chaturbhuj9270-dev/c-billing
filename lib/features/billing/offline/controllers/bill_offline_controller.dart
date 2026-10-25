@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/local_store.dart';
+import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../../../core/services/local_database.dart';
+import '../../../customer/offline/controllers/customer_transaction_offline_controller.dart';
 import '../../domain/entities/bill_extra_charge.dart';
 import '../entities/bill_entity.dart';
 
@@ -294,6 +296,19 @@ class BillOfflineController extends ChangeNotifier {
       return false;
     }
 
+    // Keep customer receivable in sync with the removed invoice.
+    final billKey = existing.serverId ?? 'local_${existing.id}';
+    try {
+      await CustomerTransactionOfflineController.instance
+          .reverseTransactionsForBill(billKey);
+      if (existing.serverId != null) {
+        await CustomerTransactionOfflineController.instance
+            .reverseTransactionsForBill('local_${existing.id}');
+      }
+    } catch (e) {
+      debugPrint('[BillOffline] Ledger reverse on delete failed: $e');
+    }
+
     if (existing.syncStatus == BillSyncStatus.newRecord) {
       // Never synced, just remove locally
       await _db.deleteBillById(id);
@@ -308,6 +323,7 @@ class BillOfflineController extends ChangeNotifier {
     }
 
     notifyListeners();
+    DashboardRefreshService.instance.notifyDataChanged(DataChangeType.bill);
     return true;
   }
 

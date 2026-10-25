@@ -60,6 +60,7 @@ class ExpenseSyncService extends ChangeNotifier {
 
   // Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
+  bool _initialized = false;
 
   ExpenseSyncService._({
     ExpenseOfflineController? offlineController,
@@ -103,6 +104,8 @@ class ExpenseSyncService extends ChangeNotifier {
 
   // Initialize the sync service
   void initialize() {
+    if (_initialized) return;
+    _initialized = true;
     debugPrint('[ExpenseSync] Initializing...');
 
     // Listen for connectivity changes
@@ -122,6 +125,13 @@ class ExpenseSyncService extends ChangeNotifier {
 
     // Initial sync
     syncNow();
+  }
+
+  void resetSyncState() {
+    _lastSyncTime = null;
+    _lastError = null;
+    _isSyncing = false;
+    _status = ExpenseSyncServiceStatus.idle;
   }
 
   // Dispose resources

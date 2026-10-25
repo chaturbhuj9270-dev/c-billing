@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import '../../main.dart' show initializeServices, initializeSyncServices;
+import '../../main.dart' show initializeServices, syncAfterLogin;
 import '../../features/authentication/presentation/pages/login.dart';
 import '../../features/dashboard/presentation/pages/optimized_dashboard_page.dart';
 import '../services/bill_report_settings_service.dart';
@@ -232,7 +232,9 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
           );
           try {
             await AccessControlService.instance.loadForCurrentUser();
-            initializeSyncServices();
+            syncAfterLogin().catchError((e) {
+              debugPrint('[ERROR] Post-login sync failed: $e');
+            });
           } catch (e) {
             debugPrint('[ERROR] Access/sync start failed: $e');
             if (mounted) {
@@ -318,7 +320,9 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         );
         try {
           await AccessControlService.instance.loadForCurrentUser();
-          initializeSyncServices();
+          syncAfterLogin().catchError((e) {
+            debugPrint('[ERROR] Post-login sync failed: $e');
+          });
         } catch (e) {
           debugPrint('[ERROR] Access/sync start failed: $e');
           if (mounted) {

@@ -57,6 +57,7 @@ import 'package:c_billing/features/dashboard/presentation/pages/web_shell.dart';
 import 'package:c_billing/features/billing/presentation/widgets/barcode_scanner_sheet.dart';
 import 'package:c_billing/features/billing/presentation/widgets/billing_add_items_widgets.dart';
 import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
+import 'package:c_billing/features/customer/offline/entities/customer_transaction_entity.dart';
 import 'package:c_billing/features/customer/domain/entities/customer_transaction.dart';
 import 'package:c_billing/features/billing/offline/held_bill_store.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
@@ -1048,6 +1049,47 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
+  /// Find or create a customer from typed name/phone so credit bills update the ledger.
+  Future<bool> _ensureCustomerForCreditBill() async {
+    final name = _customerNameController.text.trim();
+    final phone = _customerContactController.text.trim();
+    if (name.isEmpty || phone.length < 10) return false;
+
+    try {
+      final ctrl = CustomerOfflineController.instance;
+      final entity = await ctrl.getCustomerByMobile(phone) ??
+          await ctrl.addCustomer(name: name, mobile: phone);
+
+      final parts = entity.name.trim().split(RegExp(r'\s+'));
+      final firstName = parts.isNotEmpty ? parts.first : entity.name;
+      final lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+      final id = (entity.serverId != null && entity.serverId!.isNotEmpty)
+          ? entity.serverId!
+          : 'local_${entity.id}';
+
+      if (!mounted) return true;
+      setState(() {
+        _selectedCustomer = {
+          'id': id,
+          'serverId': entity.serverId,
+          'localId': entity.id,
+          'firstName': firstName,
+          'lastName': lastName,
+          'contact': entity.mobile,
+          'fullName': entity.name,
+          'pendingBalance': entity.currentPendingAmount,
+        };
+        _customerNameController.text = entity.name;
+        _customerContactController.text = entity.mobile;
+        _hasPhoneText = entity.mobile.isNotEmpty;
+      });
+      return true;
+    } catch (e) {
+      debugPrint('[Billing] ensureCustomerForCreditBill failed: $e');
+      return false;
+    }
+  }
+
   // Save new customer and auto-attach to current bill
   Future<void> _saveNewCustomer({
     required String firstName,
@@ -1387,9 +1429,22 @@ class _BillingPageState extends State<BillingPage> {
     setState(() => _isSavingBill = true);
 
     try {
-      // === INTEGRATED OFFLINE-FIRST APPROACH (FIFO) === 1. Calculate payment status
+      // Credit / partial bills must hit a real customer ledger row.
       final actualPaidAmount = _isFullPayment ? _finalAmount : _receivedAmount;
       final calculatedPendingAmount = _finalAmount - actualPaidAmount;
+      if (calculatedPendingAmount > 0.009 && _selectedCustomer == null) {
+        final linked = await _ensureCustomerForCreditBill();
+        if (!linked) {
+          if (mounted) setState(() => _isSavingBill = false);
+          _showSnackbar(
+            'Select or create a customer for unpaid bills so the ledger updates',
+            isError: true,
+          );
+          return;
+        }
+      }
+
+      // === INTEGRATED OFFLINE-FIRST APPROACH (FIFO) === 1. Calculate payment status
       BillPaymentStatus paymentStatus;
       if (calculatedPendingAmount <= 0) {
         paymentStatus = BillPaymentStatus.paid;
@@ -1474,80 +1529,95 @@ class _BillingPageState extends State<BillingPage> {
           final billId =
               integrationResult.billEntity?.serverId ??
               'local_${integrationResult.billEntity?.id}';
+          final txCtrl = CustomerTransactionOfflineController.instance;
 
           // 3a. Record bill creation transaction (adds to pending amount) - Offline
           final chargeSummary = _validExtraCharges.isEmpty
               ? ''
               : '; Extra: ${_validExtraCharges.map((c) => '${c.label} ₹${c.amount.toStringAsFixed(0)}').join(', ')}';
-          await CustomerTransactionOfflineController.instance
-              .addBillTransaction(
-                customerId: customerId,
-                customerName: customerName,
-                amount: _finalAmount,
-                billId: billId,
-                description: 'Bill #$billId$chargeSummary',
-              );
+          final billTx = await txCtrl.addBillTransaction(
+            customerId: customerId,
+            customerName: customerName,
+            amount: _finalAmount,
+            billId: billId,
+            description: 'Bill #$billId$chargeSummary',
+          );
           debugPrint(
             '[Billing] Bill transaction recorded offline: $_finalAmount',
           );
 
           // 3b. Record payment received during billing (if any) - Offline
+          CustomerTransactionEntity? paymentTx;
           if (actualPaidAmount > 0) {
-            await CustomerTransactionOfflineController.instance
-                .addPaymentTransaction(
-                  customerId: customerId,
-                  customerName: customerName,
-                  amount: actualPaidAmount,
-                  paymentMethod: _billPaymentMode.displayName,
-                  description:
-                      'Payment for Bill #$billId (${_isFullPayment ? 'Full' : 'Partial'})',
-                );
+            paymentTx = await txCtrl.addPaymentTransaction(
+              customerId: customerId,
+              customerName: customerName,
+              amount: actualPaidAmount,
+              paymentMethod: _billPaymentMode.displayName,
+              billId: billId,
+              description:
+                  'Payment for Bill #$billId (${_isFullPayment ? 'Full' : 'Partial'})',
+            );
             debugPrint(
               '[Billing] Payment transaction recorded offline: $actualPaidAmount',
             );
           }
 
-          // 3c. Sync to Firebase - Record full bill amount first
-          final billRecordResult = await _customerTransactionService
-              .recordBillGenerated(
-                customerId: customerId,
-                billId: billId,
-                billNumber: billId,
-                billAmount: _finalAmount,
+          // 3c. Sync to Firebase — stamp local rows with server IDs to avoid duplicate sync creates.
+          final firebaseCustomerId =
+              (_selectedCustomer!['serverId'] as String?) ??
+              (customerId.startsWith('local_') ? null : customerId);
+          if (firebaseCustomerId != null && firebaseCustomerId.isNotEmpty) {
+            final billRecordResult = await _customerTransactionService
+                .recordBillGenerated(
+                  customerId: firebaseCustomerId,
+                  billId: billId,
+                  billNumber: billId,
+                  billAmount: _finalAmount,
+                );
+
+            if (billRecordResult.success &&
+                billRecordResult.transactionId != null) {
+              await txCtrl.markSyncedWithServerId(
+                billTx.id,
+                billRecordResult.transactionId!,
+              );
+              debugPrint(
+                '[Billing] Firebase: Bill recorded with amount: $_finalAmount',
               );
 
-          if (billRecordResult.success) {
-            debugPrint(
-              '[Billing] Firebase: Bill recorded with amount: $_finalAmount',
-            );
+              if (actualPaidAmount > 0 && paymentTx != null) {
+                final paymentResult = await _customerTransactionService
+                    .receivePayment(
+                      customerId: firebaseCustomerId,
+                      amount: actualPaidAmount,
+                      paymentMode: _billPaymentMode,
+                      billId: billId,
+                      billNumber: billId,
+                      notes:
+                          'Payment during billing - ${_isFullPayment ? _localizations.full : _localizations.partial} (${_billPaymentMode.displayName})',
+                    );
 
-            // 3d. Then record payment received to Firebase (if any)
-            if (actualPaidAmount > 0) {
-              final paymentResult = await _customerTransactionService
-                  .receivePayment(
-                    customerId: customerId,
-                    amount: actualPaidAmount,
-                    paymentMode: _billPaymentMode,
-                    billId: billId,
-                    billNumber: billId,
-                    notes:
-                        'Payment during billing - ${_isFullPayment ? _localizations.full : _localizations.partial} (${_billPaymentMode.displayName})',
+                if (paymentResult.success &&
+                    paymentResult.transactionId != null) {
+                  await txCtrl.markSyncedWithServerId(
+                    paymentTx.id,
+                    paymentResult.transactionId!,
                   );
-
-              if (paymentResult.success) {
-                debugPrint(
-                  '[Billing] Firebase: Payment recorded: $actualPaidAmount',
-                );
-              } else {
-                debugPrint(
-                  '[Billing] Firebase: Payment failed: ${paymentResult.errorMessage}',
-                );
+                  debugPrint(
+                    '[Billing] Firebase: Payment recorded: $actualPaidAmount',
+                  );
+                } else {
+                  debugPrint(
+                    '[Billing] Firebase: Payment failed: ${paymentResult.errorMessage}',
+                  );
+                }
               }
+            } else {
+              debugPrint(
+                '[Billing] Firebase: Bill record failed: ${billRecordResult.errorMessage}',
+              );
             }
-          } else {
-            debugPrint(
-              '[Billing] Firebase: Bill record failed: ${billRecordResult.errorMessage}',
-            );
           }
         } catch (e) {
           debugPrint('[Billing] Transaction entry error (non-blocking): $e');
@@ -2438,17 +2508,26 @@ class _BillingPageState extends State<BillingPage> {
           const SizedBox(width: 16),
           SizedBox(
             width: 320,
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                children: [
-                  if (_billItems.isNotEmpty)
-                    _buildDiscountSection(showNestedSummary: false),
-                  _buildDesktopSummaryCard(),
-                  if (_billItems.isNotEmpty && !_isFullPayment)
-                    _buildPaymentSection(),
-                ],
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Discount / partial payment scroll above; summary stays at the end.
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      children: [
+                        if (_billItems.isNotEmpty)
+                          _buildDiscountSection(showNestedSummary: false),
+                        if (_billItems.isNotEmpty && !_isFullPayment)
+                          _buildPaymentSection(),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildDesktopSummaryCard(),
+              ],
             ),
           ),
         ],
@@ -7893,3 +7972,4 @@ class _ExtraChargeDraft {
     amountController.dispose();
   }
 }
+

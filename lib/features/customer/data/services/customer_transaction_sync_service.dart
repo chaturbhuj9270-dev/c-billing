@@ -52,6 +52,7 @@ class CustomerTransactionSyncService extends ChangeNotifier {
 
   // Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
+  bool _initialized = false;
 
   CustomerTransactionSyncService._({
     CustomerTransactionOfflineController? offlineController,
@@ -87,6 +88,8 @@ class CustomerTransactionSyncService extends ChangeNotifier {
 
   // Initialize the sync service Call this after the local database is initialized
   void initialize() {
+    if (_initialized) return;
+    _initialized = true;
     debugPrint('[CustomerTransactionSync] Initializing...');
 
     // Listen for connectivity changes
@@ -115,6 +118,13 @@ class CustomerTransactionSyncService extends ChangeNotifier {
     _checkAndSync();
 
     debugPrint('[CustomerTransactionSync] Initialized');
+  }
+
+  void resetSyncState() {
+    _lastSyncTime = null;
+    _lastError = null;
+    _isSyncing = false;
+    _status = CustomerTransactionSyncStatus.idle;
   }
 
   // Dispose resources
@@ -298,7 +308,10 @@ class CustomerTransactionSyncService extends ChangeNotifier {
 
   // Force full refresh from server Use with caution - may overwrite local changes
   Future<CustomerTransactionSyncResult> forceFullRefresh() async {
-    if (_status == CustomerTransactionSyncStatus.syncing) {
+    for (var i = 0; i < 25 && _isSyncing; i++) {
+      await Future.delayed(const Duration(milliseconds: 200));
+    }
+    if (_isSyncing) {
       return CustomerTransactionSyncResult(
         success: false,
         errorMessage: 'Sync already in progress',
@@ -306,6 +319,8 @@ class CustomerTransactionSyncService extends ChangeNotifier {
       );
     }
 
+    _isSyncing = true;
+    _lastSyncTime = null;
     final startTime = DateTime.now();
     _status = CustomerTransactionSyncStatus.syncing;
     _lastError = null;
@@ -350,6 +365,8 @@ class CustomerTransactionSyncService extends ChangeNotifier {
         errorMessage: e.toString(),
         duration: DateTime.now().difference(startTime),
       );
+    } finally {
+      _isSyncing = false;
     }
   }
 
@@ -394,6 +411,7 @@ class CustomerTransactionSyncService extends ChangeNotifier {
           break;
         case 'BANK TRANSFER':
         case 'ONLINE':
+        case 'ONLINE TRANSFER':
           serverPaymentMode = 'ONLINE';
           break;
         case 'CHEQUE':
