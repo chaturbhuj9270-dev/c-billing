@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/local_store.dart';
+import '../../../../core/services/inventory_batch_sort.dart';
 import '../../../../core/services/local_database.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../product/offline/entities/product_entity.dart';
@@ -46,6 +47,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     String? supplierId,
     String? supplierName,
     String unit = 'pcs',
+    String? batchNumber,
     DateTime? expiryDate,
     DateTime? productionDate,
     int? warrantyMonths,
@@ -64,6 +66,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
       supplierId: supplierId,
       supplierName: supplierName,
       unit: unit,
+      batchNumber: batchNumber,
       expiryDate: expiryDate,
       productionDate: productionDate,
       warrantyMonths: warrantyMonths,
@@ -139,7 +142,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     return null;
   }
 
-  // Get batches by product ID sorted by purchase date (oldest first for FIFO)
+  // Get batches by product ID sorted for sale (FIFO or FEFO)
   Future<List<PurchaseBatchEntity>> getBatchesByProductId(
     String productId, {
     bool onlyWithStock = true,
@@ -150,18 +153,18 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
             batch.syncStatus != BatchSyncStatus.deleted &&
             batch.quantityRemaining > 0;
       }).toList();
-      batches.sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
+      batches.sort(InventoryBatchSort.compareEntities);
       return batches;
     }
     final batches = (await _db.loadBatches()).where((batch) {
       return batch.productId == productId &&
           batch.syncStatus != BatchSyncStatus.deleted;
     }).toList();
-    batches.sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
+    batches.sort(InventoryBatchSort.compareEntities);
     return batches;
   }
 
-  // Get batches by product unique key (name + company + model) Sorted by purchase date ASC for FIFO
+  // Get batches by product unique key (name + company + model) Sorted for sale (FIFO or FEFO)
   Future<List<PurchaseBatchEntity>> getBatchesByProductUniqueKey(
     String productUniqueKey, {
     bool onlyWithStock = true,
@@ -172,18 +175,18 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
             batch.syncStatus != BatchSyncStatus.deleted &&
             batch.quantityRemaining > 0;
       }).toList();
-      batches.sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
+      batches.sort(InventoryBatchSort.compareEntities);
       return batches;
     }
     final batches = (await _db.loadBatches()).where((batch) {
       return batch.productUniqueKey == productUniqueKey &&
           batch.syncStatus != BatchSyncStatus.deleted;
     }).toList();
-    batches.sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
+    batches.sort(InventoryBatchSort.compareEntities);
     return batches;
   }
 
-  // Get available batches for FIFO consumption Returns batches with stock, sorted by purchase date (oldest first)
+  // Get available batches for sale consumption (FIFO or FEFO per purchase settings)
   Future<List<PurchaseBatchEntity>> getAvailableBatchesForProduct(
     String productId,
   ) async {
@@ -192,7 +195,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
           batch.syncStatus != BatchSyncStatus.deleted &&
           batch.quantityRemaining > 0;
     }).toList();
-    batches.sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
+    batches.sort(InventoryBatchSort.compareEntities);
     return batches;
   }
 

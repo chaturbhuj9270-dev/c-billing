@@ -40,6 +40,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
   BillTaxSettings _taxSettings = BillTaxSettings.defaultSettings;
   final _cgstController = TextEditingController();
   final _sgstController = TextEditingController();
+  final _igstController = TextEditingController();
   final _otherTaxNameController = TextEditingController();
   final _otherTaxPercentController = TextEditingController();
 
@@ -65,6 +66,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
     _animController.dispose();
     _cgstController.dispose();
     _sgstController.dispose();
+    _igstController.dispose();
     _otherTaxNameController.dispose();
     _otherTaxPercentController.dispose();
     super.dispose();
@@ -85,6 +87,9 @@ class _BillSettingsPageState extends State<BillSettingsPage>
           : '';
       _sgstController.text = taxSettings.sgstPercent > 0
           ? taxSettings.sgstPercent.toString()
+          : '';
+      _igstController.text = taxSettings.igstPercent > 0
+          ? taxSettings.igstPercent.toString()
           : '';
       _otherTaxNameController.text = taxSettings.otherTaxName;
       _otherTaxPercentController.text = taxSettings.otherTaxPercent > 0
@@ -316,6 +321,52 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                                       if (percent >= 0 && percent <= 100) {
                                         _taxSettings = _taxSettings.copyWith(
                                           sgstPercent: percent,
+                                        );
+                                        await _saveSettings();
+                                      }
+                                    },
+                                  ),
+                                ],
+                                Container(
+                                  margin: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  height: 1,
+                                  color: AppTheme.grey.withValues(alpha: 0.1),
+                                ),
+                                _buildModernToggle(
+                                  icon: Icons.public_rounded,
+                                  iconColor: AppTheme.toneBlue,
+                                  title: 'Enable IGST',
+                                  subtitle:
+                                      'Interstate default (overrides CGST/SGST when on)',
+                                  value: _taxSettings.enableIgst,
+                                  onChanged: (value) async {
+                                    setState(() {
+                                      _taxSettings = _taxSettings.copyWith(
+                                        enableIgst: value,
+                                        enableCgst: value
+                                            ? false
+                                            : _taxSettings.enableCgst,
+                                        enableSgst: value
+                                            ? false
+                                            : _taxSettings.enableSgst,
+                                      );
+                                    });
+                                    await _saveSettings();
+                                  },
+                                ),
+                                if (_taxSettings.enableIgst) ...[
+                                  const SizedBox(height: 12),
+                                  _buildPercentageInput(
+                                    controller: _igstController,
+                                    label: 'IGST %',
+                                    onChanged: (val) async {
+                                      final percent =
+                                          double.tryParse(val) ?? 0.0;
+                                      if (percent >= 0 && percent <= 100) {
+                                        _taxSettings = _taxSettings.copyWith(
+                                          igstPercent: percent,
                                         );
                                         await _saveSettings();
                                       }

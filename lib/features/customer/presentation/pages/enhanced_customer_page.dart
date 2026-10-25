@@ -54,6 +54,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   final _lastNameController = TextEditingController();
   final _contactController = TextEditingController();
   final _addressController = TextEditingController();
+  final _gstinController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   // State
@@ -134,6 +135,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     _lastNameController.dispose();
     _contactController.dispose();
     _addressController.dispose();
+    _gstinController.dispose();
     LanguageService.instance.removeListener(_onLanguageChanged);
     super.dispose();
   }
@@ -244,6 +246,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       'contact': entity.mobile,
       'address': entity.address ?? '',
       'email': entity.email ?? '',
+      'gstin': entity.gstin ?? '',
       'isActive': true,
       'isSynced': entity.isSynced,
       'currentPendingAmount':
@@ -296,6 +299,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
               'mobile': data['contact'] ?? '',
               'address': data['address'] ?? '',
               'email': data['email'] ?? '',
+              'gstin': data['gstin'] ?? data['gst'] ?? '',
               'currentPendingAmount':
                   data['currentPendingAmount'] ?? data['pendingBalance'] ?? 0,
               'totalPurchases':
@@ -420,6 +424,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     _lastNameController.clear();
     _contactController.clear();
     _addressController.clear();
+    _gstinController.clear();
     _editingCustomerId = null;
     _isEditing = false;
   }
@@ -430,6 +435,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     _lastNameController.text = customer['lastName'] ?? '';
     _contactController.text = customer['contact'] ?? '';
     _addressController.text = customer['address'] ?? '';
+    _gstinController.text = customer['gstin'] ?? customer['gst'] ?? '';
     _editingCustomerId = customer['id'];
     _isEditing = true;
   }
@@ -451,6 +457,8 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       ].where((s) => s.isNotEmpty).join(' ');
       final contact = _contactController.text.trim();
       final address = _addressController.text.trim();
+      final gstinRaw = _gstinController.text.trim().toUpperCase();
+      final gstin = gstinRaw.isEmpty ? null : gstinRaw;
       final offlineCtrl = CustomerOfflineController.instance;
 
       if (_isEditing && _editingCustomerId != null) {
@@ -464,6 +472,8 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
             name: fullName,
             mobile: contact,
             address: address,
+            gstin: gstin,
+            updateGstin: true,
           );
         } else {
           // Fallback: Firebase direct update
@@ -480,6 +490,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                   'lastName': lastName,
                   'contact': contact,
                   'address': address,
+                  'gstin': gstin,
                   'updatedAt': FieldValue.serverTimestamp(),
                 });
             _fetchFromFirebase();
@@ -503,6 +514,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
           name: fullName,
           mobile: contact,
           address: address,
+          gstin: gstin,
         );
         DashboardRefreshService.instance.notifyDataChanged(
           DataChangeType.customer,
@@ -1175,6 +1187,13 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                   icon: Icons.location_on_outlined,
                   maxLines: 3,
                   isRequired: true,
+                ),
+                const SizedBox(height: 14),
+                _buildField(
+                  label: 'GSTIN (optional)',
+                  controller: _gstinController,
+                  icon: Icons.receipt_long_outlined,
+                  maxLength: 15,
                 ),
               ],
             ),

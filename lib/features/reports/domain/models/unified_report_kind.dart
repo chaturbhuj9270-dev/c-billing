@@ -15,6 +15,7 @@ enum UnifiedReportKind {
   customers,
   suppliers,
   stock,
+  gstr1,
 }
 
 extension UnifiedReportKindX on UnifiedReportKind {
@@ -42,13 +43,15 @@ extension UnifiedReportKindX on UnifiedReportKind {
         return 'Suppliers';
       case UnifiedReportKind.stock:
         return 'Stock / Availability';
+      case UnifiedReportKind.gstr1:
+        return 'GST Summary (CA)';
     }
   }
 
   String get subtitle {
     switch (this) {
       case UnifiedReportKind.salesBills:
-        return 'Invoice lines for the selected period';
+        return 'Sales with CGST / SGST / IGST for CA';
       case UnifiedReportKind.salesReturns:
         return 'Returned quantities from sales bills';
       case UnifiedReportKind.purchases:
@@ -69,6 +72,8 @@ extension UnifiedReportKindX on UnifiedReportKind {
         return 'Supplier directory';
       case UnifiedReportKind.stock:
         return 'Current stock levels';
+      case UnifiedReportKind.gstr1:
+        return 'B2B / B2C / HSN GST summary for CA reference';
     }
   }
 
@@ -96,6 +101,8 @@ extension UnifiedReportKindX on UnifiedReportKind {
         return Icons.local_shipping_rounded;
       case UnifiedReportKind.stock:
         return Icons.event_available_rounded;
+      case UnifiedReportKind.gstr1:
+        return Icons.account_balance_rounded;
     }
   }
 
@@ -123,6 +130,8 @@ extension UnifiedReportKindX on UnifiedReportKind {
         return AppTheme.toneAmber;
       case UnifiedReportKind.stock:
         return AppTheme.primaryLight;
+      case UnifiedReportKind.gstr1:
+        return AppTheme.toneAmber;
     }
   }
 
@@ -144,6 +153,7 @@ extension UnifiedReportKindX on UnifiedReportKind {
     switch (this) {
       case UnifiedReportKind.salesBills:
       case UnifiedReportKind.salesReturns:
+      case UnifiedReportKind.gstr1:
         return AppModule.invoices;
       case UnifiedReportKind.purchases:
         return AppModule.purchase;

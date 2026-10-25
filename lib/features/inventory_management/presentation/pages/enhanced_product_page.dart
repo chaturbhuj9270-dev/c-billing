@@ -1554,6 +1554,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     final cgstController = TextEditingController();
     final sgstController = TextEditingController();
     final hsnController = TextEditingController();
+    final sizeController = TextEditingController();
+    final colorController = TextEditingController();
+    final mrpController = TextEditingController();
+    final compositionController = TextEditingController();
+    final drugScheduleController = TextEditingController();
     bool applyGst = false;
 
     // Sync CGST and SGST values
@@ -1737,6 +1742,56 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           icon: Icons.category_outlined,
                         ),
                         const SizedBox(height: 12),
+                        Text(
+                          'Garment / Medical details',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: AppColors.accent(context),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildTextField(
+                                controller: sizeController,
+                                label: 'Size',
+                                icon: Icons.straighten_rounded,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildTextField(
+                                controller: colorController,
+                                label: 'Color',
+                                icon: Icons.palette_outlined,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        _buildTextField(
+                          controller: mrpController,
+                          label: 'MRP',
+                          icon: Icons.price_change_outlined,
+                          keyboardType: TextInputType.number,
+                          prefix: '₹ ',
+                        ),
+                        const SizedBox(height: 12),
+                        _buildTextField(
+                          controller: compositionController,
+                          label: 'Composition',
+                          icon: Icons.science_outlined,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildTextField(
+                          controller: drugScheduleController,
+                          label: 'Drug schedule (H / H1 / X)',
+                          icon: Icons.medication_outlined,
+                        ),
+                        const SizedBox(height: 12),
                         Row(
                           children: [
                             Expanded(
@@ -1849,6 +1904,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       cgstController: cgstController,
                       sgstController: sgstController,
                       hsnController: hsnController,
+                      sizeController: sizeController,
+                      colorController: colorController,
+                      mrpController: mrpController,
+                      compositionController: compositionController,
+                      drugScheduleController: drugScheduleController,
                       applyGst: applyGst,
                       selectedCompany: dialogSelectedCompany,
                       selectedSupplier: dialogSelectedSupplier,
@@ -1992,6 +2052,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     required TextEditingController cgstController,
     required TextEditingController sgstController,
     required TextEditingController hsnController,
+    required TextEditingController sizeController,
+    required TextEditingController colorController,
+    required TextEditingController mrpController,
+    required TextEditingController compositionController,
+    required TextEditingController drugScheduleController,
     required bool applyGst,
     Map<String, dynamic>? selectedCompany,
     Map<String, dynamic>? selectedSupplier,
@@ -2048,6 +2113,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     }
 
     try {
+      final sizeVal = sizeController.text.trim();
+      final colorVal = colorController.text.trim();
+      final compositionVal = compositionController.text.trim();
+      final scheduleVal = drugScheduleController.text.trim();
+      final mrpVal = double.tryParse(mrpController.text.trim());
       final newProduct = await ProductOfflineController.instance.addProduct(
         name: name,
         companyName: selectedCompany?['companyName'] ?? '',
@@ -2061,6 +2131,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         defaultSupplierId: selectedSupplier?['id'],
         defaultSupplierName: selectedSupplier?['fullName'],
         customFieldsJson: customFieldsJson,
+        size: sizeVal.isNotEmpty ? sizeVal : null,
+        color: colorVal.isNotEmpty ? colorVal : null,
+        mrp: mrpVal,
+        composition: compositionVal.isNotEmpty ? compositionVal : null,
+        drugSchedule: scheduleVal.isNotEmpty ? scheduleVal : null,
       );
 
       DashboardRefreshService.instance.notifyDataChanged(
@@ -2098,6 +2173,17 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       text: product.sgstPercent.toString(),
     );
     final hsnController = TextEditingController(text: product.hsnCode ?? '');
+    final sizeController = TextEditingController(text: product.size ?? '');
+    final colorController = TextEditingController(text: product.color ?? '');
+    final mrpController = TextEditingController(
+      text: product.mrp != null ? product.mrp.toString() : '',
+    );
+    final compositionController = TextEditingController(
+      text: product.composition ?? '',
+    );
+    final drugScheduleController = TextEditingController(
+      text: product.drugSchedule ?? '',
+    );
     var applyGst = product.cgstPercent > 0 ||
         product.sgstPercent > 0 ||
         (product.hsnCode != null && product.hsnCode!.isNotEmpty);
@@ -2230,6 +2316,56 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           controller: categoryController,
                           label: _localizations.category,
                           icon: Icons.category_outlined,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Garment / Medical details',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: AppColors.accent(context),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildTextField(
+                                controller: sizeController,
+                                label: 'Size',
+                                icon: Icons.straighten_rounded,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildTextField(
+                                controller: colorController,
+                                label: 'Color',
+                                icon: Icons.palette_outlined,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        _buildTextField(
+                          controller: mrpController,
+                          label: 'MRP',
+                          icon: Icons.price_change_outlined,
+                          keyboardType: TextInputType.number,
+                          prefix: '₹ ',
+                        ),
+                        const SizedBox(height: 12),
+                        _buildTextField(
+                          controller: compositionController,
+                          label: 'Composition',
+                          icon: Icons.science_outlined,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildTextField(
+                          controller: drugScheduleController,
+                          label: 'Drug schedule (H / H1 / X)',
+                          icon: Icons.medication_outlined,
                         ),
                         const SizedBox(height: 12),
                         Row(
@@ -2381,6 +2517,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       cgstController: cgstController,
                       sgstController: sgstController,
                       hsnController: hsnController,
+                      sizeController: sizeController,
+                      colorController: colorController,
+                      mrpController: mrpController,
+                      compositionController: compositionController,
+                      drugScheduleController: drugScheduleController,
                       applyGst: applyGst,
                       customColumns: customColumns,
                       customTextControllers: customTextControllers,
@@ -2420,6 +2561,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     required TextEditingController cgstController,
     required TextEditingController sgstController,
     required TextEditingController hsnController,
+    required TextEditingController sizeController,
+    required TextEditingController colorController,
+    required TextEditingController mrpController,
+    required TextEditingController compositionController,
+    required TextEditingController drugScheduleController,
     required bool applyGst,
     required List<CustomColumn> customColumns,
     required Map<String, TextEditingController> customTextControllers,
@@ -2473,6 +2619,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     }
 
     try {
+      final sizeVal = sizeController.text.trim();
+      final colorVal = colorController.text.trim();
+      final compositionVal = compositionController.text.trim();
+      final scheduleVal = drugScheduleController.text.trim();
+      final mrpVal = double.tryParse(mrpController.text.trim());
       await ProductOfflineController.instance.updateProduct(
         id: product.id,
         name: name,
@@ -2484,6 +2635,12 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         sgstPercent: sgstVal,
         hsnCode: hsnVal.isNotEmpty ? hsnVal : null,
         customFieldsJson: customFieldsJson,
+        size: sizeVal.isNotEmpty ? sizeVal : null,
+        color: colorVal.isNotEmpty ? colorVal : null,
+        mrp: mrpVal,
+        composition: compositionVal.isNotEmpty ? compositionVal : null,
+        drugSchedule: scheduleVal.isNotEmpty ? scheduleVal : null,
+        updateVariantFields: true,
       );
 
       DashboardRefreshService.instance.notifyDataChanged(

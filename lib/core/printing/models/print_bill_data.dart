@@ -153,6 +153,9 @@ class PrintBillData {
   // SGST percentage
   final double sgstPercent;
 
+  // IGST percentage
+  final double igstPercent;
+
   // Other tax percentage
   final double otherTaxPercent;
 
@@ -165,11 +168,16 @@ class PrintBillData {
   // SGST amount
   final double sgstAmount;
 
+  // IGST amount
+  final double igstAmount;
+
   // Other tax amount
   final double otherTaxAmount;
 
   // Total tax amount
   final double totalTaxAmount;
+
+  final String? customerGstin;
 
   // Extra charges (labour, service, etc.)
   final List<BillExtraCharge> extraCharges;
@@ -205,12 +213,15 @@ class PrintBillData {
     this.isTaxInclusive = false,
     this.cgstPercent = 0.0,
     this.sgstPercent = 0.0,
+    this.igstPercent = 0.0,
     this.otherTaxPercent = 0.0,
     this.otherTaxName = '',
     this.cgstAmount = 0.0,
     this.sgstAmount = 0.0,
+    this.igstAmount = 0.0,
     this.otherTaxAmount = 0.0,
     this.totalTaxAmount = 0.0,
+    this.customerGstin,
     this.extraCharges = const [],
   });
 
@@ -249,13 +260,13 @@ class PrintBillData {
       taxAmount: ((bill.totalTaxAmount as num?)?.toDouble() ?? 0) > 0
           ? (bill.totalTaxAmount as num).toDouble()
           : null,
-      taxPercent:
-          (((bill.cgstPercent as num?)?.toDouble() ?? 0) +
-                  ((bill.sgstPercent as num?)?.toDouble() ?? 0)) >
-              0
-          ? (((bill.cgstPercent as num?)?.toDouble() ?? 0) +
-                ((bill.sgstPercent as num?)?.toDouble() ?? 0))
-          : null,
+      taxPercent: () {
+        final c = (bill.cgstPercent as num?)?.toDouble() ?? 0;
+        final s = (bill.sgstPercent as num?)?.toDouble() ?? 0;
+        final i = (bill.igstPercent as num?)?.toDouble() ?? 0;
+        final t = c + s + i;
+        return t > 0 ? t : null;
+      }(),
       grandTotal: bill.finalAmount as double,
       notes: bill.notes as String?,
       paymentMethod: _paymentModeLabel(bill),
@@ -269,12 +280,15 @@ class PrintBillData {
       isTaxInclusive: (bill.isTaxInclusive as bool?) ?? false,
       cgstPercent: (bill.cgstPercent as double?) ?? 0.0,
       sgstPercent: (bill.sgstPercent as double?) ?? 0.0,
+      igstPercent: (bill.igstPercent as double?) ?? 0.0,
       otherTaxPercent: (bill.otherTaxPercent as double?) ?? 0.0,
       otherTaxName: (bill.otherTaxName as String?) ?? '',
       cgstAmount: (bill.cgstAmount as double?) ?? 0.0,
       sgstAmount: (bill.sgstAmount as double?) ?? 0.0,
+      igstAmount: (bill.igstAmount as double?) ?? 0.0,
       otherTaxAmount: (bill.otherTaxAmount as double?) ?? 0.0,
       totalTaxAmount: (bill.totalTaxAmount as double?) ?? 0.0,
+      customerGstin: bill.customerGstin as String?,
       extraCharges: _extraChargesFrom(bill),
     );
   }
@@ -366,7 +380,11 @@ class PrintBillData {
   // Whether GST breakdown should be displayed
   bool get hasGst =>
       totalTaxAmount > 0 ||
-      (isGstApplied && (cgstAmount > 0 || sgstAmount > 0 || otherTaxAmount > 0));
+      (isGstApplied &&
+          (cgstAmount > 0 ||
+              sgstAmount > 0 ||
+              igstAmount > 0 ||
+              otherTaxAmount > 0));
 
   Map<String, dynamic> toJson() {
     return {

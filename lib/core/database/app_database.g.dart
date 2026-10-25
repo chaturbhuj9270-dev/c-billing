@@ -723,6 +723,15 @@ class $CustomerRecordsTable extends CustomerRecords
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _gstinMeta = const VerificationMeta('gstin');
+  @override
+  late final GeneratedColumn<String> gstin = GeneratedColumn<String>(
+    'gstin',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _currentPendingAmountMeta =
       const VerificationMeta('currentPendingAmount');
   @override
@@ -807,6 +816,7 @@ class $CustomerRecordsTable extends CustomerRecords
     mobile,
     address,
     email,
+    gstin,
     currentPendingAmount,
     totalPurchases,
     isSynced,
@@ -861,6 +871,12 @@ class $CustomerRecordsTable extends CustomerRecords
       context.handle(
         _emailMeta,
         email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
+    }
+    if (data.containsKey('gstin')) {
+      context.handle(
+        _gstinMeta,
+        gstin.isAcceptableOrUnknown(data['gstin']!, _gstinMeta),
       );
     }
     if (data.containsKey('current_pending_amount')) {
@@ -942,6 +958,10 @@ class $CustomerRecordsTable extends CustomerRecords
         DriftSqlType.string,
         data['${effectivePrefix}email'],
       ),
+      gstin: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}gstin'],
+      ),
       currentPendingAmount: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}current_pending_amount'],
@@ -982,6 +1002,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
   final String mobile;
   final String? address;
   final String? email;
+  final String? gstin;
   final double currentPendingAmount;
   final double totalPurchases;
   final bool isSynced;
@@ -995,6 +1016,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
     required this.mobile,
     this.address,
     this.email,
+    this.gstin,
     required this.currentPendingAmount,
     required this.totalPurchases,
     required this.isSynced,
@@ -1016,6 +1038,9 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
     }
     if (!nullToAbsent || email != null) {
       map['email'] = Variable<String>(email);
+    }
+    if (!nullToAbsent || gstin != null) {
+      map['gstin'] = Variable<String>(gstin);
     }
     map['current_pending_amount'] = Variable<double>(currentPendingAmount);
     map['total_purchases'] = Variable<double>(totalPurchases);
@@ -1040,6 +1065,9 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
       email: email == null && nullToAbsent
           ? const Value.absent()
           : Value(email),
+      gstin: gstin == null && nullToAbsent
+          ? const Value.absent()
+          : Value(gstin),
       currentPendingAmount: Value(currentPendingAmount),
       totalPurchases: Value(totalPurchases),
       isSynced: Value(isSynced),
@@ -1061,6 +1089,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
       mobile: serializer.fromJson<String>(json['mobile']),
       address: serializer.fromJson<String?>(json['address']),
       email: serializer.fromJson<String?>(json['email']),
+      gstin: serializer.fromJson<String?>(json['gstin']),
       currentPendingAmount: serializer.fromJson<double>(
         json['currentPendingAmount'],
       ),
@@ -1081,6 +1110,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
       'mobile': serializer.toJson<String>(mobile),
       'address': serializer.toJson<String?>(address),
       'email': serializer.toJson<String?>(email),
+      'gstin': serializer.toJson<String?>(gstin),
       'currentPendingAmount': serializer.toJson<double>(currentPendingAmount),
       'totalPurchases': serializer.toJson<double>(totalPurchases),
       'isSynced': serializer.toJson<bool>(isSynced),
@@ -1097,6 +1127,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
     String? mobile,
     Value<String?> address = const Value.absent(),
     Value<String?> email = const Value.absent(),
+    Value<String?> gstin = const Value.absent(),
     double? currentPendingAmount,
     double? totalPurchases,
     bool? isSynced,
@@ -1110,6 +1141,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
     mobile: mobile ?? this.mobile,
     address: address.present ? address.value : this.address,
     email: email.present ? email.value : this.email,
+    gstin: gstin.present ? gstin.value : this.gstin,
     currentPendingAmount: currentPendingAmount ?? this.currentPendingAmount,
     totalPurchases: totalPurchases ?? this.totalPurchases,
     isSynced: isSynced ?? this.isSynced,
@@ -1125,6 +1157,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
       mobile: data.mobile.present ? data.mobile.value : this.mobile,
       address: data.address.present ? data.address.value : this.address,
       email: data.email.present ? data.email.value : this.email,
+      gstin: data.gstin.present ? data.gstin.value : this.gstin,
       currentPendingAmount: data.currentPendingAmount.present
           ? data.currentPendingAmount.value
           : this.currentPendingAmount,
@@ -1147,6 +1180,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
           ..write('mobile: $mobile, ')
           ..write('address: $address, ')
           ..write('email: $email, ')
+          ..write('gstin: $gstin, ')
           ..write('currentPendingAmount: $currentPendingAmount, ')
           ..write('totalPurchases: $totalPurchases, ')
           ..write('isSynced: $isSynced, ')
@@ -1165,6 +1199,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
     mobile,
     address,
     email,
+    gstin,
     currentPendingAmount,
     totalPurchases,
     isSynced,
@@ -1182,6 +1217,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
           other.mobile == this.mobile &&
           other.address == this.address &&
           other.email == this.email &&
+          other.gstin == this.gstin &&
           other.currentPendingAmount == this.currentPendingAmount &&
           other.totalPurchases == this.totalPurchases &&
           other.isSynced == this.isSynced &&
@@ -1197,6 +1233,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
   final Value<String> mobile;
   final Value<String?> address;
   final Value<String?> email;
+  final Value<String?> gstin;
   final Value<double> currentPendingAmount;
   final Value<double> totalPurchases;
   final Value<bool> isSynced;
@@ -1210,6 +1247,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
     this.mobile = const Value.absent(),
     this.address = const Value.absent(),
     this.email = const Value.absent(),
+    this.gstin = const Value.absent(),
     this.currentPendingAmount = const Value.absent(),
     this.totalPurchases = const Value.absent(),
     this.isSynced = const Value.absent(),
@@ -1224,6 +1262,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
     required String mobile,
     this.address = const Value.absent(),
     this.email = const Value.absent(),
+    this.gstin = const Value.absent(),
     this.currentPendingAmount = const Value.absent(),
     this.totalPurchases = const Value.absent(),
     this.isSynced = const Value.absent(),
@@ -1241,6 +1280,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
     Expression<String>? mobile,
     Expression<String>? address,
     Expression<String>? email,
+    Expression<String>? gstin,
     Expression<double>? currentPendingAmount,
     Expression<double>? totalPurchases,
     Expression<bool>? isSynced,
@@ -1255,6 +1295,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
       if (mobile != null) 'mobile': mobile,
       if (address != null) 'address': address,
       if (email != null) 'email': email,
+      if (gstin != null) 'gstin': gstin,
       if (currentPendingAmount != null)
         'current_pending_amount': currentPendingAmount,
       if (totalPurchases != null) 'total_purchases': totalPurchases,
@@ -1272,6 +1313,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
     Value<String>? mobile,
     Value<String?>? address,
     Value<String?>? email,
+    Value<String?>? gstin,
     Value<double>? currentPendingAmount,
     Value<double>? totalPurchases,
     Value<bool>? isSynced,
@@ -1286,6 +1328,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
       mobile: mobile ?? this.mobile,
       address: address ?? this.address,
       email: email ?? this.email,
+      gstin: gstin ?? this.gstin,
       currentPendingAmount: currentPendingAmount ?? this.currentPendingAmount,
       totalPurchases: totalPurchases ?? this.totalPurchases,
       isSynced: isSynced ?? this.isSynced,
@@ -1315,6 +1358,9 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
     }
     if (email.present) {
       map['email'] = Variable<String>(email.value);
+    }
+    if (gstin.present) {
+      map['gstin'] = Variable<String>(gstin.value);
     }
     if (currentPendingAmount.present) {
       map['current_pending_amount'] = Variable<double>(
@@ -1348,6 +1394,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
           ..write('mobile: $mobile, ')
           ..write('address: $address, ')
           ..write('email: $email, ')
+          ..write('gstin: $gstin, ')
           ..write('currentPendingAmount: $currentPendingAmount, ')
           ..write('totalPurchases: $totalPurchases, ')
           ..write('isSynced: $isSynced, ')
@@ -2337,6 +2384,55 @@ class $ProductRecordsTable extends ProductRecords
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _sizeMeta = const VerificationMeta('size');
+  @override
+  late final GeneratedColumn<String> size = GeneratedColumn<String>(
+    'size',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+    'color',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _mrpMeta = const VerificationMeta('mrp');
+  @override
+  late final GeneratedColumn<double> mrp = GeneratedColumn<double>(
+    'mrp',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _compositionMeta = const VerificationMeta(
+    'composition',
+  );
+  @override
+  late final GeneratedColumn<String> composition = GeneratedColumn<String>(
+    'composition',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _drugScheduleMeta = const VerificationMeta(
+    'drugSchedule',
+  );
+  @override
+  late final GeneratedColumn<String> drugSchedule = GeneratedColumn<String>(
+    'drug_schedule',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2363,6 +2459,11 @@ class $ProductRecordsTable extends ProductRecords
     sgstPercent,
     hsnCode,
     customFieldsJson,
+    size,
+    color,
+    mrp,
+    composition,
+    drugSchedule,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2555,6 +2656,42 @@ class $ProductRecordsTable extends ProductRecords
         ),
       );
     }
+    if (data.containsKey('size')) {
+      context.handle(
+        _sizeMeta,
+        size.isAcceptableOrUnknown(data['size']!, _sizeMeta),
+      );
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    }
+    if (data.containsKey('mrp')) {
+      context.handle(
+        _mrpMeta,
+        mrp.isAcceptableOrUnknown(data['mrp']!, _mrpMeta),
+      );
+    }
+    if (data.containsKey('composition')) {
+      context.handle(
+        _compositionMeta,
+        composition.isAcceptableOrUnknown(
+          data['composition']!,
+          _compositionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('drug_schedule')) {
+      context.handle(
+        _drugScheduleMeta,
+        drugSchedule.isAcceptableOrUnknown(
+          data['drug_schedule']!,
+          _drugScheduleMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -2660,6 +2797,26 @@ class $ProductRecordsTable extends ProductRecords
         DriftSqlType.string,
         data['${effectivePrefix}custom_fields_json'],
       ),
+      size: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}size'],
+      ),
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color'],
+      ),
+      mrp: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}mrp'],
+      ),
+      composition: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}composition'],
+      ),
+      drugSchedule: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}drug_schedule'],
+      ),
     );
   }
 
@@ -2694,6 +2851,11 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
   final double sgstPercent;
   final String? hsnCode;
   final String? customFieldsJson;
+  final String? size;
+  final String? color;
+  final double? mrp;
+  final String? composition;
+  final String? drugSchedule;
   const ProductRecord({
     required this.id,
     this.serverId,
@@ -2719,6 +2881,11 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
     required this.sgstPercent,
     this.hsnCode,
     this.customFieldsJson,
+    this.size,
+    this.color,
+    this.mrp,
+    this.composition,
+    this.drugSchedule,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2767,6 +2934,21 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
     if (!nullToAbsent || customFieldsJson != null) {
       map['custom_fields_json'] = Variable<String>(customFieldsJson);
     }
+    if (!nullToAbsent || size != null) {
+      map['size'] = Variable<String>(size);
+    }
+    if (!nullToAbsent || color != null) {
+      map['color'] = Variable<String>(color);
+    }
+    if (!nullToAbsent || mrp != null) {
+      map['mrp'] = Variable<double>(mrp);
+    }
+    if (!nullToAbsent || composition != null) {
+      map['composition'] = Variable<String>(composition);
+    }
+    if (!nullToAbsent || drugSchedule != null) {
+      map['drug_schedule'] = Variable<String>(drugSchedule);
+    }
     return map;
   }
 
@@ -2814,6 +2996,17 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
       customFieldsJson: customFieldsJson == null && nullToAbsent
           ? const Value.absent()
           : Value(customFieldsJson),
+      size: size == null && nullToAbsent ? const Value.absent() : Value(size),
+      color: color == null && nullToAbsent
+          ? const Value.absent()
+          : Value(color),
+      mrp: mrp == null && nullToAbsent ? const Value.absent() : Value(mrp),
+      composition: composition == null && nullToAbsent
+          ? const Value.absent()
+          : Value(composition),
+      drugSchedule: drugSchedule == null && nullToAbsent
+          ? const Value.absent()
+          : Value(drugSchedule),
     );
   }
 
@@ -2851,6 +3044,11 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
       sgstPercent: serializer.fromJson<double>(json['sgstPercent']),
       hsnCode: serializer.fromJson<String?>(json['hsnCode']),
       customFieldsJson: serializer.fromJson<String?>(json['customFieldsJson']),
+      size: serializer.fromJson<String?>(json['size']),
+      color: serializer.fromJson<String?>(json['color']),
+      mrp: serializer.fromJson<double?>(json['mrp']),
+      composition: serializer.fromJson<String?>(json['composition']),
+      drugSchedule: serializer.fromJson<String?>(json['drugSchedule']),
     );
   }
   @override
@@ -2881,6 +3079,11 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
       'sgstPercent': serializer.toJson<double>(sgstPercent),
       'hsnCode': serializer.toJson<String?>(hsnCode),
       'customFieldsJson': serializer.toJson<String?>(customFieldsJson),
+      'size': serializer.toJson<String?>(size),
+      'color': serializer.toJson<String?>(color),
+      'mrp': serializer.toJson<double?>(mrp),
+      'composition': serializer.toJson<String?>(composition),
+      'drugSchedule': serializer.toJson<String?>(drugSchedule),
     };
   }
 
@@ -2909,6 +3112,11 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
     double? sgstPercent,
     Value<String?> hsnCode = const Value.absent(),
     Value<String?> customFieldsJson = const Value.absent(),
+    Value<String?> size = const Value.absent(),
+    Value<String?> color = const Value.absent(),
+    Value<double?> mrp = const Value.absent(),
+    Value<String?> composition = const Value.absent(),
+    Value<String?> drugSchedule = const Value.absent(),
   }) => ProductRecord(
     id: id ?? this.id,
     serverId: serverId.present ? serverId.value : this.serverId,
@@ -2942,6 +3150,11 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
     customFieldsJson: customFieldsJson.present
         ? customFieldsJson.value
         : this.customFieldsJson,
+    size: size.present ? size.value : this.size,
+    color: color.present ? color.value : this.color,
+    mrp: mrp.present ? mrp.value : this.mrp,
+    composition: composition.present ? composition.value : this.composition,
+    drugSchedule: drugSchedule.present ? drugSchedule.value : this.drugSchedule,
   );
   ProductRecord copyWithCompanion(ProductRecordsCompanion data) {
     return ProductRecord(
@@ -2993,6 +3206,15 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
       customFieldsJson: data.customFieldsJson.present
           ? data.customFieldsJson.value
           : this.customFieldsJson,
+      size: data.size.present ? data.size.value : this.size,
+      color: data.color.present ? data.color.value : this.color,
+      mrp: data.mrp.present ? data.mrp.value : this.mrp,
+      composition: data.composition.present
+          ? data.composition.value
+          : this.composition,
+      drugSchedule: data.drugSchedule.present
+          ? data.drugSchedule.value
+          : this.drugSchedule,
     );
   }
 
@@ -3022,7 +3244,12 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
           ..write('cgstPercent: $cgstPercent, ')
           ..write('sgstPercent: $sgstPercent, ')
           ..write('hsnCode: $hsnCode, ')
-          ..write('customFieldsJson: $customFieldsJson')
+          ..write('customFieldsJson: $customFieldsJson, ')
+          ..write('size: $size, ')
+          ..write('color: $color, ')
+          ..write('mrp: $mrp, ')
+          ..write('composition: $composition, ')
+          ..write('drugSchedule: $drugSchedule')
           ..write(')'))
         .toString();
   }
@@ -3053,6 +3280,11 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
     sgstPercent,
     hsnCode,
     customFieldsJson,
+    size,
+    color,
+    mrp,
+    composition,
+    drugSchedule,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -3081,7 +3313,12 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
           other.cgstPercent == this.cgstPercent &&
           other.sgstPercent == this.sgstPercent &&
           other.hsnCode == this.hsnCode &&
-          other.customFieldsJson == this.customFieldsJson);
+          other.customFieldsJson == this.customFieldsJson &&
+          other.size == this.size &&
+          other.color == this.color &&
+          other.mrp == this.mrp &&
+          other.composition == this.composition &&
+          other.drugSchedule == this.drugSchedule);
 }
 
 class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
@@ -3109,6 +3346,11 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
   final Value<double> sgstPercent;
   final Value<String?> hsnCode;
   final Value<String?> customFieldsJson;
+  final Value<String?> size;
+  final Value<String?> color;
+  final Value<double?> mrp;
+  final Value<String?> composition;
+  final Value<String?> drugSchedule;
   const ProductRecordsCompanion({
     this.id = const Value.absent(),
     this.serverId = const Value.absent(),
@@ -3134,6 +3376,11 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
     this.sgstPercent = const Value.absent(),
     this.hsnCode = const Value.absent(),
     this.customFieldsJson = const Value.absent(),
+    this.size = const Value.absent(),
+    this.color = const Value.absent(),
+    this.mrp = const Value.absent(),
+    this.composition = const Value.absent(),
+    this.drugSchedule = const Value.absent(),
   });
   ProductRecordsCompanion.insert({
     this.id = const Value.absent(),
@@ -3160,6 +3407,11 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
     this.sgstPercent = const Value.absent(),
     this.hsnCode = const Value.absent(),
     this.customFieldsJson = const Value.absent(),
+    this.size = const Value.absent(),
+    this.color = const Value.absent(),
+    this.mrp = const Value.absent(),
+    this.composition = const Value.absent(),
+    this.drugSchedule = const Value.absent(),
   }) : name = Value(name),
        syncStatus = Value(syncStatus),
        updatedAt = Value(updatedAt),
@@ -3189,6 +3441,11 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
     Expression<double>? sgstPercent,
     Expression<String>? hsnCode,
     Expression<String>? customFieldsJson,
+    Expression<String>? size,
+    Expression<String>? color,
+    Expression<double>? mrp,
+    Expression<String>? composition,
+    Expression<String>? drugSchedule,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3216,6 +3473,11 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
       if (sgstPercent != null) 'sgst_percent': sgstPercent,
       if (hsnCode != null) 'hsn_code': hsnCode,
       if (customFieldsJson != null) 'custom_fields_json': customFieldsJson,
+      if (size != null) 'size': size,
+      if (color != null) 'color': color,
+      if (mrp != null) 'mrp': mrp,
+      if (composition != null) 'composition': composition,
+      if (drugSchedule != null) 'drug_schedule': drugSchedule,
     });
   }
 
@@ -3244,6 +3506,11 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
     Value<double>? sgstPercent,
     Value<String?>? hsnCode,
     Value<String?>? customFieldsJson,
+    Value<String?>? size,
+    Value<String?>? color,
+    Value<double?>? mrp,
+    Value<String?>? composition,
+    Value<String?>? drugSchedule,
   }) {
     return ProductRecordsCompanion(
       id: id ?? this.id,
@@ -3270,6 +3537,11 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
       sgstPercent: sgstPercent ?? this.sgstPercent,
       hsnCode: hsnCode ?? this.hsnCode,
       customFieldsJson: customFieldsJson ?? this.customFieldsJson,
+      size: size ?? this.size,
+      color: color ?? this.color,
+      mrp: mrp ?? this.mrp,
+      composition: composition ?? this.composition,
+      drugSchedule: drugSchedule ?? this.drugSchedule,
     );
   }
 
@@ -3350,6 +3622,21 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
     if (customFieldsJson.present) {
       map['custom_fields_json'] = Variable<String>(customFieldsJson.value);
     }
+    if (size.present) {
+      map['size'] = Variable<String>(size.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
+    }
+    if (mrp.present) {
+      map['mrp'] = Variable<double>(mrp.value);
+    }
+    if (composition.present) {
+      map['composition'] = Variable<String>(composition.value);
+    }
+    if (drugSchedule.present) {
+      map['drug_schedule'] = Variable<String>(drugSchedule.value);
+    }
     return map;
   }
 
@@ -3379,7 +3666,12 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
           ..write('cgstPercent: $cgstPercent, ')
           ..write('sgstPercent: $sgstPercent, ')
           ..write('hsnCode: $hsnCode, ')
-          ..write('customFieldsJson: $customFieldsJson')
+          ..write('customFieldsJson: $customFieldsJson, ')
+          ..write('size: $size, ')
+          ..write('color: $color, ')
+          ..write('mrp: $mrp, ')
+          ..write('composition: $composition, ')
+          ..write('drugSchedule: $drugSchedule')
           ..write(')'))
         .toString();
   }
@@ -4696,6 +4988,17 @@ class $PurchaseBatchRecordsTable extends PurchaseBatchRecords
     requiredDuringInsert: false,
     defaultValue: const Constant(''),
   );
+  static const VerificationMeta _batchNumberMeta = const VerificationMeta(
+    'batchNumber',
+  );
+  @override
+  late final GeneratedColumn<String> batchNumber = GeneratedColumn<String>(
+    'batch_number',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _expiryDateMeta = const VerificationMeta(
     'expiryDate',
   );
@@ -4805,6 +5108,7 @@ class $PurchaseBatchRecordsTable extends PurchaseBatchRecords
     supplierId,
     supplierName,
     unit,
+    batchNumber,
     expiryDate,
     productionDate,
     warrantyMonths,
@@ -4950,6 +5254,15 @@ class $PurchaseBatchRecordsTable extends PurchaseBatchRecords
         unit.isAcceptableOrUnknown(data['unit']!, _unitMeta),
       );
     }
+    if (data.containsKey('batch_number')) {
+      context.handle(
+        _batchNumberMeta,
+        batchNumber.isAcceptableOrUnknown(
+          data['batch_number']!,
+          _batchNumberMeta,
+        ),
+      );
+    }
     if (data.containsKey('expiry_date')) {
       context.handle(
         _expiryDateMeta,
@@ -5083,6 +5396,10 @@ class $PurchaseBatchRecordsTable extends PurchaseBatchRecords
         DriftSqlType.string,
         data['${effectivePrefix}unit'],
       )!,
+      batchNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}batch_number'],
+      ),
       expiryDate: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}expiry_date'],
@@ -5142,6 +5459,7 @@ class PurchaseBatchRecord extends DataClass
   final String? supplierId;
   final String? supplierName;
   final String unit;
+  final String? batchNumber;
   final DateTime? expiryDate;
   final DateTime? productionDate;
   final int? warrantyMonths;
@@ -5167,6 +5485,7 @@ class PurchaseBatchRecord extends DataClass
     this.supplierId,
     this.supplierName,
     required this.unit,
+    this.batchNumber,
     this.expiryDate,
     this.productionDate,
     this.warrantyMonths,
@@ -5201,6 +5520,9 @@ class PurchaseBatchRecord extends DataClass
       map['supplier_name'] = Variable<String>(supplierName);
     }
     map['unit'] = Variable<String>(unit);
+    if (!nullToAbsent || batchNumber != null) {
+      map['batch_number'] = Variable<String>(batchNumber);
+    }
     if (!nullToAbsent || expiryDate != null) {
       map['expiry_date'] = Variable<DateTime>(expiryDate);
     }
@@ -5244,6 +5566,9 @@ class PurchaseBatchRecord extends DataClass
           ? const Value.absent()
           : Value(supplierName),
       unit: Value(unit),
+      batchNumber: batchNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(batchNumber),
       expiryDate: expiryDate == null && nullToAbsent
           ? const Value.absent()
           : Value(expiryDate),
@@ -5285,6 +5610,7 @@ class PurchaseBatchRecord extends DataClass
       supplierId: serializer.fromJson<String?>(json['supplierId']),
       supplierName: serializer.fromJson<String?>(json['supplierName']),
       unit: serializer.fromJson<String>(json['unit']),
+      batchNumber: serializer.fromJson<String?>(json['batchNumber']),
       expiryDate: serializer.fromJson<DateTime?>(json['expiryDate']),
       productionDate: serializer.fromJson<DateTime?>(json['productionDate']),
       warrantyMonths: serializer.fromJson<int?>(json['warrantyMonths']),
@@ -5315,6 +5641,7 @@ class PurchaseBatchRecord extends DataClass
       'supplierId': serializer.toJson<String?>(supplierId),
       'supplierName': serializer.toJson<String?>(supplierName),
       'unit': serializer.toJson<String>(unit),
+      'batchNumber': serializer.toJson<String?>(batchNumber),
       'expiryDate': serializer.toJson<DateTime?>(expiryDate),
       'productionDate': serializer.toJson<DateTime?>(productionDate),
       'warrantyMonths': serializer.toJson<int?>(warrantyMonths),
@@ -5343,6 +5670,7 @@ class PurchaseBatchRecord extends DataClass
     Value<String?> supplierId = const Value.absent(),
     Value<String?> supplierName = const Value.absent(),
     String? unit,
+    Value<String?> batchNumber = const Value.absent(),
     Value<DateTime?> expiryDate = const Value.absent(),
     Value<DateTime?> productionDate = const Value.absent(),
     Value<int?> warrantyMonths = const Value.absent(),
@@ -5368,6 +5696,7 @@ class PurchaseBatchRecord extends DataClass
     supplierId: supplierId.present ? supplierId.value : this.supplierId,
     supplierName: supplierName.present ? supplierName.value : this.supplierName,
     unit: unit ?? this.unit,
+    batchNumber: batchNumber.present ? batchNumber.value : this.batchNumber,
     expiryDate: expiryDate.present ? expiryDate.value : this.expiryDate,
     productionDate: productionDate.present
         ? productionDate.value
@@ -5419,6 +5748,9 @@ class PurchaseBatchRecord extends DataClass
           ? data.supplierName.value
           : this.supplierName,
       unit: data.unit.present ? data.unit.value : this.unit,
+      batchNumber: data.batchNumber.present
+          ? data.batchNumber.value
+          : this.batchNumber,
       expiryDate: data.expiryDate.present
           ? data.expiryDate.value
           : this.expiryDate,
@@ -5459,6 +5791,7 @@ class PurchaseBatchRecord extends DataClass
           ..write('supplierId: $supplierId, ')
           ..write('supplierName: $supplierName, ')
           ..write('unit: $unit, ')
+          ..write('batchNumber: $batchNumber, ')
           ..write('expiryDate: $expiryDate, ')
           ..write('productionDate: $productionDate, ')
           ..write('warrantyMonths: $warrantyMonths, ')
@@ -5489,6 +5822,7 @@ class PurchaseBatchRecord extends DataClass
     supplierId,
     supplierName,
     unit,
+    batchNumber,
     expiryDate,
     productionDate,
     warrantyMonths,
@@ -5518,6 +5852,7 @@ class PurchaseBatchRecord extends DataClass
           other.supplierId == this.supplierId &&
           other.supplierName == this.supplierName &&
           other.unit == this.unit &&
+          other.batchNumber == this.batchNumber &&
           other.expiryDate == this.expiryDate &&
           other.productionDate == this.productionDate &&
           other.warrantyMonths == this.warrantyMonths &&
@@ -5546,6 +5881,7 @@ class PurchaseBatchRecordsCompanion
   final Value<String?> supplierId;
   final Value<String?> supplierName;
   final Value<String> unit;
+  final Value<String?> batchNumber;
   final Value<DateTime?> expiryDate;
   final Value<DateTime?> productionDate;
   final Value<int?> warrantyMonths;
@@ -5571,6 +5907,7 @@ class PurchaseBatchRecordsCompanion
     this.supplierId = const Value.absent(),
     this.supplierName = const Value.absent(),
     this.unit = const Value.absent(),
+    this.batchNumber = const Value.absent(),
     this.expiryDate = const Value.absent(),
     this.productionDate = const Value.absent(),
     this.warrantyMonths = const Value.absent(),
@@ -5597,6 +5934,7 @@ class PurchaseBatchRecordsCompanion
     this.supplierId = const Value.absent(),
     this.supplierName = const Value.absent(),
     this.unit = const Value.absent(),
+    this.batchNumber = const Value.absent(),
     this.expiryDate = const Value.absent(),
     this.productionDate = const Value.absent(),
     this.warrantyMonths = const Value.absent(),
@@ -5627,6 +5965,7 @@ class PurchaseBatchRecordsCompanion
     Expression<String>? supplierId,
     Expression<String>? supplierName,
     Expression<String>? unit,
+    Expression<String>? batchNumber,
     Expression<DateTime>? expiryDate,
     Expression<DateTime>? productionDate,
     Expression<int>? warrantyMonths,
@@ -5653,6 +5992,7 @@ class PurchaseBatchRecordsCompanion
       if (supplierId != null) 'supplier_id': supplierId,
       if (supplierName != null) 'supplier_name': supplierName,
       if (unit != null) 'unit': unit,
+      if (batchNumber != null) 'batch_number': batchNumber,
       if (expiryDate != null) 'expiry_date': expiryDate,
       if (productionDate != null) 'production_date': productionDate,
       if (warrantyMonths != null) 'warranty_months': warrantyMonths,
@@ -5681,6 +6021,7 @@ class PurchaseBatchRecordsCompanion
     Value<String?>? supplierId,
     Value<String?>? supplierName,
     Value<String>? unit,
+    Value<String?>? batchNumber,
     Value<DateTime?>? expiryDate,
     Value<DateTime?>? productionDate,
     Value<int?>? warrantyMonths,
@@ -5707,6 +6048,7 @@ class PurchaseBatchRecordsCompanion
       supplierId: supplierId ?? this.supplierId,
       supplierName: supplierName ?? this.supplierName,
       unit: unit ?? this.unit,
+      batchNumber: batchNumber ?? this.batchNumber,
       expiryDate: expiryDate ?? this.expiryDate,
       productionDate: productionDate ?? this.productionDate,
       warrantyMonths: warrantyMonths ?? this.warrantyMonths,
@@ -5769,6 +6111,9 @@ class PurchaseBatchRecordsCompanion
     if (unit.present) {
       map['unit'] = Variable<String>(unit.value);
     }
+    if (batchNumber.present) {
+      map['batch_number'] = Variable<String>(batchNumber.value);
+    }
     if (expiryDate.present) {
       map['expiry_date'] = Variable<DateTime>(expiryDate.value);
     }
@@ -5815,6 +6160,7 @@ class PurchaseBatchRecordsCompanion
           ..write('supplierId: $supplierId, ')
           ..write('supplierName: $supplierName, ')
           ..write('unit: $unit, ')
+          ..write('batchNumber: $batchNumber, ')
           ..write('expiryDate: $expiryDate, ')
           ..write('productionDate: $productionDate, ')
           ..write('warrantyMonths: $warrantyMonths, ')
@@ -7398,6 +7744,18 @@ class $BillRecordsTable extends BillRecords
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _igstPercentMeta = const VerificationMeta(
+    'igstPercent',
+  );
+  @override
+  late final GeneratedColumn<double> igstPercent = GeneratedColumn<double>(
+    'igst_percent',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _otherTaxPercentMeta = const VerificationMeta(
     'otherTaxPercent',
   );
@@ -7445,6 +7803,18 @@ class $BillRecordsTable extends BillRecords
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _igstAmountMeta = const VerificationMeta(
+    'igstAmount',
+  );
+  @override
+  late final GeneratedColumn<double> igstAmount = GeneratedColumn<double>(
+    'igst_amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _otherTaxAmountMeta = const VerificationMeta(
     'otherTaxAmount',
   );
@@ -7468,6 +7838,43 @@ class $BillRecordsTable extends BillRecords
     type: DriftSqlType.double,
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _customerGstinMeta = const VerificationMeta(
+    'customerGstin',
+  );
+  @override
+  late final GeneratedColumn<String> customerGstin = GeneratedColumn<String>(
+    'customer_gstin',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _placeOfSupplyMeta = const VerificationMeta(
+    'placeOfSupply',
+  );
+  @override
+  late final GeneratedColumn<String> placeOfSupply = GeneratedColumn<String>(
+    'place_of_supply',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isInterstateMeta = const VerificationMeta(
+    'isInterstate',
+  );
+  @override
+  late final GeneratedColumn<bool> isInterstate = GeneratedColumn<bool>(
+    'is_interstate',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_interstate" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
   );
   static const VerificationMeta _extraChargesJsonMeta = const VerificationMeta(
     'extraChargesJson',
@@ -7550,12 +7957,17 @@ class $BillRecordsTable extends BillRecords
     isTaxInclusive,
     cgstPercent,
     sgstPercent,
+    igstPercent,
     otherTaxPercent,
     otherTaxName,
     cgstAmount,
     sgstAmount,
+    igstAmount,
     otherTaxAmount,
     totalTaxAmount,
+    customerGstin,
+    placeOfSupply,
+    isInterstate,
     extraChargesJson,
     paymentMode,
     syncStatus,
@@ -7749,6 +8161,15 @@ class $BillRecordsTable extends BillRecords
         ),
       );
     }
+    if (data.containsKey('igst_percent')) {
+      context.handle(
+        _igstPercentMeta,
+        igstPercent.isAcceptableOrUnknown(
+          data['igst_percent']!,
+          _igstPercentMeta,
+        ),
+      );
+    }
     if (data.containsKey('other_tax_percent')) {
       context.handle(
         _otherTaxPercentMeta,
@@ -7779,6 +8200,12 @@ class $BillRecordsTable extends BillRecords
         sgstAmount.isAcceptableOrUnknown(data['sgst_amount']!, _sgstAmountMeta),
       );
     }
+    if (data.containsKey('igst_amount')) {
+      context.handle(
+        _igstAmountMeta,
+        igstAmount.isAcceptableOrUnknown(data['igst_amount']!, _igstAmountMeta),
+      );
+    }
     if (data.containsKey('other_tax_amount')) {
       context.handle(
         _otherTaxAmountMeta,
@@ -7794,6 +8221,33 @@ class $BillRecordsTable extends BillRecords
         totalTaxAmount.isAcceptableOrUnknown(
           data['total_tax_amount']!,
           _totalTaxAmountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('customer_gstin')) {
+      context.handle(
+        _customerGstinMeta,
+        customerGstin.isAcceptableOrUnknown(
+          data['customer_gstin']!,
+          _customerGstinMeta,
+        ),
+      );
+    }
+    if (data.containsKey('place_of_supply')) {
+      context.handle(
+        _placeOfSupplyMeta,
+        placeOfSupply.isAcceptableOrUnknown(
+          data['place_of_supply']!,
+          _placeOfSupplyMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_interstate')) {
+      context.handle(
+        _isInterstateMeta,
+        isInterstate.isAcceptableOrUnknown(
+          data['is_interstate']!,
+          _isInterstateMeta,
         ),
       );
     }
@@ -7936,6 +8390,10 @@ class $BillRecordsTable extends BillRecords
         DriftSqlType.double,
         data['${effectivePrefix}sgst_percent'],
       )!,
+      igstPercent: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}igst_percent'],
+      )!,
       otherTaxPercent: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}other_tax_percent'],
@@ -7952,6 +8410,10 @@ class $BillRecordsTable extends BillRecords
         DriftSqlType.double,
         data['${effectivePrefix}sgst_amount'],
       )!,
+      igstAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}igst_amount'],
+      )!,
       otherTaxAmount: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}other_tax_amount'],
@@ -7959,6 +8421,18 @@ class $BillRecordsTable extends BillRecords
       totalTaxAmount: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}total_tax_amount'],
+      )!,
+      customerGstin: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}customer_gstin'],
+      ),
+      placeOfSupply: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}place_of_supply'],
+      ),
+      isInterstate: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_interstate'],
       )!,
       extraChargesJson: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -8012,12 +8486,17 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
   final bool isTaxInclusive;
   final double cgstPercent;
   final double sgstPercent;
+  final double igstPercent;
   final double otherTaxPercent;
   final String? otherTaxName;
   final double cgstAmount;
   final double sgstAmount;
+  final double igstAmount;
   final double otherTaxAmount;
   final double totalTaxAmount;
+  final String? customerGstin;
+  final String? placeOfSupply;
+  final bool isInterstate;
   final String extraChargesJson;
   final String paymentMode;
   final int syncStatus;
@@ -8046,12 +8525,17 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
     required this.isTaxInclusive,
     required this.cgstPercent,
     required this.sgstPercent,
+    required this.igstPercent,
     required this.otherTaxPercent,
     this.otherTaxName,
     required this.cgstAmount,
     required this.sgstAmount,
+    required this.igstAmount,
     required this.otherTaxAmount,
     required this.totalTaxAmount,
+    this.customerGstin,
+    this.placeOfSupply,
+    required this.isInterstate,
     required this.extraChargesJson,
     required this.paymentMode,
     required this.syncStatus,
@@ -8095,14 +8579,23 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
     map['is_tax_inclusive'] = Variable<bool>(isTaxInclusive);
     map['cgst_percent'] = Variable<double>(cgstPercent);
     map['sgst_percent'] = Variable<double>(sgstPercent);
+    map['igst_percent'] = Variable<double>(igstPercent);
     map['other_tax_percent'] = Variable<double>(otherTaxPercent);
     if (!nullToAbsent || otherTaxName != null) {
       map['other_tax_name'] = Variable<String>(otherTaxName);
     }
     map['cgst_amount'] = Variable<double>(cgstAmount);
     map['sgst_amount'] = Variable<double>(sgstAmount);
+    map['igst_amount'] = Variable<double>(igstAmount);
     map['other_tax_amount'] = Variable<double>(otherTaxAmount);
     map['total_tax_amount'] = Variable<double>(totalTaxAmount);
+    if (!nullToAbsent || customerGstin != null) {
+      map['customer_gstin'] = Variable<String>(customerGstin);
+    }
+    if (!nullToAbsent || placeOfSupply != null) {
+      map['place_of_supply'] = Variable<String>(placeOfSupply);
+    }
+    map['is_interstate'] = Variable<bool>(isInterstate);
     map['extra_charges_json'] = Variable<String>(extraChargesJson);
     map['payment_mode'] = Variable<String>(paymentMode);
     map['sync_status'] = Variable<int>(syncStatus);
@@ -8147,14 +8640,23 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
       isTaxInclusive: Value(isTaxInclusive),
       cgstPercent: Value(cgstPercent),
       sgstPercent: Value(sgstPercent),
+      igstPercent: Value(igstPercent),
       otherTaxPercent: Value(otherTaxPercent),
       otherTaxName: otherTaxName == null && nullToAbsent
           ? const Value.absent()
           : Value(otherTaxName),
       cgstAmount: Value(cgstAmount),
       sgstAmount: Value(sgstAmount),
+      igstAmount: Value(igstAmount),
       otherTaxAmount: Value(otherTaxAmount),
       totalTaxAmount: Value(totalTaxAmount),
+      customerGstin: customerGstin == null && nullToAbsent
+          ? const Value.absent()
+          : Value(customerGstin),
+      placeOfSupply: placeOfSupply == null && nullToAbsent
+          ? const Value.absent()
+          : Value(placeOfSupply),
+      isInterstate: Value(isInterstate),
       extraChargesJson: Value(extraChargesJson),
       paymentMode: Value(paymentMode),
       syncStatus: Value(syncStatus),
@@ -8191,12 +8693,17 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
       isTaxInclusive: serializer.fromJson<bool>(json['isTaxInclusive']),
       cgstPercent: serializer.fromJson<double>(json['cgstPercent']),
       sgstPercent: serializer.fromJson<double>(json['sgstPercent']),
+      igstPercent: serializer.fromJson<double>(json['igstPercent']),
       otherTaxPercent: serializer.fromJson<double>(json['otherTaxPercent']),
       otherTaxName: serializer.fromJson<String?>(json['otherTaxName']),
       cgstAmount: serializer.fromJson<double>(json['cgstAmount']),
       sgstAmount: serializer.fromJson<double>(json['sgstAmount']),
+      igstAmount: serializer.fromJson<double>(json['igstAmount']),
       otherTaxAmount: serializer.fromJson<double>(json['otherTaxAmount']),
       totalTaxAmount: serializer.fromJson<double>(json['totalTaxAmount']),
+      customerGstin: serializer.fromJson<String?>(json['customerGstin']),
+      placeOfSupply: serializer.fromJson<String?>(json['placeOfSupply']),
+      isInterstate: serializer.fromJson<bool>(json['isInterstate']),
       extraChargesJson: serializer.fromJson<String>(json['extraChargesJson']),
       paymentMode: serializer.fromJson<String>(json['paymentMode']),
       syncStatus: serializer.fromJson<int>(json['syncStatus']),
@@ -8230,12 +8737,17 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
       'isTaxInclusive': serializer.toJson<bool>(isTaxInclusive),
       'cgstPercent': serializer.toJson<double>(cgstPercent),
       'sgstPercent': serializer.toJson<double>(sgstPercent),
+      'igstPercent': serializer.toJson<double>(igstPercent),
       'otherTaxPercent': serializer.toJson<double>(otherTaxPercent),
       'otherTaxName': serializer.toJson<String?>(otherTaxName),
       'cgstAmount': serializer.toJson<double>(cgstAmount),
       'sgstAmount': serializer.toJson<double>(sgstAmount),
+      'igstAmount': serializer.toJson<double>(igstAmount),
       'otherTaxAmount': serializer.toJson<double>(otherTaxAmount),
       'totalTaxAmount': serializer.toJson<double>(totalTaxAmount),
+      'customerGstin': serializer.toJson<String?>(customerGstin),
+      'placeOfSupply': serializer.toJson<String?>(placeOfSupply),
+      'isInterstate': serializer.toJson<bool>(isInterstate),
       'extraChargesJson': serializer.toJson<String>(extraChargesJson),
       'paymentMode': serializer.toJson<String>(paymentMode),
       'syncStatus': serializer.toJson<int>(syncStatus),
@@ -8267,12 +8779,17 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
     bool? isTaxInclusive,
     double? cgstPercent,
     double? sgstPercent,
+    double? igstPercent,
     double? otherTaxPercent,
     Value<String?> otherTaxName = const Value.absent(),
     double? cgstAmount,
     double? sgstAmount,
+    double? igstAmount,
     double? otherTaxAmount,
     double? totalTaxAmount,
+    Value<String?> customerGstin = const Value.absent(),
+    Value<String?> placeOfSupply = const Value.absent(),
+    bool? isInterstate,
     String? extraChargesJson,
     String? paymentMode,
     int? syncStatus,
@@ -8303,12 +8820,21 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
     isTaxInclusive: isTaxInclusive ?? this.isTaxInclusive,
     cgstPercent: cgstPercent ?? this.cgstPercent,
     sgstPercent: sgstPercent ?? this.sgstPercent,
+    igstPercent: igstPercent ?? this.igstPercent,
     otherTaxPercent: otherTaxPercent ?? this.otherTaxPercent,
     otherTaxName: otherTaxName.present ? otherTaxName.value : this.otherTaxName,
     cgstAmount: cgstAmount ?? this.cgstAmount,
     sgstAmount: sgstAmount ?? this.sgstAmount,
+    igstAmount: igstAmount ?? this.igstAmount,
     otherTaxAmount: otherTaxAmount ?? this.otherTaxAmount,
     totalTaxAmount: totalTaxAmount ?? this.totalTaxAmount,
+    customerGstin: customerGstin.present
+        ? customerGstin.value
+        : this.customerGstin,
+    placeOfSupply: placeOfSupply.present
+        ? placeOfSupply.value
+        : this.placeOfSupply,
+    isInterstate: isInterstate ?? this.isInterstate,
     extraChargesJson: extraChargesJson ?? this.extraChargesJson,
     paymentMode: paymentMode ?? this.paymentMode,
     syncStatus: syncStatus ?? this.syncStatus,
@@ -8373,6 +8899,9 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
       sgstPercent: data.sgstPercent.present
           ? data.sgstPercent.value
           : this.sgstPercent,
+      igstPercent: data.igstPercent.present
+          ? data.igstPercent.value
+          : this.igstPercent,
       otherTaxPercent: data.otherTaxPercent.present
           ? data.otherTaxPercent.value
           : this.otherTaxPercent,
@@ -8385,12 +8914,24 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
       sgstAmount: data.sgstAmount.present
           ? data.sgstAmount.value
           : this.sgstAmount,
+      igstAmount: data.igstAmount.present
+          ? data.igstAmount.value
+          : this.igstAmount,
       otherTaxAmount: data.otherTaxAmount.present
           ? data.otherTaxAmount.value
           : this.otherTaxAmount,
       totalTaxAmount: data.totalTaxAmount.present
           ? data.totalTaxAmount.value
           : this.totalTaxAmount,
+      customerGstin: data.customerGstin.present
+          ? data.customerGstin.value
+          : this.customerGstin,
+      placeOfSupply: data.placeOfSupply.present
+          ? data.placeOfSupply.value
+          : this.placeOfSupply,
+      isInterstate: data.isInterstate.present
+          ? data.isInterstate.value
+          : this.isInterstate,
       extraChargesJson: data.extraChargesJson.present
           ? data.extraChargesJson.value
           : this.extraChargesJson,
@@ -8430,12 +8971,17 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
           ..write('isTaxInclusive: $isTaxInclusive, ')
           ..write('cgstPercent: $cgstPercent, ')
           ..write('sgstPercent: $sgstPercent, ')
+          ..write('igstPercent: $igstPercent, ')
           ..write('otherTaxPercent: $otherTaxPercent, ')
           ..write('otherTaxName: $otherTaxName, ')
           ..write('cgstAmount: $cgstAmount, ')
           ..write('sgstAmount: $sgstAmount, ')
+          ..write('igstAmount: $igstAmount, ')
           ..write('otherTaxAmount: $otherTaxAmount, ')
           ..write('totalTaxAmount: $totalTaxAmount, ')
+          ..write('customerGstin: $customerGstin, ')
+          ..write('placeOfSupply: $placeOfSupply, ')
+          ..write('isInterstate: $isInterstate, ')
           ..write('extraChargesJson: $extraChargesJson, ')
           ..write('paymentMode: $paymentMode, ')
           ..write('syncStatus: $syncStatus, ')
@@ -8469,12 +9015,17 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
     isTaxInclusive,
     cgstPercent,
     sgstPercent,
+    igstPercent,
     otherTaxPercent,
     otherTaxName,
     cgstAmount,
     sgstAmount,
+    igstAmount,
     otherTaxAmount,
     totalTaxAmount,
+    customerGstin,
+    placeOfSupply,
+    isInterstate,
     extraChargesJson,
     paymentMode,
     syncStatus,
@@ -8507,12 +9058,17 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
           other.isTaxInclusive == this.isTaxInclusive &&
           other.cgstPercent == this.cgstPercent &&
           other.sgstPercent == this.sgstPercent &&
+          other.igstPercent == this.igstPercent &&
           other.otherTaxPercent == this.otherTaxPercent &&
           other.otherTaxName == this.otherTaxName &&
           other.cgstAmount == this.cgstAmount &&
           other.sgstAmount == this.sgstAmount &&
+          other.igstAmount == this.igstAmount &&
           other.otherTaxAmount == this.otherTaxAmount &&
           other.totalTaxAmount == this.totalTaxAmount &&
+          other.customerGstin == this.customerGstin &&
+          other.placeOfSupply == this.placeOfSupply &&
+          other.isInterstate == this.isInterstate &&
           other.extraChargesJson == this.extraChargesJson &&
           other.paymentMode == this.paymentMode &&
           other.syncStatus == this.syncStatus &&
@@ -8543,12 +9099,17 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
   final Value<bool> isTaxInclusive;
   final Value<double> cgstPercent;
   final Value<double> sgstPercent;
+  final Value<double> igstPercent;
   final Value<double> otherTaxPercent;
   final Value<String?> otherTaxName;
   final Value<double> cgstAmount;
   final Value<double> sgstAmount;
+  final Value<double> igstAmount;
   final Value<double> otherTaxAmount;
   final Value<double> totalTaxAmount;
+  final Value<String?> customerGstin;
+  final Value<String?> placeOfSupply;
+  final Value<bool> isInterstate;
   final Value<String> extraChargesJson;
   final Value<String> paymentMode;
   final Value<int> syncStatus;
@@ -8577,12 +9138,17 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
     this.isTaxInclusive = const Value.absent(),
     this.cgstPercent = const Value.absent(),
     this.sgstPercent = const Value.absent(),
+    this.igstPercent = const Value.absent(),
     this.otherTaxPercent = const Value.absent(),
     this.otherTaxName = const Value.absent(),
     this.cgstAmount = const Value.absent(),
     this.sgstAmount = const Value.absent(),
+    this.igstAmount = const Value.absent(),
     this.otherTaxAmount = const Value.absent(),
     this.totalTaxAmount = const Value.absent(),
+    this.customerGstin = const Value.absent(),
+    this.placeOfSupply = const Value.absent(),
+    this.isInterstate = const Value.absent(),
     this.extraChargesJson = const Value.absent(),
     this.paymentMode = const Value.absent(),
     this.syncStatus = const Value.absent(),
@@ -8612,12 +9178,17 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
     this.isTaxInclusive = const Value.absent(),
     this.cgstPercent = const Value.absent(),
     this.sgstPercent = const Value.absent(),
+    this.igstPercent = const Value.absent(),
     this.otherTaxPercent = const Value.absent(),
     this.otherTaxName = const Value.absent(),
     this.cgstAmount = const Value.absent(),
     this.sgstAmount = const Value.absent(),
+    this.igstAmount = const Value.absent(),
     this.otherTaxAmount = const Value.absent(),
     this.totalTaxAmount = const Value.absent(),
+    this.customerGstin = const Value.absent(),
+    this.placeOfSupply = const Value.absent(),
+    this.isInterstate = const Value.absent(),
     this.extraChargesJson = const Value.absent(),
     this.paymentMode = const Value.absent(),
     required int syncStatus,
@@ -8651,12 +9222,17 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
     Expression<bool>? isTaxInclusive,
     Expression<double>? cgstPercent,
     Expression<double>? sgstPercent,
+    Expression<double>? igstPercent,
     Expression<double>? otherTaxPercent,
     Expression<String>? otherTaxName,
     Expression<double>? cgstAmount,
     Expression<double>? sgstAmount,
+    Expression<double>? igstAmount,
     Expression<double>? otherTaxAmount,
     Expression<double>? totalTaxAmount,
+    Expression<String>? customerGstin,
+    Expression<String>? placeOfSupply,
+    Expression<bool>? isInterstate,
     Expression<String>? extraChargesJson,
     Expression<String>? paymentMode,
     Expression<int>? syncStatus,
@@ -8686,12 +9262,17 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
       if (isTaxInclusive != null) 'is_tax_inclusive': isTaxInclusive,
       if (cgstPercent != null) 'cgst_percent': cgstPercent,
       if (sgstPercent != null) 'sgst_percent': sgstPercent,
+      if (igstPercent != null) 'igst_percent': igstPercent,
       if (otherTaxPercent != null) 'other_tax_percent': otherTaxPercent,
       if (otherTaxName != null) 'other_tax_name': otherTaxName,
       if (cgstAmount != null) 'cgst_amount': cgstAmount,
       if (sgstAmount != null) 'sgst_amount': sgstAmount,
+      if (igstAmount != null) 'igst_amount': igstAmount,
       if (otherTaxAmount != null) 'other_tax_amount': otherTaxAmount,
       if (totalTaxAmount != null) 'total_tax_amount': totalTaxAmount,
+      if (customerGstin != null) 'customer_gstin': customerGstin,
+      if (placeOfSupply != null) 'place_of_supply': placeOfSupply,
+      if (isInterstate != null) 'is_interstate': isInterstate,
       if (extraChargesJson != null) 'extra_charges_json': extraChargesJson,
       if (paymentMode != null) 'payment_mode': paymentMode,
       if (syncStatus != null) 'sync_status': syncStatus,
@@ -8723,12 +9304,17 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
     Value<bool>? isTaxInclusive,
     Value<double>? cgstPercent,
     Value<double>? sgstPercent,
+    Value<double>? igstPercent,
     Value<double>? otherTaxPercent,
     Value<String?>? otherTaxName,
     Value<double>? cgstAmount,
     Value<double>? sgstAmount,
+    Value<double>? igstAmount,
     Value<double>? otherTaxAmount,
     Value<double>? totalTaxAmount,
+    Value<String?>? customerGstin,
+    Value<String?>? placeOfSupply,
+    Value<bool>? isInterstate,
     Value<String>? extraChargesJson,
     Value<String>? paymentMode,
     Value<int>? syncStatus,
@@ -8758,12 +9344,17 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
       isTaxInclusive: isTaxInclusive ?? this.isTaxInclusive,
       cgstPercent: cgstPercent ?? this.cgstPercent,
       sgstPercent: sgstPercent ?? this.sgstPercent,
+      igstPercent: igstPercent ?? this.igstPercent,
       otherTaxPercent: otherTaxPercent ?? this.otherTaxPercent,
       otherTaxName: otherTaxName ?? this.otherTaxName,
       cgstAmount: cgstAmount ?? this.cgstAmount,
       sgstAmount: sgstAmount ?? this.sgstAmount,
+      igstAmount: igstAmount ?? this.igstAmount,
       otherTaxAmount: otherTaxAmount ?? this.otherTaxAmount,
       totalTaxAmount: totalTaxAmount ?? this.totalTaxAmount,
+      customerGstin: customerGstin ?? this.customerGstin,
+      placeOfSupply: placeOfSupply ?? this.placeOfSupply,
+      isInterstate: isInterstate ?? this.isInterstate,
       extraChargesJson: extraChargesJson ?? this.extraChargesJson,
       paymentMode: paymentMode ?? this.paymentMode,
       syncStatus: syncStatus ?? this.syncStatus,
@@ -8841,6 +9432,9 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
     if (sgstPercent.present) {
       map['sgst_percent'] = Variable<double>(sgstPercent.value);
     }
+    if (igstPercent.present) {
+      map['igst_percent'] = Variable<double>(igstPercent.value);
+    }
     if (otherTaxPercent.present) {
       map['other_tax_percent'] = Variable<double>(otherTaxPercent.value);
     }
@@ -8853,11 +9447,23 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
     if (sgstAmount.present) {
       map['sgst_amount'] = Variable<double>(sgstAmount.value);
     }
+    if (igstAmount.present) {
+      map['igst_amount'] = Variable<double>(igstAmount.value);
+    }
     if (otherTaxAmount.present) {
       map['other_tax_amount'] = Variable<double>(otherTaxAmount.value);
     }
     if (totalTaxAmount.present) {
       map['total_tax_amount'] = Variable<double>(totalTaxAmount.value);
+    }
+    if (customerGstin.present) {
+      map['customer_gstin'] = Variable<String>(customerGstin.value);
+    }
+    if (placeOfSupply.present) {
+      map['place_of_supply'] = Variable<String>(placeOfSupply.value);
+    }
+    if (isInterstate.present) {
+      map['is_interstate'] = Variable<bool>(isInterstate.value);
     }
     if (extraChargesJson.present) {
       map['extra_charges_json'] = Variable<String>(extraChargesJson.value);
@@ -8902,12 +9508,17 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
           ..write('isTaxInclusive: $isTaxInclusive, ')
           ..write('cgstPercent: $cgstPercent, ')
           ..write('sgstPercent: $sgstPercent, ')
+          ..write('igstPercent: $igstPercent, ')
           ..write('otherTaxPercent: $otherTaxPercent, ')
           ..write('otherTaxName: $otherTaxName, ')
           ..write('cgstAmount: $cgstAmount, ')
           ..write('sgstAmount: $sgstAmount, ')
+          ..write('igstAmount: $igstAmount, ')
           ..write('otherTaxAmount: $otherTaxAmount, ')
           ..write('totalTaxAmount: $totalTaxAmount, ')
+          ..write('customerGstin: $customerGstin, ')
+          ..write('placeOfSupply: $placeOfSupply, ')
+          ..write('isInterstate: $isInterstate, ')
           ..write('extraChargesJson: $extraChargesJson, ')
           ..write('paymentMode: $paymentMode, ')
           ..write('syncStatus: $syncStatus, ')
@@ -15531,6 +16142,7 @@ typedef $$CustomerRecordsTableCreateCompanionBuilder =
       required String mobile,
       Value<String?> address,
       Value<String?> email,
+      Value<String?> gstin,
       Value<double> currentPendingAmount,
       Value<double> totalPurchases,
       Value<bool> isSynced,
@@ -15546,6 +16158,7 @@ typedef $$CustomerRecordsTableUpdateCompanionBuilder =
       Value<String> mobile,
       Value<String?> address,
       Value<String?> email,
+      Value<String?> gstin,
       Value<double> currentPendingAmount,
       Value<double> totalPurchases,
       Value<bool> isSynced,
@@ -15590,6 +16203,11 @@ class $$CustomerRecordsTableFilterComposer
 
   ColumnFilters<String> get email => $composableBuilder(
     column: $table.email,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get gstin => $composableBuilder(
+    column: $table.gstin,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -15663,6 +16281,11 @@ class $$CustomerRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get gstin => $composableBuilder(
+    column: $table.gstin,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get currentPendingAmount => $composableBuilder(
     column: $table.currentPendingAmount,
     builder: (column) => ColumnOrderings(column),
@@ -15720,6 +16343,9 @@ class $$CustomerRecordsTableAnnotationComposer
 
   GeneratedColumn<String> get email =>
       $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<String> get gstin =>
+      $composableBuilder(column: $table.gstin, builder: (column) => column);
 
   GeneratedColumn<double> get currentPendingAmount => $composableBuilder(
     column: $table.currentPendingAmount,
@@ -15787,6 +16413,7 @@ class $$CustomerRecordsTableTableManager
                 Value<String> mobile = const Value.absent(),
                 Value<String?> address = const Value.absent(),
                 Value<String?> email = const Value.absent(),
+                Value<String?> gstin = const Value.absent(),
                 Value<double> currentPendingAmount = const Value.absent(),
                 Value<double> totalPurchases = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
@@ -15800,6 +16427,7 @@ class $$CustomerRecordsTableTableManager
                 mobile: mobile,
                 address: address,
                 email: email,
+                gstin: gstin,
                 currentPendingAmount: currentPendingAmount,
                 totalPurchases: totalPurchases,
                 isSynced: isSynced,
@@ -15815,6 +16443,7 @@ class $$CustomerRecordsTableTableManager
                 required String mobile,
                 Value<String?> address = const Value.absent(),
                 Value<String?> email = const Value.absent(),
+                Value<String?> gstin = const Value.absent(),
                 Value<double> currentPendingAmount = const Value.absent(),
                 Value<double> totalPurchases = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
@@ -15828,6 +16457,7 @@ class $$CustomerRecordsTableTableManager
                 mobile: mobile,
                 address: address,
                 email: email,
+                gstin: gstin,
                 currentPendingAmount: currentPendingAmount,
                 totalPurchases: totalPurchases,
                 isSynced: isSynced,
@@ -16225,6 +16855,11 @@ typedef $$ProductRecordsTableCreateCompanionBuilder =
       Value<double> sgstPercent,
       Value<String?> hsnCode,
       Value<String?> customFieldsJson,
+      Value<String?> size,
+      Value<String?> color,
+      Value<double?> mrp,
+      Value<String?> composition,
+      Value<String?> drugSchedule,
     });
 typedef $$ProductRecordsTableUpdateCompanionBuilder =
     ProductRecordsCompanion Function({
@@ -16252,6 +16887,11 @@ typedef $$ProductRecordsTableUpdateCompanionBuilder =
       Value<double> sgstPercent,
       Value<String?> hsnCode,
       Value<String?> customFieldsJson,
+      Value<String?> size,
+      Value<String?> color,
+      Value<double?> mrp,
+      Value<String?> composition,
+      Value<String?> drugSchedule,
     });
 
 class $$ProductRecordsTableFilterComposer
@@ -16380,6 +17020,31 @@ class $$ProductRecordsTableFilterComposer
 
   ColumnFilters<String> get customFieldsJson => $composableBuilder(
     column: $table.customFieldsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get size => $composableBuilder(
+    column: $table.size,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get mrp => $composableBuilder(
+    column: $table.mrp,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get composition => $composableBuilder(
+    column: $table.composition,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get drugSchedule => $composableBuilder(
+    column: $table.drugSchedule,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -16512,6 +17177,31 @@ class $$ProductRecordsTableOrderingComposer
     column: $table.customFieldsJson,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get size => $composableBuilder(
+    column: $table.size,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get mrp => $composableBuilder(
+    column: $table.mrp,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get composition => $composableBuilder(
+    column: $table.composition,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get drugSchedule => $composableBuilder(
+    column: $table.drugSchedule,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ProductRecordsTableAnnotationComposer
@@ -16618,6 +17308,25 @@ class $$ProductRecordsTableAnnotationComposer
     column: $table.customFieldsJson,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get size =>
+      $composableBuilder(column: $table.size, builder: (column) => column);
+
+  GeneratedColumn<String> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<double> get mrp =>
+      $composableBuilder(column: $table.mrp, builder: (column) => column);
+
+  GeneratedColumn<String> get composition => $composableBuilder(
+    column: $table.composition,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get drugSchedule => $composableBuilder(
+    column: $table.drugSchedule,
+    builder: (column) => column,
+  );
 }
 
 class $$ProductRecordsTableTableManager
@@ -16677,6 +17386,11 @@ class $$ProductRecordsTableTableManager
                 Value<double> sgstPercent = const Value.absent(),
                 Value<String?> hsnCode = const Value.absent(),
                 Value<String?> customFieldsJson = const Value.absent(),
+                Value<String?> size = const Value.absent(),
+                Value<String?> color = const Value.absent(),
+                Value<double?> mrp = const Value.absent(),
+                Value<String?> composition = const Value.absent(),
+                Value<String?> drugSchedule = const Value.absent(),
               }) => ProductRecordsCompanion(
                 id: id,
                 serverId: serverId,
@@ -16702,6 +17416,11 @@ class $$ProductRecordsTableTableManager
                 sgstPercent: sgstPercent,
                 hsnCode: hsnCode,
                 customFieldsJson: customFieldsJson,
+                size: size,
+                color: color,
+                mrp: mrp,
+                composition: composition,
+                drugSchedule: drugSchedule,
               ),
           createCompanionCallback:
               ({
@@ -16729,6 +17448,11 @@ class $$ProductRecordsTableTableManager
                 Value<double> sgstPercent = const Value.absent(),
                 Value<String?> hsnCode = const Value.absent(),
                 Value<String?> customFieldsJson = const Value.absent(),
+                Value<String?> size = const Value.absent(),
+                Value<String?> color = const Value.absent(),
+                Value<double?> mrp = const Value.absent(),
+                Value<String?> composition = const Value.absent(),
+                Value<String?> drugSchedule = const Value.absent(),
               }) => ProductRecordsCompanion.insert(
                 id: id,
                 serverId: serverId,
@@ -16754,6 +17478,11 @@ class $$ProductRecordsTableTableManager
                 sgstPercent: sgstPercent,
                 hsnCode: hsnCode,
                 customFieldsJson: customFieldsJson,
+                size: size,
+                color: color,
+                mrp: mrp,
+                composition: composition,
+                drugSchedule: drugSchedule,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -17305,6 +18034,7 @@ typedef $$PurchaseBatchRecordsTableCreateCompanionBuilder =
       Value<String?> supplierId,
       Value<String?> supplierName,
       Value<String> unit,
+      Value<String?> batchNumber,
       Value<DateTime?> expiryDate,
       Value<DateTime?> productionDate,
       Value<int?> warrantyMonths,
@@ -17332,6 +18062,7 @@ typedef $$PurchaseBatchRecordsTableUpdateCompanionBuilder =
       Value<String?> supplierId,
       Value<String?> supplierName,
       Value<String> unit,
+      Value<String?> batchNumber,
       Value<DateTime?> expiryDate,
       Value<DateTime?> productionDate,
       Value<int?> warrantyMonths,
@@ -17428,6 +18159,11 @@ class $$PurchaseBatchRecordsTableFilterComposer
 
   ColumnFilters<String> get unit => $composableBuilder(
     column: $table.unit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get batchNumber => $composableBuilder(
+    column: $table.batchNumber,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -17561,6 +18297,11 @@ class $$PurchaseBatchRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get batchNumber => $composableBuilder(
+    column: $table.batchNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get expiryDate => $composableBuilder(
     column: $table.expiryDate,
     builder: (column) => ColumnOrderings(column),
@@ -17679,6 +18420,11 @@ class $$PurchaseBatchRecordsTableAnnotationComposer
   GeneratedColumn<String> get unit =>
       $composableBuilder(column: $table.unit, builder: (column) => column);
 
+  GeneratedColumn<String> get batchNumber => $composableBuilder(
+    column: $table.batchNumber,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get expiryDate => $composableBuilder(
     column: $table.expiryDate,
     builder: (column) => column,
@@ -17773,6 +18519,7 @@ class $$PurchaseBatchRecordsTableTableManager
                 Value<String?> supplierId = const Value.absent(),
                 Value<String?> supplierName = const Value.absent(),
                 Value<String> unit = const Value.absent(),
+                Value<String?> batchNumber = const Value.absent(),
                 Value<DateTime?> expiryDate = const Value.absent(),
                 Value<DateTime?> productionDate = const Value.absent(),
                 Value<int?> warrantyMonths = const Value.absent(),
@@ -17798,6 +18545,7 @@ class $$PurchaseBatchRecordsTableTableManager
                 supplierId: supplierId,
                 supplierName: supplierName,
                 unit: unit,
+                batchNumber: batchNumber,
                 expiryDate: expiryDate,
                 productionDate: productionDate,
                 warrantyMonths: warrantyMonths,
@@ -17825,6 +18573,7 @@ class $$PurchaseBatchRecordsTableTableManager
                 Value<String?> supplierId = const Value.absent(),
                 Value<String?> supplierName = const Value.absent(),
                 Value<String> unit = const Value.absent(),
+                Value<String?> batchNumber = const Value.absent(),
                 Value<DateTime?> expiryDate = const Value.absent(),
                 Value<DateTime?> productionDate = const Value.absent(),
                 Value<int?> warrantyMonths = const Value.absent(),
@@ -17850,6 +18599,7 @@ class $$PurchaseBatchRecordsTableTableManager
                 supplierId: supplierId,
                 supplierName: supplierName,
                 unit: unit,
+                batchNumber: batchNumber,
                 expiryDate: expiryDate,
                 productionDate: productionDate,
                 warrantyMonths: warrantyMonths,
@@ -18506,12 +19256,17 @@ typedef $$BillRecordsTableCreateCompanionBuilder =
       Value<bool> isTaxInclusive,
       Value<double> cgstPercent,
       Value<double> sgstPercent,
+      Value<double> igstPercent,
       Value<double> otherTaxPercent,
       Value<String?> otherTaxName,
       Value<double> cgstAmount,
       Value<double> sgstAmount,
+      Value<double> igstAmount,
       Value<double> otherTaxAmount,
       Value<double> totalTaxAmount,
+      Value<String?> customerGstin,
+      Value<String?> placeOfSupply,
+      Value<bool> isInterstate,
       Value<String> extraChargesJson,
       Value<String> paymentMode,
       required int syncStatus,
@@ -18542,12 +19297,17 @@ typedef $$BillRecordsTableUpdateCompanionBuilder =
       Value<bool> isTaxInclusive,
       Value<double> cgstPercent,
       Value<double> sgstPercent,
+      Value<double> igstPercent,
       Value<double> otherTaxPercent,
       Value<String?> otherTaxName,
       Value<double> cgstAmount,
       Value<double> sgstAmount,
+      Value<double> igstAmount,
       Value<double> otherTaxAmount,
       Value<double> totalTaxAmount,
+      Value<String?> customerGstin,
+      Value<String?> placeOfSupply,
+      Value<bool> isInterstate,
       Value<String> extraChargesJson,
       Value<String> paymentMode,
       Value<int> syncStatus,
@@ -18674,6 +19434,11 @@ class $$BillRecordsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<double> get igstPercent => $composableBuilder(
+    column: $table.igstPercent,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<double> get otherTaxPercent => $composableBuilder(
     column: $table.otherTaxPercent,
     builder: (column) => ColumnFilters(column),
@@ -18694,6 +19459,11 @@ class $$BillRecordsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<double> get igstAmount => $composableBuilder(
+    column: $table.igstAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<double> get otherTaxAmount => $composableBuilder(
     column: $table.otherTaxAmount,
     builder: (column) => ColumnFilters(column),
@@ -18701,6 +19471,21 @@ class $$BillRecordsTableFilterComposer
 
   ColumnFilters<double> get totalTaxAmount => $composableBuilder(
     column: $table.totalTaxAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get customerGstin => $composableBuilder(
+    column: $table.customerGstin,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get placeOfSupply => $composableBuilder(
+    column: $table.placeOfSupply,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isInterstate => $composableBuilder(
+    column: $table.isInterstate,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -18849,6 +19634,11 @@ class $$BillRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get igstPercent => $composableBuilder(
+    column: $table.igstPercent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get otherTaxPercent => $composableBuilder(
     column: $table.otherTaxPercent,
     builder: (column) => ColumnOrderings(column),
@@ -18869,6 +19659,11 @@ class $$BillRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get igstAmount => $composableBuilder(
+    column: $table.igstAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get otherTaxAmount => $composableBuilder(
     column: $table.otherTaxAmount,
     builder: (column) => ColumnOrderings(column),
@@ -18876,6 +19671,21 @@ class $$BillRecordsTableOrderingComposer
 
   ColumnOrderings<double> get totalTaxAmount => $composableBuilder(
     column: $table.totalTaxAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get customerGstin => $composableBuilder(
+    column: $table.customerGstin,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get placeOfSupply => $composableBuilder(
+    column: $table.placeOfSupply,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isInterstate => $composableBuilder(
+    column: $table.isInterstate,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -19014,6 +19824,11 @@ class $$BillRecordsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<double> get igstPercent => $composableBuilder(
+    column: $table.igstPercent,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<double> get otherTaxPercent => $composableBuilder(
     column: $table.otherTaxPercent,
     builder: (column) => column,
@@ -19034,6 +19849,11 @@ class $$BillRecordsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<double> get igstAmount => $composableBuilder(
+    column: $table.igstAmount,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<double> get otherTaxAmount => $composableBuilder(
     column: $table.otherTaxAmount,
     builder: (column) => column,
@@ -19041,6 +19861,21 @@ class $$BillRecordsTableAnnotationComposer
 
   GeneratedColumn<double> get totalTaxAmount => $composableBuilder(
     column: $table.totalTaxAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get customerGstin => $composableBuilder(
+    column: $table.customerGstin,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get placeOfSupply => $composableBuilder(
+    column: $table.placeOfSupply,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isInterstate => $composableBuilder(
+    column: $table.isInterstate,
     builder: (column) => column,
   );
 
@@ -19119,12 +19954,17 @@ class $$BillRecordsTableTableManager
                 Value<bool> isTaxInclusive = const Value.absent(),
                 Value<double> cgstPercent = const Value.absent(),
                 Value<double> sgstPercent = const Value.absent(),
+                Value<double> igstPercent = const Value.absent(),
                 Value<double> otherTaxPercent = const Value.absent(),
                 Value<String?> otherTaxName = const Value.absent(),
                 Value<double> cgstAmount = const Value.absent(),
                 Value<double> sgstAmount = const Value.absent(),
+                Value<double> igstAmount = const Value.absent(),
                 Value<double> otherTaxAmount = const Value.absent(),
                 Value<double> totalTaxAmount = const Value.absent(),
+                Value<String?> customerGstin = const Value.absent(),
+                Value<String?> placeOfSupply = const Value.absent(),
+                Value<bool> isInterstate = const Value.absent(),
                 Value<String> extraChargesJson = const Value.absent(),
                 Value<String> paymentMode = const Value.absent(),
                 Value<int> syncStatus = const Value.absent(),
@@ -19153,12 +19993,17 @@ class $$BillRecordsTableTableManager
                 isTaxInclusive: isTaxInclusive,
                 cgstPercent: cgstPercent,
                 sgstPercent: sgstPercent,
+                igstPercent: igstPercent,
                 otherTaxPercent: otherTaxPercent,
                 otherTaxName: otherTaxName,
                 cgstAmount: cgstAmount,
                 sgstAmount: sgstAmount,
+                igstAmount: igstAmount,
                 otherTaxAmount: otherTaxAmount,
                 totalTaxAmount: totalTaxAmount,
+                customerGstin: customerGstin,
+                placeOfSupply: placeOfSupply,
+                isInterstate: isInterstate,
                 extraChargesJson: extraChargesJson,
                 paymentMode: paymentMode,
                 syncStatus: syncStatus,
@@ -19189,12 +20034,17 @@ class $$BillRecordsTableTableManager
                 Value<bool> isTaxInclusive = const Value.absent(),
                 Value<double> cgstPercent = const Value.absent(),
                 Value<double> sgstPercent = const Value.absent(),
+                Value<double> igstPercent = const Value.absent(),
                 Value<double> otherTaxPercent = const Value.absent(),
                 Value<String?> otherTaxName = const Value.absent(),
                 Value<double> cgstAmount = const Value.absent(),
                 Value<double> sgstAmount = const Value.absent(),
+                Value<double> igstAmount = const Value.absent(),
                 Value<double> otherTaxAmount = const Value.absent(),
                 Value<double> totalTaxAmount = const Value.absent(),
+                Value<String?> customerGstin = const Value.absent(),
+                Value<String?> placeOfSupply = const Value.absent(),
+                Value<bool> isInterstate = const Value.absent(),
                 Value<String> extraChargesJson = const Value.absent(),
                 Value<String> paymentMode = const Value.absent(),
                 required int syncStatus,
@@ -19223,12 +20073,17 @@ class $$BillRecordsTableTableManager
                 isTaxInclusive: isTaxInclusive,
                 cgstPercent: cgstPercent,
                 sgstPercent: sgstPercent,
+                igstPercent: igstPercent,
                 otherTaxPercent: otherTaxPercent,
                 otherTaxName: otherTaxName,
                 cgstAmount: cgstAmount,
                 sgstAmount: sgstAmount,
+                igstAmount: igstAmount,
                 otherTaxAmount: otherTaxAmount,
                 totalTaxAmount: totalTaxAmount,
+                customerGstin: customerGstin,
+                placeOfSupply: placeOfSupply,
+                isInterstate: isInterstate,
                 extraChargesJson: extraChargesJson,
                 paymentMode: paymentMode,
                 syncStatus: syncStatus,

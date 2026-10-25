@@ -42,15 +42,21 @@ class ProductOfflineController extends ChangeNotifier {
 
   Future<ProductEntity?> findDuplicateProduct(
     String name,
-    String companyName,
-  ) async {
+    String companyName, {
+    String? size,
+    String? color,
+  }) async {
     final normalizedName = name.trim().toLowerCase();
     final normalizedCompany = companyName.trim().toLowerCase();
+    final normalizedSize = (size ?? '').trim().toLowerCase();
+    final normalizedColor = (color ?? '').trim().toLowerCase();
 
     for (final product in await _db.loadProducts()) {
       if (product.syncStatus == SyncStatus.deleted) continue;
       if (product.name.trim().toLowerCase() == normalizedName &&
-          product.companyName.trim().toLowerCase() == normalizedCompany) {
+          product.companyName.trim().toLowerCase() == normalizedCompany &&
+          (product.size ?? '').trim().toLowerCase() == normalizedSize &&
+          (product.color ?? '').trim().toLowerCase() == normalizedColor) {
         return product;
       }
     }
@@ -94,11 +100,21 @@ class ProductOfflineController extends ChangeNotifier {
     double sgstPercent = 0.0,
     String? hsnCode,
     String? customFieldsJson,
+    String? size,
+    String? color,
+    double? mrp,
+    String? composition,
+    String? drugSchedule,
   }) async {
     debugPrint('[ProductOffline] Adding product: $name');
 
     if (!skipDuplicateCheck) {
-      final existingProduct = await findDuplicateProduct(name, companyName);
+      final existingProduct = await findDuplicateProduct(
+        name,
+        companyName,
+        size: size,
+        color: color,
+      );
       if (existingProduct != null) {
         debugPrint(
           '[ProductOffline] Duplicate product found: ${existingProduct.name} (${existingProduct.companyName})',
@@ -133,6 +149,11 @@ class ProductOfflineController extends ChangeNotifier {
       sgstPercent: sgstPercent,
       hsnCode: hsnCode,
       customFieldsJson: customFieldsJson,
+      size: size,
+      color: color,
+      mrp: mrp,
+      composition: composition,
+      drugSchedule: drugSchedule,
     );
 
     await _db.saveProduct(product);
@@ -261,6 +282,12 @@ class ProductOfflineController extends ChangeNotifier {
     double? sgstPercent,
     String? hsnCode,
     String? customFieldsJson,
+    String? size,
+    String? color,
+    double? mrp,
+    String? composition,
+    String? drugSchedule,
+    bool updateVariantFields = false,
   }) async {
     final existing = await _findById(id);
     if (existing == null) {
@@ -303,6 +330,15 @@ class ProductOfflineController extends ChangeNotifier {
       syncStatus: newSyncStatus,
       updatedAt: DateTime.now(),
     );
+    // Assign vertical fields directly so empty values can clear previous data
+    // (copyWith treats null as "keep existing").
+    if (updateVariantFields) {
+      updated.size = size;
+      updated.color = color;
+      updated.mrp = mrp;
+      updated.composition = composition;
+      updated.drugSchedule = drugSchedule;
+    }
 
     await _db.saveProduct(updated);
 

@@ -49,6 +49,9 @@ class BillItemEmbedded {
   double subtotal;
   double returnedQuantity; // Changed to double to match quantity type
   String? hsnCode;
+  double cgstPercent;
+  double sgstPercent;
+  double igstPercent;
   String? unit; // Base unit (kg, ltr, pcs)
   String? sellUnit; // Sale unit (gm, ml, kg, ltr, pcs)
   int? employeeToken; // Salesperson token for this line item
@@ -63,6 +66,9 @@ class BillItemEmbedded {
     this.subtotal = 0.0,
     this.returnedQuantity = 0.0,
     this.hsnCode,
+    this.cgstPercent = 0.0,
+    this.sgstPercent = 0.0,
+    this.igstPercent = 0.0,
     this.unit,
     this.sellUnit,
     this.employeeToken,
@@ -79,6 +85,9 @@ class BillItemEmbedded {
       'subtotal': subtotal,
       'returnedQuantity': returnedQuantity,
       'hsnCode': hsnCode,
+      'cgstPercent': cgstPercent,
+      'sgstPercent': sgstPercent,
+      'igstPercent': igstPercent,
       'unit': unit,
       'sellUnit': sellUnit,
       if (employeeToken != null) 'employeeToken': employeeToken,
@@ -100,6 +109,9 @@ class BillItemEmbedded {
       subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0.0,
       returnedQuantity: (json['returnedQuantity'] as num?)?.toDouble() ?? 0.0,
       hsnCode: json['hsnCode'] as String?,
+      cgstPercent: (json['cgstPercent'] as num?)?.toDouble() ?? 0.0,
+      sgstPercent: (json['sgstPercent'] as num?)?.toDouble() ?? 0.0,
+      igstPercent: (json['igstPercent'] as num?)?.toDouble() ?? 0.0,
       unit: json['unit'] as String?,
       sellUnit: json['sellUnit'] as String?,
       employeeToken: (token != null && token > 0) ? token : null,
@@ -175,6 +187,9 @@ class BillEntity {
   // SGST percentage applied
   double sgstPercent;
 
+  // IGST percentage applied (interstate)
+  double igstPercent;
+
   // Other tax percentage applied
   double otherTaxPercent;
 
@@ -187,11 +202,23 @@ class BillEntity {
   // Calculated SGST amount
   double sgstAmount;
 
+  // Calculated IGST amount
+  double igstAmount;
+
   // Calculated other tax amount
   double otherTaxAmount;
 
   // Total tax amount
   double totalTaxAmount;
+
+  /// Snapshot of customer GSTIN at billing time (GSTR-1 B2B)
+  String? customerGstin;
+
+  /// Place of supply state code (2-digit)
+  String? placeOfSupply;
+
+  /// True when IGST was applied (interstate supply)
+  bool isInterstate;
 
   // Extra charges (labour, service, etc.)
   List<BillExtraCharge> extraCharges;
@@ -230,12 +257,17 @@ class BillEntity {
     this.isTaxInclusive = false,
     this.cgstPercent = 0.0,
     this.sgstPercent = 0.0,
+    this.igstPercent = 0.0,
     this.otherTaxPercent = 0.0,
     this.otherTaxName,
     this.cgstAmount = 0.0,
     this.sgstAmount = 0.0,
+    this.igstAmount = 0.0,
     this.otherTaxAmount = 0.0,
     this.totalTaxAmount = 0.0,
+    this.customerGstin,
+    this.placeOfSupply,
+    this.isInterstate = false,
     this.extraCharges = const [],
     this.paymentMode = 'CASH',
     this.syncStatus = BillSyncStatus.newRecord,
@@ -269,12 +301,17 @@ class BillEntity {
     bool isTaxInclusive = false,
     double cgstPercent = 0.0,
     double sgstPercent = 0.0,
+    double igstPercent = 0.0,
     double otherTaxPercent = 0.0,
     String? otherTaxName,
     double cgstAmount = 0.0,
     double sgstAmount = 0.0,
+    double igstAmount = 0.0,
     double otherTaxAmount = 0.0,
     double totalTaxAmount = 0.0,
+    String? customerGstin,
+    String? placeOfSupply,
+    bool isInterstate = false,
     List<BillExtraCharge> extraCharges = const [],
     String paymentMode = 'CASH',
     BillSyncStatus syncStatus = BillSyncStatus.newRecord,
@@ -302,12 +339,17 @@ class BillEntity {
       isTaxInclusive: isTaxInclusive,
       cgstPercent: cgstPercent,
       sgstPercent: sgstPercent,
+      igstPercent: igstPercent,
       otherTaxPercent: otherTaxPercent,
       otherTaxName: otherTaxName,
       cgstAmount: cgstAmount,
       sgstAmount: sgstAmount,
+      igstAmount: igstAmount,
       otherTaxAmount: otherTaxAmount,
       totalTaxAmount: totalTaxAmount,
+      customerGstin: customerGstin,
+      placeOfSupply: placeOfSupply,
+      isInterstate: isInterstate,
       extraCharges: extraCharges,
       paymentMode: paymentMode,
       syncStatus: syncStatus,
@@ -361,12 +403,17 @@ class BillEntity {
       isTaxInclusive: data['isTaxInclusive'] as bool? ?? false,
       cgstPercent: (data['cgstPercent'] as num?)?.toDouble() ?? 0.0,
       sgstPercent: (data['sgstPercent'] as num?)?.toDouble() ?? 0.0,
+      igstPercent: (data['igstPercent'] as num?)?.toDouble() ?? 0.0,
       otherTaxPercent: (data['otherTaxPercent'] as num?)?.toDouble() ?? 0.0,
       otherTaxName: data['otherTaxName'] as String?,
       cgstAmount: (data['cgstAmount'] as num?)?.toDouble() ?? 0.0,
       sgstAmount: (data['sgstAmount'] as num?)?.toDouble() ?? 0.0,
+      igstAmount: (data['igstAmount'] as num?)?.toDouble() ?? 0.0,
       otherTaxAmount: (data['otherTaxAmount'] as num?)?.toDouble() ?? 0.0,
       totalTaxAmount: (data['totalTaxAmount'] as num?)?.toDouble() ?? 0.0,
+      customerGstin: data['customerGstin'] as String?,
+      placeOfSupply: data['placeOfSupply'] as String?,
+      isInterstate: data['isInterstate'] as bool? ?? false,
       extraCharges: charges,
       paymentMode: (data['paymentMode'] as String?)?.trim().isNotEmpty == true
           ? (data['paymentMode'] as String).trim().toUpperCase()
@@ -440,12 +487,17 @@ class BillEntity {
       'isTaxInclusive': isTaxInclusive,
       'cgstPercent': cgstPercent,
       'sgstPercent': sgstPercent,
+      'igstPercent': igstPercent,
       'otherTaxPercent': otherTaxPercent,
       'otherTaxName': otherTaxName,
       'cgstAmount': cgstAmount,
       'sgstAmount': sgstAmount,
+      'igstAmount': igstAmount,
       'otherTaxAmount': otherTaxAmount,
       'totalTaxAmount': totalTaxAmount,
+      'customerGstin': customerGstin,
+      'placeOfSupply': placeOfSupply,
+      'isInterstate': isInterstate,
       'extraCharges': extraCharges.map((c) => c.toJson()).toList(),
       'paymentMode': paymentMode,
       'createdAt': createdAt.toIso8601String(),
@@ -480,12 +532,17 @@ class BillEntity {
     bool? isTaxInclusive,
     double? cgstPercent,
     double? sgstPercent,
+    double? igstPercent,
     double? otherTaxPercent,
     String? otherTaxName,
     double? cgstAmount,
     double? sgstAmount,
+    double? igstAmount,
     double? otherTaxAmount,
     double? totalTaxAmount,
+    String? customerGstin,
+    String? placeOfSupply,
+    bool? isInterstate,
     List<BillExtraCharge>? extraCharges,
     String? paymentMode,
     BillSyncStatus? syncStatus,
@@ -514,12 +571,17 @@ class BillEntity {
       isTaxInclusive: isTaxInclusive ?? this.isTaxInclusive,
       cgstPercent: cgstPercent ?? this.cgstPercent,
       sgstPercent: sgstPercent ?? this.sgstPercent,
+      igstPercent: igstPercent ?? this.igstPercent,
       otherTaxPercent: otherTaxPercent ?? this.otherTaxPercent,
       otherTaxName: otherTaxName ?? this.otherTaxName,
       cgstAmount: cgstAmount ?? this.cgstAmount,
       sgstAmount: sgstAmount ?? this.sgstAmount,
+      igstAmount: igstAmount ?? this.igstAmount,
       otherTaxAmount: otherTaxAmount ?? this.otherTaxAmount,
       totalTaxAmount: totalTaxAmount ?? this.totalTaxAmount,
+      customerGstin: customerGstin ?? this.customerGstin,
+      placeOfSupply: placeOfSupply ?? this.placeOfSupply,
+      isInterstate: isInterstate ?? this.isInterstate,
       extraCharges: extraCharges ?? this.extraCharges,
       paymentMode: paymentMode ?? this.paymentMode,
       syncStatus: syncStatus ?? this.syncStatus,

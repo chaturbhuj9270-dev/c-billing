@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:c_billing/core/access/tenant_context.dart';
+import 'package:c_billing/core/services/inventory_batch_sort.dart';
 import '../../domain/entities/purchase_batch.dart';
 import '../../domain/repositories/purchase_batch_repository.dart';
-import 'package:c_billing/core/access/tenant_context.dart';
 
 // Firebase implementation of PurchaseBatchRepository
 class FirebasePurchaseBatchRepository implements PurchaseBatchRepository {
@@ -69,7 +70,7 @@ class FirebasePurchaseBatchRepository implements PurchaseBatchRepository {
         batches = batches.where((b) => !b.isConsumed).toList();
       }
       
-      batches.sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
+      batches.sort(InventoryBatchSort.compareBatches);
       return batches;
     }
   }
@@ -104,7 +105,7 @@ class FirebasePurchaseBatchRepository implements PurchaseBatchRepository {
         batches = batches.where((b) => b.quantityRemaining > 0).toList();
       }
       
-      batches.sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
+      batches.sort(InventoryBatchSort.compareBatches);
       return batches;
     }
   }
@@ -139,7 +140,7 @@ class FirebasePurchaseBatchRepository implements PurchaseBatchRepository {
         batches = batches.where((b) => b.quantityRemaining > 0).toList();
       }
       
-      batches.sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
+      batches.sort(InventoryBatchSort.compareBatches);
       return batches;
     }
   }
@@ -193,7 +194,7 @@ class FirebasePurchaseBatchRepository implements PurchaseBatchRepository {
               !b.purchaseDate.isBefore(startDate) && 
               !b.purchaseDate.isAfter(endDate))
           .toList();
-      batches.sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
+      batches.sort(InventoryBatchSort.compareBatches);
       return batches;
     }
   }

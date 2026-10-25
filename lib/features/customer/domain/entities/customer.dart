@@ -18,6 +18,9 @@ class Customer {
   // Customer's address (optional)
   final String? address;
 
+  /// Customer GSTIN for B2B / GSTR-1 (optional)
+  final String? gstin;
+
   // Current pending amount owed by customer Increases when bill is generated, decreases when payment is received
   final double currentPendingAmount;
 
@@ -43,6 +46,7 @@ class Customer {
     required this.lastName,
     required this.contact,
     this.address,
+    this.gstin,
     this.currentPendingAmount = 0.0,
     this.totalPurchaseAmount = 0.0,
     this.totalPaidAmount = 0.0,
@@ -71,6 +75,7 @@ class Customer {
       lastName: (json['lastName'] ?? '') as String,
       contact: (json['contact'] ?? '') as String,
       address: json['address'] as String?,
+      gstin: (json['gstin'] ?? json['gstNumber'] ?? json['gst']) as String?,
       currentPendingAmount:
           ((json['currentPendingAmount'] ?? 0) as num).toDouble(),
       totalPurchaseAmount:
@@ -99,6 +104,7 @@ class Customer {
       'lastName': lastName,
       'contact': contact,
       'address': address,
+      'gstin': gstin,
       'currentPendingAmount': currentPendingAmount,
       'totalPurchaseAmount': totalPurchaseAmount,
       'totalPaidAmount': totalPaidAmount,
@@ -116,6 +122,7 @@ class Customer {
     String? lastName,
     String? contact,
     String? address,
+    String? gstin,
     double? currentPendingAmount,
     double? totalPurchaseAmount,
     double? totalPaidAmount,
@@ -130,6 +137,7 @@ class Customer {
       lastName: lastName ?? this.lastName,
       contact: contact ?? this.contact,
       address: address ?? this.address,
+      gstin: gstin ?? this.gstin,
       currentPendingAmount: currentPendingAmount ?? this.currentPendingAmount,
       totalPurchaseAmount: totalPurchaseAmount ?? this.totalPurchaseAmount,
       totalPaidAmount: totalPaidAmount ?? this.totalPaidAmount,

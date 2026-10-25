@@ -295,6 +295,9 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
                 item.salesPrice ??
                 matchedProduct?.salesPrice ??
                 item.purchasePrice * 1.2,
+            batchNumber: item.batchNumber?.trim().isNotEmpty == true
+                ? item.batchNumber!.trim()
+                : null,
             productionDate: item.productionDate,
             expiryDate: item.expiryDate,
             warrantyMonths: null,

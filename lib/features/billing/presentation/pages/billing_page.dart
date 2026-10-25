@@ -15,6 +15,7 @@ import 'package:c_billing/features/billing/domain/entities/bill_extra_charge.dar
 import 'package:c_billing/features/inventory_management/domain/entities/product.dart';
 import 'package:c_billing/features/billing/data/datasources/bill_cache_datasource.dart';
 import 'package:c_billing/core/printing/printing.dart';
+import 'package:c_billing/core/gst/gst_utils.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
 import 'package:c_billing/features/shop/domain/entities/shop.dart';
 import 'package:c_billing/features/customer/data/repositories/customer_repository.dart';
@@ -176,10 +177,26 @@ class _BillingPageState extends State<BillingPage> {
   bool get _showGstOnBill => _taxSettings.gstFeatureEnabled;
   bool get _showExtraChargesOnBill => _taxSettings.enableExtraCharges;
 
+  /// Shop GSTIN for place-of-supply / interstate detection (loaded with shop).
+  String? _shopGstin;
+
+  bool get _isInterstateSupply {
+    if (_taxSettings.enableIgst) return true;
+    final customerGstin =
+        (_selectedCustomer?['gstin'] as String?) ??
+        (_selectedCustomer?['gst'] as String?);
+    return GstUtils.isInterstate(
+          shopGstin: _shopGstin,
+          customerGstin: customerGstin,
+        ) ==
+        true;
+  }
+
   // Prefer per-product rates from purchase; fall back to flat Bill Settings rates.
   // Never apply GST unless Bill Settings has GST enabled.
   TaxBreakdown? get _taxBreakdown {
     if (!_showGstOnBill || _gstMode == GstMode.noGst) return null;
+    final interstate = _isInterstateSupply;
 
     if (_hasItemLevelTax) {
       final breakdown = BillTaxSettings.fromItemTaxes(
@@ -194,8 +211,30 @@ class _BillingPageState extends State<BillingPage> {
             .toList(),
         discountAmount: _discountAmount,
         gstMode: _gstMode,
+        forceIgst: interstate,
       );
       return breakdown.hasAnyTax ? breakdown : null;
+    }
+
+    // Flat rates: for interstate, treat settings as IGST (cgst+sgst or igst %)
+    if (interstate) {
+      final igstRate = _taxSettings.enableIgst
+          ? _taxSettings.effectiveIgstPercent
+          : (_taxSettings.cgstPercent + _taxSettings.sgstPercent);
+      if (igstRate <= 0 && !_taxSettings.enableOtherTax) return null;
+      final interstateSettings = BillTaxSettings(
+        enableIgst: igstRate > 0,
+        igstPercent: igstRate,
+        enableOtherTax: _taxSettings.enableOtherTax,
+        otherTaxName: _taxSettings.otherTaxName,
+        otherTaxPercent: _taxSettings.otherTaxPercent,
+        defaultIncludeTax: _taxSettings.defaultIncludeTax,
+      );
+      if (!interstateSettings.hasAnyTaxEnabled) return null;
+      return interstateSettings.calculateTax(
+        subtotal: _totalAmount,
+        gstMode: _gstMode,
+      );
     }
 
     if (!_taxSettings.hasAnyTaxEnabled) return null;
@@ -263,6 +302,12 @@ class _BillingPageState extends State<BillingPage> {
   Future<void> _loadBillSettings() async {
     final prefs = await SharedPreferences.getInstance();
     final taxSettings = await BillTaxSettings.load();
+    try {
+      final shop = await _shopRepository.getShopDetails();
+      _shopGstin = shop.gstNumber;
+    } catch (_) {
+      // Keep previous shop GSTIN if offline / timeout
+    }
     if (!mounted) return;
     final clearExtra = !taxSettings.enableExtraCharges;
     final tokenOn = prefs.getBool('bill_enable_employee_token') ?? false;
@@ -823,6 +868,7 @@ class _BillingPageState extends State<BillingPage> {
             'lastName': foundCustomer['lastName'] ?? '',
             'contact': foundCustomer['contact'] ?? '',
             'fullName': fullName,
+            'gstin': foundCustomer['gstin'] ?? foundCustomer['gst'],
           };
           _autoFoundCustomerName = fullName;
           _customerNameController.text = fullName;
@@ -1078,6 +1124,7 @@ class _BillingPageState extends State<BillingPage> {
           'contact': entity.mobile,
           'fullName': entity.name,
           'pendingBalance': entity.currentPendingAmount,
+          'gstin': entity.gstin,
         };
         _customerNameController.text = entity.name;
         _customerContactController.text = entity.mobile;
@@ -1498,12 +1545,26 @@ class _BillingPageState extends State<BillingPage> {
             isTaxInclusive: _gstMode == GstMode.includeGst,
             cgstPercent: _taxBreakdown?.cgstPercent ?? 0.0,
             sgstPercent: _taxBreakdown?.sgstPercent ?? 0.0,
+            igstPercent: _taxBreakdown?.igstPercent ?? 0.0,
             otherTaxPercent: _taxBreakdown?.otherTaxPercent ?? 0.0,
             otherTaxName: _taxBreakdown?.otherTaxName,
             cgstAmount: _taxBreakdown?.cgstAmount ?? 0.0,
             sgstAmount: _taxBreakdown?.sgstAmount ?? 0.0,
+            igstAmount: _taxBreakdown?.igstAmount ?? 0.0,
             otherTaxAmount: _taxBreakdown?.otherTaxAmount ?? 0.0,
             totalTaxAmount: _taxBreakdown?.totalTaxAmount ?? 0.0,
+            customerGstin: GstUtils.normalizeGstin(
+              (_selectedCustomer?['gstin'] as String?) ??
+                  (_selectedCustomer?['gst'] as String?),
+            ),
+            placeOfSupply: GstUtils.placeOfSupplyStateCode(
+              shopGstin: _shopGstin,
+              customerGstin:
+                  (_selectedCustomer?['gstin'] as String?) ??
+                  (_selectedCustomer?['gst'] as String?),
+            ),
+            isInterstate: _isInterstateSupply &&
+                (_taxBreakdown != null && _gstMode != GstMode.noGst),
             extraCharges: _validExtraCharges,
             paymentMode: _billPaymentMode.value,
           );
@@ -5655,6 +5716,13 @@ class _BillingPageState extends State<BillingPage> {
                     ? '${_localizations.sgst} (${_taxBreakdown!.sgstPercent.toStringAsFixed(1)}%)'
                     : _localizations.sgst,
                 _taxBreakdown!.sgstAmount,
+              ),
+            if (_taxBreakdown!.igstAmount > 0)
+              _buildTaxRow(
+                _taxBreakdown!.igstPercent > 0
+                    ? 'IGST (${_taxBreakdown!.igstPercent.toStringAsFixed(1)}%)'
+                    : 'IGST',
+                _taxBreakdown!.igstAmount,
               ),
             if (_taxBreakdown!.otherTaxAmount > 0)
               _buildTaxRow(

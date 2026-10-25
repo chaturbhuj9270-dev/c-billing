@@ -71,6 +71,7 @@ class _PurchasePageState extends State<PurchasePage>
   final _companySearchController = TextEditingController();
   final _productionDateController = TextEditingController();
   final _expiryDateController = TextEditingController();
+  final _batchNumberController = TextEditingController();
 
   // For adding new supplier/company
   final _newSupplierFirstNameController = TextEditingController();
@@ -2275,6 +2276,9 @@ class _PurchasePageState extends State<PurchasePage>
             unit: _selectedUnit ?? PurchaseSettingsService.instance.defaultUnit,
             purchasePrice: price,
             salesPrice: salesPrice,
+            batchNumber: _batchNumberController.text.trim().isNotEmpty
+                ? _batchNumberController.text.trim()
+                : null,
             productionDate: _productionDate,
             expiryDate: _expiryDate,
             warrantyMonths: _selectedWarranty ?? 0,
@@ -2355,6 +2359,7 @@ class _PurchasePageState extends State<PurchasePage>
           _notesController.clear();
           _productionDateController.clear();
           _expiryDateController.clear();
+          _batchNumberController.clear();
         });
 
         // Reload products to show updated stock - stream auto-handles this
@@ -2394,6 +2399,7 @@ class _PurchasePageState extends State<PurchasePage>
     _newCompanyGstCodeController.dispose();
     _productionDateController.dispose();
     _expiryDateController.dispose();
+    _batchNumberController.dispose();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
@@ -3398,6 +3404,15 @@ class _PurchasePageState extends State<PurchasePage>
           if (PurchaseSettingsService.instance.showManufacturingDate ||
               PurchaseSettingsService.instance.showExpiryDate)
             const SizedBox(height: 16),
+          if (PurchaseSettingsService.instance.showBatchNumber) ...[
+            _buildTextField(
+              controller: _batchNumberController,
+              label: 'Batch / Lot No.',
+              hint: 'Manufacturer batch or lot number',
+              icon: Icons.qr_code_2_rounded,
+            ),
+            const SizedBox(height: 16),
+          ],
           // Quantity field
           _buildTextField(
             controller: _quantityController,

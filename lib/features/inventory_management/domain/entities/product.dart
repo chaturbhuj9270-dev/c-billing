@@ -22,6 +22,16 @@ class Product {
   final String? customFieldsJson;
   final String? unit; // Measurement unit (kg, ltr, pcs, etc.)
   final String? barcode; // Manufacturer or app-generated barcode / QR payload
+  /// Garment size (e.g. S, M, L, 42)
+  final String? size;
+  /// Garment / item color
+  final String? color;
+  /// Maximum retail price (medical / regulated retail)
+  final double? mrp;
+  /// Drug / product composition (medical)
+  final String? composition;
+  /// Schedule H / H1 / X etc. (medical)
+  final String? drugSchedule;
 
   Product({
     required this.id,
@@ -43,7 +53,32 @@ class Product {
     this.customFieldsJson,
     this.unit,
     this.barcode,
+    this.size,
+    this.color,
+    this.mrp,
+    this.composition,
+    this.drugSchedule,
   });
+
+  /// Name with size/color for billing and lists.
+  String get displayName => formatBillName(name, size: size, color: color);
+
+  /// Builds a bill/list label with optional garment + medical lot details.
+  static String formatBillName(
+    String name, {
+    String? size,
+    String? color,
+    String? batchNumber,
+  }) {
+    final parts = <String>[];
+    if (size != null && size.trim().isNotEmpty) parts.add(size.trim());
+    if (color != null && color.trim().isNotEmpty) parts.add(color.trim());
+    var label = parts.isEmpty ? name : '$name (${parts.join(' / ')})';
+    if (batchNumber != null && batchNumber.trim().isNotEmpty) {
+      label = '$label · Lot ${batchNumber.trim()}';
+    }
+    return label;
+  }
 
   // Factory constructor to create from ProductEntity (offline entity)
   factory Product.fromProductEntity(dynamic entity) {
@@ -67,6 +102,11 @@ class Product {
       customFieldsJson: entity.customFieldsJson as String?,
       unit: entity.unit as String?,
       barcode: entity.barcode as String?,
+      size: entity.size as String?,
+      color: entity.color as String?,
+      mrp: (entity.mrp as num?)?.toDouble(),
+      composition: entity.composition as String?,
+      drugSchedule: entity.drugSchedule as String?,
     );
   }
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -94,6 +134,11 @@ class Product {
         customFieldsJson: json['customFieldsJson'] as String?,
         unit: json['unit'] as String?,
         barcode: json['barcode'] as String?,
+        size: json['size'] as String?,
+        color: json['color'] as String?,
+        mrp: json['mrp'] != null ? (json['mrp'] as num).toDouble() : null,
+        composition: json['composition'] as String?,
+        drugSchedule: json['drugSchedule'] as String?,
       );
     } catch (e) {
       debugPrint('[ERROR] Failed to parse Product from JSON: $json');
@@ -135,6 +180,11 @@ class Product {
       'customFieldsJson': customFieldsJson,
       'unit': unit,
       'barcode': barcode,
+      'size': size,
+      'color': color,
+      'mrp': mrp,
+      'composition': composition,
+      'drugSchedule': drugSchedule,
     };
   }
 
@@ -159,6 +209,11 @@ class Product {
     String? customFieldsJson,
     String? unit,
     String? barcode,
+    String? size,
+    String? color,
+    double? mrp,
+    String? composition,
+    String? drugSchedule,
   }) {
     return Product(
       id: id ?? this.id,
@@ -180,6 +235,11 @@ class Product {
       customFieldsJson: customFieldsJson ?? this.customFieldsJson,
       unit: unit ?? this.unit,
       barcode: barcode ?? this.barcode,
+      size: size ?? this.size,
+      color: color ?? this.color,
+      mrp: mrp ?? this.mrp,
+      composition: composition ?? this.composition,
+      drugSchedule: drugSchedule ?? this.drugSchedule,
     );
   }
 

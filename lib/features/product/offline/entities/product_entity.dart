@@ -98,6 +98,21 @@ class ProductEntity {
   // Custom fields JSON string (stores dynamic custom column values) Format: {"column_id": "value", ...}
   String? customFieldsJson;
 
+  /// Garment size (e.g. S, M, L, 42)
+  String? size;
+
+  /// Garment / item color
+  String? color;
+
+  /// Maximum retail price
+  double? mrp;
+
+  /// Drug / product composition (medical)
+  String? composition;
+
+  /// Schedule H / H1 / X etc. (medical)
+  String? drugSchedule;
+
   ProductEntity({
     this.serverId,
     this.indexNo = 0,
@@ -122,6 +137,11 @@ class ProductEntity {
     this.sgstPercent = 0.0,
     this.hsnCode,
     this.customFieldsJson,
+    this.size,
+    this.color,
+    this.mrp,
+    this.composition,
+    this.drugSchedule,
   });
 
   // Factory constructor for creating new product with defaults
@@ -147,6 +167,11 @@ class ProductEntity {
     double sgstPercent = 0.0,
     String? hsnCode,
     String? customFieldsJson,
+    String? size,
+    String? color,
+    double? mrp,
+    String? composition,
+    String? drugSchedule,
   }) {
     final now = DateTime.now();
     return ProductEntity(
@@ -173,6 +198,11 @@ class ProductEntity {
       sgstPercent: sgstPercent,
       hsnCode: hsnCode,
       customFieldsJson: customFieldsJson,
+      size: size,
+      color: color,
+      mrp: mrp,
+      composition: composition,
+      drugSchedule: drugSchedule,
     );
   }
 
@@ -203,6 +233,11 @@ class ProductEntity {
       sgstPercent: (data['sgstPercent'] as num?)?.toDouble() ?? 0.0,
       hsnCode: data['hsnCode'] as String?,
       customFieldsJson: data['customFieldsJson'] as String?,
+      size: data['size'] as String?,
+      color: data['color'] as String?,
+      mrp: (data['mrp'] as num?)?.toDouble(),
+      composition: data['composition'] as String?,
+      drugSchedule: data['drugSchedule'] as String?,
     );
   }
 
@@ -229,6 +264,11 @@ class ProductEntity {
       'sgstPercent': sgstPercent,
       'hsnCode': hsnCode,
       'customFieldsJson': customFieldsJson,
+      'size': size,
+      'color': color,
+      'mrp': mrp,
+      'composition': composition,
+      'drugSchedule': drugSchedule,
       'updatedAt': updatedAt.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
     };
@@ -261,6 +301,11 @@ class ProductEntity {
       'cgstPercent': cgstPercent,
       'sgstPercent': sgstPercent,
       'hsnCode': hsnCode,
+      'size': size,
+      'color': color,
+      'mrp': mrp,
+      'composition': composition,
+      'drugSchedule': drugSchedule,
     };
   }
 
@@ -290,6 +335,11 @@ class ProductEntity {
     double? sgstPercent,
     String? hsnCode,
     String? customFieldsJson,
+    String? size,
+    String? color,
+    double? mrp,
+    String? composition,
+    String? drugSchedule,
   }) {
     final entity = ProductEntity(
       serverId: serverId ?? this.serverId,
@@ -315,6 +365,11 @@ class ProductEntity {
       sgstPercent: sgstPercent ?? this.sgstPercent,
       hsnCode: hsnCode ?? this.hsnCode,
       customFieldsJson: customFieldsJson ?? this.customFieldsJson,
+      size: size ?? this.size,
+      color: color ?? this.color,
+      mrp: mrp ?? this.mrp,
+      composition: composition ?? this.composition,
+      drugSchedule: drugSchedule ?? this.drugSchedule,
     );
     entity.id = id ?? this.id;
     return entity;

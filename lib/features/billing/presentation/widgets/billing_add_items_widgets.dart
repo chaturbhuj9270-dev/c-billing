@@ -679,10 +679,11 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
       final existingSellUnit = existingItem?.sellUnit;
 
       // If already in bill, show quantity adjustment dialog
+      final billName = product.displayName;
       if (existingQty > 0) {
         _showProductQuantityDialog(
           productId: product.id,
-          productName: product.name,
+          productName: billName,
           companyName: product.companyName,
           batchLocalId: null,
           sellingPrice: product.salesPrice,
@@ -706,7 +707,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
       if (supportsSubUnit && product.currentStock > 0) {
         _showProductQuantityDialog(
           productId: product.id,
-          productName: product.name,
+          productName: billName,
           companyName: product.companyName,
           batchLocalId: null,
           sellingPrice: product.salesPrice,
@@ -726,7 +727,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
       if (existingQty < product.currentStock) {
         widget.onBatchItemAdded(
           product.id,
-          product.name,
+          billName,
           product.companyName,
           null,
           product.salesPrice,
@@ -791,10 +792,16 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
         );
     final existingQty = existingItem?.quantity ?? 0.0;
 
+    final batchBillName = Product.formatBillName(
+      batch.productName,
+      size: group.fallbackProduct?.size,
+      color: group.fallbackProduct?.color,
+      batchNumber: batch.batchNumber,
+    );
     if (existingQty > 0 || supportsSubUnit) {
       _showProductQuantityDialog(
         productId: batch.productId,
-        productName: batch.productName,
+        productName: batchBillName,
         companyName: batch.companyName,
         batchLocalId: batch.id,
         sellingPrice: batch.sellingPrice,
@@ -813,7 +820,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
     if (batch.quantityRemaining > 0) {
       widget.onBatchItemAdded(
         batch.productId,
-        batch.productName,
+        batchBillName,
         batch.companyName,
         batch.id,
         batch.sellingPrice,

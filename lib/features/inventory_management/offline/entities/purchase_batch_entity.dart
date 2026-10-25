@@ -74,6 +74,9 @@ class PurchaseBatchEntity {
   // Unit of measurement
   String unit;
 
+  // Manufacturer / pharmacy batch or lot number (optional)
+  String? batchNumber;
+
   // Expiry date (optional, indexed for expiry tracking)
   DateTime? expiryDate;
 
@@ -114,6 +117,7 @@ class PurchaseBatchEntity {
     this.supplierId,
     this.supplierName,
     this.unit = 'pcs',
+    this.batchNumber,
     this.expiryDate,
     this.productionDate,
     this.warrantyMonths,
@@ -139,6 +143,7 @@ class PurchaseBatchEntity {
     String? supplierId,
     String? supplierName,
     String unit = 'pcs',
+    String? batchNumber,
     DateTime? expiryDate,
     DateTime? productionDate,
     int? warrantyMonths,
@@ -165,6 +170,7 @@ class PurchaseBatchEntity {
       supplierId: supplierId,
       supplierName: supplierName,
       unit: unit,
+      batchNumber: batchNumber,
       expiryDate: expiryDate,
       productionDate: productionDate,
       warrantyMonths: warrantyMonths,
@@ -201,6 +207,7 @@ class PurchaseBatchEntity {
       supplierId: data['supplierId'] as String?,
       supplierName: data['supplierName'] as String?,
       unit: data['unit'] as String? ?? 'pcs',
+      batchNumber: data['batchNumber'] as String?,
       expiryDate: _parseDateTime(data['expiryDate']),
       productionDate: _parseDateTime(data['productionDate']),
       warrantyMonths: (data['warrantyMonths'] as num?)?.toInt(),
@@ -230,6 +237,7 @@ class PurchaseBatchEntity {
       'supplierId': supplierId,
       'supplierName': supplierName,
       'unit': unit,
+      'batchNumber': batchNumber,
       'expiryDate': expiryDate?.toIso8601String(),
       'productionDate': productionDate?.toIso8601String(),
       'warrantyMonths': warrantyMonths,
@@ -260,6 +268,7 @@ class PurchaseBatchEntity {
       'supplierId': supplierId,
       'supplierName': supplierName,
       'unit': unit,
+      'batchNumber': batchNumber,
       'expiryDate': expiryDate,
       'productionDate': productionDate,
       'warrantyMonths': warrantyMonths,
@@ -292,6 +301,7 @@ class PurchaseBatchEntity {
     String? supplierId,
     String? supplierName,
     String? unit,
+    String? batchNumber,
     DateTime? expiryDate,
     DateTime? productionDate,
     int? warrantyMonths,
@@ -317,6 +327,7 @@ class PurchaseBatchEntity {
       supplierId: supplierId ?? this.supplierId,
       supplierName: supplierName ?? this.supplierName,
       unit: unit ?? this.unit,
+      batchNumber: batchNumber ?? this.batchNumber,
       expiryDate: expiryDate ?? this.expiryDate,
       productionDate: productionDate ?? this.productionDate,
       warrantyMonths: warrantyMonths ?? this.warrantyMonths,

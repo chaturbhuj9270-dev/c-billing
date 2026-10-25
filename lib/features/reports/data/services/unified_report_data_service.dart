@@ -52,6 +52,8 @@ class UnifiedReportDataService {
         return _suppliers();
       case UnifiedReportKind.stock:
         return _stock();
+      case UnifiedReportKind.gstr1:
+        return _gstr1(start, end, rangeLabel);
     }
   }
 
@@ -79,22 +81,41 @@ class UnifiedReportDataService {
       'Bill No',
       'Date',
       'Customer',
+      'GSTIN',
+      'Supply',
       'Items',
       'Qty',
-      'Amount',
+      'Taxable',
+      'CGST',
+      'SGST',
+      'IGST',
+      'Total Tax',
       'Discount',
-      'Tax',
-      'Total',
+      'Invoice Value',
       'Payment',
     ];
     final rows = <List<String>>[];
     var i = 0;
     double sumFinal = 0;
     double sumTax = 0;
+    double sumCgst = 0;
+    double sumSgst = 0;
+    double sumIgst = 0;
+    double sumTaxable = 0;
     for (final b in bills) {
       i++;
+      final taxable = b.isGstApplied
+          ? (b.isTaxInclusive
+                ? (b.totalAmount - b.totalTaxAmount - b.discountAmount)
+                    .clamp(0, double.infinity)
+                : (b.totalAmount - b.discountAmount).clamp(0, double.infinity))
+          : (b.totalAmount - b.discountAmount).clamp(0, double.infinity);
       sumFinal += b.finalAmount;
       sumTax += b.totalTaxAmount;
+      sumCgst += b.cgstAmount;
+      sumSgst += b.sgstAmount;
+      sumIgst += b.igstAmount;
+      sumTaxable += taxable;
       rows.add([
         '$i',
         b.billNumber,
@@ -102,22 +123,32 @@ class UnifiedReportDataService {
         (b.customerName?.trim().isNotEmpty ?? false)
             ? b.customerName!.trim()
             : 'Walk-in',
+        (b.customerGstin?.trim().isNotEmpty ?? false) ? b.customerGstin! : '-',
+        !b.isGstApplied
+            ? 'No GST'
+            : (b.isInterstate ? 'Inter (IGST)' : 'Intra (CGST+SGST)'),
         '${b.items.length}',
         '${b.totalQuantity}',
-        _rs(b.totalAmount),
-        _rs(b.discountAmount),
+        _rs(taxable.toDouble()),
+        _rs(b.cgstAmount),
+        _rs(b.sgstAmount),
+        _rs(b.igstAmount),
         _rs(b.totalTaxAmount),
+        _rs(b.discountAmount),
         _rs(b.finalAmount),
         b.paymentStatus.name,
       ]);
     }
     return UnifiedReportTable(
-      title: 'Sales / Bills Report',
+      title: 'Sales / Bills Report (with GST)',
       filterDescription: rangeLabel,
       headers: headers,
       rows: rows,
       summaryLine:
-          'Bills: ${rows.length} | Tax: Rs ${_rs(sumTax)} | Total: Rs ${_rs(sumFinal)}',
+          'Bills: ${rows.length} | Taxable: Rs ${_rs(sumTaxable)} | '
+          'CGST: Rs ${_rs(sumCgst)} | SGST: Rs ${_rs(sumSgst)} | '
+          'IGST: Rs ${_rs(sumIgst)} | Tax: Rs ${_rs(sumTax)} | '
+          'Total: Rs ${_rs(sumFinal)}',
     );
   }
 
@@ -436,6 +467,9 @@ class UnifiedReportDataService {
       'Name',
       'Company',
       'Category',
+      'HSN',
+      'CGST %',
+      'SGST %',
       'Stock',
       'Unit',
       'Purchase Rs',
@@ -451,6 +485,9 @@ class UnifiedReportDataService {
         p.name,
         p.companyName,
         p.category,
+        (p.hsnCode?.trim().isNotEmpty ?? false) ? p.hsnCode! : '-',
+        p.cgstPercent > 0 ? p.cgstPercent.toStringAsFixed(1) : '-',
+        p.sgstPercent > 0 ? p.sgstPercent.toStringAsFixed(1) : '-',
         '${p.currentStock}',
         p.unit ?? '-',
         _rs(p.purchasePrice),
@@ -459,7 +496,7 @@ class UnifiedReportDataService {
     }
     return UnifiedReportTable(
       title: 'Products Report',
-      filterDescription: 'All products',
+      filterDescription: 'All products (with HSN / GST rates)',
       headers: headers,
       rows: rows,
       summaryLine: 'Products: ${rows.length}',
@@ -469,7 +506,7 @@ class UnifiedReportDataService {
   Future<UnifiedReportTable> _customers() async {
     final list = await CustomerOfflineController.instance.getAllCustomers();
     list.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-    final headers = ['Sr', 'Name', 'Phone', 'Address', 'Pending'];
+    final headers = ['Sr', 'Name', 'Phone', 'GSTIN', 'Address', 'Pending'];
     final rows = <List<String>>[];
     var i = 0;
     for (final c in list) {
@@ -478,6 +515,7 @@ class UnifiedReportDataService {
         '$i',
         c.name,
         c.mobile,
+        (c.gstin?.trim().isNotEmpty ?? false) ? c.gstin!.trim() : '-',
         (c.address?.trim().isNotEmpty ?? false) ? c.address!.trim() : '-',
         _rs(c.currentPendingAmount),
       ]);
@@ -563,4 +601,224 @@ class UnifiedReportDataService {
           'Products: ${rows.length} | Low: $low | Out: $out',
     );
   }
+
+  /// GSTR-1 oriented export: B2B invoices, B2C summary, HSN-wise tax.
+  Future<UnifiedReportTable> _gstr1(
+    DateTime start,
+    DateTime end,
+    String rangeLabel,
+  ) async {
+    final entities = await BillOfflineController.instance.getBillsByDateRange(
+      start,
+      end,
+    );
+    final bills = entities
+        .map(Bill.fromBillEntity)
+        .where((b) => !b.returnStatus && b.isGstApplied)
+        .toList();
+
+    final headers = [
+      'Section',
+      'Date',
+      'Invoice',
+      'Customer',
+      'GSTIN',
+      'Place of Supply',
+      'Supply',
+      'HSN',
+      'Taxable',
+      'CGST',
+      'SGST',
+      'IGST',
+      'Total Tax',
+      'Invoice Value',
+    ];
+    final rows = <List<String>>[];
+
+    // —— B2B ——
+    final b2b = bills
+        .where(
+          (b) =>
+              (b.customerGstin != null && b.customerGstin!.trim().isNotEmpty),
+        )
+        .toList();
+    double b2bTaxable = 0;
+    double b2bTax = 0;
+    for (final b in b2b) {
+      final taxable = b.isTaxInclusive
+          ? (b.totalAmount - b.totalTaxAmount - b.discountAmount)
+              .clamp(0, double.infinity)
+          : (b.totalAmount - b.discountAmount).clamp(0, double.infinity);
+      b2bTaxable += taxable;
+      b2bTax += b.totalTaxAmount;
+      rows.add([
+        'B2B',
+        _dateFmt.format(b.billDate),
+        b.billNumber,
+        (b.customerName?.trim().isNotEmpty ?? false)
+            ? b.customerName!.trim()
+            : 'Customer',
+        b.customerGstin ?? '',
+        b.placeOfSupply ?? '-',
+        b.isInterstate ? 'Inter' : 'Intra',
+        '-',
+        _rs(taxable.toDouble()),
+        _rs(b.cgstAmount),
+        _rs(b.sgstAmount),
+        _rs(b.igstAmount),
+        _rs(b.totalTaxAmount),
+        _rs(b.finalAmount),
+      ]);
+    }
+
+    // —— B2C (aggregate) ——
+    final b2c = bills
+        .where(
+          (b) =>
+              b.customerGstin == null || b.customerGstin!.trim().isEmpty,
+        )
+        .toList();
+    double b2cTaxable = 0;
+    double b2cCgst = 0;
+    double b2cSgst = 0;
+    double b2cIgst = 0;
+    double b2cTax = 0;
+    double b2cValue = 0;
+    for (final b in b2c) {
+      final taxable = b.isTaxInclusive
+          ? (b.totalAmount - b.totalTaxAmount - b.discountAmount)
+              .clamp(0, double.infinity)
+          : (b.totalAmount - b.discountAmount).clamp(0, double.infinity);
+      b2cTaxable += taxable;
+      b2cCgst += b.cgstAmount;
+      b2cSgst += b.sgstAmount;
+      b2cIgst += b.igstAmount;
+      b2cTax += b.totalTaxAmount;
+      b2cValue += b.finalAmount;
+    }
+    if (b2c.isNotEmpty) {
+      rows.add([
+        'B2C',
+        rangeLabel,
+        '${b2c.length} invoices',
+        'Unregistered / Walk-in',
+        '',
+        '-',
+        b2cIgst > 0 ? 'Mixed' : 'Intra',
+        '-',
+        _rs(b2cTaxable),
+        _rs(b2cCgst),
+        _rs(b2cSgst),
+        _rs(b2cIgst),
+        _rs(b2cTax),
+        _rs(b2cValue),
+      ]);
+    }
+
+    // —— HSN summary ——
+    final hsnMap = <String, _HsnAgg>{};
+    for (final b in bills) {
+      final discountRatio = (b.discountAmount > 0 && b.totalAmount > 0)
+          ? b.discountAmount / b.totalAmount
+          : 0.0;
+      for (final item in b.items) {
+        final hsn =
+            (item.hsnCode != null && item.hsnCode!.trim().isNotEmpty)
+            ? item.hsnCode!.trim()
+            : 'UNMAPPED';
+        final net = item.subtotal * (1 - discountRatio);
+        double taxable;
+        double cgst;
+        double sgst;
+        double igst;
+        if (b.isInterstate || b.igstAmount > 0) {
+          final rate = item.cgstPercent + item.sgstPercent;
+          // Prefer persisted line IGST if present
+          final igstRate = (item.cgstPercent + item.sgstPercent);
+          if (b.isTaxInclusive && igstRate > 0) {
+            taxable = net / (1 + igstRate / 100);
+            igst = taxable * (igstRate / 100);
+          } else {
+            taxable = net;
+            igst = net * (igstRate / 100);
+          }
+          cgst = 0;
+          sgst = 0;
+          // If bill had CGST/SGST only, fall back
+          if (igst == 0 && rate == 0) {
+            // allocate bill tax proportionally
+            final share = b.totalAmount > 0 ? item.subtotal / b.totalAmount : 0;
+            igst = b.igstAmount * share;
+            cgst = b.cgstAmount * share;
+            sgst = b.sgstAmount * share;
+            taxable = b.isTaxInclusive ? net - (cgst + sgst + igst) : net;
+          }
+        } else {
+          final rate = item.cgstPercent + item.sgstPercent;
+          if (b.isTaxInclusive && rate > 0) {
+            taxable = net / (1 + rate / 100);
+            cgst = taxable * (item.cgstPercent / 100);
+            sgst = taxable * (item.sgstPercent / 100);
+          } else {
+            taxable = net;
+            cgst = net * (item.cgstPercent / 100);
+            sgst = net * (item.sgstPercent / 100);
+          }
+          igst = 0;
+          if (rate == 0 && b.totalTaxAmount > 0) {
+            final share = b.totalAmount > 0 ? item.subtotal / b.totalAmount : 0;
+            cgst = b.cgstAmount * share;
+            sgst = b.sgstAmount * share;
+            igst = b.igstAmount * share;
+            taxable = b.isTaxInclusive ? net - (cgst + sgst + igst) : net;
+          }
+        }
+        final agg = hsnMap.putIfAbsent(hsn, () => _HsnAgg());
+        agg.taxable += taxable;
+        agg.cgst += cgst;
+        agg.sgst += sgst;
+        agg.igst += igst;
+        agg.qty += item.quantity;
+      }
+    }
+    final hsnKeys = hsnMap.keys.toList()..sort();
+    for (final hsn in hsnKeys) {
+      final a = hsnMap[hsn]!;
+      rows.add([
+        'HSN',
+        rangeLabel,
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        hsn,
+        _rs(a.taxable),
+        _rs(a.cgst),
+        _rs(a.sgst),
+        _rs(a.igst),
+        _rs(a.cgst + a.sgst + a.igst),
+        _rs(a.taxable + a.cgst + a.sgst + a.igst),
+      ]);
+    }
+
+    return UnifiedReportTable(
+      title: 'GST Summary for CA',
+      filterDescription: rangeLabel,
+      headers: headers,
+      rows: rows,
+      summaryLine:
+          'B2B: ${b2b.length} (Taxable Rs ${_rs(b2bTaxable)}, Tax Rs ${_rs(b2bTax)}) | '
+          'B2C: ${b2c.length} (Taxable Rs ${_rs(b2cTaxable)}, Tax Rs ${_rs(b2cTax)}) | '
+          'HSN codes: ${hsnKeys.length}',
+    );
+  }
+}
+
+class _HsnAgg {
+  double taxable = 0;
+  double cgst = 0;
+  double sgst = 0;
+  double igst = 0;
+  double qty = 0;
 }

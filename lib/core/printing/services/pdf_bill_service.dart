@@ -525,6 +525,12 @@ class PdfBillService {
                               billData.sgstAmount,
                               color: PdfColor.fromInt(AppTheme.orange800.toARGB32()),
                             ),
+                          if (billData.igstAmount > 0)
+                            _buildSummaryRow(
+                              'IGST (${billData.igstPercent.toStringAsFixed(1)}%)',
+                              billData.igstAmount,
+                              color: PdfColor.fromInt(AppTheme.orange800.toARGB32()),
+                            ),
                           if (billData.otherTaxAmount > 0)
                             _buildSummaryRow(
                               '${billData.otherTaxName.isNotEmpty ? billData.otherTaxName : "TAX"} (${billData.otherTaxPercent.toStringAsFixed(1)}%)',
@@ -1760,6 +1766,13 @@ class PdfBillService {
                   _buildPOSTotalRow(
                     'SGST (${billData.sgstPercent.toStringAsFixed(1)}%)',
                     billData.sgstAmount,
+                  ),
+                ],
+                if (billData.igstAmount > 0) ...[
+                  pw.SizedBox(height: 1),
+                  _buildPOSTotalRow(
+                    'IGST (${billData.igstPercent.toStringAsFixed(1)}%)',
+                    billData.igstAmount,
                   ),
                 ],
                 if (billData.otherTaxAmount > 0) ...[

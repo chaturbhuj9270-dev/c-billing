@@ -29,6 +29,9 @@ class CustomerEntity {
   // Email (optional)
   String? email;
 
+  /// Customer GSTIN (B2B). Used for IGST/place-of-supply and GSTR-1.
+  String? gstin;
+
   // Current pending amount for this customer
   double currentPendingAmount;
 
@@ -53,6 +56,7 @@ class CustomerEntity {
     required this.mobile,
     this.address,
     this.email,
+    this.gstin,
     this.currentPendingAmount = 0.0,
     this.totalPurchases = 0.0,
     this.isSynced = false,
@@ -68,6 +72,7 @@ class CustomerEntity {
     required String mobile,
     String? address,
     String? email,
+    String? gstin,
     double currentPendingAmount = 0.0,
     double totalPurchases = 0.0,
     bool isSynced = false,
@@ -81,6 +86,7 @@ class CustomerEntity {
       mobile: mobile,
       address: address,
       email: email,
+      gstin: gstin,
       currentPendingAmount: currentPendingAmount,
       totalPurchases: totalPurchases,
       isSynced: isSynced,
@@ -130,6 +136,8 @@ class CustomerEntity {
       mobile: mobile,
       address: customer['address'] as String?,
       email: customer['email'] as String?,
+      gstin: (customer['gstin'] ?? customer['gstNumber'] ?? customer['gst'])
+          as String?,
       currentPendingAmount: pendingAmount,
       totalPurchases: totalPurchases,
       isSynced: true, // From server, so it's synced
@@ -157,6 +165,7 @@ class CustomerEntity {
       'contact': mobile,
       'address': address,
       'email': email,
+      'gstin': gstin,
       'currentPendingAmount': currentPendingAmount,
       'totalPurchaseAmount': totalPurchases,
       'isActive': !isDeleted,
@@ -174,6 +183,7 @@ class CustomerEntity {
       'mobile': mobile,
       'address': address,
       'email': email,
+      'gstin': gstin,
       'currentPendingAmount': currentPendingAmount,
       'totalPurchases': totalPurchases,
       'isSynced': isSynced,
@@ -191,6 +201,7 @@ class CustomerEntity {
     String? mobile,
     String? address,
     String? email,
+    String? gstin,
     double? currentPendingAmount,
     double? totalPurchases,
     bool? isSynced,
@@ -204,6 +215,7 @@ class CustomerEntity {
       mobile: mobile ?? this.mobile,
       address: address ?? this.address,
       email: email ?? this.email,
+      gstin: gstin ?? this.gstin,
       currentPendingAmount: currentPendingAmount ?? this.currentPendingAmount,
       totalPurchases: totalPurchases ?? this.totalPurchases,
       isSynced: isSynced ?? this.isSynced,

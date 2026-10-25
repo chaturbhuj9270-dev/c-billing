@@ -16,6 +16,8 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
   late bool _showManufacturingDate;
   late bool _showExpiryDate;
   late bool _showWarranty;
+  late bool _showBatchNumber;
+  late bool _useFefo;
   late List<String> _availableUnits;
   late String _defaultUnit;
   late List<int> _warrantyOptions;
@@ -30,6 +32,8 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
         PurchaseSettingsService.instance.showManufacturingDate;
     _showExpiryDate = PurchaseSettingsService.instance.showExpiryDate;
     _showWarranty = PurchaseSettingsService.instance.showWarranty;
+    _showBatchNumber = PurchaseSettingsService.instance.showBatchNumber;
+    _useFefo = PurchaseSettingsService.instance.useFefo;
     _availableUnits = List.from(
       PurchaseSettingsService.instance.availableUnits,
     );
@@ -113,6 +117,47 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                             setState(() => _showExpiryDate = value);
                             await PurchaseSettingsService.instance
                                 .setShowExpiryDate(value);
+                          },
+                        ),
+                        Container(
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          height: 1,
+                          color: AppTheme.grey.withValues(alpha: 0.1),
+                        ),
+                        _buildModernToggle(
+                          icon: Icons.qr_code_2_rounded,
+                          iconColor: AppTheme.toneBlue,
+                          title: 'Batch / Lot Number',
+                          subtitle: 'Show manufacturer batch field (medical)',
+                          value: _showBatchNumber,
+                          onChanged: (value) async {
+                            setState(() => _showBatchNumber = value);
+                            await PurchaseSettingsService.instance
+                                .setShowBatchNumber(value);
+                          },
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    _buildSectionCard(
+                      icon: Icons.inventory_2_rounded,
+                      iconColor: AppTheme.toneCyan,
+                      title: 'Stock Issue Order',
+                      subtitle: 'How stock is consumed when selling',
+                      children: [
+                        _buildModernToggle(
+                          icon: Icons.hourglass_bottom_rounded,
+                          iconColor: AppTheme.coral,
+                          title: 'FEFO (Expiry first)',
+                          subtitle:
+                              'Sell nearest-expiry batches first. Off = FIFO by purchase date',
+                          value: _useFefo,
+                          onChanged: (value) async {
+                            setState(() => _useFefo = value);
+                            await PurchaseSettingsService.instance
+                                .setUseFefo(value);
                           },
                         ),
                       ],

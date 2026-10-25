@@ -33,6 +33,7 @@ class CustomerRecords extends Table {
   TextColumn get mobile => text()();
   TextColumn get address => text().nullable()();
   TextColumn get email => text().nullable()();
+  TextColumn get gstin => text().nullable()();
   RealColumn get currentPendingAmount =>
       real().withDefault(const Constant(0))();
   RealColumn get totalPurchases => real().withDefault(const Constant(0))();
@@ -90,6 +91,11 @@ class ProductRecords extends Table {
   RealColumn get sgstPercent => real().withDefault(const Constant(0))();
   TextColumn get hsnCode => text().nullable()();
   TextColumn get customFieldsJson => text().nullable()();
+  TextColumn get size => text().nullable()();
+  TextColumn get color => text().nullable()();
+  RealColumn get mrp => real().nullable()();
+  TextColumn get composition => text().nullable()();
+  TextColumn get drugSchedule => text().nullable()();
 }
 
 @DataClassName('PurchaseRecord')
@@ -140,6 +146,7 @@ class PurchaseBatchRecords extends Table {
   TextColumn get supplierId => text().nullable()();
   TextColumn get supplierName => text().nullable()();
   TextColumn get unit => text().withDefault(const Constant(''))();
+  TextColumn get batchNumber => text().nullable()();
   DateTimeColumn get expiryDate => dateTime().nullable()();
   DateTimeColumn get productionDate => dateTime().nullable()();
   IntColumn get warrantyMonths => integer().nullable()();
@@ -209,12 +216,18 @@ class BillRecords extends Table {
       boolean().withDefault(const Constant(false))();
   RealColumn get cgstPercent => real().withDefault(const Constant(0))();
   RealColumn get sgstPercent => real().withDefault(const Constant(0))();
+  RealColumn get igstPercent => real().withDefault(const Constant(0))();
   RealColumn get otherTaxPercent => real().withDefault(const Constant(0))();
   TextColumn get otherTaxName => text().nullable()();
   RealColumn get cgstAmount => real().withDefault(const Constant(0))();
   RealColumn get sgstAmount => real().withDefault(const Constant(0))();
+  RealColumn get igstAmount => real().withDefault(const Constant(0))();
   RealColumn get otherTaxAmount => real().withDefault(const Constant(0))();
   RealColumn get totalTaxAmount => real().withDefault(const Constant(0))();
+  TextColumn get customerGstin => text().nullable()();
+  TextColumn get placeOfSupply => text().nullable()();
+  BoolColumn get isInterstate =>
+      boolean().withDefault(const Constant(false))();
   // JSON list of {id, label, amount} - labour / service / other bill charges
   TextColumn get extraChargesJson =>
       text().withDefault(const Constant('[]'))();
@@ -399,7 +412,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? openAppDatabase());
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 9;
 
   Future<bool> _hasTable(String table) async {
     final rows = await customSelect(
@@ -486,6 +499,34 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 7) {
         await _addColumnIfMissing(m, billRecords, billRecords.paymentMode);
+      }
+      if (from < 8) {
+        await _addColumnIfMissing(
+          m,
+          purchaseBatchRecords,
+          purchaseBatchRecords.batchNumber,
+        );
+        await _addColumnIfMissing(m, productRecords, productRecords.size);
+        await _addColumnIfMissing(m, productRecords, productRecords.color);
+        await _addColumnIfMissing(m, productRecords, productRecords.mrp);
+        await _addColumnIfMissing(
+          m,
+          productRecords,
+          productRecords.composition,
+        );
+        await _addColumnIfMissing(
+          m,
+          productRecords,
+          productRecords.drugSchedule,
+        );
+      }
+      if (from < 9) {
+        await _addColumnIfMissing(m, customerRecords, customerRecords.gstin);
+        await _addColumnIfMissing(m, billRecords, billRecords.igstPercent);
+        await _addColumnIfMissing(m, billRecords, billRecords.igstAmount);
+        await _addColumnIfMissing(m, billRecords, billRecords.customerGstin);
+        await _addColumnIfMissing(m, billRecords, billRecords.placeOfSupply);
+        await _addColumnIfMissing(m, billRecords, billRecords.isInterstate);
       }
     },
   );

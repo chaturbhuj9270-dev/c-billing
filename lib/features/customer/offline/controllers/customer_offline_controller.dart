@@ -36,6 +36,7 @@ class CustomerOfflineController extends ChangeNotifier {
     required String mobile,
     String? address,
     String? email,
+    String? gstin,
     double currentPendingAmount = 0.0,
     double totalPurchases = 0.0,
   }) async {
@@ -46,6 +47,7 @@ class CustomerOfflineController extends ChangeNotifier {
       mobile: mobile,
       address: address,
       email: email,
+      gstin: gstin,
       currentPendingAmount: currentPendingAmount,
       totalPurchases: totalPurchases,
       isSynced: false, // Needs to be synced
@@ -153,6 +155,8 @@ class CustomerOfflineController extends ChangeNotifier {
     String? mobile,
     String? address,
     String? email,
+    String? gstin,
+    bool updateGstin = false,
     double? currentPendingAmount,
     double? totalPurchases,
   }) async {
@@ -164,11 +168,15 @@ class CustomerOfflineController extends ChangeNotifier {
       mobile: mobile,
       address: address,
       email: email,
+      gstin: updateGstin ? gstin : null,
       currentPendingAmount: currentPendingAmount,
       totalPurchases: totalPurchases,
       isSynced: false, // Mark as needing sync
       updatedAt: DateTime.now(),
     );
+    if (updateGstin) {
+      updated.gstin = gstin;
+    }
 
     await _db.saveCustomer(updated);
 

@@ -10,6 +10,8 @@ class PurchaseSettingsService extends ChangeNotifier {
   static const String _showWarrantyKey = 'purchase_show_warranty';
   static const String _warrantyOptionsKey = 'purchase_warranty_options';
   static const String _defaultWarrantyKey = 'purchase_default_warranty';
+  static const String _showBatchNumberKey = 'purchase_show_batch_number';
+  static const String _useFefoKey = 'purchase_use_fefo';
   
   // All possible measurement units (built-in)
   static const List<String> builtInUnits = [
@@ -34,6 +36,9 @@ class PurchaseSettingsService extends ChangeNotifier {
   bool _showManufacturingDate = true;
   bool _showExpiryDate = true;
   bool _showWarranty = false;
+  bool _showBatchNumber = true;
+  /// When true, sell earliest-expiring stock first (FEFO). Otherwise FIFO by purchase date.
+  bool _useFefo = false;
   List<String> _availableUnits = ['Item', 'Qty', 'Kg', 'Grams', 'Ltr']; // Default available units
   List<String> _customUnits = []; // User-added custom units
   String _defaultUnit = 'Item';
@@ -50,6 +55,8 @@ class PurchaseSettingsService extends ChangeNotifier {
   bool get showManufacturingDate => _showManufacturingDate;
   bool get showExpiryDate => _showExpiryDate;
   bool get showWarranty => _showWarranty;
+  bool get showBatchNumber => _showBatchNumber;
+  bool get useFefo => _useFefo;
   List<String> get availableUnits => _availableUnits;
   List<String> get customUnits => _customUnits;
   String get defaultUnit => _defaultUnit;
@@ -67,6 +74,8 @@ class PurchaseSettingsService extends ChangeNotifier {
     _showManufacturingDate = prefs.getBool(_showManufacturingDateKey) ?? true;
     _showExpiryDate = prefs.getBool(_showExpiryDateKey) ?? true;
     _showWarranty = prefs.getBool(_showWarrantyKey) ?? false;
+    _showBatchNumber = prefs.getBool(_showBatchNumberKey) ?? true;
+    _useFefo = prefs.getBool(_useFefoKey) ?? false;
     
     // Load custom units first
     final savedCustomUnits = prefs.getStringList(_customUnitsKey);
@@ -118,6 +127,20 @@ class PurchaseSettingsService extends ChangeNotifier {
     _showWarranty = value;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_showWarrantyKey, value);
+    notifyListeners();
+  }
+
+  Future<void> setShowBatchNumber(bool value) async {
+    _showBatchNumber = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_showBatchNumberKey, value);
+    notifyListeners();
+  }
+
+  Future<void> setUseFefo(bool value) async {
+    _useFefo = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_useFefoKey, value);
     notifyListeners();
   }
   

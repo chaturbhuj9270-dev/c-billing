@@ -43,6 +43,9 @@ class PurchaseBatch {
   // Unit of measurement
   final String unit;
   
+  // Manufacturer / pharmacy batch or lot number (optional)
+  final String? batchNumber;
+
   // Expiry date (optional)
   final DateTime? expiryDate;
   
@@ -79,6 +82,7 @@ class PurchaseBatch {
     this.supplierId,
     this.supplierName,
     this.unit = 'pcs',
+    this.batchNumber,
     this.expiryDate,
     this.productionDate,
     this.warrantyMonths,
@@ -121,6 +125,7 @@ class PurchaseBatch {
         supplierId: json['supplierId'] as String?,
         supplierName: json['supplierName'] as String?,
         unit: (json['unit'] ?? 'pcs') as String,
+        batchNumber: json['batchNumber'] as String?,
         expiryDate: json['expiryDate'] != null
             ? DateTime.parse(json['expiryDate'] as String)
             : null,
@@ -173,6 +178,7 @@ class PurchaseBatch {
       'supplierId': supplierId,
       'supplierName': supplierName,
       'unit': unit,
+      'batchNumber': batchNumber,
       'expiryDate': expiryDate?.toIso8601String(),
       'productionDate': productionDate?.toIso8601String(),
       'warrantyMonths': warrantyMonths,
@@ -200,6 +206,7 @@ class PurchaseBatch {
     String? supplierId,
     String? supplierName,
     String? unit,
+    String? batchNumber,
     DateTime? expiryDate,
     DateTime? productionDate,
     int? warrantyMonths,
@@ -223,6 +230,7 @@ class PurchaseBatch {
       supplierId: supplierId ?? this.supplierId,
       supplierName: supplierName ?? this.supplierName,
       unit: unit ?? this.unit,
+      batchNumber: batchNumber ?? this.batchNumber,
       expiryDate: expiryDate ?? this.expiryDate,
       productionDate: productionDate ?? this.productionDate,
       warrantyMonths: warrantyMonths ?? this.warrantyMonths,
