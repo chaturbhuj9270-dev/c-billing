@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:c_billing/features/product/offline/entities/product_entity.dart';
 import 'product_filter_widget.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/sync_status_icon.dart';
 
 // Enhanced list widget for displaying products Features: Shimmer loading, Enhanced cards, Stock badges, Sync icons, Empty states
 class ProductListWidget extends StatelessWidget {
@@ -411,17 +412,7 @@ class _ProductCard extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            // Sync status icon - always show (green for synced, orange for pending)
-                            Padding(
-                              padding: const EdgeInsets.only(left: 6),
-                              child: Icon(
-                                isSynced
-                                    ? Icons.cloud_done_rounded
-                                    : Icons.cloud_upload_rounded,
-                                size: 16,
-                                color: isSynced ? AppTheme.green : AppTheme.orange,
-                              ),
-                            ),
+                            SyncStatusIcon(isSynced: isSynced),
                           ],
                         ),
                         const SizedBox(height: 4),

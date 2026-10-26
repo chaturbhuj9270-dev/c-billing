@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../offline/entities/purchase_batch_entity.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/sync_status_icon.dart';
 
 // Modern card widget for displaying individual purchase items Features: Subtle shadows, proper spacing, responsive layout
 class PurchaseCardWidget extends StatelessWidget {
@@ -134,18 +135,10 @@ class PurchaseCardWidget extends StatelessWidget {
                             ),
                             if (showSyncStatus) ...[
                               const SizedBox(height: 4),
-                              Text(
-                                synced ? 'Synced' : 'Pending',
-                                style: TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: synced
-                                      ? (isDark
-                                            ? AppColors.action(context)
-                                            : AppTheme.primaryLight)
-                                      : AppTheme.toneAmber,
-                                ),
+                              SyncStatusIcon(
+                                isSynced: synced,
+                                size: 16,
+                                padded: false,
                               ),
                             ],
                           ],

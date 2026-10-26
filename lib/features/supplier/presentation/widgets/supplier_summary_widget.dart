@@ -44,8 +44,8 @@ class SupplierSummaryWidget extends StatelessWidget {
           DesktopStat(value: '${filtered.length}', label: 'Suppliers'),
           DesktopStat(value: '$activeCount', label: 'Active'),
           DesktopStat(
-            value: unsyncedCount > 0 ? '$unsyncedCount' : 'All Synced',
-            label: unsyncedCount > 0 ? 'Unsynced' : 'Cloud sync',
+            value: unsyncedCount > 0 ? '$unsyncedCount' : '✓',
+            label: 'Cloud',
           ),
         ],
       );
@@ -89,11 +89,11 @@ class SupplierSummaryWidget extends StatelessWidget {
           Expanded(
             child: _buildStatItem(
               icon: unsyncedCount > 0
-                  ? Icons.cloud_off_rounded
+                  ? Icons.cloud_upload_rounded
                   : Icons.cloud_done_rounded,
-              label: unsyncedCount > 0 ? 'Unsynced' : 'All Synced',
+              label: 'Cloud',
               value: unsyncedCount > 0 ? '$unsyncedCount' : '✓',
-              valueColor: unsyncedCount > 0 ? AppTheme.orange300 : AppTheme.green300,
+              valueColor: unsyncedCount > 0 ? AppTheme.toneAmber : null,
               isExpanded: true,
             ),
           ),

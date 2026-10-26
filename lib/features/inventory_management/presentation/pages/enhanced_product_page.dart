@@ -23,6 +23,7 @@ import '../widgets/product_list_widget.dart';
 import 'product_settings_page.dart';
 import 'barcode_generator_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/ui/sync_status_icon.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/app_pill_button.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
@@ -475,19 +476,19 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
           GestureDetector(
             onTap: () => ProductSyncService.instance.syncNow(),
             child: Chip(
-              backgroundColor: AppTheme.orange50,
-              avatar: const Icon(
+              backgroundColor: AppTheme.toneAmber.withValues(alpha: 0.16),
+              avatar: Icon(
                 Icons.cloud_upload_rounded,
                 size: 16,
-                color: AppTheme.orange700,
+                color: AppTheme.toneAmber,
               ),
               label: Text(
                 '$_unsyncedCount',
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
-                  color: AppTheme.orange700,
+                  color: AppTheme.toneAmber,
                 ),
               ),
             ),
@@ -1027,43 +1028,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           ),
                           const SizedBox(height: 4),
                           // Sync status badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSynced
-                                  ? AppTheme.green50
-                                  : AppTheme.orange50,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  isSynced
-                                      ? Icons.cloud_done_rounded
-                                      : Icons.cloud_upload_rounded,
-                                  size: 14,
-                                  color: isSynced
-                                      ? AppTheme.green700
-                                      : AppTheme.orange700,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  isSynced ? 'Synced' : 'Pending Sync',
-                                  style: TextStyle(
-                                    fontFamily: 'Literata',
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 11,
-                                    color: isSynced
-                                        ? AppTheme.green700
-                                        : AppTheme.orange700,
-                                  ),
-                                ),
-                              ],
-                            ),
+                          SyncStatusIcon(
+                            isSynced: isSynced,
+                            size: 16,
+                            padded: false,
                           ),
                         ],
                       ),

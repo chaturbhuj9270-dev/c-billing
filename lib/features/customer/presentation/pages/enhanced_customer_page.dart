@@ -20,6 +20,7 @@ import 'customer_details_page.dart';
 import 'customer_finance_page.dart';
 import 'customer_transactions_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/ui/sync_status_icon.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
@@ -776,8 +777,6 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                           searchQuery: _searchQuery,
                           customersLabel: _localizations.customers,
                           pendingLabel: _localizations.pendingAmount,
-                          unsyncedLabel: _localizations.unsynced,
-                          allSyncedLabel: _localizations.allSynced,
                         ),
 
                         const SizedBox(height: 16),
@@ -822,8 +821,6 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                             noResultsTitle: _localizations.noResultsFound,
                             noResultsSubtitle:
                                 _localizations.tryDifferentSearch,
-                            pendingLabel: _localizations.syncPending
-                                .toLowerCase(),
                           ),
                         ),
                       ],
@@ -1372,46 +1369,10 @@ class _CustomerDetailsSheet extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                  // Sync status badge - always show
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isSynced
-                                          ? AppTheme.green50
-                                          : AppTheme.orange50,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          isSynced
-                                              ? Icons.cloud_done_rounded
-                                              : Icons.cloud_upload_rounded,
-                                          size: 12,
-                                          color: isSynced
-                                              ? AppTheme.green700
-                                              : AppTheme.orange700,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          isSynced
-                                              ? localizations.synced
-                                              : localizations.syncPending,
-                                          style: TextStyle(
-                                            fontFamily: 'Literata',
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w600,
-                                            color: isSynced
-                                                ? AppTheme.green700
-                                                : AppTheme.orange700,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                  SyncStatusIcon(
+                                    isSynced: isSynced,
+                                    size: 16,
+                                    padded: false,
                                   ),
                                 ],
                               ),

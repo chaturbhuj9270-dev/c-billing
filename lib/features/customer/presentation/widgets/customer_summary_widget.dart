@@ -11,8 +11,6 @@ class CustomerSummaryWidget extends StatelessWidget {
   // Labels
   final String customersLabel;
   final String pendingLabel;
-  final String unsyncedLabel;
-  final String allSyncedLabel;
 
   const CustomerSummaryWidget({
     super.key,
@@ -20,8 +18,6 @@ class CustomerSummaryWidget extends StatelessWidget {
     this.searchQuery = '',
     this.customersLabel = 'Customers',
     this.pendingLabel = 'Pending',
-    this.unsyncedLabel = 'Unsynced',
-    this.allSyncedLabel = 'All Synced',
   });
 
   List<Map<String, dynamic>> get _filteredCustomers {
@@ -99,13 +95,11 @@ class CustomerSummaryWidget extends StatelessWidget {
           Expanded(
             child: _buildStatItem(
               icon: unsyncedCount > 0
-                  ? Icons.cloud_off_rounded
+                  ? Icons.cloud_upload_rounded
                   : Icons.cloud_done_rounded,
-              label: unsyncedCount > 0 ? unsyncedLabel : allSyncedLabel,
+              label: 'Cloud',
               value: unsyncedCount > 0 ? '$unsyncedCount' : '✓',
-              valueColor: unsyncedCount > 0
-                  ? AppTheme.orange300
-                  : AppTheme.green300,
+              valueColor: unsyncedCount > 0 ? AppTheme.toneAmber : null,
               isExpanded: true,
             ),
           ),
@@ -131,8 +125,8 @@ class CustomerSummaryWidget extends StatelessWidget {
           label: pendingLabel,
         ),
         DesktopStat(
-          value: synced ? allSyncedLabel : '$unsyncedCount',
-          label: synced ? 'Cloud sync' : unsyncedLabel,
+          value: synced ? '✓' : '$unsyncedCount',
+          label: 'Cloud',
         ),
       ],
     );

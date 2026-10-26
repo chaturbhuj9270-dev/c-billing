@@ -45,8 +45,8 @@ class ProductSummaryWidget extends StatelessWidget {
           DesktopStat(value: '$totalStock', label: 'Total Stock'),
           DesktopStat(value: '$outOfStock', label: 'Out of Stock'),
           DesktopStat(
-            value: unsyncedCount > 0 ? '$unsyncedCount' : 'Synced',
-            label: unsyncedCount > 0 ? 'Pending' : 'Cloud sync',
+            value: unsyncedCount > 0 ? '$unsyncedCount' : '✓',
+            label: 'Cloud',
           ),
         ],
       );
@@ -98,11 +98,9 @@ class ProductSummaryWidget extends StatelessWidget {
               icon: unsyncedCount > 0
                   ? Icons.cloud_upload_rounded
                   : Icons.cloud_done_rounded,
-              label: unsyncedCount > 0 ? 'Pending' : 'Synced',
+              label: 'Cloud',
               value: unsyncedCount > 0 ? '$unsyncedCount' : '✓',
-              valueColor: unsyncedCount > 0
-                  ? AppTheme.orange300
-                  : AppTheme.green300,
+              valueColor: unsyncedCount > 0 ? AppTheme.toneAmber : null,
               isExpanded: true,
             ),
           ),

@@ -23,6 +23,7 @@ import 'package:c_billing/features/billing/data/services/bill_report_pdf_generat
 import 'package:c_billing/common_widgets/file_preview_page.dart';
 import 'package:c_billing/features/billing/presentation/pages/bill_report_settings_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/ui/sync_status_icon.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
@@ -1395,15 +1396,9 @@ class _BillsListPageState extends State<BillsListPage>
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 4),
-                              Icon(
-                                bill.isSynced
-                                    ? Icons.check_circle_rounded
-                                    : Icons.cloud_upload_rounded,
+                              SyncStatusIcon(
+                                isSynced: bill.isSynced,
                                 size: 14,
-                                color: bill.isSynced
-                                    ? AppTheme.green
-                                    : AppTheme.orange,
                               ),
                               if (hasAnyReturn) ...[
                                 const SizedBox(width: 6),

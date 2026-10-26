@@ -3,6 +3,7 @@ import '../../../../core/services/communication_service.dart';
 import 'customer_filter_widget.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
+import 'package:c_billing/core/ui/sync_status_icon.dart';
 
 // Enhanced list widget for displaying customers Features: Shimmer loading, Enhanced cards, Empty states
 class CustomerListWidget extends StatelessWidget {
@@ -22,7 +23,6 @@ class CustomerListWidget extends StatelessWidget {
   final String emptySubtitle;
   final String noResultsTitle;
   final String noResultsSubtitle;
-  final String pendingLabel;
 
   const CustomerListWidget({
     super.key,
@@ -40,7 +40,6 @@ class CustomerListWidget extends StatelessWidget {
     this.emptySubtitle = 'Add your first customer to get started',
     this.noResultsTitle = 'No results found',
     this.noResultsSubtitle = 'Try a different search term',
-    this.pendingLabel = 'pending',
   });
 
   List<Map<String, dynamic>> get _filteredAndSortedCustomers {
@@ -164,7 +163,6 @@ class CustomerListWidget extends StatelessWidget {
               onTransactionsTap: onTransactionsTap != null
                   ? () => onTransactionsTap!(filtered[index])
                   : null,
-              pendingLabel: pendingLabel,
             ),
           );
         },
@@ -349,25 +347,10 @@ class CustomerListWidget extends StatelessWidget {
               flex: 2,
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: synced
-                        ? AppColors.accentSoft(context, 0.14)
-                        : AppTheme.toneAmber.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    synced ? 'Synced' : pendingLabel,
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: synced
-                          ? AppColors.action(context)
-                          : AppTheme.toneAmber,
-                    ),
-                  ),
+                child: SyncStatusIcon(
+                  isSynced: synced,
+                  size: 18,
+                  padded: false,
                 ),
               ),
             ),
@@ -507,7 +490,6 @@ class _CustomerCard extends StatelessWidget {
   final VoidCallback? onLongPress;
   final VoidCallback? onFinanceTap;
   final VoidCallback? onTransactionsTap;
-  final String pendingLabel;
 
   const _CustomerCard({
     required this.customer,
@@ -515,7 +497,6 @@ class _CustomerCard extends StatelessWidget {
     this.onLongPress,
     this.onFinanceTap,
     this.onTransactionsTap,
-    this.pendingLabel = 'pending',
   });
 
   @override
@@ -637,18 +618,10 @@ class _CustomerCard extends StatelessWidget {
                               color: AppColors.mutedText(context),
                             ),
                           const SizedBox(height: 4),
-                          Text(
-                            isSynced ? 'Synced' : pendingLabel,
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: isSynced
-                                  ? (isDark
-                                        ? AppColors.action(context)
-                                        : AppTheme.primaryLight)
-                                  : AppTheme.toneAmber,
-                            ),
+                          SyncStatusIcon(
+                            isSynced: isSynced,
+                            size: 16,
+                            padded: false,
                           ),
                         ],
                       ),

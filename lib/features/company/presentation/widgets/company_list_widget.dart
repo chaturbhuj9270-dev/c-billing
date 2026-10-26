@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'company_filter_widget.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/sync_status_icon.dart';
 
 // Enhanced list widget for displaying companies Features: Shimmer loading, Enhanced cards with sync icons, Empty states
 class CompanyListWidget extends StatelessWidget {
@@ -310,19 +311,7 @@ class _CompanyCard extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            // Sync status icon - always show (green for synced, orange for pending)
-                            Padding(
-                              padding: const EdgeInsets.only(left: 6),
-                              child: Icon(
-                                isSynced
-                                    ? Icons.cloud_done_rounded
-                                    : Icons.cloud_upload_rounded,
-                                size: 16,
-                                color: isSynced
-                                    ? AppTheme.green
-                                    : AppTheme.orange,
-                              ),
-                            ),
+                            SyncStatusIcon(isSynced: isSynced),
                           ],
                         ),
                         const SizedBox(height: 4),

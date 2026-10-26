@@ -21,6 +21,7 @@ import '../../../../common_widgets/file_preview_page.dart';
 import 'event_order_screen.dart';
 import 'event_order_settings_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/ui/sync_status_icon.dart';
 import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
@@ -210,19 +211,19 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               GlassyToast.show(context, l10n.syncing);
             },
             child: Chip(
-              backgroundColor: AppTheme.orange50,
-              avatar: const Icon(
+              backgroundColor: AppTheme.toneAmber.withValues(alpha: 0.16),
+              avatar: Icon(
                 Icons.cloud_upload_rounded,
                 size: 16,
-                color: AppTheme.orange700,
+                color: AppTheme.toneAmber,
               ),
               label: Text(
                 '$_unsyncedCount',
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
-                  color: AppTheme.orange700,
+                  color: AppTheme.toneAmber,
                 ),
               ),
             ),
@@ -988,50 +989,10 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    // Sync status badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: order.isSynced
-                            ? AppTheme.green50
-                            : AppTheme.orange50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: order.isSynced
-                              ? AppTheme.green200
-                              : AppTheme.orange200,
-                          width: 0.5,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            order.isSynced
-                                ? Icons.cloud_done_rounded
-                                : Icons.cloud_upload_rounded,
-                            size: 14,
-                            color: order.isSynced
-                                ? AppTheme.green700
-                                : AppTheme.orange700,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            order.isSynced ? 'Synced' : 'Pending',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'Literata',
-                              color: order.isSynced
-                                  ? AppTheme.green700
-                                  : AppTheme.orange700,
-                            ),
-                          ),
-                        ],
-                      ),
+                    SyncStatusIcon(
+                      isSynced: order.isSynced,
+                      size: 16,
+                      padded: false,
                     ),
                     _buildInfoBadge(
                       Icons.calendar_today_rounded,
