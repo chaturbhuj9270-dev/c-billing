@@ -57,6 +57,7 @@ import 'package:c_billing/features/quotation/presentation/pages/quotation_list_p
 import 'package:c_billing/features/dashboard/presentation/pages/web_shell.dart';
 import 'package:c_billing/features/billing/presentation/widgets/barcode_scanner_sheet.dart';
 import 'package:c_billing/features/billing/presentation/widgets/billing_add_items_widgets.dart';
+import 'package:c_billing/features/billing/presentation/widgets/bill_items_desktop_table.dart';
 import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
 import 'package:c_billing/features/customer/offline/entities/customer_transaction_entity.dart';
 import 'package:c_billing/features/customer/domain/entities/customer_transaction.dart';
@@ -2517,35 +2518,36 @@ class _BillingPageState extends State<BillingPage> {
         children: [
           Expanded(
             flex: 3,
-            child: _billItems.isEmpty
-                ? Column(
-                    children: [
-                      if (_showCustomerOnBill || _generateBillViaContact)
-                        _buildCustomerSection(),
-                      _buildAddItemsSection(),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
-                          child: _buildDesktopEmptyBill(),
-                        ),
-                      ),
-                    ],
+            child: Column(
+              children: [
+                if (_showCustomerOnBill || _generateBillViaContact)
+                  _buildCustomerSection(),
+                _buildAddItemsSection(),
+                if (_billItems.isEmpty)
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+                      child: _buildDesktopEmptyBill(),
+                    ),
                   )
-                : SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: Column(
-                      children: [
-                        if (_showCustomerOnBill || _generateBillViaContact)
-                          _buildCustomerSection(),
-                        _buildAddItemsSection(),
-                        _buildBillItemsSection(),
-                        if (_showExtraChargesOnBill)
-                          _buildExtraChargesSection(compact: false),
-                        if (_showGstOnBill) _buildGstModeSection(),
-                        const SizedBox(height: 12),
-                      ],
+                else ...[
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Column(
+                        children: [
+                          _buildBillItemsSection(),
+                          if (_showExtraChargesOnBill)
+                            _buildExtraChargesSection(compact: false),
+                          if (_showGstOnBill) _buildGstModeSection(),
+                        ],
+                      ),
                     ),
                   ),
+                ],
+              ],
+            ),
           ),
           const SizedBox(width: 16),
           SizedBox(
@@ -3485,6 +3487,7 @@ class _BillingPageState extends State<BillingPage> {
         const SizedBox(height: 10),
         // Manual input fields
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               child: _buildInputField(
@@ -3496,7 +3499,7 @@ class _BillingPageState extends State<BillingPage> {
             const SizedBox(width: 10),
             Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildInputField(
                     controller: _customerContactController,
@@ -3596,7 +3599,7 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  // Reusable input field widget
+  // Reusable input field widget — text/hint centered in the box.
   Widget _buildInputField({
     required TextEditingController controller,
     required String label,
@@ -3607,6 +3610,7 @@ class _BillingPageState extends State<BillingPage> {
     final isPhone = keyboardType == TextInputType.phone;
     return Container(
       height: 48,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
         color: AppColors.inputFill(context),
         borderRadius: BorderRadius.circular(14),
@@ -3615,6 +3619,8 @@ class _BillingPageState extends State<BillingPage> {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        textAlign: TextAlign.center,
+        textAlignVertical: TextAlignVertical.center,
         maxLength: isPhone ? 10 : null,
         inputFormatters: isPhone
             ? [
@@ -3626,18 +3632,17 @@ class _BillingPageState extends State<BillingPage> {
           fontFamily: 'Literata',
           fontSize: 14,
           color: AppColors.primaryText(context),
+          height: 1.2,
         ),
         decoration: InputDecoration(
           hintText: label,
           hintStyle: TextStyle(
             color: AppColors.mutedText(context),
             fontSize: 14,
+            height: 1.2,
           ),
           counterText: '',
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 12,
-          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14),
           filled: false,
           isDense: true,
           border: InputBorder.none,
@@ -3647,6 +3652,10 @@ class _BillingPageState extends State<BillingPage> {
           errorBorder: InputBorder.none,
           focusedErrorBorder: InputBorder.none,
           suffixIcon: suffixIcon,
+          suffixIconConstraints: const BoxConstraints(
+            minWidth: 40,
+            minHeight: 40,
+          ),
         ),
       ),
     );
@@ -3979,7 +3988,7 @@ class _BillingPageState extends State<BillingPage> {
                       child: Row(
                         children: [
                           Icon(
-                            Icons.qr_code_2_rounded,
+                            Icons.barcode_reader,
                             size: 18,
                             color: highlighted
                                 ? accent
@@ -4049,7 +4058,7 @@ class _BillingPageState extends State<BillingPage> {
                       width: 48,
                       height: 48,
                       child: Icon(
-                        Icons.qr_code_scanner_rounded,
+                        Icons.barcode_reader,
                         color: AppTheme.white,
                         size: 22,
                       ),
@@ -4065,6 +4074,89 @@ class _BillingPageState extends State<BillingPage> {
   }
 
   Widget _buildBillItemsSection() {
+    if (_desktopBill) {
+      return Container(
+        margin: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 4, 4, 10),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppTheme.paletteFF1A2438,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.grid_view_rounded,
+                      color: AppTheme.toneBlue,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _localizations.billItems,
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            color: AppColors.primaryText(context),
+                          ),
+                        ),
+                        Text(
+                          '${_billItems.length} ${_localizations.items.toLowerCase()} · edit qty & price in table',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 12,
+                            color: AppColors.mutedText(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      _disposeItemTokenInputs();
+                      setState(() => _billItems.clear());
+                    },
+                    icon: Icon(
+                      Icons.delete_outline_rounded,
+                      color: AppColors.mutedText(context),
+                      size: 22,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            BillItemsDesktopTable(
+              items: _billItems,
+              products: _products,
+              availableBatches: _availableBatches,
+              localizations: _localizations,
+              showEmployeeToken: _enableEmployeeToken,
+              showSnackbar: _showSnackbar,
+              onItemRemoved: _disposeItemTokenInputs,
+              onItemsChanged: (next) {
+                setState(() {
+                  _billItems
+                    ..clear()
+                    ..addAll(next);
+                });
+              },
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 6, 16, 6),
       decoration: BoxDecoration(
