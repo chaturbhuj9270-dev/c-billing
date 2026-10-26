@@ -722,9 +722,13 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
   void _navigateToCustomerDetails(Map<String, dynamic> customer) {
     _isNavigatingAway = true;
+    final localId = customer['localId'];
     showAppPage(
       context,
-      CustomerDetailsPage(customerId: customer['id']),
+      CustomerDetailsPage(
+        customerId: (customer['id'] ?? '').toString(),
+        customerLocalId: localId?.toString(),
+      ),
     ).then((_) {
       _isNavigatingAway = false;
       _fetchFromFirebase();

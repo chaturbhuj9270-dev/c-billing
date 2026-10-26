@@ -1,3 +1,5 @@
+import 'package:c_billing/core/utils/date_time_parser.dart';
+
 // Represents the type of customer transaction
 enum TransactionType {
   // Payment received from customer
@@ -204,11 +206,7 @@ class CustomerTransaction {
           ((json['balanceAfterTransaction'] ?? 0) as num).toDouble(),
       notes: json['notes'] as String?,
       referenceNumber: json['referenceNumber'] as String?,
-      createdAt: json['createdAt'] != null
-          ? (json['createdAt'] is DateTime
-              ? json['createdAt'] as DateTime
-              : DateTime.parse(json['createdAt'].toString()))
-          : DateTime.now(),
+      createdAt: parseFlexibleDateTimeOrNow(json['createdAt']),
       createdBy: json['createdBy'] as String?,
     );
   }

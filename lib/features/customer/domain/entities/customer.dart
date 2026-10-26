@@ -1,3 +1,5 @@
+import 'package:c_billing/core/utils/date_time_parser.dart';
+
 // Represents a customer with transaction and pending balance tracking This entity supports: - Basic customer information (name, contact, address) - Running pending balance for cre...
 class Customer {
   // Unique identifier for the customer
@@ -81,16 +83,8 @@ class Customer {
       totalPurchaseAmount:
           ((json['totalPurchaseAmount'] ?? 0) as num).toDouble(),
       totalPaidAmount: ((json['totalPaidAmount'] ?? 0) as num).toDouble(),
-      createdAt: json['createdAt'] != null
-          ? (json['createdAt'] is DateTime
-              ? json['createdAt'] as DateTime
-              : DateTime.parse(json['createdAt'].toString()))
-          : DateTime.now(),
-      updatedAt: json['updatedAt'] != null
-          ? (json['updatedAt'] is DateTime
-              ? json['updatedAt'] as DateTime
-              : DateTime.parse(json['updatedAt'].toString()))
-          : DateTime.now(),
+      createdAt: parseFlexibleDateTimeOrNow(json['createdAt']),
+      updatedAt: parseFlexibleDateTimeOrNow(json['updatedAt']),
       isActive: (json['isActive'] ?? true) as bool,
     );
   }

@@ -3,6 +3,7 @@ import '../../../../core/database/app_database.dart';
 import '../../../../core/database/local_store.dart';
 import '../../../../core/services/local_database.dart';
 import '../../../../core/services/dashboard_refresh_service.dart';
+import '../../../../core/utils/date_time_parser.dart';
 import '../../../billing/offline/controllers/bill_offline_controller.dart';
 import '../../../billing/offline/entities/bill_entity.dart';
 import '../entities/customer_transaction_entity.dart';
@@ -654,15 +655,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
         transactionType = TransactionType.payment;
     }
 
-    // Parse dates
-    DateTime createdAt;
-    if (data['createdAt'] != null) {
-      createdAt = data['createdAt'] is DateTime
-          ? data['createdAt'] as DateTime
-          : DateTime.parse(data['createdAt'].toString());
-    } else {
-      createdAt = DateTime.now();
-    }
+    final createdAt = parseFlexibleDateTimeOrNow(data['createdAt']);
 
     final entity = CustomerTransactionEntity(
       serverId: data['id'] as String?,

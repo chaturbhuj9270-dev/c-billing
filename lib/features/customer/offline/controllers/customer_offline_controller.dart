@@ -1,18 +1,9 @@
 import 'package:flutter/foundation.dart';
-import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/local_store.dart';
 import '../../../../core/services/local_database.dart';
+import '../../../../core/utils/date_time_parser.dart';
 import '../entities/customer_entity.dart';
-
-// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
-DateTime? _parseDateTime(dynamic value) {
-  if (value == null) return null;
-  if (value is Timestamp) return value.toDate();
-  if (value is DateTime) return value;
-  if (value is String) return DateTime.tryParse(value);
-  return null;
-}
 
 // Controller for handling offline-first Customer CRUD operations All UI reads should go through this controller (never directly from API)
 class CustomerOfflineController extends ChangeNotifier {
@@ -306,7 +297,8 @@ class CustomerOfflineController extends ChangeNotifier {
         if (existing != null) {
           // Update existing if server version is newer and local is synced
           if (existing.isSynced) {
-            final serverUpdatedAt = _parseDateTime(customerData['updatedAt']);
+            final serverUpdatedAt =
+                parseFlexibleDateTime(customerData['updatedAt']);
             if (serverUpdatedAt != null &&
                 serverUpdatedAt.isAfter(existing.updatedAt)) {
               final updated = CustomerEntity.fromCustomer(customerData);

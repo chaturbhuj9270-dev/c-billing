@@ -1,3 +1,4 @@
+import 'package:c_billing/core/utils/date_time_parser.dart';
 
 // Type of transaction
 enum TransactionType {
@@ -176,16 +177,11 @@ class CustomerTransactionEntity {
       referenceType: json['referenceType'] as String?,
       description: json['description'] as String?,
       paymentMethod: json['paymentMethod'] as String?,
-      transactionDate: json['transactionDate'] != null
-          ? DateTime.parse(json['transactionDate'] as String)
-          : DateTime.now(),
+      transactionDate:
+          parseFlexibleDateTimeOrNow(json['transactionDate']),
       syncStatus: TransactionSyncStatus.synced,
-      createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'] as String)
-          : DateTime.now(),
-      updatedAt: json['updatedAt'] != null
-          ? DateTime.parse(json['updatedAt'] as String)
-          : DateTime.now(),
+      createdAt: parseFlexibleDateTimeOrNow(json['createdAt']),
+      updatedAt: parseFlexibleDateTimeOrNow(json['updatedAt']),
     );
   }
 }

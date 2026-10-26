@@ -9,7 +9,11 @@ import 'package:c_billing/core/services/customer_transaction_service.dart';
 import 'package:c_billing/features/event_order/offline/controllers/event_order_offline_controller.dart';
 import 'package:c_billing/features/event_order/domain/entities/event_order.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/features/customer/offline/controllers/customer_offline_controller.dart';
 import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
+import 'package:c_billing/features/customer/offline/entities/customer_entity.dart';
+import 'package:c_billing/features/customer/offline/entities/customer_transaction_entity.dart'
+    as offline_tx;
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
@@ -17,8 +21,13 @@ import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 // Page to display customer details, pending balance, and transaction history Also provides functionality to receive payments
 class CustomerDetailsPage extends StatefulWidget {
   final String customerId;
+  final String? customerLocalId;
 
-  const CustomerDetailsPage({super.key, required this.customerId});
+  const CustomerDetailsPage({
+    super.key,
+    required this.customerId,
+    this.customerLocalId,
+  });
 
   @override
   State<CustomerDetailsPage> createState() => _CustomerDetailsPageState();
@@ -41,6 +50,17 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
   double _totalEventsAmount = 0.0;
   double _totalAdvanceReceived = 0.0;
 
+  String get _localIdHint {
+    if (widget.customerLocalId != null &&
+        widget.customerLocalId!.isNotEmpty) {
+      return widget.customerLocalId!;
+    }
+    if (widget.customerId.startsWith('local_')) {
+      return widget.customerId.substring(6);
+    }
+    return '';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -57,6 +77,73 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
     _loadData();
   }
 
+  Future<CustomerEntity?> _resolveLocalCustomer() async {
+    final customers = CustomerOfflineController.instance;
+    if (widget.customerId.isNotEmpty &&
+        !widget.customerId.startsWith('local_')) {
+      final byServer = await customers.getCustomerByServerId(widget.customerId);
+      if (byServer != null) return byServer;
+    }
+    final localId = int.tryParse(_localIdHint);
+    if (localId != null) {
+      return customers.getCustomerById(localId);
+    }
+    return null;
+  }
+
+  Customer _mapCustomer(CustomerEntity entity) {
+    final parts = entity.name.trim().split(RegExp(r'\s+'));
+    final firstName = parts.isNotEmpty ? parts.first : '';
+    final lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+    return Customer(
+      id: entity.serverId ?? 'local_${entity.id}',
+      firstName: firstName,
+      lastName: lastName,
+      contact: entity.mobile,
+      address: entity.address,
+      gstin: entity.gstin,
+      currentPendingAmount: entity.currentPendingAmount,
+      totalPurchaseAmount: entity.totalPurchases,
+      totalPaidAmount: 0,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+      isActive: !entity.isDeleted,
+    );
+  }
+
+  CustomerTransaction _mapTransaction(offline_tx.CustomerTransactionEntity e) {
+    final TransactionType type;
+    switch (e.transactionType) {
+      case offline_tx.TransactionType.payment:
+        type = TransactionType.received;
+      case offline_tx.TransactionType.billCreated:
+        type = TransactionType.billGenerated;
+      case offline_tx.TransactionType.billReturn:
+        type = TransactionType.refund;
+      case offline_tx.TransactionType.adjustment:
+        type = TransactionType.adjusted;
+    }
+
+    PaymentMode? paymentMode;
+    final method = e.paymentMethod;
+    if (method != null && method.isNotEmpty) {
+      paymentMode = PaymentModeExtension.fromString(method.toUpperCase());
+    }
+
+    return CustomerTransaction(
+      id: e.serverId ?? 'local_${e.id}',
+      customerId: e.customerId,
+      billId: e.referenceType == 'bill' ? e.referenceId : null,
+      billNumber: e.referenceType == 'bill' ? e.referenceId : null,
+      amount: e.amount.abs(),
+      transactionType: type,
+      paymentMode: paymentMode,
+      balanceAfterTransaction: e.balanceAfter,
+      notes: e.description,
+      createdAt: e.createdAt,
+    );
+  }
+
   Future<void> _loadData() async {
     try {
       setState(() {
@@ -64,13 +151,9 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
         _error = null;
       });
 
-      final customerWithTransactions = await _transactionService
-          .getCustomerWithTransactions(
-            widget.customerId,
-            transactionLimit: 100,
-          );
-
-      if (customerWithTransactions == null) {
+      // Offline-first: read customer + ledger from local DB (no Firestore index).
+      final localCustomer = await _resolveLocalCustomer();
+      if (localCustomer == null) {
         setState(() {
           _error = 'Customer not found';
           _isLoading = false;
@@ -78,47 +161,53 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
         return;
       }
 
-      // Load event orders for this customer Try with the passed customerId first
+      final customer = _mapCustomer(localCustomer);
+      final txCtrl = CustomerTransactionOfflineController.instance;
+
+      var txEntities =
+          await txCtrl.getTransactionsByCustomerId(customer.id);
+      if (txEntities.isEmpty &&
+          _localIdHint.isNotEmpty &&
+          _localIdHint != customer.id) {
+        txEntities =
+            await txCtrl.getTransactionsByCustomerId(_localIdHint);
+      }
+      if (txEntities.isEmpty &&
+          localCustomer.serverId != null &&
+          localCustomer.serverId != customer.id) {
+        txEntities = await txCtrl
+            .getTransactionsByCustomerId(localCustomer.serverId!);
+      }
+
+      final transactions = txEntities.map(_mapTransaction).toList();
+      if (transactions.length > 100) {
+        transactions.removeRange(100, transactions.length);
+      }
+
+      final totalPaid = transactions
+          .where((t) => t.isPayment)
+          .fold<double>(0, (total, t) => total + t.amount);
+      final customerWithPaid = customer.copyWith(totalPaidAmount: totalPaid);
+
       debugPrint(
         '[CustomerDetails] Loading events for customerId: ${widget.customerId}',
       );
       var eventOrderEntities = await EventOrderOfflineController.instance
           .getEventOrdersByCustomerId(widget.customerId);
-      debugPrint(
-        '[CustomerDetails] Events found with customerId: ${eventOrderEntities.length}',
-      );
 
-      // If no results and customerId has 'local_' prefix, try with just the numeric ID This handles the mismatch where customer page uses 'local_123' but event orders store '123'
       if (eventOrderEntities.isEmpty &&
-          widget.customerId.startsWith('local_')) {
-        final localId = widget.customerId.substring(
-          6,
-        ); // Remove 'local_' prefix
-        debugPrint('[CustomerDetails] Trying with localId: $localId');
+          customer.id != widget.customerId) {
         eventOrderEntities = await EventOrderOfflineController.instance
-            .getEventOrdersByCustomerId(localId);
-        debugPrint(
-          '[CustomerDetails] Events found with localId: ${eventOrderEntities.length}',
-        );
+            .getEventOrdersByCustomerId(customer.id);
       }
 
-      // Debug: Get all event orders to see what customer IDs exist
-      if (eventOrderEntities.isEmpty) {
-        final allOrders = await EventOrderOfflineController.instance
-            .getAllEventOrders();
-        debugPrint(
-          '[CustomerDetails] Total event orders in DB: ${allOrders.length}',
-        );
-        for (final o in allOrders) {
-          debugPrint(
-            '[CustomerDetails] Order customerId: "${o.customerId}" vs looking for: "${widget.customerId}"',
-          );
-        }
+      if (eventOrderEntities.isEmpty && _localIdHint.isNotEmpty) {
+        eventOrderEntities = await EventOrderOfflineController.instance
+            .getEventOrdersByCustomerId(_localIdHint);
       }
 
       final eventOrders = eventOrderEntities.map((e) => e.toDomain()).toList();
 
-      // Calculate event totals
       double totalEventsAmount = 0.0;
       double totalAdvanceReceived = 0.0;
       for (final order in eventOrders) {
@@ -128,11 +217,8 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
         }
       }
 
-      // Build combined transactions list
       final combined = <_CombinedTransaction>[];
-
-      // Add bill transactions
-      for (final tx in customerWithTransactions.transactions) {
+      for (final tx in transactions) {
         combined.add(
           _CombinedTransaction(
             type: _TransactionType.billTransaction,
@@ -141,8 +227,6 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
           ),
         );
       }
-
-      // Add event orders as transactions
       for (final order in eventOrders) {
         combined.add(
           _CombinedTransaction(
@@ -152,13 +236,11 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
           ),
         );
       }
-
-      // Sort by date descending
       combined.sort((a, b) => b.date.compareTo(a.date));
 
       setState(() {
-        _customer = customerWithTransactions.customer;
-        _transactions = customerWithTransactions.transactions;
+        _customer = customerWithPaid;
+        _transactions = transactions;
         _eventOrders = eventOrders;
         _combinedTransactions = combined;
         _totalEventsAmount = totalEventsAmount;

@@ -1,13 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
-
-// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
-DateTime? _parseDateTime(dynamic value) {
-  if (value == null) return null;
-  if (value is Timestamp) return value.toDate();
-  if (value is DateTime) return value;
-  if (value is String) return DateTime.tryParse(value);
-  return null;
-}
+import 'package:c_billing/core/utils/date_time_parser.dart';
 
 // Local record for Customer with offline-first support Designed for high-performance CRUD operations with proper indexing
 class CustomerEntity {
@@ -142,8 +133,8 @@ class CustomerEntity {
       totalPurchases: totalPurchases,
       isSynced: true, // From server, so it's synced
       isDeleted: customer['isActive'] == false,
-      updatedAt: _parseDateTime(customer['updatedAt']) ?? now,
-      createdAt: _parseDateTime(customer['createdAt']) ?? now,
+      updatedAt: parseFlexibleDateTime(customer['updatedAt']) ?? now,
+      createdAt: parseFlexibleDateTime(customer['createdAt']) ?? now,
     );
   }
 

@@ -59,21 +59,22 @@ class FirebaseCustomerTransactionRepository
     int? limit,
   }) async {
     try {
-      Query<Map<String, dynamic>> query = _transactionsCollection
+      // Equality-only query avoids a composite index; sort client-side.
+      final snapshot = await _transactionsCollection
           .where('customerId', isEqualTo: customerId)
-          .orderBy('createdAt', descending: true);
+          .get();
 
-      if (limit != null) {
-        query = query.limit(limit);
-      }
-
-      final snapshot = await query.get();
-
-      return snapshot.docs.map((doc) {
+      final transactions = snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
         return CustomerTransaction.fromJson(data);
       }).toList();
+
+      transactions.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      if (limit != null && transactions.length > limit) {
+        return transactions.sublist(0, limit);
+      }
+      return transactions;
     } catch (e) {
       debugPrint('[ERROR] Failed to get transactions by customer ID: $e');
       rethrow;

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:c_billing/core/access/tenant_context.dart';
+import 'package:c_billing/core/utils/date_time_parser.dart';
 
 // API Service for Customer Transaction data operations with Firebase This handles all remote server communication for transactions
 class CustomerTransactionApiService {
@@ -101,16 +102,25 @@ class CustomerTransactionApiService {
         );
       }
 
-      // Order by createdAt for consistent results
-      query = query.orderBy('createdAt', descending: true);
-
+      // Avoid orderBy here — equality(+optional range) alone needs no composite
+      // index; sort client-side for stable ordering.
       final snapshot = await query.get();
 
-      return snapshot.docs.map((doc) {
+      final rows = snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
         return data;
       }).toList();
+
+      rows.sort((a, b) {
+        final aDate = parseFlexibleDateTime(a['createdAt']);
+        final bDate = parseFlexibleDateTime(b['createdAt']);
+        if (aDate == null && bDate == null) return 0;
+        if (aDate == null) return 1;
+        if (bDate == null) return -1;
+        return bDate.compareTo(aDate);
+      });
+      return rows;
     } catch (e) {
       debugPrint(
         '[CustomerTransactionAPI] Error fetching customer transactions: $e',
