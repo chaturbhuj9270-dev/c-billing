@@ -1527,6 +1527,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     final mrpController = TextEditingController();
     final compositionController = TextEditingController();
     final drugScheduleController = TextEditingController();
+    final unitController = TextEditingController(text: 'Pcs');
+    final packUnitController = TextEditingController();
+    final unitsPerPackController = TextEditingController(text: '1');
     bool applyGst = false;
 
     // Sync CGST and SGST values
@@ -1764,6 +1767,33 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           children: [
                             Expanded(
                               child: _buildTextField(
+                                controller: unitController,
+                                label: 'Sell unit (base)',
+                                icon: Icons.straighten_rounded,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildTextField(
+                                controller: packUnitController,
+                                label: 'Pack unit (optional)',
+                                icon: Icons.inventory_2_outlined,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        _buildTextField(
+                          controller: unitsPerPackController,
+                          label: 'Units per pack (e.g. 10)',
+                          icon: Icons.grid_view_rounded,
+                          keyboardType: TextInputType.number,
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildTextField(
                                 controller: purchasePriceController,
                                 label: _localizations.purchasePrice,
                                 icon: Icons.shopping_cart_outlined,
@@ -1877,6 +1907,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       mrpController: mrpController,
                       compositionController: compositionController,
                       drugScheduleController: drugScheduleController,
+                      unitController: unitController,
+                      packUnitController: packUnitController,
+                      unitsPerPackController: unitsPerPackController,
                       applyGst: applyGst,
                       selectedCompany: dialogSelectedCompany,
                       selectedSupplier: dialogSelectedSupplier,
@@ -2025,6 +2058,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     required TextEditingController mrpController,
     required TextEditingController compositionController,
     required TextEditingController drugScheduleController,
+    required TextEditingController unitController,
+    required TextEditingController packUnitController,
+    required TextEditingController unitsPerPackController,
     required bool applyGst,
     Map<String, dynamic>? selectedCompany,
     Map<String, dynamic>? selectedSupplier,
@@ -2086,6 +2122,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       final compositionVal = compositionController.text.trim();
       final scheduleVal = drugScheduleController.text.trim();
       final mrpVal = double.tryParse(mrpController.text.trim());
+      final unitVal = unitController.text.trim();
+      final packUnitVal = packUnitController.text.trim();
+      final unitsPerPackVal = int.tryParse(unitsPerPackController.text.trim()) ?? 1;
       final newProduct = await ProductOfflineController.instance.addProduct(
         name: name,
         companyName: selectedCompany?['companyName'] ?? '',
@@ -2104,6 +2143,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         mrp: mrpVal,
         composition: compositionVal.isNotEmpty ? compositionVal : null,
         drugSchedule: scheduleVal.isNotEmpty ? scheduleVal : null,
+        unit: unitVal.isNotEmpty ? unitVal : null,
+        packUnit: packUnitVal.isNotEmpty ? packUnitVal : null,
+        unitsPerPack: unitsPerPackVal < 1 ? 1 : unitsPerPackVal,
       );
 
       DashboardRefreshService.instance.notifyDataChanged(
@@ -2151,6 +2193,13 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     );
     final drugScheduleController = TextEditingController(
       text: product.drugSchedule ?? '',
+    );
+    final unitController = TextEditingController(text: product.unit ?? 'Pcs');
+    final packUnitController = TextEditingController(
+      text: product.packUnit ?? '',
+    );
+    final unitsPerPackController = TextEditingController(
+      text: '${product.unitsPerPack < 1 ? 1 : product.unitsPerPack}',
     );
     var applyGst = product.cgstPercent > 0 ||
         product.sgstPercent > 0 ||
@@ -2340,6 +2389,33 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           children: [
                             Expanded(
                               child: _buildTextField(
+                                controller: unitController,
+                                label: 'Sell unit (base)',
+                                icon: Icons.straighten_rounded,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildTextField(
+                                controller: packUnitController,
+                                label: 'Pack unit (optional)',
+                                icon: Icons.inventory_2_outlined,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        _buildTextField(
+                          controller: unitsPerPackController,
+                          label: 'Units per pack (e.g. 10)',
+                          icon: Icons.grid_view_rounded,
+                          keyboardType: TextInputType.number,
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildTextField(
                                 controller: purchasePriceController,
                                 label: _localizations.purchasePrice,
                                 icon: Icons.shopping_cart_outlined,
@@ -2490,6 +2566,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       mrpController: mrpController,
                       compositionController: compositionController,
                       drugScheduleController: drugScheduleController,
+                      unitController: unitController,
+                      packUnitController: packUnitController,
+                      unitsPerPackController: unitsPerPackController,
                       applyGst: applyGst,
                       customColumns: customColumns,
                       customTextControllers: customTextControllers,
@@ -2534,6 +2613,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     required TextEditingController mrpController,
     required TextEditingController compositionController,
     required TextEditingController drugScheduleController,
+    required TextEditingController unitController,
+    required TextEditingController packUnitController,
+    required TextEditingController unitsPerPackController,
     required bool applyGst,
     required List<CustomColumn> customColumns,
     required Map<String, TextEditingController> customTextControllers,
@@ -2592,6 +2674,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       final compositionVal = compositionController.text.trim();
       final scheduleVal = drugScheduleController.text.trim();
       final mrpVal = double.tryParse(mrpController.text.trim());
+      final unitVal = unitController.text.trim();
+      final packUnitVal = packUnitController.text.trim();
+      final unitsPerPackVal =
+          int.tryParse(unitsPerPackController.text.trim()) ?? 1;
       await ProductOfflineController.instance.updateProduct(
         id: product.id,
         name: name,
@@ -2608,6 +2694,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         mrp: mrpVal,
         composition: compositionVal.isNotEmpty ? compositionVal : null,
         drugSchedule: scheduleVal.isNotEmpty ? scheduleVal : null,
+        unit: unitVal.isNotEmpty ? unitVal : null,
+        packUnit: packUnitVal.isNotEmpty ? packUnitVal : null,
+        unitsPerPack: unitsPerPackVal < 1 ? 1 : unitsPerPackVal,
         updateVariantFields: true,
       );
 

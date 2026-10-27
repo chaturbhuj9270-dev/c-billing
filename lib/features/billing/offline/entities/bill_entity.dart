@@ -53,7 +53,8 @@ class BillItemEmbedded {
   double sgstPercent;
   double igstPercent;
   String? unit; // Base unit (kg, ltr, pcs)
-  String? sellUnit; // Sale unit (gm, ml, kg, ltr, pcs)
+  String? sellUnit; // Sale unit (gm, ml, kg, ltr, pcs, Strip, …)
+  int unitsPerPack; // Pack size for bulk↔loose display (stock is base)
   int? employeeToken; // Salesperson token for this line item
 
   BillItemEmbedded({
@@ -71,6 +72,7 @@ class BillItemEmbedded {
     this.igstPercent = 0.0,
     this.unit,
     this.sellUnit,
+    this.unitsPerPack = 1,
     this.employeeToken,
   });
 
@@ -90,6 +92,7 @@ class BillItemEmbedded {
       'igstPercent': igstPercent,
       'unit': unit,
       'sellUnit': sellUnit,
+      'unitsPerPack': unitsPerPack,
       if (employeeToken != null) 'employeeToken': employeeToken,
     };
   }
@@ -114,6 +117,7 @@ class BillItemEmbedded {
       igstPercent: (json['igstPercent'] as num?)?.toDouble() ?? 0.0,
       unit: json['unit'] as String?,
       sellUnit: json['sellUnit'] as String?,
+      unitsPerPack: (json['unitsPerPack'] as num?)?.toInt() ?? 1,
       employeeToken: (token != null && token > 0) ? token : null,
     );
   }

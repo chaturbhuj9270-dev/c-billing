@@ -262,6 +262,7 @@ class Bill {
             sgstPercent: item.sgstPercent,
             unit: item.unit,
             sellUnit: item.sellUnit,
+            unitsPerPack: item.unitsPerPack,
             employeeToken: item.employeeToken,
           ),
         )

@@ -32,6 +32,10 @@ class Product {
   final String? composition;
   /// Schedule H / H1 / X etc. (medical)
   final String? drugSchedule;
+  /// Pack label when buying bulk / selling pack (e.g. Strip, Bag, Box).
+  final String? packUnit;
+  /// Base [unit] count in one pack (e.g. 10 tablets per strip). Stock is always base units.
+  final int unitsPerPack;
 
   Product({
     required this.id,
@@ -58,7 +62,12 @@ class Product {
     this.mrp,
     this.composition,
     this.drugSchedule,
+    this.packUnit,
+    this.unitsPerPack = 1,
   });
+
+  bool get hasPackSell =>
+      unitsPerPack > 1 && packUnit != null && packUnit!.trim().isNotEmpty;
 
   /// Name with size/color for billing and lists.
   String get displayName => formatBillName(name, size: size, color: color);
@@ -107,6 +116,8 @@ class Product {
       mrp: (entity.mrp as num?)?.toDouble(),
       composition: entity.composition as String?,
       drugSchedule: entity.drugSchedule as String?,
+      packUnit: entity.packUnit as String?,
+      unitsPerPack: (entity.unitsPerPack as int?) ?? 1,
     );
   }
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -139,6 +150,8 @@ class Product {
         mrp: json['mrp'] != null ? (json['mrp'] as num).toDouble() : null,
         composition: json['composition'] as String?,
         drugSchedule: json['drugSchedule'] as String?,
+        packUnit: json['packUnit'] as String?,
+        unitsPerPack: (json['unitsPerPack'] as num?)?.toInt() ?? 1,
       );
     } catch (e) {
       debugPrint('[ERROR] Failed to parse Product from JSON: $json');
@@ -185,6 +198,8 @@ class Product {
       'mrp': mrp,
       'composition': composition,
       'drugSchedule': drugSchedule,
+      'packUnit': packUnit,
+      'unitsPerPack': unitsPerPack,
     };
   }
 
@@ -214,6 +229,8 @@ class Product {
     double? mrp,
     String? composition,
     String? drugSchedule,
+    String? packUnit,
+    int? unitsPerPack,
   }) {
     return Product(
       id: id ?? this.id,
@@ -240,6 +257,8 @@ class Product {
       mrp: mrp ?? this.mrp,
       composition: composition ?? this.composition,
       drugSchedule: drugSchedule ?? this.drugSchedule,
+      packUnit: packUnit ?? this.packUnit,
+      unitsPerPack: unitsPerPack ?? this.unitsPerPack,
     );
   }
 

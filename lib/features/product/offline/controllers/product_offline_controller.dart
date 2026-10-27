@@ -105,6 +105,8 @@ class ProductOfflineController extends ChangeNotifier {
     double? mrp,
     String? composition,
     String? drugSchedule,
+    String? packUnit,
+    int unitsPerPack = 1,
   }) async {
     debugPrint('[ProductOffline] Adding product: $name');
 
@@ -154,6 +156,8 @@ class ProductOfflineController extends ChangeNotifier {
       mrp: mrp,
       composition: composition,
       drugSchedule: drugSchedule,
+      packUnit: packUnit,
+      unitsPerPack: unitsPerPack < 1 ? 1 : unitsPerPack,
     );
 
     await _db.saveProduct(product);
@@ -287,6 +291,8 @@ class ProductOfflineController extends ChangeNotifier {
     double? mrp,
     String? composition,
     String? drugSchedule,
+    String? packUnit,
+    int? unitsPerPack,
     bool updateVariantFields = false,
   }) async {
     final existing = await _findById(id);
@@ -338,6 +344,10 @@ class ProductOfflineController extends ChangeNotifier {
       updated.mrp = mrp;
       updated.composition = composition;
       updated.drugSchedule = drugSchedule;
+      updated.unit = unit;
+      updated.packUnit = packUnit;
+      updated.unitsPerPack =
+          (unitsPerPack == null || unitsPerPack < 1) ? 1 : unitsPerPack;
     }
 
     await _db.saveProduct(updated);

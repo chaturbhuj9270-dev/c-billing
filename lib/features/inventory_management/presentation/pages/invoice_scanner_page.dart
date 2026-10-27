@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/services/invoice_scanner_service.dart';
 import '../../../../core/services/inventory_integration_service.dart';
+import '../../../../core/services/purchase_settings_service.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
 import '../../../supplier/offline/entities/supplier_entity.dart';
 import '../../../company/offline/controllers/company_offline_controller.dart';
@@ -295,7 +296,8 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
                 item.salesPrice ??
                 matchedProduct?.salesPrice ??
                 item.purchasePrice * 1.2,
-            batchNumber: item.batchNumber?.trim().isNotEmpty == true
+            batchNumber: PurchaseSettingsService.instance.showBatchNumber &&
+                    item.batchNumber?.trim().isNotEmpty == true
                 ? item.batchNumber!.trim()
                 : null,
             productionDate: item.productionDate,
@@ -975,7 +977,8 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
                           'Exp: ${DateFormat('dd/MM/yy').format(item.expiryDate!)}',
                           colorScheme,
                         ),
-                      if (item.batchNumber != null)
+                      if (PurchaseSettingsService.instance.showBatchNumber &&
+                          item.batchNumber != null)
                         _buildItemDetail(
                           Icons.tag,
                           'Batch: ${item.batchNumber}',
@@ -1335,14 +1338,16 @@ class _EditItemDialogState extends State<_EditItemDialog> {
                 });
               },
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _batchController,
-              decoration: const InputDecoration(
-                labelText: 'Batch Number',
-                border: OutlineInputBorder(),
+            if (PurchaseSettingsService.instance.showBatchNumber) ...[
+              const SizedBox(height: 12),
+              TextField(
+                controller: _batchController,
+                decoration: const InputDecoration(
+                  labelText: 'Batch Number',
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
+            ],
             const SizedBox(height: 12),
             // Dates
             Row(
@@ -1431,7 +1436,8 @@ class _EditItemDialogState extends State<_EditItemDialog> {
                   ? _unitController.text
                   : null,
               companyName: _selectedCompanyName,
-              batchNumber: _batchController.text.isNotEmpty
+              batchNumber: PurchaseSettingsService.instance.showBatchNumber &&
+                      _batchController.text.isNotEmpty
                   ? _batchController.text
                   : null,
               matchedProductId: _selectedProductId,

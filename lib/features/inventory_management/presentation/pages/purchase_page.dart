@@ -7,6 +7,7 @@ import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/services/purchase_settings_service.dart';
 import 'package:c_billing/core/services/product_settings_service.dart';
+import 'package:c_billing/core/services/pack_unit_conversion.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import '../../data/datasources/purchase_cache_datasource.dart';
 import '../../domain/entities/product.dart';
@@ -61,6 +62,8 @@ class _PurchasePageState extends State<PurchasePage>
   DateTime? _expiryDate;
   String? _selectedUnit;
   int? _selectedWarranty;
+  /// When product has pack config, buy in pack units by default (e.g. Strip).
+  bool _buyAsPack = true;
 
   final _quantityController = TextEditingController();
   final _priceController = TextEditingController();
@@ -175,6 +178,11 @@ class _PurchasePageState extends State<PurchasePage>
 
         // Always update to the new default warranty when settings change
         _selectedWarranty = PurchaseSettingsService.instance.defaultWarranty;
+
+        // Drop stale lot text when batch entry is turned off in settings.
+        if (!PurchaseSettingsService.instance.showBatchNumber) {
+          _batchNumberController.clear();
+        }
       });
     }
   }
@@ -1528,11 +1536,28 @@ class _PurchasePageState extends State<PurchasePage>
                               onTap: () {
                                 setState(() {
                                   _selectedProduct = product;
-                                  _priceController.text = product.purchasePrice
-                                      .toString();
-                                  _salesPriceController.text = product
-                                      .salesPrice
-                                      .toString();
+                                  _buyAsPack = product.hasPackSell;
+                                  if (_buyAsPack) {
+                                    final n = PackUnitConversion
+                                        .normalizeUnitsPerPack(
+                                      product.unitsPerPack,
+                                    );
+                                    _priceController.text =
+                                        PackUnitConversion.toPackUnitPrice(
+                                      product.purchasePrice,
+                                      n,
+                                    ).toStringAsFixed(2);
+                                    _salesPriceController.text =
+                                        PackUnitConversion.toPackUnitPrice(
+                                      product.salesPrice,
+                                      n,
+                                    ).toStringAsFixed(2);
+                                  } else {
+                                    _priceController.text =
+                                        product.purchasePrice.toString();
+                                    _salesPriceController.text =
+                                        product.salesPrice.toString();
+                                  }
 
                                   // Auto-populate company from product
                                   if (product.companyName.isNotEmpty) {
@@ -2241,24 +2266,49 @@ class _PurchasePageState extends State<PurchasePage>
       return;
     }
 
-    final quantity = int.tryParse(_quantityController.text);
-    final price = double.tryParse(_priceController.text);
-    final salesPrice = double.tryParse(_salesPriceController.text);
+    final enteredQty = int.tryParse(_quantityController.text);
+    final enteredPrice = double.tryParse(_priceController.text);
+    final enteredSalesPrice = double.tryParse(_salesPriceController.text);
 
-    if (quantity == null || quantity <= 0) {
+    if (enteredQty == null || enteredQty <= 0) {
       GlassyToast.show(context, _localizations.pleaseEnterValidQuantity);
       return;
     }
 
-    if (price == null || price < 0) {
+    if (enteredPrice == null || enteredPrice < 0) {
       GlassyToast.show(context, _localizations.pleaseEnterValidPurchasePrice);
       return;
     }
 
-    if (salesPrice == null || salesPrice < 0) {
+    if (enteredSalesPrice == null || enteredSalesPrice < 0) {
       GlassyToast.show(context, _localizations.pleaseEnterValidSalesPrice);
       return;
     }
+
+    // Pack↔base: stock / FIFO always store base units & per-base prices.
+    final product = _selectedProduct!;
+    final buyingAsPack = _buyAsPack &&
+        PackUnitConversion.hasPack(
+          packUnit: product.packUnit,
+          unitsPerPack: product.unitsPerPack,
+        );
+    final unitsPerPack =
+        PackUnitConversion.normalizeUnitsPerPack(product.unitsPerPack);
+    final quantity = buyingAsPack
+        ? PackUnitConversion.toBaseQuantity(enteredQty, unitsPerPack)
+        : enteredQty;
+    final price = buyingAsPack
+        ? PackUnitConversion.toBaseUnitPrice(enteredPrice, unitsPerPack)
+        : enteredPrice;
+    final salesPrice = buyingAsPack
+        ? PackUnitConversion.toBaseUnitPrice(enteredSalesPrice, unitsPerPack)
+        : enteredSalesPrice;
+    final stockUnit = (product.unit != null && product.unit!.trim().isNotEmpty)
+        ? product.unit!.trim()
+        : (_selectedUnit ?? PurchaseSettingsService.instance.defaultUnit);
+    final packNote = buyingAsPack
+        ? 'Bought $enteredQty ${product.packUnit} × $unitsPerPack $stockUnit'
+        : null;
 
     setState(() => _isLoading = true);
 
@@ -2266,25 +2316,31 @@ class _PurchasePageState extends State<PurchasePage>
       // Use InventoryIntegrationService for unified processing: Creates PurchaseEntity + PurchaseBatch (FIFO) + StockLedger + updates Product stock/prices
       final integrationResult = await InventoryIntegrationService.instance
           .processPurchase(
-            productId: _selectedProduct!.id,
-            productName: _selectedProduct!.name,
+            productId: product.id,
+            productName: product.name,
             supplierId: _selectedSupplier!['id'],
             supplierName: _selectedSupplier!['fullName'],
             companyId: _selectedCompany?['id'],
             companyName: _selectedCompany?['companyName'],
             quantity: quantity,
-            unit: _selectedUnit ?? PurchaseSettingsService.instance.defaultUnit,
+            unit: stockUnit,
             purchasePrice: price,
             salesPrice: salesPrice,
-            batchNumber: _batchNumberController.text.trim().isNotEmpty
+            batchNumber: PurchaseSettingsService.instance.showBatchNumber &&
+                    _batchNumberController.text.trim().isNotEmpty
                 ? _batchNumberController.text.trim()
                 : null,
             productionDate: _productionDate,
             expiryDate: _expiryDate,
             warrantyMonths: _selectedWarranty ?? 0,
-            notes: _notesController.text.isNotEmpty
-                ? _notesController.text
-                : null,
+            notes: () {
+              final userNotes = _notesController.text.trim();
+              if (packNote != null && userNotes.isNotEmpty) {
+                return '$packNote; $userNotes';
+              }
+              if (packNote != null) return packNote;
+              return userNotes.isNotEmpty ? userNotes : null;
+            }(),
           );
 
       if (!integrationResult.success) {
@@ -3413,25 +3469,67 @@ class _PurchasePageState extends State<PurchasePage>
             ),
             const SizedBox(height: 16),
           ],
+          // Buy as pack vs base (strip/bag ↔ tablet/kg)
+          if (_selectedProduct != null &&
+              PackUnitConversion.hasPack(
+                packUnit: _selectedProduct!.packUnit,
+                unitsPerPack: _selectedProduct!.unitsPerPack,
+              )) ...[
+            _buildChipSelector<bool>(
+              label: 'Buy as',
+              options: const [true, false],
+              selectedValue: _buyAsPack,
+              onSelected: (asPack) => setState(() => _buyAsPack = asPack),
+              color: AppTheme.toneCyan,
+              icon: Icons.inventory_2_outlined,
+              labelBuilder: (asPack) => asPack
+                  ? (_selectedProduct!.packUnit ?? 'Pack')
+                  : (_selectedProduct!.unit ?? 'Unit'),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _buyAsPack
+                  ? 'Stock will add qty × ${_selectedProduct!.unitsPerPack} ${_selectedProduct!.unit ?? 'units'}'
+                  : 'Stock tracked in ${_selectedProduct!.unit ?? 'base units'}',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 12,
+                color: AppTheme.grey600,
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
           // Quantity field
           _buildTextField(
             controller: _quantityController,
-            label: _localizations.purchaseQuantity,
+            label: _selectedProduct != null &&
+                    _buyAsPack &&
+                    PackUnitConversion.hasPack(
+                      packUnit: _selectedProduct!.packUnit,
+                      unitsPerPack: _selectedProduct!.unitsPerPack,
+                    )
+                ? 'Quantity (${_selectedProduct!.packUnit})'
+                : _localizations.purchaseQuantity,
             hint: _localizations.enterQuantity,
             icon: Icons.shopping_cart_rounded,
             keyboardType: TextInputType.number,
             onChanged: (_) => _calculateTotal(),
           ),
           SizedBox(height: 16),
-          // Measurement Unit
-          _buildChipSelector(
-            label: _localizations.measurementUnit,
-            options: PurchaseSettingsService.instance.availableUnits,
-            selectedValue: _selectedUnit,
-            onSelected: (unit) => setState(() => _selectedUnit = unit),
-            color: AppColors.accent(context),
-            icon: Icons.straighten_rounded,
-          ),
+          // Measurement Unit (hidden when product pack config drives base unit)
+          if (_selectedProduct == null ||
+              !PackUnitConversion.hasPack(
+                packUnit: _selectedProduct!.packUnit,
+                unitsPerPack: _selectedProduct!.unitsPerPack,
+              ))
+            _buildChipSelector(
+              label: _localizations.measurementUnit,
+              options: PurchaseSettingsService.instance.availableUnits,
+              selectedValue: _selectedUnit,
+              onSelected: (unit) => setState(() => _selectedUnit = unit),
+              color: AppColors.accent(context),
+              icon: Icons.straighten_rounded,
+            ),
           // Warranty (if enabled)
           if (PurchaseSettingsService.instance.showWarranty) ...[
             const SizedBox(height: 16),

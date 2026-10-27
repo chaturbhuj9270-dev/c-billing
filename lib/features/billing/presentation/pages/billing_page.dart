@@ -1221,6 +1221,7 @@ class _BillingPageState extends State<BillingPage> {
               hsnCode,
               unit,
               sellUnit,
+              unitsPerPack,
             ) {
               // Use a unique key: productId + batchLocalId (or just productId if no batch)
               final uniqueKey = batchLocalId != null
@@ -1248,6 +1249,7 @@ class _BillingPageState extends State<BillingPage> {
                     hsnCode: hsnCode,
                     unit: unit,
                     sellUnit: sellUnit,
+                    unitsPerPack: unitsPerPack,
                     employeeToken: prev.employeeToken,
                   );
                 } else {
@@ -1264,6 +1266,7 @@ class _BillingPageState extends State<BillingPage> {
                       hsnCode: hsnCode,
                       unit: unit,
                       sellUnit: sellUnit,
+                      unitsPerPack: unitsPerPack,
                     ),
                   );
                 }
@@ -1521,6 +1524,7 @@ class _BillingPageState extends State<BillingPage> {
           hsnCode: item.hsnCode,
           unit: item.unit,
           sellUnit: item.sellUnit,
+          unitsPerPack: item.unitsPerPack,
           employeeToken: item.employeeToken,
         );
       }).toList();
@@ -3765,6 +3769,8 @@ class _BillingPageState extends State<BillingPage> {
           sgstPercent: resolved.sgstPercent,
           hsnCode: resolved.hsnCode,
           unit: resolved.unit,
+          packUnit: resolved.packUnit,
+          unitsPerPack: resolved.unitsPerPack,
           onBatchSelected: (batch, quantity, sellUnit) {
             final uniqueKey = '${resolved.id}_batch_${batch.id}';
             final existingIndex = _billItems.indexWhere(
@@ -3791,6 +3797,7 @@ class _BillingPageState extends State<BillingPage> {
                   hsnCode: resolved.hsnCode,
                   unit: resolved.unit,
                   sellUnit: sellUnit,
+                  unitsPerPack: resolved.unitsPerPack,
                   employeeToken: prev.employeeToken,
                 );
               } else {
@@ -3809,6 +3816,7 @@ class _BillingPageState extends State<BillingPage> {
                     hsnCode: resolved.hsnCode,
                     unit: resolved.unit,
                     sellUnit: sellUnit,
+                    unitsPerPack: resolved.unitsPerPack,
                   ),
                 );
               }
@@ -3866,6 +3874,7 @@ class _BillingPageState extends State<BillingPage> {
             hsnCode: resolved.hsnCode,
             unit: existing.unit ?? resolved.unit,
             sellUnit: existing.sellUnit ?? resolved.unit,
+            unitsPerPack: resolved.unitsPerPack,
             employeeToken: existing.employeeToken,
           );
         } else {
@@ -3892,6 +3901,7 @@ class _BillingPageState extends State<BillingPage> {
             hsnCode: resolved.hsnCode,
             unit: resolved.unit,
             sellUnit: resolved.unit,
+            unitsPerPack: resolved.unitsPerPack,
           ),
         );
       }

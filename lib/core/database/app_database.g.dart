@@ -2433,6 +2433,29 @@ class $ProductRecordsTable extends ProductRecords
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _packUnitMeta = const VerificationMeta(
+    'packUnit',
+  );
+  @override
+  late final GeneratedColumn<String> packUnit = GeneratedColumn<String>(
+    'pack_unit',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _unitsPerPackMeta = const VerificationMeta(
+    'unitsPerPack',
+  );
+  @override
+  late final GeneratedColumn<int> unitsPerPack = GeneratedColumn<int>(
+    'units_per_pack',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2464,6 +2487,8 @@ class $ProductRecordsTable extends ProductRecords
     mrp,
     composition,
     drugSchedule,
+    packUnit,
+    unitsPerPack,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2692,6 +2717,21 @@ class $ProductRecordsTable extends ProductRecords
         ),
       );
     }
+    if (data.containsKey('pack_unit')) {
+      context.handle(
+        _packUnitMeta,
+        packUnit.isAcceptableOrUnknown(data['pack_unit']!, _packUnitMeta),
+      );
+    }
+    if (data.containsKey('units_per_pack')) {
+      context.handle(
+        _unitsPerPackMeta,
+        unitsPerPack.isAcceptableOrUnknown(
+          data['units_per_pack']!,
+          _unitsPerPackMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -2817,6 +2857,14 @@ class $ProductRecordsTable extends ProductRecords
         DriftSqlType.string,
         data['${effectivePrefix}drug_schedule'],
       ),
+      packUnit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pack_unit'],
+      ),
+      unitsPerPack: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}units_per_pack'],
+      )!,
     );
   }
 
@@ -2856,6 +2904,12 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
   final double? mrp;
   final String? composition;
   final String? drugSchedule;
+
+  /// Pack / strip / bag label when buying bulk and selling loose (e.g. Strip, Bag).
+  final String? packUnit;
+
+  /// How many base [unit] items are in one pack (e.g. 10 tablets per strip).
+  final int unitsPerPack;
   const ProductRecord({
     required this.id,
     this.serverId,
@@ -2886,6 +2940,8 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
     this.mrp,
     this.composition,
     this.drugSchedule,
+    this.packUnit,
+    required this.unitsPerPack,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2949,6 +3005,10 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
     if (!nullToAbsent || drugSchedule != null) {
       map['drug_schedule'] = Variable<String>(drugSchedule);
     }
+    if (!nullToAbsent || packUnit != null) {
+      map['pack_unit'] = Variable<String>(packUnit);
+    }
+    map['units_per_pack'] = Variable<int>(unitsPerPack);
     return map;
   }
 
@@ -3007,6 +3067,10 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
       drugSchedule: drugSchedule == null && nullToAbsent
           ? const Value.absent()
           : Value(drugSchedule),
+      packUnit: packUnit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(packUnit),
+      unitsPerPack: Value(unitsPerPack),
     );
   }
 
@@ -3049,6 +3113,8 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
       mrp: serializer.fromJson<double?>(json['mrp']),
       composition: serializer.fromJson<String?>(json['composition']),
       drugSchedule: serializer.fromJson<String?>(json['drugSchedule']),
+      packUnit: serializer.fromJson<String?>(json['packUnit']),
+      unitsPerPack: serializer.fromJson<int>(json['unitsPerPack']),
     );
   }
   @override
@@ -3084,6 +3150,8 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
       'mrp': serializer.toJson<double?>(mrp),
       'composition': serializer.toJson<String?>(composition),
       'drugSchedule': serializer.toJson<String?>(drugSchedule),
+      'packUnit': serializer.toJson<String?>(packUnit),
+      'unitsPerPack': serializer.toJson<int>(unitsPerPack),
     };
   }
 
@@ -3117,6 +3185,8 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
     Value<double?> mrp = const Value.absent(),
     Value<String?> composition = const Value.absent(),
     Value<String?> drugSchedule = const Value.absent(),
+    Value<String?> packUnit = const Value.absent(),
+    int? unitsPerPack,
   }) => ProductRecord(
     id: id ?? this.id,
     serverId: serverId.present ? serverId.value : this.serverId,
@@ -3155,6 +3225,8 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
     mrp: mrp.present ? mrp.value : this.mrp,
     composition: composition.present ? composition.value : this.composition,
     drugSchedule: drugSchedule.present ? drugSchedule.value : this.drugSchedule,
+    packUnit: packUnit.present ? packUnit.value : this.packUnit,
+    unitsPerPack: unitsPerPack ?? this.unitsPerPack,
   );
   ProductRecord copyWithCompanion(ProductRecordsCompanion data) {
     return ProductRecord(
@@ -3215,6 +3287,10 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
       drugSchedule: data.drugSchedule.present
           ? data.drugSchedule.value
           : this.drugSchedule,
+      packUnit: data.packUnit.present ? data.packUnit.value : this.packUnit,
+      unitsPerPack: data.unitsPerPack.present
+          ? data.unitsPerPack.value
+          : this.unitsPerPack,
     );
   }
 
@@ -3249,7 +3325,9 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
           ..write('color: $color, ')
           ..write('mrp: $mrp, ')
           ..write('composition: $composition, ')
-          ..write('drugSchedule: $drugSchedule')
+          ..write('drugSchedule: $drugSchedule, ')
+          ..write('packUnit: $packUnit, ')
+          ..write('unitsPerPack: $unitsPerPack')
           ..write(')'))
         .toString();
   }
@@ -3285,6 +3363,8 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
     mrp,
     composition,
     drugSchedule,
+    packUnit,
+    unitsPerPack,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -3318,7 +3398,9 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
           other.color == this.color &&
           other.mrp == this.mrp &&
           other.composition == this.composition &&
-          other.drugSchedule == this.drugSchedule);
+          other.drugSchedule == this.drugSchedule &&
+          other.packUnit == this.packUnit &&
+          other.unitsPerPack == this.unitsPerPack);
 }
 
 class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
@@ -3351,6 +3433,8 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
   final Value<double?> mrp;
   final Value<String?> composition;
   final Value<String?> drugSchedule;
+  final Value<String?> packUnit;
+  final Value<int> unitsPerPack;
   const ProductRecordsCompanion({
     this.id = const Value.absent(),
     this.serverId = const Value.absent(),
@@ -3381,6 +3465,8 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
     this.mrp = const Value.absent(),
     this.composition = const Value.absent(),
     this.drugSchedule = const Value.absent(),
+    this.packUnit = const Value.absent(),
+    this.unitsPerPack = const Value.absent(),
   });
   ProductRecordsCompanion.insert({
     this.id = const Value.absent(),
@@ -3412,6 +3498,8 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
     this.mrp = const Value.absent(),
     this.composition = const Value.absent(),
     this.drugSchedule = const Value.absent(),
+    this.packUnit = const Value.absent(),
+    this.unitsPerPack = const Value.absent(),
   }) : name = Value(name),
        syncStatus = Value(syncStatus),
        updatedAt = Value(updatedAt),
@@ -3446,6 +3534,8 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
     Expression<double>? mrp,
     Expression<String>? composition,
     Expression<String>? drugSchedule,
+    Expression<String>? packUnit,
+    Expression<int>? unitsPerPack,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3478,6 +3568,8 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
       if (mrp != null) 'mrp': mrp,
       if (composition != null) 'composition': composition,
       if (drugSchedule != null) 'drug_schedule': drugSchedule,
+      if (packUnit != null) 'pack_unit': packUnit,
+      if (unitsPerPack != null) 'units_per_pack': unitsPerPack,
     });
   }
 
@@ -3511,6 +3603,8 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
     Value<double?>? mrp,
     Value<String?>? composition,
     Value<String?>? drugSchedule,
+    Value<String?>? packUnit,
+    Value<int>? unitsPerPack,
   }) {
     return ProductRecordsCompanion(
       id: id ?? this.id,
@@ -3542,6 +3636,8 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
       mrp: mrp ?? this.mrp,
       composition: composition ?? this.composition,
       drugSchedule: drugSchedule ?? this.drugSchedule,
+      packUnit: packUnit ?? this.packUnit,
+      unitsPerPack: unitsPerPack ?? this.unitsPerPack,
     );
   }
 
@@ -3637,6 +3733,12 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
     if (drugSchedule.present) {
       map['drug_schedule'] = Variable<String>(drugSchedule.value);
     }
+    if (packUnit.present) {
+      map['pack_unit'] = Variable<String>(packUnit.value);
+    }
+    if (unitsPerPack.present) {
+      map['units_per_pack'] = Variable<int>(unitsPerPack.value);
+    }
     return map;
   }
 
@@ -3671,7 +3773,9 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
           ..write('color: $color, ')
           ..write('mrp: $mrp, ')
           ..write('composition: $composition, ')
-          ..write('drugSchedule: $drugSchedule')
+          ..write('drugSchedule: $drugSchedule, ')
+          ..write('packUnit: $packUnit, ')
+          ..write('unitsPerPack: $unitsPerPack')
           ..write(')'))
         .toString();
   }
@@ -16860,6 +16964,8 @@ typedef $$ProductRecordsTableCreateCompanionBuilder =
       Value<double?> mrp,
       Value<String?> composition,
       Value<String?> drugSchedule,
+      Value<String?> packUnit,
+      Value<int> unitsPerPack,
     });
 typedef $$ProductRecordsTableUpdateCompanionBuilder =
     ProductRecordsCompanion Function({
@@ -16892,6 +16998,8 @@ typedef $$ProductRecordsTableUpdateCompanionBuilder =
       Value<double?> mrp,
       Value<String?> composition,
       Value<String?> drugSchedule,
+      Value<String?> packUnit,
+      Value<int> unitsPerPack,
     });
 
 class $$ProductRecordsTableFilterComposer
@@ -17045,6 +17153,16 @@ class $$ProductRecordsTableFilterComposer
 
   ColumnFilters<String> get drugSchedule => $composableBuilder(
     column: $table.drugSchedule,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get packUnit => $composableBuilder(
+    column: $table.packUnit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get unitsPerPack => $composableBuilder(
+    column: $table.unitsPerPack,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -17202,6 +17320,16 @@ class $$ProductRecordsTableOrderingComposer
     column: $table.drugSchedule,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get packUnit => $composableBuilder(
+    column: $table.packUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get unitsPerPack => $composableBuilder(
+    column: $table.unitsPerPack,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ProductRecordsTableAnnotationComposer
@@ -17327,6 +17455,14 @@ class $$ProductRecordsTableAnnotationComposer
     column: $table.drugSchedule,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get packUnit =>
+      $composableBuilder(column: $table.packUnit, builder: (column) => column);
+
+  GeneratedColumn<int> get unitsPerPack => $composableBuilder(
+    column: $table.unitsPerPack,
+    builder: (column) => column,
+  );
 }
 
 class $$ProductRecordsTableTableManager
@@ -17391,6 +17527,8 @@ class $$ProductRecordsTableTableManager
                 Value<double?> mrp = const Value.absent(),
                 Value<String?> composition = const Value.absent(),
                 Value<String?> drugSchedule = const Value.absent(),
+                Value<String?> packUnit = const Value.absent(),
+                Value<int> unitsPerPack = const Value.absent(),
               }) => ProductRecordsCompanion(
                 id: id,
                 serverId: serverId,
@@ -17421,6 +17559,8 @@ class $$ProductRecordsTableTableManager
                 mrp: mrp,
                 composition: composition,
                 drugSchedule: drugSchedule,
+                packUnit: packUnit,
+                unitsPerPack: unitsPerPack,
               ),
           createCompanionCallback:
               ({
@@ -17453,6 +17593,8 @@ class $$ProductRecordsTableTableManager
                 Value<double?> mrp = const Value.absent(),
                 Value<String?> composition = const Value.absent(),
                 Value<String?> drugSchedule = const Value.absent(),
+                Value<String?> packUnit = const Value.absent(),
+                Value<int> unitsPerPack = const Value.absent(),
               }) => ProductRecordsCompanion.insert(
                 id: id,
                 serverId: serverId,
@@ -17483,6 +17625,8 @@ class $$ProductRecordsTableTableManager
                 mrp: mrp,
                 composition: composition,
                 drugSchedule: drugSchedule,
+                packUnit: packUnit,
+                unitsPerPack: unitsPerPack,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

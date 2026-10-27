@@ -96,6 +96,11 @@ class ProductRecords extends Table {
   RealColumn get mrp => real().nullable()();
   TextColumn get composition => text().nullable()();
   TextColumn get drugSchedule => text().nullable()();
+  /// Pack / strip / bag label when buying bulk and selling loose (e.g. Strip, Bag).
+  TextColumn get packUnit => text().nullable()();
+  /// How many base [unit] items are in one pack (e.g. 10 tablets per strip).
+  IntColumn get unitsPerPack =>
+      integer().withDefault(const Constant(1))();
 }
 
 @DataClassName('PurchaseRecord')
@@ -412,7 +417,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? openAppDatabase());
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   Future<bool> _hasTable(String table) async {
     final rows = await customSelect(
@@ -527,6 +532,14 @@ class AppDatabase extends _$AppDatabase {
         await _addColumnIfMissing(m, billRecords, billRecords.customerGstin);
         await _addColumnIfMissing(m, billRecords, billRecords.placeOfSupply);
         await _addColumnIfMissing(m, billRecords, billRecords.isInterstate);
+      }
+      if (from < 10) {
+        await _addColumnIfMissing(m, productRecords, productRecords.packUnit);
+        await _addColumnIfMissing(
+          m,
+          productRecords,
+          productRecords.unitsPerPack,
+        );
       }
     },
   );

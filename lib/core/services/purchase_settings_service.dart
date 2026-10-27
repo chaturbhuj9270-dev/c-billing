@@ -36,7 +36,8 @@ class PurchaseSettingsService extends ChangeNotifier {
   bool _showManufacturingDate = true;
   bool _showExpiryDate = true;
   bool _showWarranty = false;
-  bool _showBatchNumber = true;
+  /// Manufacturer batch/lot on purchase form. Opt-in (medical/pharmacy).
+  bool _showBatchNumber = false;
   /// When true, sell earliest-expiring stock first (FEFO). Otherwise FIFO by purchase date.
   bool _useFefo = false;
   List<String> _availableUnits = ['Item', 'Qty', 'Kg', 'Grams', 'Ltr']; // Default available units
@@ -74,7 +75,7 @@ class PurchaseSettingsService extends ChangeNotifier {
     _showManufacturingDate = prefs.getBool(_showManufacturingDateKey) ?? true;
     _showExpiryDate = prefs.getBool(_showExpiryDateKey) ?? true;
     _showWarranty = prefs.getBool(_showWarrantyKey) ?? false;
-    _showBatchNumber = prefs.getBool(_showBatchNumberKey) ?? true;
+    _showBatchNumber = prefs.getBool(_showBatchNumberKey) ?? false;
     _useFefo = prefs.getBool(_useFefoKey) ?? false;
     
     // Load custom units first

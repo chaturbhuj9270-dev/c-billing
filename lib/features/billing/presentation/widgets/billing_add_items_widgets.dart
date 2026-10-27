@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/services/pack_unit_conversion.dart';
 import '../../../../core/ui/glassy_toast.dart';
 import '../../domain/entities/bill_item.dart';
 import '../../../inventory_management/domain/entities/product.dart';
@@ -32,7 +33,8 @@ class AddItemsBottomSheet extends StatefulWidget {
     double sgstPercent,
     String? hsnCode,
     String? unit, // Base unit (kg, ltr, pcs)
-    String? sellUnit, // Unit used for sale (kg, gm, ltr, ml, pcs)
+    String? sellUnit, // Unit used for sale (kg, gm, ltr, ml, pcs, Strip)
+    int unitsPerPack,
   )
   onBatchItemAdded;
   final Function(String uniqueKey) onItemRemoved;
@@ -94,6 +96,8 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
           sgstPercent: product?.sgstPercent ?? 0.0,
           hsnCode: product?.hsnCode,
           unit: batch.unit.isNotEmpty ? batch.unit : product?.unit,
+          packUnit: product?.packUnit,
+          unitsPerPack: product?.unitsPerPack ?? 1,
         );
       }
     }
@@ -114,6 +118,8 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
             sgstPercent: product.sgstPercent,
             hsnCode: product.hsnCode,
             unit: product.unit,
+            packUnit: product.packUnit,
+            unitsPerPack: product.unitsPerPack,
           );
         }
       }
@@ -201,24 +207,31 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
     required String? hsnCode,
     String? unit,
     String? currentSellUnit,
+    String? packUnit,
+    int unitsPerPack = 1,
   }) {
-    // Determine if this product supports sub-unit selling
+    // Determine if this product supports sub-unit / pack selling
     final lowerUnit = unit?.toLowerCase();
     final supportsSubUnit = lowerUnit == 'kg' || lowerUnit == 'ltr';
     final subUnit = lowerUnit == 'kg'
         ? 'gm'
         : (lowerUnit == 'ltr' ? 'ml' : null);
+    final supportsPack = PackUnitConversion.hasPack(
+      packUnit: packUnit,
+      unitsPerPack: unitsPerPack,
+    );
 
     // Initialize sell unit (default to base unit)
     String selectedSellUnit = currentSellUnit ?? unit ?? 'pcs';
 
     // Convert current quantity to display value based on sell unit
-    double displayQty = currentQty;
-    if (selectedSellUnit == 'gm' && lowerUnit == 'kg') {
-      displayQty = currentQty * 1000;
-    } else if (selectedSellUnit == 'ml' && lowerUnit == 'ltr') {
-      displayQty = currentQty * 1000;
-    }
+    double displayQty = PackUnitConversion.baseToDisplayQty(
+      baseQty: currentQty,
+      sellUnit: selectedSellUnit,
+      baseUnit: unit,
+      packUnit: packUnit,
+      unitsPerPack: unitsPerPack,
+    );
 
     final qtyController = TextEditingController(
       text: displayQty == displayQty.roundToDouble()
@@ -233,12 +246,13 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
         builder: (context, setDialogState) {
           // Get max stock in current display unit
           double getMaxStockInDisplayUnit() {
-            if (selectedSellUnit == 'gm' && lowerUnit == 'kg') {
-              return maxStock * 1000.0;
-            } else if (selectedSellUnit == 'ml' && lowerUnit == 'ltr') {
-              return maxStock * 1000.0;
-            }
-            return maxStock.toDouble();
+            return PackUnitConversion.maxStockInDisplayUnit(
+              baseStock: maxStock,
+              sellUnit: selectedSellUnit,
+              baseUnit: unit,
+              packUnit: packUnit,
+              unitsPerPack: unitsPerPack,
+            );
           }
 
           // Validate quantity based on selected unit
@@ -260,33 +274,34 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
           // Convert display quantity to base unit quantity
           double getBaseUnitQuantity() {
             final displayQty = double.tryParse(qtyController.text) ?? 0;
-            if (selectedSellUnit == 'gm' && lowerUnit == 'kg') {
-              return displayQty / 1000;
-            } else if (selectedSellUnit == 'ml' && lowerUnit == 'ltr') {
-              return displayQty / 1000;
-            }
-            return displayQty;
+            return PackUnitConversion.displayToBaseQty(
+              displayQty: displayQty,
+              sellUnit: selectedSellUnit,
+              baseUnit: unit,
+              packUnit: packUnit,
+              unitsPerPack: unitsPerPack,
+            );
           }
 
           // Handle unit toggle
           void toggleUnit(String newUnit) {
             final currentDisplayQty = double.tryParse(qtyController.text) ?? 0;
-            double newDisplayQty;
-
             if (selectedSellUnit == newUnit) return; // No change
 
-            // Convert between units
-            if (newUnit == 'gm' && selectedSellUnit == 'kg') {
-              newDisplayQty = currentDisplayQty * 1000;
-            } else if (newUnit == 'kg' && selectedSellUnit == 'gm') {
-              newDisplayQty = currentDisplayQty / 1000;
-            } else if (newUnit == 'ml' && selectedSellUnit == 'ltr') {
-              newDisplayQty = currentDisplayQty * 1000;
-            } else if (newUnit == 'ltr' && selectedSellUnit == 'ml') {
-              newDisplayQty = currentDisplayQty / 1000;
-            } else {
-              newDisplayQty = currentDisplayQty;
-            }
+            final baseQty = PackUnitConversion.displayToBaseQty(
+              displayQty: currentDisplayQty,
+              sellUnit: selectedSellUnit,
+              baseUnit: unit,
+              packUnit: packUnit,
+              unitsPerPack: unitsPerPack,
+            );
+            final newDisplayQty = PackUnitConversion.baseToDisplayQty(
+              baseQty: baseQty,
+              sellUnit: newUnit,
+              baseUnit: unit,
+              packUnit: packUnit,
+              unitsPerPack: unitsPerPack,
+            );
 
             setDialogState(() {
               selectedSellUnit = newUnit;
@@ -379,8 +394,8 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                     ],
                   ),
                 ),
-                // Unit toggle for kg/ltr products
-                if (supportsSubUnit && subUnit != null) ...[
+                // Unit toggle for pack / kg-ltr products
+                if (supportsPack || (supportsSubUnit && subUnit != null)) ...[
                   const SizedBox(height: 12),
                   Container(
                     padding: EdgeInsets.all(4),
@@ -416,32 +431,62 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                             ),
                           ),
                         ),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () => toggleUnit(subUnit),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              decoration: BoxDecoration(
-                                color: selectedSellUnit == subUnit
-                                    ? AppColors.action(context)
-                                    : AppTheme.transparent,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  subUnit.toUpperCase(),
-                                  style: TextStyle(
-                                    fontFamily: 'Literata',
-                                    fontWeight: FontWeight.w600,
-                                    color: selectedSellUnit == subUnit
-                                        ? AppTheme.white
-                                        : AppColors.mutedText(context),
+                        if (supportsPack && packUnit != null)
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => toggleUnit(packUnit),
+                              child: Container(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: selectedSellUnit == packUnit
+                                      ? AppColors.action(context)
+                                      : AppTheme.transparent,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    packUnit.toUpperCase(),
+                                    style: TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontWeight: FontWeight.w600,
+                                      color: selectedSellUnit == packUnit
+                                          ? AppTheme.white
+                                          : AppColors.mutedText(context),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
+                        if (supportsSubUnit && subUnit != null)
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => toggleUnit(subUnit),
+                              child: Container(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: selectedSellUnit == subUnit
+                                      ? AppColors.action(context)
+                                      : AppTheme.transparent,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    subUnit.toUpperCase(),
+                                    style: TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontWeight: FontWeight.w600,
+                                      color: selectedSellUnit == subUnit
+                                          ? AppTheme.white
+                                          : AppColors.mutedText(context),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -634,6 +679,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                             hsnCode,
                             unit,
                             selectedSellUnit,
+                            unitsPerPack,
                           );
                           setState(() {});
                           Navigator.pop(ctx);
@@ -695,16 +741,19 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
           hsnCode: group.hsnCode,
           unit: group.unit,
           currentSellUnit: existingSellUnit,
+          packUnit: group.packUnit,
+          unitsPerPack: group.unitsPerPack,
         );
         return;
       }
 
-      // Check if product supports sub-unit (kg->gm, ltr->ml)
+      // Check if product supports sub-unit (kg->gm, ltr->ml) or pack sell
       final lowerUnit = group.unit?.toLowerCase();
       final supportsSubUnit = lowerUnit == 'kg' || lowerUnit == 'ltr';
 
-      // For kg/ltr products, show quantity dialog to allow unit selection
-      if (supportsSubUnit && product.currentStock > 0) {
+      // For kg/ltr/pack products, show quantity dialog to allow unit selection
+      if ((supportsSubUnit || group.supportsPackSell) &&
+          product.currentStock > 0) {
         _showProductQuantityDialog(
           productId: product.id,
           productName: billName,
@@ -719,6 +768,8 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
           hsnCode: group.hsnCode,
           unit: group.unit,
           currentSellUnit: null,
+          packUnit: group.packUnit,
+          unitsPerPack: group.unitsPerPack,
         );
         return;
       }
@@ -739,6 +790,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
           group.hsnCode,
           group.unit,
           group.unit, // Default sellUnit same as base unit
+          group.unitsPerPack,
         );
         setState(() {});
         widget.showSnackbar(
@@ -798,7 +850,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
       color: group.fallbackProduct?.color,
       batchNumber: batch.batchNumber,
     );
-    if (existingQty > 0 || supportsSubUnit) {
+    if (existingQty > 0 || supportsSubUnit || group.supportsPackSell) {
       _showProductQuantityDialog(
         productId: batch.productId,
         productName: batchBillName,
@@ -813,6 +865,8 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
         hsnCode: group.hsnCode,
         unit: group.unit,
         currentSellUnit: existingItem?.sellUnit,
+        packUnit: group.packUnit,
+        unitsPerPack: group.unitsPerPack,
       );
       return;
     }
@@ -832,6 +886,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
         group.hsnCode,
         group.unit,
         group.unit,
+        group.unitsPerPack,
       );
       setState(() {});
       widget.showSnackbar(
@@ -1297,7 +1352,9 @@ class GroupedBillingProduct {
   final double cgstPercent;
   final double sgstPercent;
   final String? hsnCode;
-  final String? unit; // Base unit (kg, ltr, pcs, etc.)
+  final String? unit; // Base unit (kg, ltr, pcs, Tablet, etc.)
+  final String? packUnit; // Pack / strip / bag when bulk↔loose enabled
+  final int unitsPerPack;
 
   GroupedBillingProduct({
     required this.productName,
@@ -1309,6 +1366,8 @@ class GroupedBillingProduct {
     this.sgstPercent = 0.0,
     this.hsnCode,
     this.unit,
+    this.packUnit,
+    this.unitsPerPack = 1,
   }) {
     // Sort batches FIFO (oldest first)
     batches.sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
@@ -1325,6 +1384,9 @@ class GroupedBillingProduct {
     if (lowerUnit == 'ltr') return 'ml';
     return null;
   }
+
+  bool get supportsPackSell =>
+      unitsPerPack > 1 && packUnit != null && packUnit!.trim().isNotEmpty;
 
   // Total stock across all batches
   int get totalStock {
@@ -1376,7 +1438,9 @@ class BatchSelectionSheet extends StatefulWidget {
   final double cgstPercent;
   final double sgstPercent;
   final String? hsnCode;
-  final String? unit; // Base unit (kg, ltr, pcs)
+  final String? unit; // Base unit (kg, ltr, pcs, Tablet)
+  final String? packUnit;
+  final int unitsPerPack;
 
   const BatchSelectionSheet({
     super.key,
@@ -1391,6 +1455,8 @@ class BatchSelectionSheet extends StatefulWidget {
     this.sgstPercent = 0.0,
     this.hsnCode,
     this.unit,
+    this.packUnit,
+    this.unitsPerPack = 1,
   });
 
   // Check if this product supports sub-unit selling (kg -> gm, ltr -> ml)
@@ -1404,6 +1470,9 @@ class BatchSelectionSheet extends StatefulWidget {
     if (lowerUnit == 'ltr') return 'ml';
     return null;
   }
+
+  bool get supportsPackSell =>
+      unitsPerPack > 1 && packUnit != null && packUnit!.trim().isNotEmpty;
 
   @override
   State<BatchSelectionSheet> createState() => BatchSelectionSheetState();
@@ -1457,10 +1526,13 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
   }
 
   double _toBaseQty(double displayQty) {
-    final unit = widget.unit?.toLowerCase();
-    if (_selectedSellUnit == 'gm' && unit == 'kg') return displayQty / 1000;
-    if (_selectedSellUnit == 'ml' && unit == 'ltr') return displayQty / 1000;
-    return displayQty;
+    return PackUnitConversion.displayToBaseQty(
+      displayQty: displayQty,
+      sellUnit: _selectedSellUnit,
+      baseUnit: widget.unit,
+      packUnit: widget.packUnit,
+      unitsPerPack: widget.unitsPerPack,
+    );
   }
 
   double _getExistingQtyForBatch(PurchaseBatchEntity batch) {
@@ -1472,13 +1544,13 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
 
   // Get max stock in display unit
   double _getMaxStockInDisplayUnit(int maxStock) {
-    if (_selectedSellUnit == 'gm' && widget.unit?.toLowerCase() == 'kg') {
-      return maxStock * 1000.0;
-    } else if (_selectedSellUnit == 'ml' &&
-        widget.unit?.toLowerCase() == 'ltr') {
-      return maxStock * 1000.0;
-    }
-    return maxStock.toDouble();
+    return PackUnitConversion.maxStockInDisplayUnit(
+      baseStock: maxStock,
+      sellUnit: _selectedSellUnit,
+      baseUnit: widget.unit,
+      packUnit: widget.packUnit,
+      unitsPerPack: widget.unitsPerPack,
+    );
   }
 
   void _validateQuantity() {
@@ -1858,7 +1930,8 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                 ],
               ),
             ),
-            if (widget.supportsSubUnit && widget.subUnit != null)
+            if (widget.supportsPackSell ||
+                (widget.supportsSubUnit && widget.subUnit != null))
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
                 child: Container(
@@ -1869,8 +1942,14 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                   ),
                   child: Row(
                     children: [
-                      _unitChip(widget.unit!, widget.unit!),
-                      _unitChip(widget.subUnit!, widget.subUnit!),
+                      _unitChip(
+                        widget.unit ?? 'pcs',
+                        widget.unit ?? 'pcs',
+                      ),
+                      if (widget.supportsPackSell)
+                        _unitChip(widget.packUnit!, widget.packUnit!),
+                      if (widget.supportsSubUnit && widget.subUnit != null)
+                        _unitChip(widget.subUnit!, widget.subUnit!),
                     ],
                   ),
                 ),
@@ -2158,7 +2237,14 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                   children: [
                     _buildBatchInfoChip(
                       label: widget.localizations.sellPrice,
-                      value: '₹${_money(batch.sellingPrice)}',
+                      value: PackUnitConversion.isSellingAsPack(
+                            sellUnit: _selectedSellUnit,
+                            baseUnit: widget.unit,
+                            packUnit: widget.packUnit,
+                            unitsPerPack: widget.unitsPerPack,
+                          )
+                          ? '₹${_money(PackUnitConversion.toPackUnitPrice(batch.sellingPrice, widget.unitsPerPack))}/${widget.packUnit}'
+                          : '₹${_money(batch.sellingPrice)}',
                       valueColor: AppColors.action(context),
                     ),
                     const SizedBox(width: 8),
@@ -2170,7 +2256,12 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                     const SizedBox(width: 8),
                     _buildBatchInfoChip(
                       label: widget.localizations.inStock,
-                      value: '${batch.quantityRemaining} ${batch.unit}',
+                      value: PackUnitConversion.formatStockLabel(
+                        baseStock: batch.quantityRemaining,
+                        baseUnit: widget.unit ?? batch.unit,
+                        packUnit: widget.packUnit,
+                        unitsPerPack: widget.unitsPerPack,
+                      ),
                       valueColor: AppColors.primaryText(context),
                     ),
                   ],

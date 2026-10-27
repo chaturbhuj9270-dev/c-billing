@@ -113,6 +113,12 @@ class ProductEntity {
   /// Schedule H / H1 / X etc. (medical)
   String? drugSchedule;
 
+  /// Pack label (Strip, Bag, Box) when buying bulk / selling pack.
+  String? packUnit;
+
+  /// Base units in one pack. Stock is always tracked in [unit] (base).
+  int unitsPerPack;
+
   ProductEntity({
     this.serverId,
     this.indexNo = 0,
@@ -142,7 +148,12 @@ class ProductEntity {
     this.mrp,
     this.composition,
     this.drugSchedule,
+    this.packUnit,
+    this.unitsPerPack = 1,
   });
+
+  bool get hasPackSell =>
+      unitsPerPack > 1 && packUnit != null && packUnit!.trim().isNotEmpty;
 
   // Factory constructor for creating new product with defaults
   factory ProductEntity.create({
@@ -172,6 +183,8 @@ class ProductEntity {
     double? mrp,
     String? composition,
     String? drugSchedule,
+    String? packUnit,
+    int unitsPerPack = 1,
   }) {
     final now = DateTime.now();
     return ProductEntity(
@@ -203,6 +216,8 @@ class ProductEntity {
       mrp: mrp,
       composition: composition,
       drugSchedule: drugSchedule,
+      packUnit: packUnit,
+      unitsPerPack: unitsPerPack < 1 ? 1 : unitsPerPack,
     );
   }
 
@@ -238,6 +253,8 @@ class ProductEntity {
       mrp: (data['mrp'] as num?)?.toDouble(),
       composition: data['composition'] as String?,
       drugSchedule: data['drugSchedule'] as String?,
+      packUnit: data['packUnit'] as String?,
+      unitsPerPack: (data['unitsPerPack'] as num?)?.toInt() ?? 1,
     );
   }
 
@@ -269,6 +286,8 @@ class ProductEntity {
       'mrp': mrp,
       'composition': composition,
       'drugSchedule': drugSchedule,
+      'packUnit': packUnit,
+      'unitsPerPack': unitsPerPack,
       'updatedAt': updatedAt.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
     };
@@ -306,6 +325,8 @@ class ProductEntity {
       'mrp': mrp,
       'composition': composition,
       'drugSchedule': drugSchedule,
+      'packUnit': packUnit,
+      'unitsPerPack': unitsPerPack,
     };
   }
 
@@ -340,6 +361,8 @@ class ProductEntity {
     double? mrp,
     String? composition,
     String? drugSchedule,
+    String? packUnit,
+    int? unitsPerPack,
   }) {
     final entity = ProductEntity(
       serverId: serverId ?? this.serverId,
@@ -370,6 +393,8 @@ class ProductEntity {
       mrp: mrp ?? this.mrp,
       composition: composition ?? this.composition,
       drugSchedule: drugSchedule ?? this.drugSchedule,
+      packUnit: packUnit ?? this.packUnit,
+      unitsPerPack: unitsPerPack ?? this.unitsPerPack,
     );
     entity.id = id ?? this.id;
     return entity;

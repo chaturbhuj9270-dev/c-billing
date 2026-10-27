@@ -127,8 +127,9 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                         _buildModernToggle(
                           icon: Icons.qr_code_2_rounded,
                           iconColor: AppTheme.toneBlue,
-                          title: 'Batch / Lot Number',
-                          subtitle: 'Show manufacturer batch field (medical)',
+                          title: 'Enable Batch / Lot Number',
+                          subtitle:
+                              'Allow entering manufacturer batch on purchase (medical)',
                           value: _showBatchNumber,
                           onChanged: (value) async {
                             setState(() => _showBatchNumber = value);

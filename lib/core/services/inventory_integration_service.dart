@@ -237,6 +237,7 @@ class InventoryIntegrationService {
                   : 0,
               unit: item.unit,
               sellUnit: item.sellUnit,
+              unitsPerPack: item.unitsPerPack,
               employeeToken: item.employeeToken,
             ),
           )

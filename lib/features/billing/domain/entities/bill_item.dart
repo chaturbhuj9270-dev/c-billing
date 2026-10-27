@@ -17,8 +17,10 @@ class BillItem {
   final double cgstPercent; // Per-product CGST percentage
   final double sgstPercent; // Per-product SGST percentage
   final String? hsnCode; // HSN code for GST compliance
-  final String? unit; // Base unit (kg, ltr, pcs, etc.)
-  final String? sellUnit; // Unit used for sale (kg, gm, ltr, ml, pcs)
+  final String? unit; // Base unit (kg, ltr, pcs, Tablet, etc.)
+  final String? sellUnit; // Unit used for sale (kg, gm, Strip, Tablet, …)
+  /// Pack size when product supports bulk↔loose (stock qty is always base).
+  final int unitsPerPack;
   // Salesperson token for this line (cloth collection - per product).
   final int? employeeToken;
 
@@ -38,6 +40,7 @@ class BillItem {
     this.hsnCode,
     this.unit,
     this.sellUnit,
+    this.unitsPerPack = 1,
     this.employeeToken,
   });
 
@@ -59,13 +62,30 @@ class BillItem {
   // Get quantity as int (for backward compatibility)
   int get quantityInt => quantity.round();
 
-  // Get display quantity with appropriate unit conversion If sold in gm, shows gm value; if sold in ml, shows ml value
+  // Get display quantity with appropriate unit conversion (gm/ml or pack↔base).
   String get displayQuantity {
-    if (sellUnit == 'gm' && unit == 'kg') {
-      return '${(quantity * 1000).toStringAsFixed(quantity * 1000 == (quantity * 1000).roundToDouble() ? 0 : 1)} gm';
-    } else if (sellUnit == 'ml' && unit == 'ltr') {
-      return '${(quantity * 1000).toStringAsFixed(quantity * 1000 == (quantity * 1000).roundToDouble() ? 0 : 1)} ml';
-    } else if (unit != null && unit!.isNotEmpty) {
+    if (sellUnit == 'gm' && unit?.toLowerCase() == 'kg') {
+      final q = quantity * 1000;
+      return '${q.toStringAsFixed(q == q.roundToDouble() ? 0 : 1)} gm';
+    }
+    if (sellUnit == 'ml' && unit?.toLowerCase() == 'ltr') {
+      final q = quantity * 1000;
+      return '${q.toStringAsFixed(q == q.roundToDouble() ? 0 : 1)} ml';
+    }
+    final pack = unitsPerPack < 1 ? 1 : unitsPerPack;
+    final sellingPack = pack > 1 &&
+        sellUnit != null &&
+        sellUnit!.trim().isNotEmpty &&
+        unit != null &&
+        sellUnit!.trim().toLowerCase() != unit!.trim().toLowerCase() &&
+        sellUnit != 'gm' &&
+        sellUnit != 'ml';
+    if (sellingPack) {
+      final q = quantity / pack;
+      final label = sellUnit!.trim();
+      return '${q == q.roundToDouble() ? q.toInt() : q.toStringAsFixed(2)} $label';
+    }
+    if (unit != null && unit!.isNotEmpty) {
       return '${quantity == quantity.roundToDouble() ? quantity.toInt() : quantity.toStringAsFixed(2)} ${sellUnit ?? unit}';
     }
     return quantity == quantity.roundToDouble()
@@ -105,6 +125,7 @@ class BillItem {
         hsnCode: json['hsnCode'] as String?,
         unit: json['unit'] as String?,
         sellUnit: json['sellUnit'] as String?,
+        unitsPerPack: (json['unitsPerPack'] as num?)?.toInt() ?? 1,
         employeeToken: _parseToken(json['employeeToken']),
       );
     } catch (e) {
@@ -143,6 +164,7 @@ class BillItem {
       'hsnCode': hsnCode,
       'unit': unit,
       'sellUnit': sellUnit,
+      'unitsPerPack': unitsPerPack,
       if (employeeToken != null) 'employeeToken': employeeToken,
     };
   }
@@ -170,6 +192,7 @@ class BillItem {
     String? hsnCode,
     String? unit,
     String? sellUnit,
+    int? unitsPerPack,
     int? employeeToken,
     bool clearEmployeeToken = false,
   }) {
@@ -189,6 +212,7 @@ class BillItem {
       hsnCode: hsnCode ?? this.hsnCode,
       unit: unit ?? this.unit,
       sellUnit: sellUnit ?? this.sellUnit,
+      unitsPerPack: unitsPerPack ?? this.unitsPerPack,
       employeeToken: clearEmployeeToken
           ? null
           : (employeeToken ?? this.employeeToken),
@@ -211,6 +235,7 @@ class BillItem {
     String? hsnCode,
     String? unit,
     String? sellUnit,
+    int unitsPerPack = 1,
     int? employeeToken,
   }) {
     return BillItem(
@@ -229,6 +254,7 @@ class BillItem {
       hsnCode: hsnCode,
       unit: unit,
       sellUnit: sellUnit,
+      unitsPerPack: unitsPerPack < 1 ? 1 : unitsPerPack,
       employeeToken: employeeToken,
     );
   }
