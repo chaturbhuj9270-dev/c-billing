@@ -36,6 +36,8 @@ class Product {
   final String? packUnit;
   /// Base [unit] count in one pack (e.g. 10 tablets per strip). Stock is always base units.
   final int unitsPerPack;
+  /// Sale price for one pack (independent of [salesPrice] per unit).
+  final double? packSalesPrice;
 
   Product({
     required this.id,
@@ -64,10 +66,18 @@ class Product {
     this.drugSchedule,
     this.packUnit,
     this.unitsPerPack = 1,
+    this.packSalesPrice,
   });
 
   bool get hasPackSell =>
       unitsPerPack > 1 && packUnit != null && packUnit!.trim().isNotEmpty;
+
+  /// Pack list price, or derived from unit price when pack price not set.
+  double get effectivePackSalesPrice {
+    if (packSalesPrice != null && packSalesPrice! > 0) return packSalesPrice!;
+    final n = unitsPerPack < 1 ? 1 : unitsPerPack;
+    return salesPrice * n;
+  }
 
   /// Name with size/color for billing and lists.
   String get displayName => formatBillName(name, size: size, color: color);
@@ -118,6 +128,7 @@ class Product {
       drugSchedule: entity.drugSchedule as String?,
       packUnit: entity.packUnit as String?,
       unitsPerPack: (entity.unitsPerPack as int?) ?? 1,
+      packSalesPrice: (entity.packSalesPrice as num?)?.toDouble(),
     );
   }
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -152,6 +163,9 @@ class Product {
         drugSchedule: json['drugSchedule'] as String?,
         packUnit: json['packUnit'] as String?,
         unitsPerPack: (json['unitsPerPack'] as num?)?.toInt() ?? 1,
+        packSalesPrice: json['packSalesPrice'] != null
+            ? (json['packSalesPrice'] as num).toDouble()
+            : null,
       );
     } catch (e) {
       debugPrint('[ERROR] Failed to parse Product from JSON: $json');
@@ -200,6 +214,7 @@ class Product {
       'drugSchedule': drugSchedule,
       'packUnit': packUnit,
       'unitsPerPack': unitsPerPack,
+      'packSalesPrice': packSalesPrice,
     };
   }
 
@@ -231,6 +246,7 @@ class Product {
     String? drugSchedule,
     String? packUnit,
     int? unitsPerPack,
+    double? packSalesPrice,
   }) {
     return Product(
       id: id ?? this.id,
@@ -259,6 +275,7 @@ class Product {
       drugSchedule: drugSchedule ?? this.drugSchedule,
       packUnit: packUnit ?? this.packUnit,
       unitsPerPack: unitsPerPack ?? this.unitsPerPack,
+      packSalesPrice: packSalesPrice ?? this.packSalesPrice,
     );
   }
 

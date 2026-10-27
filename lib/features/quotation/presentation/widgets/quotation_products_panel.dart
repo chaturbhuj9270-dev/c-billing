@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/services/pack_unit_conversion.dart';
 import '../../../../core/ui/glassy_toast.dart';
 import '../../../billing/domain/entities/bill_item.dart';
 import '../../../billing/presentation/widgets/barcode_scanner_sheet.dart';
@@ -230,6 +231,7 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
               hsnCode,
               unit,
               sellUnit,
+              unitsPerPack,
             ) {
               final uniqueKey = batchLocalId != null
                   ? '${productId}_batch_$batchLocalId'
@@ -245,6 +247,7 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
                   hsnCode: hsnCode,
                   unit: unit,
                   sellUnit: sellUnit,
+                  unitsPerPack: unitsPerPack,
                   cgstPercent: cgstPercent,
                   sgstPercent: sgstPercent,
                 ),
@@ -340,8 +343,27 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
           sgstPercent: product.sgstPercent,
           hsnCode: product.hsnCode,
           unit: product.unit,
+          packUnit: product.packUnit,
+          unitsPerPack: product.unitsPerPack,
+          packSalesPrice: product.packSalesPrice,
+          baseSalesPrice: product.salesPrice,
           onBatchSelected: (batch, quantity, sellUnit) {
             final uniqueKey = '${product.id}_batch_${batch.id}';
+            final sellingAsPack = PackUnitConversion.isSellingAsPack(
+              sellUnit: sellUnit,
+              baseUnit: product.unit,
+              packUnit: product.packUnit,
+              unitsPerPack: product.unitsPerPack,
+            );
+            final baseList = product.salesPrice > 0
+                ? product.salesPrice
+                : batch.sellingPrice;
+            final lineSellPrice = PackUnitConversion.sellPricePerBaseUnit(
+              baseSalesPrice: baseList,
+              packSalesPrice: product.packSalesPrice,
+              sellingAsPack: sellingAsPack,
+              unitsPerPack: product.unitsPerPack,
+            );
             _upsertFromBillItem(
               BillItem.create(
                 productId: uniqueKey,
@@ -349,12 +371,13 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
                 companyName: batch.companyName.isNotEmpty
                     ? batch.companyName
                     : null,
-                sellingPrice: batch.sellingPrice,
+                sellingPrice: lineSellPrice,
                 purchasePrice: batch.purchasePrice,
                 quantity: quantity,
                 hsnCode: product.hsnCode,
                 unit: product.unit,
                 sellUnit: sellUnit,
+                unitsPerPack: product.unitsPerPack,
                 cgstPercent: product.cgstPercent,
                 sgstPercent: product.sgstPercent,
               ),

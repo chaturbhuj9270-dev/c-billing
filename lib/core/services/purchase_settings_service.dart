@@ -24,6 +24,9 @@ class PurchaseSettingsService extends ChangeNotifier {
     'Ltr',
     'Ml',
     'Pcs',
+    'Tablet',
+    'Strip',
+    'Bag',
     'Box',
     'Dozen',
   ];
@@ -40,7 +43,18 @@ class PurchaseSettingsService extends ChangeNotifier {
   bool _showBatchNumber = false;
   /// When true, sell earliest-expiring stock first (FEFO). Otherwise FIFO by purchase date.
   bool _useFefo = false;
-  List<String> _availableUnits = ['Item', 'Qty', 'Kg', 'Grams', 'Ltr']; // Default available units
+  List<String> _availableUnits = [
+    'Item',
+    'Qty',
+    'Kg',
+    'Grams',
+    'Ltr',
+    'Pcs',
+    'Tablet',
+    'Strip',
+    'Bag',
+    'Box',
+  ]; // Default available units (includes pack buy options)
   List<String> _customUnits = []; // User-added custom units
   String _defaultUnit = 'Item';
   List<int> _warrantyOptions = [0, 3, 6, 12]; // Available warranty options
@@ -88,6 +102,17 @@ class PurchaseSettingsService extends ChangeNotifier {
     final savedUnits = prefs.getStringList(_availableUnitsKey);
     if (savedUnits != null && savedUnits.isNotEmpty) {
       _availableUnits = savedUnits;
+    }
+    // Ensure pack buy options exist for medical / bulk retail (older installs).
+    var unitsChanged = false;
+    for (final pack in const ['Strip', 'Bag', 'Box', 'Tablet', 'Pcs']) {
+      if (!_availableUnits.contains(pack)) {
+        _availableUnits.add(pack);
+        unitsChanged = true;
+      }
+    }
+    if (unitsChanged) {
+      await prefs.setStringList(_availableUnitsKey, _availableUnits);
     }
     
     // Load default unit

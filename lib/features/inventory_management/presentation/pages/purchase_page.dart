@@ -62,8 +62,37 @@ class _PurchasePageState extends State<PurchasePage>
   DateTime? _expiryDate;
   String? _selectedUnit;
   int? _selectedWarranty;
-  /// When product has pack config, buy in pack units by default (e.g. Strip).
-  bool _buyAsPack = true;
+  /// When buying packs (Strip/Bag/Box), convert qty×unitsPerPack into base stock.
+  bool _buyAsPack = false;
+  /// Purchase-time pack label (Strip / Bag / Box). Null = buy in base unit.
+  String? _purchasePackUnit;
+  final _unitsPerPackController = TextEditingController(text: '10');
+  /// Per-unit (tablet) sale price when buying packs — independent of pack sale price.
+  final _unitSalesPriceController = TextEditingController();
+
+  static const List<String> _packUnitOptions = ['Strip', 'Bag', 'Box'];
+
+  /// Units shown on purchase: settings list + pack options always (mobile).
+  List<String> get _purchaseUnitChipOptions {
+    final units = <String>[
+      ...PurchaseSettingsService.instance.availableUnits,
+    ];
+    for (final pack in [..._packUnitOptions, 'Tablet', 'Pcs']) {
+      if (!units.contains(pack)) units.add(pack);
+    }
+    return units;
+  }
+
+  List<String> get _baseStockUnitOptions {
+    final units = <String>[
+      ...PurchaseSettingsService.instance.availableUnits,
+    ];
+    for (final u in ['Pcs', 'Tablet', 'Item', 'Qty', 'Kg', 'Grams', 'Ltr', 'Ml']) {
+      if (!units.contains(u)) units.add(u);
+    }
+    // Pack labels are not base stock units.
+    return units.where((u) => !_packUnitOptions.contains(u)).toList();
+  }
 
   final _quantityController = TextEditingController();
   final _priceController = TextEditingController();
@@ -194,22 +223,7 @@ class _PurchasePageState extends State<PurchasePage>
         .listen((entities) {
           if (!mounted) return;
           final products = entities
-              .map(
-                (entity) => Product(
-                  id: entity.serverId ?? entity.id.toString(),
-                  indexNo: entity.indexNo,
-                  name: entity.name,
-                  companyName: entity.companyName,
-                  category: entity.category,
-                  purchasePrice: entity.purchasePrice,
-                  salesPrice: entity.salesPrice,
-                  currentStock: entity.currentStock,
-                  createdAt: entity.createdAt,
-                  updatedAt: entity.updatedAt,
-                  defaultSupplierId: entity.defaultSupplierId,
-                  defaultSupplierName: entity.defaultSupplierName,
-                ),
-              )
+              .map((entity) => Product.fromProductEntity(entity))
               .toList();
           setState(() {
             _products = products;
@@ -1536,28 +1550,8 @@ class _PurchasePageState extends State<PurchasePage>
                               onTap: () {
                                 setState(() {
                                   _selectedProduct = product;
-                                  _buyAsPack = product.hasPackSell;
-                                  if (_buyAsPack) {
-                                    final n = PackUnitConversion
-                                        .normalizeUnitsPerPack(
-                                      product.unitsPerPack,
-                                    );
-                                    _priceController.text =
-                                        PackUnitConversion.toPackUnitPrice(
-                                      product.purchasePrice,
-                                      n,
-                                    ).toStringAsFixed(2);
-                                    _salesPriceController.text =
-                                        PackUnitConversion.toPackUnitPrice(
-                                      product.salesPrice,
-                                      n,
-                                    ).toStringAsFixed(2);
-                                  } else {
-                                    _priceController.text =
-                                        product.purchasePrice.toString();
-                                    _salesPriceController.text =
-                                        product.salesPrice.toString();
-                                  }
+                                  _applyProductPackDefaults(product);
+                                  _fillPricesForSelectedProduct(product);
 
                                   // Auto-populate company from product
                                   if (product.companyName.isNotEmpty) {
@@ -2245,6 +2239,112 @@ class _PurchasePageState extends State<PurchasePage>
     setState(() {});
   }
 
+  void _applyProductPackDefaults(Product product) {
+    if (product.hasPackSell) {
+      _buyAsPack = true;
+      _purchasePackUnit = product.packUnit!.trim();
+      _unitsPerPackController.text = '${product.unitsPerPack}';
+      if (product.unit != null && product.unit!.trim().isNotEmpty) {
+        _selectedUnit = product.unit!.trim();
+      }
+    } else {
+      _buyAsPack = false;
+      _purchasePackUnit = null;
+      _unitsPerPackController.text = '10';
+      if (product.unit != null && product.unit!.trim().isNotEmpty) {
+        _selectedUnit = product.unit!.trim();
+      }
+    }
+  }
+
+  void _fillPricesForSelectedProduct(Product product) {
+    final n = PackUnitConversion.normalizeUnitsPerPack(
+      int.tryParse(_unitsPerPackController.text) ?? product.unitsPerPack,
+    );
+    _unitSalesPriceController.text = product.salesPrice.toStringAsFixed(2);
+    if (_buyAsPack) {
+      _priceController.text = PackUnitConversion.toPackUnitPrice(
+        product.purchasePrice,
+        n,
+      ).toStringAsFixed(2);
+      // Pack sale price is independent (not unit × N).
+      _salesPriceController.text = product.effectivePackSalesPrice
+          .toStringAsFixed(2);
+    } else {
+      _priceController.text = product.purchasePrice.toString();
+      _salesPriceController.text = product.salesPrice.toString();
+    }
+  }
+
+  void _onPurchaseUnitSelected(String unit) {
+    if (_packUnitOptions.contains(unit)) {
+      _selectPurchasePackUnit(unit);
+      return;
+    }
+    // Plain unit (Item/Kg/Tablet…) — buy 1:1 into stock.
+    _selectPurchasePackUnit(null);
+    setState(() => _selectedUnit = unit);
+  }
+
+  void _selectPurchasePackUnit(String? packUnit) {
+    final product = _selectedProduct;
+    final previousBuyAsPack = _buyAsPack;
+    final previousUnits = PackUnitConversion.normalizeUnitsPerPack(
+      int.tryParse(_unitsPerPackController.text) ?? 1,
+    );
+    final enteredPrice = double.tryParse(_priceController.text);
+
+    setState(() {
+      if (packUnit == null) {
+        _buyAsPack = false;
+        _purchasePackUnit = null;
+      } else {
+        _buyAsPack = true;
+        _purchasePackUnit = packUnit;
+        if ((int.tryParse(_unitsPerPackController.text) ?? 1) <= 1) {
+          _unitsPerPackController.text = packUnit == 'Bag' ? '50' : '10';
+        }
+      }
+
+      final nextUnits = PackUnitConversion.normalizeUnitsPerPack(
+        int.tryParse(_unitsPerPackController.text) ?? 1,
+      );
+
+      // Convert purchase cost between pack ↔ unit; keep sale prices independent.
+      if (enteredPrice != null) {
+        if (previousBuyAsPack && !_buyAsPack) {
+          _priceController.text = PackUnitConversion.toBaseUnitPrice(
+            enteredPrice,
+            previousUnits,
+          ).toStringAsFixed(2);
+        } else if (!previousBuyAsPack && _buyAsPack) {
+          _priceController.text = PackUnitConversion.toPackUnitPrice(
+            enteredPrice,
+            nextUnits,
+          ).toStringAsFixed(2);
+        }
+      }
+
+      if (product != null) {
+        if (_buyAsPack) {
+          if (_salesPriceController.text.trim().isEmpty || !previousBuyAsPack) {
+            _salesPriceController.text = product.effectivePackSalesPrice
+                .toStringAsFixed(2);
+          }
+          if (_unitSalesPriceController.text.trim().isEmpty) {
+            _unitSalesPriceController.text =
+                product.salesPrice.toStringAsFixed(2);
+          }
+        } else if (previousBuyAsPack) {
+          // Leaving pack mode — show unit sale price in the main sales field.
+          final unitSale = double.tryParse(_unitSalesPriceController.text) ??
+              product.salesPrice;
+          _salesPriceController.text = unitSale.toStringAsFixed(2);
+        }
+      }
+    });
+  }
+
   Future<void> _processPurchase() async {
     if (_selectedProduct == null) {
       GlassyToast.show(context, _localizations.pleaseSelectProduct);
@@ -2268,7 +2368,7 @@ class _PurchasePageState extends State<PurchasePage>
 
     final enteredQty = int.tryParse(_quantityController.text);
     final enteredPrice = double.tryParse(_priceController.text);
-    final enteredSalesPrice = double.tryParse(_salesPriceController.text);
+    final enteredPackOrUnitSales = double.tryParse(_salesPriceController.text);
 
     if (enteredQty == null || enteredQty <= 0) {
       GlassyToast.show(context, _localizations.pleaseEnterValidQuantity);
@@ -2280,34 +2380,47 @@ class _PurchasePageState extends State<PurchasePage>
       return;
     }
 
-    if (enteredSalesPrice == null || enteredSalesPrice < 0) {
+    if (enteredPackOrUnitSales == null || enteredPackOrUnitSales < 0) {
       GlassyToast.show(context, _localizations.pleaseEnterValidSalesPrice);
       return;
     }
 
-    // Pack↔base: stock / FIFO always store base units & per-base prices.
+    // Pack↔base: stock / FIFO always store base units & per-base COGS.
+    // Pack sale price stays independent from unit (tablet) sale price.
     final product = _selectedProduct!;
+    final purchasePackUnit = _purchasePackUnit?.trim();
+    final unitsPerPack = PackUnitConversion.normalizeUnitsPerPack(
+      int.tryParse(_unitsPerPackController.text.trim()) ?? 1,
+    );
     final buyingAsPack = _buyAsPack &&
-        PackUnitConversion.hasPack(
-          packUnit: product.packUnit,
-          unitsPerPack: product.unitsPerPack,
-        );
-    final unitsPerPack =
-        PackUnitConversion.normalizeUnitsPerPack(product.unitsPerPack);
+        purchasePackUnit != null &&
+        purchasePackUnit.isNotEmpty &&
+        unitsPerPack > 1;
     final quantity = buyingAsPack
         ? PackUnitConversion.toBaseQuantity(enteredQty, unitsPerPack)
         : enteredQty;
     final price = buyingAsPack
         ? PackUnitConversion.toBaseUnitPrice(enteredPrice, unitsPerPack)
         : enteredPrice;
-    final salesPrice = buyingAsPack
-        ? PackUnitConversion.toBaseUnitPrice(enteredSalesPrice, unitsPerPack)
-        : enteredSalesPrice;
-    final stockUnit = (product.unit != null && product.unit!.trim().isNotEmpty)
-        ? product.unit!.trim()
-        : (_selectedUnit ?? PurchaseSettingsService.instance.defaultUnit);
+    final double? packSalesPrice = buyingAsPack ? enteredPackOrUnitSales : null;
+    final double salesPrice = buyingAsPack
+        ? (double.tryParse(_unitSalesPriceController.text) ??
+              product.salesPrice)
+        : enteredPackOrUnitSales;
+    if (buyingAsPack && salesPrice < 0) {
+      GlassyToast.show(context, _localizations.pleaseEnterValidSalesPrice);
+      return;
+    }
+    final stockUnit =
+        (_selectedUnit != null && _selectedUnit!.trim().isNotEmpty)
+        ? _selectedUnit!.trim()
+        : (product.unit != null && product.unit!.trim().isNotEmpty
+              ? product.unit!.trim()
+              : PurchaseSettingsService.instance.defaultUnit);
     final packNote = buyingAsPack
-        ? 'Bought $enteredQty ${product.packUnit} × $unitsPerPack $stockUnit'
+        ? 'Bought $enteredQty $purchasePackUnit × $unitsPerPack $stockUnit'
+            ' (pack sale ₹${enteredPackOrUnitSales.toStringAsFixed(2)},'
+            ' unit sale ₹${salesPrice.toStringAsFixed(2)})'
         : null;
 
     setState(() => _isLoading = true);
@@ -2354,6 +2467,35 @@ class _PurchasePageState extends State<PurchasePage>
         '[DEBUG] Purchase fully processed: PurchaseEntity + PurchaseBatch + StockLedger + Product stock updated',
       );
 
+      // Persist pack config on product so billing can sell Strip/Bag later.
+      if (buyingAsPack) {
+        try {
+          final localId = int.tryParse(
+            product.id.startsWith('local_')
+                ? product.id.substring(6)
+                : '',
+          );
+          final existing = localId != null
+              ? await ProductOfflineController.instance.getProductById(localId)
+              : await ProductOfflineController.instance
+                  .getProductByServerId(product.id);
+          if (existing != null) {
+            await ProductOfflineController.instance.updateProduct(
+              id: existing.id,
+              purchasePrice: price,
+              salesPrice: salesPrice,
+              unit: stockUnit,
+              packUnit: purchasePackUnit,
+              unitsPerPack: unitsPerPack,
+              packSalesPrice: packSalesPrice,
+              updateVariantFields: true,
+            );
+          }
+        } catch (e) {
+          debugPrint('[Purchase] Could not save pack config on product: $e');
+        }
+      }
+
       // Also update Firestore if online and product is synced
       final currentUser = FirebaseAuth.instance.currentUser;
       final productId = _selectedProduct!.id;
@@ -2365,12 +2507,20 @@ class _PurchasePageState extends State<PurchasePage>
 
       if (currentUser != null && isValidServerId) {
         try {
-          // Only update purchasePrice; keep salesPrice from product creation
           final updateData = <String, dynamic>{
             'purchasePrice': price,
+            'salesPrice': salesPrice,
             'currentStock': newStock,
             'updatedAt': DateTime.now().toIso8601String(),
           };
+          if (buyingAsPack) {
+            updateData['packUnit'] = purchasePackUnit;
+            updateData['unitsPerPack'] = unitsPerPack;
+            updateData['unit'] = stockUnit;
+            if (packSalesPrice != null) {
+              updateData['packSalesPrice'] = packSalesPrice;
+            }
+          }
 
           await _firestore
               .collection('users')
@@ -2416,6 +2566,10 @@ class _PurchasePageState extends State<PurchasePage>
           _productionDateController.clear();
           _expiryDateController.clear();
           _batchNumberController.clear();
+          _buyAsPack = false;
+          _purchasePackUnit = null;
+          _unitsPerPackController.text = '10';
+          _unitSalesPriceController.clear();
         });
 
         // Reload products to show updated stock - stream auto-handles this
@@ -2456,6 +2610,8 @@ class _PurchasePageState extends State<PurchasePage>
     _productionDateController.dispose();
     _expiryDateController.dispose();
     _batchNumberController.dispose();
+    _unitsPerPackController.dispose();
+    _unitSalesPriceController.dispose();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
@@ -3469,67 +3625,57 @@ class _PurchasePageState extends State<PurchasePage>
             ),
             const SizedBox(height: 16),
           ],
-          // Buy as pack vs base (strip/bag ↔ tablet/kg)
-          if (_selectedProduct != null &&
-              PackUnitConversion.hasPack(
-                packUnit: _selectedProduct!.packUnit,
-                unitsPerPack: _selectedProduct!.unitsPerPack,
-              )) ...[
-            _buildChipSelector<bool>(
-              label: 'Buy as',
-              options: const [true, false],
-              selectedValue: _buyAsPack,
-              onSelected: (asPack) => setState(() => _buyAsPack = asPack),
-              color: AppTheme.toneCyan,
-              icon: Icons.inventory_2_outlined,
-              labelBuilder: (asPack) => asPack
-                  ? (_selectedProduct!.packUnit ?? 'Pack')
-                  : (_selectedProduct!.unit ?? 'Unit'),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _buyAsPack
-                  ? 'Stock will add qty × ${_selectedProduct!.unitsPerPack} ${_selectedProduct!.unit ?? 'units'}'
-                  : 'Stock tracked in ${_selectedProduct!.unit ?? 'base units'}',
-              style: TextStyle(
-                fontFamily: 'Literata',
-                fontSize: 12,
-                color: AppTheme.grey600,
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
           // Quantity field
           _buildTextField(
             controller: _quantityController,
-            label: _selectedProduct != null &&
-                    _buyAsPack &&
-                    PackUnitConversion.hasPack(
-                      packUnit: _selectedProduct!.packUnit,
-                      unitsPerPack: _selectedProduct!.unitsPerPack,
-                    )
-                ? 'Quantity (${_selectedProduct!.packUnit})'
+            label: _buyAsPack && _purchasePackUnit != null
+                ? 'Quantity ($_purchasePackUnit)'
                 : _localizations.purchaseQuantity,
             hint: _localizations.enterQuantity,
             icon: Icons.shopping_cart_rounded,
             keyboardType: TextInputType.number,
             onChanged: (_) => _calculateTotal(),
           ),
-          SizedBox(height: 16),
-          // Measurement Unit (hidden when product pack config drives base unit)
-          if (_selectedProduct == null ||
-              !PackUnitConversion.hasPack(
-                packUnit: _selectedProduct!.packUnit,
-                unitsPerPack: _selectedProduct!.unitsPerPack,
-              ))
+          const SizedBox(height: 16),
+          // Measurement + pack units (Strip/Bag/Box always listed for mobile)
+          _buildChipSelector(
+            label: _localizations.measurementUnit,
+            options: _purchaseUnitChipOptions,
+            selectedValue: _buyAsPack ? _purchasePackUnit : _selectedUnit,
+            onSelected: _onPurchaseUnitSelected,
+            color: AppColors.accent(context),
+            icon: Icons.straighten_rounded,
+          ),
+          if (_buyAsPack) ...[
+            const SizedBox(height: 16),
+            _buildTextField(
+              controller: _unitsPerPackController,
+              label:
+                  'Units per ${_purchasePackUnit ?? 'pack'} (e.g. 10 tablets)',
+              hint: 'How many sell units in one pack',
+              icon: Icons.grid_view_rounded,
+              keyboardType: TextInputType.number,
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 12),
             _buildChipSelector(
-              label: _localizations.measurementUnit,
-              options: PurchaseSettingsService.instance.availableUnits,
+              label: 'Sell / stock unit (inside pack)',
+              options: _baseStockUnitOptions,
               selectedValue: _selectedUnit,
               onSelected: (unit) => setState(() => _selectedUnit = unit),
-              color: AppColors.accent(context),
-              icon: Icons.straighten_rounded,
+              color: AppTheme.toneCyan,
+              icon: Icons.inventory_2_outlined,
             ),
+            const SizedBox(height: 8),
+            Text(
+              'Example: 5 Strip × ${_unitsPerPackController.text.isEmpty ? '10' : _unitsPerPackController.text} = stock in ${_selectedUnit ?? 'units'}',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 12,
+                color: AppTheme.grey600,
+              ),
+            ),
+          ],
           // Warranty (if enabled)
           if (PurchaseSettingsService.instance.showWarranty) ...[
             const SizedBox(height: 16),
@@ -3806,6 +3952,8 @@ class _PurchasePageState extends State<PurchasePage>
     final quantity = int.tryParse(_quantityController.text) ?? 0;
     final price = double.tryParse(_priceController.text) ?? 0;
     final total = quantity * price;
+    final packLabel = _purchasePackUnit ?? 'pack';
+    final unitLabel = _selectedUnit ?? 'unit';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -3821,7 +3969,9 @@ class _PurchasePageState extends State<PurchasePage>
               Expanded(
                 child: _buildPriceField(
                   controller: _priceController,
-                  label: _localizations.purchasePrice,
+                  label: _buyAsPack
+                      ? 'Purchase / $packLabel'
+                      : _localizations.purchasePrice,
                   hint: '0.00',
                   onChanged: (_) => _calculateTotal(),
                 ),
@@ -3830,12 +3980,31 @@ class _PurchasePageState extends State<PurchasePage>
               Expanded(
                 child: _buildPriceField(
                   controller: _salesPriceController,
-                  label: _localizations.salesPrice,
+                  label: _buyAsPack
+                      ? 'Sale / $packLabel'
+                      : _localizations.salesPrice,
                   hint: '0.00',
                 ),
               ),
             ],
           ),
+          if (_buyAsPack) ...[
+            const SizedBox(height: 12),
+            _buildPriceField(
+              controller: _unitSalesPriceController,
+              label: 'Sale / $unitLabel (loose)',
+              hint: '0.00',
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Strip/Bag sale price is separate from per-$unitLabel sale price',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 12,
+                color: AppTheme.grey600,
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           // Total amount card
           Container(

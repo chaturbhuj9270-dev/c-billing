@@ -31,6 +31,7 @@ import 'package:c_billing/features/product/offline/controllers/product_offline_c
 import 'package:c_billing/features/product/offline/entities/product_entity.dart';
 import 'package:c_billing/features/product/data/services/product_sync_service.dart';
 import 'package:c_billing/core/services/inventory_integration_service.dart';
+import 'package:c_billing/core/services/pack_unit_conversion.dart';
 import 'package:c_billing/core/services/barcode_service.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 import 'package:c_billing/features/employee/data/repositories/employee_repository.dart';
@@ -57,6 +58,7 @@ import 'package:c_billing/features/quotation/presentation/pages/quotation_list_p
 import 'package:c_billing/features/dashboard/presentation/pages/web_shell.dart';
 import 'package:c_billing/features/billing/presentation/widgets/barcode_scanner_sheet.dart';
 import 'package:c_billing/features/billing/presentation/widgets/billing_add_items_widgets.dart';
+import 'package:c_billing/features/billing/presentation/widgets/billing_line_item_widgets.dart';
 import 'package:c_billing/features/billing/presentation/widgets/bill_items_desktop_table.dart';
 import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
 import 'package:c_billing/features/customer/offline/entities/customer_transaction_entity.dart';
@@ -3771,10 +3773,27 @@ class _BillingPageState extends State<BillingPage> {
           unit: resolved.unit,
           packUnit: resolved.packUnit,
           unitsPerPack: resolved.unitsPerPack,
+          packSalesPrice: resolved.packSalesPrice,
+          baseSalesPrice: resolved.salesPrice,
           onBatchSelected: (batch, quantity, sellUnit) {
             final uniqueKey = '${resolved.id}_batch_${batch.id}';
             final existingIndex = _billItems.indexWhere(
               (item) => item.productId == uniqueKey,
+            );
+            final sellingAsPack = PackUnitConversion.isSellingAsPack(
+              sellUnit: sellUnit,
+              baseUnit: resolved.unit,
+              packUnit: resolved.packUnit,
+              unitsPerPack: resolved.unitsPerPack,
+            );
+            final baseList = resolved.salesPrice > 0
+                ? resolved.salesPrice
+                : batch.sellingPrice;
+            final lineSellPrice = PackUnitConversion.sellPricePerBaseUnit(
+              baseSalesPrice: baseList,
+              packSalesPrice: resolved.packSalesPrice,
+              sellingAsPack: sellingAsPack,
+              unitsPerPack: resolved.unitsPerPack,
             );
             setState(() {
               _ensureGstModeForProductTax(
@@ -3789,7 +3808,7 @@ class _BillingPageState extends State<BillingPage> {
                   companyName: batch.companyName.isNotEmpty
                       ? batch.companyName
                       : null,
-                  sellingPrice: batch.sellingPrice,
+                  sellingPrice: lineSellPrice,
                   purchasePrice: batch.purchasePrice,
                   quantity: quantity,
                   cgstPercent: resolved.cgstPercent,
@@ -3808,7 +3827,7 @@ class _BillingPageState extends State<BillingPage> {
                     companyName: batch.companyName.isNotEmpty
                         ? batch.companyName
                         : null,
-                    sellingPrice: batch.sellingPrice,
+                    sellingPrice: lineSellPrice,
                     purchasePrice: batch.purchasePrice,
                     quantity: quantity,
                     cgstPercent: resolved.cgstPercent,
@@ -4384,7 +4403,14 @@ class _BillingPageState extends State<BillingPage> {
                                   child: Row(
                                     children: [
                                       Text(
-                                        '₹${item.sellingPrice.toStringAsFixed(0)} / ${item.displayUnit.isEmpty ? 'unit' : item.displayUnit}',
+                                        () {
+                                          final p = displayUnitSellPrice(item);
+                                          final unitLabel = item.displayUnit
+                                                  .isEmpty
+                                              ? 'unit'
+                                              : item.displayUnit;
+                                          return '₹${p.toStringAsFixed(p == p.roundToDouble() ? 0 : 2)} / $unitLabel';
+                                        }(),
                                         style: TextStyle(
                                           fontFamily: 'Literata',
                                           fontSize: 12,
@@ -4438,7 +4464,9 @@ class _BillingPageState extends State<BillingPage> {
                                   (item.sellUnit == 'gm' ||
                                       item.sellUnit == 'ml')
                                   ? 0.1
-                                  : 1.0;
+                                  : (billItemSellingAsPack(item)
+                                      ? item.unitsPerPack.toDouble()
+                                      : 1.0);
                               if (item.quantity > step) {
                                 setState(() {
                                   _billItems[index] = BillItem.create(
@@ -4453,6 +4481,7 @@ class _BillingPageState extends State<BillingPage> {
                                     hsnCode: item.hsnCode,
                                     unit: item.unit,
                                     sellUnit: item.sellUnit,
+                                    unitsPerPack: item.unitsPerPack,
                                     employeeToken: item.employeeToken,
                                   );
                                 });
@@ -4494,6 +4523,7 @@ class _BillingPageState extends State<BillingPage> {
                                   hsnCode: item.hsnCode,
                                   unit: item.unit,
                                   sellUnit: item.sellUnit,
+                                  unitsPerPack: item.unitsPerPack,
                                   employeeToken: item.employeeToken,
                                 );
                               });
@@ -4509,7 +4539,9 @@ class _BillingPageState extends State<BillingPage> {
                                   (item.sellUnit == 'gm' ||
                                       item.sellUnit == 'ml')
                                   ? 0.1
-                                  : 1.0;
+                                  : (billItemSellingAsPack(item)
+                                      ? item.unitsPerPack.toDouble()
+                                      : 1.0);
                               if (item.quantity + step <= maxStock) {
                                 setState(() {
                                   _billItems[index] = BillItem.create(
@@ -4524,7 +4556,8 @@ class _BillingPageState extends State<BillingPage> {
                                     hsnCode: item.hsnCode,
                                     unit: item.unit,
                                     sellUnit: item.sellUnit,
-                                  employeeToken: item.employeeToken,
+                                    unitsPerPack: item.unitsPerPack,
+                                    employeeToken: item.employeeToken,
                                   );
                                 });
                               } else {
@@ -5059,10 +5092,18 @@ class _BillingPageState extends State<BillingPage> {
 
   // Show dialog to edit sell price for a bill item
   void _showEditSellPriceDialog({required int index, required BillItem item}) {
+    final asPack = billItemSellingAsPack(item);
     final priceController = TextEditingController(
-      text: item.sellingPrice.toStringAsFixed(2),
+      text: displayUnitSellPrice(item).toStringAsFixed(2),
     );
     String? errorText;
+
+    double toBaseSellPrice(double entered) {
+      if (asPack) {
+        return PackUnitConversion.toBaseUnitPrice(entered, item.unitsPerPack);
+      }
+      return entered;
+    }
 
     showDialog(
       context: context,
@@ -5164,7 +5205,7 @@ class _BillingPageState extends State<BillingPage> {
                             ),
                           ),
                           Text(
-                            '${item.quantity}',
+                            item.displayQuantity,
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontWeight: FontWeight.w700,
@@ -5191,7 +5232,14 @@ class _BillingPageState extends State<BillingPage> {
                             ),
                           ),
                           Text(
-                            '₹${((double.tryParse(priceController.text) ?? item.sellingPrice) * item.quantity).toStringAsFixed(0)}',
+                            () {
+                              final entered =
+                                  double.tryParse(priceController.text) ??
+                                      displayUnitSellPrice(item);
+                              final line =
+                                  toBaseSellPrice(entered) * item.quantity;
+                              return '₹${line.toStringAsFixed(0)}';
+                            }(),
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontWeight: FontWeight.w700,
@@ -5274,7 +5322,10 @@ class _BillingPageState extends State<BillingPage> {
                       updatedAt: DateTime.now(),
                     ),
                   );
-                  priceController.text = product.salesPrice.toStringAsFixed(2);
+                  final reset = asPack
+                      ? product.effectivePackSalesPrice
+                      : product.salesPrice;
+                  priceController.text = reset.toStringAsFixed(2);
                   validatePrice();
                 },
                 icon: Icon(
@@ -5309,9 +5360,10 @@ class _BillingPageState extends State<BillingPage> {
               ElevatedButton(
                 onPressed: errorText == null
                     ? () {
-                        final price =
+                        final entered =
                             double.tryParse(priceController.text) ?? 0;
-                        if (price > 0) {
+                        if (entered > 0) {
+                          final price = toBaseSellPrice(entered);
                           setState(() {
                             _billItems[index] = BillItem.create(
                               productId: item.productId,
@@ -5323,14 +5375,15 @@ class _BillingPageState extends State<BillingPage> {
                               cgstPercent: item.cgstPercent,
                               sgstPercent: item.sgstPercent,
                               hsnCode: item.hsnCode,
-                            unit: item.unit,
-                            sellUnit: item.sellUnit,
-                            employeeToken: item.employeeToken,
+                              unit: item.unit,
+                              sellUnit: item.sellUnit,
+                              unitsPerPack: item.unitsPerPack,
+                              employeeToken: item.employeeToken,
                             );
                           });
                           Navigator.pop(ctx);
                           _showSnackbar(
-                            'Price updated to ₹${price.toStringAsFixed(0)}',
+                            'Price updated to ₹${entered.toStringAsFixed(0)}',
                             isError: false,
                           );
                         }
@@ -7948,14 +8001,14 @@ class _InlineQuantityFieldState extends State<_InlineQuantityField> {
   // Get the display value based on unit conversion
   String _getDisplayValue() {
     final item = widget.item;
-    double displayQty = item.quantity;
-
-    // Convert to display unit if needed
-    if (item.sellUnit == 'gm' && item.unit == 'kg') {
-      displayQty = item.quantity * 1000;
-    } else if (item.sellUnit == 'ml' && item.unit == 'ltr') {
-      displayQty = item.quantity * 1000;
-    }
+    final packUnit = billItemSellingAsPack(item) ? item.sellUnit : null;
+    final displayQty = PackUnitConversion.baseToDisplayQty(
+      baseQty: item.quantity,
+      sellUnit: item.sellUnit,
+      baseUnit: item.unit,
+      packUnit: packUnit,
+      unitsPerPack: item.unitsPerPack,
+    );
 
     // Format nicely - remove decimals if whole number
     if (displayQty == displayQty.roundToDouble()) {
@@ -7973,23 +8026,27 @@ class _InlineQuantityFieldState extends State<_InlineQuantityField> {
   // Convert display value back to base unit quantity
   double _convertToBaseUnit(double displayQty) {
     final item = widget.item;
-    if (item.sellUnit == 'gm' && item.unit == 'kg') {
-      return displayQty / 1000;
-    } else if (item.sellUnit == 'ml' && item.unit == 'ltr') {
-      return displayQty / 1000;
-    }
-    return displayQty;
+    final packUnit = billItemSellingAsPack(item) ? item.sellUnit : null;
+    return PackUnitConversion.displayToBaseQty(
+      displayQty: displayQty,
+      sellUnit: item.sellUnit,
+      baseUnit: item.unit,
+      packUnit: packUnit,
+      unitsPerPack: item.unitsPerPack,
+    );
   }
 
   // Get max stock in display units
   double _getMaxStockInDisplayUnit() {
     final item = widget.item;
-    if (item.sellUnit == 'gm' && item.unit == 'kg') {
-      return widget.maxStock * 1000.0;
-    } else if (item.sellUnit == 'ml' && item.unit == 'ltr') {
-      return widget.maxStock * 1000.0;
-    }
-    return widget.maxStock.toDouble();
+    final packUnit = billItemSellingAsPack(item) ? item.sellUnit : null;
+    return PackUnitConversion.maxStockInDisplayUnit(
+      baseStock: widget.maxStock,
+      sellUnit: item.sellUnit,
+      baseUnit: item.unit,
+      packUnit: packUnit,
+      unitsPerPack: item.unitsPerPack,
+    );
   }
 
   void _validateAndSubmit() {

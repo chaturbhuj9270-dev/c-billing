@@ -1,7 +1,7 @@
 class EnglishLocalization {
   // App General
   static const String appName = 'C-BILLING';
-  static const String tagline = 'POWER OF EVERY\nBUSINESS';
+  static const String tagline = 'POWER YOUR BUSINESS';
 
   // Dashboard
   static const String dashboard = 'Dashboard';
@@ -684,7 +684,7 @@ class EnglishLocalization {
   // ═══════════════════════════════════════════════════ Auth Pages (Login/Signup/Change Password) ═══════════════════════════════════════════════════
   static const String welcomeBackLogin = 'Welcome Back';
   static const String signInToAccount = 'Sign in to your account';
-  static const String backboneOfBusiness = 'Power of every business';
+  static const String backboneOfBusiness = 'Power your business';
   static const String enterEmailPhone = 'Enter email/phone and password';
   static const String password = 'Password';
   static const String forgotPasswordQuestion = 'Forgot password?';

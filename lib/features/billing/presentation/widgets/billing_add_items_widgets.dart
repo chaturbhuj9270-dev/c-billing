@@ -98,6 +98,8 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
           unit: batch.unit.isNotEmpty ? batch.unit : product?.unit,
           packUnit: product?.packUnit,
           unitsPerPack: product?.unitsPerPack ?? 1,
+          packSalesPrice: product?.packSalesPrice,
+          baseSalesPrice: product?.salesPrice,
         );
       }
     }
@@ -120,6 +122,8 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
             unit: product.unit,
             packUnit: product.packUnit,
             unitsPerPack: product.unitsPerPack,
+            packSalesPrice: product.packSalesPrice,
+            baseSalesPrice: product.salesPrice,
           );
         }
       }
@@ -209,6 +213,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
     String? currentSellUnit,
     String? packUnit,
     int unitsPerPack = 1,
+    double? packSalesPrice,
   }) {
     // Determine if this product supports sub-unit / pack selling
     final lowerUnit = unit?.toLowerCase();
@@ -313,6 +318,25 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
             validateQty();
           }
 
+          final sellingAsPack = PackUnitConversion.isSellingAsPack(
+            sellUnit: selectedSellUnit,
+            baseUnit: unit,
+            packUnit: packUnit,
+            unitsPerPack: unitsPerPack,
+          );
+          final displayPrice = PackUnitConversion.displaySellPrice(
+            baseSalesPrice: sellingPrice,
+            packSalesPrice: packSalesPrice,
+            sellingAsPack: sellingAsPack,
+            unitsPerPack: unitsPerPack,
+          );
+          final lineSellPrice = PackUnitConversion.sellPricePerBaseUnit(
+            baseSalesPrice: sellingPrice,
+            packSalesPrice: packSalesPrice,
+            sellingAsPack: sellingAsPack,
+            unitsPerPack: unitsPerPack,
+          );
+
           return AlertDialog(
             backgroundColor: AppColors.card(context),
             shape: RoundedRectangleBorder(
@@ -376,7 +400,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Price: ₹${sellingPrice.toStringAsFixed(0)}${unit != null ? '/$unit' : ''}',
+                        'Price: ₹${displayPrice.toStringAsFixed(displayPrice == displayPrice.roundToDouble() ? 0 : 2)}/$selectedSellUnit',
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w600,
@@ -665,12 +689,13 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                           );
                         } else {
                           // Update quantity with unit info
+                          // Bill line stores per-base sell price (pack ÷ N when selling pack).
                           widget.onBatchItemAdded(
                             productId,
                             productName,
                             companyName,
                             batchLocalId,
-                            sellingPrice,
+                            lineSellPrice,
                             purchasePrice,
                             baseQty,
                             maxStock,
@@ -743,6 +768,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
           currentSellUnit: existingSellUnit,
           packUnit: group.packUnit,
           unitsPerPack: group.unitsPerPack,
+          packSalesPrice: group.packSalesPrice ?? product.packSalesPrice,
         );
         return;
       }
@@ -770,6 +796,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
           currentSellUnit: null,
           packUnit: group.packUnit,
           unitsPerPack: group.unitsPerPack,
+          packSalesPrice: group.packSalesPrice ?? product.packSalesPrice,
         );
         return;
       }
@@ -851,12 +878,16 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
       batchNumber: batch.batchNumber,
     );
     if (existingQty > 0 || supportsSubUnit || group.supportsPackSell) {
+      final baseList = (group.baseSalesPrice != null &&
+              group.baseSalesPrice! > 0)
+          ? group.baseSalesPrice!
+          : batch.sellingPrice;
       _showProductQuantityDialog(
         productId: batch.productId,
         productName: batchBillName,
         companyName: batch.companyName,
         batchLocalId: batch.id,
-        sellingPrice: batch.sellingPrice,
+        sellingPrice: baseList,
         purchasePrice: batch.purchasePrice,
         currentQty: existingQty,
         maxStock: batch.quantityRemaining,
@@ -867,6 +898,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
         currentSellUnit: existingItem?.sellUnit,
         packUnit: group.packUnit,
         unitsPerPack: group.unitsPerPack,
+        packSalesPrice: group.packSalesPrice,
       );
       return;
     }
@@ -1355,6 +1387,8 @@ class GroupedBillingProduct {
   final String? unit; // Base unit (kg, ltr, pcs, Tablet, etc.)
   final String? packUnit; // Pack / strip / bag when bulk↔loose enabled
   final int unitsPerPack;
+  final double? packSalesPrice;
+  final double? baseSalesPrice;
 
   GroupedBillingProduct({
     required this.productName,
@@ -1368,6 +1402,8 @@ class GroupedBillingProduct {
     this.unit,
     this.packUnit,
     this.unitsPerPack = 1,
+    this.packSalesPrice,
+    this.baseSalesPrice,
   }) {
     // Sort batches FIFO (oldest first)
     batches.sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
@@ -1412,10 +1448,18 @@ class GroupedBillingProduct {
     return names.toList();
   }
 
-  // Price range display: single price or range
+  // Price range display: single price or range (unit price; show pack if set)
   String get priceRangeDisplay {
+    final unitPrice = baseSalesPrice ??
+        fallbackProduct?.salesPrice ??
+        (batches.isNotEmpty ? batches.first.sellingPrice : 0.0);
+    if (packSalesPrice != null &&
+        packSalesPrice! > 0 &&
+        supportsPackSell) {
+      return '₹${unitPrice.toStringAsFixed(0)}/${unit ?? 'pcs'} · ₹${packSalesPrice!.toStringAsFixed(0)}/$packUnit';
+    }
     if (batches.isEmpty) {
-      return '₹${fallbackProduct?.salesPrice.toStringAsFixed(0) ?? '0'}';
+      return '₹${unitPrice.toStringAsFixed(0)}';
     }
     final prices = batches.map((b) => b.sellingPrice).toSet().toList()..sort();
     if (prices.length == 1) {
@@ -1441,6 +1485,8 @@ class BatchSelectionSheet extends StatefulWidget {
   final String? unit; // Base unit (kg, ltr, pcs, Tablet)
   final String? packUnit;
   final int unitsPerPack;
+  final double? packSalesPrice;
+  final double? baseSalesPrice;
 
   const BatchSelectionSheet({
     super.key,
@@ -1457,6 +1503,8 @@ class BatchSelectionSheet extends StatefulWidget {
     this.unit,
     this.packUnit,
     this.unitsPerPack = 1,
+    this.packSalesPrice,
+    this.baseSalesPrice,
   });
 
   // Check if this product supports sub-unit selling (kg -> gm, ltr -> ml)
@@ -1494,6 +1542,37 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
     if (widget.batches.isNotEmpty) {
       _selectedBatchIndex = 0;
     }
+  }
+
+  bool get _sellingAsPack => PackUnitConversion.isSellingAsPack(
+        sellUnit: _selectedSellUnit,
+        baseUnit: widget.unit,
+        packUnit: widget.packUnit,
+        unitsPerPack: widget.unitsPerPack,
+      );
+
+  double _baseListPrice(PurchaseBatchEntity batch) {
+    final base = widget.baseSalesPrice;
+    if (base != null && base > 0) return base;
+    return batch.sellingPrice;
+  }
+
+  double _lineSellPrice(PurchaseBatchEntity batch) {
+    return PackUnitConversion.sellPricePerBaseUnit(
+      baseSalesPrice: _baseListPrice(batch),
+      packSalesPrice: widget.packSalesPrice,
+      sellingAsPack: _sellingAsPack,
+      unitsPerPack: widget.unitsPerPack,
+    );
+  }
+
+  double _displaySellPrice(PurchaseBatchEntity batch) {
+    return PackUnitConversion.displaySellPrice(
+      baseSalesPrice: _baseListPrice(batch),
+      packSalesPrice: widget.packSalesPrice,
+      sellingAsPack: _sellingAsPack,
+      unitsPerPack: widget.unitsPerPack,
+    );
   }
 
   @override
@@ -1667,7 +1746,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Price: ₹${batch.sellingPrice.toStringAsFixed(0)}',
+                        'Price: ₹${_displaySellPrice(batch).toStringAsFixed(_displaySellPrice(batch) == _displaySellPrice(batch).roundToDouble() ? 0 : 2)}/$_selectedSellUnit',
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w600,
@@ -2237,14 +2316,8 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                   children: [
                     _buildBatchInfoChip(
                       label: widget.localizations.sellPrice,
-                      value: PackUnitConversion.isSellingAsPack(
-                            sellUnit: _selectedSellUnit,
-                            baseUnit: widget.unit,
-                            packUnit: widget.packUnit,
-                            unitsPerPack: widget.unitsPerPack,
-                          )
-                          ? '₹${_money(PackUnitConversion.toPackUnitPrice(batch.sellingPrice, widget.unitsPerPack))}/${widget.packUnit}'
-                          : '₹${_money(batch.sellingPrice)}',
+                      value:
+                          '₹${_money(_displaySellPrice(batch))}/$_selectedSellUnit',
                       valueColor: AppColors.action(context),
                     ),
                     const SizedBox(width: 8),
@@ -2281,7 +2354,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
       maxAvailable < 0 ? 0 : maxAvailable,
     );
     final baseQty = _toBaseQty(displayQty < 0 ? 0 : displayQty);
-    final lineTotal = batch.sellingPrice * baseQty;
+    final lineTotal = _lineSellPrice(batch) * baseQty;
     final canAdd = _qtyError == null && displayQty > 0;
 
     void changeQty(int delta) {

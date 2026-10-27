@@ -1530,6 +1530,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     final unitController = TextEditingController(text: 'Pcs');
     final packUnitController = TextEditingController();
     final unitsPerPackController = TextEditingController(text: '1');
+    final packSalesPriceController = TextEditingController();
     bool applyGst = false;
 
     // Sync CGST and SGST values
@@ -1805,13 +1806,21 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                             Expanded(
                               child: _buildTextField(
                                 controller: salesPriceController,
-                                label: _localizations.salesPrice,
+                                label: 'Sale / unit',
                                 icon: Icons.sell_outlined,
                                 keyboardType: TextInputType.number,
                                 prefix: '₹ ',
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 12),
+                        _buildTextField(
+                          controller: packSalesPriceController,
+                          label: 'Sale / pack (Strip/Bag/Box)',
+                          icon: Icons.sell_outlined,
+                          keyboardType: TextInputType.number,
+                          prefix: '₹ ',
                         ),
                         const SizedBox(height: 12),
                         _buildTextField(
@@ -1910,6 +1919,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       unitController: unitController,
                       packUnitController: packUnitController,
                       unitsPerPackController: unitsPerPackController,
+                      packSalesPriceController: packSalesPriceController,
                       applyGst: applyGst,
                       selectedCompany: dialogSelectedCompany,
                       selectedSupplier: dialogSelectedSupplier,
@@ -2061,6 +2071,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     required TextEditingController unitController,
     required TextEditingController packUnitController,
     required TextEditingController unitsPerPackController,
+    required TextEditingController packSalesPriceController,
     required bool applyGst,
     Map<String, dynamic>? selectedCompany,
     Map<String, dynamic>? selectedSupplier,
@@ -2125,6 +2136,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       final unitVal = unitController.text.trim();
       final packUnitVal = packUnitController.text.trim();
       final unitsPerPackVal = int.tryParse(unitsPerPackController.text.trim()) ?? 1;
+      final packSalesParsed =
+          double.tryParse(packSalesPriceController.text.trim());
       final newProduct = await ProductOfflineController.instance.addProduct(
         name: name,
         companyName: selectedCompany?['companyName'] ?? '',
@@ -2146,6 +2159,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         unit: unitVal.isNotEmpty ? unitVal : null,
         packUnit: packUnitVal.isNotEmpty ? packUnitVal : null,
         unitsPerPack: unitsPerPackVal < 1 ? 1 : unitsPerPackVal,
+        packSalesPrice: (packSalesParsed != null && packSalesParsed > 0)
+            ? packSalesParsed
+            : null,
       );
 
       DashboardRefreshService.instance.notifyDataChanged(
@@ -2200,6 +2216,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     );
     final unitsPerPackController = TextEditingController(
       text: '${product.unitsPerPack < 1 ? 1 : product.unitsPerPack}',
+    );
+    final packSalesPriceController = TextEditingController(
+      text: product.packSalesPrice != null && product.packSalesPrice! > 0
+          ? product.packSalesPrice!.toString()
+          : '',
     );
     var applyGst = product.cgstPercent > 0 ||
         product.sgstPercent > 0 ||
@@ -2427,13 +2448,21 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                             Expanded(
                               child: _buildTextField(
                                 controller: salesPriceController,
-                                label: _localizations.salesPrice,
+                                label: 'Sale / unit',
                                 icon: Icons.sell_outlined,
                                 keyboardType: TextInputType.number,
                                 prefix: '₹ ',
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 12),
+                        _buildTextField(
+                          controller: packSalesPriceController,
+                          label: 'Sale / pack (Strip/Bag/Box)',
+                          icon: Icons.sell_outlined,
+                          keyboardType: TextInputType.number,
+                          prefix: '₹ ',
                         ),
                         const SizedBox(height: 12),
                         _buildApplyGstToggle(
@@ -2569,6 +2598,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       unitController: unitController,
                       packUnitController: packUnitController,
                       unitsPerPackController: unitsPerPackController,
+                      packSalesPriceController: packSalesPriceController,
                       applyGst: applyGst,
                       customColumns: customColumns,
                       customTextControllers: customTextControllers,
@@ -2616,6 +2646,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     required TextEditingController unitController,
     required TextEditingController packUnitController,
     required TextEditingController unitsPerPackController,
+    required TextEditingController packSalesPriceController,
     required bool applyGst,
     required List<CustomColumn> customColumns,
     required Map<String, TextEditingController> customTextControllers,
@@ -2678,6 +2709,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       final packUnitVal = packUnitController.text.trim();
       final unitsPerPackVal =
           int.tryParse(unitsPerPackController.text.trim()) ?? 1;
+      final packSalesParsed =
+          double.tryParse(packSalesPriceController.text.trim());
       await ProductOfflineController.instance.updateProduct(
         id: product.id,
         name: name,
@@ -2697,6 +2730,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         unit: unitVal.isNotEmpty ? unitVal : null,
         packUnit: packUnitVal.isNotEmpty ? packUnitVal : null,
         unitsPerPack: unitsPerPackVal < 1 ? 1 : unitsPerPackVal,
+        packSalesPrice: (packSalesParsed != null && packSalesParsed > 0)
+            ? packSalesParsed
+            : null,
         updateVariantFields: true,
       );
 

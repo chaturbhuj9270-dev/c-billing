@@ -150,6 +150,7 @@ ProductEntity productFromRecord(ProductRecord row) {
     drugSchedule: row.drugSchedule,
     packUnit: row.packUnit,
     unitsPerPack: row.unitsPerPack,
+    packSalesPrice: row.packSalesPrice,
   )..id = row.id;
 }
 
@@ -186,6 +187,7 @@ ProductRecordsCompanion productCompanion(ProductEntity entity) {
     drugSchedule: Value(entity.drugSchedule),
     packUnit: Value(entity.packUnit),
     unitsPerPack: Value(entity.unitsPerPack < 1 ? 1 : entity.unitsPerPack),
+    packSalesPrice: Value(entity.packSalesPrice),
   );
 }
 

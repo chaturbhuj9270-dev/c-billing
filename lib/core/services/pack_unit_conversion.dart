@@ -131,6 +131,37 @@ class PackUnitConversion {
     );
   }
 
+  /// Effective **per-base** sell price for bill lines / FIFO revenue.
+  /// Pack sale uses [packSalesPrice] ÷ unitsPerPack (not base×N), so strip
+  /// and tablet can have independent list prices.
+  static double sellPricePerBaseUnit({
+    required double baseSalesPrice,
+    double? packSalesPrice,
+    required bool sellingAsPack,
+    int? unitsPerPack,
+  }) {
+    final n = normalizeUnitsPerPack(unitsPerPack);
+    if (sellingAsPack && packSalesPrice != null && packSalesPrice > 0 && n > 1) {
+      return packSalesPrice / n;
+    }
+    return baseSalesPrice;
+  }
+
+  /// Price shown in UI for the selected sell unit (pack or base).
+  static double displaySellPrice({
+    required double baseSalesPrice,
+    double? packSalesPrice,
+    required bool sellingAsPack,
+    int? unitsPerPack,
+  }) {
+    if (sellingAsPack) {
+      final n = normalizeUnitsPerPack(unitsPerPack);
+      if (packSalesPrice != null && packSalesPrice > 0) return packSalesPrice;
+      return toPackUnitPrice(baseSalesPrice, n);
+    }
+    return baseSalesPrice;
+  }
+
   /// Human-readable stock: "150 Tablet (15 Strip)".
   static String formatStockLabel({
     required int baseStock,

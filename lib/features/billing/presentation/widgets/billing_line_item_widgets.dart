@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/services/pack_unit_conversion.dart';
 import '../../../inventory_management/domain/entities/product.dart';
 import '../../../inventory_management/offline/entities/purchase_batch_entity.dart';
 import '../../domain/entities/bill_item.dart';
@@ -50,6 +51,29 @@ int resolveBillItemMaxStock({
       )
       .fold<int>(0, (s, b) => s + b.quantityRemaining);
   return batchStock > 0 ? batchStock : product.currentStock;
+}
+
+bool billItemSellingAsPack(BillItem item) {
+  final pack = item.unitsPerPack < 1 ? 1 : item.unitsPerPack;
+  if (pack <= 1) return false;
+  final sell = item.sellUnit?.trim().toLowerCase();
+  final base = item.unit?.trim().toLowerCase();
+  if (sell == null || sell.isEmpty || base == null || base.isEmpty) {
+    return false;
+  }
+  if (sell == 'gm' || sell == 'ml') return false;
+  return sell != base;
+}
+
+/// UI price for the line's sell unit (pack list price when selling Strip/Bag/Box).
+double displayUnitSellPrice(BillItem item) {
+  if (billItemSellingAsPack(item)) {
+    return PackUnitConversion.toPackUnitPrice(
+      item.sellingPrice,
+      item.unitsPerPack,
+    );
+  }
+  return item.sellingPrice;
 }
 
 // Compact bill line list with +/- qty, inline qty edit, and tappable price - same as billing.
@@ -208,7 +232,10 @@ class BillItemsLineList extends StatelessWidget {
                           child: Row(
                             children: [
                               Text(
-                                '₹${item.sellingPrice.toStringAsFixed(0)}',
+                                () {
+                                  final p = displayUnitSellPrice(item);
+                                  return '₹${p.toStringAsFixed(p == p.roundToDouble() ? 0 : 2)}';
+                                }(),
                                 style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontSize: 11,
@@ -268,7 +295,9 @@ class BillItemsLineList extends StatelessWidget {
                             final step = (item.sellUnit == 'gm' ||
                                     item.sellUnit == 'ml')
                                 ? 0.1
-                                : 1.0;
+                                : (billItemSellingAsPack(item)
+                                    ? item.unitsPerPack.toDouble()
+                                    : 1.0);
                             if (item.quantity > step) {
                               _updateItem(
                                 index,
@@ -284,6 +313,7 @@ class BillItemsLineList extends StatelessWidget {
                                   hsnCode: item.hsnCode,
                                   unit: item.unit,
                                   sellUnit: item.sellUnit,
+                                  unitsPerPack: item.unitsPerPack,
                                 ),
                               );
                             } else {
@@ -325,6 +355,7 @@ class BillItemsLineList extends StatelessWidget {
                                 hsnCode: item.hsnCode,
                                 unit: item.unit,
                                 sellUnit: item.sellUnit,
+                                unitsPerPack: item.unitsPerPack,
                               ),
                             );
                           },
@@ -335,7 +366,9 @@ class BillItemsLineList extends StatelessWidget {
                             final step = (item.sellUnit == 'gm' ||
                                     item.sellUnit == 'ml')
                                 ? 0.1
-                                : 1.0;
+                                : (billItemSellingAsPack(item)
+                                    ? item.unitsPerPack.toDouble()
+                                    : 1.0);
                             if (item.quantity + step <= maxStock) {
                               _updateItem(
                                 index,
@@ -351,6 +384,7 @@ class BillItemsLineList extends StatelessWidget {
                                   hsnCode: item.hsnCode,
                                   unit: item.unit,
                                   sellUnit: item.sellUnit,
+                                  unitsPerPack: item.unitsPerPack,
                                 ),
                               );
                             } else {
@@ -416,10 +450,18 @@ void showEditBillItemSellPriceDialog({
   required AppLocalizations localizations,
   required ValueChanged<double> onPriceUpdated,
 }) {
+  final asPack = billItemSellingAsPack(item);
   final priceController = TextEditingController(
-    text: item.sellingPrice.toStringAsFixed(2),
+    text: displayUnitSellPrice(item).toStringAsFixed(2),
   );
   String? errorText;
+
+  double toBaseSellPrice(double entered) {
+    if (asPack) {
+      return PackUnitConversion.toBaseUnitPrice(entered, item.unitsPerPack);
+    }
+    return entered;
+  }
 
   showDialog(
     context: context,
@@ -543,7 +585,14 @@ void showEditBillItemSellPriceDialog({
                           ),
                         ),
                         Text(
-                          '₹${((double.tryParse(priceController.text) ?? item.sellingPrice) * item.quantity).toStringAsFixed(0)}',
+                          () {
+                            final entered =
+                                double.tryParse(priceController.text) ??
+                                    displayUnitSellPrice(item);
+                            final line = toBaseSellPrice(entered) *
+                                item.quantity;
+                            return '₹${line.toStringAsFixed(0)}';
+                          }(),
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w700,
@@ -625,7 +674,10 @@ void showEditBillItemSellPriceDialog({
                     updatedAt: DateTime.now(),
                   ),
                 );
-                priceController.text = product.salesPrice.toStringAsFixed(2);
+                final reset = asPack
+                    ? product.effectivePackSalesPrice
+                    : product.salesPrice;
+                priceController.text = reset.toStringAsFixed(2);
                 validatePrice();
               },
               icon: Icon(
@@ -660,7 +712,7 @@ void showEditBillItemSellPriceDialog({
                   ? () {
                       final price = double.tryParse(priceController.text) ?? 0;
                       if (price > 0) {
-                        onPriceUpdated(price);
+                        onPriceUpdated(toBaseSellPrice(price));
                         Navigator.pop(ctx);
                       }
                     }
@@ -761,13 +813,15 @@ class _InlineBillQuantityFieldState extends State<InlineBillQuantityField> {
 
   String _getDisplayValue() {
     final item = widget.item;
-    double displayQty = item.quantity;
-
-    if (item.sellUnit == 'gm' && item.unit == 'kg') {
-      displayQty = item.quantity * 1000;
-    } else if (item.sellUnit == 'ml' && item.unit == 'ltr') {
-      displayQty = item.quantity * 1000;
-    }
+    final packUnit =
+        billItemSellingAsPack(item) ? item.sellUnit : null;
+    final displayQty = PackUnitConversion.baseToDisplayQty(
+      baseQty: item.quantity,
+      sellUnit: item.sellUnit,
+      baseUnit: item.unit,
+      packUnit: packUnit,
+      unitsPerPack: item.unitsPerPack,
+    );
 
     if (displayQty == displayQty.roundToDouble()) {
       return displayQty.toInt().toString();
@@ -782,22 +836,28 @@ class _InlineBillQuantityFieldState extends State<InlineBillQuantityField> {
 
   double _convertToBaseUnit(double displayQty) {
     final item = widget.item;
-    if (item.sellUnit == 'gm' && item.unit == 'kg') {
-      return displayQty / 1000;
-    } else if (item.sellUnit == 'ml' && item.unit == 'ltr') {
-      return displayQty / 1000;
-    }
-    return displayQty;
+    final packUnit =
+        billItemSellingAsPack(item) ? item.sellUnit : null;
+    return PackUnitConversion.displayToBaseQty(
+      displayQty: displayQty,
+      sellUnit: item.sellUnit,
+      baseUnit: item.unit,
+      packUnit: packUnit,
+      unitsPerPack: item.unitsPerPack,
+    );
   }
 
   double _getMaxStockInDisplayUnit() {
     final item = widget.item;
-    if (item.sellUnit == 'gm' && item.unit == 'kg') {
-      return widget.maxStock * 1000.0;
-    } else if (item.sellUnit == 'ml' && item.unit == 'ltr') {
-      return widget.maxStock * 1000.0;
-    }
-    return widget.maxStock.toDouble();
+    final packUnit =
+        billItemSellingAsPack(item) ? item.sellUnit : null;
+    return PackUnitConversion.maxStockInDisplayUnit(
+      baseStock: widget.maxStock,
+      sellUnit: item.sellUnit,
+      baseUnit: item.unit,
+      packUnit: packUnit,
+      unitsPerPack: item.unitsPerPack,
+    );
   }
 
   void _validateAndSubmit() {

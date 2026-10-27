@@ -1,7 +1,7 @@
 class MarathiLocalization {
   // App General
   static const String appName = 'सी-बिलिंग';
-  static const String tagline = 'प्रत्येक व्यवसायाची ताकद';
+  static const String tagline = 'तुमच्या व्यवसायाची ऊर्जा';
 
   // Dashboard
   static const String dashboard = 'डॅशबोर्ड';
@@ -689,7 +689,7 @@ class MarathiLocalization {
   // ═══════════════════════════════════════════════════ Auth Pages (Login/Signup/Change Password) ═══════════════════════════════════════════════════
   static const String welcomeBackLogin = 'परत स्वागत आहे';
   static const String signInToAccount = 'तुमच्या खात्यात साइन इन करा';
-  static const String backboneOfBusiness = 'प्रत्येक व्यवसायाची ताकद';
+  static const String backboneOfBusiness = 'तुमच्या व्यवसायाची ऊर्जा';
   static const String enterEmailPhone = 'ईमेल/फोन आणि पासवर्ड प्रविष्ट करा';
   static const String password = 'पासवर्ड';
   static const String forgotPasswordQuestion = 'पासवर्ड विसरलात?';

@@ -101,6 +101,8 @@ class ProductRecords extends Table {
   /// How many base [unit] items are in one pack (e.g. 10 tablets per strip).
   IntColumn get unitsPerPack =>
       integer().withDefault(const Constant(1))();
+  /// Sale price for one pack (Strip/Bag/Box). Independent of [salesPrice] (per unit).
+  RealColumn get packSalesPrice => real().nullable()();
 }
 
 @DataClassName('PurchaseRecord')
@@ -417,7 +419,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? openAppDatabase());
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   Future<bool> _hasTable(String table) async {
     final rows = await customSelect(
@@ -539,6 +541,13 @@ class AppDatabase extends _$AppDatabase {
           m,
           productRecords,
           productRecords.unitsPerPack,
+        );
+      }
+      if (from < 11) {
+        await _addColumnIfMissing(
+          m,
+          productRecords,
+          productRecords.packSalesPrice,
         );
       }
     },

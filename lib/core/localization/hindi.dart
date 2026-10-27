@@ -1,7 +1,7 @@
 class HindiLocalization {
   // App General
   static const String appName = 'सी-बिलिंग';
-  static const String tagline = 'हर व्यवसाय की शक्ति';
+  static const String tagline = 'अपने व्यवसाय को शक्ति दें';
 
   // Dashboard
   static const String dashboard = 'डैशबोर्ड';
@@ -686,7 +686,7 @@ class HindiLocalization {
   // ═══════════════════════════════════════════════════ Auth Pages (Login/Signup/Change Password) ═══════════════════════════════════════════════════
   static const String welcomeBackLogin = 'वापसी पर स्वागत है';
   static const String signInToAccount = 'अपने खाते में साइन इन करें';
-  static const String backboneOfBusiness = 'हर व्यवसाय की शक्ति';
+  static const String backboneOfBusiness = 'अपने व्यवसाय को शक्ति दें';
   static const String enterEmailPhone = 'ईमेल/फोन और पासवर्ड दर्ज करें';
   static const String password = 'पासवर्ड';
   static const String forgotPasswordQuestion = 'पासवर्ड भूल गए?';

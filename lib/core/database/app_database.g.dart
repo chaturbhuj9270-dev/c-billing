@@ -2456,6 +2456,17 @@ class $ProductRecordsTable extends ProductRecords
     requiredDuringInsert: false,
     defaultValue: const Constant(1),
   );
+  static const VerificationMeta _packSalesPriceMeta = const VerificationMeta(
+    'packSalesPrice',
+  );
+  @override
+  late final GeneratedColumn<double> packSalesPrice = GeneratedColumn<double>(
+    'pack_sales_price',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2489,6 +2500,7 @@ class $ProductRecordsTable extends ProductRecords
     drugSchedule,
     packUnit,
     unitsPerPack,
+    packSalesPrice,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2732,6 +2744,15 @@ class $ProductRecordsTable extends ProductRecords
         ),
       );
     }
+    if (data.containsKey('pack_sales_price')) {
+      context.handle(
+        _packSalesPriceMeta,
+        packSalesPrice.isAcceptableOrUnknown(
+          data['pack_sales_price']!,
+          _packSalesPriceMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -2865,6 +2886,10 @@ class $ProductRecordsTable extends ProductRecords
         DriftSqlType.int,
         data['${effectivePrefix}units_per_pack'],
       )!,
+      packSalesPrice: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}pack_sales_price'],
+      ),
     );
   }
 
@@ -2910,6 +2935,9 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
 
   /// How many base [unit] items are in one pack (e.g. 10 tablets per strip).
   final int unitsPerPack;
+
+  /// Sale price for one pack (Strip/Bag/Box). Independent of [salesPrice] (per unit).
+  final double? packSalesPrice;
   const ProductRecord({
     required this.id,
     this.serverId,
@@ -2942,6 +2970,7 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
     this.drugSchedule,
     this.packUnit,
     required this.unitsPerPack,
+    this.packSalesPrice,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3009,6 +3038,9 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
       map['pack_unit'] = Variable<String>(packUnit);
     }
     map['units_per_pack'] = Variable<int>(unitsPerPack);
+    if (!nullToAbsent || packSalesPrice != null) {
+      map['pack_sales_price'] = Variable<double>(packSalesPrice);
+    }
     return map;
   }
 
@@ -3071,6 +3103,9 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
           ? const Value.absent()
           : Value(packUnit),
       unitsPerPack: Value(unitsPerPack),
+      packSalesPrice: packSalesPrice == null && nullToAbsent
+          ? const Value.absent()
+          : Value(packSalesPrice),
     );
   }
 
@@ -3115,6 +3150,7 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
       drugSchedule: serializer.fromJson<String?>(json['drugSchedule']),
       packUnit: serializer.fromJson<String?>(json['packUnit']),
       unitsPerPack: serializer.fromJson<int>(json['unitsPerPack']),
+      packSalesPrice: serializer.fromJson<double?>(json['packSalesPrice']),
     );
   }
   @override
@@ -3152,6 +3188,7 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
       'drugSchedule': serializer.toJson<String?>(drugSchedule),
       'packUnit': serializer.toJson<String?>(packUnit),
       'unitsPerPack': serializer.toJson<int>(unitsPerPack),
+      'packSalesPrice': serializer.toJson<double?>(packSalesPrice),
     };
   }
 
@@ -3187,6 +3224,7 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
     Value<String?> drugSchedule = const Value.absent(),
     Value<String?> packUnit = const Value.absent(),
     int? unitsPerPack,
+    Value<double?> packSalesPrice = const Value.absent(),
   }) => ProductRecord(
     id: id ?? this.id,
     serverId: serverId.present ? serverId.value : this.serverId,
@@ -3227,6 +3265,9 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
     drugSchedule: drugSchedule.present ? drugSchedule.value : this.drugSchedule,
     packUnit: packUnit.present ? packUnit.value : this.packUnit,
     unitsPerPack: unitsPerPack ?? this.unitsPerPack,
+    packSalesPrice: packSalesPrice.present
+        ? packSalesPrice.value
+        : this.packSalesPrice,
   );
   ProductRecord copyWithCompanion(ProductRecordsCompanion data) {
     return ProductRecord(
@@ -3291,6 +3332,9 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
       unitsPerPack: data.unitsPerPack.present
           ? data.unitsPerPack.value
           : this.unitsPerPack,
+      packSalesPrice: data.packSalesPrice.present
+          ? data.packSalesPrice.value
+          : this.packSalesPrice,
     );
   }
 
@@ -3327,7 +3371,8 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
           ..write('composition: $composition, ')
           ..write('drugSchedule: $drugSchedule, ')
           ..write('packUnit: $packUnit, ')
-          ..write('unitsPerPack: $unitsPerPack')
+          ..write('unitsPerPack: $unitsPerPack, ')
+          ..write('packSalesPrice: $packSalesPrice')
           ..write(')'))
         .toString();
   }
@@ -3365,6 +3410,7 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
     drugSchedule,
     packUnit,
     unitsPerPack,
+    packSalesPrice,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -3400,7 +3446,8 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
           other.composition == this.composition &&
           other.drugSchedule == this.drugSchedule &&
           other.packUnit == this.packUnit &&
-          other.unitsPerPack == this.unitsPerPack);
+          other.unitsPerPack == this.unitsPerPack &&
+          other.packSalesPrice == this.packSalesPrice);
 }
 
 class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
@@ -3435,6 +3482,7 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
   final Value<String?> drugSchedule;
   final Value<String?> packUnit;
   final Value<int> unitsPerPack;
+  final Value<double?> packSalesPrice;
   const ProductRecordsCompanion({
     this.id = const Value.absent(),
     this.serverId = const Value.absent(),
@@ -3467,6 +3515,7 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
     this.drugSchedule = const Value.absent(),
     this.packUnit = const Value.absent(),
     this.unitsPerPack = const Value.absent(),
+    this.packSalesPrice = const Value.absent(),
   });
   ProductRecordsCompanion.insert({
     this.id = const Value.absent(),
@@ -3500,6 +3549,7 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
     this.drugSchedule = const Value.absent(),
     this.packUnit = const Value.absent(),
     this.unitsPerPack = const Value.absent(),
+    this.packSalesPrice = const Value.absent(),
   }) : name = Value(name),
        syncStatus = Value(syncStatus),
        updatedAt = Value(updatedAt),
@@ -3536,6 +3586,7 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
     Expression<String>? drugSchedule,
     Expression<String>? packUnit,
     Expression<int>? unitsPerPack,
+    Expression<double>? packSalesPrice,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3570,6 +3621,7 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
       if (drugSchedule != null) 'drug_schedule': drugSchedule,
       if (packUnit != null) 'pack_unit': packUnit,
       if (unitsPerPack != null) 'units_per_pack': unitsPerPack,
+      if (packSalesPrice != null) 'pack_sales_price': packSalesPrice,
     });
   }
 
@@ -3605,6 +3657,7 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
     Value<String?>? drugSchedule,
     Value<String?>? packUnit,
     Value<int>? unitsPerPack,
+    Value<double?>? packSalesPrice,
   }) {
     return ProductRecordsCompanion(
       id: id ?? this.id,
@@ -3638,6 +3691,7 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
       drugSchedule: drugSchedule ?? this.drugSchedule,
       packUnit: packUnit ?? this.packUnit,
       unitsPerPack: unitsPerPack ?? this.unitsPerPack,
+      packSalesPrice: packSalesPrice ?? this.packSalesPrice,
     );
   }
 
@@ -3739,6 +3793,9 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
     if (unitsPerPack.present) {
       map['units_per_pack'] = Variable<int>(unitsPerPack.value);
     }
+    if (packSalesPrice.present) {
+      map['pack_sales_price'] = Variable<double>(packSalesPrice.value);
+    }
     return map;
   }
 
@@ -3775,7 +3832,8 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
           ..write('composition: $composition, ')
           ..write('drugSchedule: $drugSchedule, ')
           ..write('packUnit: $packUnit, ')
-          ..write('unitsPerPack: $unitsPerPack')
+          ..write('unitsPerPack: $unitsPerPack, ')
+          ..write('packSalesPrice: $packSalesPrice')
           ..write(')'))
         .toString();
   }
@@ -16966,6 +17024,7 @@ typedef $$ProductRecordsTableCreateCompanionBuilder =
       Value<String?> drugSchedule,
       Value<String?> packUnit,
       Value<int> unitsPerPack,
+      Value<double?> packSalesPrice,
     });
 typedef $$ProductRecordsTableUpdateCompanionBuilder =
     ProductRecordsCompanion Function({
@@ -17000,6 +17059,7 @@ typedef $$ProductRecordsTableUpdateCompanionBuilder =
       Value<String?> drugSchedule,
       Value<String?> packUnit,
       Value<int> unitsPerPack,
+      Value<double?> packSalesPrice,
     });
 
 class $$ProductRecordsTableFilterComposer
@@ -17163,6 +17223,11 @@ class $$ProductRecordsTableFilterComposer
 
   ColumnFilters<int> get unitsPerPack => $composableBuilder(
     column: $table.unitsPerPack,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get packSalesPrice => $composableBuilder(
+    column: $table.packSalesPrice,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -17330,6 +17395,11 @@ class $$ProductRecordsTableOrderingComposer
     column: $table.unitsPerPack,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<double> get packSalesPrice => $composableBuilder(
+    column: $table.packSalesPrice,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ProductRecordsTableAnnotationComposer
@@ -17463,6 +17533,11 @@ class $$ProductRecordsTableAnnotationComposer
     column: $table.unitsPerPack,
     builder: (column) => column,
   );
+
+  GeneratedColumn<double> get packSalesPrice => $composableBuilder(
+    column: $table.packSalesPrice,
+    builder: (column) => column,
+  );
 }
 
 class $$ProductRecordsTableTableManager
@@ -17529,6 +17604,7 @@ class $$ProductRecordsTableTableManager
                 Value<String?> drugSchedule = const Value.absent(),
                 Value<String?> packUnit = const Value.absent(),
                 Value<int> unitsPerPack = const Value.absent(),
+                Value<double?> packSalesPrice = const Value.absent(),
               }) => ProductRecordsCompanion(
                 id: id,
                 serverId: serverId,
@@ -17561,6 +17637,7 @@ class $$ProductRecordsTableTableManager
                 drugSchedule: drugSchedule,
                 packUnit: packUnit,
                 unitsPerPack: unitsPerPack,
+                packSalesPrice: packSalesPrice,
               ),
           createCompanionCallback:
               ({
@@ -17595,6 +17672,7 @@ class $$ProductRecordsTableTableManager
                 Value<String?> drugSchedule = const Value.absent(),
                 Value<String?> packUnit = const Value.absent(),
                 Value<int> unitsPerPack = const Value.absent(),
+                Value<double?> packSalesPrice = const Value.absent(),
               }) => ProductRecordsCompanion.insert(
                 id: id,
                 serverId: serverId,
@@ -17627,6 +17705,7 @@ class $$ProductRecordsTableTableManager
                 drugSchedule: drugSchedule,
                 packUnit: packUnit,
                 unitsPerPack: unitsPerPack,
+                packSalesPrice: packSalesPrice,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

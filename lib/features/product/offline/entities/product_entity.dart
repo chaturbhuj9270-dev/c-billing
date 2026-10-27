@@ -119,6 +119,9 @@ class ProductEntity {
   /// Base units in one pack. Stock is always tracked in [unit] (base).
   int unitsPerPack;
 
+  /// Sale price for one pack (independent of [salesPrice] per unit).
+  double? packSalesPrice;
+
   ProductEntity({
     this.serverId,
     this.indexNo = 0,
@@ -150,10 +153,17 @@ class ProductEntity {
     this.drugSchedule,
     this.packUnit,
     this.unitsPerPack = 1,
+    this.packSalesPrice,
   });
 
   bool get hasPackSell =>
       unitsPerPack > 1 && packUnit != null && packUnit!.trim().isNotEmpty;
+
+  double get effectivePackSalesPrice {
+    if (packSalesPrice != null && packSalesPrice! > 0) return packSalesPrice!;
+    final n = unitsPerPack < 1 ? 1 : unitsPerPack;
+    return salesPrice * n;
+  }
 
   // Factory constructor for creating new product with defaults
   factory ProductEntity.create({
@@ -185,6 +195,7 @@ class ProductEntity {
     String? drugSchedule,
     String? packUnit,
     int unitsPerPack = 1,
+    double? packSalesPrice,
   }) {
     final now = DateTime.now();
     return ProductEntity(
@@ -218,6 +229,7 @@ class ProductEntity {
       drugSchedule: drugSchedule,
       packUnit: packUnit,
       unitsPerPack: unitsPerPack < 1 ? 1 : unitsPerPack,
+      packSalesPrice: packSalesPrice,
     );
   }
 
@@ -255,6 +267,7 @@ class ProductEntity {
       drugSchedule: data['drugSchedule'] as String?,
       packUnit: data['packUnit'] as String?,
       unitsPerPack: (data['unitsPerPack'] as num?)?.toInt() ?? 1,
+      packSalesPrice: (data['packSalesPrice'] as num?)?.toDouble(),
     );
   }
 
@@ -288,6 +301,7 @@ class ProductEntity {
       'drugSchedule': drugSchedule,
       'packUnit': packUnit,
       'unitsPerPack': unitsPerPack,
+      'packSalesPrice': packSalesPrice,
       'updatedAt': updatedAt.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
     };
@@ -327,6 +341,7 @@ class ProductEntity {
       'drugSchedule': drugSchedule,
       'packUnit': packUnit,
       'unitsPerPack': unitsPerPack,
+      'packSalesPrice': packSalesPrice,
     };
   }
 
@@ -363,6 +378,7 @@ class ProductEntity {
     String? drugSchedule,
     String? packUnit,
     int? unitsPerPack,
+    double? packSalesPrice,
   }) {
     final entity = ProductEntity(
       serverId: serverId ?? this.serverId,
@@ -395,6 +411,7 @@ class ProductEntity {
       drugSchedule: drugSchedule ?? this.drugSchedule,
       packUnit: packUnit ?? this.packUnit,
       unitsPerPack: unitsPerPack ?? this.unitsPerPack,
+      packSalesPrice: packSalesPrice ?? this.packSalesPrice,
     );
     entity.id = id ?? this.id;
     return entity;
