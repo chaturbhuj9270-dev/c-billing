@@ -278,14 +278,27 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
 
   // ==================== READ ====================
 
-  // Get all transactions for a customer
+  Future<Set<String>> _aliasesForCustomerKey(String customerId) async {
+    final customer = await _getCustomerByIdOrServerId(customerId);
+    if (customer != null) return customerIdAliases(customer);
+    final keys = <String>{customerId};
+    if (customerId.startsWith('local_')) {
+      keys.add(customerId.substring(6));
+    } else {
+      keys.add('local_$customerId');
+    }
+    return keys;
+  }
+
+  // Get all transactions for a customer (matches serverId / local_ / numeric)
   Future<List<CustomerTransactionEntity>> getTransactionsByCustomerId(
     String customerId,
   ) async {
+    final keys = await _aliasesForCustomerKey(customerId);
     final transactions = (await _db.loadTransactions())
         .where(
           (transaction) =>
-              transaction.customerId == customerId &&
+              keys.contains(transaction.customerId) &&
               transaction.syncStatus != TransactionSyncStatus.deleted,
         )
         .toList();
@@ -301,8 +314,9 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     required DateTime startDate,
     required DateTime endDate,
   }) async {
+    final keys = await _aliasesForCustomerKey(customerId);
     final transactions = (await _db.loadTransactions()).where((transaction) {
-      if (transaction.customerId != customerId) return false;
+      if (!keys.contains(transaction.customerId)) return false;
       if (transaction.syncStatus == TransactionSyncStatus.deleted) {
         return false;
       }
@@ -523,21 +537,66 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
 
   // ==================== HELPERS ====================
 
+  /// All ID forms that may appear on ledger rows for one customer.
+  Set<String> customerIdAliases(CustomerEntity customer) {
+    final keys = <String>{'local_${customer.id}', '${customer.id}'};
+    final serverId = customer.serverId;
+    if (serverId != null && serverId.isNotEmpty) keys.add(serverId);
+    return keys;
+  }
+
+  /// Resolve `serverId`, numeric local id, or `local_<id>` billing keys.
   Future<CustomerEntity?> _getCustomerByIdOrServerId(String customerId) async {
-    // Try to find by serverId first
-    for (final customer in await _db.loadCustomers()) {
-      if (customer.serverId == customerId) return customer;
+    final raw = customerId.trim();
+    if (raw.isEmpty) return null;
+
+    final customers = await _db.loadCustomers();
+
+    for (final customer in customers) {
+      if (customer.serverId == raw) return customer;
     }
 
-    // If not found, try by local ID
-    final localId = int.tryParse(customerId);
+    var localId = int.tryParse(raw);
+    if (localId == null && raw.startsWith('local_')) {
+      localId = int.tryParse(raw.substring(6));
+    }
     if (localId != null) {
-      for (final customer in await _db.loadCustomers()) {
+      for (final customer in customers) {
         if (customer.id == localId) return customer;
       }
     }
 
     return null;
+  }
+
+  /// Rebuild receivable from non-deleted ledger rows (source of truth).
+  Future<double> recomputeCustomerPending(String customerId) async {
+    final customer = await _getCustomerByIdOrServerId(customerId);
+    if (customer == null) return 0;
+
+    final keys = customerIdAliases(customer);
+    double pending = 0;
+    for (final tx in await _db.loadTransactions()) {
+      if (tx.syncStatus == TransactionSyncStatus.deleted) continue;
+      if (!keys.contains(tx.customerId)) continue;
+      switch (tx.transactionType) {
+        case TransactionType.billCreated:
+          pending += tx.amount;
+        case TransactionType.payment:
+        case TransactionType.billReturn:
+          pending -= tx.amount;
+        case TransactionType.adjustment:
+          pending += tx.amount; // signed amount
+      }
+    }
+
+    customer.currentPendingAmount = pending;
+    customer.updatedAt = DateTime.now();
+    customer.isSynced = false;
+    await _db.saveCustomer(customer);
+    notifyListeners();
+    DashboardRefreshService.instance.notifyDataChanged(DataChangeType.customer);
+    return pending;
   }
 
   // Get unsynced transactions count
@@ -623,6 +682,17 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
         }
       }
     });
+
+    // Keep receivable balances aligned with imported ledger rows.
+    for (final customerId in uniqueCustomerIds) {
+      try {
+        await recomputeCustomerPending(customerId!);
+      } catch (e) {
+        debugPrint(
+          '[TransactionOffline] Pending recompute failed for $customerId: $e',
+        );
+      }
+    }
 
     debugPrint('[TransactionOffline] Import completed');
     notifyListeners();

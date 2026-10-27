@@ -311,7 +311,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            isError ? Icons.error_outline_rounded : Icons.qr_code_2_rounded,
+            isError ? Icons.error_outline_rounded : Icons.barcode_reader,
             size: 24,
             color: isError ? AppTheme.toneRose : _mutedText,
           ),
@@ -744,7 +744,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.qr_code_2_rounded, size: 18),
+                const Icon(Icons.barcode_reader, size: 18),
                 const SizedBox(width: 8),
                 const Text('Barcode'),
               ],
@@ -897,7 +897,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
-                    Icons.qr_code_scanner_rounded,
+                    Icons.barcode_reader,
                     color: _primaryColor,
                     size: 20,
                   ),
@@ -1770,7 +1770,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    Icons.qr_code_scanner_rounded,
+                    Icons.barcode_reader,
                     color: _primaryColor,
                     size: 22,
                   ),
@@ -1921,7 +1921,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
               borderRadius: BorderRadius.circular(24),
             ),
             child: Icon(
-              Icons.qr_code_2_rounded,
+              Icons.barcode_reader,
               size: 56,
               color: _accentColor.withValues(alpha: 0.6),
             ),
@@ -2652,7 +2652,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
-                      Icons.qr_code_2_rounded,
+                      Icons.barcode_reader,
                       color: AppTheme.white,
                       size: 24,
                     ),

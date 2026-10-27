@@ -538,7 +538,7 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
               width: 48,
               height: 48,
               child: Icon(
-                Icons.qr_code_scanner_rounded,
+                Icons.barcode_reader,
                 color: AppTheme.white,
                 size: 22,
               ),

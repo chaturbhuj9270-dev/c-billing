@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -144,12 +146,14 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
     );
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadData({bool silent = false}) async {
     try {
-      setState(() {
-        _isLoading = true;
-        _error = null;
-      });
+      if (!silent) {
+        setState(() {
+          _isLoading = true;
+          _error = null;
+        });
+      }
 
       // Offline-first: read customer + ledger from local DB (no Firestore index).
       final localCustomer = await _resolveLocalCustomer();
@@ -265,8 +269,20 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
       builder: (context) => ReceivePaymentSheet(
         customer: _customer!,
         transactionService: _transactionService,
-        onPaymentReceived: () {
-          _loadData();
+        onPaymentReceived: (amount) {
+          // Optimistic UI update so pending drops immediately, then reconcile from DB.
+          final current = _customer;
+          if (current != null && mounted) {
+            setState(() {
+              _customer = current.copyWith(
+                currentPendingAmount: (current.currentPendingAmount - amount)
+                    .clamp(0.0, double.infinity)
+                    .toDouble(),
+                totalPaidAmount: current.totalPaidAmount + amount,
+              );
+            });
+          }
+          _loadData(silent: true);
         },
       ),
     );
@@ -1052,7 +1068,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
 class ReceivePaymentSheet extends StatefulWidget {
   final Customer customer;
   final CustomerTransactionService transactionService;
-  final VoidCallback onPaymentReceived;
+  final ValueChanged<double> onPaymentReceived;
 
   const ReceivePaymentSheet({
     super.key,
@@ -1101,55 +1117,70 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
 
     setState(() => _isProcessing = true);
 
-    try {
-      final notes = _notesController.text.trim().isNotEmpty
-          ? _notesController.text.trim()
-          : 'Payment received';
-      final txCtrl = CustomerTransactionOfflineController.instance;
+    final paidAmount = _enteredAmount;
+    final notes = _notesController.text.trim().isNotEmpty
+        ? _notesController.text.trim()
+        : 'Payment received';
+    final paymentMode = _selectedPaymentMode;
+    final referenceNumber = _referenceController.text.trim().isNotEmpty
+        ? _referenceController.text.trim()
+        : null;
+    final customerId = widget.customer.id;
+    final customerName = widget.customer.fullName;
+    final txCtrl = CustomerTransactionOfflineController.instance;
 
-      // Offline-first: always update local ledger / bill allocation.
+    try {
+      // Offline-first: ledger + pending update happen locally first.
       final localTx = await txCtrl.addPaymentTransaction(
-        customerId: widget.customer.id,
-        customerName: widget.customer.fullName,
-        amount: _enteredAmount,
+        customerId: customerId,
+        customerName: customerName,
+        amount: paidAmount,
         description: notes,
-        paymentMethod: _selectedPaymentMode.name,
+        paymentMethod: paymentMode.name,
         allocateToBills: true,
       );
 
-      final result = await widget.transactionService.receivePayment(
-        customerId: widget.customer.id,
-        amount: _enteredAmount,
-        paymentMode: _selectedPaymentMode,
-        notes: notes,
-        referenceNumber: _referenceController.text.trim().isNotEmpty
-            ? _referenceController.text.trim()
-            : null,
-      );
-
-      if (result.success && result.transactionId != null) {
-        await txCtrl.markSyncedWithServerId(
-          localTx.id,
-          result.transactionId!,
-        );
-      }
-
       if (!mounted) return;
 
+      // Close sheet + refresh UI immediately (do not wait for cloud).
       Navigator.pop(context);
-      if (result.success) {
-        GlassyToast.show(
-          context,
-          'Payment of ₹${_enteredAmount.toStringAsFixed(2)} recorded',
-        );
-      } else {
-        // Local ledger already applied; sync will push when online.
-        GlassyToast.show(
-          context,
-          'Payment saved locally. Cloud sync pending: ${result.errorMessage ?? 'offline'}',
-        );
+      GlassyToast.show(
+        context,
+        'Payment of ₹${paidAmount.toStringAsFixed(2)} recorded',
+      );
+      widget.onPaymentReceived(paidAmount);
+
+      // Background cloud sync — never blocks the amount refresh.
+      final canSyncCloud =
+          customerId.isNotEmpty && !customerId.startsWith('local_');
+      if (canSyncCloud) {
+        unawaited(() async {
+          try {
+            final result = await widget.transactionService.receivePayment(
+              customerId: customerId,
+              amount: paidAmount,
+              paymentMode: paymentMode,
+              notes: notes,
+              referenceNumber: referenceNumber,
+            );
+            if (result.success && result.transactionId != null) {
+              await txCtrl.markSyncedWithServerId(
+                localTx.id,
+                result.transactionId!,
+              );
+            }
+          } catch (e) {
+            debugPrint('[ReceivePayment] Cloud sync deferred: $e');
+          }
+        }());
       }
-      widget.onPaymentReceived();
+    } catch (e) {
+      if (!mounted) return;
+      GlassyToast.show(
+        context,
+        'Could not save payment: $e',
+        isError: true,
+      );
     } finally {
       if (mounted) {
         setState(() => _isProcessing = false);

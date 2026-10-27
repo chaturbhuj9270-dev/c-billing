@@ -618,7 +618,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       case WebShell.quotations:
         return Icons.description_outlined;
       case WebShell.barcode:
-        return Icons.qr_code_scanner_rounded;
+        return Icons.barcode_reader;
       case WebShell.expenses:
         return Icons.account_balance_wallet_outlined;
       case WebShell.shop:
@@ -1157,7 +1157,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     );
     add(WebShell.events, Icons.auto_awesome_rounded, _localizations.events);
     add(WebShell.quotations, Icons.description_outlined, _localizations.quotations);
-    add(WebShell.barcode, Icons.qr_code_scanner_rounded, _localizations.barcode);
+    add(WebShell.barcode, Icons.barcode_reader, _localizations.barcode);
     add(WebShell.expenses, Icons.account_balance_wallet_outlined, 'Expenses');
     add(WebShell.reports, Icons.assessment_outlined, 'Business reports');
     if (access.isOwner) {

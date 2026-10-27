@@ -1570,7 +1570,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     width: 48,
                     height: 48,
                     child: Icon(
-                      Icons.qr_code_scanner_rounded,
+                      Icons.barcode_reader,
                       color: AppTheme.white,
                       size: 22,
                     ),
@@ -4110,7 +4110,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Icon(
-                        Icons.qr_code_scanner,
+                        Icons.barcode_reader,
                         color: AppTheme.white,
                         size: 18,
                       ),

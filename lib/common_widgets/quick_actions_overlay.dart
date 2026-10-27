@@ -198,7 +198,7 @@ List<QuickActionItem> buildQuickActionItems(
   add(
     WebShell.barcode,
     QuickActionItem(
-      icon: Icons.qr_code_scanner_rounded,
+      icon: Icons.barcode_reader,
       label: l10n.barcode,
       color: AppTheme.greenAccent,
       gradient: const [AppTheme.teal600, AppTheme.teal900],

@@ -283,9 +283,13 @@ class StockLedgerOfflineController extends ChangeNotifier {
   // ==================== QUERY / AGGREGATIONS ====================
 
   // Get total COGS (Cost of Goods Sold) for a date range
+  // Net of sale returns so returned stock does not inflate COGS.
   Future<double> getTotalCOGS({DateTime? startDate, DateTime? endDate}) async {
     final entries = (await _db.loadLedger()).where((entry) {
-      if (entry.ledgerType != LedgerTransactionType.SALE) return false;
+      final isCogs =
+          entry.ledgerType == LedgerTransactionType.SALE ||
+          entry.ledgerType == LedgerTransactionType.SALE_RETURN;
+      if (!isCogs) return false;
       if (entry.syncStatus == LedgerSyncStatus.deleted) return false;
       if (startDate != null && endDate != null) {
         return !entry.transactionDate.isBefore(startDate) &&
@@ -294,7 +298,12 @@ class StockLedgerOfflineController extends ChangeNotifier {
       return true;
     });
 
-    return entries.fold<double>(0.0, (total, e) => total + e.totalCost);
+    return entries.fold<double>(0.0, (total, e) {
+      if (e.ledgerType == LedgerTransactionType.SALE_RETURN) {
+        return total - e.totalCost;
+      }
+      return total + e.totalCost;
+    });
   }
 
   // Get COGS by product for a date range
@@ -303,7 +312,10 @@ class StockLedgerOfflineController extends ChangeNotifier {
     DateTime? endDate,
   }) async {
     final entries = (await _db.loadLedger()).where((entry) {
-      if (entry.ledgerType != LedgerTransactionType.SALE) return false;
+      final isCogs =
+          entry.ledgerType == LedgerTransactionType.SALE ||
+          entry.ledgerType == LedgerTransactionType.SALE_RETURN;
+      if (!isCogs) return false;
       if (entry.syncStatus == LedgerSyncStatus.deleted) return false;
       if (startDate != null && endDate != null) {
         return !entry.transactionDate.isBefore(startDate) &&
@@ -316,7 +328,10 @@ class StockLedgerOfflineController extends ChangeNotifier {
 
     for (final entry in entries) {
       final current = cogsMap[entry.productId] ?? 0.0;
-      cogsMap[entry.productId] = current + entry.totalCost;
+      final delta = entry.ledgerType == LedgerTransactionType.SALE_RETURN
+          ? -entry.totalCost
+          : entry.totalCost;
+      cogsMap[entry.productId] = current + delta;
     }
 
     return cogsMap;

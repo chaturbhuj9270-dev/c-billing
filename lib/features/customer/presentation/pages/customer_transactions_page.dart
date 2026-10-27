@@ -709,7 +709,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
           : widget.customerLocalId;
       final txCtrl = CustomerTransactionOfflineController.instance;
 
-      // Save offline first
+      // Save offline first — pending updates locally immediately.
       final localTx = await txCtrl.addPaymentTransaction(
         customerId: customerId,
         customerName: widget.customerName,
@@ -719,44 +719,49 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
         allocateToBills: true,
       );
 
-      // Sync to Firebase (online) and stamp server id to avoid duplicate sync rows.
-      try {
-        final paymentMode = _mapPaymentMethod(paymentMethod);
-        final firebaseCustomerId = widget.customerId.isNotEmpty
-            ? widget.customerId
-            : null;
-        if (firebaseCustomerId != null) {
-          final firebaseResult = await _transactionService.receivePayment(
-            customerId: firebaseCustomerId,
-            amount: amount,
-            paymentMode: paymentMode,
-            notes: description ?? 'Payment received',
-          );
-
-          if (firebaseResult.success &&
-              firebaseResult.transactionId != null) {
-            await txCtrl.markSyncedWithServerId(
-              localTx.id,
-              firebaseResult.transactionId!,
-            );
-            debugPrint('[Transactions] Payment synced to Firebase: $amount');
-          } else {
-            debugPrint(
-              '[Transactions] Firebase sync failed: ${firebaseResult.errorMessage}',
-            );
-          }
-        }
-      } catch (e) {
-        debugPrint('[Transactions] Firebase sync error (non-blocking): $e');
-      }
-
+      // Refresh UI right away (do not wait for cloud).
       _loadTransactions();
-
       if (mounted) {
         GlassyToast.show(
           context,
           'Payment of ₹${amount.toStringAsFixed(0)} recorded',
         );
+      }
+
+      // Background cloud sync — stamp server id to avoid duplicate sync rows.
+      final paymentMode = _mapPaymentMethod(paymentMethod);
+      final firebaseCustomerId =
+          widget.customerId.isNotEmpty ? widget.customerId : null;
+      if (firebaseCustomerId != null) {
+        unawaited(() async {
+          try {
+            final firebaseResult = await _transactionService.receivePayment(
+              customerId: firebaseCustomerId,
+              amount: amount,
+              paymentMode: paymentMode,
+              notes: description ?? 'Payment received',
+            );
+
+            if (firebaseResult.success &&
+                firebaseResult.transactionId != null) {
+              await txCtrl.markSyncedWithServerId(
+                localTx.id,
+                firebaseResult.transactionId!,
+              );
+              debugPrint(
+                '[Transactions] Payment synced to Firebase: $amount',
+              );
+            } else {
+              debugPrint(
+                '[Transactions] Firebase sync failed: ${firebaseResult.errorMessage}',
+              );
+            }
+          } catch (e) {
+            debugPrint(
+              '[Transactions] Firebase sync error (non-blocking): $e',
+            );
+          }
+        }());
       }
     }
   }

@@ -3150,7 +3150,7 @@ class _PurchasePageState extends State<PurchasePage>
       subtitle: _localizations.recordNewInventoryPurchase,
       actions: [
         AppTopBar.action(
-          icon: Icons.qr_code_scanner_rounded,
+          icon: Icons.barcode_reader,
           onTap: () async {
             final result = await showAppPage(
               context,
@@ -3409,7 +3409,7 @@ class _PurchasePageState extends State<PurchasePage>
               controller: _batchNumberController,
               label: 'Batch / Lot No.',
               hint: 'Manufacturer batch or lot number',
-              icon: Icons.qr_code_2_rounded,
+              icon: Icons.barcode_reader,
             ),
             const SizedBox(height: 16),
           ],

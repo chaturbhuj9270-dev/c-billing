@@ -356,7 +356,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   AppTopBar.action(
-                    icon: Icons.qr_code_2_rounded,
+                    icon: Icons.barcode_reader,
                     onTap: () {
                       showAppPage(context, BarcodeGeneratorPage());
                     },
@@ -494,7 +494,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             ),
           ),
         AppTopBar.action(
-          icon: Icons.qr_code_2_rounded,
+          icon: Icons.barcode_reader,
           onTap: () {
             showAppPage(context, BarcodeGeneratorPage());
           },
@@ -1082,7 +1082,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                             : '-',
                       ),
                       _buildInfoCard(
-                        icon: Icons.qr_code_rounded,
+                        icon: Icons.barcode_reader,
                         label: 'Barcode',
                         value: product.barcode ?? '-',
                       ),

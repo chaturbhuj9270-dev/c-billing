@@ -217,6 +217,10 @@ class _BillingPageState extends State<BillingPage> {
       return breakdown.hasAnyTax ? breakdown : null;
     }
 
+    // Tax on post-discount taxable value (matches item-level + final amount).
+    final taxableBase =
+        (_totalAmount - _discountAmount).clamp(0.0, double.infinity);
+
     // Flat rates: for interstate, treat settings as IGST (cgst+sgst or igst %)
     if (interstate) {
       final igstRate = _taxSettings.enableIgst
@@ -233,14 +237,14 @@ class _BillingPageState extends State<BillingPage> {
       );
       if (!interstateSettings.hasAnyTaxEnabled) return null;
       return interstateSettings.calculateTax(
-        subtotal: _totalAmount,
+        subtotal: taxableBase,
         gstMode: _gstMode,
       );
     }
 
     if (!_taxSettings.hasAnyTaxEnabled) return null;
     return _taxSettings.calculateTax(
-      subtotal: _totalAmount,
+      subtotal: taxableBase,
       gstMode: _gstMode,
     );
   }
@@ -2552,30 +2556,51 @@ class _BillingPageState extends State<BillingPage> {
           const SizedBox(width: 16),
           SizedBox(
             width: 320,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Discount / partial payment scroll above; summary stays at the end.
-                Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: Column(
-                      children: [
-                        if (_billItems.isNotEmpty)
-                          _buildDiscountSection(showNestedSummary: false),
-                        if (_billItems.isNotEmpty && !_isFullPayment)
-                          _buildPaymentSection(),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildDesktopSummaryCard(),
-              ],
-            ),
+            child: _buildDesktopRightRail(),
           ),
         ],
       ),
+    );
+  }
+
+  /// Top-right rail: discount / payment scroll on top; bill summary sticks bottom-right.
+  Widget _buildDesktopRightRail() {
+    final hasScrollableTop = _billItems.isNotEmpty;
+    final summary = _buildDesktopSummaryCard();
+
+    // No extras yet — keep summary at the top-right.
+    if (!hasScrollableTop) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          summary,
+          const Spacer(),
+        ],
+      );
+    }
+
+    // Extras present — top portion scrolls; summary pinned bottom-right.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildDiscountSection(showNestedSummary: false),
+                  if (!_isFullPayment) _buildPaymentSection(),
+                ],
+              ),
+            ),
+          ),
+        ),
+        summary,
+      ],
     );
   }
 
@@ -7145,7 +7170,7 @@ class _BillingPageState extends State<BillingPage> {
         },
       ),
       _QuickStatItem(
-        icon: Icons.qr_code_2_rounded,
+        icon: Icons.barcode_reader,
         value: '',
         label: _localizations.barcode,
         color: AppTheme.teal600,

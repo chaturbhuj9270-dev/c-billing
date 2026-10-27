@@ -299,16 +299,16 @@ class InventoryIntegrationService {
           debugPrint(
             '[Integration] Warning: FIFO sale failed for ${item.productName}: ${saleResult.errorMessage}',
           );
-          // Continue even if FIFO fails - the bill is already created The stock inconsistency can be resolved later
+          // Do not touch ProductEntity.currentStock when FIFO failed —
+          // that would create product vs batch drift.
         } else {
           allConsumedBatches.addAll(saleResult.consumedBatches);
           totalCOGS += saleResult.totalCOGS;
           totalRevenue += saleResult.totalRevenue;
           totalProfit += saleResult.totalProfit;
+          // 2b. Keep ProductEntity.currentStock in lockstep with FIFO
+          await _decrementProductStock(item.productId, item.quantityInt);
         }
-
-        // 2b. Update ProductEntity.currentStock (round for stock tracking)
-        await _decrementProductStock(item.productId, item.quantityInt);
       }
 
       debugPrint(

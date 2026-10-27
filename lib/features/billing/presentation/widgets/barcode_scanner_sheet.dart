@@ -333,7 +333,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
               ],
             ),
             child: const Icon(
-              Icons.qr_code_scanner_rounded,
+              Icons.barcode_reader,
               color: AppTheme.white,
               size: 22,
             ),
@@ -1155,7 +1155,7 @@ class _HardwareBarcodeReaderDialogState
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
-                      Icons.qr_code_scanner_rounded,
+                      Icons.barcode_reader,
                       color: AppTheme.white,
                       size: 22,
                     ),
@@ -1239,7 +1239,7 @@ class _HardwareBarcodeReaderDialogState
                     borderSide: BorderSide(color: action, width: 1.6),
                   ),
                   prefixIcon: Icon(
-                    Icons.qr_code_2_rounded,
+                    Icons.barcode_reader,
                     color: action,
                   ),
                   contentPadding: const EdgeInsets.symmetric(
