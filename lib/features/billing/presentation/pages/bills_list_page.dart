@@ -582,7 +582,15 @@ class _BillsListPageState extends State<BillsListPage>
               .toList();
           break;
         case _BillDateFilter.custom:
-          // Custom filter uses _startDate and _endDate - handled separately
+          if (_startDate != null && _endDate != null) {
+            bills = bills
+                .where(
+                  (bill) =>
+                      !bill.billDate.isBefore(_startDate!) &&
+                      !bill.billDate.isAfter(_endDate!),
+                )
+                .toList();
+          }
           break;
         case _BillDateFilter.none:
           // No date filter - show all
@@ -641,8 +649,15 @@ class _BillsListPageState extends State<BillsListPage>
       // Toggle off if already selected
       if (_dateFilter == filter) {
         _dateFilter = _BillDateFilter.none;
+        _startDate = null;
+        _endDate = null;
       } else {
         _dateFilter = filter;
+        // Preset chips replace any custom range so stream + client filter stay aligned.
+        if (filter != _BillDateFilter.custom) {
+          _startDate = null;
+          _endDate = null;
+        }
       }
     });
     _filterBills(_searchController.text);
@@ -689,7 +704,12 @@ class _BillsListPageState extends State<BillsListPage>
 
     if (picked != null) {
       setState(() {
-        _startDate = picked.start;
+        _dateFilter = _BillDateFilter.custom;
+        _startDate = DateTime(
+          picked.start.year,
+          picked.start.month,
+          picked.start.day,
+        );
         _endDate = DateTime(
           picked.end.year,
           picked.end.month,
@@ -699,16 +719,19 @@ class _BillsListPageState extends State<BillsListPage>
           59,
         );
       });
-      _loadBills();
+      // Keep full offline stream list; apply range in _filterBills so live
+      // updates do not wipe the custom selection.
+      _filterBills(_searchController.text);
     }
   }
 
   void _clearDateFilter() {
     setState(() {
+      _dateFilter = _BillDateFilter.none;
       _startDate = null;
       _endDate = null;
     });
-    _loadBills();
+    _filterBills(_searchController.text);
   }
 
   void _showBillDetails(Bill bill) async {

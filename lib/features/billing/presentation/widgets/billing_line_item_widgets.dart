@@ -208,24 +208,23 @@ class BillItemsLineList extends StatelessWidget {
                             products: products,
                             localizations: localizations,
                             onPriceUpdated: (price) {
-                              _updateItem(
-                                index,
-                                BillItem.create(
-                                  productId: item.productId,
-                                  productName: item.productName,
-                                  companyName: item.companyName,
-                                  sellingPrice: price,
-                                  purchasePrice: item.purchasePrice,
-                                  quantity: item.quantity,
-                                  cgstPercent: item.cgstPercent,
-                                  sgstPercent: item.sgstPercent,
-                                  hsnCode: item.hsnCode,
-                                  unit: item.unit,
-                                  sellUnit: item.sellUnit,
-                                ),
+                              final updated = BillItem.create(
+                                productId: item.productId,
+                                productName: item.productName,
+                                companyName: item.companyName,
+                                sellingPrice: price,
+                                purchasePrice: item.purchasePrice,
+                                quantity: item.quantity,
+                                cgstPercent: item.cgstPercent,
+                                sgstPercent: item.sgstPercent,
+                                hsnCode: item.hsnCode,
+                                unit: item.unit,
+                                sellUnit: item.sellUnit,
+                                unitsPerPack: item.unitsPerPack,
                               );
+                              _updateItem(index, updated);
                               showSnackbar(
-                                'Price updated to ₹${price.toStringAsFixed(0)}',
+                                'Price updated to ₹${displayUnitSellPrice(updated).toStringAsFixed(0)}',
                               );
                             },
                           ),

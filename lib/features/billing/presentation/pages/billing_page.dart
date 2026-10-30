@@ -4787,7 +4787,8 @@ class _BillingPageState extends State<BillingPage> {
                               hsnCode: item.hsnCode,
                               unit: item.unit,
                               sellUnit: subUnit,
-                            employeeToken: item.employeeToken,
+                              unitsPerPack: item.unitsPerPack,
+                              employeeToken: item.employeeToken,
                             );
                           });
                         }
@@ -4845,7 +4846,8 @@ class _BillingPageState extends State<BillingPage> {
                             hsnCode: item.hsnCode,
                             unit: item.unit,
                             sellUnit: unit,
-                          employeeToken: item.employeeToken,
+                            unitsPerPack: item.unitsPerPack,
+                            employeeToken: item.employeeToken,
                           );
                         });
                       }
@@ -5062,7 +5064,8 @@ class _BillingPageState extends State<BillingPage> {
                               hsnCode: item.hsnCode,
                               unit: item.unit,
                               sellUnit: subUnit,
-                            employeeToken: item.employeeToken,
+                              unitsPerPack: item.unitsPerPack,
+                              employeeToken: item.employeeToken,
                             );
                           });
                           Navigator.pop(ctx);

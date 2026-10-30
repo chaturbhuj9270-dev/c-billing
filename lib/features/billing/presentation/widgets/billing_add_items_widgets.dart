@@ -1657,26 +1657,45 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
     required PurchaseBatchEntity batch,
     required double existingQty,
   }) {
+    String localSellUnit = _selectedSellUnit;
+    final initialDisplay = PackUnitConversion.baseToDisplayQty(
+      baseQty: existingQty,
+      sellUnit: localSellUnit,
+      baseUnit: widget.unit,
+      packUnit: widget.packUnit,
+      unitsPerPack: widget.unitsPerPack,
+    );
     final qtyController = TextEditingController(
-      text: existingQty == existingQty.roundToDouble()
-          ? existingQty.toInt().toString()
-          : existingQty.toStringAsFixed(2),
+      text: initialDisplay == initialDisplay.roundToDouble()
+          ? initialDisplay.toInt().toString()
+          : initialDisplay.toStringAsFixed(2),
     );
     final maxStock = batch.quantityRemaining;
     String? errorText;
-    String localSellUnit = _selectedSellUnit;
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) {
+          double maxInDisplayUnit() {
+            return PackUnitConversion.maxStockInDisplayUnit(
+              baseStock: maxStock,
+              sellUnit: localSellUnit,
+              baseUnit: widget.unit,
+              packUnit: widget.packUnit,
+              unitsPerPack: widget.unitsPerPack,
+            );
+          }
+
           void validateQty() {
             final qty = double.tryParse(qtyController.text) ?? 0;
+            final maxDisplay = maxInDisplayUnit();
             setDialogState(() {
               if (qty < 0) {
                 errorText = widget.localizations.pleaseEnterValidNumber;
-              } else if (qty > maxStock) {
-                errorText = '${widget.localizations.maxStock}: $maxStock';
+              } else if (qty > maxDisplay) {
+                errorText =
+                    '${widget.localizations.maxStock}: ${maxDisplay.toStringAsFixed(maxDisplay == maxDisplay.roundToDouble() ? 0 : 1)} $localSellUnit';
               } else {
                 errorText = null;
               }
@@ -1827,7 +1846,8 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                     IconButton(
                       onPressed: () {
                         final current = int.tryParse(qtyController.text) ?? 0;
-                        if (current < maxStock) {
+                        final maxDisplay = maxInDisplayUnit();
+                        if (current < maxDisplay) {
                           qtyController.text = (current + 1).toString();
                           validateQty();
                         }
@@ -1891,8 +1911,16 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
               ElevatedButton(
                 onPressed: errorText == null
                     ? () {
-                        final qty = double.tryParse(qtyController.text) ?? 0;
-                        if (qty <= 0.001) {
+                        final displayQty =
+                            double.tryParse(qtyController.text) ?? 0;
+                        final baseQty = PackUnitConversion.displayToBaseQty(
+                          displayQty: displayQty,
+                          sellUnit: localSellUnit,
+                          baseUnit: widget.unit,
+                          packUnit: widget.packUnit,
+                          unitsPerPack: widget.unitsPerPack,
+                        );
+                        if (baseQty <= 0.001) {
                           // Remove item
                           final uniqueKey =
                               '${batch.productId}_batch_${batch.id}';
@@ -1904,8 +1932,12 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                             '${batch.productName} ${widget.localizations.delete}d',
                           );
                         } else {
-                          // Update quantity
-                          widget.onBatchSelected(batch, qty, localSellUnit);
+                          // Update quantity in base units for stock/FIFO.
+                          widget.onBatchSelected(
+                            batch,
+                            baseQty,
+                            localSellUnit,
+                          );
                           setState(() {});
                           Navigator.pop(ctx);
                         }

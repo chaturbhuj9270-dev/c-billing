@@ -177,6 +177,9 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
       sgstPercent: entity.sgstPercent,
       hsnCode: entity.hsnCode,
       unit: entity.unit,
+      packUnit: entity.packUnit,
+      unitsPerPack: entity.unitsPerPack < 1 ? 1 : entity.unitsPerPack,
+      packSalesPrice: entity.packSalesPrice,
     );
   }
 
@@ -412,6 +415,7 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
           hsnCode: existing.hsnCode,
           unit: existing.unit,
           sellUnit: existing.sellUnit,
+          unitsPerPack: existing.unitsPerPack,
         );
       } else {
         _showSnackbar(
@@ -431,6 +435,8 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
           quantity: 1,
           hsnCode: product.hsnCode,
           unit: product.unit,
+          sellUnit: product.unit,
+          unitsPerPack: product.unitsPerPack,
           cgstPercent: product.cgstPercent,
           sgstPercent: product.sgstPercent,
         ),

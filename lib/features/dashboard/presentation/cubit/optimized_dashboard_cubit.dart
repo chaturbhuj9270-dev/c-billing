@@ -185,13 +185,13 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
   Future<void> setCustomDateRange(DateTime start, DateTime end) async {
     final newParams = DashboardParams(
       filter: DashboardFilter.custom,
-      startDate: start,
-      endDate: end,
+      startDate: DateTime(start.year, start.month, start.day),
+      endDate: DateTime(end.year, end.month, end.day, 23, 59, 59),
     );
 
-    // Try cached data first
+    // Always emit new params first so _refreshData uses the custom range
+    // even when there is no cached/ready data yet.
     final cachedData = _repository.getCachedSummary(params: newParams);
-
     if (cachedData != null) {
       emit(
         DashboardReadyState(
@@ -210,6 +210,8 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
           lastUpdated: state.lastUpdated,
         ),
       );
+    } else {
+      emit(DashboardInitialState(params: newParams));
     }
 
     await _refreshData(showRefreshIndicator: true);

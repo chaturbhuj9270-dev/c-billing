@@ -576,8 +576,20 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
 
     if (picked != null) {
       setState(() {
-        _customStartDate = picked.start;
-        _customEndDate = picked.end;
+        _customStartDate = DateTime(
+          picked.start.year,
+          picked.start.month,
+          picked.start.day,
+        );
+        // Include the full end day (calendar returns midnight).
+        _customEndDate = DateTime(
+          picked.end.year,
+          picked.end.month,
+          picked.end.day,
+          23,
+          59,
+          59,
+        );
         _selectedFilter = TransactionDateFilter.custom;
       });
       _loadTransactions();

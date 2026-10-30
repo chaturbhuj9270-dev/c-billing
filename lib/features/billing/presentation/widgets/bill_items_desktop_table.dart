@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/services/pack_unit_conversion.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../inventory_management/domain/entities/product.dart';
 import '../../../inventory_management/offline/entities/purchase_batch_entity.dart';
@@ -60,10 +61,27 @@ class BillItemsDesktopTable extends StatelessWidget {
       hsnCode: item.hsnCode,
       unit: item.unit,
       sellUnit: item.sellUnit,
+      unitsPerPack: item.unitsPerPack,
       employeeToken: clearEmployeeToken
           ? null
           : (employeeToken ?? item.employeeToken),
     );
+  }
+
+  double _qtyStep(BillItem item) {
+    if (item.sellUnit == 'gm' || item.sellUnit == 'ml') return 0.1;
+    if (billItemSellingAsPack(item)) return item.unitsPerPack.toDouble();
+    return 1.0;
+  }
+
+  double _toBaseSellPrice(BillItem item, double enteredDisplayPrice) {
+    if (billItemSellingAsPack(item)) {
+      return PackUnitConversion.toBaseUnitPrice(
+        enteredDisplayPrice,
+        item.unitsPerPack,
+      );
+    }
+    return enteredDisplayPrice;
   }
 
   void _updateAt(int index, BillItem updated) {
@@ -211,8 +229,7 @@ class BillItemsDesktopTable extends StatelessWidget {
           _updateAt(index, _rebuild(item, quantity: qty));
         },
         onStep: (delta) {
-          final step =
-              (item.sellUnit == 'gm' || item.sellUnit == 'ml') ? 0.1 : 1.0;
+          final step = _qtyStep(item);
           final next = item.quantity + (delta * step);
           if (next <= 0) {
             _removeAt(index);
@@ -227,12 +244,15 @@ class BillItemsDesktopTable extends StatelessWidget {
       ),
       price: _PriceEditor(
         item: item,
-        onChanged: (price) {
-          if (price <= 0) {
+        onChanged: (displayPrice) {
+          if (displayPrice <= 0) {
             showSnackbar(localizations.pleaseEnterValidPrice, isError: true);
             return;
           }
-          _updateAt(index, _rebuild(item, sellingPrice: price));
+          _updateAt(
+            index,
+            _rebuild(item, sellingPrice: _toBaseSellPrice(item, displayPrice)),
+          );
         },
       ),
       gst: Center(
@@ -429,30 +449,28 @@ class _QtyEditorState extends State<_QtyEditor> {
   }
 
   String _display() {
-    final q = widget.item.quantity;
-    if (widget.item.sellUnit == 'gm' && widget.item.unit == 'kg') {
-      final g = q * 1000;
-      return g == g.roundToDouble()
-          ? g.toInt().toString()
-          : g.toStringAsFixed(1);
-    }
-    if (widget.item.sellUnit == 'ml' && widget.item.unit == 'ltr') {
-      final m = q * 1000;
-      return m == m.roundToDouble()
-          ? m.toInt().toString()
-          : m.toStringAsFixed(1);
-    }
+    final item = widget.item;
+    final packUnit = billItemSellingAsPack(item) ? item.sellUnit : null;
+    final q = PackUnitConversion.baseToDisplayQty(
+      baseQty: item.quantity,
+      sellUnit: item.sellUnit,
+      baseUnit: item.unit,
+      packUnit: packUnit,
+      unitsPerPack: item.unitsPerPack,
+    );
     return q == q.roundToDouble() ? q.toInt().toString() : q.toStringAsFixed(2);
   }
 
   double _toBase(double display) {
-    if (widget.item.sellUnit == 'gm' && widget.item.unit == 'kg') {
-      return display / 1000;
-    }
-    if (widget.item.sellUnit == 'ml' && widget.item.unit == 'ltr') {
-      return display / 1000;
-    }
-    return display;
+    final item = widget.item;
+    final packUnit = billItemSellingAsPack(item) ? item.sellUnit : null;
+    return PackUnitConversion.displayToBaseQty(
+      displayQty: display,
+      sellUnit: item.sellUnit,
+      baseUnit: item.unit,
+      packUnit: packUnit,
+      unitsPerPack: item.unitsPerPack,
+    );
   }
 
   void _onFocus() {
@@ -584,7 +602,7 @@ class _PriceEditorState extends State<_PriceEditor> {
   void initState() {
     super.initState();
     _controller =
-        TextEditingController(text: _format(widget.item.sellingPrice));
+        TextEditingController(text: _format(displayUnitSellPrice(widget.item)));
     _focus = FocusNode()..addListener(_onFocus);
   }
 
@@ -592,8 +610,10 @@ class _PriceEditorState extends State<_PriceEditor> {
   void didUpdateWidget(_PriceEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!_editing &&
-        oldWidget.item.sellingPrice != widget.item.sellingPrice) {
-      _controller.text = _format(widget.item.sellingPrice);
+        (oldWidget.item.sellingPrice != widget.item.sellingPrice ||
+            oldWidget.item.sellUnit != widget.item.sellUnit ||
+            oldWidget.item.unitsPerPack != widget.item.unitsPerPack)) {
+      _controller.text = _format(displayUnitSellPrice(widget.item));
     }
   }
 
@@ -623,11 +643,13 @@ class _PriceEditorState extends State<_PriceEditor> {
 
   void _commit() {
     final parsed = double.tryParse(_controller.text.trim());
+    final currentDisplay = displayUnitSellPrice(widget.item);
     if (parsed == null) {
-      _controller.text = _format(widget.item.sellingPrice);
+      _controller.text = _format(currentDisplay);
       return;
     }
-    if ((parsed - widget.item.sellingPrice).abs() > 0.0001) {
+    if ((parsed - currentDisplay).abs() > 0.0001) {
+      // Parent converts pack display price → per-base for ledger storage.
       widget.onChanged(parsed);
     }
     _controller.text = _format(parsed);

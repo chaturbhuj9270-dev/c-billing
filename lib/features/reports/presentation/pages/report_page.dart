@@ -116,6 +116,11 @@ class _ReportPageState extends State<ReportPage>
   // ━━━━━━━━━━━━ ACTIONS ━━━━━━━━━━━━
 
   void _selectPreset(int index) {
+    // Custom opens the picker first; only commit selection if user confirms.
+    if (index == 4) {
+      _pickCustomDateRange();
+      return;
+    }
     setState(() {
       _selectedPreset = index;
       _reportResult = null;
@@ -150,9 +155,6 @@ class _ReportPageState extends State<ReportPage>
             presetLabel: 'This Year',
           );
           break;
-        case 4:
-          _pickCustomDateRange();
-          break;
       }
     });
   }
@@ -169,8 +171,13 @@ class _ReportPageState extends State<ReportPage>
     );
     if (picked != null) {
       setState(() {
+        _selectedPreset = 4;
         _filter = _filter.copyWith(
-          startDate: picked.start,
+          startDate: DateTime(
+            picked.start.year,
+            picked.start.month,
+            picked.start.day,
+          ),
           endDate: DateTime(
             picked.end.year,
             picked.end.month,
