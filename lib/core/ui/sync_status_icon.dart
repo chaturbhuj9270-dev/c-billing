@@ -18,9 +18,9 @@ class SyncStatusIcon extends StatelessWidget {
   static IconData iconFor(bool isSynced) =>
       isSynced ? Icons.cloud_done_rounded : Icons.cloud_upload_rounded;
 
-  static Color colorFor(BuildContext context, bool isSynced) => isSynced
-      ? AppColors.actionBright(context)
-      : AppTheme.toneAmber;
+  // Theme color only — synced/unsynced differ by icon, not by accent hue.
+  static Color colorFor(BuildContext context, bool isSynced) =>
+      AppColors.action(context);
 
   @override
   Widget build(BuildContext context) {

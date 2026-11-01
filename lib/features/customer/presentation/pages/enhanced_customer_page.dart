@@ -781,6 +781,8 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                           searchQuery: _searchQuery,
                           customersLabel: _localizations.customers,
                           pendingLabel: _localizations.pendingAmount,
+                          syncedLabel: _localizations.synced,
+                          unsyncedLabel: _localizations.unsynced,
                         ),
 
                         const SizedBox(height: 16),
@@ -843,8 +845,8 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
   Widget _buildHeader() {
     return AppTopBar(
-      title: _localizations.manageCustomers,
-      subtitle: '${_customers.length} ${_localizations.customers.toLowerCase()}',
+      title: _localizations.customers,
+      subtitle: _localizations.manageCustomers,
     );
   }
 

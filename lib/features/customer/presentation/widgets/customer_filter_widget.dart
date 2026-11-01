@@ -71,119 +71,108 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
         children: [
           Expanded(flex: 3, child: _buildSearchBar()),
           const SizedBox(width: 12),
-          _sortChip(
+          _buildSortChip(
             label: widget.sortByNameLabel,
-            selected: widget.sortField == CustomerSortField.name,
+            isSelected: widget.sortField == CustomerSortField.name,
             onTap: () => widget.onSortFieldChanged(CustomerSortField.name),
-            icon: Icons.sort_by_alpha_rounded,
           ),
           const SizedBox(width: 8),
-          _sortChip(
+          _buildSortChip(
             label: widget.sortByPendingLabel,
-            selected: widget.sortField == CustomerSortField.pendingAmount,
+            isSelected: widget.sortField == CustomerSortField.pendingAmount,
             onTap: () =>
                 widget.onSortFieldChanged(CustomerSortField.pendingAmount),
-            icon: Icons.account_balance_wallet_outlined,
           ),
           const SizedBox(width: 8),
-          _sortChip(
+          _buildSortChip(
             label: widget.sortByDateLabel,
-            selected: widget.sortField == CustomerSortField.createdDate,
+            isSelected: widget.sortField == CustomerSortField.createdDate,
             onTap: () =>
                 widget.onSortFieldChanged(CustomerSortField.createdDate),
-            icon: Icons.calendar_today_rounded,
           ),
+          const SizedBox(width: 8),
+          _buildSortDirectionButton(),
         ],
       );
     }
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Search bar row
-          Row(
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: _buildSearchBar()),
+            const SizedBox(width: 10),
+            _buildSortDirectionButton(),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
             children: [
-              Expanded(child: _buildSearchBar()),
-              const SizedBox(width: 10),
-              _buildSortDirectionButton(),
+              _buildSortChip(
+                label: widget.sortByNameLabel,
+                isSelected: widget.sortField == CustomerSortField.name,
+                onTap: () =>
+                    widget.onSortFieldChanged(CustomerSortField.name),
+              ),
+              const SizedBox(width: 8),
+              _buildSortChip(
+                label: widget.sortByPendingLabel,
+                isSelected:
+                    widget.sortField == CustomerSortField.pendingAmount,
+                onTap: () => widget.onSortFieldChanged(
+                  CustomerSortField.pendingAmount,
+                ),
+              ),
+              const SizedBox(width: 8),
+              _buildSortChip(
+                label: widget.sortByDateLabel,
+                isSelected: widget.sortField == CustomerSortField.createdDate,
+                onTap: () =>
+                    widget.onSortFieldChanged(CustomerSortField.createdDate),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
-          // Sort chips row
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildSortChip(
-                  label: widget.sortByNameLabel,
-                  isSelected: widget.sortField == CustomerSortField.name,
-                  onTap: () =>
-                      widget.onSortFieldChanged(CustomerSortField.name),
-                  icon: Icons.sort_by_alpha_rounded,
-                ),
-                const SizedBox(width: 8),
-                _buildSortChip(
-                  label: widget.sortByPendingLabel,
-                  isSelected:
-                      widget.sortField == CustomerSortField.pendingAmount,
-                  onTap: () => widget.onSortFieldChanged(
-                    CustomerSortField.pendingAmount,
-                  ),
-                  icon: Icons.account_balance_wallet_outlined,
-                ),
-                const SizedBox(width: 8),
-                _buildSortChip(
-                  label: widget.sortByDateLabel,
-                  isSelected: widget.sortField == CustomerSortField.createdDate,
-                  onTap: () =>
-                      widget.onSortFieldChanged(CustomerSortField.createdDate),
-                  icon: Icons.calendar_today_rounded,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildSearchBar() {
+    final isDark = AppColors.isDark(context);
     return Container(
-      height: 44,
+      height: 46,
       decoration: BoxDecoration(
-        color: AppColors.scaffold(context),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border(context), width: 1),
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border(context)),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: isDark ? 0.16 : 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: TextField(
         controller: _searchController,
         style: TextStyle(
           fontSize: 14,
           fontFamily: 'Literata',
-          color: AppColors.accent(context),
+          color: AppColors.primaryText(context),
         ),
         decoration: InputDecoration(
           hintText: widget.searchHint,
           hintStyle: TextStyle(
-            color: AppTheme.grey400,
+            color: AppColors.mutedText(context),
             fontFamily: 'Literata',
             fontSize: 13,
           ),
           prefixIcon: Icon(
             Icons.search_rounded,
-            color: AppTheme.grey,
+            color: AppColors.mutedText(context),
             size: 20,
           ),
           suffixIcon: _searchController.text.isNotEmpty
@@ -195,7 +184,7 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
                   },
                   child: Icon(
                     Icons.close_rounded,
-                    color: AppTheme.grey,
+                    color: AppColors.mutedText(context),
                     size: 18,
                   ),
                 )
@@ -206,79 +195,41 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
         ),
         onChanged: (value) {
           widget.onSearchChanged(value);
-          setState(() {}); // Rebuild to show/hide clear button
+          setState(() {});
         },
       ),
     );
   }
 
   Widget _buildSortDirectionButton() {
+    final accent = AppColors.action(context);
     return GestureDetector(
       onTap: widget.onSortDirectionToggle,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        width: 44,
-        height: 44,
+        width: 46,
+        height: 46,
         decoration: BoxDecoration(
-          color: AppColors.selectedFill(context),
-          borderRadius: BorderRadius.circular(12),
+          color: accent,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: accent.withValues(alpha: 0.28),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Center(
           child: AnimatedRotation(
             duration: const Duration(milliseconds: 200),
             turns: widget.sortAscending ? 0 : 0.5,
-            child: Icon(
+            child: const Icon(
               Icons.arrow_upward_rounded,
-              color: AppColors.selectedOnFill(context),
+              color: AppTheme.white,
               size: 20,
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _sortChip({
-    required String label,
-    required bool selected,
-    required VoidCallback onTap,
-    required IconData icon,
-  }) {
-    final dark = AppColors.isDark(context);
-    final fill = selected
-        ? (dark ? AppTheme.darkAction : AppTheme.paletteFFD7EDE3)
-        : AppColors.card(context);
-    final ink = selected
-        ? (dark ? AppTheme.white : AppColors.action(context))
-        : AppColors.secondaryText(context);
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: fill,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected
-                ? AppTheme.paletteFFD7EDE3
-                : AppColors.border(context),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 15, color: ink),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Literata',
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-                color: ink,
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -288,43 +239,33 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
-    required IconData icon,
   }) {
-    final selected = AppColors.selectedFill(context);
-    final onSelected = AppColors.selectedOnFill(context);
+    final accent = AppColors.action(context);
+    final isDark = AppColors.isDark(context);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? selected : AppColors.chipFill(context),
-          borderRadius: BorderRadius.circular(10),
+          color: isSelected
+              ? accent.withValues(alpha: isDark ? 0.18 : 0.1)
+              : AppColors.card(context),
+          borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: isSelected ? selected : AppColors.border(context),
-            width: 1,
+            color: isSelected ? accent : AppColors.border(context),
+            width: isSelected ? 1.4 : 1,
           ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? onSelected : AppColors.secondaryText(context),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Literata',
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-                color: isSelected ? onSelected : AppColors.secondaryText(context),
-              ),
-            ),
-          ],
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+            color: isSelected ? accent : AppColors.secondaryText(context),
+          ),
         ),
       ),
     );

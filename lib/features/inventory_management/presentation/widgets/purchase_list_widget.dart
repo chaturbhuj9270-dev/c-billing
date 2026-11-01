@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import '../../offline/entities/purchase_batch_entity.dart';
@@ -7,6 +8,13 @@ import 'purchase_filter_widget.dart';
 import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
+
+class _PurchaseDayGroup {
+  final String label;
+  final List<PurchaseBatchEntity> items;
+
+  _PurchaseDayGroup({required this.label, required this.items});
+}
 
 // Main list widget for displaying purchase history Features: Shimmer loading, empty state, smooth scrolling, real-time updates
 class PurchaseListWidget extends StatefulWidget {
@@ -124,6 +132,8 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
       return _buildEmptyState();
     }
 
+    final groups = _groupByDate(filteredList);
+
     return RefreshIndicator(
       onRefresh: () async {
         widget.onRefresh?.call();
@@ -135,24 +145,93 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
           parent: BouncingScrollPhysics(),
         ),
         padding: const EdgeInsets.only(bottom: 100), // Space for FAB
-        itemCount: filteredList.length,
+        itemCount: groups.length,
         itemBuilder: (context, index) {
-          final purchase = filteredList[index];
-          return AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: PurchaseCardWidget(
-              key: ValueKey(purchase.id),
-              purchase: purchase,
-              onTap: widget.onPurchaseTap != null
-                  ? () => widget.onPurchaseTap!(purchase)
-                  : null,
-              onLongPress: widget.onPurchaseLongPress != null
-                  ? () => widget.onPurchaseLongPress!(purchase)
-                  : null,
-              showSyncStatus: true,
-            ),
+          final group = groups[index];
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _dateHeader(context, group),
+              ...group.items.map(
+                (purchase) => PurchaseCardWidget(
+                  key: ValueKey(purchase.id),
+                  purchase: purchase,
+                  onTap: widget.onPurchaseTap != null
+                      ? () => widget.onPurchaseTap!(purchase)
+                      : null,
+                  onLongPress: widget.onPurchaseLongPress != null
+                      ? () => widget.onPurchaseLongPress!(purchase)
+                      : null,
+                  showSyncStatus: true,
+                ),
+              ),
+            ],
           );
         },
+      ),
+    );
+  }
+
+  List<_PurchaseDayGroup> _groupByDate(List<PurchaseBatchEntity> list) {
+    final sorted = [...list]
+      ..sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate));
+    final Map<String, _PurchaseDayGroup> map = {};
+    final dateFormat = DateFormat('dd MMM yyyy');
+
+    for (final p in sorted) {
+      final key =
+          '${p.purchaseDate.year}-${p.purchaseDate.month}-${p.purchaseDate.day}';
+      final group = map.putIfAbsent(
+        key,
+        () => _PurchaseDayGroup(
+          label: dateFormat.format(p.purchaseDate),
+          items: [],
+        ),
+      );
+      group.items.add(p);
+    }
+    return map.values.toList();
+  }
+
+  Widget _dateHeader(BuildContext context, _PurchaseDayGroup group) {
+    final total = group.items.fold<double>(
+      0,
+      (sum, p) => sum + (p.purchasePrice * p.quantityPurchased),
+    );
+    final countLabel = group.items.length == 1
+        ? '1 purchase'
+        : '${group.items.length} purchases';
+    final amount = total
+        .toStringAsFixed(0)
+        .replaceAllMapped(
+          RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+          (m) => '${m[1]},',
+        );
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(2, 10, 2, 8),
+      child: Row(
+        children: [
+          Text(
+            group.label,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
+              color: AppColors.primaryText(context),
+            ),
+          ),
+          const Spacer(),
+          Text(
+            '$countLabel · ₹$amount',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w500,
+              fontSize: 12,
+              color: AppColors.mutedText(context),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -391,6 +470,20 @@ class PurchaseSummaryWidget extends StatelessWidget {
     return filtered;
   }
 
+  bool _isWeightUnit(String unit) {
+    final u = unit.toLowerCase().trim();
+    return u == 'kg' ||
+        u == 'g' ||
+        u == 'gm' ||
+        u.contains('kilogram') ||
+        u.contains('gram') ||
+        u == 'ltr' ||
+        u == 'l' ||
+        u == 'ml' ||
+        u.contains('liter') ||
+        u.contains('litre');
+  }
+
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(
@@ -401,16 +494,40 @@ class PurchaseSummaryWidget extends StatelessWidget {
       0,
       (total, p) => total + (p.purchasePrice * p.quantityPurchased),
     );
-    final totalQuantity = filtered.fold<double>(
-      0.0,
-      (total, p) => total + p.quantityPurchased,
-    );
+
+    double weightQty = 0;
+    double itemQty = 0;
+    for (final p in filtered) {
+      if (_isWeightUnit(p.unit)) {
+        weightQty += p.quantityPurchased;
+      } else {
+        itemQty += p.quantityPurchased;
+      }
+    }
 
     if (DesktopCanvas.isDesktopPlatform) {
       return DesktopStatBar(
         stats: [
-          DesktopStat(value: '${filtered.length}', label: localizations.purchases),
-          DesktopStat(value: '$totalQuantity', label: localizations.totalQty),
+          DesktopStat(
+            value: '${filtered.length}',
+            label: localizations.purchases,
+          ),
+          DesktopStat(
+            value: weightQty == 0
+                ? '0'
+                : (weightQty == weightQty.roundToDouble()
+                      ? weightQty.toInt().toString()
+                      : weightQty.toStringAsFixed(1)),
+            label: 'Kg',
+          ),
+          DesktopStat(
+            value: itemQty == 0
+                ? '0'
+                : (itemQty == itemQty.roundToDouble()
+                      ? itemQty.toInt().toString()
+                      : itemQty.toStringAsFixed(1)),
+            label: 'Items',
+          ),
           DesktopStat(
             value: '₹${_compactAmount(totalAmount)}',
             label: localizations.totalValue,
@@ -419,44 +536,113 @@ class PurchaseSummaryWidget extends StatelessWidget {
       );
     }
 
+    final isDark = AppColors.isDark(context);
+    final header = AppColors.headerGradient(context);
+
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
       decoration: BoxDecoration(
-        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.border(context)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+                  header.first.withValues(alpha: 0.92),
+                  header.last.withValues(alpha: 0.98),
+                ]
+              : [header.first, header.last],
+        ),
+        border: isDark
+            ? Border.all(color: AppTheme.white.withValues(alpha: 0.12))
+            : null,
         boxShadow: [
           BoxShadow(
-            color: AppTheme.black.withValues(
-              alpha: AppColors.isDark(context) ? 0.18 : 0.04,
-            ),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: AppTheme.black.withValues(alpha: isDark ? 0.35 : 0.18),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildStatItem(
-            context,
-            icon: Icons.receipt_long_rounded,
-            iconColor: AppTheme.toneBlue,
-            label: localizations.purchases,
-            value: '${filtered.length}',
+          Row(
+            children: [
+              Text(
+                localizations.totalValue.toUpperCase(),
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 11,
+                  letterSpacing: 0.8,
+                  color: AppTheme.white.withValues(alpha: 0.75),
+                ),
+              ),
+              const Spacer(),
+              Container(
+                width: 32,
+                height: 32,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppTheme.white.withValues(alpha: 0.16),
+                  shape: BoxShape.circle,
+                ),
+                child: const Text(
+                  '₹',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                    color: AppTheme.white,
+                  ),
+                ),
+              ),
+            ],
           ),
-          _buildStatItem(
-            context,
-            icon: Icons.inventory_2_rounded,
-            iconColor: AppTheme.orange300,
-            label: localizations.totalQty,
-            value: '$totalQuantity',
+          const SizedBox(height: 6),
+          Text(
+            '₹${_compactAmount(totalAmount)}',
+            style: const TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w800,
+              fontSize: 30,
+              color: AppTheme.white,
+              height: 1.1,
+            ),
           ),
-          _buildStatItem(
-            context,
-            icon: Icons.currency_rupee_rounded,
-            iconColor: AppColors.action(context),
-            label: localizations.totalValue,
-            value: '₹${_compactAmount(totalAmount)}',
+          const SizedBox(height: 14),
+          Container(
+            height: 1,
+            color: AppTheme.white.withValues(alpha: 0.16),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _summaryStat(
+                value: '${filtered.length}',
+                label: localizations.purchases,
+              ),
+              _summaryDivider(),
+              _summaryStat(
+                value: weightQty == 0
+                    ? '0'
+                    : (weightQty == weightQty.roundToDouble()
+                          ? weightQty.toInt().toString()
+                          : weightQty.toStringAsFixed(1)),
+                label: 'Kg',
+              ),
+              _summaryDivider(),
+              _summaryStat(
+                value: itemQty == 0
+                    ? '0'
+                    : (itemQty == itemQty.roundToDouble()
+                          ? itemQty.toInt().toString()
+                          : itemQty.toStringAsFixed(1)),
+                label: 'Items',
+              ),
+            ],
           ),
         ],
       ),
@@ -472,34 +658,26 @@ class PurchaseSummaryWidget extends StatelessWidget {
         );
   }
 
-  Widget _buildStatItem(
-    BuildContext context, {
-    required IconData icon,
-    required Color iconColor,
-    required String label,
-    required String value,
-  }) {
+  Widget _summaryDivider() {
+    return Container(
+      width: 1,
+      height: 28,
+      margin: const EdgeInsets.symmetric(horizontal: 6),
+      color: AppTheme.white.withValues(alpha: 0.2),
+    );
+  }
+
+  Widget _summaryStat({required String value, required String label}) {
     return Expanded(
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: iconColor, size: 18),
-          ),
-          const SizedBox(height: 8),
           Text(
             value,
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w800,
-              fontSize: 18,
-              color: AppColors.primaryText(context),
+              fontSize: 16,
+              color: AppTheme.white,
             ),
           ),
           const SizedBox(height: 2),
@@ -509,7 +687,7 @@ class PurchaseSummaryWidget extends StatelessWidget {
               fontFamily: 'Literata',
               fontWeight: FontWeight.w500,
               fontSize: 11,
-              color: AppColors.mutedText(context),
+              color: AppTheme.white.withValues(alpha: 0.7),
             ),
           ),
         ],

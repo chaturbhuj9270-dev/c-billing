@@ -1627,7 +1627,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       child: FadeTransition(
         opacity: _opacityAnimation,
         child: AppTopBar(
-          title: _localizations.purchaseHistory,
+          title: _localizations.purchase,
           subtitle: _localizations.trackPurchases,
           actions: [
             AppTopBar.action(

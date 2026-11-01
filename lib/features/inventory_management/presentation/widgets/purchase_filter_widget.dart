@@ -41,8 +41,8 @@ class PurchaseFilterWidget extends StatefulWidget {
     this.onReportTap,
     this.allLabel = 'All',
     this.todayLabel = 'Today',
-    this.thisMonthLabel = 'This Month',
-    this.thisYearLabel = 'This Year',
+    this.thisMonthLabel = 'Month',
+    this.thisYearLabel = 'Year',
     this.customLabel = 'Custom',
     this.supplierLabel = 'Supplier',
   });
@@ -82,7 +82,6 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                           widget.selectedDateFilter == PurchaseDateFilter.all,
                       onTap: () =>
                           widget.onDateFilterChanged(PurchaseDateFilter.all),
-                      icon: Icons.list_alt_rounded,
                     ),
                     const SizedBox(width: 8),
                     _buildFilterChip(
@@ -92,7 +91,6 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                       onTap: () => widget.onDateFilterChanged(
                         PurchaseDateFilter.today,
                       ),
-                      icon: Icons.today_outlined,
                     ),
                     const SizedBox(width: 8),
                     _buildFilterChip(
@@ -103,7 +101,6 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                       onTap: () => widget.onDateFilterChanged(
                         PurchaseDateFilter.thisMonth,
                       ),
-                      icon: Icons.calendar_month_outlined,
                     ),
                     const SizedBox(width: 8),
                     _buildFilterChip(
@@ -114,7 +111,6 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                       onTap: () => widget.onDateFilterChanged(
                         PurchaseDateFilter.thisYear,
                       ),
-                      icon: Icons.calendar_today_outlined,
                     ),
                     const SizedBox(width: 8),
                     _buildFilterChip(
@@ -127,7 +123,6 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                       isSelected:
                           widget.selectedDateFilter == PurchaseDateFilter.custom,
                       onTap: () => _showCustomDatePicker(context),
-                      icon: Icons.date_range_outlined,
                     ),
                     const SizedBox(width: 8),
                     _buildSupplierDropdown(),
@@ -175,45 +170,33 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
-    required IconData icon,
   }) {
-    final accent = Theme.of(context).primaryColor;
+    final accent = AppColors.action(context);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        height: 42,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        height: 38,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: isSelected
-              ? accent.withValues(alpha: 0.10)
-              : AppColors.card(context),
-          borderRadius: BorderRadius.circular(21),
+          color: isSelected ? accent : AppColors.card(context),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? accent : AppColors.border(context),
-            width: isSelected ? 1.4 : 1,
           ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? accent : AppColors.secondaryText(context),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Literata',
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-                color: isSelected ? accent : AppColors.secondaryText(context),
-              ),
-            ),
-          ],
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+            color: isSelected
+                ? AppTheme.white
+                : AppColors.secondaryText(context),
+          ),
         ),
       ),
     );

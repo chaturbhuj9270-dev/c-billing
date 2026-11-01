@@ -11,6 +11,8 @@ class CustomerSummaryWidget extends StatelessWidget {
   // Labels
   final String customersLabel;
   final String pendingLabel;
+  final String syncedLabel;
+  final String unsyncedLabel;
 
   const CustomerSummaryWidget({
     super.key,
@@ -18,6 +20,8 @@ class CustomerSummaryWidget extends StatelessWidget {
     this.searchQuery = '',
     this.customersLabel = 'Customers',
     this.pendingLabel = 'Pending',
+    this.syncedLabel = 'Synced',
+    this.unsyncedLabel = 'Unsynced',
   });
 
   List<Map<String, dynamic>> get _filteredCustomers {
@@ -45,6 +49,7 @@ class CustomerSummaryWidget extends StatelessWidget {
           total + ((c['currentPendingAmount'] as num?)?.toDouble() ?? 0.0),
     );
     final unsyncedCount = filtered.where((c) => c['isSynced'] != true).length;
+    final synced = unsyncedCount == 0;
 
     if (DesktopCanvas.wide(context)) {
       return _buildWideCards(
@@ -55,52 +60,58 @@ class CustomerSummaryWidget extends StatelessWidget {
       );
     }
 
-    final header = AppColors.headerGradient(context);
+    final isDark = AppColors.isDark(context);
+    final accent = AppColors.action(context);
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(10, 14, 10, 14),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [header.first, header.last],
-        ),
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border(context)),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.black.withValues(
-              alpha: AppColors.isDark(context) ? 0.45 : 0.3,
-            ),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: AppTheme.black.withValues(alpha: isDark ? 0.22 : 0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Row(
         children: [
-          _buildStatItem(
-            icon: Icons.people_rounded,
-            label: customersLabel,
-            value: '${filtered.length}',
-          ),
-          _buildDivider(),
-          _buildStatItem(
-            icon: Icons.account_balance_wallet_rounded,
-            label: pendingLabel,
-            value: totalPending.round() == 0
-                ? 'No pending'
-                : '₹${totalPending.toStringAsFixed(0)}',
-            valueColor: totalPending.round() != 0 ? AppTheme.amber300 : null,
-          ),
-          _buildDivider(),
           Expanded(
-            child: _buildStatItem(
-              icon: unsyncedCount > 0
-                  ? Icons.cloud_upload_rounded
-                  : Icons.cloud_done_rounded,
+            child: _statTile(
+              context,
+              icon: Icons.people_alt_rounded,
+              iconColor: accent,
+              value: '${filtered.length}',
+              label: customersLabel,
+            ),
+          ),
+          _divider(context),
+          Expanded(
+            child: _statTile(
+              context,
+              icon: Icons.account_balance_wallet_rounded,
+              iconColor: AppTheme.toneRose,
+              value: totalPending.round() == 0
+                  ? '₹0'
+                  : '₹${_formatAmount(totalPending)}',
+              label: pendingLabel,
+              valueColor: totalPending.round() != 0 ? AppTheme.toneRose : null,
+            ),
+          ),
+          _divider(context),
+          Expanded(
+            child: _statTile(
+              context,
+              icon: synced
+                  ? Icons.cloud_done_rounded
+                  : Icons.cloud_upload_rounded,
+              iconColor: synced ? accent : AppTheme.toneAmber,
+              value: synced ? syncedLabel : '$unsyncedCount',
               label: 'Cloud',
-              value: unsyncedCount > 0 ? '$unsyncedCount' : '✓',
-              valueColor: unsyncedCount > 0 ? AppTheme.toneAmber : null,
-              isExpanded: true,
+              valueColor: synced ? accent : AppTheme.toneAmber,
             ),
           ),
         ],
@@ -120,61 +131,85 @@ class CustomerSummaryWidget extends StatelessWidget {
         DesktopStat(value: '$count', label: customersLabel),
         DesktopStat(
           value: totalPending.round() == 0
-              ? 'No pending'
-              : '₹${totalPending.toStringAsFixed(0)}',
+              ? '₹0'
+              : '₹${_formatAmount(totalPending)}',
           label: pendingLabel,
         ),
         DesktopStat(
-          value: synced ? '✓' : '$unsyncedCount',
-          label: 'Cloud',
+          value: synced ? syncedLabel : '$unsyncedCount',
+          label: synced ? syncedLabel : unsyncedLabel,
         ),
       ],
     );
   }
 
-  Widget _buildStatItem({
+  Widget _statTile(
+    BuildContext context, {
     required IconData icon,
-    required String label,
+    required Color iconColor,
     required String value,
+    required String label,
     Color? valueColor,
-    bool isExpanded = false,
   }) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 8),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: AppTheme.white, size: 20),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w800,
-              fontSize: 16,
-              color: valueColor ?? AppTheme.white,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: iconColor.withValues(
+              alpha: AppColors.isDark(context) ? 0.18 : 0.12,
             ),
+            borderRadius: BorderRadius.circular(10),
           ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w400,
-              fontSize: 11,
-              color: AppTheme.white.withValues(alpha: 0.7),
-            ),
+          child: Icon(icon, color: iconColor, size: 18),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+            color: valueColor ?? AppColors.primaryText(context),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w500,
+            fontSize: 11,
+            color: AppColors.mutedText(context),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildDivider() {
+  Widget _divider(BuildContext context) {
     return Container(
       width: 1,
-      height: 40,
-      color: AppTheme.white.withValues(alpha: 0.2),
+      height: 52,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      color: AppColors.border(context),
     );
+  }
+
+  String _formatAmount(double amount) {
+    final whole = amount.round().abs().toString();
+    final buf = StringBuffer(amount < 0 ? '-' : '');
+    for (var i = 0; i < whole.length; i++) {
+      if (i > 0 && (whole.length - i) % 3 == 0) buf.write(',');
+      buf.write(whole[i]);
+    }
+    return buf.toString();
   }
 }
