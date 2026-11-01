@@ -25,7 +25,7 @@ class ReturnableBatchInfo {
   final String modelName;
   final double purchasePrice;
   final double sellingPrice;
-  final int quantityRemaining;
+  final double quantityRemaining;
   final DateTime purchaseDate;
   final String? supplierName;
   final String? supplierId;
@@ -62,7 +62,7 @@ class PurchaseReturnResult {
 
 // Impact preview before confirming a return
 class ReturnImpactPreview {
-  final Map<String, int> stockAfterReturn; // productId -> new stock
+  final Map<String, double> stockAfterReturn; // productId -> new stock
   final double supplierCreditAdjustment;
   final double inventoryValueChange;
 
@@ -122,8 +122,10 @@ class PurchaseReturnService {
     return grouped.entries.map((e) {
       final productBatches = e.value;
       final first = productBatches.first;
-      final totalRemaining =
-          productBatches.fold(0, (s, b) => s + b.quantityRemaining);
+      final totalRemaining = productBatches.fold<double>(
+        0.0,
+        (s, b) => s + b.quantityRemaining,
+      );
       return ReturnableBatchInfo(
         localBatchId: first.id,
         batchId: first.serverId ?? 'local_${first.id}',
@@ -188,8 +190,8 @@ class PurchaseReturnService {
 
   // Validate a return item quantity against available stock
   ReturnValidation validateReturnQuantity({
-    required int returnQty,
-    required int availableQty,
+    required double returnQty,
+    required double availableQty,
   }) {
     if (returnQty <= 0) {
       return ReturnValidation.invalid('Return quantity must be > 0');
@@ -225,7 +227,7 @@ class PurchaseReturnService {
   // Preview the impact of a return before processing
   Future<ReturnImpactPreview> previewReturnImpact(
       List<PurchaseReturnItem> items) async {
-    final stockAfter = <String, int>{};
+    final stockAfter = <String, double>{};
     double creditAdj = 0.0;
     double valueChange = 0.0;
 
@@ -234,8 +236,9 @@ class PurchaseReturnService {
       final currentStock =
           await _batchController.getTotalStockByProductId(item.productId);
       stockAfter[item.productId] = currentStock - item.quantity;
+      // Supplier credit may include GST; inventory value stays exclusive COGS.
       creditAdj += item.amount;
-      valueChange -= item.amount;
+      valueChange -= item.rate * item.quantity;
     }
 
     return ReturnImpactPreview(
@@ -284,11 +287,17 @@ class PurchaseReturnService {
         productBatches
             .sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate));
 
-        int remainingToReturn = item.quantity;
+        double remainingToReturn = item.quantity;
+        // Preserve GST-inclusive credit from the UI line (falls back to exclusive).
+        final unitCredit = item.quantity > 0
+            ? item.amount / item.quantity
+            : item.rate;
 
         // Check total available
-        final totalAvailable =
-            productBatches.fold(0, (s, b) => s + b.quantityRemaining);
+        final totalAvailable = productBatches.fold<double>(
+          0.0,
+          (s, b) => s + b.quantityRemaining,
+        );
         if (totalAvailable < item.quantity) {
           return PurchaseReturnResult.failure(
             'Insufficient stock for ${item.productName}. '
@@ -313,7 +322,7 @@ class PurchaseReturnService {
           final newTotalValue = await _batchController
               .getTotalStockValueByProductId(item.productId);
 
-          // Create ledger entry
+          // Create ledger entry (exclusive COGS — never bake GST into batch cost)
           final batchIdStr = batch.serverId ?? 'local_${batch.id}';
           await _ledgerController.recordMultipleEntries([
             StockLedgerEntity(
@@ -343,7 +352,7 @@ class PurchaseReturnService {
             ),
           ]);
 
-          final returnItemAmount = batch.purchasePrice * qtyFromBatch;
+          final returnItemAmount = unitCredit * qtyFromBatch;
           totalReturnAmount += returnItemAmount;
 
           processedItems.add(PurchaseReturnItem(
@@ -402,7 +411,7 @@ class PurchaseReturnService {
     }
   }
 
-  Future<void> _reduceProductStock(String productId, int quantity) async {
+  Future<void> _reduceProductStock(String productId, double quantity) async {
     final products = ProductOfflineController.instance;
     final isServerId =
         productId.isNotEmpty &&

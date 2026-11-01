@@ -87,7 +87,7 @@ class ProductOfflineController extends ChangeNotifier {
     String? barcode,
     required double purchasePrice,
     required double salesPrice,
-    int currentStock = 0,
+    double currentStock = 0,
     String? unit,
     bool isActive = true,
     String? description,
@@ -278,7 +278,7 @@ class ProductOfflineController extends ChangeNotifier {
     String? barcode,
     double? purchasePrice,
     double? salesPrice,
-    int? currentStock,
+    double? currentStock,
     String? unit,
     bool? isActive,
     String? description,
@@ -363,11 +363,11 @@ class ProductOfflineController extends ChangeNotifier {
     return updated;
   }
 
-  Future<ProductEntity?> updateStock(int id, int newQuantity) async {
+  Future<ProductEntity?> updateStock(int id, double newQuantity) async {
     return updateProduct(id: id, currentStock: newQuantity);
   }
 
-  Future<ProductEntity?> adjustStock(int id, int adjustment) async {
+  Future<ProductEntity?> adjustStock(int id, double adjustment) async {
     final existing = await _findById(id);
     if (existing == null) return null;
 
@@ -377,7 +377,7 @@ class ProductOfflineController extends ChangeNotifier {
 
   Future<ProductEntity?> decrementStock(
     String productServerId,
-    int quantity,
+    double quantity,
   ) async {
     final existing = await getProductByServerId(productServerId);
 
@@ -388,9 +388,8 @@ class ProductOfflineController extends ChangeNotifier {
       return null;
     }
 
-    final newQuantity = (existing.currentStock - quantity)
-        .clamp(0, double.maxFinite)
-        .toInt();
+    final newQuantity =
+        (existing.currentStock - quantity).clamp(0.0, double.maxFinite);
     debugPrint(
       '[ProductOffline] Decrementing stock for ${existing.name}: ${existing.currentStock} - $quantity = $newQuantity',
     );
@@ -399,7 +398,7 @@ class ProductOfflineController extends ChangeNotifier {
 
   Future<ProductEntity?> incrementStock(
     String productServerId,
-    int quantity,
+    double quantity,
   ) async {
     final existing = await getProductByServerId(productServerId);
 

@@ -25,7 +25,7 @@ class PurchaseReturn {
   });
 
   int get totalItems => items.length;
-  int get totalQuantity => items.fold(0, (s, i) => s + i.quantity);
+  double get totalQuantity => items.fold(0.0, (s, i) => s + i.quantity);
 
   factory PurchaseReturn.fromJson(Map<String, dynamic> json) {
     final itemsList = (json['items'] as List<dynamic>?)
@@ -105,7 +105,7 @@ class PurchaseReturnItem {
   final String modelName;
   final String batchId;
   final int localBatchId;
-  final int quantity;
+  final double quantity;
   final double rate;
   final double amount;
   final DateTime? purchaseDate;
@@ -135,7 +135,7 @@ class PurchaseReturnItem {
       modelName: (json['modelName'] ?? '') as String,
       batchId: (json['batchId'] ?? '') as String,
       localBatchId: (json['localBatchId'] ?? 0) as int,
-      quantity: (json['quantity'] ?? 0) as int,
+      quantity: ((json['quantity'] ?? 0) as num).toDouble(),
       rate: ((json['rate'] ?? 0) as num).toDouble(),
       amount: ((json['amount'] ?? 0) as num).toDouble(),
       purchaseDate: json['purchaseDate'] != null

@@ -8,7 +8,7 @@ import '../../domain/entities/bill_item.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 // Max available stock for a bill line (batch-aware), same logic as billing page.
-int resolveBillItemMaxStock({
+double resolveBillItemMaxStock({
   required BillItem item,
   required List<Product> products,
   required List<PurchaseBatchEntity> availableBatches,
@@ -49,7 +49,7 @@ int resolveBillItemMaxStock({
       .where(
         (b) => b.productId == realProductId && b.quantityRemaining > 0,
       )
-      .fold<int>(0, (s, b) => s + b.quantityRemaining);
+      .fold<double>(0.0, (s, b) => s + b.quantityRemaining);
   return batchStock > 0 ? batchStock : product.currentStock;
 }
 
@@ -746,7 +746,7 @@ void showEditBillItemSellPriceDialog({
 // Inline editable quantity field for bill items (billing page parity).
 class InlineBillQuantityField extends StatefulWidget {
   final BillItem item;
-  final int maxStock;
+  final double maxStock;
   final ValueChanged<double> onQuantityChanged;
   final VoidCallback onRemoveItem;
 

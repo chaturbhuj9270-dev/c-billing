@@ -260,7 +260,7 @@ class FirebasePurchaseBatchRepository implements PurchaseBatchRepository {
   }
 
   @override
-  Future<PurchaseBatch> deductFromBatch(String batchId, int quantity) async {
+  Future<PurchaseBatch> deductFromBatch(String batchId, double quantity) async {
     try {
       final batch = await getBatchById(batchId);
       if (batch == null) {
@@ -288,7 +288,7 @@ class FirebasePurchaseBatchRepository implements PurchaseBatchRepository {
   }
 
   @override
-  Future<PurchaseBatch> addToBatch(String batchId, int quantity) async {
+  Future<PurchaseBatch> addToBatch(String batchId, double quantity) async {
     try {
       final batch = await getBatchById(batchId);
       if (batch == null) {
@@ -332,15 +332,26 @@ class FirebasePurchaseBatchRepository implements PurchaseBatchRepository {
   }
 
   @override
-  Future<int> getTotalStockByProductId(String productId) async {
+  Future<double> getTotalStockByProductId(String productId) async {
     final batches = await getBatchesByProductId(productId, onlyWithStock: true);
-    return batches.fold<int>(0, (total, b) => total + b.quantityRemaining);
+    return batches.fold<double>(
+      0.0,
+      (total, b) => total + b.quantityRemaining,
+    );
   }
 
   @override
-  Future<int> getTotalStockByProductUniqueKey(String productUniqueKey) async {
-    final batches = await getBatchesByProductUniqueKey(productUniqueKey, onlyWithStock: true);
-    return batches.fold<int>(0, (total, b) => total + b.quantityRemaining);
+  Future<double> getTotalStockByProductUniqueKey(
+    String productUniqueKey,
+  ) async {
+    final batches = await getBatchesByProductUniqueKey(
+      productUniqueKey,
+      onlyWithStock: true,
+    );
+    return batches.fold<double>(
+      0.0,
+      (total, b) => total + b.quantityRemaining,
+    );
   }
 
   @override
@@ -355,18 +366,21 @@ class FirebasePurchaseBatchRepository implements PurchaseBatchRepository {
     if (batches.isEmpty) return 0.0;
     
     final totalValue = batches.fold<double>(0.0, (total, b) => total + (b.quantityRemaining * b.purchasePrice));
-    final totalQty = batches.fold<int>(0, (total, b) => total + b.quantityRemaining);
+    final totalQty = batches.fold<double>(
+      0.0,
+      (total, b) => total + b.quantityRemaining,
+    );
     
     return totalQty > 0 ? totalValue / totalQty : 0.0;
   }
 
   @override
-  Future<Map<String, int>> getAllProductsWithStock() async {
+  Future<Map<String, double>> getAllProductsWithStock() async {
     final batches = await getAllBatches(includeConsumed: false);
-    final stockMap = <String, int>{};
+    final stockMap = <String, double>{};
     
     for (final batch in batches) {
-      final current = stockMap[batch.productId] ?? 0;
+      final current = stockMap[batch.productId] ?? 0.0;
       stockMap[batch.productId] = current + batch.quantityRemaining;
     }
     

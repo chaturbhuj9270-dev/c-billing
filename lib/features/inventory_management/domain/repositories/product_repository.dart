@@ -11,7 +11,7 @@ abstract class ProductRepository {
 
   // Update
   Future<void> updateProduct(Product product);
-  Future<void> updateProductStock(String productId, int newStock);
+  Future<void> updateProductStock(String productId, double newStock);
 
   // Delete
   Future<void> deleteProduct(String id);

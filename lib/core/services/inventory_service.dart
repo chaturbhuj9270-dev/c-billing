@@ -23,7 +23,7 @@ class InventoryService {
   // Process a purchase and update inventory
   Future<String> processPurchase({
     required String productId,
-    required int quantity,
+    required double quantity,
     required double purchasePrice,
     String? notes,
   }) async {
@@ -90,7 +90,7 @@ class InventoryService {
   // Process a sale and update inventory
   Future<String> processSale({
     required String productId,
-    required int quantity,
+    required double quantity,
     String? referenceId,
   }) async {
     try {
@@ -156,7 +156,7 @@ class InventoryService {
   }
 
   // Get total purchases quantity
-  Future<int> getTotalPurchasesQuantity({
+  Future<double> getTotalPurchasesQuantity({
     DateTime? startDate,
     DateTime? endDate,
   }) async {
@@ -203,7 +203,7 @@ class InventoryService {
   }
 
   // Get total sales quantity (from sales stock entries)
-  Future<int> getTotalSalesQuantity({
+  Future<double> getTotalSalesQuantity({
     DateTime? startDate,
     DateTime? endDate,
   }) async {
@@ -212,7 +212,7 @@ class InventoryService {
         'SALE',
       );
 
-      int total = 0;
+      double total = 0;
       for (var stock in salesStocks) {
         final createdAt = stock.createdAt;
 
@@ -277,7 +277,7 @@ class InventoryService {
     String category = '',
     required double purchasePrice,
     required double salesPrice,
-    int initialStock = 0,
+    double initialStock = 0,
     int? indexNo,
   }) async {
     try {

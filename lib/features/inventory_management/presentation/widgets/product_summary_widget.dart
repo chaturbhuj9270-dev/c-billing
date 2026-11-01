@@ -32,7 +32,10 @@ class ProductSummaryWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final filtered = _filteredProducts;
-    final totalStock = filtered.fold<int>(0, (total, p) => total + p.currentStock);
+    final totalStock = filtered.fold<double>(
+      0.0,
+      (total, p) => total + p.currentStock,
+    );
     final outOfStock = filtered.where((p) => p.currentStock == 0).length;
     final unsyncedCount = filtered
         .where((p) => p.syncStatus != SyncStatus.synced)

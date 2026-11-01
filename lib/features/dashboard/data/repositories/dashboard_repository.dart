@@ -140,12 +140,12 @@ class DashboardRepository {
 
     // Calculate purchase data
     double totalPurchaseAmount = 0;
-    int totalPurchaseQty = 0;
+    double totalPurchaseQty = 0;
     for (var doc in purchasesSnapshot.docs) {
       final data = doc.data() as Map<String, dynamic>?;
       if (data != null) {
         totalPurchaseAmount += (data['totalAmount'] as num?)?.toDouble() ?? 0;
-        totalPurchaseQty += (data['quantity'] as num?)?.toInt() ?? 0;
+        totalPurchaseQty += (data['quantity'] as num?)?.toDouble() ?? 0.0;
       }
     }
 
@@ -154,7 +154,7 @@ class DashboardRepository {
     int lowStockCount = 0;
     for (var doc in productsSnapshot.docs) {
       final data = doc.data() as Map<String, dynamic>;
-      final currentStock = (data['currentStock'] as num?)?.toInt() ?? 0;
+      final currentStock = (data['currentStock'] as num?)?.toDouble() ?? 0.0;
       final purchasePrice = (data['purchasePrice'] as num?)?.toDouble() ?? 0;
       stockValue += currentStock * purchasePrice;
       if (currentStock < 10 && currentStock > 0) {
@@ -432,7 +432,7 @@ class DashboardRepository {
               return data;
             })
             .where((p) {
-              final stock = (p['currentStock'] as num?)?.toInt() ?? 0;
+              final stock = (p['currentStock'] as num?)?.toDouble() ?? 0.0;
               return stock > 0 && stock < threshold;
             })
             .toList();

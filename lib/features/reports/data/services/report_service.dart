@@ -301,7 +301,7 @@ class ReportService {
 
 // Internal aggregation helper
 class _LedgerAgg {
-  int totalQty = 0;
+  double totalQty = 0;
   double totalCost = 0;
   double totalRevenue = 0;
   double totalProfit = 0;
@@ -320,7 +320,7 @@ class _ProductInfo {
   String productName = '';
   String companyName = '';
   String supplierName = '';
-  int totalRemaining = 0;
+  double totalRemaining = 0;
   double latestPurchasePrice = 0;
   double latestSellingPrice = 0;
   bool isExpired = false;

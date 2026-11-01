@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
+import 'package:c_billing/core/utils/qty.dart';
 
 // Helper to parse DateTime from Firestore Timestamp or ISO8601 string
 DateTime? _parseDateTime(dynamic value) {
@@ -57,10 +58,10 @@ class PurchaseBatchEntity {
   double sellingPrice;
 
   // Original quantity purchased in this batch
-  int quantityPurchased;
+  double quantityPurchased;
 
   // Remaining quantity available for sale (FIFO tracking)
-  int quantityRemaining;
+  double quantityRemaining;
 
   // Date when this batch was purchased (indexed for FIFO sorting)
   DateTime purchaseDate;
@@ -138,7 +139,7 @@ class PurchaseBatchEntity {
     String category = '',
     required double purchasePrice,
     required double sellingPrice,
-    required int quantity,
+    required double quantity,
     DateTime? purchaseDate,
     String? supplierId,
     String? supplierName,
@@ -201,8 +202,10 @@ class PurchaseBatchEntity {
       productUniqueKey: data['productUniqueKey'] as String? ?? uniqueKey,
       purchasePrice: (data['purchasePrice'] as num?)?.toDouble() ?? 0.0,
       sellingPrice: (data['sellingPrice'] as num?)?.toDouble() ?? 0.0,
-      quantityPurchased: (data['quantityPurchased'] as num?)?.toInt() ?? 0,
-      quantityRemaining: (data['quantityRemaining'] as num?)?.toInt() ?? 0,
+      quantityPurchased:
+          (data['quantityPurchased'] as num?)?.toDouble() ?? 0.0,
+      quantityRemaining:
+          (data['quantityRemaining'] as num?)?.toDouble() ?? 0.0,
       purchaseDate: _parseDateTime(data['purchaseDate']) ?? now,
       supplierId: data['supplierId'] as String?,
       supplierName: data['supplierName'] as String?,
@@ -295,8 +298,8 @@ class PurchaseBatchEntity {
     String? productUniqueKey,
     double? purchasePrice,
     double? sellingPrice,
-    int? quantityPurchased,
-    int? quantityRemaining,
+    double? quantityPurchased,
+    double? quantityRemaining,
     DateTime? purchaseDate,
     String? supplierId,
     String? supplierName,
@@ -348,7 +351,7 @@ class PurchaseBatchEntity {
   bool get isMarkedForDeletion => syncStatus == BatchSyncStatus.deleted;
 
   // Check if batch has stock available
-  bool get hasStock => quantityRemaining > 0;
+  bool get hasStock => !Qty.isConsumed(quantityRemaining);
 
   @override
   String toString() {

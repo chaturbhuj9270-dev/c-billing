@@ -315,7 +315,7 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
             .where((b) => b.productId == product.id && b.quantityRemaining > 0)
             .toList()
           ..sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
-    final batchStock = productBatches.fold<int>(
+    final batchStock = productBatches.fold<double>(
       0,
       (s, b) => s + b.quantityRemaining,
     );

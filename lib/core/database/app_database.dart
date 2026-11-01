@@ -76,7 +76,8 @@ class ProductRecords extends Table {
   TextColumn get barcode => text().nullable()();
   RealColumn get purchasePrice => real().withDefault(const Constant(0))();
   RealColumn get salesPrice => real().withDefault(const Constant(0))();
-  IntColumn get currentStock => integer().withDefault(const Constant(0))();
+  /// Supports fractional stock (kg / ltr / ml).
+  RealColumn get currentStock => real().withDefault(const Constant(0))();
   TextColumn get unit => text().nullable()();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
   IntColumn get syncStatus => integer()();
@@ -118,15 +119,34 @@ class PurchaseRecords extends Table {
   TextColumn get supplierName => text().nullable()();
   TextColumn get companyId => text().nullable()();
   TextColumn get companyName => text().nullable()();
-  IntColumn get quantity => integer().withDefault(const Constant(0))();
+  RealColumn get quantity => real().withDefault(const Constant(0))();
   TextColumn get unit => text().withDefault(const Constant(''))();
   RealColumn get purchasePrice => real().withDefault(const Constant(0))();
   RealColumn get salesPrice => real().withDefault(const Constant(0))();
+  /// Invoice grand total (taxable + GST when applied).
   RealColumn get totalAmount => real().withDefault(const Constant(0))();
   DateTimeColumn get productionDate => dateTime().nullable()();
   DateTimeColumn get expiryDate => dateTime().nullable()();
   IntColumn get warrantyMonths => integer().nullable()();
   TextColumn get notes => text().nullable()();
+  // Purchase GST / ITC snapshot (defaults keep legacy qty×price behaviour).
+  BoolColumn get isGstApplied => boolean().withDefault(const Constant(false))();
+  BoolColumn get isTaxInclusive =>
+      boolean().withDefault(const Constant(false))();
+  BoolColumn get isInterstate => boolean().withDefault(const Constant(false))();
+  RealColumn get taxableValue => real().withDefault(const Constant(0))();
+  RealColumn get cgstPercent => real().withDefault(const Constant(0))();
+  RealColumn get sgstPercent => real().withDefault(const Constant(0))();
+  RealColumn get igstPercent => real().withDefault(const Constant(0))();
+  RealColumn get otherTaxPercent => real().withDefault(const Constant(0))();
+  TextColumn get otherTaxName => text().nullable()();
+  RealColumn get cgstAmount => real().withDefault(const Constant(0))();
+  RealColumn get sgstAmount => real().withDefault(const Constant(0))();
+  RealColumn get igstAmount => real().withDefault(const Constant(0))();
+  RealColumn get otherTaxAmount => real().withDefault(const Constant(0))();
+  RealColumn get totalTaxAmount => real().withDefault(const Constant(0))();
+  TextColumn get hsnCode => text().nullable()();
+  TextColumn get supplierGstin => text().nullable()();
   IntColumn get syncStatus => integer()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
@@ -147,8 +167,8 @@ class PurchaseBatchRecords extends Table {
   TextColumn get productUniqueKey => text().withDefault(const Constant(''))();
   RealColumn get purchasePrice => real().withDefault(const Constant(0))();
   RealColumn get sellingPrice => real().withDefault(const Constant(0))();
-  IntColumn get quantityPurchased => integer().withDefault(const Constant(0))();
-  IntColumn get quantityRemaining => integer().withDefault(const Constant(0))();
+  RealColumn get quantityPurchased => real().withDefault(const Constant(0))();
+  RealColumn get quantityRemaining => real().withDefault(const Constant(0))();
   DateTimeColumn get purchaseDate => dateTime()();
   TextColumn get supplierId => text().nullable()();
   TextColumn get supplierName => text().nullable()();
@@ -181,13 +201,13 @@ class StockLedgerRecords extends Table {
   IntColumn get ledgerType => integer()();
   TextColumn get referenceId => text().withDefault(const Constant(''))();
   TextColumn get referenceType => text().withDefault(const Constant(''))();
-  IntColumn get quantity => integer().withDefault(const Constant(0))();
+  RealColumn get quantity => real().withDefault(const Constant(0))();
   RealColumn get costPrice => real().withDefault(const Constant(0))();
   RealColumn get sellingPrice => real().withDefault(const Constant(0))();
   RealColumn get totalCost => real().withDefault(const Constant(0))();
   RealColumn get totalRevenue => real().withDefault(const Constant(0))();
   RealColumn get profit => real().withDefault(const Constant(0))();
-  IntColumn get balanceQuantity => integer().withDefault(const Constant(0))();
+  RealColumn get balanceQuantity => real().withDefault(const Constant(0))();
   RealColumn get balanceValue => real().withDefault(const Constant(0))();
   DateTimeColumn get transactionDate => dateTime()();
   TextColumn get notes => text().nullable()();
@@ -206,7 +226,7 @@ class BillRecords extends Table {
   TextColumn get customerName => text().nullable()();
   TextColumn get customerContact => text().nullable()();
   TextColumn get itemsJson => text().withDefault(const Constant('[]'))();
-  IntColumn get totalQuantity => integer().withDefault(const Constant(0))();
+  RealColumn get totalQuantity => real().withDefault(const Constant(0))();
   RealColumn get totalAmount => real().withDefault(const Constant(0))();
   RealColumn get discountAmount => real().withDefault(const Constant(0))();
   RealColumn get discountPercent => real().withDefault(const Constant(0))();
@@ -419,7 +439,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? openAppDatabase());
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   Future<bool> _hasTable(String table) async {
     final rows = await customSelect(
@@ -549,6 +569,20 @@ class AppDatabase extends _$AppDatabase {
           productRecords,
           productRecords.packSalesPrice,
         );
+      }
+      if (from < 12) {
+        // Recreate tables so INTEGER qty columns become REAL (fractional kg/ml)
+        // and purchase GST columns exist. Existing ints cast cleanly to REAL.
+        // ignore: experimental_member_use
+        await m.alterTable(TableMigration(productRecords));
+        // ignore: experimental_member_use
+        await m.alterTable(TableMigration(purchaseBatchRecords));
+        // ignore: experimental_member_use
+        await m.alterTable(TableMigration(stockLedgerRecords));
+        // ignore: experimental_member_use
+        await m.alterTable(TableMigration(billRecords));
+        // ignore: experimental_member_use
+        await m.alterTable(TableMigration(purchaseRecords));
       }
     },
   );

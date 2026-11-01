@@ -17,7 +17,7 @@ class DashboardData extends Equatable {
   final double netSales;
   final double totalPurchases;
   final int purchaseOrders;
-  final int purchaseQty;
+  final double purchaseQty;
   final double profit;
   final double profitPercentage;
   final double stockValue;
@@ -81,7 +81,7 @@ class DashboardData extends Equatable {
     double? netSales,
     double? totalPurchases,
     int? purchaseOrders,
-    int? purchaseQty,
+    double? purchaseQty,
     double? profit,
     double? profitPercentage,
     double? stockValue,

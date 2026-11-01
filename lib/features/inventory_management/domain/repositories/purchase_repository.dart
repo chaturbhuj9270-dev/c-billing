@@ -12,5 +12,5 @@ abstract class PurchaseRepository {
   // Query
   Future<List<Purchase>> getPurchasesByDateRange(DateTime startDate, DateTime endDate);
   Future<double> getTotalPurchaseAmount({DateTime? startDate, DateTime? endDate});
-  Future<int> getTotalPurchaseQuantity({DateTime? startDate, DateTime? endDate});
+  Future<double> getTotalPurchaseQuantity({DateTime? startDate, DateTime? endDate});
 }

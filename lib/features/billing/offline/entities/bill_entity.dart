@@ -144,7 +144,7 @@ class BillEntity {
   List<BillItemEmbedded> items;
 
   // Total quantity of all items
-  int totalQuantity;
+  double totalQuantity;
 
   // Total amount before discount
   double totalAmount;
@@ -297,7 +297,7 @@ class BillEntity {
     String? customerName,
     String? customerContact,
     List<BillItemEmbedded> items = const [],
-    int totalQuantity = 0,
+    double totalQuantity = 0,
     double totalAmount = 0.0,
     double discountAmount = 0.0,
     double discountPercent = 0.0,
@@ -399,7 +399,7 @@ class BillEntity {
       customerName: data['customerName'] as String?,
       customerContact: data['customerContact'] as String?,
       items: billItems,
-      totalQuantity: (data['totalQuantity'] as num?)?.toInt() ?? 0,
+      totalQuantity: (data['totalQuantity'] as num?)?.toDouble() ?? 0.0,
       totalAmount: (data['totalAmount'] as num?)?.toDouble() ?? 0.0,
       discountAmount: (data['discountAmount'] as num?)?.toDouble() ?? 0.0,
       discountPercent: (data['discountPercent'] as num?)?.toDouble() ?? 0.0,
@@ -528,7 +528,7 @@ class BillEntity {
     String? customerName,
     String? customerContact,
     List<BillItemEmbedded>? items,
-    int? totalQuantity,
+    double? totalQuantity,
     double? totalAmount,
     double? discountAmount,
     double? discountPercent,

@@ -1386,8 +1386,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     );
   }
 
-  Map<String, dynamic> _getStockLevel(int stock) {
-    if (stock == 0) {
+  Map<String, dynamic> _getStockLevel(num stock) {
+    if (stock <= 0) {
       return {
         'label': _localizations.outOfStock.toUpperCase(),
         'color': AppTheme.red,
@@ -1440,7 +1440,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   }
 
   Widget _buildPageHeader() {
-    final totalStock = _groupedProducts.fold<int>(
+    final totalStock = _groupedProducts.fold<double>(
       0,
       (total, group) => total + group.totalStock,
     );

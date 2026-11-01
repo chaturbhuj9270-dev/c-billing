@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:c_billing/core/utils/qty.dart';
 // Represents a purchase batch for FIFO inventory management. Each purchase creates a separate batch even for the same product. Unique product identification is based on: productNa...
 class PurchaseBatch {
   // Unique identifier for this batch
@@ -26,10 +27,10 @@ class PurchaseBatch {
   final double sellingPrice;
   
   // Original quantity purchased in this batch
-  final int quantityPurchased;
+  final double quantityPurchased;
   
   // Remaining quantity available for sale (FIFO tracking)
-  final int quantityRemaining;
+  final double quantityRemaining;
   
   // Date when this batch was purchased
   final DateTime purchaseDate;
@@ -103,7 +104,10 @@ class PurchaseBatch {
   double get remainingValue => purchasePrice * quantityRemaining;
   
   // Quantity already sold from this batch
-  int get quantitySold => quantityPurchased - quantityRemaining;
+  double get quantitySold => quantityPurchased - quantityRemaining;
+
+  /// Whether remaining stock is effectively zero.
+  bool get isFullyConsumed => Qty.isConsumed(quantityRemaining);
 
   // Factory constructor to create from JSON (for Firebase)
   factory PurchaseBatch.fromJson(Map<String, dynamic> json) {
@@ -117,8 +121,10 @@ class PurchaseBatch {
         category: (json['category'] ?? '') as String,
         purchasePrice: ((json['purchasePrice'] ?? 0) as num).toDouble(),
         sellingPrice: ((json['sellingPrice'] ?? 0) as num).toDouble(),
-        quantityPurchased: (json['quantityPurchased'] ?? 0) as int,
-        quantityRemaining: (json['quantityRemaining'] ?? 0) as int,
+        quantityPurchased:
+            ((json['quantityPurchased'] ?? 0) as num).toDouble(),
+        quantityRemaining:
+            ((json['quantityRemaining'] ?? 0) as num).toDouble(),
         purchaseDate: json['purchaseDate'] != null
             ? DateTime.parse(json['purchaseDate'] as String)
             : DateTime.now(),
@@ -200,8 +206,8 @@ class PurchaseBatch {
     String? category,
     double? purchasePrice,
     double? sellingPrice,
-    int? quantityPurchased,
-    int? quantityRemaining,
+    double? quantityPurchased,
+    double? quantityRemaining,
     DateTime? purchaseDate,
     String? supplierId,
     String? supplierName,

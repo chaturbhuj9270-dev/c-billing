@@ -397,7 +397,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
               for (final detail in returnItemDetails) {
                 await ProductOfflineController.instance.incrementStock(
                   detail.productId,
-                  detail.stockQuantityInt,
+                  detail.returnQuantity,
                 );
               }
               await _applyLedgerReturnWithoutLocalBill(result.refundAmount ?? 0);

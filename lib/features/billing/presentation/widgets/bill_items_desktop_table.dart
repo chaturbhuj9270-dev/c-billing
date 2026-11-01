@@ -403,7 +403,7 @@ class _ColumnRow extends StatelessWidget {
 
 class _QtyEditor extends StatefulWidget {
   final BillItem item;
-  final int maxStock;
+  final double maxStock;
   final String unitLabel;
   final ValueChanged<double> onChanged;
   final ValueChanged<int> onStep;

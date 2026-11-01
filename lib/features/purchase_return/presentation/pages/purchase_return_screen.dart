@@ -9,6 +9,8 @@ import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../data/services/purchase_return_service.dart';
 import '../../domain/entities/purchase_return.dart';
+import '../../../inventory_management/domain/utils/purchase_tax_calculator.dart';
+import '../../../product/offline/controllers/product_offline_controller.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
 import 'package:c_billing/common_widgets/app_tab_bar.dart';
@@ -54,8 +56,10 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
   List<ReturnableBatchInfo> _products = [];
   bool _isLoadingProducts = false;
   final Map<String, TextEditingController> _qtyControllers = {};
-  final Map<String, int> _returnQuantities = {};
+  final Map<String, double> _returnQuantities = {};
   final Map<String, bool> _qtyErrors = {};
+  /// productId → (cgst%, sgst%) for ITC-style return credit when rates exist.
+  final Map<String, ({double cgst, double sgst})> _productGstRates = {};
 
   // ── Search ──
   final _supplierSearchCtrl = TextEditingController();
@@ -185,11 +189,34 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
       _qtyControllers.clear();
       _returnQuantities.clear();
       _qtyErrors.clear();
+      _productGstRates.clear();
 
       for (final p in products) {
         _qtyControllers[p.productId] = TextEditingController(text: '0');
         _returnQuantities[p.productId] = 0;
         _qtyErrors[p.productId] = false;
+        try {
+          final isServerId = p.productId.isNotEmpty &&
+              !p.productId.startsWith('local_') &&
+              p.productId.length >= 10;
+          final entity = isServerId
+              ? await ProductOfflineController.instance
+                  .getProductByServerId(p.productId)
+              : await ProductOfflineController.instance.getProductById(
+                  int.tryParse(
+                        p.productId.startsWith('local_')
+                            ? p.productId.substring(6)
+                            : p.productId,
+                      ) ??
+                      -1,
+                );
+          if (entity != null) {
+            _productGstRates[p.productId] = (
+              cgst: entity.cgstPercent,
+              sgst: entity.sgstPercent,
+            );
+          }
+        } catch (_) {}
       }
 
       if (mounted) {
@@ -230,17 +257,20 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
     Navigator.pop(context); // close bottom sheet
   }
 
-  void _onQtyChanged(String productId, String value, int maxQty) {
-    final qty = int.tryParse(value) ?? 0;
+  void _onQtyChanged(String productId, String value, double maxQty) {
+    final qty = double.tryParse(value.trim()) ?? 0;
     setState(() {
       _returnQuantities[productId] = qty;
-      _qtyErrors[productId] = qty < 0 || qty > maxQty;
+      _qtyErrors[productId] = qty < 0 || qty > maxQty + 1e-9;
     });
   }
 
-  void _setFullBatchQty(String productId, int maxQty) {
-    _qtyControllers[productId]?.text = maxQty.toString();
-    _onQtyChanged(productId, maxQty.toString(), maxQty);
+  void _setFullBatchQty(String productId, double maxQty) {
+    final text = maxQty == maxQty.roundToDouble()
+        ? maxQty.toInt().toString()
+        : maxQty.toStringAsFixed(2);
+    _qtyControllers[productId]?.text = text;
+    _onQtyChanged(productId, text, maxQty);
   }
 
   List<ReturnableBatchInfo> get _filteredProducts {
@@ -253,14 +283,30 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
     }).toList();
   }
 
-  int get _totalReturnQty => _returnQuantities.values.fold(0, (s, v) => s + v);
+  double _returnLineAmount(ReturnableBatchInfo p, double qty) {
+    if (qty <= 0) return 0;
+    final rates = _productGstRates[p.productId];
+    final cgst = rates?.cgst ?? 0;
+    final sgst = rates?.sgst ?? 0;
+    final tax = PurchaseTaxCalculator.calculate(
+      quantity: qty,
+      purchasePrice: p.purchasePrice,
+      cgstPercent: cgst,
+      sgstPercent: sgst,
+      isGstApplied: cgst > 0 || sgst > 0,
+    );
+    return tax.totalAmount;
+  }
+
+  double get _totalReturnQty =>
+      _returnQuantities.values.fold(0.0, (s, v) => s + v);
   int get _totalItemsWithQty =>
       _returnQuantities.values.where((v) => v > 0).length;
   double get _totalReturnAmount {
     double total = 0;
     for (final p in _products) {
       final qty = _returnQuantities[p.productId] ?? 0;
-      if (qty > 0) total += p.purchasePrice * qty;
+      if (qty > 0) total += _returnLineAmount(p, qty);
     }
     return total;
   }
@@ -277,11 +323,12 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
       return;
     }
 
-    // Build items for preview
+    // Build items for preview (amount may include GST when product rates > 0)
     final items = <PurchaseReturnItem>[];
     for (final p in _products) {
       final qty = _returnQuantities[p.productId] ?? 0;
       if (qty <= 0) continue;
+      final amount = _returnLineAmount(p, qty);
       items.add(
         PurchaseReturnItem(
           id: '',
@@ -293,7 +340,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
           localBatchId: p.localBatchId,
           quantity: qty,
           rate: p.purchasePrice,
-          amount: p.purchasePrice * qty,
+          amount: amount,
         ),
       );
     }
@@ -924,7 +971,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
   Widget _buildProductRow(ReturnableBatchInfo product) {
     final qty = _returnQuantities[product.productId] ?? 0;
     final hasError = _qtyErrors[product.productId] ?? false;
-    final amount = product.purchasePrice * qty;
+    final amount = _returnLineAmount(product, qty);
     final ctrl = _qtyControllers[product.productId];
 
     return Dismissible(

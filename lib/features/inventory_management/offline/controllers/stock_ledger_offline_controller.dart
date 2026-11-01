@@ -35,9 +35,9 @@ class StockLedgerOfflineController extends ChangeNotifier {
     required String batchId,
     int? localBatchId,
     required String purchaseReferenceId,
-    required int quantity,
+    required double quantity,
     required double costPrice,
-    required int balanceQuantity,
+    required double balanceQuantity,
     required double balanceValue,
     String? notes,
   }) async {
@@ -74,10 +74,10 @@ class StockLedgerOfflineController extends ChangeNotifier {
     required String batchId,
     int? localBatchId,
     required String billId,
-    required int quantity,
+    required double quantity,
     required double costPrice,
     required double sellingPrice,
-    required int balanceQuantity,
+    required double balanceQuantity,
     required double balanceValue,
     String? notes,
   }) async {
@@ -115,10 +115,10 @@ class StockLedgerOfflineController extends ChangeNotifier {
     required String batchId,
     int? localBatchId,
     required String returnReferenceId,
-    required int quantity,
+    required double quantity,
     required double costPrice,
     required double sellingPrice,
-    required int balanceQuantity,
+    required double balanceQuantity,
     required double balanceValue,
     String? notes,
   }) async {
@@ -438,8 +438,8 @@ class StockLedgerOfflineController extends ChangeNotifier {
       return true;
     }).toList();
 
-    int totalIn = 0;
-    int totalOut = 0;
+    double totalIn = 0.0;
+    double totalOut = 0.0;
     double totalPurchaseValue = 0.0;
     double totalSalesValue = 0.0;
     double totalCOGS = 0.0;

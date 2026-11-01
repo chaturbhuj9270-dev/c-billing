@@ -276,7 +276,7 @@ class DashboardLocalDataSource {
         );
 
     double totalAmount = 0;
-    int totalQty = 0;
+    double totalQty = 0;
 
     for (final batch in batches) {
       // Calculate total purchase amount: quantityPurchased × purchasePrice
@@ -311,7 +311,7 @@ class DashboardLocalDataSource {
         .toList();
 
     double totalAmount = 0;
-    int totalQty = 0;
+    double totalQty = 0;
     final returnIds = <String>{};
 
     for (final entry in allReturnEntries) {
@@ -356,14 +356,14 @@ class DashboardLocalDataSource {
     int lowStockCount = 0;
 
     // Track per-product remaining stock for low stock detection
-    final productStockMap = <String, int>{};
+    final productStockMap = <String, double>{};
 
     for (final batch in batches) {
       stockValue += batch.quantityRemaining * batch.purchasePrice;
 
       // Accumulate total remaining stock per product
       productStockMap[batch.productId] =
-          (productStockMap[batch.productId] ?? 0) + batch.quantityRemaining;
+          (productStockMap[batch.productId] ?? 0.0) + batch.quantityRemaining;
     }
 
     // Count products with low stock (> 0 but < 10)
@@ -495,7 +495,7 @@ class _SalesResult {
 class _PurchaseResult {
   final double totalAmount;
   final int orderCount;
-  final int totalQty;
+  final double totalQty;
 
   const _PurchaseResult({
     required this.totalAmount,
@@ -506,7 +506,7 @@ class _PurchaseResult {
 
 class _PurchaseReturnResult {
   final double totalAmount;
-  final int totalQty;
+  final double totalQty;
   final int returnCount;
 
   const _PurchaseReturnResult({

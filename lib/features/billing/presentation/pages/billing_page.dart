@@ -1545,7 +1545,7 @@ class _BillingPageState extends State<BillingPage> {
                 ? _customerContactController.text.trim()
                 : _selectedCustomer?['contact'],
             items: processableItems,
-            totalQuantity: _totalQuantity.round(),
+            totalQuantity: _totalQuantity,
             totalAmount: _totalAmount,
             discountAmount: _discountAmount,
             discountPercent: _discountPercent,
@@ -1767,7 +1767,7 @@ class _BillingPageState extends State<BillingPage> {
         final index = _products.indexWhere((p) => p.id == realProductId);
         if (index != -1) {
           final p = _products[index];
-          final newStock = (p.currentStock - item.quantity).round();
+          final newStock = p.currentStock - item.quantity;
           if (newStock > 0) {
             _products[index] = p.copyWith(currentStock: newStock);
           } else {
@@ -3743,8 +3743,8 @@ class _BillingPageState extends State<BillingPage> {
             .where((b) => b.productId == resolved.id && b.quantityRemaining > 0)
             .toList()
           ..sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
-    final batchStock = productBatches.fold<int>(
-      0,
+    final batchStock = productBatches.fold<double>(
+      0.0,
       (s, b) => s + b.quantityRemaining,
     );
     final effectiveStock = batchStock > 0 ? batchStock : resolved.currentStock;
@@ -4312,7 +4312,7 @@ class _BillingPageState extends State<BillingPage> {
                 ),
               );
 
-              int maxStock;
+              double maxStock;
               final parts = item.productId.split('_batch_');
               final batchLocalId = parts.length > 1
                   ? int.tryParse(parts.last)
@@ -4332,7 +4332,7 @@ class _BillingPageState extends State<BillingPage> {
                           b.productId == realProductId &&
                           b.quantityRemaining > 0,
                     )
-                    .fold<int>(0, (s, b) => s + b.quantityRemaining);
+                    .fold<double>(0.0, (s, b) => s + b.quantityRemaining);
                 maxStock = batchStock > 0 ? batchStock : product.currentStock;
               }
 
@@ -4743,7 +4743,7 @@ class _BillingPageState extends State<BillingPage> {
   Widget _buildInlineUnitSelector({
     required int index,
     required BillItem item,
-    required int maxStock,
+    required double maxStock,
   }) {
     final unit = item.unit?.toLowerCase() ?? '';
     final isKg = unit == 'kg';
@@ -4947,7 +4947,7 @@ class _BillingPageState extends State<BillingPage> {
   void _showCustomUnitDialog({
     required int index,
     required BillItem item,
-    required int maxStock,
+    required double maxStock,
   }) {
     final unit = item.unit?.toLowerCase() ?? '';
     final isKg = unit == 'kg';
@@ -7939,7 +7939,7 @@ class _QuickStatItem {
 // Inline editable quantity field for bill items
 class _InlineQuantityField extends StatefulWidget {
   final BillItem item;
-  final int maxStock;
+  final double maxStock;
   final ValueChanged<double> onQuantityChanged;
   final VoidCallback onRemoveItem;
 

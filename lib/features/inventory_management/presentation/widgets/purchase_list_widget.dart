@@ -401,8 +401,8 @@ class PurchaseSummaryWidget extends StatelessWidget {
       0,
       (total, p) => total + (p.purchasePrice * p.quantityPurchased),
     );
-    final totalQuantity = filtered.fold<int>(
-      0,
+    final totalQuantity = filtered.fold<double>(
+      0.0,
       (total, p) => total + p.quantityPurchased,
     );
 

@@ -3,11 +3,13 @@ import '../../features/inventory_management/data/services/fifo_inventory_service
 import '../../features/inventory_management/offline/controllers/purchase_offline_controller.dart';
 import '../../features/inventory_management/offline/controllers/purchase_batch_offline_controller.dart';
 import '../../features/inventory_management/offline/entities/purchase_batch_entity.dart';
+import '../../features/inventory_management/domain/utils/purchase_tax_calculator.dart';
 import '../../features/product/offline/controllers/product_offline_controller.dart';
 import '../../features/billing/offline/controllers/bill_offline_controller.dart';
 import '../../features/billing/offline/entities/bill_entity.dart';
 import '../../features/billing/domain/entities/bill_item.dart';
 import '../../features/billing/domain/entities/bill_extra_charge.dart';
+import '../../features/billing/domain/entities/bill_tax_settings.dart';
 import '../../features/customer/offline/controllers/customer_transaction_offline_controller.dart';
 import '../services/dashboard_refresh_service.dart';
 
@@ -50,6 +52,7 @@ class InventoryIntegrationService {
   }
 
   // Creates purchase, FIFO batch, ledger, and product stock/price updates.
+  // [purchasePrice] stays exclusive COGS for FIFO/batch; GST snapshot → PurchaseEntity only.
   Future<IntegratedPurchaseResult> processPurchase({
     required String productId,
     required String productName,
@@ -59,7 +62,7 @@ class InventoryIntegrationService {
     String? companyName,
     String modelName = '',
     String category = '',
-    required int quantity,
+    required double quantity,
     String unit = 'pcs',
     required double purchasePrice,
     required double salesPrice,
@@ -68,13 +71,23 @@ class InventoryIntegrationService {
     DateTime? expiryDate,
     int? warrantyMonths,
     String? notes,
+    bool isGstApplied = false,
+    bool isInterstate = false,
+    double cgstPercent = 0,
+    double sgstPercent = 0,
+    double otherTaxPercent = 0,
+    String otherTaxName = '',
+    GstMode gstMode = GstMode.excludeGst,
+    String? hsnCode,
+    String? supplierGstin,
+    PurchaseTaxResult? taxSnapshot,
   }) async {
     try {
       debugPrint(
         '[Integration] Processing purchase: $productName, qty: $quantity',
       );
 
-      // 1. Create PurchaseEntity (old system - for sync, history, reporting)
+      // 1. Create PurchaseEntity (invoice + optional GST/ITC snapshot)
       final purchaseEntity = await _purchaseController.addPurchase(
         productId: productId,
         productName: productName,
@@ -90,10 +103,20 @@ class InventoryIntegrationService {
         expiryDate: expiryDate,
         warrantyMonths: warrantyMonths,
         notes: notes,
+        isGstApplied: isGstApplied,
+        isInterstate: isInterstate,
+        cgstPercent: cgstPercent,
+        sgstPercent: sgstPercent,
+        otherTaxPercent: otherTaxPercent,
+        otherTaxName: otherTaxName,
+        gstMode: gstMode,
+        hsnCode: hsnCode,
+        supplierGstin: supplierGstin,
+        taxSnapshot: taxSnapshot,
       );
       debugPrint('[Integration] PurchaseEntity created: ${purchaseEntity.id}');
 
-      // 2. Create PurchaseBatch + StockLedger via FIFO service
+      // 2. Create PurchaseBatch + StockLedger via FIFO (exclusive COGS only)
       final fifoResult = await _fifoService.processPurchase(
         productId: productId,
         productName: productName,
@@ -182,7 +205,7 @@ class InventoryIntegrationService {
     String? customerName,
     String? customerContact,
     required List<BillItem> items,
-    required int totalQuantity,
+    required double totalQuantity,
     required double totalAmount,
     double discountAmount = 0.0,
     double discountPercent = 0.0,
@@ -287,10 +310,10 @@ class InventoryIntegrationService {
       double totalProfit = 0.0;
 
       for (final item in items) {
-        // 2a. FIFO deduction from batches + ledger entries (use rounded int for stock operations)
+        // 2a. FIFO deduction from batches + ledger entries (exact fractional qty)
         final saleResult = await _fifoService.processFifoSale(
           productId: item.productId,
-          quantity: item.quantityInt, // Round for FIFO stock tracking
+          quantity: item.quantity,
           sellingPrice: item.sellingPrice,
           billId: billId,
           notes: 'Bill: $billId',
@@ -308,7 +331,7 @@ class InventoryIntegrationService {
           totalRevenue += saleResult.totalRevenue;
           totalProfit += saleResult.totalProfit;
           // 2b. Keep ProductEntity.currentStock in lockstep with FIFO
-          await _decrementProductStock(item.productId, item.quantityInt);
+          await _decrementProductStock(item.productId, item.quantity);
         }
       }
 
@@ -352,7 +375,7 @@ class InventoryIntegrationService {
         if (returnItem.returnQuantity <= 0) continue;
 
         // 1. Process FIFO return (add stock back to batch + create ledger entry)
-        final stockQty = returnItem.stockQuantityInt;
+        final stockQty = returnItem.returnQuantity;
         final returned = await _fifoService.processSaleReturn(
           productId: returnItem.productId,
           productName: returnItem.productName,
@@ -481,20 +504,19 @@ class InventoryIntegrationService {
   // ==================== STOCK QUERY HELPERS ====================
 
   // Get accurate stock for a product from FIFO batches This is the source of truth for stock levels
-  Future<int> getAccurateStock(String productId) async {
+  Future<double> getAccurateStock(String productId) async {
     return await _fifoService.getAvailableStock(productId);
   }
 
   // Validate stock availability for bill items using FIFO data
   Future<Map<String, String>> validateStockForBill(List<BillItem> items) async {
-    // Use rounded quantities for stock validation since stock is tracked in integers
     return await _fifoService.validateStockForSale({
-      for (final item in items) item.productId: item.quantityInt,
+      for (final item in items) item.productId: item.quantity,
     });
   }
 
   // Check if a product has sufficient stock
-  Future<bool> hasStock(String productId, int requiredQuantity) async {
+  Future<bool> hasStock(String productId, double requiredQuantity) async {
     return await _fifoService.hasAvailableStock(productId, requiredQuantity);
   }
 
@@ -591,7 +613,10 @@ class InventoryIntegrationService {
   // ==================== PRIVATE HELPERS ====================
 
   // Decrement product stock by server ID or local ID
-  Future<void> _decrementProductStock(String productId, int quantity) async {
+  Future<void> _decrementProductStock(
+    String productId,
+    double quantity,
+  ) async {
     final isValidServerId =
         productId.isNotEmpty &&
         !productId.startsWith('local_') &&
@@ -604,7 +629,8 @@ class InventoryIntegrationService {
       if (localId != null) {
         final entity = await _productController.getProductById(localId);
         if (entity != null) {
-          final newStock = (entity.currentStock - quantity).clamp(0, 999999999);
+          final newStock =
+              (entity.currentStock - quantity).clamp(0.0, double.maxFinite);
           await _productController.updateProduct(
             id: entity.id,
             currentStock: newStock,
@@ -615,7 +641,10 @@ class InventoryIntegrationService {
   }
 
   // Increment product stock by server ID or local ID
-  Future<void> _incrementProductStock(String productId, int quantity) async {
+  Future<void> _incrementProductStock(
+    String productId,
+    double quantity,
+  ) async {
     final isValidServerId =
         productId.isNotEmpty &&
         !productId.startsWith('local_') &&
@@ -770,7 +799,7 @@ class ReturnItemDetail {
     this.billItemId,
   });
 
-  /// FIFO/stock layers still use whole units; never round a positive fraction to 0.
+  @Deprecated('FIFO now accepts double; use returnQuantity directly')
   int get stockQuantityInt {
     if (returnQuantity <= 0) return 0;
     if (returnQuantity < 1) return 1;

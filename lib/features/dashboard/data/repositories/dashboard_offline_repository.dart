@@ -66,7 +66,7 @@ class DashboardOfflineRepository {
     // Extract purchase data
     final purchaseData = results[7] as Map<String, dynamic>;
     final totalPurchaseAmount = purchaseData['totalAmount'] as double;
-    final totalPurchaseQty = purchaseData['totalQty'] as int;
+    final totalPurchaseQty = (purchaseData['totalQty'] as num).toDouble();
     final purchaseOrdersCount = purchaseData['ordersCount'] as int;
 
     // Extract stock data
@@ -201,7 +201,7 @@ class DashboardOfflineRepository {
         );
 
     double totalAmount = 0;
-    int totalQty = 0;
+    double totalQty = 0;
 
     for (final purchase in purchases) {
       totalAmount += purchase.totalAmount;
@@ -378,11 +378,12 @@ class DashboardOfflineRepository {
         .getAllBatches(includeConsumed: false);
 
     // Calculate actual stock from batches for each product
-    final Map<String, int> productStockFromBatches = {};
+    final Map<String, double> productStockFromBatches = {};
     for (final batch in allBatches) {
       final productId = batch.productId;
       productStockFromBatches[productId] =
-          (productStockFromBatches[productId] ?? 0) + batch.quantityRemaining;
+          (productStockFromBatches[productId] ?? 0.0) +
+          batch.quantityRemaining;
     }
 
     // Filter products that are low on stock (using batch-based stock)

@@ -46,7 +46,7 @@ class BillReportPdfGenerator {
 
       // Calculate totals
       int totalItems = 0;
-      int totalQuantity = 0;
+      double totalQuantity = 0;
       double totalAmount = 0;
       double totalDiscount = 0;
       double totalTax = 0;

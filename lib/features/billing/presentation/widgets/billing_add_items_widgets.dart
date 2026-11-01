@@ -28,7 +28,7 @@ class AddItemsBottomSheet extends StatefulWidget {
     double sellingPrice,
     double purchasePrice,
     double quantity, // Changed to double to support decimal quantities
-    int maxStock,
+    double maxStock,
     double cgstPercent,
     double sgstPercent,
     String? hsnCode,
@@ -177,20 +177,20 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
   }
 
   // Check if any batch from this product group is already in the bill
-  int _getGroupQuantityInBill(GroupedBillingProduct group) {
-    int total = 0;
+  double _getGroupQuantityInBill(GroupedBillingProduct group) {
+    double total = 0;
     for (final billItem in widget.billItems) {
       // Check if bill item belongs to this product group
       for (final batch in group.batches) {
         final uniqueKey = '${batch.productId}_batch_${batch.id}';
         if (billItem.productId == uniqueKey) {
-          total += billItem.quantityInt;
+          total += billItem.quantity;
         }
       }
       // Also check fallback product
       if (group.fallbackProduct != null &&
           billItem.productId == group.fallbackProduct!.id) {
-        total += billItem.quantityInt;
+        total += billItem.quantity;
       }
     }
     return total;
@@ -205,7 +205,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
     required double sellingPrice,
     required double purchasePrice,
     required double currentQty,
-    required int maxStock,
+    required double maxStock,
     required double cgstPercent,
     required double sgstPercent,
     required String? hsnCode,
@@ -1425,9 +1425,9 @@ class GroupedBillingProduct {
       unitsPerPack > 1 && packUnit != null && packUnit!.trim().isNotEmpty;
 
   // Total stock across all batches
-  int get totalStock {
+  double get totalStock {
     if (batches.isNotEmpty) {
-      return batches.fold<int>(0, (s, b) => s + b.quantityRemaining);
+      return batches.fold<double>(0.0, (s, b) => s + b.quantityRemaining);
     }
     return fallbackProduct?.currentStock ?? 0;
   }
@@ -1622,7 +1622,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
   }
 
   // Get max stock in display unit
-  double _getMaxStockInDisplayUnit(int maxStock) {
+  double _getMaxStockInDisplayUnit(num maxStock) {
     return PackUnitConversion.maxStockInDisplayUnit(
       baseStock: maxStock,
       sellUnit: _selectedSellUnit,
@@ -1636,7 +1636,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
     if (_selectedBatchIndex == null) return;
     final batch = _filteredBatches[_selectedBatchIndex!];
     final existingQty = _getExistingQtyForBatch(batch);
-    final maxAvailable = batch.quantityRemaining - existingQty.round();
+    final maxAvailable = batch.quantityRemaining - existingQty;
     final maxInDisplayUnit = _getMaxStockInDisplayUnit(maxAvailable);
     final qty = double.tryParse(_qtyController.text) ?? 0;
 
@@ -1790,9 +1790,17 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                     // Minus button
                     IconButton(
                       onPressed: () {
-                        final current = int.tryParse(qtyController.text) ?? 0;
+                        final current =
+                            double.tryParse(qtyController.text.trim()) ?? 0;
+                        final step = (_selectedSellUnit == 'gm' ||
+                                _selectedSellUnit == 'ml')
+                            ? 100.0
+                            : 1.0;
                         if (current > 0) {
-                          qtyController.text = (current - 1).toString();
+                          final next = (current - step).clamp(0.0, double.infinity);
+                          qtyController.text = next == next.roundToDouble()
+                              ? next.toInt().toString()
+                              : next.toStringAsFixed(2);
                           validateQty();
                         }
                       },
@@ -1813,7 +1821,9 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                     Expanded(
                       child: TextField(
                         controller: qtyController,
-                        keyboardType: TextInputType.number,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                         textAlign: TextAlign.center,
                         onChanged: (_) => validateQty(),
                         style: TextStyle(
@@ -1845,10 +1855,18 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                     // Plus button
                     IconButton(
                       onPressed: () {
-                        final current = int.tryParse(qtyController.text) ?? 0;
+                        final current =
+                            double.tryParse(qtyController.text.trim()) ?? 0;
                         final maxDisplay = maxInDisplayUnit();
+                        final step = (_selectedSellUnit == 'gm' ||
+                                _selectedSellUnit == 'ml')
+                            ? 100.0
+                            : 1.0;
                         if (current < maxDisplay) {
-                          qtyController.text = (current + 1).toString();
+                          final next = (current + step).clamp(0.0, maxDisplay);
+                          qtyController.text = next == next.roundToDouble()
+                              ? next.toInt().toString()
+                              : next.toStringAsFixed(2);
                           validateQty();
                         }
                       },
@@ -2381,9 +2399,9 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
 
   Widget _buildQuantityBar(PurchaseBatchEntity batch, double existingQty) {
     final displayQty = double.tryParse(_qtyController.text) ?? 0;
-    final maxAvailable = batch.quantityRemaining - existingQty.round();
+    final maxAvailable = batch.quantityRemaining - existingQty;
     final maxDisplay = _getMaxStockInDisplayUnit(
-      maxAvailable < 0 ? 0 : maxAvailable,
+      maxAvailable < 0 ? 0.0 : maxAvailable,
     );
     final baseQty = _toBaseQty(displayQty < 0 ? 0 : displayQty);
     final lineTotal = _lineSellPrice(batch) * baseQty;

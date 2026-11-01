@@ -22,7 +22,7 @@ class Bill {
   final String? customerName;
   final String? customerContact;
   final List<BillItem> items;
-  final int totalQuantity;
+  final double totalQuantity;
   final double totalAmount;
   final double discountAmount;
   final double discountPercent;
@@ -173,7 +173,7 @@ class Bill {
         customerName: json['customerName'] as String?,
         customerContact: json['customerContact'] as String?,
         items: billItems,
-        totalQuantity: (json['totalQuantity'] ?? 0) as int,
+        totalQuantity: ((json['totalQuantity'] ?? 0) as num).toDouble(),
         totalAmount: totalAmount,
         discountAmount: discountAmount,
         discountPercent: discountPercent,
@@ -386,7 +386,7 @@ class Bill {
     String? customerName,
     String? customerContact,
     List<BillItem>? items,
-    int? totalQuantity,
+    double? totalQuantity,
     double? totalAmount,
     double? discountAmount,
     double? discountPercent,

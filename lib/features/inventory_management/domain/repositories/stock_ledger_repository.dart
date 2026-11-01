@@ -81,7 +81,7 @@ abstract class StockLedgerRepository {
   });
   
   // Get current stock balance for a product
-  Future<int> getCurrentBalance(String productId);
+  Future<double> getCurrentBalance(String productId);
   
   // Get current stock value for a product
   Future<double> getCurrentStockValue(String productId);

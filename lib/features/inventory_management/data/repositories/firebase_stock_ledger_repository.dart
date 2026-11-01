@@ -300,9 +300,9 @@ class FirebaseStockLedgerRepository implements StockLedgerRepository {
   }
 
   @override
-  Future<int> getCurrentBalance(String productId) async {
+  Future<double> getCurrentBalance(String productId) async {
     final entries = await getLedgerByProductId(productId);
-    if (entries.isEmpty) return 0;
+    if (entries.isEmpty) return 0.0;
     
     // Get the latest entry for balance
     return entries.first.balanceQuantity;
@@ -330,8 +330,8 @@ class FirebaseStockLedgerRepository implements StockLedgerRepository {
           !e.transactionDate.isAfter(endDate)).toList();
     }
     
-    int totalIn = 0;
-    int totalOut = 0;
+    double totalIn = 0.0;
+    double totalOut = 0.0;
     double totalCost = 0.0;
     double totalRevenue = 0.0;
     double totalProfit = 0.0;

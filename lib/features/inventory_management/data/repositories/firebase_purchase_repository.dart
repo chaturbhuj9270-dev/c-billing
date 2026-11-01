@@ -187,7 +187,7 @@ class FirebasePurchaseRepository implements PurchaseRepository {
   }
 
   @override
-  Future<int> getTotalPurchaseQuantity({
+  Future<double> getTotalPurchaseQuantity({
     DateTime? startDate,
     DateTime? endDate,
   }) async {
@@ -209,7 +209,7 @@ class FirebasePurchaseRepository implements PurchaseRepository {
       }
 
       final snapshot = await query.get();
-      int total = 0;
+      double total = 0.0;
       for (var doc in snapshot.docs) {
         final purchase = Purchase.fromJson(doc.data() as Map<String, dynamic>);
         total += purchase.quantity;

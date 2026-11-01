@@ -11,7 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ScannedInvoiceItem {
   String productName;
   String? companyName;
-  int quantity;
+  double quantity;
   double purchasePrice;
   double? salesPrice;
   String? unit;
@@ -45,7 +45,7 @@ class ScannedInvoiceItem {
     return ScannedInvoiceItem(
       productName: json['productName'] ?? json['name'] ?? 'Unknown',
       companyName: json['companyName'] ?? json['company'] ?? json['brand'],
-      quantity: _parseIntSafe(json['quantity'] ?? json['qty']),
+      quantity: _parseDoubleSafe(json['quantity'] ?? json['qty']),
       purchasePrice: _parseDoubleSafe(
         json['purchasePrice'] ??
             json['price'] ??
@@ -94,17 +94,6 @@ class ScannedInvoiceItem {
     'isSelected': isSelected,
     'matchedProductId': matchedProductId,
   };
-
-  static int _parseIntSafe(dynamic value) {
-    if (value == null) return 0;
-    if (value is int) return value;
-    if (value is double) return value.toInt();
-    if (value is String) {
-      final cleaned = value.replaceAll(RegExp(r'[^\d.]'), '');
-      return int.tryParse(cleaned) ?? double.tryParse(cleaned)?.toInt() ?? 0;
-    }
-    return 0;
-  }
 
   static double _parseDoubleSafe(dynamic value) {
     if (value == null) return 0.0;
@@ -161,7 +150,7 @@ class ScannedInvoiceItem {
   ScannedInvoiceItem copyWith({
     String? productName,
     String? companyName,
-    int? quantity,
+    double? quantity,
     double? purchasePrice,
     double? salesPrice,
     String? unit,

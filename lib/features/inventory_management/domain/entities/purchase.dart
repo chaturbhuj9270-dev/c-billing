@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 class Purchase {
   final String id;
   final String productId;
-  final int quantity;
+  final double quantity;
   final double purchasePrice;
   final double totalAmount;
   final String? notes;
@@ -26,7 +26,7 @@ class Purchase {
       return Purchase(
         id: (json['id'] ?? '') as String,
         productId: (json['productId'] ?? '') as String,
-        quantity: (json['quantity'] ?? 0) as int,
+        quantity: ((json['quantity'] ?? 0) as num).toDouble(),
         purchasePrice: ((json['purchasePrice'] ?? 0) as num).toDouble(),
         totalAmount: ((json['totalAmount'] ?? 0) as num).toDouble(),
         notes: json['notes'] as String?,
@@ -72,7 +72,7 @@ class Purchase {
   Purchase copyWith({
     String? id,
     String? productId,
-    int? quantity,
+    double? quantity,
     double? purchasePrice,
     double? totalAmount,
     String? notes,

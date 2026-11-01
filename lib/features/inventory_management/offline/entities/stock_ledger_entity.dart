@@ -90,7 +90,7 @@ class StockLedgerEntity {
   String referenceType;
 
   // Quantity moved in this transaction (always positive)
-  int quantity;
+  double quantity;
 
   // Cost price per unit from the batch (for COGS calculation)
   double costPrice;
@@ -108,7 +108,7 @@ class StockLedgerEntity {
   double profit;
 
   // Balance quantity after this transaction
-  int balanceQuantity;
+  double balanceQuantity;
 
   // Balance value after this transaction
   double balanceValue;
@@ -161,9 +161,9 @@ class StockLedgerEntity {
     required String batchId,
     int? localBatchId,
     required String purchaseReferenceId,
-    required int quantity,
+    required double quantity,
     required double costPrice,
-    required int balanceQuantity,
+    required double balanceQuantity,
     required double balanceValue,
     String? notes,
     LedgerSyncStatus syncStatus = LedgerSyncStatus.newRecord,
@@ -209,10 +209,10 @@ class StockLedgerEntity {
     required String batchId,
     int? localBatchId,
     required String billId,
-    required int quantity,
+    required double quantity,
     required double costPrice,
     required double sellingPrice,
-    required int balanceQuantity,
+    required double balanceQuantity,
     required double balanceValue,
     String? notes,
     LedgerSyncStatus syncStatus = LedgerSyncStatus.newRecord,
@@ -260,10 +260,10 @@ class StockLedgerEntity {
     required String batchId,
     int? localBatchId,
     required String returnReferenceId,
-    required int quantity,
+    required double quantity,
     required double costPrice,
     required double sellingPrice,
-    required int balanceQuantity,
+    required double balanceQuantity,
     required double balanceValue,
     String? notes,
     LedgerSyncStatus syncStatus = LedgerSyncStatus.newRecord,
@@ -333,13 +333,13 @@ class StockLedgerEntity {
       ledgerType: ledgerType,
       referenceId: data['referenceId'] as String? ?? '',
       referenceType: data['referenceType'] as String? ?? '',
-      quantity: (data['quantity'] as num?)?.toInt() ?? 0,
+      quantity: (data['quantity'] as num?)?.toDouble() ?? 0.0,
       costPrice: (data['costPrice'] as num?)?.toDouble() ?? 0.0,
       sellingPrice: (data['sellingPrice'] as num?)?.toDouble() ?? 0.0,
       totalCost: (data['totalCost'] as num?)?.toDouble() ?? 0.0,
       totalRevenue: (data['totalRevenue'] as num?)?.toDouble() ?? 0.0,
       profit: (data['profit'] as num?)?.toDouble() ?? 0.0,
-      balanceQuantity: (data['balanceQuantity'] as num?)?.toInt() ?? 0,
+      balanceQuantity: (data['balanceQuantity'] as num?)?.toDouble() ?? 0.0,
       balanceValue: (data['balanceValue'] as num?)?.toDouble() ?? 0.0,
       transactionDate: _parseDateTime(data['transactionDate']) ?? now,
       notes: data['notes'] as String?,
@@ -428,13 +428,13 @@ class StockLedgerEntity {
     LedgerTransactionType? ledgerType,
     String? referenceId,
     String? referenceType,
-    int? quantity,
+    double? quantity,
     double? costPrice,
     double? sellingPrice,
     double? totalCost,
     double? totalRevenue,
     double? profit,
-    int? balanceQuantity,
+    double? balanceQuantity,
     double? balanceValue,
     DateTime? transactionDate,
     String? notes,

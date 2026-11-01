@@ -293,13 +293,13 @@ class DashboardFirebaseDataSource {
   // Calculate purchase metrics from purchases snapshot
   _PurchaseMetrics _calculatePurchaseMetrics(QuerySnapshot purchasesSnapshot) {
     double totalAmount = 0;
-    int itemCount = 0;
+    double itemCount = 0;
 
     for (var doc in purchasesSnapshot.docs) {
       final data = doc.data() as Map<String, dynamic>?;
       if (data != null) {
         totalAmount += (data['totalAmount'] as num?)?.toDouble() ?? 0;
-        itemCount += (data['quantity'] as num?)?.toInt() ?? 0;
+        itemCount += (data['quantity'] as num?)?.toDouble() ?? 0.0;
       }
     }
 
@@ -317,7 +317,7 @@ class DashboardFirebaseDataSource {
 
     for (var doc in productsSnapshot.docs) {
       final data = doc.data() as Map<String, dynamic>;
-      final currentStock = (data['currentStock'] as num?)?.toInt() ?? 0;
+      final currentStock = (data['currentStock'] as num?)?.toDouble() ?? 0.0;
       final purchasePrice = (data['purchasePrice'] as num?)?.toDouble() ?? 0;
       stockValue += currentStock * purchasePrice;
       if (currentStock < 10 && currentStock > 0) {
@@ -354,7 +354,7 @@ class _SalesMetrics {
 class _PurchaseMetrics {
   final double totalAmount;
   final int count;
-  final int itemCount;
+  final double itemCount;
 
   _PurchaseMetrics({
     required this.totalAmount,

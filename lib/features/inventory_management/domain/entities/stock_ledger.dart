@@ -82,7 +82,7 @@ class StockLedger {
   final String referenceType;
   
   // Quantity moved in this transaction (always positive)
-  final int quantity;
+  final double quantity;
   
   // Cost price per unit from the batch (for COGS calculation)
   final double costPrice;
@@ -100,7 +100,7 @@ class StockLedger {
   final double profit;
   
   // Balance quantity after this transaction
-  final int balanceQuantity;
+  final double balanceQuantity;
   
   // Balance value after this transaction
   final double balanceValue;
@@ -156,13 +156,13 @@ class StockLedger {
         ),
         referenceId: (json['referenceId'] ?? '') as String,
         referenceType: (json['referenceType'] ?? '') as String,
-        quantity: (json['quantity'] ?? 0) as int,
+        quantity: ((json['quantity'] ?? 0) as num).toDouble(),
         costPrice: ((json['costPrice'] ?? 0) as num).toDouble(),
         sellingPrice: ((json['sellingPrice'] ?? 0) as num).toDouble(),
         totalCost: ((json['totalCost'] ?? 0) as num).toDouble(),
         totalRevenue: ((json['totalRevenue'] ?? 0) as num).toDouble(),
         profit: ((json['profit'] ?? 0) as num).toDouble(),
-        balanceQuantity: (json['balanceQuantity'] ?? 0) as int,
+        balanceQuantity: ((json['balanceQuantity'] ?? 0) as num).toDouble(),
         balanceValue: ((json['balanceValue'] ?? 0) as num).toDouble(),
         transactionDate: json['transactionDate'] != null
             ? DateTime.parse(json['transactionDate'] as String)
@@ -231,13 +231,13 @@ class StockLedger {
     LedgerType? ledgerType,
     String? referenceId,
     String? referenceType,
-    int? quantity,
+    double? quantity,
     double? costPrice,
     double? sellingPrice,
     double? totalCost,
     double? totalRevenue,
     double? profit,
-    int? balanceQuantity,
+    double? balanceQuantity,
     double? balanceValue,
     DateTime? transactionDate,
     String? notes,
@@ -290,7 +290,7 @@ class ConsumedBatchEntry {
   final String productName;
   final String companyName;
   final String modelName;
-  final int quantityConsumed;
+  final double quantityConsumed;
   final double costPrice;
   final double totalCost;
   
@@ -325,7 +325,7 @@ class ConsumedBatchEntry {
       productName: (json['productName'] ?? '') as String,
       companyName: (json['companyName'] ?? '') as String,
       modelName: (json['modelName'] ?? '') as String,
-      quantityConsumed: (json['quantityConsumed'] ?? 0) as int,
+      quantityConsumed: ((json['quantityConsumed'] ?? 0) as num).toDouble(),
       costPrice: ((json['costPrice'] ?? 0) as num).toDouble(),
       totalCost: ((json['totalCost'] ?? 0) as num).toDouble(),
     );

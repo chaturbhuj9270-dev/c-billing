@@ -4,12 +4,12 @@ class ReportProductRow {
   final String productName;
   final String companyName;
   final String supplierName;
-  final int purchaseQty;
-  final int soldQty;
-  final int returnedQty; // sale returns + purchase returns combined
-  final int saleReturnQty;
-  final int purchaseReturnQty;
-  final int currentStock;
+  final double purchaseQty;
+  final double soldQty;
+  final double returnedQty; // sale returns + purchase returns combined
+  final double saleReturnQty;
+  final double purchaseReturnQty;
+  final double currentStock;
   final double purchasePrice;
   final double sellingPrice;
   final double totalPurchaseAmount;

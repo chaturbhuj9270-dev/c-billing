@@ -129,7 +129,7 @@ class FirebaseProductRepository implements ProductRepository {
   }
 
   @override
-  Future<void> updateProductStock(String productId, int newStock) async {
+  Future<void> updateProductStock(String productId, double newStock) async {
     try {
       await _productsCollection.doc(productId).update({
         'currentStock': newStock,

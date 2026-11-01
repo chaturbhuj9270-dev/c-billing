@@ -943,7 +943,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     );
   }
 
-  Widget _buildStatusChip(int stock) {
+  Widget _buildStatusChip(num stock) {
     final status = _getStockStatus(stock);
     final color = _getStockColor(stock);
 
@@ -1262,14 +1262,14 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
 
   // --------------------------------------------------------------------------- Helpers ---------------------------------------------------------------------------
 
-  String _getStockStatus(int stock) {
-    if (stock == 0) return _localizations.outOfStock;
+  String _getStockStatus(num stock) {
+    if (stock <= 0) return _localizations.outOfStock;
     if (stock <= 10) return _localizations.lowStock;
     return _localizations.inStock;
   }
 
-  Color _getStockColor(int stock) {
-    if (stock == 0) return AppTheme.red600;
+  Color _getStockColor(num stock) {
+    if (stock <= 0) return AppTheme.red600;
     if (stock <= 10) return AppTheme.orange600;
     return AppTheme.green600;
   }

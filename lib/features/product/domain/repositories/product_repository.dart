@@ -12,7 +12,7 @@ class Product {
   final String? barcode;
   final double purchasePrice;
   final double salesPrice;
-  final int currentStock;
+  final double currentStock;
   final String? unit;
   final bool isActive;
   final bool isSynced;
@@ -82,7 +82,7 @@ class Product {
     String? barcode,
     double? purchasePrice,
     double? salesPrice,
-    int? currentStock,
+    double? currentStock,
     String? unit,
     bool? isActive,
     bool? isSynced,
@@ -215,7 +215,7 @@ class ProductRepository {
     String? barcode,
     required double purchasePrice,
     required double salesPrice,
-    int currentStock = 0,
+    double currentStock = 0,
     String? unit,
     bool isActive = true,
     String? description,
@@ -252,7 +252,7 @@ class ProductRepository {
     String? barcode,
     double? purchasePrice,
     double? salesPrice,
-    int? currentStock,
+    double? currentStock,
     String? unit,
     bool? isActive,
     String? description,
@@ -279,13 +279,13 @@ class ProductRepository {
   }
 
   // Update stock quantity
-  Future<Product?> updateStock(int id, int newQuantity) async {
+  Future<Product?> updateStock(int id, double newQuantity) async {
     final entity = await _offlineController.updateStock(id, newQuantity);
     return entity != null ? Product.fromEntity(entity) : null;
   }
 
   // Adjust stock (add/subtract)
-  Future<Product?> adjustStock(int id, int adjustment) async {
+  Future<Product?> adjustStock(int id, double adjustment) async {
     final entity = await _offlineController.adjustStock(id, adjustment);
     return entity != null ? Product.fromEntity(entity) : null;
   }

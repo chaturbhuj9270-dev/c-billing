@@ -25,7 +25,7 @@ class DashboardSummary extends Equatable {
 
   final double totalPurchases;
   final int purchaseOrders;
-  final int purchaseQty;
+  final double purchaseQty;
 
   // Total purchase return amount (sum of quantity × purchasePrice from PURCHASE_RETURN ledger entries)
   final double totalPurchaseReturns;
@@ -122,7 +122,7 @@ class DashboardSummary extends Equatable {
     double? netSales,
     double? totalPurchases,
     int? purchaseOrders,
-    int? purchaseQty,
+    double? purchaseQty,
     double? totalPurchaseReturns,
     int? purchaseReturnCount,
     double? profit,
@@ -225,7 +225,7 @@ class DashboardSummary extends Equatable {
       netSales: (json['netSales'] as num?)?.toDouble() ?? 0,
       totalPurchases: (json['totalPurchases'] as num?)?.toDouble() ?? 0,
       purchaseOrders: json['purchaseOrders'] as int? ?? 0,
-      purchaseQty: json['purchaseQty'] as int? ?? 0,
+      purchaseQty: (json['purchaseQty'] as num?)?.toDouble() ?? 0.0,
       totalPurchaseReturns:
           (json['totalPurchaseReturns'] as num?)?.toDouble() ?? 0,
       purchaseReturnCount: json['purchaseReturnCount'] as int? ?? 0,

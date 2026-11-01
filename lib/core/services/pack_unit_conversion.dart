@@ -19,11 +19,11 @@ class PackUnitConversion {
     return n < 1 ? defaultUnitsPerPack : n;
   }
 
-  /// Packs → base units (stock scale).
-  static int toBaseQuantity(num packOrBaseQty, int unitsPerPack) {
+  /// Packs → base units (stock scale). Supports fractional packs.
+  static double toBaseQuantity(num packOrBaseQty, int unitsPerPack) {
     final n = normalizeUnitsPerPack(unitsPerPack);
-    if (n <= 1) return packOrBaseQty.round();
-    return (packOrBaseQty * n).round();
+    if (n <= 1) return packOrBaseQty.toDouble();
+    return packOrBaseQty.toDouble() * n;
   }
 
   /// Base units → pack display qty.
@@ -116,7 +116,7 @@ class PackUnitConversion {
 
   /// Max sellable in display unit from base stock.
   static double maxStockInDisplayUnit({
-    required int baseStock,
+    required num baseStock,
     required String? sellUnit,
     required String? baseUnit,
     String? packUnit,
@@ -162,9 +162,45 @@ class PackUnitConversion {
     return baseSalesPrice;
   }
 
+  /// Suggested stock unit when buying a pack (Bag→Kg, Strip→Tablet).
+  static String? suggestedBaseUnitForPack(String? packUnit) {
+    switch ((packUnit ?? '').trim().toLowerCase()) {
+      case 'bag':
+        return 'Kg';
+      case 'strip':
+        return 'Tablet';
+      case 'box':
+        return 'Pcs';
+      default:
+        return null;
+    }
+  }
+
+  /// Example content for one pack, e.g. "50 Kg" or "10 Tablet".
+  static String unitsPerPackExample({
+    required String? packUnit,
+    required String? baseUnit,
+  }) {
+    final pack = (packUnit ?? 'pack').trim();
+    final base = (baseUnit ?? suggestedBaseUnitForPack(pack) ?? 'unit').trim();
+    if (pack.toLowerCase() == 'bag') return 'e.g. 50 $base';
+    if (pack.toLowerCase() == 'strip') return 'e.g. 10 $base';
+    return 'e.g. 10 $base';
+  }
+
+  /// Invoice / ledger total when buying packs at a **per-base** rate.
+  /// Example: 2 Bag × 50 Kg × ₹40/Kg = ₹4000.
+  static double packPurchaseTotal({
+    required num packQty,
+    required int unitsPerPack,
+    required num pricePerBaseUnit,
+  }) {
+    return toBaseQuantity(packQty, unitsPerPack) * pricePerBaseUnit.toDouble();
+  }
+
   /// Human-readable stock: "150 Tablet (15 Strip)".
   static String formatStockLabel({
-    required int baseStock,
+    required num baseStock,
     String? baseUnit,
     String? packUnit,
     int? unitsPerPack,
@@ -172,16 +208,23 @@ class PackUnitConversion {
     final baseLabel = (baseUnit != null && baseUnit.trim().isNotEmpty)
         ? baseUnit.trim()
         : 'pcs';
+    final stock = baseStock.toDouble();
+    final stockText = stock == stock.roundToDouble()
+        ? stock.toInt().toString()
+        : stock.toStringAsFixed(2);
     if (!hasPack(packUnit: packUnit, unitsPerPack: unitsPerPack)) {
-      return '$baseStock $baseLabel';
+      return '$stockText $baseLabel';
     }
     final n = normalizeUnitsPerPack(unitsPerPack);
-    final packs = baseStock ~/ n;
-    final loose = baseStock % n;
+    final packs = (stock / n).floor();
+    final loose = stock - (packs * n);
     final packLabel = packUnit!.trim();
-    if (loose == 0) {
-      return '$baseStock $baseLabel ($packs $packLabel)';
+    if (loose.abs() < 1e-9) {
+      return '$stockText $baseLabel ($packs $packLabel)';
     }
-    return '$baseStock $baseLabel ($packs $packLabel + $loose)';
+    final looseText = loose == loose.roundToDouble()
+        ? loose.toInt().toString()
+        : loose.toStringAsFixed(2);
+    return '$stockText $baseLabel ($packs $packLabel + $looseText)';
   }
 }

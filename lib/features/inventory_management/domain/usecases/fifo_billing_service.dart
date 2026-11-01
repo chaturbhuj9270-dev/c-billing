@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../../../core/utils/qty.dart';
 import '../../../billing/domain/entities/bill_item.dart';
 import '../../../billing/offline/entities/bill_entity.dart';
 import '../../../billing/offline/controllers/bill_offline_controller.dart';
@@ -85,8 +86,7 @@ class FifoBillingService {
         item.productId,
       );
 
-      // Use rounded quantity for stock comparison since stock is integer-based
-      if (availableStock < item.quantityInt) {
+      if (availableStock + Qty.epsilon < item.quantity) {
         final displayQty = item.quantity == item.quantity.roundToDouble()
             ? item.quantity.toInt().toString()
             : item.quantity.toStringAsFixed(2);
@@ -99,7 +99,7 @@ class FifoBillingService {
   }
 
   // Get current stock for a product
-  Future<int> getProductStock(String productId) async {
+  Future<double> getProductStock(String productId) async {
     return await _fifoService.getAvailableStock(productId);
   }
 
@@ -129,10 +129,10 @@ class FifoBillingService {
     }
 
     try {
-      // Calculate totals (use rounded quantity for display total)
-      final totalQuantity = items.fold(
-        0,
-        (total, item) => total + item.quantityInt,
+      // Calculate totals from exact line quantities
+      final totalQuantity = items.fold<double>(
+        0.0,
+        (total, item) => total + item.quantity,
       );
       final totalAmount = items.fold(0.0, (total, item) => total + item.subtotal);
 
@@ -203,7 +203,7 @@ class FifoBillingService {
       for (final item in items) {
         final saleResult = await _fifoService.processFifoSale(
           productId: item.productId,
-          quantity: item.quantityInt, // Round for FIFO stock tracking
+          quantity: item.quantity,
           sellingPrice: item.sellingPrice,
           billId: billId,
           notes: 'Bill: $billId',
@@ -316,7 +316,7 @@ class ReturnItemInfo {
   final String modelName;
   final String batchId;
   final int? localBatchId;
-  final int quantity;
+  final double quantity;
   final double costPrice;
   final double sellingPrice;
 

@@ -8,6 +8,7 @@ import '../../../../core/services/language_service.dart';
 import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../../../core/services/product_settings_service.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/utils/qty.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../product/offline/entities/product_entity.dart';
 import '../../../product/data/services/product_sync_service.dart';
@@ -2088,7 +2089,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
     final purchasePrice = double.tryParse(purchasePriceController.text) ?? 0.0;
     final salesPrice = double.tryParse(salesPriceController.text) ?? 0.0;
-    final initialStock = int.tryParse(initialStockController.text) ?? 0;
+    final initialStock =
+        Qty.tryParse(initialStockController.text) ?? 0.0;
     final cgstVal = applyGst
         ? (double.tryParse(cgstController.text) ?? 0.0)
         : 0.0;

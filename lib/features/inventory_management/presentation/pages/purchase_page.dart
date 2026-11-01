@@ -8,6 +8,7 @@ import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/services/purchase_settings_service.dart';
 import 'package:c_billing/core/services/product_settings_service.dart';
 import 'package:c_billing/core/services/pack_unit_conversion.dart';
+import 'package:c_billing/core/utils/qty.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import '../../data/datasources/purchase_cache_datasource.dart';
 import '../../domain/entities/product.dart';
@@ -23,6 +24,8 @@ import '../../../company/offline/entities/company_entity.dart';
 import '../../../company/data/services/company_sync_service.dart';
 import '../../../product/offline/entities/product_entity.dart';
 import '../../../../core/services/inventory_integration_service.dart';
+import '../../domain/utils/purchase_tax_calculator.dart';
+import '../../../billing/domain/entities/bill_tax_settings.dart';
 import 'purchase_settings_page.dart';
 import 'invoice_scanner_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
@@ -70,28 +73,66 @@ class _PurchasePageState extends State<PurchasePage>
   /// Per-unit (tablet) sale price when buying packs — independent of pack sale price.
   final _unitSalesPriceController = TextEditingController();
 
+  // Purchase GST / ITC (rates seeded from product; batch COGS stays exclusive).
+  bool _applyGst = false;
+  bool _isInterstate = false;
+  double _purchaseCgstPercent = 0;
+  double _purchaseSgstPercent = 0;
+  String? _purchaseHsnCode;
+
   static const List<String> _packUnitOptions = ['Strip', 'Bag', 'Box'];
 
-  /// Units shown on purchase: settings list + pack options always (mobile).
+  /// Buy-as chips: pack containers first, then loose/base units.
   List<String> get _purchaseUnitChipOptions {
-    final units = <String>[
+    final units = <String>[..._packUnitOptions];
+    for (final u in [
       ...PurchaseSettingsService.instance.availableUnits,
-    ];
-    for (final pack in [..._packUnitOptions, 'Tablet', 'Pcs']) {
-      if (!units.contains(pack)) units.add(pack);
+      'Kg',
+      'Grams',
+      'Ltr',
+      'Ml',
+      'Tablet',
+      'Pcs',
+      'Item',
+      'Qty',
+    ]) {
+      if (!_packUnitOptions.contains(u) && !units.contains(u)) {
+        units.add(u);
+      }
     }
     return units;
   }
 
+  /// Stock unit inside a pack — never show Strip/Bag/Box here.
   List<String> get _baseStockUnitOptions {
-    final units = <String>[
-      ...PurchaseSettingsService.instance.availableUnits,
-    ];
-    for (final u in ['Pcs', 'Tablet', 'Item', 'Qty', 'Kg', 'Grams', 'Ltr', 'Ml']) {
-      if (!units.contains(u)) units.add(u);
+    final preferred = <String>[];
+    final pack = _purchasePackUnit;
+    final suggested = PackUnitConversion.suggestedBaseUnitForPack(pack);
+    if (suggested != null) preferred.add(suggested);
+    // Context-aware extras (Bag → weight, Strip → tablet/pcs).
+    if (pack == 'Bag') {
+      preferred.addAll(['Kg', 'Grams']);
+    } else if (pack == 'Strip') {
+      preferred.addAll(['Tablet', 'Pcs', 'Item']);
+    } else if (pack == 'Box') {
+      preferred.addAll(['Pcs', 'Item', 'Qty', 'Tablet']);
     }
-    // Pack labels are not base stock units.
-    return units.where((u) => !_packUnitOptions.contains(u)).toList();
+    for (final u in [
+      ...PurchaseSettingsService.instance.availableUnits,
+      'Kg',
+      'Grams',
+      'Ltr',
+      'Ml',
+      'Tablet',
+      'Pcs',
+      'Item',
+      'Qty',
+    ]) {
+      if (!_packUnitOptions.contains(u) && !preferred.contains(u)) {
+        preferred.add(u);
+      }
+    }
+    return preferred;
   }
 
   final _quantityController = TextEditingController();
@@ -796,6 +837,7 @@ class _PurchasePageState extends State<PurchasePage>
             _priceController.text = _selectedProduct!.purchasePrice.toString();
             _salesPriceController.text = _selectedProduct!.salesPrice
                 .toString();
+            _seedPurchaseGstFromProduct(_selectedProduct!);
             // Auto-populate company and supplier from the newly created product
             if (selectedCompany != null) {
               _selectedCompany = selectedCompany;
@@ -1552,6 +1594,7 @@ class _PurchasePageState extends State<PurchasePage>
                                   _selectedProduct = product;
                                   _applyProductPackDefaults(product);
                                   _fillPricesForSelectedProduct(product);
+                                  _seedPurchaseGstFromProduct(product);
 
                                   // Auto-populate company from product
                                   if (product.companyName.isNotEmpty) {
@@ -2239,6 +2282,41 @@ class _PurchasePageState extends State<PurchasePage>
     setState(() {});
   }
 
+  /// Whole units inside one pack (50 Kg/Bag, 10 Tablet/Strip).
+  int _parseUnitsPerPack() {
+    final raw = _unitsPerPackController.text.trim();
+    final asDouble = double.tryParse(raw);
+    if (asDouble != null && asDouble >= 1) {
+      return asDouble.round().clamp(1, 999999);
+    }
+    return int.tryParse(raw) ?? 1;
+  }
+
+  void _seedPurchaseGstFromProduct(Product product) {
+    _purchaseCgstPercent = product.cgstPercent;
+    _purchaseSgstPercent = product.sgstPercent;
+    _purchaseHsnCode = product.hsnCode;
+    _applyGst = product.cgstPercent > 0 || product.sgstPercent > 0;
+    // Keep interstate as user preference across product picks unless rates are zero.
+    if (!_applyGst) _isInterstate = false;
+  }
+
+  PurchaseTaxResult _currentPurchaseTax({
+    required double quantity,
+    required double purchasePrice,
+  }) {
+    return PurchaseTaxCalculator.calculate(
+      quantity: quantity,
+      purchasePrice: purchasePrice,
+      cgstPercent: _purchaseCgstPercent,
+      sgstPercent: _purchaseSgstPercent,
+      isInterstate: _isInterstate,
+      isGstApplied: _applyGst,
+      gstMode: GstMode.excludeGst,
+      hsnCode: _purchaseHsnCode,
+    );
+  }
+
   void _applyProductPackDefaults(Product product) {
     if (product.hasPackSell) {
       _buyAsPack = true;
@@ -2246,6 +2324,11 @@ class _PurchasePageState extends State<PurchasePage>
       _unitsPerPackController.text = '${product.unitsPerPack}';
       if (product.unit != null && product.unit!.trim().isNotEmpty) {
         _selectedUnit = product.unit!.trim();
+      } else {
+        _selectedUnit = PackUnitConversion.suggestedBaseUnitForPack(
+              _purchasePackUnit,
+            ) ??
+            'Pcs';
       }
     } else {
       _buyAsPack = false;
@@ -2258,21 +2341,15 @@ class _PurchasePageState extends State<PurchasePage>
   }
 
   void _fillPricesForSelectedProduct(Product product) {
-    final n = PackUnitConversion.normalizeUnitsPerPack(
-      int.tryParse(_unitsPerPackController.text) ?? product.unitsPerPack,
-    );
+    // Purchase price is always per stock unit (₹/Kg, ₹/Tablet) — even when
+    // buying bags/strips. Total = packs × unitsPerPack × rate.
+    _priceController.text = product.purchasePrice.toStringAsFixed(2);
     _unitSalesPriceController.text = product.salesPrice.toStringAsFixed(2);
     if (_buyAsPack) {
-      _priceController.text = PackUnitConversion.toPackUnitPrice(
-        product.purchasePrice,
-        n,
-      ).toStringAsFixed(2);
-      // Pack sale price is independent (not unit × N).
-      _salesPriceController.text = product.effectivePackSalesPrice
-          .toStringAsFixed(2);
+      _salesPriceController.text =
+          product.effectivePackSalesPrice.toStringAsFixed(2);
     } else {
-      _priceController.text = product.purchasePrice.toString();
-      _salesPriceController.text = product.salesPrice.toString();
+      _salesPriceController.text = product.salesPrice.toStringAsFixed(2);
     }
   }
 
@@ -2289,10 +2366,6 @@ class _PurchasePageState extends State<PurchasePage>
   void _selectPurchasePackUnit(String? packUnit) {
     final product = _selectedProduct;
     final previousBuyAsPack = _buyAsPack;
-    final previousUnits = PackUnitConversion.normalizeUnitsPerPack(
-      int.tryParse(_unitsPerPackController.text) ?? 1,
-    );
-    final enteredPrice = double.tryParse(_priceController.text);
 
     setState(() {
       if (packUnit == null) {
@@ -2304,39 +2377,36 @@ class _PurchasePageState extends State<PurchasePage>
         if ((int.tryParse(_unitsPerPackController.text) ?? 1) <= 1) {
           _unitsPerPackController.text = packUnit == 'Bag' ? '50' : '10';
         }
-      }
-
-      final nextUnits = PackUnitConversion.normalizeUnitsPerPack(
-        int.tryParse(_unitsPerPackController.text) ?? 1,
-      );
-
-      // Convert purchase cost between pack ↔ unit; keep sale prices independent.
-      if (enteredPrice != null) {
-        if (previousBuyAsPack && !_buyAsPack) {
-          _priceController.text = PackUnitConversion.toBaseUnitPrice(
-            enteredPrice,
-            previousUnits,
-          ).toStringAsFixed(2);
-        } else if (!previousBuyAsPack && _buyAsPack) {
-          _priceController.text = PackUnitConversion.toPackUnitPrice(
-            enteredPrice,
-            nextUnits,
-          ).toStringAsFixed(2);
+        // Align stock unit with pack type (Bag→Kg, Strip→Tablet) when empty
+        // or still on an unrelated default.
+        final suggested =
+            PackUnitConversion.suggestedBaseUnitForPack(packUnit);
+        final current = _selectedUnit?.trim();
+        final needsSuggest = current == null ||
+            current.isEmpty ||
+            _packUnitOptions.contains(current) ||
+            (packUnit == 'Bag' &&
+                !['Kg', 'Grams', 'gm', 'kg'].contains(current)) ||
+            (packUnit == 'Strip' &&
+                !['Tablet', 'Pcs', 'Item', 'Qty'].contains(current));
+        if (suggested != null && needsSuggest) {
+          _selectedUnit = suggested;
         }
       }
 
+      // Purchase rate stays per-base (₹/Kg). Do not multiply/divide when
+      // toggling Bag/Strip — that was causing ₹40/kg → ₹400/bag confusion.
       if (product != null) {
         if (_buyAsPack) {
           if (_salesPriceController.text.trim().isEmpty || !previousBuyAsPack) {
-            _salesPriceController.text = product.effectivePackSalesPrice
-                .toStringAsFixed(2);
+            _salesPriceController.text =
+                product.effectivePackSalesPrice.toStringAsFixed(2);
           }
           if (_unitSalesPriceController.text.trim().isEmpty) {
             _unitSalesPriceController.text =
                 product.salesPrice.toStringAsFixed(2);
           }
         } else if (previousBuyAsPack) {
-          // Leaving pack mode — show unit sale price in the main sales field.
           final unitSale = double.tryParse(_unitSalesPriceController.text) ??
               product.salesPrice;
           _salesPriceController.text = unitSale.toStringAsFixed(2);
@@ -2366,7 +2436,7 @@ class _PurchasePageState extends State<PurchasePage>
       return;
     }
 
-    final enteredQty = int.tryParse(_quantityController.text);
+    final enteredQty = Qty.tryParse(_quantityController.text);
     final enteredPrice = double.tryParse(_priceController.text);
     final enteredPackOrUnitSales = double.tryParse(_salesPriceController.text);
 
@@ -2385,23 +2455,26 @@ class _PurchasePageState extends State<PurchasePage>
       return;
     }
 
-    // Pack↔base: stock / FIFO always store base units & per-base COGS.
-    // Pack sale price stays independent from unit (tablet) sale price.
+    // Pack↔base: stock/FIFO store base units. Purchase rate is always per
+    // base unit (₹/Kg, ₹/Tablet). Total = packs × unitsPerPack × rate
+    // e.g. 2 Bag × 50 Kg × ₹40 = ₹4000 → stock 100 Kg @ ₹40/Kg.
     final product = _selectedProduct!;
     final purchasePackUnit = _purchasePackUnit?.trim();
-    final unitsPerPack = PackUnitConversion.normalizeUnitsPerPack(
-      int.tryParse(_unitsPerPackController.text.trim()) ?? 1,
-    );
+    final unitsPerPack =
+        PackUnitConversion.normalizeUnitsPerPack(_parseUnitsPerPack());
     final buyingAsPack = _buyAsPack &&
         purchasePackUnit != null &&
         purchasePackUnit.isNotEmpty &&
         unitsPerPack > 1;
     final quantity = buyingAsPack
-        ? PackUnitConversion.toBaseQuantity(enteredQty, unitsPerPack)
+        ? PackUnitConversion.toBaseQuantity(enteredQty, unitsPerPack).toDouble()
         : enteredQty;
-    final price = buyingAsPack
-        ? PackUnitConversion.toBaseUnitPrice(enteredPrice, unitsPerPack)
-        : enteredPrice;
+    // enteredPrice is already ₹ per stock unit — never divide by unitsPerPack.
+    final price = enteredPrice;
+    final taxSnapshot = _currentPurchaseTax(
+      quantity: quantity,
+      purchasePrice: price,
+    );
     final double? packSalesPrice = buyingAsPack ? enteredPackOrUnitSales : null;
     final double salesPrice = buyingAsPack
         ? (double.tryParse(_unitSalesPriceController.text) ??
@@ -2419,8 +2492,11 @@ class _PurchasePageState extends State<PurchasePage>
               : PurchaseSettingsService.instance.defaultUnit);
     final packNote = buyingAsPack
         ? 'Bought $enteredQty $purchasePackUnit × $unitsPerPack $stockUnit'
-            ' (pack sale ₹${enteredPackOrUnitSales.toStringAsFixed(2)},'
-            ' unit sale ₹${salesPrice.toStringAsFixed(2)})'
+            ' = ${quantity.toStringAsFixed(quantity == quantity.roundToDouble() ? 0 : 2)} $stockUnit'
+            ' @ ₹${price.toStringAsFixed(2)}/$stockUnit'
+            ' (total ₹${(quantity * price).toStringAsFixed(2)};'
+            ' pack sale ₹${enteredPackOrUnitSales.toStringAsFixed(2)},'
+            ' loose sale ₹${salesPrice.toStringAsFixed(2)}/$stockUnit)'
         : null;
 
     setState(() => _isLoading = true);
@@ -2454,6 +2530,12 @@ class _PurchasePageState extends State<PurchasePage>
               if (packNote != null) return packNote;
               return userNotes.isNotEmpty ? userNotes : null;
             }(),
+            isGstApplied: taxSnapshot.isGstApplied,
+            isInterstate: taxSnapshot.isInterstate,
+            cgstPercent: _purchaseCgstPercent,
+            sgstPercent: _purchaseSgstPercent,
+            hsnCode: _purchaseHsnCode,
+            taxSnapshot: taxSnapshot,
           );
 
       if (!integrationResult.success) {
@@ -2570,6 +2652,11 @@ class _PurchasePageState extends State<PurchasePage>
           _purchasePackUnit = null;
           _unitsPerPackController.text = '10';
           _unitSalesPriceController.clear();
+          _applyGst = false;
+          _isInterstate = false;
+          _purchaseCgstPercent = 0;
+          _purchaseSgstPercent = 0;
+          _purchaseHsnCode = null;
         });
 
         // Reload products to show updated stock - stream auto-handles this
@@ -3633,7 +3720,7 @@ class _PurchasePageState extends State<PurchasePage>
                 : _localizations.purchaseQuantity,
             hint: _localizations.enterQuantity,
             icon: Icons.shopping_cart_rounded,
-            keyboardType: TextInputType.number,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             onChanged: (_) => _calculateTotal(),
           ),
           const SizedBox(height: 16),
@@ -3651,24 +3738,48 @@ class _PurchasePageState extends State<PurchasePage>
             _buildTextField(
               controller: _unitsPerPackController,
               label:
-                  'Units per ${_purchasePackUnit ?? 'pack'} (e.g. 10 tablets)',
-              hint: 'How many sell units in one pack',
+                  '${_selectedUnit ?? 'Units'} per ${_purchasePackUnit ?? 'pack'} '
+                  '(${PackUnitConversion.unitsPerPackExample(packUnit: _purchasePackUnit, baseUnit: _selectedUnit)})',
+              hint:
+                  'How many ${_selectedUnit ?? 'units'} in one ${_purchasePackUnit ?? 'pack'}',
               icon: Icons.grid_view_rounded,
-              keyboardType: TextInputType.number,
-              onChanged: (_) => setState(() {}),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              onChanged: (_) => _calculateTotal(),
             ),
             const SizedBox(height: 12),
             _buildChipSelector(
-              label: 'Sell / stock unit (inside pack)',
+              label: 'Stock unit (inside ${_purchasePackUnit ?? 'pack'})',
               options: _baseStockUnitOptions,
               selectedValue: _selectedUnit,
-              onSelected: (unit) => setState(() => _selectedUnit = unit),
+              onSelected: (unit) => setState(() {
+                _selectedUnit = unit;
+                _calculateTotal();
+              }),
               color: AppTheme.toneCyan,
               icon: Icons.inventory_2_outlined,
             ),
             const SizedBox(height: 8),
             Text(
-              'Example: 5 Strip × ${_unitsPerPackController.text.isEmpty ? '10' : _unitsPerPackController.text} = stock in ${_selectedUnit ?? 'units'}',
+              () {
+                final packs = _quantityController.text.trim().isEmpty
+                    ? '2'
+                    : _quantityController.text.trim();
+                final per = _unitsPerPackController.text.trim().isEmpty
+                    ? (_purchasePackUnit == 'Bag' ? '50' : '10')
+                    : _unitsPerPackController.text.trim();
+                final pack = _purchasePackUnit ?? 'pack';
+                final unit = _selectedUnit ?? 'unit';
+                final totalStock = (Qty.parseOrZero(packs) *
+                        (double.tryParse(per) ?? 0))
+                    .toStringAsFixed(
+                  (Qty.parseOrZero(packs) * (double.tryParse(per) ?? 0)) ==
+                          (Qty.parseOrZero(packs) * (double.tryParse(per) ?? 0))
+                              .roundToDouble()
+                      ? 0
+                      : 2,
+                );
+                return 'Example: $packs $pack × $per $unit = $totalStock $unit stock';
+              }(),
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 12,
@@ -3949,11 +4060,28 @@ class _PurchasePageState extends State<PurchasePage>
 
   // Pricing section
   Widget _buildPricingSection() {
-    final quantity = int.tryParse(_quantityController.text) ?? 0;
-    final price = double.tryParse(_priceController.text) ?? 0;
-    final total = quantity * price;
+    final enteredQty = double.tryParse(_quantityController.text.trim()) ?? 0;
+    final enteredPrice = double.tryParse(_priceController.text) ?? 0;
+    final unitsPerPack =
+        PackUnitConversion.normalizeUnitsPerPack(_parseUnitsPerPack());
+    final buyingAsPack = _buyAsPack &&
+        _purchasePackUnit != null &&
+        _purchasePackUnit!.isNotEmpty &&
+        unitsPerPack > 1;
+    // Rate is per stock unit (₹/Kg). Taxable = packs × content × rate.
+    final baseQty = buyingAsPack
+        ? PackUnitConversion.toBaseQuantity(enteredQty, unitsPerPack).toDouble()
+        : enteredQty;
+    final basePrice = enteredPrice;
+    final tax = _currentPurchaseTax(
+      quantity: baseQty,
+      purchasePrice: basePrice,
+    );
     final packLabel = _purchasePackUnit ?? 'pack';
     final unitLabel = _selectedUnit ?? 'unit';
+    final hasProductRates =
+        _purchaseCgstPercent > 0 || _purchaseSgstPercent > 0;
+    final packCost = buyingAsPack ? enteredPrice * unitsPerPack : enteredPrice;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -3963,15 +4091,13 @@ class _PurchasePageState extends State<PurchasePage>
         children: [
           _sectionHeading(Icons.currency_rupee_rounded, _localizations.pricing),
           const SizedBox(height: 16),
-          // Price fields row
+          // Price fields row — purchase rate always per stock unit
           Row(
             children: [
               Expanded(
                 child: _buildPriceField(
                   controller: _priceController,
-                  label: _buyAsPack
-                      ? 'Purchase / $packLabel'
-                      : _localizations.purchasePrice,
+                  label: 'Purchase / $unitLabel',
                   hint: '0.00',
                   onChanged: (_) => _calculateTotal(),
                 ),
@@ -3982,7 +4108,7 @@ class _PurchasePageState extends State<PurchasePage>
                   controller: _salesPriceController,
                   label: _buyAsPack
                       ? 'Sale / $packLabel'
-                      : _localizations.salesPrice,
+                      : 'Sale / $unitLabel',
                   hint: '0.00',
                 ),
               ),
@@ -3997,7 +4123,9 @@ class _PurchasePageState extends State<PurchasePage>
             ),
             const SizedBox(height: 8),
             Text(
-              'Strip/Bag sale price is separate from per-$unitLabel sale price',
+              'Rate is ₹/$unitLabel. One $packLabel costs ₹${packCost.toStringAsFixed(2)} '
+              '($unitsPerPack $unitLabel × ₹${enteredPrice.toStringAsFixed(2)}). '
+              'Sale /$packLabel is independent of loose sale /$unitLabel.',
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 12,
@@ -4005,10 +4133,59 @@ class _PurchasePageState extends State<PurchasePage>
               ),
             ),
           ],
+          if (_selectedProduct != null && hasProductRates) ...[
+            const SizedBox(height: 16),
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                _localizations.applyGst,
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+              subtitle: Text(
+                _isInterstate
+                    ? 'IGST ${(_purchaseCgstPercent + _purchaseSgstPercent).toStringAsFixed(0)}%'
+                    : 'CGST ${_purchaseCgstPercent.toStringAsFixed(0)}% + '
+                        'SGST ${_purchaseSgstPercent.toStringAsFixed(0)}%'
+                    '${_purchaseHsnCode != null && _purchaseHsnCode!.isNotEmpty ? ' · HSN $_purchaseHsnCode' : ''}',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 12,
+                  color: AppTheme.grey600,
+                ),
+              ),
+              value: _applyGst,
+              onChanged: (v) => setState(() {
+                _applyGst = v;
+                if (!v) _isInterstate = false;
+              }),
+            ),
+            if (_applyGst)
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                title: const Text(
+                  'Interstate (IGST)',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                subtitle: const Text(
+                  'Charge combined CGST+SGST as IGST',
+                  style: TextStyle(fontFamily: 'Literata', fontSize: 12),
+                ),
+                value: _isInterstate,
+                onChanged: (v) => setState(() => _isInterstate = v),
+              ),
+          ],
           const SizedBox(height: 16),
-          // Total amount card
+          // Invoice total card (taxable + GST when applied)
           Container(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -4023,56 +4200,95 @@ class _PurchasePageState extends State<PurchasePage>
                 color: AppColors.accentSoft(context, 0.2),
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
               children: [
+                if (tax.isGstApplied) ...[
+                  _purchaseTaxRow(
+                    _localizations.taxableValue,
+                    tax.taxableValue,
+                  ),
+                  if (tax.isInterstate && tax.igstAmount > 0)
+                    _purchaseTaxRow(
+                      'IGST (${tax.igstPercent.toStringAsFixed(0)}%)',
+                      tax.igstAmount,
+                    )
+                  else ...[
+                    if (tax.cgstAmount > 0)
+                      _purchaseTaxRow(
+                        '${_localizations.cgst} (${tax.cgstPercent.toStringAsFixed(0)}%)',
+                        tax.cgstAmount,
+                      ),
+                    if (tax.sgstAmount > 0)
+                      _purchaseTaxRow(
+                        '${_localizations.sgst} (${tax.sgstPercent.toStringAsFixed(0)}%)',
+                        tax.sgstAmount,
+                      ),
+                  ],
+                  _purchaseTaxRow(
+                    _localizations.totalTax,
+                    tax.totalTaxAmount,
+                  ),
+                  const SizedBox(height: 8),
+                  Divider(color: AppColors.border(context)),
+                  const SizedBox(height: 8),
+                ],
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      padding: EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.accentSoft(context, 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.receipt_long_rounded,
-                        color: AppColors.accent(context),
-                        size: 18,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Row(
                       children: [
-                        Text(
-                          _localizations.totalAmount,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            fontFamily: 'Literata',
-                            color: AppTheme.grey600,
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.accentSoft(context, 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.receipt_long_rounded,
+                            color: AppColors.accent(context),
+                            size: 18,
                           ),
                         ),
-                        Text(
-                          '$quantity × ₹${price.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontFamily: 'Literata',
-                            color: AppTheme.grey,
-                          ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              tax.isGstApplied
+                                  ? 'Invoice total'
+                                  : _localizations.totalAmount,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Literata',
+                                color: AppTheme.grey600,
+                              ),
+                            ),
+                            Text(
+                              buyingAsPack
+                                  ? '${_formatQty(enteredQty)} $packLabel × $unitsPerPack $unitLabel × ₹${enteredPrice.toStringAsFixed(2)}/$unitLabel'
+                                      '\n= ${_formatQty(baseQty)} $unitLabel stock'
+                                  : '${_formatQty(enteredQty)} $unitLabel × ₹${enteredPrice.toStringAsFixed(2)}/$unitLabel',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontFamily: 'Literata',
+                                color: AppTheme.grey,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
+                    Text(
+                      '₹${tax.totalAmount.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        fontFamily: 'Literata',
+                        color: AppColors.accent(context),
+                      ),
+                    ),
                   ],
-                ),
-                Text(
-                  '₹${total.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    fontFamily: 'Literata',
-                    color: AppColors.accent(context),
-                  ),
                 ),
               ],
             ),
@@ -4080,6 +4296,39 @@ class _PurchasePageState extends State<PurchasePage>
         ],
       ),
     );
+  }
+
+  Widget _purchaseTaxRow(String label, double amount) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 12,
+              color: AppTheme.grey600,
+            ),
+          ),
+          Text(
+            '₹${amount.toStringAsFixed(2)}',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primaryText(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatQty(double qty) {
+    if (qty == qty.roundToDouble()) return qty.toInt().toString();
+    return qty.toStringAsFixed(2);
   }
 
   // Price field widget

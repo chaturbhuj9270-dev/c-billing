@@ -10,7 +10,7 @@ class Product {
   final String category;
   final double purchasePrice;
   final double salesPrice;
-  final int currentStock;
+  final double currentStock;
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? defaultSupplierId;
@@ -141,7 +141,7 @@ class Product {
         category: (json['category'] ?? '') as String,
         purchasePrice: ((json['purchasePrice'] ?? 0) as num).toDouble(),
         salesPrice: ((json['salesPrice'] ?? 0) as num).toDouble(),
-        currentStock: (json['currentStock'] ?? 0) as int,
+        currentStock: ((json['currentStock'] ?? 0) as num).toDouble(),
         createdAt: json['createdAt'] != null
             ? DateTime.parse(json['createdAt'] as String)
             : DateTime.now(),
@@ -227,7 +227,7 @@ class Product {
     String? category,
     double? purchasePrice,
     double? salesPrice,
-    int? currentStock,
+    double? currentStock,
     DateTime? createdAt,
     DateTime? updatedAt,
     String? defaultSupplierId,

@@ -3,7 +3,7 @@ import 'package:c_billing/features/inventory_management/domain/entities/product.
 // Model for report preview with selectable rows and editable order quantity. - [isSelected] controls whether this item is included in the final report. Defaults to `true` (all ite...
 class ReportItem {
   final Product product;
-  final int availableQuantity;
+  final double availableQuantity;
   int? orderQuantity;
   bool isSelected;
   final DateTime? expiryDate;
@@ -64,7 +64,7 @@ class ReportItem {
   // Copy with updated values
   ReportItem copyWith({
     Product? product,
-    int? availableQuantity,
+    double? availableQuantity,
     int? Function()? orderQuantity,
     bool? isSelected,
     DateTime? Function()? expiryDate,

@@ -50,8 +50,8 @@ class InventoryReportService {
   }
 
   // Get stock status label
-  String getStockStatus(int stock) {
-    if (stock == 0) {
+  String getStockStatus(num stock) {
+    if (stock <= 0) {
       return 'Out of Stock';
     } else if (stock <= 10) {
       return 'Low Stock';
@@ -190,7 +190,7 @@ class InventoryReportService {
 
   pw.Widget _buildPdfSummary(List<Product> products, ReportType reportType) {
     final totalProducts = products.length;
-    final totalStock = products.fold<int>(0, (total, p) => total + p.currentStock);
+    final totalStock = products.fold<double>(0, (total, p) => total + p.currentStock);
     final totalValue = products.fold<double>(
       0,
       (total, p) => total + p.getStockValue(),

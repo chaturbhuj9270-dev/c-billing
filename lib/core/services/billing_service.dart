@@ -120,9 +120,9 @@ class BillingService {
     return sellingPrice * quantity;
   }
 
-  // Calculate total quantity from bill items (rounded for display)
-  int calculateTotalQuantity(List<BillItem> items) {
-    return items.fold(0, (total, item) => total + item.quantityInt);
+  // Calculate total quantity from bill items (exact fractional qty)
+  double calculateTotalQuantity(List<BillItem> items) {
+    return items.fold(0.0, (total, item) => total + item.quantity);
   }
 
   // Calculate total amount from bill items
@@ -159,7 +159,7 @@ class BillingService {
   }
 
   // Get current stock for a product
-  Future<int> getProductStock(String productId) async {
+  Future<double> getProductStock(String productId) async {
     final product = await _productRepository.getProductById(productId);
     return product?.currentStock ?? 0;
   }
@@ -204,7 +204,7 @@ class BillingService {
         transaction,
       ) async {
         // Step 1: Verify and get current stock and purchase price for all products in parallel
-        final productStocks = <String, int>{};
+        final productStocks = <String, double>{};
         final productPurchasePrices = <String, double>{};
         final productRefsMap = <String, DocumentReference>{};
 
@@ -235,7 +235,8 @@ class BillingService {
           }
 
           final data = productDoc.data();
-          final currentStock = (data?['currentStock'] ?? 0) as int;
+          final currentStock =
+              ((data?['currentStock'] ?? 0) as num).toDouble();
           final purchasePrice = ((data?['purchasePrice'] ?? 0) as num)
               .toDouble();
 
@@ -309,17 +310,15 @@ class BillingService {
 
         transaction.set(billRef, bill.toJson());
 
-        // Step 3: Update stock for each product and create stock entries Track new balances for products that might appear multiple times in the bill Note: Stock is tracked in whole units...
-        final productNewBalances = Map<String, int>.from(productStocks);
+        // Step 3: Update stock for each product and create stock entries.
+        // Track new balances for products that might appear multiple times.
+        final productNewBalances = Map<String, double>.from(productStocks);
 
         for (final item in items) {
           final currentBalance = productNewBalances[item.productId]!;
-          // Round quantity for stock deduction (supports fractional selling like grams)
-          final stockQty = item.quantityInt;
+          final stockQty = item.quantity;
           final newStock = currentBalance - stockQty;
           productNewBalances[item.productId] = newStock;
-
-          // Update product stock with the final accumulated new balance Note: We'll set the update call outside this loop per unique product to be more efficient
         }
 
         // Apply product updates once per unique product
@@ -345,7 +344,7 @@ class BillingService {
             id: stockRef.id,
             productId: item.productId,
             quantityIn: 0,
-            quantityOut: item.quantityInt, // Round for stock tracking
+            quantityOut: item.quantity,
             balanceQuantity:
                 productNewBalances[item
                     .productId]!, // Note: this is the overall balance after all items
@@ -461,8 +460,8 @@ class BillingService {
       0.0,
       (total, bill) => total + bill.totalAmount,
     );
-    final totalItems = todaysBills.fold(
-      0,
+    final totalItems = todaysBills.fold<double>(
+      0.0,
       (total, bill) => total + bill.totalQuantity,
     );
 
@@ -480,7 +479,7 @@ class BillingService {
   }
 
   // Get current stock balance for a product from stock repository
-  Future<int> getStockBalance(String productId) async {
+  Future<double> getStockBalance(String productId) async {
     return await _stockRepository.getCurrentBalance(productId);
   }
 
@@ -622,7 +621,7 @@ class BillingService {
         }
 
         // Step 3: Get current stock for all products being returned
-        final productStocks = <String, int>{};
+        final productStocks = <String, double>{};
         final productRefsMap = <String, DocumentReference>{};
         final uniqueProductIds = itemsToReturn.keys
             .map((e) => e.productId)
@@ -649,18 +648,19 @@ class BillingService {
           final productDoc = productDocsMap[productId]!;
           if (productDoc.exists) {
             final data = productDoc.data();
-            productStocks[productId] = (data?['currentStock'] ?? 0) as int;
+            productStocks[productId] =
+                ((data?['currentStock'] ?? 0) as num).toDouble();
           } else {
             // Product might have been deleted, still allow return
             productStocks[productId] = 0;
           }
         }
 
-        // Step 4: Calculate new stock quantities (add back returned quantities) Note: Stock is tracked in whole units, so we round fractional returns
-        final productNewBalances = Map<String, int>.from(productStocks);
+        // Step 4: Calculate new stock quantities (exact fractional returns)
+        final productNewBalances = Map<String, double>.from(productStocks);
         for (final entry in itemsToReturn.entries) {
           final productId = entry.key.productId;
-          final returnQty = entry.value.round(); // Round for stock tracking
+          final returnQty = entry.value;
           productNewBalances[productId] =
               (productNewBalances[productId] ?? 0) + returnQty;
         }
@@ -693,7 +693,7 @@ class BillingService {
           final stockEntry = Stock(
             id: stockRef.id,
             productId: item.productId,
-            quantityIn: returnQty.round(), // Round for stock tracking
+            quantityIn: returnQty,
             quantityOut: 0,
             balanceQuantity: productNewBalances[item.productId]!,
             referenceType: ReferenceType.RETURN,

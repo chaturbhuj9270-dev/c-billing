@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/services/invoice_scanner_service.dart';
 import '../../../../core/services/inventory_integration_service.dart';
 import '../../../../core/services/purchase_settings_service.dart';
+import '../../../../core/utils/qty.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
 import '../../../supplier/offline/entities/supplier_entity.dart';
 import '../../../company/offline/controllers/company_offline_controller.dart';
@@ -1426,7 +1427,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
             final updatedItem = widget.item.copyWith(
               productName: _nameController.text,
               quantity:
-                  int.tryParse(_quantityController.text) ??
+                  Qty.tryParse(_quantityController.text) ??
                   widget.item.quantity,
               purchasePrice:
                   double.tryParse(_purchasePriceController.text) ??

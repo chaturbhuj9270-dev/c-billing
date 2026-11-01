@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:c_billing/core/services/language_service.dart';
+import 'package:c_billing/core/utils/qty.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/services/product_settings_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
@@ -792,7 +793,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                         double.tryParse(sellingPriceController.text) ??
                         purchase.sellingPrice;
                     var newQuantity =
-                        int.tryParse(quantityController.text) ??
+                        Qty.tryParse(quantityController.text) ??
                         purchase.quantityPurchased;
                     final newUnit = unitController.text.trim().isNotEmpty
                         ? unitController.text.trim()

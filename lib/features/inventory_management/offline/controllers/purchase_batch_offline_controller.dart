@@ -5,6 +5,7 @@ import '../../../../core/database/app_database.dart';
 import '../../../../core/database/local_store.dart';
 import '../../../../core/services/inventory_batch_sort.dart';
 import '../../../../core/services/local_database.dart';
+import '../../../../core/utils/qty.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../product/offline/entities/product_entity.dart';
 import '../entities/purchase_batch_entity.dart';
@@ -42,7 +43,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     String category = '',
     required double purchasePrice,
     required double sellingPrice,
-    required int quantity,
+    required double quantity,
     DateTime? purchaseDate,
     String? supplierId,
     String? supplierName,
@@ -151,7 +152,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
       final batches = (await _db.loadBatches()).where((batch) {
         return batch.productId == productId &&
             batch.syncStatus != BatchSyncStatus.deleted &&
-            batch.quantityRemaining > 0;
+            !Qty.isConsumed(batch.quantityRemaining);
       }).toList();
       batches.sort(InventoryBatchSort.compareEntities);
       return batches;
@@ -173,7 +174,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
       final batches = (await _db.loadBatches()).where((batch) {
         return batch.productUniqueKey == productUniqueKey &&
             batch.syncStatus != BatchSyncStatus.deleted &&
-            batch.quantityRemaining > 0;
+            !Qty.isConsumed(batch.quantityRemaining);
       }).toList();
       batches.sort(InventoryBatchSort.compareEntities);
       return batches;
@@ -193,7 +194,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     final batches = (await _db.loadBatches()).where((batch) {
       return batch.productId == productId &&
           batch.syncStatus != BatchSyncStatus.deleted &&
-          batch.quantityRemaining > 0;
+          !Qty.isConsumed(batch.quantityRemaining);
     }).toList();
     batches.sort(InventoryBatchSort.compareEntities);
     return batches;
@@ -236,7 +237,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
       final expiryDate = batch.expiryDate;
       if (expiryDate == null) return false;
       if (batch.syncStatus == BatchSyncStatus.deleted) return false;
-      if (batch.quantityRemaining <= 0) return false;
+      if (Qty.isConsumed(batch.quantityRemaining)) return false;
       return !expiryDate.isBefore(now) && !expiryDate.isAfter(deadline);
     }).toList();
     batches.sort((a, b) => a.expiryDate!.compareTo(b.expiryDate!));
@@ -251,7 +252,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
       final expiryDate = batch.expiryDate;
       if (expiryDate == null) return false;
       if (batch.syncStatus == BatchSyncStatus.deleted) return false;
-      if (batch.quantityRemaining <= 0) return false;
+      if (Qty.isConsumed(batch.quantityRemaining)) return false;
       return expiryDate.isBefore(now);
     }).toList();
     batches.sort((a, b) => a.expiryDate!.compareTo(b.expiryDate!));
@@ -265,8 +266,8 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     required int id,
     double? purchasePrice,
     double? sellingPrice,
-    int? quantityPurchased,
-    int? quantityRemaining,
+    double? quantityPurchased,
+    double? quantityRemaining,
     String? supplierName,
     String? supplierId,
     String? unit,
@@ -313,8 +314,8 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
       expiryDate: expiryDate,
       productionDate: productionDate,
       warrantyMonths: warrantyMonths,
-      isConsumed:
-          isConsumed ?? (quantityRemaining != null && quantityRemaining <= 0),
+      isConsumed: isConsumed ??
+          (quantityRemaining != null && Qty.isConsumed(quantityRemaining)),
       syncStatus: newSyncStatus,
     );
 
@@ -328,30 +329,31 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
   }
 
   // Deduct quantity from batch (for FIFO sale) Returns updated batch
-  Future<PurchaseBatchEntity?> deductFromBatch(int id, int quantity) async {
+  Future<PurchaseBatchEntity?> deductFromBatch(int id, double quantity) async {
     final existing = await getBatchById(id);
     if (existing == null) {
       debugPrint('[BatchOffline] Batch not found for deduction: $id');
       return null;
     }
 
-    if (existing.quantityRemaining < quantity) {
+    if (existing.quantityRemaining + Qty.epsilon < quantity) {
       throw Exception(
         'Insufficient stock in batch. Available: ${existing.quantityRemaining}, Requested: $quantity',
       );
     }
 
-    final newRemaining = existing.quantityRemaining - quantity;
+    final newRemaining =
+        Qty.clampNonNegative(existing.quantityRemaining - quantity);
 
     return await updateBatch(
       id: id,
       quantityRemaining: newRemaining,
-      isConsumed: newRemaining <= 0,
+      isConsumed: Qty.isConsumed(newRemaining),
     );
   }
 
   // Add quantity to batch (for returns) Returns updated batch
-  Future<PurchaseBatchEntity?> addToBatch(int id, int quantity) async {
+  Future<PurchaseBatchEntity?> addToBatch(int id, double quantity) async {
     final existing = await getBatchById(id);
     if (existing == null) {
       debugPrint('[BatchOffline] Batch not found for addition: $id');
@@ -402,22 +404,24 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
   // ==================== QUERY / AGGREGATIONS ====================
 
   // Get total available stock for a product
-  Future<int> getTotalStockByProductId(String productId) async {
+  Future<double> getTotalStockByProductId(String productId) async {
     final batches = await getBatchesByProductId(productId, onlyWithStock: true);
-    return batches.fold<int>(
-      0,
+    return batches.fold<double>(
+      0.0,
       (total, batch) => total + batch.quantityRemaining,
     );
   }
 
   // Get total available stock by product unique key
-  Future<int> getTotalStockByProductUniqueKey(String productUniqueKey) async {
+  Future<double> getTotalStockByProductUniqueKey(
+    String productUniqueKey,
+  ) async {
     final batches = await getBatchesByProductUniqueKey(
       productUniqueKey,
       onlyWithStock: true,
     );
-    return batches.fold<int>(
-      0,
+    return batches.fold<double>(
+      0.0,
       (total, batch) => total + batch.quantityRemaining,
     );
   }
@@ -440,21 +444,21 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
       0.0,
       (total, b) => total + (b.quantityRemaining * b.purchasePrice),
     );
-    final totalQty = batches.fold<int>(
-      0,
+    final totalQty = batches.fold<double>(
+      0.0,
       (total, b) => total + b.quantityRemaining,
     );
 
-    return totalQty > 0 ? totalValue / totalQty : 0.0;
+    return Qty.isPositive(totalQty) ? totalValue / totalQty : 0.0;
   }
 
   // Get all unique products with their total stock
-  Future<Map<String, int>> getAllProductsWithStock() async {
+  Future<Map<String, double>> getAllProductsWithStock() async {
     final batches = await getAllBatches(includeConsumed: false);
-    final stockMap = <String, int>{};
+    final stockMap = <String, double>{};
 
     for (final batch in batches) {
-      final current = stockMap[batch.productId] ?? 0;
+      final current = stockMap[batch.productId] ?? 0.0;
       stockMap[batch.productId] = current + batch.quantityRemaining;
     }
 
@@ -726,7 +730,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
 
     await _db.transaction(() async {
       for (final product in products) {
-        if (product.currentStock <= 0) continue;
+        if (!Qty.isPositive(product.currentStock)) continue;
         if (await _productHasAnyBatch(product)) continue;
 
         final productId = _productIdForBatch(product);
@@ -838,24 +842,26 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
         final orderedBatches = uniqueBatches.values.toList()
           ..sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
 
-        var totalRemaining = orderedBatches.fold<int>(
-          0,
+        var totalRemaining = orderedBatches.fold<double>(
+          0.0,
           (total, batch) => total + batch.quantityRemaining,
         );
-        final targetStock = math.max(0, product.currentStock);
+        final targetStock = math.max(0.0, product.currentStock);
 
-        if (totalRemaining > targetStock) {
+        if (totalRemaining > targetStock + Qty.epsilon) {
           var excess = totalRemaining - targetStock;
           for (final batch in orderedBatches.reversed) {
-            if (excess <= 0) break;
+            if (!Qty.isPositive(excess)) break;
             final reduce = math.min(excess, batch.quantityRemaining);
-            batch.quantityRemaining -= reduce;
-            batch.isConsumed = batch.quantityRemaining <= 0;
+            batch.quantityRemaining =
+                Qty.clampNonNegative(batch.quantityRemaining - reduce);
+            batch.isConsumed = Qty.isConsumed(batch.quantityRemaining);
             batch.updatedAt = DateTime.now();
             excess -= reduce;
             await _db.saveBatch(batch);
           }
-        } else if (totalRemaining < targetStock && orderedBatches.isNotEmpty) {
+        } else if (totalRemaining + Qty.epsilon < targetStock &&
+            orderedBatches.isNotEmpty) {
           final newest = orderedBatches.last;
           newest.quantityRemaining += targetStock - totalRemaining;
           newest.isConsumed = false;

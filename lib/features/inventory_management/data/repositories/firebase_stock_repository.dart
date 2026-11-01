@@ -103,7 +103,7 @@ class FirebaseStockRepository implements StockRepository {
   }
 
   @override
-  Future<int> getCurrentBalance(String productId) async {
+  Future<double> getCurrentBalance(String productId) async {
     try {
       try {
         final snapshot = await _stockCollection

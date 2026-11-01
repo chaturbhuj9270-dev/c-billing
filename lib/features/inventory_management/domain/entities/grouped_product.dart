@@ -7,7 +7,7 @@ class ProductSubEntry {
   final String companyName;
   final double purchasePrice;
   final double salesPrice;
-  final int stockQuantity;
+  final double stockQuantity;
   final DateTime purchaseDate;
   final String? supplierName;
   final String? modelName;
@@ -59,8 +59,8 @@ class GroupedProduct {
   });
 
   // Grand total stock across all sub-entries
-  int get totalStock =>
-      subEntries.fold<int>(0, (total, e) => total + e.stockQuantity);
+  double get totalStock =>
+      subEntries.fold<double>(0.0, (total, e) => total + e.stockQuantity);
 
   // Number of distinct variants/batches
   int get variantCount => subEntries.length;
@@ -116,8 +116,11 @@ class GroupedProduct {
       subEntries.where((e) => e.isExpired && e.stockQuantity > 0).length;
 
   // Total expired stock quantity
-  int get expiredStockCount =>
-      subEntries.where((e) => e.isExpired).fold<int>(0, (total, e) => total + e.stockQuantity);
+  double get expiredStockCount =>
+      subEntries.where((e) => e.isExpired).fold<double>(
+            0.0,
+            (total, e) => total + e.stockQuantity,
+          );
 
   // Count of batches expiring soon (within 30 days)
   int get expiringSoonBatchCount =>
@@ -143,7 +146,8 @@ class GroupedProduct {
         companyName: (batch.companyName as String?) ?? '',
         purchasePrice: (batch.purchasePrice as double?) ?? 0.0,
         salesPrice: (batch.sellingPrice as double?) ?? 0.0,
-        stockQuantity: (batch.quantityRemaining as int?) ?? 0,
+        stockQuantity:
+            (batch.quantityRemaining as num?)?.toDouble() ?? 0.0,
         purchaseDate: batch.purchaseDate as DateTime,
         supplierName: batch.supplierName as String?,
         modelName: (batch.modelName as String?)?.isNotEmpty == true
@@ -170,7 +174,8 @@ class GroupedProduct {
               companyName: (product.companyName as String?) ?? '',
               purchasePrice: (product.purchasePrice as double?) ?? 0.0,
               salesPrice: (product.salesPrice as double?) ?? 0.0,
-              stockQuantity: (product.currentStock as int?) ?? 0,
+              stockQuantity:
+                  (product.currentStock as num?)?.toDouble() ?? 0.0,
               purchaseDate: (product.createdAt as DateTime?) ?? DateTime.now(),
             ),
           ];

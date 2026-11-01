@@ -11,7 +11,7 @@ class InventoryModel extends InventoryItem {
     return InventoryModel(
       id: json['id'] as String,
       name: json['name'] as String,
-      quantity: json['quantity'] as int,
+      quantity: ((json['quantity'] ?? 0) as num).toDouble(),
     );
   }
 

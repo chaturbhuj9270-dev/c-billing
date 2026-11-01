@@ -10,7 +10,7 @@ abstract class StockRepository {
   Future<List<Stock>> getAllStockEntries();
 
   // Query
-  Future<int> getCurrentBalance(String productId);
+  Future<double> getCurrentBalance(String productId);
   Future<List<Stock>> getStockByDateRange(DateTime startDate, DateTime endDate);
   Future<List<Stock>> getStockByReferenceType(String referenceType);
 }

@@ -2217,11 +2217,11 @@ class $ProductRecordsTable extends ProductRecords
     'currentStock',
   );
   @override
-  late final GeneratedColumn<int> currentStock = GeneratedColumn<int>(
+  late final GeneratedColumn<double> currentStock = GeneratedColumn<double>(
     'current_stock',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.double,
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
@@ -2799,7 +2799,7 @@ class $ProductRecordsTable extends ProductRecords
         data['${effectivePrefix}sales_price'],
       )!,
       currentStock: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.double,
         data['${effectivePrefix}current_stock'],
       )!,
       unit: attachedDatabase.typeMapping.read(
@@ -2909,7 +2909,9 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
   final String? barcode;
   final double purchasePrice;
   final double salesPrice;
-  final int currentStock;
+
+  /// Supports fractional stock (kg / ltr / ml).
+  final double currentStock;
   final String? unit;
   final bool isActive;
   final int syncStatus;
@@ -2988,7 +2990,7 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
     }
     map['purchase_price'] = Variable<double>(purchasePrice);
     map['sales_price'] = Variable<double>(salesPrice);
-    map['current_stock'] = Variable<int>(currentStock);
+    map['current_stock'] = Variable<double>(currentStock);
     if (!nullToAbsent || unit != null) {
       map['unit'] = Variable<String>(unit);
     }
@@ -3124,7 +3126,7 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
       barcode: serializer.fromJson<String?>(json['barcode']),
       purchasePrice: serializer.fromJson<double>(json['purchasePrice']),
       salesPrice: serializer.fromJson<double>(json['salesPrice']),
-      currentStock: serializer.fromJson<int>(json['currentStock']),
+      currentStock: serializer.fromJson<double>(json['currentStock']),
       unit: serializer.fromJson<String?>(json['unit']),
       isActive: serializer.fromJson<bool>(json['isActive']),
       syncStatus: serializer.fromJson<int>(json['syncStatus']),
@@ -3166,7 +3168,7 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
       'barcode': serializer.toJson<String?>(barcode),
       'purchasePrice': serializer.toJson<double>(purchasePrice),
       'salesPrice': serializer.toJson<double>(salesPrice),
-      'currentStock': serializer.toJson<int>(currentStock),
+      'currentStock': serializer.toJson<double>(currentStock),
       'unit': serializer.toJson<String?>(unit),
       'isActive': serializer.toJson<bool>(isActive),
       'syncStatus': serializer.toJson<int>(syncStatus),
@@ -3202,7 +3204,7 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
     Value<String?> barcode = const Value.absent(),
     double? purchasePrice,
     double? salesPrice,
-    int? currentStock,
+    double? currentStock,
     Value<String?> unit = const Value.absent(),
     bool? isActive,
     int? syncStatus,
@@ -3460,7 +3462,7 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
   final Value<String?> barcode;
   final Value<double> purchasePrice;
   final Value<double> salesPrice;
-  final Value<int> currentStock;
+  final Value<double> currentStock;
   final Value<String?> unit;
   final Value<bool> isActive;
   final Value<int> syncStatus;
@@ -3564,7 +3566,7 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
     Expression<String>? barcode,
     Expression<double>? purchasePrice,
     Expression<double>? salesPrice,
-    Expression<int>? currentStock,
+    Expression<double>? currentStock,
     Expression<String>? unit,
     Expression<bool>? isActive,
     Expression<int>? syncStatus,
@@ -3635,7 +3637,7 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
     Value<String?>? barcode,
     Value<double>? purchasePrice,
     Value<double>? salesPrice,
-    Value<int>? currentStock,
+    Value<double>? currentStock,
     Value<String?>? unit,
     Value<bool>? isActive,
     Value<int>? syncStatus,
@@ -3726,7 +3728,7 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
       map['sales_price'] = Variable<double>(salesPrice.value);
     }
     if (currentStock.present) {
-      map['current_stock'] = Variable<int>(currentStock.value);
+      map['current_stock'] = Variable<double>(currentStock.value);
     }
     if (unit.present) {
       map['unit'] = Variable<String>(unit.value);
@@ -3940,11 +3942,11 @@ class $PurchaseRecordsTable extends PurchaseRecords
     'quantity',
   );
   @override
-  late final GeneratedColumn<int> quantity = GeneratedColumn<int>(
+  late final GeneratedColumn<double> quantity = GeneratedColumn<double>(
     'quantity',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.double,
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
@@ -4037,6 +4039,204 @@ class $PurchaseRecordsTable extends PurchaseRecords
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _isGstAppliedMeta = const VerificationMeta(
+    'isGstApplied',
+  );
+  @override
+  late final GeneratedColumn<bool> isGstApplied = GeneratedColumn<bool>(
+    'is_gst_applied',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_gst_applied" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _isTaxInclusiveMeta = const VerificationMeta(
+    'isTaxInclusive',
+  );
+  @override
+  late final GeneratedColumn<bool> isTaxInclusive = GeneratedColumn<bool>(
+    'is_tax_inclusive',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_tax_inclusive" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _isInterstateMeta = const VerificationMeta(
+    'isInterstate',
+  );
+  @override
+  late final GeneratedColumn<bool> isInterstate = GeneratedColumn<bool>(
+    'is_interstate',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_interstate" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _taxableValueMeta = const VerificationMeta(
+    'taxableValue',
+  );
+  @override
+  late final GeneratedColumn<double> taxableValue = GeneratedColumn<double>(
+    'taxable_value',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _cgstPercentMeta = const VerificationMeta(
+    'cgstPercent',
+  );
+  @override
+  late final GeneratedColumn<double> cgstPercent = GeneratedColumn<double>(
+    'cgst_percent',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _sgstPercentMeta = const VerificationMeta(
+    'sgstPercent',
+  );
+  @override
+  late final GeneratedColumn<double> sgstPercent = GeneratedColumn<double>(
+    'sgst_percent',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _igstPercentMeta = const VerificationMeta(
+    'igstPercent',
+  );
+  @override
+  late final GeneratedColumn<double> igstPercent = GeneratedColumn<double>(
+    'igst_percent',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _otherTaxPercentMeta = const VerificationMeta(
+    'otherTaxPercent',
+  );
+  @override
+  late final GeneratedColumn<double> otherTaxPercent = GeneratedColumn<double>(
+    'other_tax_percent',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _otherTaxNameMeta = const VerificationMeta(
+    'otherTaxName',
+  );
+  @override
+  late final GeneratedColumn<String> otherTaxName = GeneratedColumn<String>(
+    'other_tax_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _cgstAmountMeta = const VerificationMeta(
+    'cgstAmount',
+  );
+  @override
+  late final GeneratedColumn<double> cgstAmount = GeneratedColumn<double>(
+    'cgst_amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _sgstAmountMeta = const VerificationMeta(
+    'sgstAmount',
+  );
+  @override
+  late final GeneratedColumn<double> sgstAmount = GeneratedColumn<double>(
+    'sgst_amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _igstAmountMeta = const VerificationMeta(
+    'igstAmount',
+  );
+  @override
+  late final GeneratedColumn<double> igstAmount = GeneratedColumn<double>(
+    'igst_amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _otherTaxAmountMeta = const VerificationMeta(
+    'otherTaxAmount',
+  );
+  @override
+  late final GeneratedColumn<double> otherTaxAmount = GeneratedColumn<double>(
+    'other_tax_amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _totalTaxAmountMeta = const VerificationMeta(
+    'totalTaxAmount',
+  );
+  @override
+  late final GeneratedColumn<double> totalTaxAmount = GeneratedColumn<double>(
+    'total_tax_amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _hsnCodeMeta = const VerificationMeta(
+    'hsnCode',
+  );
+  @override
+  late final GeneratedColumn<String> hsnCode = GeneratedColumn<String>(
+    'hsn_code',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _supplierGstinMeta = const VerificationMeta(
+    'supplierGstin',
+  );
+  @override
+  late final GeneratedColumn<String> supplierGstin = GeneratedColumn<String>(
+    'supplier_gstin',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _syncStatusMeta = const VerificationMeta(
     'syncStatus',
   );
@@ -4089,6 +4289,22 @@ class $PurchaseRecordsTable extends PurchaseRecords
     expiryDate,
     warrantyMonths,
     notes,
+    isGstApplied,
+    isTaxInclusive,
+    isInterstate,
+    taxableValue,
+    cgstPercent,
+    sgstPercent,
+    igstPercent,
+    otherTaxPercent,
+    otherTaxName,
+    cgstAmount,
+    sgstAmount,
+    igstAmount,
+    otherTaxAmount,
+    totalTaxAmount,
+    hsnCode,
+    supplierGstin,
     syncStatus,
     createdAt,
     updatedAt,
@@ -4227,6 +4443,138 @@ class $PurchaseRecordsTable extends PurchaseRecords
         notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
       );
     }
+    if (data.containsKey('is_gst_applied')) {
+      context.handle(
+        _isGstAppliedMeta,
+        isGstApplied.isAcceptableOrUnknown(
+          data['is_gst_applied']!,
+          _isGstAppliedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_tax_inclusive')) {
+      context.handle(
+        _isTaxInclusiveMeta,
+        isTaxInclusive.isAcceptableOrUnknown(
+          data['is_tax_inclusive']!,
+          _isTaxInclusiveMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_interstate')) {
+      context.handle(
+        _isInterstateMeta,
+        isInterstate.isAcceptableOrUnknown(
+          data['is_interstate']!,
+          _isInterstateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('taxable_value')) {
+      context.handle(
+        _taxableValueMeta,
+        taxableValue.isAcceptableOrUnknown(
+          data['taxable_value']!,
+          _taxableValueMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cgst_percent')) {
+      context.handle(
+        _cgstPercentMeta,
+        cgstPercent.isAcceptableOrUnknown(
+          data['cgst_percent']!,
+          _cgstPercentMeta,
+        ),
+      );
+    }
+    if (data.containsKey('sgst_percent')) {
+      context.handle(
+        _sgstPercentMeta,
+        sgstPercent.isAcceptableOrUnknown(
+          data['sgst_percent']!,
+          _sgstPercentMeta,
+        ),
+      );
+    }
+    if (data.containsKey('igst_percent')) {
+      context.handle(
+        _igstPercentMeta,
+        igstPercent.isAcceptableOrUnknown(
+          data['igst_percent']!,
+          _igstPercentMeta,
+        ),
+      );
+    }
+    if (data.containsKey('other_tax_percent')) {
+      context.handle(
+        _otherTaxPercentMeta,
+        otherTaxPercent.isAcceptableOrUnknown(
+          data['other_tax_percent']!,
+          _otherTaxPercentMeta,
+        ),
+      );
+    }
+    if (data.containsKey('other_tax_name')) {
+      context.handle(
+        _otherTaxNameMeta,
+        otherTaxName.isAcceptableOrUnknown(
+          data['other_tax_name']!,
+          _otherTaxNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cgst_amount')) {
+      context.handle(
+        _cgstAmountMeta,
+        cgstAmount.isAcceptableOrUnknown(data['cgst_amount']!, _cgstAmountMeta),
+      );
+    }
+    if (data.containsKey('sgst_amount')) {
+      context.handle(
+        _sgstAmountMeta,
+        sgstAmount.isAcceptableOrUnknown(data['sgst_amount']!, _sgstAmountMeta),
+      );
+    }
+    if (data.containsKey('igst_amount')) {
+      context.handle(
+        _igstAmountMeta,
+        igstAmount.isAcceptableOrUnknown(data['igst_amount']!, _igstAmountMeta),
+      );
+    }
+    if (data.containsKey('other_tax_amount')) {
+      context.handle(
+        _otherTaxAmountMeta,
+        otherTaxAmount.isAcceptableOrUnknown(
+          data['other_tax_amount']!,
+          _otherTaxAmountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('total_tax_amount')) {
+      context.handle(
+        _totalTaxAmountMeta,
+        totalTaxAmount.isAcceptableOrUnknown(
+          data['total_tax_amount']!,
+          _totalTaxAmountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('hsn_code')) {
+      context.handle(
+        _hsnCodeMeta,
+        hsnCode.isAcceptableOrUnknown(data['hsn_code']!, _hsnCodeMeta),
+      );
+    }
+    if (data.containsKey('supplier_gstin')) {
+      context.handle(
+        _supplierGstinMeta,
+        supplierGstin.isAcceptableOrUnknown(
+          data['supplier_gstin']!,
+          _supplierGstinMeta,
+        ),
+      );
+    }
     if (data.containsKey('sync_status')) {
       context.handle(
         _syncStatusMeta,
@@ -4293,7 +4641,7 @@ class $PurchaseRecordsTable extends PurchaseRecords
         data['${effectivePrefix}company_name'],
       ),
       quantity: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.double,
         data['${effectivePrefix}quantity'],
       )!,
       unit: attachedDatabase.typeMapping.read(
@@ -4328,6 +4676,70 @@ class $PurchaseRecordsTable extends PurchaseRecords
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
       ),
+      isGstApplied: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_gst_applied'],
+      )!,
+      isTaxInclusive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_tax_inclusive'],
+      )!,
+      isInterstate: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_interstate'],
+      )!,
+      taxableValue: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}taxable_value'],
+      )!,
+      cgstPercent: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}cgst_percent'],
+      )!,
+      sgstPercent: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}sgst_percent'],
+      )!,
+      igstPercent: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}igst_percent'],
+      )!,
+      otherTaxPercent: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}other_tax_percent'],
+      )!,
+      otherTaxName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}other_tax_name'],
+      ),
+      cgstAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}cgst_amount'],
+      )!,
+      sgstAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}sgst_amount'],
+      )!,
+      igstAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}igst_amount'],
+      )!,
+      otherTaxAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}other_tax_amount'],
+      )!,
+      totalTaxAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}total_tax_amount'],
+      )!,
+      hsnCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}hsn_code'],
+      ),
+      supplierGstin: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}supplier_gstin'],
+      ),
       syncStatus: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}sync_status'],
@@ -4358,15 +4770,33 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
   final String? supplierName;
   final String? companyId;
   final String? companyName;
-  final int quantity;
+  final double quantity;
   final String unit;
   final double purchasePrice;
   final double salesPrice;
+
+  /// Invoice grand total (taxable + GST when applied).
   final double totalAmount;
   final DateTime? productionDate;
   final DateTime? expiryDate;
   final int? warrantyMonths;
   final String? notes;
+  final bool isGstApplied;
+  final bool isTaxInclusive;
+  final bool isInterstate;
+  final double taxableValue;
+  final double cgstPercent;
+  final double sgstPercent;
+  final double igstPercent;
+  final double otherTaxPercent;
+  final String? otherTaxName;
+  final double cgstAmount;
+  final double sgstAmount;
+  final double igstAmount;
+  final double otherTaxAmount;
+  final double totalTaxAmount;
+  final String? hsnCode;
+  final String? supplierGstin;
   final int syncStatus;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -4388,6 +4818,22 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
     this.expiryDate,
     this.warrantyMonths,
     this.notes,
+    required this.isGstApplied,
+    required this.isTaxInclusive,
+    required this.isInterstate,
+    required this.taxableValue,
+    required this.cgstPercent,
+    required this.sgstPercent,
+    required this.igstPercent,
+    required this.otherTaxPercent,
+    this.otherTaxName,
+    required this.cgstAmount,
+    required this.sgstAmount,
+    required this.igstAmount,
+    required this.otherTaxAmount,
+    required this.totalTaxAmount,
+    this.hsnCode,
+    this.supplierGstin,
     required this.syncStatus,
     required this.createdAt,
     required this.updatedAt,
@@ -4413,7 +4859,7 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
     if (!nullToAbsent || companyName != null) {
       map['company_name'] = Variable<String>(companyName);
     }
-    map['quantity'] = Variable<int>(quantity);
+    map['quantity'] = Variable<double>(quantity);
     map['unit'] = Variable<String>(unit);
     map['purchase_price'] = Variable<double>(purchasePrice);
     map['sales_price'] = Variable<double>(salesPrice);
@@ -4429,6 +4875,28 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
     }
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
+    }
+    map['is_gst_applied'] = Variable<bool>(isGstApplied);
+    map['is_tax_inclusive'] = Variable<bool>(isTaxInclusive);
+    map['is_interstate'] = Variable<bool>(isInterstate);
+    map['taxable_value'] = Variable<double>(taxableValue);
+    map['cgst_percent'] = Variable<double>(cgstPercent);
+    map['sgst_percent'] = Variable<double>(sgstPercent);
+    map['igst_percent'] = Variable<double>(igstPercent);
+    map['other_tax_percent'] = Variable<double>(otherTaxPercent);
+    if (!nullToAbsent || otherTaxName != null) {
+      map['other_tax_name'] = Variable<String>(otherTaxName);
+    }
+    map['cgst_amount'] = Variable<double>(cgstAmount);
+    map['sgst_amount'] = Variable<double>(sgstAmount);
+    map['igst_amount'] = Variable<double>(igstAmount);
+    map['other_tax_amount'] = Variable<double>(otherTaxAmount);
+    map['total_tax_amount'] = Variable<double>(totalTaxAmount);
+    if (!nullToAbsent || hsnCode != null) {
+      map['hsn_code'] = Variable<String>(hsnCode);
+    }
+    if (!nullToAbsent || supplierGstin != null) {
+      map['supplier_gstin'] = Variable<String>(supplierGstin);
     }
     map['sync_status'] = Variable<int>(syncStatus);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -4473,6 +4941,28 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
       notes: notes == null && nullToAbsent
           ? const Value.absent()
           : Value(notes),
+      isGstApplied: Value(isGstApplied),
+      isTaxInclusive: Value(isTaxInclusive),
+      isInterstate: Value(isInterstate),
+      taxableValue: Value(taxableValue),
+      cgstPercent: Value(cgstPercent),
+      sgstPercent: Value(sgstPercent),
+      igstPercent: Value(igstPercent),
+      otherTaxPercent: Value(otherTaxPercent),
+      otherTaxName: otherTaxName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(otherTaxName),
+      cgstAmount: Value(cgstAmount),
+      sgstAmount: Value(sgstAmount),
+      igstAmount: Value(igstAmount),
+      otherTaxAmount: Value(otherTaxAmount),
+      totalTaxAmount: Value(totalTaxAmount),
+      hsnCode: hsnCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(hsnCode),
+      supplierGstin: supplierGstin == null && nullToAbsent
+          ? const Value.absent()
+          : Value(supplierGstin),
       syncStatus: Value(syncStatus),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -4493,7 +4983,7 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
       supplierName: serializer.fromJson<String?>(json['supplierName']),
       companyId: serializer.fromJson<String?>(json['companyId']),
       companyName: serializer.fromJson<String?>(json['companyName']),
-      quantity: serializer.fromJson<int>(json['quantity']),
+      quantity: serializer.fromJson<double>(json['quantity']),
       unit: serializer.fromJson<String>(json['unit']),
       purchasePrice: serializer.fromJson<double>(json['purchasePrice']),
       salesPrice: serializer.fromJson<double>(json['salesPrice']),
@@ -4502,6 +4992,22 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
       expiryDate: serializer.fromJson<DateTime?>(json['expiryDate']),
       warrantyMonths: serializer.fromJson<int?>(json['warrantyMonths']),
       notes: serializer.fromJson<String?>(json['notes']),
+      isGstApplied: serializer.fromJson<bool>(json['isGstApplied']),
+      isTaxInclusive: serializer.fromJson<bool>(json['isTaxInclusive']),
+      isInterstate: serializer.fromJson<bool>(json['isInterstate']),
+      taxableValue: serializer.fromJson<double>(json['taxableValue']),
+      cgstPercent: serializer.fromJson<double>(json['cgstPercent']),
+      sgstPercent: serializer.fromJson<double>(json['sgstPercent']),
+      igstPercent: serializer.fromJson<double>(json['igstPercent']),
+      otherTaxPercent: serializer.fromJson<double>(json['otherTaxPercent']),
+      otherTaxName: serializer.fromJson<String?>(json['otherTaxName']),
+      cgstAmount: serializer.fromJson<double>(json['cgstAmount']),
+      sgstAmount: serializer.fromJson<double>(json['sgstAmount']),
+      igstAmount: serializer.fromJson<double>(json['igstAmount']),
+      otherTaxAmount: serializer.fromJson<double>(json['otherTaxAmount']),
+      totalTaxAmount: serializer.fromJson<double>(json['totalTaxAmount']),
+      hsnCode: serializer.fromJson<String?>(json['hsnCode']),
+      supplierGstin: serializer.fromJson<String?>(json['supplierGstin']),
       syncStatus: serializer.fromJson<int>(json['syncStatus']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -4519,7 +5025,7 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
       'supplierName': serializer.toJson<String?>(supplierName),
       'companyId': serializer.toJson<String?>(companyId),
       'companyName': serializer.toJson<String?>(companyName),
-      'quantity': serializer.toJson<int>(quantity),
+      'quantity': serializer.toJson<double>(quantity),
       'unit': serializer.toJson<String>(unit),
       'purchasePrice': serializer.toJson<double>(purchasePrice),
       'salesPrice': serializer.toJson<double>(salesPrice),
@@ -4528,6 +5034,22 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
       'expiryDate': serializer.toJson<DateTime?>(expiryDate),
       'warrantyMonths': serializer.toJson<int?>(warrantyMonths),
       'notes': serializer.toJson<String?>(notes),
+      'isGstApplied': serializer.toJson<bool>(isGstApplied),
+      'isTaxInclusive': serializer.toJson<bool>(isTaxInclusive),
+      'isInterstate': serializer.toJson<bool>(isInterstate),
+      'taxableValue': serializer.toJson<double>(taxableValue),
+      'cgstPercent': serializer.toJson<double>(cgstPercent),
+      'sgstPercent': serializer.toJson<double>(sgstPercent),
+      'igstPercent': serializer.toJson<double>(igstPercent),
+      'otherTaxPercent': serializer.toJson<double>(otherTaxPercent),
+      'otherTaxName': serializer.toJson<String?>(otherTaxName),
+      'cgstAmount': serializer.toJson<double>(cgstAmount),
+      'sgstAmount': serializer.toJson<double>(sgstAmount),
+      'igstAmount': serializer.toJson<double>(igstAmount),
+      'otherTaxAmount': serializer.toJson<double>(otherTaxAmount),
+      'totalTaxAmount': serializer.toJson<double>(totalTaxAmount),
+      'hsnCode': serializer.toJson<String?>(hsnCode),
+      'supplierGstin': serializer.toJson<String?>(supplierGstin),
       'syncStatus': serializer.toJson<int>(syncStatus),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -4543,7 +5065,7 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
     Value<String?> supplierName = const Value.absent(),
     Value<String?> companyId = const Value.absent(),
     Value<String?> companyName = const Value.absent(),
-    int? quantity,
+    double? quantity,
     String? unit,
     double? purchasePrice,
     double? salesPrice,
@@ -4552,6 +5074,22 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
     Value<DateTime?> expiryDate = const Value.absent(),
     Value<int?> warrantyMonths = const Value.absent(),
     Value<String?> notes = const Value.absent(),
+    bool? isGstApplied,
+    bool? isTaxInclusive,
+    bool? isInterstate,
+    double? taxableValue,
+    double? cgstPercent,
+    double? sgstPercent,
+    double? igstPercent,
+    double? otherTaxPercent,
+    Value<String?> otherTaxName = const Value.absent(),
+    double? cgstAmount,
+    double? sgstAmount,
+    double? igstAmount,
+    double? otherTaxAmount,
+    double? totalTaxAmount,
+    Value<String?> hsnCode = const Value.absent(),
+    Value<String?> supplierGstin = const Value.absent(),
     int? syncStatus,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -4577,6 +5115,24 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
         ? warrantyMonths.value
         : this.warrantyMonths,
     notes: notes.present ? notes.value : this.notes,
+    isGstApplied: isGstApplied ?? this.isGstApplied,
+    isTaxInclusive: isTaxInclusive ?? this.isTaxInclusive,
+    isInterstate: isInterstate ?? this.isInterstate,
+    taxableValue: taxableValue ?? this.taxableValue,
+    cgstPercent: cgstPercent ?? this.cgstPercent,
+    sgstPercent: sgstPercent ?? this.sgstPercent,
+    igstPercent: igstPercent ?? this.igstPercent,
+    otherTaxPercent: otherTaxPercent ?? this.otherTaxPercent,
+    otherTaxName: otherTaxName.present ? otherTaxName.value : this.otherTaxName,
+    cgstAmount: cgstAmount ?? this.cgstAmount,
+    sgstAmount: sgstAmount ?? this.sgstAmount,
+    igstAmount: igstAmount ?? this.igstAmount,
+    otherTaxAmount: otherTaxAmount ?? this.otherTaxAmount,
+    totalTaxAmount: totalTaxAmount ?? this.totalTaxAmount,
+    hsnCode: hsnCode.present ? hsnCode.value : this.hsnCode,
+    supplierGstin: supplierGstin.present
+        ? supplierGstin.value
+        : this.supplierGstin,
     syncStatus: syncStatus ?? this.syncStatus,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -4620,6 +5176,52 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
           ? data.warrantyMonths.value
           : this.warrantyMonths,
       notes: data.notes.present ? data.notes.value : this.notes,
+      isGstApplied: data.isGstApplied.present
+          ? data.isGstApplied.value
+          : this.isGstApplied,
+      isTaxInclusive: data.isTaxInclusive.present
+          ? data.isTaxInclusive.value
+          : this.isTaxInclusive,
+      isInterstate: data.isInterstate.present
+          ? data.isInterstate.value
+          : this.isInterstate,
+      taxableValue: data.taxableValue.present
+          ? data.taxableValue.value
+          : this.taxableValue,
+      cgstPercent: data.cgstPercent.present
+          ? data.cgstPercent.value
+          : this.cgstPercent,
+      sgstPercent: data.sgstPercent.present
+          ? data.sgstPercent.value
+          : this.sgstPercent,
+      igstPercent: data.igstPercent.present
+          ? data.igstPercent.value
+          : this.igstPercent,
+      otherTaxPercent: data.otherTaxPercent.present
+          ? data.otherTaxPercent.value
+          : this.otherTaxPercent,
+      otherTaxName: data.otherTaxName.present
+          ? data.otherTaxName.value
+          : this.otherTaxName,
+      cgstAmount: data.cgstAmount.present
+          ? data.cgstAmount.value
+          : this.cgstAmount,
+      sgstAmount: data.sgstAmount.present
+          ? data.sgstAmount.value
+          : this.sgstAmount,
+      igstAmount: data.igstAmount.present
+          ? data.igstAmount.value
+          : this.igstAmount,
+      otherTaxAmount: data.otherTaxAmount.present
+          ? data.otherTaxAmount.value
+          : this.otherTaxAmount,
+      totalTaxAmount: data.totalTaxAmount.present
+          ? data.totalTaxAmount.value
+          : this.totalTaxAmount,
+      hsnCode: data.hsnCode.present ? data.hsnCode.value : this.hsnCode,
+      supplierGstin: data.supplierGstin.present
+          ? data.supplierGstin.value
+          : this.supplierGstin,
       syncStatus: data.syncStatus.present
           ? data.syncStatus.value
           : this.syncStatus,
@@ -4648,6 +5250,22 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
           ..write('expiryDate: $expiryDate, ')
           ..write('warrantyMonths: $warrantyMonths, ')
           ..write('notes: $notes, ')
+          ..write('isGstApplied: $isGstApplied, ')
+          ..write('isTaxInclusive: $isTaxInclusive, ')
+          ..write('isInterstate: $isInterstate, ')
+          ..write('taxableValue: $taxableValue, ')
+          ..write('cgstPercent: $cgstPercent, ')
+          ..write('sgstPercent: $sgstPercent, ')
+          ..write('igstPercent: $igstPercent, ')
+          ..write('otherTaxPercent: $otherTaxPercent, ')
+          ..write('otherTaxName: $otherTaxName, ')
+          ..write('cgstAmount: $cgstAmount, ')
+          ..write('sgstAmount: $sgstAmount, ')
+          ..write('igstAmount: $igstAmount, ')
+          ..write('otherTaxAmount: $otherTaxAmount, ')
+          ..write('totalTaxAmount: $totalTaxAmount, ')
+          ..write('hsnCode: $hsnCode, ')
+          ..write('supplierGstin: $supplierGstin, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -4656,7 +5274,7 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     serverId,
     productId,
@@ -4674,10 +5292,26 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
     expiryDate,
     warrantyMonths,
     notes,
+    isGstApplied,
+    isTaxInclusive,
+    isInterstate,
+    taxableValue,
+    cgstPercent,
+    sgstPercent,
+    igstPercent,
+    otherTaxPercent,
+    otherTaxName,
+    cgstAmount,
+    sgstAmount,
+    igstAmount,
+    otherTaxAmount,
+    totalTaxAmount,
+    hsnCode,
+    supplierGstin,
     syncStatus,
     createdAt,
     updatedAt,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4699,6 +5333,22 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
           other.expiryDate == this.expiryDate &&
           other.warrantyMonths == this.warrantyMonths &&
           other.notes == this.notes &&
+          other.isGstApplied == this.isGstApplied &&
+          other.isTaxInclusive == this.isTaxInclusive &&
+          other.isInterstate == this.isInterstate &&
+          other.taxableValue == this.taxableValue &&
+          other.cgstPercent == this.cgstPercent &&
+          other.sgstPercent == this.sgstPercent &&
+          other.igstPercent == this.igstPercent &&
+          other.otherTaxPercent == this.otherTaxPercent &&
+          other.otherTaxName == this.otherTaxName &&
+          other.cgstAmount == this.cgstAmount &&
+          other.sgstAmount == this.sgstAmount &&
+          other.igstAmount == this.igstAmount &&
+          other.otherTaxAmount == this.otherTaxAmount &&
+          other.totalTaxAmount == this.totalTaxAmount &&
+          other.hsnCode == this.hsnCode &&
+          other.supplierGstin == this.supplierGstin &&
           other.syncStatus == this.syncStatus &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -4713,7 +5363,7 @@ class PurchaseRecordsCompanion extends UpdateCompanion<PurchaseRecord> {
   final Value<String?> supplierName;
   final Value<String?> companyId;
   final Value<String?> companyName;
-  final Value<int> quantity;
+  final Value<double> quantity;
   final Value<String> unit;
   final Value<double> purchasePrice;
   final Value<double> salesPrice;
@@ -4722,6 +5372,22 @@ class PurchaseRecordsCompanion extends UpdateCompanion<PurchaseRecord> {
   final Value<DateTime?> expiryDate;
   final Value<int?> warrantyMonths;
   final Value<String?> notes;
+  final Value<bool> isGstApplied;
+  final Value<bool> isTaxInclusive;
+  final Value<bool> isInterstate;
+  final Value<double> taxableValue;
+  final Value<double> cgstPercent;
+  final Value<double> sgstPercent;
+  final Value<double> igstPercent;
+  final Value<double> otherTaxPercent;
+  final Value<String?> otherTaxName;
+  final Value<double> cgstAmount;
+  final Value<double> sgstAmount;
+  final Value<double> igstAmount;
+  final Value<double> otherTaxAmount;
+  final Value<double> totalTaxAmount;
+  final Value<String?> hsnCode;
+  final Value<String?> supplierGstin;
   final Value<int> syncStatus;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -4743,6 +5409,22 @@ class PurchaseRecordsCompanion extends UpdateCompanion<PurchaseRecord> {
     this.expiryDate = const Value.absent(),
     this.warrantyMonths = const Value.absent(),
     this.notes = const Value.absent(),
+    this.isGstApplied = const Value.absent(),
+    this.isTaxInclusive = const Value.absent(),
+    this.isInterstate = const Value.absent(),
+    this.taxableValue = const Value.absent(),
+    this.cgstPercent = const Value.absent(),
+    this.sgstPercent = const Value.absent(),
+    this.igstPercent = const Value.absent(),
+    this.otherTaxPercent = const Value.absent(),
+    this.otherTaxName = const Value.absent(),
+    this.cgstAmount = const Value.absent(),
+    this.sgstAmount = const Value.absent(),
+    this.igstAmount = const Value.absent(),
+    this.otherTaxAmount = const Value.absent(),
+    this.totalTaxAmount = const Value.absent(),
+    this.hsnCode = const Value.absent(),
+    this.supplierGstin = const Value.absent(),
     this.syncStatus = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -4765,6 +5447,22 @@ class PurchaseRecordsCompanion extends UpdateCompanion<PurchaseRecord> {
     this.expiryDate = const Value.absent(),
     this.warrantyMonths = const Value.absent(),
     this.notes = const Value.absent(),
+    this.isGstApplied = const Value.absent(),
+    this.isTaxInclusive = const Value.absent(),
+    this.isInterstate = const Value.absent(),
+    this.taxableValue = const Value.absent(),
+    this.cgstPercent = const Value.absent(),
+    this.sgstPercent = const Value.absent(),
+    this.igstPercent = const Value.absent(),
+    this.otherTaxPercent = const Value.absent(),
+    this.otherTaxName = const Value.absent(),
+    this.cgstAmount = const Value.absent(),
+    this.sgstAmount = const Value.absent(),
+    this.igstAmount = const Value.absent(),
+    this.otherTaxAmount = const Value.absent(),
+    this.totalTaxAmount = const Value.absent(),
+    this.hsnCode = const Value.absent(),
+    this.supplierGstin = const Value.absent(),
     required int syncStatus,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -4781,7 +5479,7 @@ class PurchaseRecordsCompanion extends UpdateCompanion<PurchaseRecord> {
     Expression<String>? supplierName,
     Expression<String>? companyId,
     Expression<String>? companyName,
-    Expression<int>? quantity,
+    Expression<double>? quantity,
     Expression<String>? unit,
     Expression<double>? purchasePrice,
     Expression<double>? salesPrice,
@@ -4790,6 +5488,22 @@ class PurchaseRecordsCompanion extends UpdateCompanion<PurchaseRecord> {
     Expression<DateTime>? expiryDate,
     Expression<int>? warrantyMonths,
     Expression<String>? notes,
+    Expression<bool>? isGstApplied,
+    Expression<bool>? isTaxInclusive,
+    Expression<bool>? isInterstate,
+    Expression<double>? taxableValue,
+    Expression<double>? cgstPercent,
+    Expression<double>? sgstPercent,
+    Expression<double>? igstPercent,
+    Expression<double>? otherTaxPercent,
+    Expression<String>? otherTaxName,
+    Expression<double>? cgstAmount,
+    Expression<double>? sgstAmount,
+    Expression<double>? igstAmount,
+    Expression<double>? otherTaxAmount,
+    Expression<double>? totalTaxAmount,
+    Expression<String>? hsnCode,
+    Expression<String>? supplierGstin,
     Expression<int>? syncStatus,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -4812,6 +5526,22 @@ class PurchaseRecordsCompanion extends UpdateCompanion<PurchaseRecord> {
       if (expiryDate != null) 'expiry_date': expiryDate,
       if (warrantyMonths != null) 'warranty_months': warrantyMonths,
       if (notes != null) 'notes': notes,
+      if (isGstApplied != null) 'is_gst_applied': isGstApplied,
+      if (isTaxInclusive != null) 'is_tax_inclusive': isTaxInclusive,
+      if (isInterstate != null) 'is_interstate': isInterstate,
+      if (taxableValue != null) 'taxable_value': taxableValue,
+      if (cgstPercent != null) 'cgst_percent': cgstPercent,
+      if (sgstPercent != null) 'sgst_percent': sgstPercent,
+      if (igstPercent != null) 'igst_percent': igstPercent,
+      if (otherTaxPercent != null) 'other_tax_percent': otherTaxPercent,
+      if (otherTaxName != null) 'other_tax_name': otherTaxName,
+      if (cgstAmount != null) 'cgst_amount': cgstAmount,
+      if (sgstAmount != null) 'sgst_amount': sgstAmount,
+      if (igstAmount != null) 'igst_amount': igstAmount,
+      if (otherTaxAmount != null) 'other_tax_amount': otherTaxAmount,
+      if (totalTaxAmount != null) 'total_tax_amount': totalTaxAmount,
+      if (hsnCode != null) 'hsn_code': hsnCode,
+      if (supplierGstin != null) 'supplier_gstin': supplierGstin,
       if (syncStatus != null) 'sync_status': syncStatus,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -4827,7 +5557,7 @@ class PurchaseRecordsCompanion extends UpdateCompanion<PurchaseRecord> {
     Value<String?>? supplierName,
     Value<String?>? companyId,
     Value<String?>? companyName,
-    Value<int>? quantity,
+    Value<double>? quantity,
     Value<String>? unit,
     Value<double>? purchasePrice,
     Value<double>? salesPrice,
@@ -4836,6 +5566,22 @@ class PurchaseRecordsCompanion extends UpdateCompanion<PurchaseRecord> {
     Value<DateTime?>? expiryDate,
     Value<int?>? warrantyMonths,
     Value<String?>? notes,
+    Value<bool>? isGstApplied,
+    Value<bool>? isTaxInclusive,
+    Value<bool>? isInterstate,
+    Value<double>? taxableValue,
+    Value<double>? cgstPercent,
+    Value<double>? sgstPercent,
+    Value<double>? igstPercent,
+    Value<double>? otherTaxPercent,
+    Value<String?>? otherTaxName,
+    Value<double>? cgstAmount,
+    Value<double>? sgstAmount,
+    Value<double>? igstAmount,
+    Value<double>? otherTaxAmount,
+    Value<double>? totalTaxAmount,
+    Value<String?>? hsnCode,
+    Value<String?>? supplierGstin,
     Value<int>? syncStatus,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -4858,6 +5604,22 @@ class PurchaseRecordsCompanion extends UpdateCompanion<PurchaseRecord> {
       expiryDate: expiryDate ?? this.expiryDate,
       warrantyMonths: warrantyMonths ?? this.warrantyMonths,
       notes: notes ?? this.notes,
+      isGstApplied: isGstApplied ?? this.isGstApplied,
+      isTaxInclusive: isTaxInclusive ?? this.isTaxInclusive,
+      isInterstate: isInterstate ?? this.isInterstate,
+      taxableValue: taxableValue ?? this.taxableValue,
+      cgstPercent: cgstPercent ?? this.cgstPercent,
+      sgstPercent: sgstPercent ?? this.sgstPercent,
+      igstPercent: igstPercent ?? this.igstPercent,
+      otherTaxPercent: otherTaxPercent ?? this.otherTaxPercent,
+      otherTaxName: otherTaxName ?? this.otherTaxName,
+      cgstAmount: cgstAmount ?? this.cgstAmount,
+      sgstAmount: sgstAmount ?? this.sgstAmount,
+      igstAmount: igstAmount ?? this.igstAmount,
+      otherTaxAmount: otherTaxAmount ?? this.otherTaxAmount,
+      totalTaxAmount: totalTaxAmount ?? this.totalTaxAmount,
+      hsnCode: hsnCode ?? this.hsnCode,
+      supplierGstin: supplierGstin ?? this.supplierGstin,
       syncStatus: syncStatus ?? this.syncStatus,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -4892,7 +5654,7 @@ class PurchaseRecordsCompanion extends UpdateCompanion<PurchaseRecord> {
       map['company_name'] = Variable<String>(companyName.value);
     }
     if (quantity.present) {
-      map['quantity'] = Variable<int>(quantity.value);
+      map['quantity'] = Variable<double>(quantity.value);
     }
     if (unit.present) {
       map['unit'] = Variable<String>(unit.value);
@@ -4917,6 +5679,54 @@ class PurchaseRecordsCompanion extends UpdateCompanion<PurchaseRecord> {
     }
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
+    }
+    if (isGstApplied.present) {
+      map['is_gst_applied'] = Variable<bool>(isGstApplied.value);
+    }
+    if (isTaxInclusive.present) {
+      map['is_tax_inclusive'] = Variable<bool>(isTaxInclusive.value);
+    }
+    if (isInterstate.present) {
+      map['is_interstate'] = Variable<bool>(isInterstate.value);
+    }
+    if (taxableValue.present) {
+      map['taxable_value'] = Variable<double>(taxableValue.value);
+    }
+    if (cgstPercent.present) {
+      map['cgst_percent'] = Variable<double>(cgstPercent.value);
+    }
+    if (sgstPercent.present) {
+      map['sgst_percent'] = Variable<double>(sgstPercent.value);
+    }
+    if (igstPercent.present) {
+      map['igst_percent'] = Variable<double>(igstPercent.value);
+    }
+    if (otherTaxPercent.present) {
+      map['other_tax_percent'] = Variable<double>(otherTaxPercent.value);
+    }
+    if (otherTaxName.present) {
+      map['other_tax_name'] = Variable<String>(otherTaxName.value);
+    }
+    if (cgstAmount.present) {
+      map['cgst_amount'] = Variable<double>(cgstAmount.value);
+    }
+    if (sgstAmount.present) {
+      map['sgst_amount'] = Variable<double>(sgstAmount.value);
+    }
+    if (igstAmount.present) {
+      map['igst_amount'] = Variable<double>(igstAmount.value);
+    }
+    if (otherTaxAmount.present) {
+      map['other_tax_amount'] = Variable<double>(otherTaxAmount.value);
+    }
+    if (totalTaxAmount.present) {
+      map['total_tax_amount'] = Variable<double>(totalTaxAmount.value);
+    }
+    if (hsnCode.present) {
+      map['hsn_code'] = Variable<String>(hsnCode.value);
+    }
+    if (supplierGstin.present) {
+      map['supplier_gstin'] = Variable<String>(supplierGstin.value);
     }
     if (syncStatus.present) {
       map['sync_status'] = Variable<int>(syncStatus.value);
@@ -4950,6 +5760,22 @@ class PurchaseRecordsCompanion extends UpdateCompanion<PurchaseRecord> {
           ..write('expiryDate: $expiryDate, ')
           ..write('warrantyMonths: $warrantyMonths, ')
           ..write('notes: $notes, ')
+          ..write('isGstApplied: $isGstApplied, ')
+          ..write('isTaxInclusive: $isTaxInclusive, ')
+          ..write('isInterstate: $isInterstate, ')
+          ..write('taxableValue: $taxableValue, ')
+          ..write('cgstPercent: $cgstPercent, ')
+          ..write('sgstPercent: $sgstPercent, ')
+          ..write('igstPercent: $igstPercent, ')
+          ..write('otherTaxPercent: $otherTaxPercent, ')
+          ..write('otherTaxName: $otherTaxName, ')
+          ..write('cgstAmount: $cgstAmount, ')
+          ..write('sgstAmount: $sgstAmount, ')
+          ..write('igstAmount: $igstAmount, ')
+          ..write('otherTaxAmount: $otherTaxAmount, ')
+          ..write('totalTaxAmount: $totalTaxAmount, ')
+          ..write('hsnCode: $hsnCode, ')
+          ..write('supplierGstin: $supplierGstin, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -5087,26 +5913,28 @@ class $PurchaseBatchRecordsTable extends PurchaseBatchRecords
     'quantityPurchased',
   );
   @override
-  late final GeneratedColumn<int> quantityPurchased = GeneratedColumn<int>(
-    'quantity_purchased',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(0),
-  );
+  late final GeneratedColumn<double> quantityPurchased =
+      GeneratedColumn<double>(
+        'quantity_purchased',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      );
   static const VerificationMeta _quantityRemainingMeta = const VerificationMeta(
     'quantityRemaining',
   );
   @override
-  late final GeneratedColumn<int> quantityRemaining = GeneratedColumn<int>(
-    'quantity_remaining',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(0),
-  );
+  late final GeneratedColumn<double> quantityRemaining =
+      GeneratedColumn<double>(
+        'quantity_remaining',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      );
   static const VerificationMeta _purchaseDateMeta = const VerificationMeta(
     'purchaseDate',
   );
@@ -5535,11 +6363,11 @@ class $PurchaseBatchRecordsTable extends PurchaseBatchRecords
         data['${effectivePrefix}selling_price'],
       )!,
       quantityPurchased: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.double,
         data['${effectivePrefix}quantity_purchased'],
       )!,
       quantityRemaining: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.double,
         data['${effectivePrefix}quantity_remaining'],
       )!,
       purchaseDate: attachedDatabase.typeMapping.read(
@@ -5615,8 +6443,8 @@ class PurchaseBatchRecord extends DataClass
   final String productUniqueKey;
   final double purchasePrice;
   final double sellingPrice;
-  final int quantityPurchased;
-  final int quantityRemaining;
+  final double quantityPurchased;
+  final double quantityRemaining;
   final DateTime purchaseDate;
   final String? supplierId;
   final String? supplierName;
@@ -5672,8 +6500,8 @@ class PurchaseBatchRecord extends DataClass
     map['product_unique_key'] = Variable<String>(productUniqueKey);
     map['purchase_price'] = Variable<double>(purchasePrice);
     map['selling_price'] = Variable<double>(sellingPrice);
-    map['quantity_purchased'] = Variable<int>(quantityPurchased);
-    map['quantity_remaining'] = Variable<int>(quantityRemaining);
+    map['quantity_purchased'] = Variable<double>(quantityPurchased);
+    map['quantity_remaining'] = Variable<double>(quantityRemaining);
     map['purchase_date'] = Variable<DateTime>(purchaseDate);
     if (!nullToAbsent || supplierId != null) {
       map['supplier_id'] = Variable<String>(supplierId);
@@ -5766,8 +6594,8 @@ class PurchaseBatchRecord extends DataClass
       productUniqueKey: serializer.fromJson<String>(json['productUniqueKey']),
       purchasePrice: serializer.fromJson<double>(json['purchasePrice']),
       sellingPrice: serializer.fromJson<double>(json['sellingPrice']),
-      quantityPurchased: serializer.fromJson<int>(json['quantityPurchased']),
-      quantityRemaining: serializer.fromJson<int>(json['quantityRemaining']),
+      quantityPurchased: serializer.fromJson<double>(json['quantityPurchased']),
+      quantityRemaining: serializer.fromJson<double>(json['quantityRemaining']),
       purchaseDate: serializer.fromJson<DateTime>(json['purchaseDate']),
       supplierId: serializer.fromJson<String?>(json['supplierId']),
       supplierName: serializer.fromJson<String?>(json['supplierName']),
@@ -5797,8 +6625,8 @@ class PurchaseBatchRecord extends DataClass
       'productUniqueKey': serializer.toJson<String>(productUniqueKey),
       'purchasePrice': serializer.toJson<double>(purchasePrice),
       'sellingPrice': serializer.toJson<double>(sellingPrice),
-      'quantityPurchased': serializer.toJson<int>(quantityPurchased),
-      'quantityRemaining': serializer.toJson<int>(quantityRemaining),
+      'quantityPurchased': serializer.toJson<double>(quantityPurchased),
+      'quantityRemaining': serializer.toJson<double>(quantityRemaining),
       'purchaseDate': serializer.toJson<DateTime>(purchaseDate),
       'supplierId': serializer.toJson<String?>(supplierId),
       'supplierName': serializer.toJson<String?>(supplierName),
@@ -5826,8 +6654,8 @@ class PurchaseBatchRecord extends DataClass
     String? productUniqueKey,
     double? purchasePrice,
     double? sellingPrice,
-    int? quantityPurchased,
-    int? quantityRemaining,
+    double? quantityPurchased,
+    double? quantityRemaining,
     DateTime? purchaseDate,
     Value<String?> supplierId = const Value.absent(),
     Value<String?> supplierName = const Value.absent(),
@@ -6037,8 +6865,8 @@ class PurchaseBatchRecordsCompanion
   final Value<String> productUniqueKey;
   final Value<double> purchasePrice;
   final Value<double> sellingPrice;
-  final Value<int> quantityPurchased;
-  final Value<int> quantityRemaining;
+  final Value<double> quantityPurchased;
+  final Value<double> quantityRemaining;
   final Value<DateTime> purchaseDate;
   final Value<String?> supplierId;
   final Value<String?> supplierName;
@@ -6121,8 +6949,8 @@ class PurchaseBatchRecordsCompanion
     Expression<String>? productUniqueKey,
     Expression<double>? purchasePrice,
     Expression<double>? sellingPrice,
-    Expression<int>? quantityPurchased,
-    Expression<int>? quantityRemaining,
+    Expression<double>? quantityPurchased,
+    Expression<double>? quantityRemaining,
     Expression<DateTime>? purchaseDate,
     Expression<String>? supplierId,
     Expression<String>? supplierName,
@@ -6177,8 +7005,8 @@ class PurchaseBatchRecordsCompanion
     Value<String>? productUniqueKey,
     Value<double>? purchasePrice,
     Value<double>? sellingPrice,
-    Value<int>? quantityPurchased,
-    Value<int>? quantityRemaining,
+    Value<double>? quantityPurchased,
+    Value<double>? quantityRemaining,
     Value<DateTime>? purchaseDate,
     Value<String?>? supplierId,
     Value<String?>? supplierName,
@@ -6256,10 +7084,10 @@ class PurchaseBatchRecordsCompanion
       map['selling_price'] = Variable<double>(sellingPrice.value);
     }
     if (quantityPurchased.present) {
-      map['quantity_purchased'] = Variable<int>(quantityPurchased.value);
+      map['quantity_purchased'] = Variable<double>(quantityPurchased.value);
     }
     if (quantityRemaining.present) {
-      map['quantity_remaining'] = Variable<int>(quantityRemaining.value);
+      map['quantity_remaining'] = Variable<double>(quantityRemaining.value);
     }
     if (purchaseDate.present) {
       map['purchase_date'] = Variable<DateTime>(purchaseDate.value);
@@ -6487,11 +7315,11 @@ class $StockLedgerRecordsTable extends StockLedgerRecords
     'quantity',
   );
   @override
-  late final GeneratedColumn<int> quantity = GeneratedColumn<int>(
+  late final GeneratedColumn<double> quantity = GeneratedColumn<double>(
     'quantity',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.double,
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
@@ -6557,11 +7385,11 @@ class $StockLedgerRecordsTable extends StockLedgerRecords
     'balanceQuantity',
   );
   @override
-  late final GeneratedColumn<int> balanceQuantity = GeneratedColumn<int>(
+  late final GeneratedColumn<double> balanceQuantity = GeneratedColumn<double>(
     'balance_quantity',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.double,
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
@@ -6901,7 +7729,7 @@ class $StockLedgerRecordsTable extends StockLedgerRecords
         data['${effectivePrefix}reference_type'],
       )!,
       quantity: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.double,
         data['${effectivePrefix}quantity'],
       )!,
       costPrice: attachedDatabase.typeMapping.read(
@@ -6925,7 +7753,7 @@ class $StockLedgerRecordsTable extends StockLedgerRecords
         data['${effectivePrefix}profit'],
       )!,
       balanceQuantity: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.double,
         data['${effectivePrefix}balance_quantity'],
       )!,
       balanceValue: attachedDatabase.typeMapping.read(
@@ -6971,13 +7799,13 @@ class StockLedgerRecord extends DataClass
   final int ledgerType;
   final String referenceId;
   final String referenceType;
-  final int quantity;
+  final double quantity;
   final double costPrice;
   final double sellingPrice;
   final double totalCost;
   final double totalRevenue;
   final double profit;
-  final int balanceQuantity;
+  final double balanceQuantity;
   final double balanceValue;
   final DateTime transactionDate;
   final String? notes;
@@ -7028,13 +7856,13 @@ class StockLedgerRecord extends DataClass
     map['ledger_type'] = Variable<int>(ledgerType);
     map['reference_id'] = Variable<String>(referenceId);
     map['reference_type'] = Variable<String>(referenceType);
-    map['quantity'] = Variable<int>(quantity);
+    map['quantity'] = Variable<double>(quantity);
     map['cost_price'] = Variable<double>(costPrice);
     map['selling_price'] = Variable<double>(sellingPrice);
     map['total_cost'] = Variable<double>(totalCost);
     map['total_revenue'] = Variable<double>(totalRevenue);
     map['profit'] = Variable<double>(profit);
-    map['balance_quantity'] = Variable<int>(balanceQuantity);
+    map['balance_quantity'] = Variable<double>(balanceQuantity);
     map['balance_value'] = Variable<double>(balanceValue);
     map['transaction_date'] = Variable<DateTime>(transactionDate);
     if (!nullToAbsent || notes != null) {
@@ -7098,13 +7926,13 @@ class StockLedgerRecord extends DataClass
       ledgerType: serializer.fromJson<int>(json['ledgerType']),
       referenceId: serializer.fromJson<String>(json['referenceId']),
       referenceType: serializer.fromJson<String>(json['referenceType']),
-      quantity: serializer.fromJson<int>(json['quantity']),
+      quantity: serializer.fromJson<double>(json['quantity']),
       costPrice: serializer.fromJson<double>(json['costPrice']),
       sellingPrice: serializer.fromJson<double>(json['sellingPrice']),
       totalCost: serializer.fromJson<double>(json['totalCost']),
       totalRevenue: serializer.fromJson<double>(json['totalRevenue']),
       profit: serializer.fromJson<double>(json['profit']),
-      balanceQuantity: serializer.fromJson<int>(json['balanceQuantity']),
+      balanceQuantity: serializer.fromJson<double>(json['balanceQuantity']),
       balanceValue: serializer.fromJson<double>(json['balanceValue']),
       transactionDate: serializer.fromJson<DateTime>(json['transactionDate']),
       notes: serializer.fromJson<String?>(json['notes']),
@@ -7128,13 +7956,13 @@ class StockLedgerRecord extends DataClass
       'ledgerType': serializer.toJson<int>(ledgerType),
       'referenceId': serializer.toJson<String>(referenceId),
       'referenceType': serializer.toJson<String>(referenceType),
-      'quantity': serializer.toJson<int>(quantity),
+      'quantity': serializer.toJson<double>(quantity),
       'costPrice': serializer.toJson<double>(costPrice),
       'sellingPrice': serializer.toJson<double>(sellingPrice),
       'totalCost': serializer.toJson<double>(totalCost),
       'totalRevenue': serializer.toJson<double>(totalRevenue),
       'profit': serializer.toJson<double>(profit),
-      'balanceQuantity': serializer.toJson<int>(balanceQuantity),
+      'balanceQuantity': serializer.toJson<double>(balanceQuantity),
       'balanceValue': serializer.toJson<double>(balanceValue),
       'transactionDate': serializer.toJson<DateTime>(transactionDate),
       'notes': serializer.toJson<String?>(notes),
@@ -7156,13 +7984,13 @@ class StockLedgerRecord extends DataClass
     int? ledgerType,
     String? referenceId,
     String? referenceType,
-    int? quantity,
+    double? quantity,
     double? costPrice,
     double? sellingPrice,
     double? totalCost,
     double? totalRevenue,
     double? profit,
-    int? balanceQuantity,
+    double? balanceQuantity,
     double? balanceValue,
     DateTime? transactionDate,
     Value<String?> notes = const Value.absent(),
@@ -7350,13 +8178,13 @@ class StockLedgerRecordsCompanion extends UpdateCompanion<StockLedgerRecord> {
   final Value<int> ledgerType;
   final Value<String> referenceId;
   final Value<String> referenceType;
-  final Value<int> quantity;
+  final Value<double> quantity;
   final Value<double> costPrice;
   final Value<double> sellingPrice;
   final Value<double> totalCost;
   final Value<double> totalRevenue;
   final Value<double> profit;
-  final Value<int> balanceQuantity;
+  final Value<double> balanceQuantity;
   final Value<double> balanceValue;
   final Value<DateTime> transactionDate;
   final Value<String?> notes;
@@ -7431,13 +8259,13 @@ class StockLedgerRecordsCompanion extends UpdateCompanion<StockLedgerRecord> {
     Expression<int>? ledgerType,
     Expression<String>? referenceId,
     Expression<String>? referenceType,
-    Expression<int>? quantity,
+    Expression<double>? quantity,
     Expression<double>? costPrice,
     Expression<double>? sellingPrice,
     Expression<double>? totalCost,
     Expression<double>? totalRevenue,
     Expression<double>? profit,
-    Expression<int>? balanceQuantity,
+    Expression<double>? balanceQuantity,
     Expression<double>? balanceValue,
     Expression<DateTime>? transactionDate,
     Expression<String>? notes,
@@ -7485,13 +8313,13 @@ class StockLedgerRecordsCompanion extends UpdateCompanion<StockLedgerRecord> {
     Value<int>? ledgerType,
     Value<String>? referenceId,
     Value<String>? referenceType,
-    Value<int>? quantity,
+    Value<double>? quantity,
     Value<double>? costPrice,
     Value<double>? sellingPrice,
     Value<double>? totalCost,
     Value<double>? totalRevenue,
     Value<double>? profit,
-    Value<int>? balanceQuantity,
+    Value<double>? balanceQuantity,
     Value<double>? balanceValue,
     Value<DateTime>? transactionDate,
     Value<String?>? notes,
@@ -7566,7 +8394,7 @@ class StockLedgerRecordsCompanion extends UpdateCompanion<StockLedgerRecord> {
       map['reference_type'] = Variable<String>(referenceType.value);
     }
     if (quantity.present) {
-      map['quantity'] = Variable<int>(quantity.value);
+      map['quantity'] = Variable<double>(quantity.value);
     }
     if (costPrice.present) {
       map['cost_price'] = Variable<double>(costPrice.value);
@@ -7584,7 +8412,7 @@ class StockLedgerRecordsCompanion extends UpdateCompanion<StockLedgerRecord> {
       map['profit'] = Variable<double>(profit.value);
     }
     if (balanceQuantity.present) {
-      map['balance_quantity'] = Variable<int>(balanceQuantity.value);
+      map['balance_quantity'] = Variable<double>(balanceQuantity.value);
     }
     if (balanceValue.present) {
       map['balance_value'] = Variable<double>(balanceValue.value);
@@ -7715,11 +8543,11 @@ class $BillRecordsTable extends BillRecords
     'totalQuantity',
   );
   @override
-  late final GeneratedColumn<int> totalQuantity = GeneratedColumn<int>(
+  late final GeneratedColumn<double> totalQuantity = GeneratedColumn<double>(
     'total_quantity',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.double,
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
@@ -8489,7 +9317,7 @@ class $BillRecordsTable extends BillRecords
         data['${effectivePrefix}items_json'],
       )!,
       totalQuantity: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.double,
         data['${effectivePrefix}total_quantity'],
       )!,
       totalAmount: attachedDatabase.typeMapping.read(
@@ -8632,7 +9460,7 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
   final String? customerName;
   final String? customerContact;
   final String itemsJson;
-  final int totalQuantity;
+  final double totalQuantity;
   final double totalAmount;
   final double discountAmount;
   final double discountPercent;
@@ -8721,7 +9549,7 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
       map['customer_contact'] = Variable<String>(customerContact);
     }
     map['items_json'] = Variable<String>(itemsJson);
-    map['total_quantity'] = Variable<int>(totalQuantity);
+    map['total_quantity'] = Variable<double>(totalQuantity);
     map['total_amount'] = Variable<double>(totalAmount);
     map['discount_amount'] = Variable<double>(discountAmount);
     map['discount_percent'] = Variable<double>(discountPercent);
@@ -8839,7 +9667,7 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
       customerName: serializer.fromJson<String?>(json['customerName']),
       customerContact: serializer.fromJson<String?>(json['customerContact']),
       itemsJson: serializer.fromJson<String>(json['itemsJson']),
-      totalQuantity: serializer.fromJson<int>(json['totalQuantity']),
+      totalQuantity: serializer.fromJson<double>(json['totalQuantity']),
       totalAmount: serializer.fromJson<double>(json['totalAmount']),
       discountAmount: serializer.fromJson<double>(json['discountAmount']),
       discountPercent: serializer.fromJson<double>(json['discountPercent']),
@@ -8883,7 +9711,7 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
       'customerName': serializer.toJson<String?>(customerName),
       'customerContact': serializer.toJson<String?>(customerContact),
       'itemsJson': serializer.toJson<String>(itemsJson),
-      'totalQuantity': serializer.toJson<int>(totalQuantity),
+      'totalQuantity': serializer.toJson<double>(totalQuantity),
       'totalAmount': serializer.toJson<double>(totalAmount),
       'discountAmount': serializer.toJson<double>(discountAmount),
       'discountPercent': serializer.toJson<double>(discountPercent),
@@ -8925,7 +9753,7 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
     Value<String?> customerName = const Value.absent(),
     Value<String?> customerContact = const Value.absent(),
     String? itemsJson,
-    int? totalQuantity,
+    double? totalQuantity,
     double? totalAmount,
     double? discountAmount,
     double? discountPercent,
@@ -9245,7 +10073,7 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
   final Value<String?> customerName;
   final Value<String?> customerContact;
   final Value<String> itemsJson;
-  final Value<int> totalQuantity;
+  final Value<double> totalQuantity;
   final Value<double> totalAmount;
   final Value<double> discountAmount;
   final Value<double> discountPercent;
@@ -9368,7 +10196,7 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
     Expression<String>? customerName,
     Expression<String>? customerContact,
     Expression<String>? itemsJson,
-    Expression<int>? totalQuantity,
+    Expression<double>? totalQuantity,
     Expression<double>? totalAmount,
     Expression<double>? discountAmount,
     Expression<double>? discountPercent,
@@ -9450,7 +10278,7 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
     Value<String?>? customerName,
     Value<String?>? customerContact,
     Value<String>? itemsJson,
-    Value<int>? totalQuantity,
+    Value<double>? totalQuantity,
     Value<double>? totalAmount,
     Value<double>? discountAmount,
     Value<double>? discountPercent,
@@ -9547,7 +10375,7 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
       map['items_json'] = Variable<String>(itemsJson.value);
     }
     if (totalQuantity.present) {
-      map['total_quantity'] = Variable<int>(totalQuantity.value);
+      map['total_quantity'] = Variable<double>(totalQuantity.value);
     }
     if (totalAmount.present) {
       map['total_amount'] = Variable<double>(totalAmount.value);
@@ -17002,7 +17830,7 @@ typedef $$ProductRecordsTableCreateCompanionBuilder =
       Value<String?> barcode,
       Value<double> purchasePrice,
       Value<double> salesPrice,
-      Value<int> currentStock,
+      Value<double> currentStock,
       Value<String?> unit,
       Value<bool> isActive,
       required int syncStatus,
@@ -17037,7 +17865,7 @@ typedef $$ProductRecordsTableUpdateCompanionBuilder =
       Value<String?> barcode,
       Value<double> purchasePrice,
       Value<double> salesPrice,
-      Value<int> currentStock,
+      Value<double> currentStock,
       Value<String?> unit,
       Value<bool> isActive,
       Value<int> syncStatus,
@@ -17116,7 +17944,7 @@ class $$ProductRecordsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get currentStock => $composableBuilder(
+  ColumnFilters<double> get currentStock => $composableBuilder(
     column: $table.currentStock,
     builder: (column) => ColumnFilters(column),
   );
@@ -17286,7 +18114,7 @@ class $$ProductRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get currentStock => $composableBuilder(
+  ColumnOrderings<double> get currentStock => $composableBuilder(
     column: $table.currentStock,
     builder: (column) => ColumnOrderings(column),
   );
@@ -17444,7 +18272,7 @@ class $$ProductRecordsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get currentStock => $composableBuilder(
+  GeneratedColumn<double> get currentStock => $composableBuilder(
     column: $table.currentStock,
     builder: (column) => column,
   );
@@ -17582,7 +18410,7 @@ class $$ProductRecordsTableTableManager
                 Value<String?> barcode = const Value.absent(),
                 Value<double> purchasePrice = const Value.absent(),
                 Value<double> salesPrice = const Value.absent(),
-                Value<int> currentStock = const Value.absent(),
+                Value<double> currentStock = const Value.absent(),
                 Value<String?> unit = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<int> syncStatus = const Value.absent(),
@@ -17650,7 +18478,7 @@ class $$ProductRecordsTableTableManager
                 Value<String?> barcode = const Value.absent(),
                 Value<double> purchasePrice = const Value.absent(),
                 Value<double> salesPrice = const Value.absent(),
-                Value<int> currentStock = const Value.absent(),
+                Value<double> currentStock = const Value.absent(),
                 Value<String?> unit = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 required int syncStatus,
@@ -17742,7 +18570,7 @@ typedef $$PurchaseRecordsTableCreateCompanionBuilder =
       Value<String?> supplierName,
       Value<String?> companyId,
       Value<String?> companyName,
-      Value<int> quantity,
+      Value<double> quantity,
       Value<String> unit,
       Value<double> purchasePrice,
       Value<double> salesPrice,
@@ -17751,6 +18579,22 @@ typedef $$PurchaseRecordsTableCreateCompanionBuilder =
       Value<DateTime?> expiryDate,
       Value<int?> warrantyMonths,
       Value<String?> notes,
+      Value<bool> isGstApplied,
+      Value<bool> isTaxInclusive,
+      Value<bool> isInterstate,
+      Value<double> taxableValue,
+      Value<double> cgstPercent,
+      Value<double> sgstPercent,
+      Value<double> igstPercent,
+      Value<double> otherTaxPercent,
+      Value<String?> otherTaxName,
+      Value<double> cgstAmount,
+      Value<double> sgstAmount,
+      Value<double> igstAmount,
+      Value<double> otherTaxAmount,
+      Value<double> totalTaxAmount,
+      Value<String?> hsnCode,
+      Value<String?> supplierGstin,
       required int syncStatus,
       required DateTime createdAt,
       required DateTime updatedAt,
@@ -17765,7 +18609,7 @@ typedef $$PurchaseRecordsTableUpdateCompanionBuilder =
       Value<String?> supplierName,
       Value<String?> companyId,
       Value<String?> companyName,
-      Value<int> quantity,
+      Value<double> quantity,
       Value<String> unit,
       Value<double> purchasePrice,
       Value<double> salesPrice,
@@ -17774,6 +18618,22 @@ typedef $$PurchaseRecordsTableUpdateCompanionBuilder =
       Value<DateTime?> expiryDate,
       Value<int?> warrantyMonths,
       Value<String?> notes,
+      Value<bool> isGstApplied,
+      Value<bool> isTaxInclusive,
+      Value<bool> isInterstate,
+      Value<double> taxableValue,
+      Value<double> cgstPercent,
+      Value<double> sgstPercent,
+      Value<double> igstPercent,
+      Value<double> otherTaxPercent,
+      Value<String?> otherTaxName,
+      Value<double> cgstAmount,
+      Value<double> sgstAmount,
+      Value<double> igstAmount,
+      Value<double> otherTaxAmount,
+      Value<double> totalTaxAmount,
+      Value<String?> hsnCode,
+      Value<String?> supplierGstin,
       Value<int> syncStatus,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -17828,7 +18688,7 @@ class $$PurchaseRecordsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get quantity => $composableBuilder(
+  ColumnFilters<double> get quantity => $composableBuilder(
     column: $table.quantity,
     builder: (column) => ColumnFilters(column),
   );
@@ -17870,6 +18730,86 @@ class $$PurchaseRecordsTableFilterComposer
 
   ColumnFilters<String> get notes => $composableBuilder(
     column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isGstApplied => $composableBuilder(
+    column: $table.isGstApplied,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isTaxInclusive => $composableBuilder(
+    column: $table.isTaxInclusive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isInterstate => $composableBuilder(
+    column: $table.isInterstate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get taxableValue => $composableBuilder(
+    column: $table.taxableValue,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get cgstPercent => $composableBuilder(
+    column: $table.cgstPercent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get sgstPercent => $composableBuilder(
+    column: $table.sgstPercent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get igstPercent => $composableBuilder(
+    column: $table.igstPercent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get otherTaxPercent => $composableBuilder(
+    column: $table.otherTaxPercent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get otherTaxName => $composableBuilder(
+    column: $table.otherTaxName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get cgstAmount => $composableBuilder(
+    column: $table.cgstAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get sgstAmount => $composableBuilder(
+    column: $table.sgstAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get igstAmount => $composableBuilder(
+    column: $table.igstAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get otherTaxAmount => $composableBuilder(
+    column: $table.otherTaxAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get totalTaxAmount => $composableBuilder(
+    column: $table.totalTaxAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get hsnCode => $composableBuilder(
+    column: $table.hsnCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get supplierGstin => $composableBuilder(
+    column: $table.supplierGstin,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -17938,7 +18878,7 @@ class $$PurchaseRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get quantity => $composableBuilder(
+  ColumnOrderings<double> get quantity => $composableBuilder(
     column: $table.quantity,
     builder: (column) => ColumnOrderings(column),
   );
@@ -17980,6 +18920,86 @@ class $$PurchaseRecordsTableOrderingComposer
 
   ColumnOrderings<String> get notes => $composableBuilder(
     column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isGstApplied => $composableBuilder(
+    column: $table.isGstApplied,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isTaxInclusive => $composableBuilder(
+    column: $table.isTaxInclusive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isInterstate => $composableBuilder(
+    column: $table.isInterstate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get taxableValue => $composableBuilder(
+    column: $table.taxableValue,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get cgstPercent => $composableBuilder(
+    column: $table.cgstPercent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get sgstPercent => $composableBuilder(
+    column: $table.sgstPercent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get igstPercent => $composableBuilder(
+    column: $table.igstPercent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get otherTaxPercent => $composableBuilder(
+    column: $table.otherTaxPercent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get otherTaxName => $composableBuilder(
+    column: $table.otherTaxName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get cgstAmount => $composableBuilder(
+    column: $table.cgstAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get sgstAmount => $composableBuilder(
+    column: $table.sgstAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get igstAmount => $composableBuilder(
+    column: $table.igstAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get otherTaxAmount => $composableBuilder(
+    column: $table.otherTaxAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get totalTaxAmount => $composableBuilder(
+    column: $table.totalTaxAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hsnCode => $composableBuilder(
+    column: $table.hsnCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get supplierGstin => $composableBuilder(
+    column: $table.supplierGstin,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -18040,7 +19060,7 @@ class $$PurchaseRecordsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get quantity =>
+  GeneratedColumn<double> get quantity =>
       $composableBuilder(column: $table.quantity, builder: (column) => column);
 
   GeneratedColumn<String> get unit =>
@@ -18078,6 +19098,84 @@ class $$PurchaseRecordsTableAnnotationComposer
 
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<bool> get isGstApplied => $composableBuilder(
+    column: $table.isGstApplied,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isTaxInclusive => $composableBuilder(
+    column: $table.isTaxInclusive,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isInterstate => $composableBuilder(
+    column: $table.isInterstate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get taxableValue => $composableBuilder(
+    column: $table.taxableValue,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get cgstPercent => $composableBuilder(
+    column: $table.cgstPercent,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get sgstPercent => $composableBuilder(
+    column: $table.sgstPercent,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get igstPercent => $composableBuilder(
+    column: $table.igstPercent,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get otherTaxPercent => $composableBuilder(
+    column: $table.otherTaxPercent,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get otherTaxName => $composableBuilder(
+    column: $table.otherTaxName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get cgstAmount => $composableBuilder(
+    column: $table.cgstAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get sgstAmount => $composableBuilder(
+    column: $table.sgstAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get igstAmount => $composableBuilder(
+    column: $table.igstAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get otherTaxAmount => $composableBuilder(
+    column: $table.otherTaxAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get totalTaxAmount => $composableBuilder(
+    column: $table.totalTaxAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get hsnCode =>
+      $composableBuilder(column: $table.hsnCode, builder: (column) => column);
+
+  GeneratedColumn<String> get supplierGstin => $composableBuilder(
+    column: $table.supplierGstin,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<int> get syncStatus => $composableBuilder(
     column: $table.syncStatus,
@@ -18136,7 +19234,7 @@ class $$PurchaseRecordsTableTableManager
                 Value<String?> supplierName = const Value.absent(),
                 Value<String?> companyId = const Value.absent(),
                 Value<String?> companyName = const Value.absent(),
-                Value<int> quantity = const Value.absent(),
+                Value<double> quantity = const Value.absent(),
                 Value<String> unit = const Value.absent(),
                 Value<double> purchasePrice = const Value.absent(),
                 Value<double> salesPrice = const Value.absent(),
@@ -18145,6 +19243,22 @@ class $$PurchaseRecordsTableTableManager
                 Value<DateTime?> expiryDate = const Value.absent(),
                 Value<int?> warrantyMonths = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
+                Value<bool> isGstApplied = const Value.absent(),
+                Value<bool> isTaxInclusive = const Value.absent(),
+                Value<bool> isInterstate = const Value.absent(),
+                Value<double> taxableValue = const Value.absent(),
+                Value<double> cgstPercent = const Value.absent(),
+                Value<double> sgstPercent = const Value.absent(),
+                Value<double> igstPercent = const Value.absent(),
+                Value<double> otherTaxPercent = const Value.absent(),
+                Value<String?> otherTaxName = const Value.absent(),
+                Value<double> cgstAmount = const Value.absent(),
+                Value<double> sgstAmount = const Value.absent(),
+                Value<double> igstAmount = const Value.absent(),
+                Value<double> otherTaxAmount = const Value.absent(),
+                Value<double> totalTaxAmount = const Value.absent(),
+                Value<String?> hsnCode = const Value.absent(),
+                Value<String?> supplierGstin = const Value.absent(),
                 Value<int> syncStatus = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -18166,6 +19280,22 @@ class $$PurchaseRecordsTableTableManager
                 expiryDate: expiryDate,
                 warrantyMonths: warrantyMonths,
                 notes: notes,
+                isGstApplied: isGstApplied,
+                isTaxInclusive: isTaxInclusive,
+                isInterstate: isInterstate,
+                taxableValue: taxableValue,
+                cgstPercent: cgstPercent,
+                sgstPercent: sgstPercent,
+                igstPercent: igstPercent,
+                otherTaxPercent: otherTaxPercent,
+                otherTaxName: otherTaxName,
+                cgstAmount: cgstAmount,
+                sgstAmount: sgstAmount,
+                igstAmount: igstAmount,
+                otherTaxAmount: otherTaxAmount,
+                totalTaxAmount: totalTaxAmount,
+                hsnCode: hsnCode,
+                supplierGstin: supplierGstin,
                 syncStatus: syncStatus,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -18180,7 +19310,7 @@ class $$PurchaseRecordsTableTableManager
                 Value<String?> supplierName = const Value.absent(),
                 Value<String?> companyId = const Value.absent(),
                 Value<String?> companyName = const Value.absent(),
-                Value<int> quantity = const Value.absent(),
+                Value<double> quantity = const Value.absent(),
                 Value<String> unit = const Value.absent(),
                 Value<double> purchasePrice = const Value.absent(),
                 Value<double> salesPrice = const Value.absent(),
@@ -18189,6 +19319,22 @@ class $$PurchaseRecordsTableTableManager
                 Value<DateTime?> expiryDate = const Value.absent(),
                 Value<int?> warrantyMonths = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
+                Value<bool> isGstApplied = const Value.absent(),
+                Value<bool> isTaxInclusive = const Value.absent(),
+                Value<bool> isInterstate = const Value.absent(),
+                Value<double> taxableValue = const Value.absent(),
+                Value<double> cgstPercent = const Value.absent(),
+                Value<double> sgstPercent = const Value.absent(),
+                Value<double> igstPercent = const Value.absent(),
+                Value<double> otherTaxPercent = const Value.absent(),
+                Value<String?> otherTaxName = const Value.absent(),
+                Value<double> cgstAmount = const Value.absent(),
+                Value<double> sgstAmount = const Value.absent(),
+                Value<double> igstAmount = const Value.absent(),
+                Value<double> otherTaxAmount = const Value.absent(),
+                Value<double> totalTaxAmount = const Value.absent(),
+                Value<String?> hsnCode = const Value.absent(),
+                Value<String?> supplierGstin = const Value.absent(),
                 required int syncStatus,
                 required DateTime createdAt,
                 required DateTime updatedAt,
@@ -18210,6 +19356,22 @@ class $$PurchaseRecordsTableTableManager
                 expiryDate: expiryDate,
                 warrantyMonths: warrantyMonths,
                 notes: notes,
+                isGstApplied: isGstApplied,
+                isTaxInclusive: isTaxInclusive,
+                isInterstate: isInterstate,
+                taxableValue: taxableValue,
+                cgstPercent: cgstPercent,
+                sgstPercent: sgstPercent,
+                igstPercent: igstPercent,
+                otherTaxPercent: otherTaxPercent,
+                otherTaxName: otherTaxName,
+                cgstAmount: cgstAmount,
+                sgstAmount: sgstAmount,
+                igstAmount: igstAmount,
+                otherTaxAmount: otherTaxAmount,
+                totalTaxAmount: totalTaxAmount,
+                hsnCode: hsnCode,
+                supplierGstin: supplierGstin,
                 syncStatus: syncStatus,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -18251,8 +19413,8 @@ typedef $$PurchaseBatchRecordsTableCreateCompanionBuilder =
       Value<String> productUniqueKey,
       Value<double> purchasePrice,
       Value<double> sellingPrice,
-      Value<int> quantityPurchased,
-      Value<int> quantityRemaining,
+      Value<double> quantityPurchased,
+      Value<double> quantityRemaining,
       required DateTime purchaseDate,
       Value<String?> supplierId,
       Value<String?> supplierName,
@@ -18279,8 +19441,8 @@ typedef $$PurchaseBatchRecordsTableUpdateCompanionBuilder =
       Value<String> productUniqueKey,
       Value<double> purchasePrice,
       Value<double> sellingPrice,
-      Value<int> quantityPurchased,
-      Value<int> quantityRemaining,
+      Value<double> quantityPurchased,
+      Value<double> quantityRemaining,
       Value<DateTime> purchaseDate,
       Value<String?> supplierId,
       Value<String?> supplierName,
@@ -18355,12 +19517,12 @@ class $$PurchaseBatchRecordsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get quantityPurchased => $composableBuilder(
+  ColumnFilters<double> get quantityPurchased => $composableBuilder(
     column: $table.quantityPurchased,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get quantityRemaining => $composableBuilder(
+  ColumnFilters<double> get quantityRemaining => $composableBuilder(
     column: $table.quantityRemaining,
     builder: (column) => ColumnFilters(column),
   );
@@ -18490,12 +19652,12 @@ class $$PurchaseBatchRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get quantityPurchased => $composableBuilder(
+  ColumnOrderings<double> get quantityPurchased => $composableBuilder(
     column: $table.quantityPurchased,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get quantityRemaining => $composableBuilder(
+  ColumnOrderings<double> get quantityRemaining => $composableBuilder(
     column: $table.quantityRemaining,
     builder: (column) => ColumnOrderings(column),
   );
@@ -18615,12 +19777,12 @@ class $$PurchaseBatchRecordsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get quantityPurchased => $composableBuilder(
+  GeneratedColumn<double> get quantityPurchased => $composableBuilder(
     column: $table.quantityPurchased,
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get quantityRemaining => $composableBuilder(
+  GeneratedColumn<double> get quantityRemaining => $composableBuilder(
     column: $table.quantityRemaining,
     builder: (column) => column,
   );
@@ -18736,8 +19898,8 @@ class $$PurchaseBatchRecordsTableTableManager
                 Value<String> productUniqueKey = const Value.absent(),
                 Value<double> purchasePrice = const Value.absent(),
                 Value<double> sellingPrice = const Value.absent(),
-                Value<int> quantityPurchased = const Value.absent(),
-                Value<int> quantityRemaining = const Value.absent(),
+                Value<double> quantityPurchased = const Value.absent(),
+                Value<double> quantityRemaining = const Value.absent(),
                 Value<DateTime> purchaseDate = const Value.absent(),
                 Value<String?> supplierId = const Value.absent(),
                 Value<String?> supplierName = const Value.absent(),
@@ -18790,8 +19952,8 @@ class $$PurchaseBatchRecordsTableTableManager
                 Value<String> productUniqueKey = const Value.absent(),
                 Value<double> purchasePrice = const Value.absent(),
                 Value<double> sellingPrice = const Value.absent(),
-                Value<int> quantityPurchased = const Value.absent(),
-                Value<int> quantityRemaining = const Value.absent(),
+                Value<double> quantityPurchased = const Value.absent(),
+                Value<double> quantityRemaining = const Value.absent(),
                 required DateTime purchaseDate,
                 Value<String?> supplierId = const Value.absent(),
                 Value<String?> supplierName = const Value.absent(),
@@ -18875,13 +20037,13 @@ typedef $$StockLedgerRecordsTableCreateCompanionBuilder =
       required int ledgerType,
       Value<String> referenceId,
       Value<String> referenceType,
-      Value<int> quantity,
+      Value<double> quantity,
       Value<double> costPrice,
       Value<double> sellingPrice,
       Value<double> totalCost,
       Value<double> totalRevenue,
       Value<double> profit,
-      Value<int> balanceQuantity,
+      Value<double> balanceQuantity,
       Value<double> balanceValue,
       required DateTime transactionDate,
       Value<String?> notes,
@@ -18902,13 +20064,13 @@ typedef $$StockLedgerRecordsTableUpdateCompanionBuilder =
       Value<int> ledgerType,
       Value<String> referenceId,
       Value<String> referenceType,
-      Value<int> quantity,
+      Value<double> quantity,
       Value<double> costPrice,
       Value<double> sellingPrice,
       Value<double> totalCost,
       Value<double> totalRevenue,
       Value<double> profit,
-      Value<int> balanceQuantity,
+      Value<double> balanceQuantity,
       Value<double> balanceValue,
       Value<DateTime> transactionDate,
       Value<String?> notes,
@@ -18985,7 +20147,7 @@ class $$StockLedgerRecordsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get quantity => $composableBuilder(
+  ColumnFilters<double> get quantity => $composableBuilder(
     column: $table.quantity,
     builder: (column) => ColumnFilters(column),
   );
@@ -19015,7 +20177,7 @@ class $$StockLedgerRecordsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get balanceQuantity => $composableBuilder(
+  ColumnFilters<double> get balanceQuantity => $composableBuilder(
     column: $table.balanceQuantity,
     builder: (column) => ColumnFilters(column),
   );
@@ -19115,7 +20277,7 @@ class $$StockLedgerRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get quantity => $composableBuilder(
+  ColumnOrderings<double> get quantity => $composableBuilder(
     column: $table.quantity,
     builder: (column) => ColumnOrderings(column),
   );
@@ -19145,7 +20307,7 @@ class $$StockLedgerRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get balanceQuantity => $composableBuilder(
+  ColumnOrderings<double> get balanceQuantity => $composableBuilder(
     column: $table.balanceQuantity,
     builder: (column) => ColumnOrderings(column),
   );
@@ -19235,7 +20397,7 @@ class $$StockLedgerRecordsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get quantity =>
+  GeneratedColumn<double> get quantity =>
       $composableBuilder(column: $table.quantity, builder: (column) => column);
 
   GeneratedColumn<double> get costPrice =>
@@ -19257,7 +20419,7 @@ class $$StockLedgerRecordsTableAnnotationComposer
   GeneratedColumn<double> get profit =>
       $composableBuilder(column: $table.profit, builder: (column) => column);
 
-  GeneratedColumn<int> get balanceQuantity => $composableBuilder(
+  GeneratedColumn<double> get balanceQuantity => $composableBuilder(
     column: $table.balanceQuantity,
     builder: (column) => column,
   );
@@ -19336,13 +20498,13 @@ class $$StockLedgerRecordsTableTableManager
                 Value<int> ledgerType = const Value.absent(),
                 Value<String> referenceId = const Value.absent(),
                 Value<String> referenceType = const Value.absent(),
-                Value<int> quantity = const Value.absent(),
+                Value<double> quantity = const Value.absent(),
                 Value<double> costPrice = const Value.absent(),
                 Value<double> sellingPrice = const Value.absent(),
                 Value<double> totalCost = const Value.absent(),
                 Value<double> totalRevenue = const Value.absent(),
                 Value<double> profit = const Value.absent(),
-                Value<int> balanceQuantity = const Value.absent(),
+                Value<double> balanceQuantity = const Value.absent(),
                 Value<double> balanceValue = const Value.absent(),
                 Value<DateTime> transactionDate = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
@@ -19388,13 +20550,13 @@ class $$StockLedgerRecordsTableTableManager
                 required int ledgerType,
                 Value<String> referenceId = const Value.absent(),
                 Value<String> referenceType = const Value.absent(),
-                Value<int> quantity = const Value.absent(),
+                Value<double> quantity = const Value.absent(),
                 Value<double> costPrice = const Value.absent(),
                 Value<double> sellingPrice = const Value.absent(),
                 Value<double> totalCost = const Value.absent(),
                 Value<double> totalRevenue = const Value.absent(),
                 Value<double> profit = const Value.absent(),
-                Value<int> balanceQuantity = const Value.absent(),
+                Value<double> balanceQuantity = const Value.absent(),
                 Value<double> balanceValue = const Value.absent(),
                 required DateTime transactionDate,
                 Value<String?> notes = const Value.absent(),
@@ -19463,7 +20625,7 @@ typedef $$BillRecordsTableCreateCompanionBuilder =
       Value<String?> customerName,
       Value<String?> customerContact,
       Value<String> itemsJson,
-      Value<int> totalQuantity,
+      Value<double> totalQuantity,
       Value<double> totalAmount,
       Value<double> discountAmount,
       Value<double> discountPercent,
@@ -19504,7 +20666,7 @@ typedef $$BillRecordsTableUpdateCompanionBuilder =
       Value<String?> customerName,
       Value<String?> customerContact,
       Value<String> itemsJson,
-      Value<int> totalQuantity,
+      Value<double> totalQuantity,
       Value<double> totalAmount,
       Value<double> discountAmount,
       Value<double> discountPercent,
@@ -19577,7 +20739,7 @@ class $$BillRecordsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get totalQuantity => $composableBuilder(
+  ColumnFilters<double> get totalQuantity => $composableBuilder(
     column: $table.totalQuantity,
     builder: (column) => ColumnFilters(column),
   );
@@ -19777,7 +20939,7 @@ class $$BillRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get totalQuantity => $composableBuilder(
+  ColumnOrderings<double> get totalQuantity => $composableBuilder(
     column: $table.totalQuantity,
     builder: (column) => ColumnOrderings(column),
   );
@@ -19971,7 +21133,7 @@ class $$BillRecordsTableAnnotationComposer
   GeneratedColumn<String> get itemsJson =>
       $composableBuilder(column: $table.itemsJson, builder: (column) => column);
 
-  GeneratedColumn<int> get totalQuantity => $composableBuilder(
+  GeneratedColumn<double> get totalQuantity => $composableBuilder(
     column: $table.totalQuantity,
     builder: (column) => column,
   );
@@ -20161,7 +21323,7 @@ class $$BillRecordsTableTableManager
                 Value<String?> customerName = const Value.absent(),
                 Value<String?> customerContact = const Value.absent(),
                 Value<String> itemsJson = const Value.absent(),
-                Value<int> totalQuantity = const Value.absent(),
+                Value<double> totalQuantity = const Value.absent(),
                 Value<double> totalAmount = const Value.absent(),
                 Value<double> discountAmount = const Value.absent(),
                 Value<double> discountPercent = const Value.absent(),
@@ -20241,7 +21403,7 @@ class $$BillRecordsTableTableManager
                 Value<String?> customerName = const Value.absent(),
                 Value<String?> customerContact = const Value.absent(),
                 Value<String> itemsJson = const Value.absent(),
-                Value<int> totalQuantity = const Value.absent(),
+                Value<double> totalQuantity = const Value.absent(),
                 Value<double> totalAmount = const Value.absent(),
                 Value<double> discountAmount = const Value.absent(),
                 Value<double> discountPercent = const Value.absent(),

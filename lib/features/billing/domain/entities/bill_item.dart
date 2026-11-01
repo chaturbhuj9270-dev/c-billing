@@ -59,10 +59,10 @@ class BillItem {
   // Get remaining quantity that can still be returned
   double get remainingQuantity => quantity - returnedQuantity;
 
-  // Get quantity as int for stock/FIFO (never round a positive fraction to 0).
+  // Display/legacy helper — FIFO uses [quantity] (double) directly.
+  // Rounds only for integer UI contexts; does not force min 1.
   int get quantityInt {
     if (quantity <= 0) return 0;
-    if (quantity < 1) return 1;
     return quantity.round();
   }
 

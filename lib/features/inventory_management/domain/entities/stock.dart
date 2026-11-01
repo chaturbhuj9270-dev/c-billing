@@ -25,9 +25,9 @@ extension ReferenceTypeExtension on ReferenceType {
 class Stock {
   final String id;
   final String productId;
-  final int quantityIn;
-  final int quantityOut;
-  final int balanceQuantity;
+  final double quantityIn;
+  final double quantityOut;
+  final double balanceQuantity;
   final ReferenceType referenceType;
   final String referenceId;
   final DateTime createdAt;
@@ -49,9 +49,9 @@ class Stock {
       return Stock(
         id: (json['id'] ?? '') as String,
         productId: (json['productId'] ?? '') as String,
-        quantityIn: (json['quantityIn'] ?? 0) as int,
-        quantityOut: (json['quantityOut'] ?? 0) as int,
-        balanceQuantity: (json['balanceQuantity'] ?? 0) as int,
+        quantityIn: ((json['quantityIn'] ?? 0) as num).toDouble(),
+        quantityOut: ((json['quantityOut'] ?? 0) as num).toDouble(),
+        balanceQuantity: ((json['balanceQuantity'] ?? 0) as num).toDouble(),
         referenceType: ReferenceTypeExtension.fromString(
           (json['referenceType'] ?? 'ADJUSTMENT') as String,
         ),
@@ -92,7 +92,7 @@ class Stock {
   }
 
   // Get net quantity change
-  int getNetChange() {
+  double getNetChange() {
     return quantityIn - quantityOut;
   }
 
@@ -105,9 +105,9 @@ class Stock {
   Stock copyWith({
     String? id,
     String? productId,
-    int? quantityIn,
-    int? quantityOut,
-    int? balanceQuantity,
+    double? quantityIn,
+    double? quantityOut,
+    double? balanceQuantity,
     ReferenceType? referenceType,
     String? referenceId,
     DateTime? createdAt,

@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/local_store.dart';
 import '../../../../core/services/local_database.dart';
+import '../../domain/utils/purchase_tax_calculator.dart';
+import '../../../billing/domain/entities/bill_tax_settings.dart';
 import '../entities/purchase_entity.dart';
 
 // Offline-first controller for Purchase CRUD operations. All operations go to the local database first, then sync in the background.
@@ -42,7 +44,7 @@ class PurchaseOfflineController extends ChangeNotifier {
     String? supplierName,
     String? companyId,
     String? companyName,
-    required int quantity,
+    required double quantity,
     required String unit,
     required double purchasePrice,
     required double salesPrice,
@@ -50,7 +52,32 @@ class PurchaseOfflineController extends ChangeNotifier {
     DateTime? expiryDate,
     int? warrantyMonths,
     String? notes,
+    bool isGstApplied = false,
+    bool isInterstate = false,
+    double cgstPercent = 0,
+    double sgstPercent = 0,
+    double otherTaxPercent = 0,
+    String otherTaxName = '',
+    GstMode gstMode = GstMode.excludeGst,
+    String? hsnCode,
+    String? supplierGstin,
+    PurchaseTaxResult? taxSnapshot,
   }) async {
+    final tax = taxSnapshot ??
+        PurchaseTaxCalculator.calculate(
+          quantity: quantity,
+          purchasePrice: purchasePrice,
+          cgstPercent: cgstPercent,
+          sgstPercent: sgstPercent,
+          isInterstate: isInterstate,
+          isGstApplied: isGstApplied,
+          otherTaxPercent: otherTaxPercent,
+          otherTaxName: otherTaxName,
+          gstMode: gstMode,
+          hsnCode: hsnCode,
+          supplierGstin: supplierGstin,
+        );
+
     final purchase = PurchaseEntity.create(
       productId: productId,
       productName: productName,
@@ -66,6 +93,7 @@ class PurchaseOfflineController extends ChangeNotifier {
       expiryDate: expiryDate,
       warrantyMonths: warrantyMonths,
       notes: notes,
+      tax: tax,
       syncStatus: PurchaseSyncStatus.newRecord,
     );
 
@@ -143,7 +171,7 @@ class PurchaseOfflineController extends ChangeNotifier {
 
   Future<PurchaseEntity?> updatePurchase({
     required int id,
-    int? quantity,
+    double? quantity,
     String? unit,
     double? purchasePrice,
     double? salesPrice,
@@ -151,6 +179,16 @@ class PurchaseOfflineController extends ChangeNotifier {
     DateTime? expiryDate,
     int? warrantyMonths,
     String? notes,
+    bool? isGstApplied,
+    bool? isInterstate,
+    double? cgstPercent,
+    double? sgstPercent,
+    double? otherTaxPercent,
+    String? otherTaxName,
+    GstMode? gstMode,
+    String? hsnCode,
+    String? supplierGstin,
+    PurchaseTaxResult? taxSnapshot,
   }) async {
     final existing = await _findById(id);
     if (existing == null) {
@@ -174,18 +212,53 @@ class PurchaseOfflineController extends ChangeNotifier {
 
     final newQuantity = quantity ?? existing.quantity;
     final newPrice = purchasePrice ?? existing.purchasePrice;
-    final newTotal = newQuantity * newPrice;
+    // Never wipe tax on qty/price update — recompute from stored (or new) rates.
+    final tax = taxSnapshot ??
+        PurchaseTaxCalculator.calculate(
+          quantity: newQuantity,
+          purchasePrice: newPrice,
+          cgstPercent: cgstPercent ?? existing.cgstPercent,
+          sgstPercent: sgstPercent ?? existing.sgstPercent,
+          isInterstate: isInterstate ?? existing.isInterstate,
+          isGstApplied: isGstApplied ?? existing.isGstApplied,
+          otherTaxPercent: otherTaxPercent ?? existing.otherTaxPercent,
+          otherTaxName: otherTaxName ?? existing.otherTaxName ?? '',
+          gstMode: gstMode ??
+              (existing.isTaxInclusive
+                  ? GstMode.includeGst
+                  : (existing.isGstApplied
+                      ? GstMode.excludeGst
+                      : GstMode.noGst)),
+          hsnCode: hsnCode ?? existing.hsnCode,
+          supplierGstin: supplierGstin ?? existing.supplierGstin,
+        );
 
     final updated = existing.copyWith(
-      quantity: quantity,
+      quantity: newQuantity,
       unit: unit,
-      purchasePrice: purchasePrice,
+      purchasePrice: newPrice,
       salesPrice: salesPrice,
-      totalAmount: newTotal,
+      totalAmount: tax.totalAmount,
       productionDate: productionDate,
       expiryDate: expiryDate,
       warrantyMonths: warrantyMonths,
       notes: notes,
+      isGstApplied: tax.isGstApplied,
+      isTaxInclusive: tax.isTaxInclusive,
+      isInterstate: tax.isInterstate,
+      taxableValue: tax.taxableValue,
+      cgstPercent: tax.cgstPercent,
+      sgstPercent: tax.sgstPercent,
+      igstPercent: tax.igstPercent,
+      otherTaxPercent: tax.otherTaxPercent,
+      otherTaxName: tax.otherTaxName,
+      cgstAmount: tax.cgstAmount,
+      sgstAmount: tax.sgstAmount,
+      igstAmount: tax.igstAmount,
+      otherTaxAmount: tax.otherTaxAmount,
+      totalTaxAmount: tax.totalTaxAmount,
+      hsnCode: tax.hsnCode,
+      supplierGstin: tax.supplierGstin,
       syncStatus: newSyncStatus,
       updatedAt: DateTime.now(),
     );
@@ -272,7 +345,7 @@ class PurchaseOfflineController extends ChangeNotifier {
 
         if (existing == null) {
           final productId = data['productId'] as String? ?? '';
-          final quantity = (data['quantity'] as num?)?.toInt() ?? 0;
+          final quantity = (data['quantity'] as num?)?.toDouble() ?? 0.0;
           final purchasePrice =
               (data['purchasePrice'] as num?)?.toDouble() ?? 0.0;
 
@@ -345,7 +418,7 @@ class PurchaseOfflineController extends ChangeNotifier {
     });
     return purchases.fold<double>(
       0.0,
-      (total, purchase) => total + purchase.totalAmount,
+      (total, purchase) => total + purchase.displayTotalAmount,
     );
   }
 

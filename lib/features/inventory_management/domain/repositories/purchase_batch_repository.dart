@@ -51,10 +51,10 @@ abstract class PurchaseBatchRepository {
   Future<void> updateBatch(PurchaseBatch batch);
   
   // Deduct quantity from batch (for FIFO sale) Returns updated batch
-  Future<PurchaseBatch> deductFromBatch(String batchId, int quantity);
+  Future<PurchaseBatch> deductFromBatch(String batchId, double quantity);
   
   // Add quantity to batch (for returns) Returns updated batch
-  Future<PurchaseBatch> addToBatch(String batchId, int quantity);
+  Future<PurchaseBatch> addToBatch(String batchId, double quantity);
   
   // Mark batch as consumed
   Future<void> markBatchAsConsumed(String batchId);
@@ -67,10 +67,10 @@ abstract class PurchaseBatchRepository {
   // ==================== QUERY / AGGREGATIONS ====================
   
   // Get total available stock for a product (sum of all batches)
-  Future<int> getTotalStockByProductId(String productId);
+  Future<double> getTotalStockByProductId(String productId);
   
   // Get total available stock by product unique key
-  Future<int> getTotalStockByProductUniqueKey(String productUniqueKey);
+  Future<double> getTotalStockByProductUniqueKey(String productUniqueKey);
   
   // Get total stock value for a product (sum of remaining quantities * purchase prices)
   Future<double> getTotalStockValueByProductId(String productId);
@@ -79,7 +79,7 @@ abstract class PurchaseBatchRepository {
   Future<double> getWeightedAverageCost(String productId);
   
   // Get all unique products with their total stock
-  Future<Map<String, int>> getAllProductsWithStock();
+  Future<Map<String, double>> getAllProductsWithStock();
   
   // Get batch count for a product
   Future<int> getBatchCountByProductId(String productId);

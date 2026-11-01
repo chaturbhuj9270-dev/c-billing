@@ -53,8 +53,8 @@ class ProductEntity {
   // Sales price
   double salesPrice;
 
-  // Current stock quantity (as int to match domain model)
-  int currentStock;
+  // Current stock quantity (supports fractional kg/ml)
+  double currentStock;
 
   // Measurement unit (kg, pcs, ltr, etc.)
   String? unit;
@@ -175,7 +175,7 @@ class ProductEntity {
     String? barcode,
     required double purchasePrice,
     required double salesPrice,
-    int currentStock = 0,
+    double currentStock = 0,
     String? unit,
     bool isActive = true,
     SyncStatus syncStatus = SyncStatus.newRecord,
@@ -245,7 +245,7 @@ class ProductEntity {
       barcode: data['barcode'] as String?,
       purchasePrice: (data['purchasePrice'] as num?)?.toDouble() ?? 0.0,
       salesPrice: (data['salesPrice'] as num?)?.toDouble() ?? 0.0,
-      currentStock: (data['currentStock'] as num?)?.toInt() ?? 0,
+      currentStock: (data['currentStock'] as num?)?.toDouble() ?? 0.0,
       unit: data['unit'] as String?,
       isActive: data['isActive'] as bool? ?? true,
       syncStatus: SyncStatus.synced,
@@ -356,7 +356,7 @@ class ProductEntity {
     String? barcode,
     double? purchasePrice,
     double? salesPrice,
-    int? currentStock,
+    double? currentStock,
     String? unit,
     bool? isActive,
     SyncStatus? syncStatus,

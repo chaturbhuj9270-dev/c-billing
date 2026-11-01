@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../../../core/utils/qty.dart';
 import '../../offline/controllers/purchase_batch_offline_controller.dart';
 import '../../offline/controllers/stock_ledger_offline_controller.dart';
 import '../../offline/entities/purchase_batch_entity.dart';
@@ -50,7 +51,7 @@ class ConsumedBatchInfo {
   final String productName;
   final String companyName;
   final String modelName;
-  final int quantityConsumed;
+  final double quantityConsumed;
   final double costPrice;
   final double sellingPrice;
   final double totalCost;
@@ -159,7 +160,7 @@ class FifoInventoryService {
     String category = '',
     required double purchasePrice,
     required double sellingPrice,
-    required int quantity,
+    required double quantity,
     DateTime? purchaseDate,
     String? supplierId,
     String? supplierName,
@@ -172,7 +173,7 @@ class FifoInventoryService {
   }) async {
     try {
       // Validate inputs
-      if (quantity <= 0) {
+      if (!Qty.isPositive(quantity)) {
         return PurchaseResult.failure('Quantity must be greater than 0');
       }
       if (purchasePrice < 0) {
@@ -241,14 +242,14 @@ class FifoInventoryService {
   // Process a FIFO sale for a product Deducts from oldest batches first and creates ledger entries
   Future<FifoSaleResult> processFifoSale({
     required String productId,
-    required int quantity,
+    required double quantity,
     required double sellingPrice,
     required String billId,
     String? notes,
   }) async {
     try {
       // Validate inputs
-      if (quantity <= 0) {
+      if (!Qty.isPositive(quantity)) {
         return FifoSaleResult.failure('Quantity must be greater than 0');
       }
 
@@ -260,16 +261,19 @@ class FifoInventoryService {
       }
 
       // Calculate total available stock
-      final totalAvailable = availableBatches.fold(0, (total, b) => total + b.quantityRemaining);
+      final totalAvailable = availableBatches.fold<double>(
+        0.0,
+        (total, b) => total + b.quantityRemaining,
+      );
       
-      if (totalAvailable < quantity) {
+      if (totalAvailable + Qty.epsilon < quantity) {
         return FifoSaleResult.failure(
           'Insufficient stock. Available: $totalAvailable, Requested: $quantity'
         );
       }
 
       // FIFO: Consume from oldest batches first
-      int remainingToSell = quantity;
+      double remainingToSell = quantity;
       final consumedBatches = <ConsumedBatchInfo>[];
       final ledgerEntries = <StockLedgerEntity>[];
       double totalCOGS = 0.0;
@@ -277,11 +281,12 @@ class FifoInventoryService {
       double totalProfit = 0.0;
 
       for (final batch in availableBatches) {
-        if (remainingToSell <= 0) break;
+        if (!Qty.isPositive(remainingToSell)) break;
 
-        final qtyFromThisBatch = remainingToSell <= batch.quantityRemaining
-            ? remainingToSell
-            : batch.quantityRemaining;
+        final qtyFromThisBatch =
+            remainingToSell <= batch.quantityRemaining + Qty.epsilon
+                ? remainingToSell
+                : batch.quantityRemaining;
 
         // Deduct from batch
         await _batchController.deductFromBatch(batch.id, qtyFromThisBatch);
@@ -355,18 +360,23 @@ class FifoInventoryService {
   }
 
   // Check if sufficient stock is available for a sale
-  Future<bool> hasAvailableStock(String productId, int requiredQuantity) async {
+  Future<bool> hasAvailableStock(
+    String productId,
+    double requiredQuantity,
+  ) async {
     final totalStock = await _batchController.getTotalStockByProductId(productId);
-    return totalStock >= requiredQuantity;
+    return totalStock + Qty.epsilon >= requiredQuantity;
   }
 
   // Get available stock for a product
-  Future<int> getAvailableStock(String productId) async {
+  Future<double> getAvailableStock(String productId) async {
     return await _batchController.getTotalStockByProductId(productId);
   }
 
   // Validate stock availability for multiple products Returns map of productId -> error message for products with insufficient stock
-  Future<Map<String, String>> validateStockForSale(Map<String, int> productQuantities) async {
+  Future<Map<String, String>> validateStockForSale(
+    Map<String, double> productQuantities,
+  ) async {
     final errors = <String, String>{};
     
     for (final entry in productQuantities.entries) {
@@ -375,7 +385,7 @@ class FifoInventoryService {
       
       final availableStock = await _batchController.getTotalStockByProductId(productId);
       
-      if (availableStock < requiredQty) {
+      if (availableStock + Qty.epsilon < requiredQty) {
         errors[productId] = 'Insufficient stock. Available: $availableStock, Required: $requiredQty';
       }
     }
@@ -393,14 +403,14 @@ class FifoInventoryService {
     String modelName = '',
     required String batchId,
     int? localBatchId,
-    required int quantity,
+    required double quantity,
     required double costPrice,
     required double sellingPrice,
     required String returnReferenceId,
     String? notes,
   }) async {
     try {
-      if (quantity <= 0) {
+      if (!Qty.isPositive(quantity)) {
         throw Exception('Return quantity must be greater than 0');
       }
 
@@ -441,7 +451,7 @@ class FifoInventoryService {
   // ==================== STOCK QUERIES ====================
 
   // Get total stock for a product across all batches
-  Future<int> getTotalStock(String productId) async {
+  Future<double> getTotalStock(String productId) async {
     return await _batchController.getTotalStockByProductId(productId);
   }
 
@@ -464,7 +474,7 @@ class FifoInventoryService {
   }
 
   // Get all products with their stock levels
-  Future<Map<String, int>> getAllProductsWithStock() async {
+  Future<Map<String, double>> getAllProductsWithStock() async {
     return await _batchController.getAllProductsWithStock();
   }
 
