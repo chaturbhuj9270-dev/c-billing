@@ -108,8 +108,22 @@ class _QuotationScreenState extends State<QuotationScreen> {
   double get _subEventsTotal =>
       _subEvents.fold(0.0, (total, e) => total + e.charges);
 
-  double get _productsTotal =>
-      _orderItems.fold(0.0, (total, e) => total + e.total);
+  double get _productsTaxable => _orderItems.fold(
+    0.0,
+    (total, e) => total + (e.subtotal - e.discountAmount),
+  );
+
+  double get _productsTax =>
+      _orderItems.fold(0.0, (total, e) => total + e.taxAmount);
+
+  double get _productsTotal {
+    // Bill-level discount applies to taxable base; scale tax proportionally.
+    final taxable = _productsTaxable;
+    final discount = _discountAmount.clamp(0.0, taxable);
+    final afterDiscount = taxable - discount;
+    final tax = taxable > 0 ? _productsTax * (afterDiscount / taxable) : 0.0;
+    return afterDiscount + tax;
+  }
 
   double get _eventCharges =>
       double.tryParse(_eventChargesController.text) ?? 0.0;
@@ -117,15 +131,16 @@ class _QuotationScreenState extends State<QuotationScreen> {
   double get _discountAmount => double.tryParse(_discountController.text) ?? 0;
 
   double get _totalAmount {
-    var subtotal = 0.0;
     if (_type == QuotationType.product) {
-      subtotal = _productsTotal;
-    } else if (_type == QuotationType.event) {
-      subtotal = _eventCharges + _subEventsTotal;
-    } else {
-      subtotal = _eventCharges + _subEventsTotal + _productsTotal;
+      return _productsTotal.clamp(0.0, double.infinity);
     }
-    return (subtotal - _discountAmount).clamp(0.0, double.infinity);
+    if (_type == QuotationType.event) {
+      return (_eventCharges + _subEventsTotal - _discountAmount)
+          .clamp(0.0, double.infinity);
+    }
+    // Mixed: discount already applied inside _productsTotal for product lines.
+    return (_eventCharges + _subEventsTotal + _productsTotal)
+        .clamp(0.0, double.infinity);
   }
 
   Future<void> _pickDate({

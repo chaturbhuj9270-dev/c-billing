@@ -974,7 +974,10 @@ class _TransactionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
-    final isPayment = transaction.transactionType == TransactionType.payment;
+    final isCredit = transaction.transactionType == TransactionType.payment ||
+        transaction.transactionType == TransactionType.billReturn ||
+        (transaction.transactionType == TransactionType.adjustment &&
+            transaction.amount < 0);
 
     IconData icon;
     Color color;
@@ -993,7 +996,7 @@ class _TransactionCard extends StatelessWidget {
         break;
       case TransactionType.billReturn:
         icon = Icons.undo_rounded;
-        color = AppTheme.blue;
+        color = AppTheme.green;
         typeLabel = 'Bill Return';
         break;
       case TransactionType.adjustment:
@@ -1068,11 +1071,11 @@ class _TransactionCard extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '${isPayment ? '+' : ''}₹${transaction.amount.toStringAsFixed(0)}',
+                          '${isCredit ? '-' : '+'}₹${transaction.amount.abs().toStringAsFixed(0)}',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: isPayment ? AppTheme.green : AppTheme.orange,
+                            color: isCredit ? AppTheme.green : AppTheme.orange,
                             fontFamily: 'Literata',
                           ),
                         ),

@@ -281,7 +281,9 @@ class BillOfflineController extends ChangeNotifier {
     final existing = await getBillById(id);
     if (existing == null) return null;
 
-    final pendingAmount = existing.finalAmount - paidAmount;
+    // After returns, paid + pending is the remaining chargeable (not finalAmount).
+    final chargeable = existing.paidAmount + existing.pendingAmount;
+    final pendingAmount = chargeable - paidAmount;
 
     return updateBill(
       id: id,
@@ -308,12 +310,32 @@ class BillOfflineController extends ChangeNotifier {
 
     // Keep customer receivable in sync with the removed invoice.
     final billKey = existing.serverId ?? 'local_${existing.id}';
+    final customerId = existing.customerId;
     try {
-      await CustomerTransactionOfflineController.instance
-          .reverseTransactionsForBill(billKey);
+      final txCtrl = CustomerTransactionOfflineController.instance;
+      final reversedPayments = await txCtrl.reverseTransactionsForBill(billKey);
+      var totalReversedPayments = reversedPayments;
       if (existing.serverId != null) {
-        await CustomerTransactionOfflineController.instance
-            .reverseTransactionsForBill('local_${existing.id}');
+        totalReversedPayments += await txCtrl.reverseTransactionsForBill(
+          'local_${existing.id}',
+        );
+      }
+      // Payments allocated via FIFO without billId stay as ledger credits.
+      // Voiding the invoice must reverse that orphaned credit or pending goes negative.
+      final orphanPaid = existing.paidAmount - totalReversedPayments;
+      if (orphanPaid > 0.009 &&
+          customerId != null &&
+          customerId.isNotEmpty) {
+        await txCtrl.addAdjustmentTransaction(
+          customerId: customerId,
+          customerName: existing.customerName ?? '',
+          amount: orphanPaid,
+          description:
+              'Reverse allocated payment for deleted bill ${existing.serverId ?? existing.id}',
+        );
+      }
+      if (customerId != null && customerId.isNotEmpty) {
+        await txCtrl.recomputeCustomerPending(customerId);
       }
     } catch (e) {
       debugPrint('[BillOffline] Ledger reverse on delete failed: $e');

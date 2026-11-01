@@ -228,11 +228,8 @@ class DashboardLocalDataSource {
       // Gross sales = sum of finalAmount (already includes discount)
       grossSales += bill.finalAmount;
 
-      // Calculate discount ratio for proportional return calculation
-      final billTotalAmount = bill.totalAmount; // pre-discount total
-      final discountRatio = billTotalAmount > 0
-          ? bill.discountAmount / billTotalAmount
-          : 0.0;
+      // Match live return math: item charge ratio (discount/tax, excludes extras).
+      final chargeRatio = bill.itemChargeRatio;
 
       for (final item in bill.items) {
         final qty = item.quantity;
@@ -245,12 +242,10 @@ class DashboardLocalDataSource {
         totalReturnedItems += returnedQty
             .round(); // Round for dashboard display
 
-        // Return amount = returnedQty × sellingPrice × (1 - discountRatio) This accounts for the proportional discount that was applied at sale
-        final returnAmount = returnedQty * sellingPrice * (1 - discountRatio);
+        final returnAmount = returnedQty * sellingPrice * chargeRatio;
         totalReturns += returnAmount;
 
-        // Profit from this item = revenue from NET sold items - cost of NET sold items Revenue = netSoldQty × sellingPrice × (1 - discountRatio) Cost = netSoldQty × purchasePrice
-        final netRevenue = netSoldQty * sellingPrice * (1 - discountRatio);
+        final netRevenue = netSoldQty * sellingPrice * chargeRatio;
         final netCost = netSoldQty * purchasePrice;
         netProfit += (netRevenue - netCost);
       }

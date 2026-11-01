@@ -59,8 +59,12 @@ class BillItem {
   // Get remaining quantity that can still be returned
   double get remainingQuantity => quantity - returnedQuantity;
 
-  // Get quantity as int (for backward compatibility)
-  int get quantityInt => quantity.round();
+  // Get quantity as int for stock/FIFO (never round a positive fraction to 0).
+  int get quantityInt {
+    if (quantity <= 0) return 0;
+    if (quantity < 1) return 1;
+    return quantity.round();
+  }
 
   // Get display quantity with appropriate unit conversion (gm/ml or pack↔base).
   String get displayQuantity {

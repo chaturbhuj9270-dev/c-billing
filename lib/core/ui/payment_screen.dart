@@ -146,26 +146,47 @@ class _PaymentScreenState extends State<PaymentScreen>
     if (result.success) {
       setState(() => _statusMessage = _localizations.activatingSubscription);
 
-      final active = await _subscriptionService.waitUntilActive(
-        timeout: const Duration(seconds: 12),
-      );
-
-      if (!mounted) return;
-
-      if (active) {
-        GlassyToast.show(context, _localizations.subscriptionActivatedSuccess);
-        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const OptimizedDashboardPage()),
-          (_) => false,
+      // verifyPlayPurchase already activated on the server — cache expiry & enter app.
+      final fromPurchase = result.expiresAt;
+      if (fromPurchase != null && fromPurchase.isNotEmpty) {
+        await _subscriptionService.cacheServerExpiresAt(
+          fromPurchase,
+          source: 'paid',
         );
-        return;
+      } else {
+        final active = await _subscriptionService.waitUntilActive(
+          timeout: const Duration(seconds: 12),
+        );
+        if (!mounted) return;
+        if (!active) {
+          GlassyToast.show(
+            context,
+            _localizations.paymentReceivedActivatingSoon,
+          );
+          setState(() {
+            _statusMessage = _localizations.paymentReceivedActivatingSoon;
+            _isPaying = false;
+          });
+          return;
+        }
+        final access = await _subscriptionService.fetchAccessFromApi();
+        final serverExpiry = access?['expiresAt']?.toString();
+        if (serverExpiry != null) {
+          await _subscriptionService.cacheServerExpiresAt(
+            serverExpiry,
+            source: 'paid',
+          );
+        } else {
+          await _subscriptionService.cachePaidSubscriptionLocally(DateTime.now());
+        }
       }
 
-      GlassyToast.show(context, _localizations.paymentReceivedActivatingSoon);
-      setState(() {
-        _statusMessage = _localizations.paymentReceivedActivatingSoon;
-        _isPaying = false;
-      });
+      if (!mounted) return;
+      GlassyToast.show(context, _localizations.subscriptionActivatedSuccess);
+      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const OptimizedDashboardPage()),
+        (_) => false,
+      );
       return;
     }
 

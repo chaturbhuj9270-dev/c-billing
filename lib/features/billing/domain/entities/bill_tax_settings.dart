@@ -191,6 +191,8 @@ class BillTaxSettings {
     required double discountAmount,
     required GstMode gstMode,
     bool forceIgst = false,
+    double otherTaxPercent = 0,
+    String otherTaxName = '',
   }) {
     final subtotal = items.fold<double>(0, (s, i) => s + i.subtotal);
     if (subtotal <= 0 || gstMode == GstMode.noGst) {
@@ -242,17 +244,29 @@ class BillTaxSettings {
       }
     }
 
-    final totalTax = cgstAmount + sgstAmount + igstAmount;
+    // Cess / other tax from bill settings still applies on item-GST bills.
+    double otherTaxAmount = 0;
+    if (otherTaxPercent > 0 && taxableValue > 0) {
+      if (gstMode == GstMode.includeGst) {
+        // Inclusive: other tax is already in MRP-style nets; skip extraction here.
+        otherTaxAmount = 0;
+      } else {
+        otherTaxAmount = taxableValue * (otherTaxPercent / 100);
+      }
+    }
+
+    final totalTax = cgstAmount + sgstAmount + igstAmount + otherTaxAmount;
     return TaxBreakdown(
       taxableValue: taxableValue,
       cgstPercent: cgstRates.length == 1 ? cgstRates.first : 0,
       sgstPercent: sgstRates.length == 1 ? sgstRates.first : 0,
       igstPercent: igstRates.length == 1 ? igstRates.first : 0,
-      otherTaxPercent: 0,
+      otherTaxPercent: otherTaxPercent,
+      otherTaxName: otherTaxName,
       cgstAmount: cgstAmount,
       sgstAmount: sgstAmount,
       igstAmount: igstAmount,
-      otherTaxAmount: 0,
+      otherTaxAmount: otherTaxAmount,
       totalTaxAmount: totalTax,
       subtotal: subtotal,
       isInclusive: gstMode == GstMode.includeGst,
@@ -338,12 +352,16 @@ class TaxBreakdown {
     );
   }
 
-  // Grand total after tax and discount
+  /// Grand total. Prefer post-discount [taxableValue] + tax (discount already in tax build).
   double grandTotal({double discount = 0.0}) {
     if (isInclusive) {
-      return subtotal - discount;
+      return (subtotal - discount).clamp(0.0, double.infinity);
     }
-    return subtotal + totalTaxAmount - discount;
+    // fromItemTaxes / calculateTax already used a discounted base → taxableValue.
+    if (taxableValue > 0 && taxableValue <= subtotal + 0.001) {
+      return taxableValue + totalTaxAmount;
+    }
+    return (subtotal - discount).clamp(0.0, double.infinity) + totalTaxAmount;
   }
 
   bool get hasCgst => cgstAmount > 0;

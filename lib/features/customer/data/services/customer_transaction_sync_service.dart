@@ -422,10 +422,16 @@ class CustomerTransactionSyncService extends ChangeNotifier {
       }
     }
 
+    // Firebase ADJUSTED is a write-off magnitude (always reduces pending).
+    final serverAmount =
+        transaction.transactionType == TransactionType.adjustment
+            ? transaction.amount.abs()
+            : transaction.amount;
+
     return {
       'customerId': transaction.customerId,
       'billId': transaction.referenceId,
-      'amount': transaction.amount,
+      'amount': serverAmount,
       'transactionType': serverTransactionType,
       'paymentMode': serverPaymentMode,
       'balanceAfterTransaction': transaction.balanceAfter,

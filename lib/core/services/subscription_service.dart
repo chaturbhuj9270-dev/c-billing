@@ -1,17 +1,28 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:c_billing/core/access/tenant_context.dart';
 
 // Service to manage user subscription status.
-// Access is allowed during a 30-day free trial (`trialStartedAt`) or a paid
- // `subscriptionDate` within [subscriptionDuration]. Paid activation is done
- // by Cloud Functions after Cashfree / Play Billing.
+//
+// **Source of truth = Cloud Function `getSubscriptionAccess`** (server clock).
+// Paid: `subscriptionExpiresAt` written only by Functions on payment verify.
+// Trial: `trialExpiresAt` written only by Functions on first access check.
+// Local cache stores the last server-issued expiresAt for offline use only —
+// the app never invents a year/trial end date itself while online.
 class SubscriptionService {
   static final SubscriptionService _instance = SubscriptionService._internal();
   factory SubscriptionService() => _instance;
   SubscriptionService._internal();
 
   FirebaseFirestore get _firestore => FirebaseFirestore.instance;
+
+  static const String _functionsRegion = 'asia-south1';
+
+  FirebaseFunctions get _functions =>
+      FirebaseFunctions.instanceFor(region: _functionsRegion);
 
   // Subscription price in INR
   static const double subscriptionPrice = 3999.0;
@@ -25,8 +36,17 @@ class SubscriptionService {
   // Free trial after registration
   static const Duration freeTrialDuration = Duration(days: 30);
 
-  // Get current user ID
+  static const String _prefsExpiryKeyPrefix = 'sub_access_expiry_';
+  static const String _prefsSourceKeyPrefix = 'sub_access_source_';
+
+  // Get current user ID (auth uid for trial ownership; tenant for shop data)
   String? get _userId => TenantContext.dataOwnerIdOrNull;
+
+  String? get _authUid => FirebaseAuth.instance.currentUser?.uid;
+
+  /// Prefer auth uid for caching trial — employees share dataOwner but trial
+  /// is on the shop owner's user doc; cache key still uses owner when known.
+  String? get _cacheUid => _userId ?? _authUid;
 
   DateTime? _parseDate(dynamic value) {
     if (value == null) return null;
@@ -35,140 +55,146 @@ class SubscriptionService {
     return null;
   }
 
-  // Paid expiry if subscribed; otherwise free-trial expiry.
-  // Falls back to createdAt when trialStartedAt was never written (older accounts).
-  DateTime? _accessExpiryFromData(Map<String, dynamic> data) {
-    final subDate = _parseDate(data['subscriptionDate']);
-    if (subDate != null) {
-      return subDate.add(subscriptionDuration);
-    }
-    final trialStart =
-        _parseDate(data['trialStartedAt']) ?? _parseDate(data['createdAt']);
-    if (trialStart != null) {
-      return trialStart.add(freeTrialDuration);
-    }
-    return null;
-  }
-
   bool _isActiveExpiry(DateTime? expiry) {
     if (expiry == null) return false;
     return DateTime.now().isBefore(expiry);
   }
 
-  // Older accounts never received trialStartedAt. Grant a one-time 30-day trial
-  // when there is no paid subscription and no trial field yet.
-  Future<Map<String, dynamic>> _ensureTrialStarted(
-    String userId,
-    Map<String, dynamic> data,
-  ) async {
-    if (_parseDate(data['subscriptionDate']) != null) return data;
-    if (_parseDate(data['trialStartedAt']) != null) return data;
-
-    final createdAt = _parseDate(data['createdAt']);
-    // Still inside first month from registration — treat createdAt as trial start.
-    if (createdAt != null &&
-        DateTime.now().isBefore(createdAt.add(freeTrialDuration))) {
-      try {
-        await _firestore.collection('users').doc(userId).set({
-          'trialStartedAt': Timestamp.fromDate(createdAt),
-          'subscriptionStatus': 'trial',
-        }, SetOptions(merge: true));
-      } catch (e) {
-        debugPrint('[SubscriptionService] Could not backfill trial from createdAt: $e');
-      }
-      return {
-        ...data,
-        'trialStartedAt': Timestamp.fromDate(createdAt),
-        'subscriptionStatus': 'trial',
-      };
-    }
-
-    // Account older than 30 days / missing createdAt: start trial from now once.
+  Future<void> _cacheAccessExpiry(DateTime expiry, {required String source}) async {
+    final uid = _cacheUid;
+    if (uid == null) return;
     try {
-      await _firestore.collection('users').doc(userId).set({
-        'trialStartedAt': FieldValue.serverTimestamp(),
-        'subscriptionStatus': 'trial',
-      }, SetOptions(merge: true));
-      debugPrint('[SubscriptionService] Started free trial for existing user $userId');
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('$_prefsExpiryKeyPrefix$uid', expiry.toIso8601String());
+      await prefs.setString('$_prefsSourceKeyPrefix$uid', source);
     } catch (e) {
-      debugPrint('[SubscriptionService] Could not start free trial: $e');
-      // Still allow access locally for this session using "now".
-      return {
-        ...data,
-        'trialStartedAt': Timestamp.fromDate(DateTime.now()),
-        'subscriptionStatus': 'trial',
-      };
+      debugPrint('[SubscriptionService] Cache write failed: $e');
     }
-
-    final refreshed = await _firestore.collection('users').doc(userId).get();
-    return refreshed.data() ?? {
-      ...data,
-      'trialStartedAt': Timestamp.fromDate(DateTime.now()),
-      'subscriptionStatus': 'trial',
-    };
   }
 
-  // Check if user's subscription / free trial is valid. Fail-closed on errors.
+  Future<DateTime?> _cachedAccessExpiry() async {
+    final uid = _cacheUid;
+    if (uid == null) return null;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString('$_prefsExpiryKeyPrefix$uid');
+      if (raw == null || raw.isEmpty) return null;
+      return DateTime.tryParse(raw);
+    } catch (e) {
+      debugPrint('[SubscriptionService] Cache read failed: $e');
+      return null;
+    }
+  }
+
+  /// Offline / fail-open: Auth account age is authoritative for free trial.
+  DateTime? _authCreationTrialExpiry() {
+    final created = FirebaseAuth.instance.currentUser?.metadata.creationTime;
+    if (created == null) return null;
+    return created.add(freeTrialDuration);
+  }
+
+  /// Fast offline check used by splash timeouts — never hits the network.
+  Future<bool> hasOfflineEntitlement() =>
+      _allowFromLocalFallbacks(reason: 'offline-only');
+
+  Future<bool> _allowFromLocalFallbacks({String reason = ''}) async {
+    final cached = await _cachedAccessExpiry();
+    if (_isActiveExpiry(cached)) {
+      debugPrint(
+        '[SubscriptionService] Allowing via local cache (expires: $cached) [$reason]',
+      );
+      return true;
+    }
+
+    final authTrialExpiry = _authCreationTrialExpiry();
+    if (_isActiveExpiry(authTrialExpiry)) {
+      debugPrint(
+        '[SubscriptionService] Allowing via Auth creationTime trial '
+        '(expires: $authTrialExpiry) [$reason]',
+      );
+      // Persist so subsequent offline opens stay consistent.
+      await _cacheAccessExpiry(authTrialExpiry!, source: 'trial');
+      return true;
+    }
+
+    debugPrint(
+      '[SubscriptionService] No local/auth trial access [$reason] '
+      '(cached: $cached, authTrial: $authTrialExpiry)',
+    );
+    return false;
+  }
+
+  /// Ask Cloud Functions for access using **server time + server-written expiry**.
+  Future<Map<String, dynamic>?> fetchAccessFromApi() async {
+    try {
+      final callable = _functions.httpsCallable('getSubscriptionAccess');
+      final result = await callable.call().timeout(const Duration(seconds: 12));
+      final raw = result.data;
+      if (raw is! Map) return null;
+      return Map<String, dynamic>.from(raw);
+    } catch (e) {
+      debugPrint('[SubscriptionService] getSubscriptionAccess failed: $e');
+      return null;
+    }
+  }
+
+  // Check if user's subscription / free trial is valid.
+  // Online: trust API only. Offline: last server-issued expiresAt (never invent).
   Future<bool> isSubscriptionValid() async {
     try {
-      final userId = _userId;
-      if (userId == null) {
+      if (FirebaseAuth.instance.currentUser == null && _userId == null) {
         debugPrint(
           '[SubscriptionService] No user logged in - subscription required',
         );
         return false;
       }
 
-      final userDoc = await _firestore
-          .collection('users')
-          .doc(userId)
-          .get()
-          .timeout(const Duration(seconds: 8));
-
-      if (!userDoc.exists) {
+      final api = await fetchAccessFromApi();
+      if (api != null) {
+        final allowed = api['allowed'] == true;
+        final expiresRaw = api['expiresAt']?.toString();
+        final expiresAt =
+            expiresRaw != null ? DateTime.tryParse(expiresRaw) : null;
+        final source = api['source']?.toString() ?? 'api';
+        if (expiresAt != null) {
+          await _cacheAccessExpiry(expiresAt, source: source);
+        }
         debugPrint(
-          '[SubscriptionService] User document not found - subscription required',
+          '[SubscriptionService] API access allowed=$allowed '
+          '(expires: $expiresAt, status: ${api['status']}, '
+          'serverNow: ${api['serverNow']})',
         );
-        return false;
+        return allowed;
       }
 
-      var data = userDoc.data();
-      if (data == null) {
-        debugPrint(
-          '[SubscriptionService] User data is null - subscription required',
-        );
-        return false;
-      }
-
-      data = await _ensureTrialStarted(userId, data);
-
-      final expiry = _accessExpiryFromData(data);
-      final isValid = _isActiveExpiry(expiry);
-      debugPrint(
-        '[SubscriptionService] Access valid: $isValid (expires: $expiry)',
-      );
-      return isValid;
+      // Offline / API down — use last server-issued expiry only.
+      return _allowFromLocalFallbacks(reason: 'api-unavailable');
     } catch (e) {
       debugPrint('[SubscriptionService] Error checking subscription: $e');
-      // Fail closed - do not unlock the app on network/read errors.
-      return false;
+      return _allowFromLocalFallbacks(reason: 'unexpected-error');
     }
   }
 
-  // Get access expiry date (paid subscription or free trial)
+  // Get access expiry date — prefers server API `expiresAt`.
   Future<DateTime?> getExpiryDate() async {
     try {
-      final userId = _userId;
-      if (userId == null) return null;
-
-      final userDoc = await _firestore.collection('users').doc(userId).get();
-      var data = userDoc.data();
-      if (data == null) return null;
-      data = await _ensureTrialStarted(userId, data);
-      return _accessExpiryFromData(data);
+      final api = await fetchAccessFromApi();
+      if (api != null) {
+        final expiresRaw = api['expiresAt']?.toString();
+        final expiresAt =
+            expiresRaw != null ? DateTime.tryParse(expiresRaw) : null;
+        if (expiresAt != null) {
+          await _cacheAccessExpiry(
+            expiresAt,
+            source: api['source']?.toString() ?? 'api',
+          );
+          return expiresAt;
+        }
+      }
+      return await _cachedAccessExpiry() ?? _authCreationTrialExpiry();
     } catch (e) {
       debugPrint('[SubscriptionService] Error getting expiry date: $e');
-      return null;
+      return await _cachedAccessExpiry() ?? _authCreationTrialExpiry();
     }
   }
 
@@ -188,13 +214,18 @@ class SubscriptionService {
       if (userId == null) return false;
       final userDoc = await _firestore.collection('users').doc(userId).get();
       final data = userDoc.data();
-      if (data == null) return false;
+      if (data == null) {
+        return _isActiveExpiry(_authCreationTrialExpiry());
+      }
       if (_parseDate(data['subscriptionDate']) != null) return false;
-      final trialStart = _parseDate(data['trialStartedAt']);
-      if (trialStart == null) return false;
+      final trialStart =
+          _parseDate(data['trialStartedAt']) ?? _parseDate(data['createdAt']);
+      if (trialStart == null) {
+        return _isActiveExpiry(_authCreationTrialExpiry());
+      }
       return _isActiveExpiry(trialStart.add(freeTrialDuration));
     } catch (_) {
-      return false;
+      return _isActiveExpiry(_authCreationTrialExpiry());
     }
   }
 
@@ -214,59 +245,113 @@ class SubscriptionService {
   // New users start with a 30-day free trial, then must subscribe.
   static Future<void> setInitialSubscription(String userId) async {
     try {
+      final trialStart = DateTime.now();
       await FirebaseFirestore.instance.collection('users').doc(userId).set({
         'subscriptionDate': null,
         'subscriptionStatus': 'trial',
         'trialStartedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+
+      // Cache immediately so splash/login never flash the paywall.
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        '$_prefsExpiryKeyPrefix$userId',
+        trialStart.add(freeTrialDuration).toIso8601String(),
+      );
+      await prefs.setString('$_prefsSourceKeyPrefix$userId', 'trial');
+
       debugPrint(
         '[SubscriptionService] Free trial started for user: $userId',
       );
     } catch (e) {
       debugPrint('[SubscriptionService] Error setting initial trial: $e');
+      // Still cache locally so the free month works offline.
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+          '$_prefsExpiryKeyPrefix$userId',
+          DateTime.now().add(freeTrialDuration).toIso8601String(),
+        );
+        await prefs.setString('$_prefsSourceKeyPrefix$userId', 'trial');
+      } catch (_) {}
     }
   }
 
-  // Get subscription status details
+  /// Call right after signup so the free month is locked in on-device.
+  static Future<void> cacheTrialStartLocally(String userId, {DateTime? start}) async {
+    final trialStart = start ?? DateTime.now();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        '$_prefsExpiryKeyPrefix$userId',
+        trialStart.add(freeTrialDuration).toIso8601String(),
+      );
+      await prefs.setString('$_prefsSourceKeyPrefix$userId', 'trial');
+    } catch (e) {
+      debugPrint('[SubscriptionService] Local trial cache failed: $e');
+    }
+  }
+
+  /// After paid activation, refresh local cache so offline stays unlocked.
+  Future<void> cachePaidSubscriptionLocally(DateTime subscriptionDate) async {
+    await _cacheAccessExpiry(
+      subscriptionDate.add(subscriptionDuration),
+      source: 'paid',
+    );
+  }
+
+  /// Prefer caching the exact `expiresAt` returned by the payment verify API.
+  Future<void> cacheServerExpiresAt(String? isoExpiresAt, {String source = 'paid'}) async {
+    if (isoExpiresAt == null || isoExpiresAt.isEmpty) return;
+    final parsed = DateTime.tryParse(isoExpiresAt);
+    if (parsed == null) return;
+    await _cacheAccessExpiry(parsed, source: source);
+  }
+
+  // Get subscription status details (API-first).
   Future<Map<String, dynamic>> getSubscriptionStatus() async {
     try {
-      final userId = _userId;
-      if (userId == null) {
+      if (FirebaseAuth.instance.currentUser == null && _userId == null) {
         return {'isActive': false, 'message': 'Not logged in'};
       }
 
-      final userDoc = await _firestore.collection('users').doc(userId).get();
-      final data = userDoc.data() ?? <String, dynamic>{};
-      final subDate = _parseDate(data['subscriptionDate']);
-      final trialStart = _parseDate(data['trialStartedAt']);
-      final expiryDate = _accessExpiryFromData(data);
-      final isActive = _isActiveExpiry(expiryDate);
-      final remainingDays = isActive && expiryDate != null
-          ? expiryDate.difference(DateTime.now()).inDays
-          : 0;
-      final onTrial = isActive && subDate == null && trialStart != null;
-
-      if (expiryDate == null) {
+      final api = await fetchAccessFromApi();
+      if (api != null) {
+        final allowed = api['allowed'] == true;
+        final expiresAt = api['expiresAt'] != null
+            ? DateTime.tryParse(api['expiresAt'].toString())
+            : null;
+        final source = api['source']?.toString();
+        final onTrial = source == 'trial' && allowed;
+        if (expiresAt != null) {
+          await _cacheAccessExpiry(expiresAt, source: source ?? 'api');
+        }
         return {
-          'isActive': false,
-          'isTrial': false,
-          'message': 'No subscription found',
-          'subscriptionDate': null,
-          'expiryDate': null,
-          'remainingDays': 0,
+          'isActive': allowed,
+          'isTrial': onTrial,
+          'message': !allowed
+              ? (source == 'paid' ? 'Subscription expired' : 'Free trial ended')
+              : (onTrial ? 'Free trial active' : 'Subscription active'),
+          'expiryDate': expiresAt,
+          'remainingDays': api['remainingDays'] ?? 0,
+          'serverNow': api['serverNow'],
+          'source': source,
         };
       }
 
+      final expiry =
+          await _cachedAccessExpiry() ?? _authCreationTrialExpiry();
+      final active = _isActiveExpiry(expiry);
       return {
-        'isActive': isActive,
-        'isTrial': onTrial,
-        'message': !isActive
-            ? (subDate == null ? 'Free trial ended' : 'Subscription expired')
-            : (onTrial ? 'Free trial active' : 'Subscription active'),
-        'subscriptionDate': subDate,
-        'trialStartedAt': trialStart,
-        'expiryDate': expiryDate,
-        'remainingDays': remainingDays,
+        'isActive': active,
+        'isTrial': active,
+        'message': active
+            ? 'Free trial / subscription active (offline)'
+            : 'Unable to verify subscription',
+        'expiryDate': expiry,
+        'remainingDays': active && expiry != null
+            ? expiry.difference(DateTime.now()).inDays
+            : 0,
       };
     } catch (e) {
       debugPrint('[SubscriptionService] Error getting subscription status: $e');

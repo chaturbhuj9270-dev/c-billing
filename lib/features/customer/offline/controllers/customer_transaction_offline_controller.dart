@@ -47,12 +47,30 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
       '[TransactionOffline] Adding payment: $amount for customer: $customerId',
     );
 
-    // Get current pending amount
     final customer = await _getCustomerByIdOrServerId(customerId);
+    final now = DateTime.now();
+
+    // Split into per-bill payments so bill delete can reverse the right credits.
+    if (allocateToBills && amount > 0 && billId == null) {
+      final last = await _allocatePaymentToBillsAsTransactions(
+        customer: customer,
+        customerId: customerId,
+        customerName: customerName,
+        amount: amount,
+        description: description,
+        paymentMethod: paymentMethod,
+        transactionDate: transactionDate ?? now,
+      );
+      notifyListeners();
+      DashboardRefreshService.instance.notifyDataChanged(
+        DataChangeType.customer,
+      );
+      return last;
+    }
+
     final currentPending = customer?.currentPendingAmount ?? 0.0;
     final newPending = currentPending - amount;
 
-    final now = DateTime.now();
     final transaction = CustomerTransactionEntity(
       customerId: customerId,
       customerName: customerName,
@@ -71,7 +89,6 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     await _db.transaction(() async {
       await _db.saveTransaction(transaction);
 
-      // Update customer pending amount
       if (customer != null) {
         customer.currentPendingAmount = newPending;
         customer.updatedAt = DateTime.now();
@@ -81,7 +98,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     });
 
     debugPrint('[TransactionOffline] Payment saved. New pending: $newPending');
-    if (allocateToBills && amount > 0) {
+    if (allocateToBills && amount > 0 && billId != null) {
       await _allocatePaymentToBills(customer, customerId, amount);
     }
     notifyListeners();
@@ -135,11 +152,9 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     return transaction;
   }
 
-  // Apply a later payment to the oldest open bills so invoice balances match the ledger.
-  Future<void> _allocatePaymentToBills(
+  Future<List<BillEntity>> _openBillsForCustomer(
     CustomerEntity? customer,
     String customerId,
-    double amount,
   ) async {
     final ids = <String>{customerId};
     if (customer != null) {
@@ -161,9 +176,19 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
       }
     }
     bills.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return bills;
+  }
 
+  // Apply a later payment to the oldest open bills so invoice balances match the ledger.
+  Future<void> _allocatePaymentToBills(
+    CustomerEntity? customer,
+    String customerId,
+    double amount,
+  ) async {
+    final bills = await _openBillsForCustomer(customer, customerId);
     var remaining = amount;
     var appliedAny = false;
+    final billsController = BillOfflineController.instance;
     for (final bill in bills) {
       if (remaining <= 0.009) break;
       final applied = remaining > bill.pendingAmount
@@ -184,6 +209,99 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     if (appliedAny) {
       DashboardRefreshService.instance.notifyDataChanged(DataChangeType.bill);
     }
+  }
+
+  /// Create one payment ledger row per bill (plus remainder as advance).
+  Future<CustomerTransactionEntity> _allocatePaymentToBillsAsTransactions({
+    required CustomerEntity? customer,
+    required String customerId,
+    required String customerName,
+    required double amount,
+    String? description,
+    String? paymentMethod,
+    required DateTime transactionDate,
+  }) async {
+    final bills = await _openBillsForCustomer(customer, customerId);
+    final billsController = BillOfflineController.instance;
+    var remaining = amount;
+    var runningPending = customer?.currentPendingAmount ?? 0.0;
+    CustomerTransactionEntity? last;
+
+    for (final bill in bills) {
+      if (remaining <= 0.009) break;
+      final applied = remaining > bill.pendingAmount
+          ? bill.pendingAmount
+          : remaining;
+      runningPending -= applied;
+      final billKey = bill.serverId ?? 'local_${bill.id}';
+      final tx = CustomerTransactionEntity(
+        customerId: customerId,
+        customerName: customer?.name ?? customerName,
+        transactionType: TransactionType.payment,
+        amount: applied,
+        balanceAfter: runningPending,
+        referenceId: billKey,
+        referenceType: 'bill',
+        description: description ?? 'Payment for bill $billKey',
+        paymentMethod: paymentMethod,
+        transactionDate: transactionDate,
+        createdAt: transactionDate,
+        updatedAt: transactionDate,
+      );
+      await _db.saveTransaction(tx);
+      last = tx;
+
+      final pending = bill.pendingAmount - applied;
+      await billsController.updateBill(
+        id: bill.id,
+        paidAmount: bill.paidAmount + applied,
+        pendingAmount: pending <= 0.009 ? 0 : pending,
+        paymentStatus: pending <= 0.009
+            ? BillPaymentStatus.paid
+            : BillPaymentStatus.partiallyPaid,
+      );
+      remaining -= applied;
+    }
+
+    if (remaining > 0.009) {
+      runningPending -= remaining;
+      last = CustomerTransactionEntity(
+        customerId: customerId,
+        customerName: customer?.name ?? customerName,
+        transactionType: TransactionType.payment,
+        amount: remaining,
+        balanceAfter: runningPending,
+        description: description ?? 'Advance payment',
+        paymentMethod: paymentMethod,
+        transactionDate: transactionDate,
+        createdAt: transactionDate,
+        updatedAt: transactionDate,
+      );
+      await _db.saveTransaction(last);
+    }
+
+    if (customer != null) {
+      customer.currentPendingAmount = runningPending;
+      customer.updatedAt = DateTime.now();
+      customer.isSynced = false;
+      await _db.saveCustomer(customer);
+    }
+
+    DashboardRefreshService.instance.notifyDataChanged(DataChangeType.bill);
+
+    // Fallback if no open bills — single unallocated payment.
+    if (last == null) {
+      return addPaymentTransaction(
+        customerId: customerId,
+        customerName: customerName,
+        amount: amount,
+        description: description,
+        paymentMethod: paymentMethod,
+        transactionDate: transactionDate,
+        allocateToBills: false,
+      );
+    }
+    return last;
   }
 
   // Reduce what the customer owes after a sale return.
@@ -389,20 +507,27 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
   // Watch transactions for a customer
   Stream<List<CustomerTransactionEntity>> watchTransactionsByCustomerId(
     String customerId,
-  ) {
-    return _db.watchTransactions().map((rows) {
+  ) async* {
+    // Resolve aliases once; fall back to exact id if customer row is missing.
+    Set<String> keys;
+    try {
+      keys = await _aliasesForCustomerKey(customerId);
+    } catch (_) {
+      keys = {customerId};
+    }
+    await for (final rows in _db.watchTransactions()) {
       final transactions = rows
           .where(
             (transaction) =>
-                transaction.customerId == customerId &&
+                keys.contains(transaction.customerId) &&
                 transaction.syncStatus != TransactionSyncStatus.deleted,
           )
           .toList();
       transactions.sort(
         (a, b) => b.transactionDate.compareTo(a.transactionDate),
       );
-      return transactions;
-    });
+      yield transactions;
+    }
   }
 
   // Get transaction by ID
@@ -415,9 +540,10 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
 
   // Get total payment received for a customer
   Future<double> getTotalPaymentsReceived(String customerId) async {
+    final keys = await _aliasesForCustomerKey(customerId);
     final transactions = (await _db.loadTransactions()).where(
       (transaction) =>
-          transaction.customerId == customerId &&
+          keys.contains(transaction.customerId) &&
           transaction.transactionType == TransactionType.payment &&
           transaction.syncStatus != TransactionSyncStatus.deleted,
     );
@@ -498,8 +624,9 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
   }
 
   /// Reverse all ledger rows tied to a bill (on bill delete).
-  Future<void> reverseTransactionsForBill(String billId) async {
-    if (billId.isEmpty) return;
+  /// Returns the sum of payment amounts that were reversed (for orphan detection).
+  Future<double> reverseTransactionsForBill(String billId) async {
+    if (billId.isEmpty) return 0;
     final keys = <String>{billId};
     if (billId.startsWith('local_')) {
       keys.add(billId.substring(6));
@@ -520,9 +647,14 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
       return false;
     }).toList();
 
+    var reversedPayments = 0.0;
     for (final tx in matches) {
+      if (tx.transactionType == TransactionType.payment) {
+        reversedPayments += tx.amount;
+      }
       await deleteTransaction(tx.id);
     }
+    return reversedPayments;
   }
 
   /// After a Firebase write, stamp the local row so sync will not create a duplicate.
@@ -676,9 +808,19 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
             await _db.saveTransaction(updated);
           }
         } else {
-          // New transaction from server
-          final entity = _createEntityFromServerData(data, null, customerName);
-          await _db.saveTransaction(entity);
+          // Link unsynced local twin (same bill + type + amount) instead of duplicating.
+          final twin = await _findUnsyncedTwin(data);
+          if (twin != null) {
+            twin.serverId = serverId;
+            twin.syncStatus = TransactionSyncStatus.synced;
+            twin.updatedAt = DateTime.now();
+            await _db.saveTransaction(twin);
+          } else {
+            final entity = _createEntityFromServerData(data, null, customerName);
+            if (entity.amount.abs() > 0.009) {
+              await _db.saveTransaction(entity);
+            }
+          }
         }
       }
     });
@@ -696,6 +838,54 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
 
     debugPrint('[TransactionOffline] Import completed');
     notifyListeners();
+  }
+
+  /// Match an unsynced local row to a server txn to avoid double-counting on pull.
+  Future<CustomerTransactionEntity?> _findUnsyncedTwin(
+    Map<String, dynamic> data,
+  ) async {
+    final billId = data['billId'] as String?;
+    final customerId = (data['customerId'] as String?) ?? '';
+    final amount = (data['amount'] as num?)?.toDouble();
+    if (amount == null || customerId.isEmpty) return null;
+
+    final serverType =
+        (data['transactionType'] as String?)?.toUpperCase() ?? '';
+    final TransactionType? expected = switch (serverType) {
+      'RECEIVED' => TransactionType.payment,
+      'BILL_GENERATED' => TransactionType.billCreated,
+      'REFUND' => TransactionType.billReturn,
+      'ADJUSTED' => TransactionType.adjustment,
+      _ => null,
+    };
+    if (expected == null) return null;
+
+    // Firebase ADJUSTED is always a credit; local stores signed amount.
+    final matchAmount = expected == TransactionType.adjustment
+        ? -amount.abs()
+        : amount;
+
+    final aliases = await _aliasesForCustomerKey(customerId);
+    for (final tx in await _db.loadTransactions()) {
+      if (tx.syncStatus != TransactionSyncStatus.newRecord) continue;
+      if (tx.serverId != null) continue;
+      if (tx.transactionType != expected) continue;
+      if (!aliases.contains(tx.customerId) && tx.customerId != customerId) {
+        continue;
+      }
+      if ((tx.amount - matchAmount).abs() > 0.05) continue;
+      if (billId != null && billId.isNotEmpty) {
+        final ref = tx.referenceId;
+        if (ref != null &&
+            ref != billId &&
+            ref != 'local_$billId' &&
+            billId != 'local_$ref') {
+          continue;
+        }
+      }
+      return tx;
+    }
+    return null;
   }
 
   // Create entity from server data
@@ -727,13 +917,19 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
 
     final createdAt = parseFlexibleDateTimeOrNow(data['createdAt']);
 
+    // Never fall back to balanceAfter — that corrupts recompute.
+    var amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+    // Firebase ADJUSTED always reduces pending; offline recompute uses signed +=.
+    if (transactionType == TransactionType.adjustment && amount > 0) {
+      amount = -amount;
+    }
+
     final entity = CustomerTransactionEntity(
       serverId: data['id'] as String?,
       customerId: (data['customerId'] as String?) ?? '',
       customerName: customerName,
       transactionType: transactionType,
-      amount: ((data['amount'] ?? data['balanceAfterTransaction'] ?? 0) as num)
-          .toDouble(),
+      amount: amount,
       balanceAfter: ((data['balanceAfterTransaction'] ?? 0) as num).toDouble(),
       referenceId: data['billId'] as String?,
       referenceType: data['billId'] != null ? 'bill' : null,

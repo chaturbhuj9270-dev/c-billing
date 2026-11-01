@@ -32,9 +32,108 @@ const GOOGLE_PLAY_SERVICE_ACCOUNT_JSON = defineSecret(
 const SUBSCRIPTION_AMOUNT = 3999;
 const SUBSCRIPTION_CURRENCY = "INR";
 const SUBSCRIPTION_DAYS = 365;
+const FREE_TRIAL_DAYS = 30;
 const API_VERSION = "2025-01-01";
 const PLAY_YEARLY_PRODUCT_ID = "cbilling_yearly";
 const PLAY_PACKAGE_NAME = "com.example.c_billing";
+
+/** Server clock + N days → Firestore Timestamp (authoritative expiry). */
+function expiryTimestampFrom(baseMs, days) {
+  return admin.firestore.Timestamp.fromMillis(
+    baseMs + days * 24 * 60 * 60 * 1000
+  );
+}
+
+function toDate(value) {
+  if (!value) return null;
+  if (value.toDate) return value.toDate();
+  if (value instanceof Date) return value;
+  if (typeof value === "string") {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
+/**
+ * Resolve access from user doc using **server time**.
+ * Prefers stored subscriptionExpiresAt / trialExpiresAt (written only by Functions).
+ */
+async function resolveSubscriptionAccess(uid, userRef, data) {
+  const serverNowMs = Date.now();
+  const serverNow = new Date(serverNowMs);
+  const patch = {};
+
+  const subDate = toDate(data.subscriptionDate);
+  let paidExpires = toDate(data.subscriptionExpiresAt);
+  if (subDate && !paidExpires) {
+    paidExpires = new Date(subDate.getTime() + SUBSCRIPTION_DAYS * 86400000);
+    patch.subscriptionExpiresAt = admin.firestore.Timestamp.fromDate(paidExpires);
+  }
+
+  if (paidExpires) {
+    if (Object.keys(patch).length) {
+      await userRef.set(patch, { merge: true });
+    }
+    const allowed = serverNowMs < paidExpires.getTime();
+    return {
+      allowed,
+      status: allowed ? "active" : "expired",
+      source: "paid",
+      expiresAt: paidExpires.toISOString(),
+      serverNow: serverNow.toISOString(),
+      remainingDays: allowed
+        ? Math.ceil((paidExpires.getTime() - serverNowMs) / 86400000)
+        : 0,
+    };
+  }
+
+  // Free trial — server writes trialExpiresAt once so clients cannot extend it.
+  let trialStart =
+    toDate(data.trialStartedAt) || toDate(data.createdAt) || null;
+  let trialExpires = toDate(data.trialExpiresAt);
+
+  if (!trialStart && !trialExpires) {
+    trialStart = serverNow;
+    patch.trialStartedAt = admin.firestore.FieldValue.serverTimestamp();
+    patch.subscriptionStatus = "trial";
+    trialExpires = new Date(serverNowMs + FREE_TRIAL_DAYS * 86400000);
+    patch.trialExpiresAt = admin.firestore.Timestamp.fromDate(trialExpires);
+  } else if (trialStart && !trialExpires) {
+    trialExpires = new Date(
+      trialStart.getTime() + FREE_TRIAL_DAYS * 86400000
+    );
+    patch.trialExpiresAt = admin.firestore.Timestamp.fromDate(trialExpires);
+    if (!data.subscriptionStatus) patch.subscriptionStatus = "trial";
+  }
+
+  if (Object.keys(patch).length) {
+    await userRef.set(patch, { merge: true });
+  }
+
+  if (!trialExpires) {
+    return {
+      allowed: false,
+      status: "none",
+      source: "none",
+      expiresAt: null,
+      serverNow: serverNow.toISOString(),
+      remainingDays: 0,
+    };
+  }
+
+  const allowed = serverNowMs < trialExpires.getTime();
+  return {
+    allowed,
+    status: allowed ? "trial" : "expired",
+    source: "trial",
+    expiresAt: trialExpires.toISOString(),
+    serverNow: serverNow.toISOString(),
+    remainingDays: allowed
+      ? Math.ceil((trialExpires.getTime() - serverNowMs) / 86400000)
+      : 0,
+  };
+}
 
 function cashfreeBaseUrl(envValue) {
   return String(envValue || "SANDBOX").toUpperCase() === "PRODUCTION"
@@ -67,6 +166,8 @@ function normalizePhone(raw) {
 
 async function activateSubscription(uid, orderId, orderData = {}) {
   const now = admin.firestore.FieldValue.serverTimestamp();
+  // Expiry is computed on the server clock — clients never decide the end date.
+  const subscriptionExpiresAt = expiryTimestampFrom(Date.now(), SUBSCRIPTION_DAYS);
   const userRef = db.collection("users").doc(uid);
   const paymentRef = userRef.collection("subscription_payments").doc(orderId);
   const provider = orderData.provider || "cashfree";
@@ -92,6 +193,7 @@ async function activateSubscription(uid, orderId, orderData = {}) {
         playSubscriptionState: orderData.playSubscriptionState || null,
         updatedAt: now,
         paidAt: now,
+        expiresAt: subscriptionExpiresAt,
       },
       { merge: true }
     );
@@ -100,6 +202,7 @@ async function activateSubscription(uid, orderId, orderData = {}) {
       userRef,
       {
         subscriptionDate: now,
+        subscriptionExpiresAt,
         lastSubscriptionUpdate: now,
         lastSubscriptionOrderId: orderId,
         subscriptionStatus: "active",
@@ -108,6 +211,8 @@ async function activateSubscription(uid, orderId, orderData = {}) {
       { merge: true }
     );
   });
+
+  return subscriptionExpiresAt.toDate().toISOString();
 }
 
 function getPlayAuthClient() {
@@ -261,7 +366,7 @@ exports.verifyPlayPurchase = onCall(
     // Stable doc id from token (Firestore doc ids max ~1500 chars; tokens are shorter).
     const orderId = `play_${purchaseToken.slice(0, 80)}`;
 
-    await activateSubscription(uid, orderId, {
+    const expiresAt = await activateSubscription(uid, orderId, {
       provider: "google_play",
       productId,
       purchaseToken,
@@ -273,6 +378,7 @@ exports.verifyPlayPurchase = onCall(
       status: "ACTIVE",
       orderId,
       productId,
+      expiresAt,
       message: "Google Play subscription activated for 1 year",
     };
   }
@@ -394,6 +500,54 @@ exports.createSubscriptionOrder = onCall(
 );
 
 /**
+ * Callable: server-authoritative subscription / trial check.
+ * Returns expiresAt from Cloud Functions clock — clients must not invent this date.
+ *
+ * Response:
+ *   { allowed, status, source, expiresAt, serverNow, remainingDays }
+ */
+exports.getSubscriptionAccess = onCall(
+  { region: "asia-south1" },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "Login required.");
+    }
+
+    // Shop owners: own uid. Employees: tenant owner carries the subscription.
+    const ownerId =
+      (typeof request.auth.token?.tenantOwnerId === "string" &&
+        request.auth.token.tenantOwnerId) ||
+      request.auth.uid;
+
+    const userRef = db.collection("users").doc(ownerId);
+    const snap = await userRef.get();
+    if (!snap.exists) {
+      // Brand-new account — start trial from server now.
+      const trialExpiresAt = expiryTimestampFrom(Date.now(), FREE_TRIAL_DAYS);
+      await userRef.set(
+        {
+          trialStartedAt: admin.firestore.FieldValue.serverTimestamp(),
+          trialExpiresAt,
+          subscriptionStatus: "trial",
+          subscriptionDate: null,
+        },
+        { merge: true }
+      );
+      return {
+        allowed: true,
+        status: "trial",
+        source: "trial",
+        expiresAt: trialExpiresAt.toDate().toISOString(),
+        serverNow: new Date().toISOString(),
+        remainingDays: FREE_TRIAL_DAYS,
+      };
+    }
+
+    return resolveSubscriptionAccess(ownerId, userRef, snap.data() || {});
+  }
+);
+
+/**
  * Callable: verify Cashfree order and activate subscription when PAID.
  */
 exports.verifySubscriptionPayment = onCall(
@@ -427,11 +581,12 @@ exports.verifySubscriptionPayment = onCall(
     const status = String(order.order_status || "").toUpperCase();
 
     if (status === "PAID") {
-      await activateSubscription(uid, orderId, order);
+      const expiresAt = await activateSubscription(uid, orderId, order);
       return {
         success: true,
         status: "PAID",
         orderId,
+        expiresAt,
         message: "Subscription activated for 1 year",
       };
     }

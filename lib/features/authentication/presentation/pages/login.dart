@@ -355,9 +355,15 @@ class _LoginPageV2State extends State<LoginPageV2>
         await LogoutService.instance.logout(context);
         return;
       }
-      // Fail closed - require subscription screen on errors
+      // Network/access glitches must not interrupt an active free month.
+      final stillValid = await SubscriptionService().isSubscriptionValid();
+      if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
+        MaterialPageRoute(
+          builder: (_) => stillValid
+              ? const OptimizedDashboardPage()
+              : const SubscriptionScreen(),
+        ),
       );
     }
   }

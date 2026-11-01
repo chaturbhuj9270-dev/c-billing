@@ -491,10 +491,25 @@ class Bill {
   // Get total returned quantity as int (for display)
   int get totalReturnedQuantityInt => totalReturnedQuantity.round();
 
-  // Get total refund amount based on returned quantities
+  /// Ratio of item list price → what customer was charged for items.
+  /// Excludes labour/service extras so item returns do not refund them.
+  double get itemChargeRatio {
+    final itemsCharged =
+        (finalAmount - extraChargesTotal).clamp(0.0, double.infinity);
+    if (totalAmount <= 0) return 1.0;
+    return itemsCharged / totalAmount;
+  }
+
+  /// Refund for a list-price return amount using [itemChargeRatio].
+  double chargedRefundFor(double listPriceRefund) =>
+      listPriceRefund * itemChargeRatio;
+
+  // Get total refund amount based on returned quantities (after discount/tax ratio)
   double get totalReturnedAmount => items.fold(
     0.0,
-    (total, item) => total + (item.sellingPrice * item.returnedQuantity),
+    (total, item) =>
+        total +
+        chargedRefundFor(item.sellingPrice * item.returnedQuantity),
   );
 
   @override

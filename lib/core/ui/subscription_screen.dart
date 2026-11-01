@@ -7,6 +7,7 @@ import '../services/language_service.dart';
 import '../services/subscription_service.dart';
 import 'payment_screen.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/features/dashboard/presentation/pages/optimized_dashboard_page.dart';
 
 // Subscription screen shown when user's subscription has expired Premium UI matching the app's elegant design language
 class SubscriptionScreen extends StatefulWidget {
@@ -58,6 +59,20 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
 
     _animController.forward();
     _pulseController.repeat(reverse: true);
+    // If user still has free trial / paid access, never keep them here.
+    _redirectIfStillEntitled();
+  }
+
+  Future<void> _redirectIfStillEntitled() async {
+    try {
+      final valid = await SubscriptionService().isSubscriptionValid();
+      if (!mounted || !valid) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => const OptimizedDashboardPage(),
+        ),
+      );
+    } catch (_) {}
   }
 
   @override

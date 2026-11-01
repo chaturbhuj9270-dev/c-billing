@@ -189,7 +189,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
       }
 
       final totalPaid = transactions
-          .where((t) => t.isPayment)
+          .where((t) => t.transactionType == TransactionType.received)
           .fold<double>(0, (total, t) => total + t.amount);
       final customerWithPaid = customer.copyWith(totalPaidAmount: totalPaid);
 
@@ -618,7 +618,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
 
   Widget _buildTransactionItem(CustomerTransaction transaction) {
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
-    final isPayment = transaction.isPayment;
+    final isCredit = transaction.reducesReceivable;
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -635,14 +635,14 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: isPayment
+              color: isCredit
                   ? AppTheme.green.withValues(alpha: 0.1)
                   : AppTheme.orange.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
-              isPayment ? Icons.arrow_downward : Icons.receipt_long,
-              color: isPayment ? AppTheme.green : AppTheme.orange,
+              isCredit ? Icons.arrow_downward : Icons.receipt_long,
+              color: isCredit ? AppTheme.green : AppTheme.orange,
               size: 20,
             ),
           ),
@@ -710,12 +710,12 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${isPayment ? '-' : '+'}₹${transaction.amount.toStringAsFixed(2)}',
+                '${isCredit ? '-' : '+'}₹${transaction.amount.toStringAsFixed(2)}',
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: isPayment ? AppTheme.green : AppTheme.orange,
+                  color: isCredit ? AppTheme.green : AppTheme.orange,
                 ),
               ),
               const SizedBox(height: 4),

@@ -282,6 +282,14 @@ class BillEntity {
   double get extraChargesTotal =>
       extraCharges.fold(0.0, (sum, c) => sum + c.amount);
 
+  /// Item list→charged ratio excluding labour/service extras.
+  double get itemChargeRatio {
+    final itemsCharged =
+        (finalAmount - extraChargesTotal).clamp(0.0, double.infinity);
+    if (totalAmount <= 0) return 1.0;
+    return itemsCharged / totalAmount;
+  }
+
   // Factory constructor for creating new bill with defaults
   factory BillEntity.create({
     String? serverId,

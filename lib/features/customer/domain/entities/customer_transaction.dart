@@ -170,6 +170,12 @@ class CustomerTransaction {
       transactionType == TransactionType.received ||
       transactionType == TransactionType.adjusted;
 
+  /// True when this row reduces customer receivable (credit).
+  bool get reducesReceivable =>
+      transactionType == TransactionType.received ||
+      transactionType == TransactionType.refund ||
+      transactionType == TransactionType.adjusted;
+
   // Check if this is a bill transaction (increases pending balance)
   bool get isBillTransaction =>
       transactionType == TransactionType.billGenerated;

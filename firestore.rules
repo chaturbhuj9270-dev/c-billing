@@ -35,6 +35,8 @@ service cloud.firestore {
         .affectedKeys()
         .hasAny([
           'subscriptionDate',
+          'subscriptionExpiresAt',
+          'trialExpiresAt',
           'lastSubscriptionUpdate',
           'lastSubscriptionOrderId',
           'subscriptionStatus',
@@ -61,24 +63,33 @@ service cloud.firestore {
     }
 
     // New shop owners may start inactive or on a 30-day free trial (no paid date).
+    // Expiry timestamps are server-only — clients must not invent them at create.
     function creatingInactiveSubscription() {
       let noPaid = (!('subscriptionDate' in request.resource.data)
           || request.resource.data.subscriptionDate == null);
       let statusOk = (!('subscriptionStatus' in request.resource.data)
           || request.resource.data.subscriptionStatus == 'inactive'
           || request.resource.data.subscriptionStatus == 'trial');
-      return noPaid && statusOk;
+      let noServerExpiry = !('subscriptionExpiresAt' in request.resource.data)
+        && !('trialExpiresAt' in request.resource.data);
+      return noPaid && statusOk && noServerExpiry;
     }
 
     function isUnpaid(data) {
       return !('subscriptionDate' in data) || data.subscriptionDate == null;
     }
 
-    // Paid year OR free trial (trialStartedAt / createdAt / subscriptionStatus=trial).
+    // Prefer server-written expiresAt fields; fall back to start+duration.
     function hasActiveSubscription(userId) {
       let data = get(/databases/$(database)/documents/users/$(userId)).data;
-      let paidActive = data.subscriptionDate is timestamp
-        && request.time < data.subscriptionDate + duration.value(365, 'd');
+      let paidByExpiry = data.subscriptionExpiresAt is timestamp
+        && request.time < data.subscriptionExpiresAt;
+      let paidActive = paidByExpiry
+        || (data.subscriptionDate is timestamp
+          && request.time < data.subscriptionDate + duration.value(365, 'd'));
+      let trialByExpiry = isUnpaid(data)
+        && data.trialExpiresAt is timestamp
+        && request.time < data.trialExpiresAt;
       let trialByField = data.trialStartedAt is timestamp
         && request.time < data.trialStartedAt + duration.value(30, 'd');
       let trialByCreated = isUnpaid(data)
@@ -89,8 +100,9 @@ service cloud.firestore {
       let trialByStatus = isUnpaid(data)
         && data.subscriptionStatus == 'trial'
         && !(data.trialStartedAt is timestamp)
-        && !(data.createdAt is timestamp);
-      return paidActive || trialByField || trialByCreated || trialByStatus;
+        && !(data.createdAt is timestamp)
+        && !(data.trialExpiresAt is timestamp);
+      return paidActive || trialByExpiry || trialByField || trialByCreated || trialByStatus;
     }
 
     // Employee profile docs: owner create/update via Admin SDK preferred;
@@ -123,7 +135,14 @@ service cloud.firestore {
           && request.resource.data.role == 'employee'
           && request.resource.data.tenantOwnerId == resource.data.tenantOwnerId
           && !request.resource.data.diff(resource.data).affectedKeys()
-            .hasAny(['subscriptionDate', 'subscriptionStatus', 'subscriptionProvider', 'trialStartedAt'])
+            .hasAny([
+              'subscriptionDate',
+              'subscriptionExpiresAt',
+              'trialExpiresAt',
+              'subscriptionStatus',
+              'subscriptionProvider',
+              'trialStartedAt'
+            ])
         );
 
       allow delete: if isOwner(userId)

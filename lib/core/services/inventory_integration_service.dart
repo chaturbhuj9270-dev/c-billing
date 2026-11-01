@@ -352,6 +352,7 @@ class InventoryIntegrationService {
         if (returnItem.returnQuantity <= 0) continue;
 
         // 1. Process FIFO return (add stock back to batch + create ledger entry)
+        final stockQty = returnItem.stockQuantityInt;
         final returned = await _fifoService.processSaleReturn(
           productId: returnItem.productId,
           productName: returnItem.productName,
@@ -359,7 +360,7 @@ class InventoryIntegrationService {
           modelName: returnItem.modelName,
           batchId: returnItem.batchId,
           localBatchId: returnItem.localBatchId,
-          quantity: returnItem.returnQuantity,
+          quantity: stockQty,
           costPrice: returnItem.costPrice,
           sellingPrice: returnItem.sellingPrice,
           returnReferenceId:
@@ -376,7 +377,7 @@ class InventoryIntegrationService {
         // 2. Increment ProductEntity.currentStock
         await _incrementProductStock(
           returnItem.productId,
-          returnItem.returnQuantity,
+          stockQty,
         );
 
         totalRefundAmount +=
@@ -387,34 +388,33 @@ class InventoryIntegrationService {
       final bill = await _billController.getBillById(billLocalId);
       var customerRefund = totalRefundAmount;
       if (bill != null) {
-        // Update return quantities on bill items
+        // Update return quantities on bill items (match line id first, then product).
+        final remainingReturns = List<ReturnItemDetail>.from(returnItems);
         final updatedItems = bill.items.map((item) {
-          final returnItem = returnItems.firstWhere(
-            (ri) => ri.productId == item.productId,
-            orElse: () => ReturnItemDetail(
-              productId: '',
-              productName: '',
-              returnQuantity: 0,
-              costPrice: 0,
-              sellingPrice: 0,
-              batchId: '',
-            ),
+          final byLine = remainingReturns.indexWhere(
+            (ri) =>
+                ri.billItemId != null &&
+                ri.billItemId!.isNotEmpty &&
+                ri.billItemId == item.itemId,
           );
-
-          if (returnItem.productId.isNotEmpty) {
-            return BillItemEmbedded(
-              itemId: item.itemId,
-              productId: item.productId,
-              productName: item.productName,
-              purchasePrice: item.purchasePrice,
-              sellingPrice: item.sellingPrice,
-              quantity: item.quantity,
-              subtotal: item.subtotal,
-              returnedQuantity:
-                  item.returnedQuantity + returnItem.returnQuantity,
-            );
-          }
-          return item;
+          final byProduct = byLine >= 0
+              ? byLine
+              : remainingReturns.indexWhere(
+                  (ri) => ri.productId == item.productId && ri.returnQuantity > 0,
+                );
+          if (byProduct < 0) return item;
+          final returnItem = remainingReturns.removeAt(byProduct);
+          return BillItemEmbedded(
+            itemId: item.itemId,
+            productId: item.productId,
+            productName: item.productName,
+            purchasePrice: item.purchasePrice,
+            sellingPrice: item.sellingPrice,
+            quantity: item.quantity,
+            subtotal: item.subtotal,
+            returnedQuantity:
+                item.returnedQuantity + returnItem.returnQuantity,
+          );
         }).toList();
 
         // Check if all items are fully returned
@@ -422,15 +422,14 @@ class InventoryIntegrationService {
           (item) => item.returnedQuantity >= item.quantity,
         );
 
-        // Refund follows what the customer was charged, including discount and exclusive tax, then only the unpaid part changes the ledger.
-        final chargeRatio = bill.totalAmount > 0
-            ? bill.finalAmount / bill.totalAmount
-            : 1.0;
+        // Refund = list return × item charge ratio (excludes labour/service extras).
         customerRefund = 0;
         for (final returnItem in returnItems) {
           if (returnItem.returnQuantity <= 0) continue;
           customerRefund +=
-              returnItem.returnQuantity * returnItem.sellingPrice * chargeRatio;
+              returnItem.returnQuantity *
+              returnItem.sellingPrice *
+              bill.itemChargeRatio;
         }
         final appliedToDue = customerRefund > bill.pendingAmount
             ? bill.pendingAmount
@@ -749,11 +748,14 @@ class ReturnItemDetail {
   final String productName;
   final String companyName;
   final String modelName;
-  final int returnQuantity;
+  /// Exact qty returned (may be fractional for kg/ltr).
+  final double returnQuantity;
   final double costPrice;
   final double sellingPrice;
   final String batchId;
   final int? localBatchId;
+  /// Bill line id — prefer this when matching so duplicate products don't collide.
+  final String? billItemId;
 
   ReturnItemDetail({
     required this.productId,
@@ -765,5 +767,13 @@ class ReturnItemDetail {
     required this.sellingPrice,
     required this.batchId,
     this.localBatchId,
+    this.billItemId,
   });
+
+  /// FIFO/stock layers still use whole units; never round a positive fraction to 0.
+  int get stockQuantityInt {
+    if (returnQuantity <= 0) return 0;
+    if (returnQuantity < 1) return 1;
+    return returnQuantity.round();
+  }
 }

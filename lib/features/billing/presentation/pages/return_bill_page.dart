@@ -130,15 +130,15 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     return _returnQuantities.values.fold(0.0, (total, qty) => total + qty);
   }
 
-  // Get total refund amount based on selected quantities
+  // Get total refund amount based on selected quantities (after discount/tax ratio)
   double get _totalRefundAmount {
     if (_currentBill == null) return 0.0;
-    double total = 0.0;
+    double listTotal = 0.0;
     for (final item in _currentBill!.items) {
       final returnQty = _returnQuantities[item.id] ?? 0.0;
-      total += item.sellingPrice * returnQty;
+      listTotal += item.sellingPrice * returnQty;
     }
-    return total;
+    return _currentBill!.chargedRefundFor(listTotal);
   }
 
   // Check if any items are selected for return
@@ -343,10 +343,11 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                 ReturnItemDetail(
                   productId: item.productId,
                   productName: item.productName,
-                  returnQuantity: returnQty.round(), // Stock operations use int
+                  returnQuantity: returnQty,
                   costPrice: item.purchasePrice,
                   sellingPrice: item.sellingPrice,
                   batchId: 'BILL_${_currentBill!.id}_${item.productId}',
+                  billItemId: item.id,
                 ),
               );
             }
@@ -396,7 +397,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
               for (final detail in returnItemDetails) {
                 await ProductOfflineController.instance.incrementStock(
                   detail.productId,
-                  detail.returnQuantity,
+                  detail.stockQuantityInt,
                 );
               }
               await _applyLedgerReturnWithoutLocalBill(result.refundAmount ?? 0);

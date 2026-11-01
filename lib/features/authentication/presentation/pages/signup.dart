@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/language_service.dart';
+import '../../../../core/services/subscription_service.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'email_verification_page.dart';
@@ -170,6 +171,8 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
               'trialStartedAt': FieldValue.serverTimestamp(),
               'emailVerifiedAtSignup': false,
             });
+            // Lock free month on-device immediately so splash/login never show paywall.
+            await SubscriptionService.cacheTrialStartLocally(currentUser.uid);
             debugPrint(
               '[DEBUG] Firestore write successful for UID: ${currentUser.uid}',
             );

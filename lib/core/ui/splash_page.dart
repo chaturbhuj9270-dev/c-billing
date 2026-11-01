@@ -563,13 +563,18 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     try {
       debugPrint('[DEBUG] Checking subscription status...');
       await _setLoadState(step: 3, progress: 0.98);
+      // Service itself fail-opens during free trial (cache / Auth creationTime).
+      // Never treat a slow network as "expired" — that flashed the paywall mid-trial.
       final isSubscriptionValid = await _subscriptionService
           .isSubscriptionValid()
-          .timeout(const Duration(seconds: 8), onTimeout: () => false);
+          .timeout(
+            const Duration(seconds: 12),
+            onTimeout: () => _subscriptionService.hasOfflineEntitlement(),
+          );
 
       if (!isSubscriptionValid) {
         debugPrint(
-          '[DEBUG] Subscription expired/missing, redirecting to subscription screen',
+          '[DEBUG] Subscription/trial expired, redirecting to subscription screen',
         );
         if (mounted) {
           Navigator.of(context).pushReplacement(
@@ -579,7 +584,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         return;
       }
 
-      debugPrint('[DEBUG] Subscription valid, navigating to dashboard');
+      debugPrint('[DEBUG] Subscription/trial valid, navigating to dashboard');
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const OptimizedDashboardPage()),
@@ -587,11 +592,16 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       }
     } catch (e) {
       debugPrint('[ERROR] Error checking subscription: $e');
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
-        );
-      }
+      // Only show paywall when access is definitively expired.
+      final stillValid = await _subscriptionService.isSubscriptionValid();
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => stillValid
+              ? const OptimizedDashboardPage()
+              : const SubscriptionScreen(),
+        ),
+      );
     }
   }
 

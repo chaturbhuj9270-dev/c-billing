@@ -4,6 +4,7 @@ import '../../../../core/database/local_store.dart';
 import '../../../../core/services/local_database.dart';
 import '../../../../core/utils/date_time_parser.dart';
 import '../entities/customer_entity.dart';
+import 'customer_transaction_offline_controller.dart';
 
 // Controller for handling offline-first Customer CRUD operations All UI reads should go through this controller (never directly from API)
 class CustomerOfflineController extends ChangeNotifier {
@@ -39,7 +40,8 @@ class CustomerOfflineController extends ChangeNotifier {
       address: address,
       email: email,
       gstin: gstin,
-      currentPendingAmount: currentPendingAmount,
+      // Pending comes from ledger; opening balance is written as an adjustment below.
+      currentPendingAmount: 0,
       totalPurchases: totalPurchases,
       isSynced: false, // Needs to be synced
       isDeleted: false,
@@ -50,6 +52,34 @@ class CustomerOfflineController extends ChangeNotifier {
     debugPrint('[CustomerOffline] Writing to local database...');
     await _db.saveCustomer(customer);
     debugPrint('[CustomerOffline] Customer saved with ID: ${customer.id}');
+
+    // Persist opening due as a billCreated row (debit) so sync/recompute stay correct.
+    // Do not use ADJUSTED — Firebase treats that as a write-off (credit).
+    if (currentPendingAmount > 0.009) {
+      try {
+        await CustomerTransactionOfflineController.instance.addBillTransaction(
+          customerId: 'local_${customer.id}',
+          customerName: name,
+          amount: currentPendingAmount,
+          billId: 'opening_local_${customer.id}',
+          description: 'Opening balance',
+        );
+      } catch (e) {
+        debugPrint('[CustomerOffline] Opening balance ledger failed: $e');
+      }
+    } else if (currentPendingAmount < -0.009) {
+      try {
+        await CustomerTransactionOfflineController.instance
+            .addPaymentTransaction(
+          customerId: 'local_${customer.id}',
+          customerName: name,
+          amount: currentPendingAmount.abs(),
+          description: 'Opening advance',
+        );
+      } catch (e) {
+        debugPrint('[CustomerOffline] Opening advance ledger failed: $e');
+      }
+    }
 
     notifyListeners();
     return customer;
@@ -301,8 +331,11 @@ class CustomerOfflineController extends ChangeNotifier {
                 parseFlexibleDateTime(customerData['updatedAt']);
             if (serverUpdatedAt != null &&
                 serverUpdatedAt.isAfter(existing.updatedAt)) {
+              // Ledger is source of truth for AR — never overwrite pending from customer doc.
+              final preservedPending = existing.currentPendingAmount;
               final updated = CustomerEntity.fromCustomer(customerData);
               updated.id = existing.id; // Keep local ID
+              updated.currentPendingAmount = preservedPending;
               await _db.saveCustomer(updated);
             }
           }

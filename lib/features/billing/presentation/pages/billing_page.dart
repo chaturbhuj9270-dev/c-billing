@@ -215,6 +215,10 @@ class _BillingPageState extends State<BillingPage> {
         discountAmount: _discountAmount,
         gstMode: _gstMode,
         forceIgst: interstate,
+        otherTaxPercent: _taxSettings.enableOtherTax
+            ? _taxSettings.otherTaxPercent
+            : 0,
+        otherTaxName: _taxSettings.otherTaxName,
       );
       return breakdown.hasAnyTax ? breakdown : null;
     }
@@ -1419,8 +1423,8 @@ class _BillingPageState extends State<BillingPage> {
     }
     // Extra charges (labour / service) always add on top
     amount += _extraChargesTotal;
-    // Round up to nearest rupee
-    return amount.ceilToDouble();
+    // Round to nearest rupee (standard billing; ceil was overcharging)
+    return amount.roundToDouble();
   }
 
   // Computed pending amount based on received amount

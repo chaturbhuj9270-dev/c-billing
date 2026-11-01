@@ -132,8 +132,14 @@ class _LoginOtpPageState extends State<LoginOtpPage> {
       );
     } catch (e) {
       if (!mounted) return;
+      final stillValid = await SubscriptionService().isSubscriptionValid();
+      if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
+        MaterialPageRoute(
+          builder: (_) => stillValid
+              ? const OptimizedDashboardPage()
+              : const SubscriptionScreen(),
+        ),
         (_) => false,
       );
     }

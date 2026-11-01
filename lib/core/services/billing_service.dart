@@ -722,11 +722,9 @@ class BillingService {
               item.quantity - 0.001; // Tolerance for floats
         });
 
-        // Refund follows what the customer was charged (discount/tax ratio),
-        // and only the unpaid portion reduces bill pending / receivable.
-        final chargeRatio =
-            bill.totalAmount > 0 ? bill.finalAmount / bill.totalAmount : 1.0;
-        final customerRefund = totalRefundAmount * chargeRatio;
+        // Refund follows charged item amount (discount/tax), excluding extras.
+        // Ledger write is offline-first; sync pushes REFUND (avoid dual-write).
+        final customerRefund = bill.chargedRefundFor(totalRefundAmount);
         final appliedToDue = customerRefund > bill.pendingAmount
             ? bill.pendingAmount
             : customerRefund;
@@ -758,30 +756,6 @@ class BillingService {
           'billNumber': bill.billNumber,
         };
       });
-
-      final appliedToDue = (result['appliedToDue'] as num?)?.toDouble() ?? 0.0;
-      final customerId = result['customerId'] as String?;
-      final billNumber =
-          (result['billNumber'] as String?) ?? (result['billId'] as String);
-
-      // Keep Firebase customer ledger in sync with the unpaid portion returned.
-      if (appliedToDue > 0.009 &&
-          customerId != null &&
-          customerId.isNotEmpty &&
-          _customerTransactionService != null) {
-        final refundResult = await _customerTransactionService.recordRefund(
-          customerId: customerId,
-          billId: billId,
-          billNumber: billNumber,
-          refundAmount: appliedToDue,
-          notes: 'Return for bill $billNumber',
-        );
-        if (!refundResult.success) {
-          debugPrint(
-            '[BillingService] recordRefund failed: ${refundResult.errorMessage}',
-          );
-        }
-      }
 
       return ReturnBillResult.success(
         result['billId'] as String,
