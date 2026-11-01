@@ -12,6 +12,7 @@ import 'package:c_billing/features/inventory_management/domain/entities/grouped_
 import 'package:c_billing/features/inventory_management/offline/controllers/purchase_batch_offline_controller.dart';
 import 'package:c_billing/features/inventory_management/offline/entities/purchase_batch_entity.dart';
 import 'package:c_billing/features/availability/presentation/pages/report_preview_screen.dart';
+import 'package:c_billing/features/inventory_management/presentation/pages/purchase_page.dart';
 import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
@@ -135,10 +136,21 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     final productsWithoutBatches = _products
         .where((p) => !batchProductIds.contains(p.id))
         .toList();
+    final productById = <String, Product>{};
+    for (final p in _products) {
+      productById[p.id] = p;
+      // Batches may key by either serverId or local_<id>.
+      if (p.id.startsWith('local_')) {
+        productById[p.id.substring(6)] = p;
+      } else {
+        productById['local_${p.id}'] = p;
+      }
+    }
 
     _groupedProducts = GroupedProduct.buildFromBatches(
       _allBatches,
       productsWithoutBatches: productsWithoutBatches,
+      productById: productById,
     );
 
     _applyGroupedFilters();
@@ -728,94 +740,94 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
         : accent;
     final statusLabel = isLow
         ? '${_localizations.lowStock.toUpperCase()} · ${group.variantCount} ${_localizations.batch.toUpperCase()}'
-        : stockLevel['label'] as String;
-    final expiredBatchCount = group.expiredBatchCount;
+        : (stockLevel['label'] as String).toUpperCase();
+    final company = group.companies.isNotEmpty ? group.companies.first : null;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: AppColors.border(context)),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.black.withValues(alpha: isDark ? 0.18 : 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: AppTheme.black.withValues(alpha: isDark ? 0.22 : 0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: AppTheme.transparent),
         child: ExpansionTile(
-          tilePadding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
+          tilePadding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
           childrenPadding: EdgeInsets.zero,
-          iconColor: AppColors.mutedText(context),
-          collapsedIconColor: AppColors.mutedText(context),
           shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(20)),
+            borderRadius: BorderRadius.all(Radius.circular(22)),
           ),
           collapsedShape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(20)),
+            borderRadius: BorderRadius.all(Radius.circular(22)),
           ),
-          leading: Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: isDark ? 0.18 : 0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.inventory_2_outlined,
-              color: accent,
-              size: 20,
-            ),
+          leading: _stockQtyBox(
+            qtyText: group.totalStockQtyText,
+            unit: group.unitLabel,
+            color: statusColor,
           ),
-          title: Row(
+          // Qty always visible at top-right when collapsed.
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: Text(
-                  group.productName,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Literata',
-                    color: AppColors.primaryText(context),
-                    height: 1.2,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+              _stockQtyCorner(
+                qtyText: group.totalStockQtyText,
+                unit: group.unitLabel,
+                color: statusColor,
               ),
-              const SizedBox(width: 8),
-              Text(
-                '${group.totalStock}',
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                  color: statusColor,
+              const SizedBox(width: 6),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.chipFill(context),
+                  border: Border.all(color: AppColors.border(context)),
+                ),
+                child: Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 20,
+                  color: AppColors.mutedText(context),
                 ),
               ),
             ],
           ),
+          title: Text(
+            group.productName,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              fontFamily: 'Literata',
+              color: AppColors.primaryText(context),
+              height: 1.2,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
           subtitle: Padding(
-            padding: const EdgeInsets.only(top: 6),
+            padding: const EdgeInsets.only(top: 4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (group.companies.isNotEmpty)
+                if (company != null)
                   Row(
                     children: [
                       Icon(
-                        Icons.receipt_long_outlined,
+                        Icons.apartment_rounded,
                         size: 13,
                         color: AppColors.mutedText(context),
                       ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          group.companies.first,
+                          company,
                           style: TextStyle(
                             fontSize: 12,
                             color: AppColors.mutedText(context),
@@ -829,9 +841,15 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                   ),
                 const SizedBox(height: 8),
                 Wrap(
-                  spacing: 8,
+                  spacing: 6,
                   runSpacing: 6,
                   children: [
+                    if (group.packHint != null)
+                      _buildBadge(
+                        label: group.packHint!,
+                        color: AppColors.accent(context),
+                        icon: Icons.inventory_2_outlined,
+                      ),
                     _buildBadge(
                       label: statusLabel,
                       color: statusColor,
@@ -841,448 +859,237 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                           ? Icons.warning_amber_rounded
                           : Icons.check_circle_outline,
                     ),
-                    if (expiredBatchCount > 0)
-                      _buildBadge(
-                        label:
-                            '$expiredBatchCount ${_localizations.expired.toLowerCase()}',
-                        color: AppTheme.toneViolet,
-                        icon: Icons.event_busy_rounded,
-                      ),
                   ],
                 ),
               ],
             ),
           ),
           children: [
-            // Summary bar with stock value & price range
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.action(context).withValues(alpha: 0.06),
-                    AppColors.action(context).withValues(alpha: 0.02),
-                  ],
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildInfoChip(
-                    Icons.shopping_cart_outlined,
-                    group.purchasePriceRange,
-                    _localizations.purchase,
-                  ),
-                  Container(
-                    width: 1,
-                    height: 32,
-                    color: AppTheme.grey.withValues(alpha: 0.15),
-                  ),
-                  _buildInfoChip(
-                    Icons.sell_outlined,
-                    group.salesPriceRange,
-                    _localizations.sell,
-                  ),
-                  Container(
-                    width: 1,
-                    height: 32,
-                    color: AppTheme.grey.withValues(alpha: 0.15),
-                  ),
-                  _buildInfoChip(
-                    Icons.account_balance_wallet_outlined,
-                    '₹${_formatCompactNumber(group.totalStockValue)}',
-                    _localizations.stockValue,
-                  ),
-                ],
-              ),
-            ),
-            // Batch header
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.chipFill(context),
-                border: Border(
-                  bottom: BorderSide(color: AppColors.border(context)),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: Text(
-                      _localizations.company,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'Literata',
-                        color: AppTheme.grey600,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      _localizations.date,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'Literata',
-                        color: AppTheme.grey600,
-                        letterSpacing: 0.5,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      '${_localizations.sellPrice} ₹',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'Literata',
-                        color: AppTheme.grey600,
-                        letterSpacing: 0.5,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      _localizations.qty,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'Literata',
-                        color: AppColors.accent(context),
-                        letterSpacing: 0.5,
-                      ),
-                      textAlign: TextAlign.end,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Batch rows
+            Divider(height: 1, color: AppColors.border(context)),
             ...group.subEntries.asMap().entries.map((mapEntry) {
               final i = mapEntry.key;
               final entry = mapEntry.value;
-              final isEven = i % 2 == 0;
               final isLowBatch =
                   entry.stockQuantity > 0 && entry.stockQuantity <= 5;
               final isOutBatch = entry.stockQuantity == 0;
               final isExpired = entry.isExpired;
-              final isExpiringSoon = entry.isExpiringSoon;
-
-              // Determine color priority: expired > out > low
-              Color? rowColor;
-              Color? borderColor;
-              if (isExpired) {
-                rowColor = AppTheme.purple.withValues(alpha: 0.06);
-                borderColor = AppTheme.purple;
-              } else if (isOutBatch) {
-                rowColor = AppTheme.red.withValues(alpha: 0.04);
-                borderColor = AppTheme.red;
-              } else if (isLowBatch) {
-                rowColor = AppTheme.orange.withValues(alpha: 0.04);
-                borderColor = AppTheme.orange;
-              }
+              final qtyColor = isExpired
+                  ? AppTheme.toneViolet
+                  : isOutBatch
+                  ? AppTheme.error
+                  : isLowBatch
+                  ? AppTheme.toneAmber
+                  : accent;
+              final brand = entry.companyName.isNotEmpty
+                  ? entry.companyName
+                  : (company ?? '-');
 
               return Container(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
-                  color:
-                      rowColor ??
-                      (isEven ? AppTheme.white : AppColors.scaffold(context)),
                   border: Border(
                     bottom: BorderSide(
-                      color: AppTheme.grey.withValues(alpha: 0.1),
-                      width: 0.5,
-                    ),
-                    left: BorderSide(
-                      color: borderColor ?? AppTheme.transparent,
-                      width: borderColor != null ? 3 : 0,
+                      color: AppColors.border(context).withValues(alpha: 0.7),
                     ),
                   ),
                 ),
                 child: Row(
                   children: [
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            entry.companyName.isNotEmpty
-                                ? entry.companyName
-                                : '-',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontFamily: 'Literata',
-                              fontWeight: FontWeight.w600,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          // Status badges (can show multiple)
-                          if (isExpired ||
-                              isExpiringSoon ||
-                              isLowBatch ||
-                              isOutBatch)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 3),
-                              child: Wrap(
-                                spacing: 4,
-                                runSpacing: 4,
-                                children: [
-                                  if (isExpired)
-                                    _buildMicroBadge(
-                                      label: _localizations.expired,
-                                      color: AppTheme.purple,
-                                      icon: Icons.event_busy_rounded,
-                                    ),
-                                  if (isExpiringSoon && !isExpired)
-                                    _buildMicroBadge(
-                                      label: _localizations.expiringSoon,
-                                      color: AppTheme.deepOrange,
-                                      icon: Icons.schedule,
-                                    ),
-                                  if (isOutBatch)
-                                    _buildMicroBadge(
-                                      label: _localizations.outOfStock,
-                                      color: AppTheme.red,
-                                      icon: Icons.error_outline,
-                                    ),
-                                  if (isLowBatch && !isOutBatch)
-                                    _buildMicroBadge(
-                                      label: _localizations.lowStock,
-                                      color: AppTheme.orange,
-                                      icon: Icons.warning_amber_rounded,
-                                    ),
-                                ],
-                              ),
-                            ),
-                        ],
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: accent.withValues(alpha: isDark ? 0.16 : 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.inventory_2_outlined,
+                        size: 16,
+                        color: accent,
                       ),
                     ),
+                    const SizedBox(width: 10),
                     Expanded(
-                      flex: 2,
                       child: Text(
-                        entry.formattedDate,
+                        '${_localizations.batch} ${i + 1} · $brand',
                         style: TextStyle(
-                          fontSize: 11,
-                          fontFamily: 'Literata',
-                          color: AppTheme.grey600,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        '₹${entry.salesPrice.toStringAsFixed(0)}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontFamily: 'Literata',
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.green700,
+                          fontFamily: 'Literata',
+                          color: AppColors.primaryText(context),
                         ),
-                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    Expanded(
-                      flex: 2,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isExpired
-                                  ? AppTheme.purple.withValues(alpha: 0.1)
-                                  : isOutBatch
-                                  ? AppTheme.red.withValues(alpha: 0.1)
-                                  : isLowBatch
-                                  ? AppTheme.orange.withValues(alpha: 0.1)
-                                  : AppColors.action(context).withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              '${entry.stockQuantity}',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontFamily: 'Literata',
-                                fontWeight: FontWeight.w800,
-                                color: isExpired
-                                    ? AppTheme.purple
-                                    : isOutBatch
-                                    ? AppTheme.red
-                                    : isLowBatch
-                                    ? AppTheme.orange
-                                    : AppColors.action(context),
-                              ),
-                            ),
-                          ),
-                        ],
+                    const SizedBox(width: 8),
+                    Text(
+                      '${entry.stockQtyText} ${entry.unitLabel}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        fontFamily: 'Literata',
+                        color: qtyColor,
                       ),
                     ),
                   ],
                 ),
               );
             }),
-            // Alert banner at bottom
-            if (group.hasExpiredStock)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppTheme.purple.withValues(alpha: 0.08),
-                      AppTheme.purple.withValues(alpha: 0.04),
-                    ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _cardActionButton(
+                      label: '+ Add stock',
+                      color: accent,
+                      filled: false,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                const PurchasePage(isEmbedded: false),
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                  borderRadius: group.totalStock == 0 || group.totalStock <= 10
-                      ? BorderRadius.zero
-                      : const BorderRadius.only(
-                          bottomLeft: Radius.circular(17),
-                          bottomRight: Radius.circular(17),
-                        ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: AppTheme.purple.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.event_busy_rounded,
-                        color: AppTheme.purple,
-                        size: 16,
-                      ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _cardActionButton(
+                      label: 'Adjust',
+                      color: AppColors.secondaryText(context),
+                      filled: false,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                const PurchasePage(isEmbedded: false),
+                          ),
+                        );
+                      },
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        '${group.expiredBatchCount} ${_localizations.batch}${group.expiredBatchCount > 1 ? 's' : ''} ${_localizations.batchExpiredRemove}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.purple700,
-                          fontFamily: 'Literata',
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            if (group.totalStock == 0)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppTheme.red.withValues(alpha: 0.08),
-                      AppTheme.red.withValues(alpha: 0.04),
-                    ],
-                  ),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(17),
-                    bottomRight: Radius.circular(17),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: AppTheme.red.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.error_outline,
-                        color: AppTheme.red,
-                        size: 16,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _localizations.outOfStockMessage,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.red700,
-                          fontFamily: 'Literata',
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            else if (group.totalStock <= 10 && !group.hasExpiredStock)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppTheme.orange.withValues(alpha: 0.08),
-                      AppTheme.orange.withValues(alpha: 0.04),
-                    ],
-                  ),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(17),
-                    bottomRight: Radius.circular(17),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: AppTheme.orange.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.warning_amber_rounded,
-                        color: AppTheme.orange,
-                        size: 16,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _localizations.lowStockMessage,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.orange800,
-                          fontFamily: 'Literata',
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _stockQtyBox({
+    required String qtyText,
+    required String unit,
+    required Color color,
+  }) {
+    final isDark = AppColors.isDark(context);
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.22 : 0.14),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            qtyText,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+              height: 1.05,
+              color: color,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          Text(
+            unit.toUpperCase(),
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w700,
+              fontSize: 9,
+              height: 1.1,
+              letterSpacing: 0.3,
+              color: color.withValues(alpha: 0.9),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _stockQtyCorner({
+    required String qtyText,
+    required String unit,
+    required Color color,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          qtyText,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+            height: 1.1,
+            color: color,
+          ),
+        ),
+        Text(
+          unit,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w600,
+            fontSize: 11,
+            height: 1.1,
+            color: color.withValues(alpha: 0.9),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _cardActionButton({
+    required String label,
+    required Color color,
+    required bool filled,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: AppTheme.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          height: 44,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: filled
+                ? color.withValues(alpha: 0.14)
+                : color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: color.withValues(alpha: 0.45)),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              color: color,
+            ),
+          ),
         ),
       ),
     );
@@ -1320,72 +1127,6 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     );
   }
 
-  // Smaller badge for batch row status indicators
-  Widget _buildMicroBadge({
-    required String label,
-    required Color color,
-    IconData? icon,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(icon, size: 9, color: color),
-            const SizedBox(width: 3),
-          ],
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 8,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'Literata',
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoChip(IconData icon, String value, String label) {
-    return Column(
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: AppColors.accent(context)),
-            SizedBox(width: 6),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                fontFamily: 'Literata',
-                color: AppColors.accent(context),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 3),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontFamily: 'Literata',
-            color: AppTheme.grey,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-
   Map<String, dynamic> _getStockLevel(num stock) {
     if (stock <= 0) {
       return {
@@ -1413,8 +1154,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
         children: [
           if (!widget.isEmbedded)
             AppTopBar(
-              title: _localizations.stockOverview,
-              subtitle: _localizations.availability,
+              title: _localizations.availability,
+              subtitle: _localizations.stockAvailability,
               actions: [
                 AppTopBar.action(
                   icon: Icons.file_download_outlined,
@@ -1502,7 +1243,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                             ),
                           ),
                           Text(
-                            '${_groupedProducts.length} ${_localizations.products.toLowerCase()} · $totalStock ${_localizations.units.toLowerCase()}',
+                            '${_groupedProducts.length} ${_localizations.products.toLowerCase()} · ${_formatQty(totalStock)} ${_localizations.units.toLowerCase()}',
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 12,
@@ -1736,55 +1477,80 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   Widget _buildSearchField() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: TextField(
-        controller: _searchController,
-        onChanged: _onSearchChanged,
-        style: TextStyle(
-          fontFamily: 'Literata',
-          fontSize: 14,
-          color: AppColors.primaryText(context),
-        ),
-        decoration: InputDecoration(
-          hintText: _localizations.searchProducts,
-          hintStyle: TextStyle(
-            color: AppColors.mutedText(context),
-            fontFamily: 'Literata',
-          ),
-          prefixIcon: Icon(
-            Icons.search_rounded,
-            color: AppColors.mutedText(context),
-          ),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? IconButton(
-                  icon: Icon(
-                    Icons.close_rounded,
-                    size: 18,
-                    color: AppColors.mutedText(context),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              onChanged: _onSearchChanged,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 14,
+                color: AppColors.primaryText(context),
+              ),
+              decoration: InputDecoration(
+                hintText: _localizations.searchProducts,
+                hintStyle: TextStyle(
+                  color: AppColors.mutedText(context),
+                  fontFamily: 'Literata',
+                ),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: AppColors.mutedText(context),
+                ),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(
+                          Icons.close_rounded,
+                          size: 18,
+                          color: AppColors.mutedText(context),
+                        ),
+                        onPressed: () {
+                          _searchController.clear();
+                          _onSearchChanged('');
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: AppColors.card(context),
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: AppColors.border(context)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: AppColors.border(context)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: AppColors.action(context),
+                    width: 1.4,
                   ),
-                  onPressed: () {
-                    _searchController.clear();
-                    _onSearchChanged('');
-                  },
-                )
-              : null,
-          filled: true,
-          fillColor: AppColors.card(context),
-          contentPadding: const EdgeInsets.symmetric(vertical: 14),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: AppColors.border(context)),
+                ),
+              ),
+            ),
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: AppColors.border(context)),
+          const SizedBox(width: 10),
+          _outlineIconButton(
+            icon: Icons.tune_rounded,
+            onTap: () {
+              GlassyToast.show(
+                context,
+                'Use the status chips above to filter stock',
+              );
+            },
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: AppColors.action(context), width: 1.4),
-          ),
-        ),
+        ],
       ),
     );
+  }
+
+  String _formatQty(num qty) {
+    final v = qty.toDouble();
+    if (v == v.roundToDouble()) return v.toInt().toString();
+    return v.toStringAsFixed(2);
   }
 
   String _formatCompactNumber(double number) {
