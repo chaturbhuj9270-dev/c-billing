@@ -165,7 +165,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
               'email': email,
               'contact': contact,
               'createdAt': FieldValue.serverTimestamp(),
-              // 1-month free trial; after that Cashfree / Play subscription is required
+              // 1-month free trial; after that Play Billing subscription is required on Android
               'subscriptionDate': null,
               'subscriptionStatus': 'trial',
               'trialStartedAt': FieldValue.serverTimestamp(),

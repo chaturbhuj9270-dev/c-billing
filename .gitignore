@@ -49,3 +49,9 @@ app.*.map.json
 /functions/.env
 /functions/.env.*
 !/functions/.env.example
+
+# Android release signing (never commit)
+/android/key.properties
+/android/*.jks
+/android/*.keystore
+/android/app/upload-keystore.jks

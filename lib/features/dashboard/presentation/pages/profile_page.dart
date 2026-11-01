@@ -5,9 +5,14 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/config/app_store_config.dart';
+import '../../../../core/legal/legal_document_page.dart';
+import '../../../../core/legal/legal_documents.dart';
+import '../../../../core/services/account_deletion_service.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 class ProfilePage extends StatefulWidget {
   final bool isEmbedded;
@@ -325,6 +330,67 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                       ),
                     ),
+                    const SizedBox(height: 24),
+                    _legalTile(
+                      icon: Icons.privacy_tip_outlined,
+                      label: LegalDocuments.privacyPolicyTitle,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => LegalDocumentPage(
+                              title: LegalDocuments.privacyPolicyTitle,
+                              body: LegalDocuments.privacyPolicyBody,
+                              webUrl: AppStoreConfig.privacyPolicyUrl,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    _legalTile(
+                      icon: Icons.description_outlined,
+                      label: LegalDocuments.termsTitle,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => LegalDocumentPage(
+                              title: LegalDocuments.termsTitle,
+                              body: LegalDocuments.termsBody,
+                              webUrl: AppStoreConfig.termsOfServiceUrl,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    OutlinedButton.icon(
+                      onPressed: _isSaving ? null : _confirmDeleteAccount,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.toneRose,
+                        side: const BorderSide(color: AppTheme.toneRose),
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.delete_forever_rounded),
+                      label: const Text(
+                        'Delete account',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Permanently deletes your C-Billing account and clears data on this device. Required for Play Store policy.',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 11,
+                        color: AppColors.mutedText(context),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -333,6 +399,162 @@ class _ProfilePageState extends State<ProfilePage> {
         ],
       ),
     );
+  }
+
+  Widget _legalTile({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: AppColors.card(context),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border(context)),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: AppColors.action(context), size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: AppColors.primaryText(context),
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.mutedText(context),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteAccount() async {
+    final passwordController = TextEditingController();
+    final needsPassword = _currentUser?.providerData.any(
+          (p) => p.providerId == 'password',
+        ) ??
+        false;
+
+    final confirmed = await showAppBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.transparent,
+      builder: (ctx) {
+        return Container(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            16,
+            20,
+            20 + MediaQuery.of(ctx).viewInsets.bottom,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.card(ctx),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Delete account?',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                  color: AppColors.primaryText(ctx),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'This cannot be undone. Your login will be removed and local data on this device will be cleared.',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 13,
+                  color: AppColors.mutedText(ctx),
+                ),
+              ),
+              if (needsPassword) ...[
+                const SizedBox(height: 14),
+                TextField(
+                  controller: passwordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Confirm password',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.toneRose,
+                        foregroundColor: AppTheme.white,
+                      ),
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Delete'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) {
+      passwordController.dispose();
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      await AccountDeletionService.instance.deleteAndExit(
+        context,
+        password: needsPassword ? passwordController.text.trim() : null,
+      );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      GlassyToast.show(
+        context,
+        e.code == 'requires-recent-login'
+            ? 'Please log in again, then delete your account.'
+            : (e.message ?? 'Could not delete account'),
+        isError: true,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      GlassyToast.show(context, 'Could not delete account: $e', isError: true);
+    } finally {
+      passwordController.dispose();
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   Widget _buildFormField({

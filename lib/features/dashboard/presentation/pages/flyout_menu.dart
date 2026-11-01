@@ -21,6 +21,9 @@ import '../../../reports/presentation/pages/unified_reports_page.dart';
 import 'package:c_billing/common_widgets/glass_bevel_frame.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/access/access_control_service.dart';
+import 'package:c_billing/core/config/app_store_config.dart';
+import 'package:c_billing/core/legal/legal_document_page.dart';
+import 'package:c_billing/core/legal/legal_documents.dart';
 import '../../../employee/presentation/pages/employees_page.dart';
 
 class FlyoutMenu extends StatefulWidget {
@@ -121,6 +124,18 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
         route: 'Theme',
         color: AppTheme.toneViolet,
         trailing: ThemeService.instance.modeLabel,
+      ),
+      _MenuItem(
+        icon: Icons.privacy_tip_outlined,
+        label: 'Privacy Policy',
+        route: 'Privacy',
+        color: AppTheme.toneBlue,
+      ),
+      _MenuItem(
+        icon: Icons.description_outlined,
+        label: 'Terms of Service',
+        route: 'Terms',
+        color: AppTheme.toneAmber,
       ),
     ];
     return [
@@ -294,6 +309,30 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
         afterClose((ctx) {
           if (WebShell.open(WebShell.profile)) return;
           showAppPage(ctx, const ProfilePage());
+        });
+        break;
+      case 'Privacy':
+        afterClose((ctx) {
+          showAppPage(
+            ctx,
+            LegalDocumentPage(
+              title: LegalDocuments.privacyPolicyTitle,
+              body: LegalDocuments.privacyPolicyBody,
+              webUrl: AppStoreConfig.privacyPolicyUrl,
+            ),
+          );
+        });
+        break;
+      case 'Terms':
+        afterClose((ctx) {
+          showAppPage(
+            ctx,
+            LegalDocumentPage(
+              title: LegalDocuments.termsTitle,
+              body: LegalDocuments.termsBody,
+              webUrl: AppStoreConfig.termsOfServiceUrl,
+            ),
+          );
         });
         break;
       case 'ShopDetails':

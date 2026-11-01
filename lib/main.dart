@@ -2,7 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
+import 'core/config/app_store_config.dart';
 import 'core/di/injection.dart' as di;
 import 'core/ui/splash_page.dart';
 import 'core/services/credentials_manager.dart';
@@ -23,7 +25,7 @@ import 'firebase_options.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize error logging service early to capture all errors
+  // Local error buffer first; Crashlytics hooks are layered after Firebase init.
   ErrorLoggingService.initialize();
 
   // Firebase MUST be initialized before runApp because services like SubscriptionService access FirebaseFirestore.instance at construction time. Timeout avoids an indefinite blank s...
@@ -31,6 +33,24 @@ Future<void> main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     ).timeout(const Duration(seconds: 15));
+
+    // Crash reporting for Play production builds (keeps local ErrorLogging too).
+    if (!kIsWeb) {
+      final previousFlutterOnError = FlutterError.onError;
+      FlutterError.onError = (details) {
+        previousFlutterOnError?.call(details);
+        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      };
+      final previousPlatformOnError = PlatformDispatcher.instance.onError;
+      PlatformDispatcher.instance.onError = (error, stack) {
+        previousPlatformOnError?.call(error, stack);
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        return true;
+      };
+      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
+        !kDebugMode,
+      );
+    }
   } catch (e) {
     debugPrint('Firebase init error: $e');
   }
@@ -121,7 +141,7 @@ class MyApp extends StatelessWidget {
       listenable: ThemeService.instance,
       builder: (context, _) {
         return MaterialApp(
-          title: 'C-Billing',
+          title: AppStoreConfig.appName,
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
           themeMode: ThemeService.instance.themeMode,
