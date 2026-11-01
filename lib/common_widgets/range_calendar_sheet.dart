@@ -117,7 +117,9 @@ class _AppRangeCalendarPageState extends State<AppRangeCalendarPage> {
     _syncFields();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _revealMonth(_start ?? _today());
+      // Prefer the selected start, else today, so the sheet opens near
+      // the useful months instead of firstDate (often Jan 2020).
+      _revealMonth(_start ?? _today(), animate: false);
     });
   }
 
@@ -173,16 +175,64 @@ class _AppRangeCalendarPageState extends State<AppRangeCalendarPage> {
     _endField.text = _end == null ? '' : format.format(_end!);
   }
 
-  void _revealMonth(DateTime day) {
+  /// Matches [_MonthBlock] layout so we can jump past lazy ListView gaps.
+  double _estimatedMonthHeight(DateTime month) {
+    final daysInMonth = DateUtils.getDaysInMonth(month.year, month.month);
+    final leading = DateTime(month.year, month.month, 1).weekday % 7;
+    final weeks = ((leading + daysInMonth + 6) ~/ 7);
+    const titleBlock = 40.0; // top/bottom padding + MMMM yyyy
+    const weekHeight = 46.0;
+    const bottomPad = 18.0;
+    return titleBlock + weeks * weekHeight + bottomPad;
+  }
+
+  double _estimatedOffsetForMonth(DateTime month) {
+    final target = DateTime(month.year, month.month);
+    var offset = 8.0; // ListView top padding
+    for (final m in _months) {
+      if (m.year == target.year && m.month == target.month) break;
+      offset += _estimatedMonthHeight(m);
+    }
+    return offset;
+  }
+
+  void _revealMonth(DateTime day, {bool animate = true}) {
     final month = DateTime(day.year, day.month);
-    final context = _monthKeys[month]?.currentContext;
-    if (context == null) return;
-    Scrollable.ensureVisible(
-      context,
-      alignment: 0.02,
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
-    );
+    if (!_monthKeys.containsKey(month)) return;
+
+    void ensureVisibleIfMounted() {
+      final targetContext = _monthKeys[month]?.currentContext;
+      if (targetContext == null) return;
+      Scrollable.ensureVisible(
+        targetContext,
+        alignment: 0.02,
+        duration: animate
+            ? const Duration(milliseconds: 220)
+            : Duration.zero,
+        curve: Curves.easeOutCubic,
+      );
+    }
+
+    final mountedContext = _monthKeys[month]?.currentContext;
+    if (mountedContext != null) {
+      ensureVisibleIfMounted();
+      return;
+    }
+
+    // Off-screen months are not built yet, so jump by estimated height first.
+    if (!_scroll.hasClients) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _revealMonth(day, animate: animate);
+      });
+      return;
+    }
+
+    final max = _scroll.position.maxScrollExtent;
+    final jumpTo = _estimatedOffsetForMonth(month).clamp(0.0, max);
+    _scroll.jumpTo(jumpTo);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ensureVisibleIfMounted();
+    });
   }
 
   void _selectDay(DateTime day) {
