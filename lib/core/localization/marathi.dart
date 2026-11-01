@@ -52,12 +52,12 @@ class MarathiLocalization {
   static const String home = 'मुख्यपृष्ठ';
   static const String billing = 'बिलिंग';
   static const String customers = 'ग्राहक';
-  static const String availability = 'उपलब्धता';
+  static const String availability = 'स्टॉक';
   static const String purchase = 'खरीद';
 
   // Navigation Subtitles
   static const String manageCustomers = 'ग्राहकांना सुविधा';
-  static const String stockAvailability = 'स्टॉक उपलब्धता';
+  static const String stockAvailability = 'स्टॉक ट्रॅक करा';
   static const String generateInvoice = 'बिल तौल करा';
   static const String trackPurchases = 'खरेदी सुथ करा';
 

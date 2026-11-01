@@ -52,12 +52,12 @@ class EnglishLocalization {
   static const String home = 'Home';
   static const String billing = 'Billing';
   static const String customers = 'Customers';
-  static const String availability = 'Availability';
+  static const String availability = 'Stock';
   static const String purchase = 'Purchase';
 
   // Navigation Subtitles
   static const String manageCustomers = 'Manage Customers';
-  static const String stockAvailability = 'Stock Availability';
+  static const String stockAvailability = 'Track stock';
   static const String generateInvoice = 'Generate Invoice';
   static const String trackPurchases = 'Track Purchases';
 

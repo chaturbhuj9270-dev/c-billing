@@ -52,12 +52,12 @@ class HindiLocalization {
   static const String home = 'होम';
   static const String billing = 'बिलिंग';
   static const String customers = 'ग्राहक';
-  static const String availability = 'उपलब्धता';
+  static const String availability = 'स्टॉक';
   static const String purchase = 'खरीद';
 
   // Navigation Subtitles
   static const String manageCustomers = 'ग्राहकों का परिलक्षण करें';
-  static const String stockAvailability = 'स्टॉक उपलब्धता';
+  static const String stockAvailability = 'स्टॉक ट्रैक करें';
   static const String generateInvoice = 'इनवॉयस तैयार करें';
   static const String trackPurchases = 'खरीद को संधबन से संबंधित करें';
 

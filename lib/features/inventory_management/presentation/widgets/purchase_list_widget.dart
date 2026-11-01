@@ -6,6 +6,7 @@ import '../../offline/entities/purchase_batch_entity.dart';
 import 'purchase_card_widget.dart';
 import 'purchase_filter_widget.dart';
 import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
+import 'package:c_billing/common_widgets/glass_summary_card.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
@@ -536,116 +537,31 @@ class PurchaseSummaryWidget extends StatelessWidget {
       );
     }
 
-    final isDark = AppColors.isDark(context);
-    final header = AppColors.headerGradient(context);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [
-                  header.first.withValues(alpha: 0.92),
-                  header.last.withValues(alpha: 0.98),
-                ]
-              : [header.first, header.last],
+    return GlassSummaryCard(
+      title: localizations.totalValue,
+      amount: '₹${_compactAmount(totalAmount)}',
+      stats: [
+        GlassSummaryStat(
+          value: '${filtered.length}',
+          label: localizations.purchases,
         ),
-        border: isDark
-            ? Border.all(color: AppTheme.white.withValues(alpha: 0.12))
-            : null,
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: isDark ? 0.35 : 0.18),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                localizations.totalValue.toUpperCase(),
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  fontWeight: FontWeight.w600,
-                  fontSize: 11,
-                  letterSpacing: 0.8,
-                  color: AppTheme.white.withValues(alpha: 0.75),
-                ),
-              ),
-              const Spacer(),
-              Container(
-                width: 32,
-                height: 32,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppTheme.white.withValues(alpha: 0.16),
-                  shape: BoxShape.circle,
-                ),
-                child: const Text(
-                  '₹',
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                    color: AppTheme.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '₹${_compactAmount(totalAmount)}',
-            style: const TextStyle(
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w800,
-              fontSize: 30,
-              color: AppTheme.white,
-              height: 1.1,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Container(
-            height: 1,
-            color: AppTheme.white.withValues(alpha: 0.16),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _summaryStat(
-                value: '${filtered.length}',
-                label: localizations.purchases,
-              ),
-              _summaryDivider(),
-              _summaryStat(
-                value: weightQty == 0
-                    ? '0'
-                    : (weightQty == weightQty.roundToDouble()
-                          ? weightQty.toInt().toString()
-                          : weightQty.toStringAsFixed(1)),
-                label: 'Kg',
-              ),
-              _summaryDivider(),
-              _summaryStat(
-                value: itemQty == 0
-                    ? '0'
-                    : (itemQty == itemQty.roundToDouble()
-                          ? itemQty.toInt().toString()
-                          : itemQty.toStringAsFixed(1)),
-                label: 'Items',
-              ),
-            ],
-          ),
-        ],
-      ),
+        GlassSummaryStat(
+          value: weightQty == 0
+              ? '0'
+              : (weightQty == weightQty.roundToDouble()
+                    ? weightQty.toInt().toString()
+                    : weightQty.toStringAsFixed(1)),
+          label: 'Kg',
+        ),
+        GlassSummaryStat(
+          value: itemQty == 0
+              ? '0'
+              : (itemQty == itemQty.roundToDouble()
+                    ? itemQty.toInt().toString()
+                    : itemQty.toStringAsFixed(1)),
+          label: 'Items',
+        ),
+      ],
     );
   }
 
@@ -656,42 +572,5 @@ class PurchaseSummaryWidget extends StatelessWidget {
           RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
           (match) => '${match[1]},',
         );
-  }
-
-  Widget _summaryDivider() {
-    return Container(
-      width: 1,
-      height: 28,
-      margin: const EdgeInsets.symmetric(horizontal: 6),
-      color: AppTheme.white.withValues(alpha: 0.2),
-    );
-  }
-
-  Widget _summaryStat({required String value, required String label}) {
-    return Expanded(
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w800,
-              fontSize: 16,
-              color: AppTheme.white,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w500,
-              fontSize: 11,
-              color: AppTheme.white.withValues(alpha: 0.7),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

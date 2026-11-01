@@ -14,6 +14,7 @@ import 'package:c_billing/features/inventory_management/offline/entities/purchas
 import 'package:c_billing/features/availability/presentation/pages/report_preview_screen.dart';
 import 'package:c_billing/features/inventory_management/presentation/pages/purchase_page.dart';
 import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
+import 'package:c_billing/common_widgets/glass_summary_card.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
@@ -1181,10 +1182,6 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   }
 
   Widget _buildPageHeader() {
-    final totalStock = _groupedProducts.fold<double>(
-      0,
-      (total, group) => total + group.totalStock,
-    );
     final totalValue = _groupedProducts.fold<double>(
       0,
       (total, group) => total + group.totalStockValue,
@@ -1216,101 +1213,44 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
       );
     }
 
+    final isDark = AppColors.isDark(context);
     return Padding(
       padding: EdgeInsets.fromLTRB(16, widget.isEmbedded ? 8 : 16, 16, 4),
-      child: _sectionCard(
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    _iconWell(
-                      icon: Icons.inventory_2_outlined,
-                      background: AppTheme.headerDarkStart,
-                      foreground: AppTheme.white,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _localizations.stockOverview,
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              fontWeight: FontWeight.w800,
-                              fontSize: 16,
-                              color: AppColors.primaryText(context),
-                            ),
-                          ),
-                          Text(
-                            '${_groupedProducts.length} ${_localizations.products.toLowerCase()} · ${_formatQty(totalStock)} ${_localizations.units.toLowerCase()}',
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              fontSize: 12,
-                              color: AppColors.mutedText(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    _outlineIconButton(
-                      icon: Icons.file_download_outlined,
-                      onTap: _showReportBottomSheet,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    _overviewStat(
-                      '₹${_formatCompactNumber(totalValue)}',
-                      _localizations.stockValue,
-                      AppColors.primaryText(context),
-                    ),
-                    _overviewStat(
-                      '${_allBatches.length}',
-                      _localizations.batch,
-                      AppColors.primaryText(context),
-                    ),
-                    _overviewStat(
-                      '$lowStock',
-                      _localizations.lowStock,
-                      AppTheme.toneAmber,
-                    ),
-                  ],
-                ),
-              ],
+      child: GlassSummaryCard(
+        title: _localizations.stockValue,
+        amount: '₹${_formatCompactNumber(totalValue)}',
+        trailing: Container(
+          width: 34,
+          height: 34,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppTheme.white.withValues(alpha: isDark ? 0.16 : 0.28),
+            border: Border.all(
+              color: AppTheme.white.withValues(alpha: 0.45),
             ),
           ),
-    );
-  }
-
-  Widget _sectionCard({required Widget child}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border(context)),
+          child: Icon(
+            Icons.inventory_2_outlined,
+            size: 17,
+            color: AppTheme.white.withValues(alpha: 0.95),
+          ),
+        ),
+        stats: [
+          GlassSummaryStat(
+            value: '${_groupedProducts.length}',
+            label: _localizations.products,
+          ),
+          GlassSummaryStat(
+            value: '${_allBatches.length}',
+            label: _localizations.batch,
+          ),
+          GlassSummaryStat(
+            value: '$lowStock',
+            label: _localizations.lowStock,
+          ),
+        ],
       ),
-      child: child,
-    );
-  }
-
-  Widget _iconWell({
-    required IconData icon,
-    required Color background,
-    required Color foreground,
-  }) {
-    return Container(
-      width: 42,
-      height: 42,
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Icon(icon, color: foreground, size: 20),
     );
   }
 
@@ -1332,33 +1272,6 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           ),
           child: Icon(icon, size: 18, color: AppColors.secondaryText(context)),
         ),
-      ),
-    );
-  }
-
-  Widget _overviewStat(String value, String label, Color valueColor) {
-    return Expanded(
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w800,
-              fontSize: 20,
-              color: valueColor,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontSize: 11,
-              color: AppColors.mutedText(context),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -1545,12 +1458,6 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
         ],
       ),
     );
-  }
-
-  String _formatQty(num qty) {
-    final v = qty.toDouble();
-    if (v == v.roundToDouble()) return v.toInt().toString();
-    return v.toStringAsFixed(2);
   }
 
   String _formatCompactNumber(double number) {
