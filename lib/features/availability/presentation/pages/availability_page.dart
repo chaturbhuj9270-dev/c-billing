@@ -774,31 +774,20 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
             unit: group.unitLabel,
             color: statusColor,
           ),
-          // Qty always visible at top-right when collapsed.
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _stockQtyCorner(
-                qtyText: group.totalStockQtyText,
-                unit: group.unitLabel,
-                color: statusColor,
-              ),
-              const SizedBox(width: 6),
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.chipFill(context),
-                  border: Border.all(color: AppColors.border(context)),
-                ),
-                child: Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  size: 20,
-                  color: AppColors.mutedText(context),
-                ),
-              ),
-            ],
+          // Qty only on the left badge — keep expand chevron on the right.
+          trailing: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.chipFill(context),
+              border: Border.all(color: AppColors.border(context)),
+            ),
+            child: Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 20,
+              color: AppColors.mutedText(context),
+            ),
           ),
           title: Text(
             group.productName,
@@ -1025,39 +1014,6 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _stockQtyCorner({
-    required String qtyText,
-    required String unit,
-    required Color color,
-  }) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(
-          qtyText,
-          style: TextStyle(
-            fontFamily: 'Literata',
-            fontWeight: FontWeight.w800,
-            fontSize: 16,
-            height: 1.1,
-            color: color,
-          ),
-        ),
-        Text(
-          unit,
-          style: TextStyle(
-            fontFamily: 'Literata',
-            fontWeight: FontWeight.w600,
-            fontSize: 11,
-            height: 1.1,
-            color: color.withValues(alpha: 0.9),
-          ),
-        ),
-      ],
     );
   }
 
