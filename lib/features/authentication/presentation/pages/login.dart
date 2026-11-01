@@ -300,7 +300,15 @@ class _LoginPageV2State extends State<LoginPageV2>
 
           if (!mounted) return;
           setState(() => _loading = false);
-          GlassyToast.show(context, _localizations.loginSuccessful);
+          final welcomeName =
+              user.displayName?.trim().isNotEmpty == true
+              ? user.displayName!.trim()
+              : (user.email ?? user.phoneNumber ?? 'user');
+          GlassyToast.show(
+            context,
+            _localizations.loginSuccessful,
+            subtitle: '${_localizations.welcomeBack}, $welcomeName',
+          );
           debugPrint('[DEBUG] Session timeout set for 2 hours');
 
           // Check subscription status before navigating

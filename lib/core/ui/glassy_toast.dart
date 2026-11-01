@@ -1,21 +1,17 @@
-import 'dart:math' as math;
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:c_billing/common_widgets/glass_bevel_frame.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
-import 'package:c_billing/core/ui/desktop_canvas.dart';
 
-// Premium glass toast. Mobile: bottom-right. Web/desktop: top-right.
-// Spring entrance, glow pulse, icon pop, lifetime bar, and sharp exit.
+/// Top pill toast: icon + title/subtitle + close + lifetime progress bar.
 class GlassyToast {
   static OverlayEntry? _currentEntry;
 
   static void show(
     BuildContext context,
     String message, {
+    String? subtitle,
     bool isError = false,
     IconData? icon,
-    Duration duration = const Duration(milliseconds: 2800),
+    Duration duration = const Duration(milliseconds: 3200),
   }) {
     dismiss();
 
@@ -31,19 +27,16 @@ class GlassyToast {
         );
 
     final isDark = AppColors.isDark(context);
-    final isDesktop = DesktopCanvas.isDesktopPlatform;
     late OverlayEntry entry;
     entry = OverlayEntry(
       builder: (_) => _GlassyToastWidget(
-        message: message,
+        title: message,
+        subtitle: subtitle,
         isError: isError,
         isDark: isDark,
         icon: icon,
         duration: duration,
         topPadding: mediaQuery.padding.top,
-        bottomPadding: mediaQuery.padding.bottom,
-        // Desktop/web: top-right. Mobile: bottom-right corner toast.
-        anchorBottom: !isDesktop,
         onDismiss: () {
           entry.remove();
           if (_currentEntry == entry) _currentEntry = null;
@@ -62,26 +55,23 @@ class GlassyToast {
 }
 
 class _GlassyToastWidget extends StatefulWidget {
-  final String message;
+  final String title;
+  final String? subtitle;
   final bool isError;
   final bool isDark;
   final IconData? icon;
   final Duration duration;
   final double topPadding;
-  final double bottomPadding;
-  /// When true, toast anchors bottom-right (mobile). Else top-right (desktop).
-  final bool anchorBottom;
   final VoidCallback onDismiss;
 
   const _GlassyToastWidget({
-    required this.message,
+    required this.title,
+    this.subtitle,
     required this.isError,
     required this.isDark,
     this.icon,
     required this.duration,
     required this.topPadding,
-    required this.bottomPadding,
-    required this.anchorBottom,
     required this.onDismiss,
   });
 
@@ -92,16 +82,10 @@ class _GlassyToastWidget extends StatefulWidget {
 class _GlassyToastWidgetState extends State<_GlassyToastWidget>
     with TickerProviderStateMixin {
   late final AnimationController _enter;
-  late final AnimationController _glow;
   late final AnimationController _life;
-
   late final Animation<Offset> _slide;
   late final Animation<double> _fade;
   late final Animation<double> _scale;
-  late final Animation<double> _tilt;
-  late final Animation<double> _iconPop;
-  late final Animation<double> _glowPulse;
-  late final Animation<double> _blurReveal;
 
   bool _dismissed = false;
 
@@ -111,61 +95,25 @@ class _GlassyToastWidgetState extends State<_GlassyToastWidget>
 
     _enter = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 720),
-      reverseDuration: const Duration(milliseconds: 320),
-    );
-    _glow = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1100),
+      duration: const Duration(milliseconds: 420),
+      reverseDuration: const Duration(milliseconds: 240),
     );
     _life = AnimationController(vsync: this, duration: widget.duration);
 
-    final spring = CurvedAnimation(
+    final curve = CurvedAnimation(
       parent: _enter,
-      curve: const ElasticOutCurve(0.78),
+      curve: Curves.easeOutCubic,
       reverseCurve: Curves.easeInCubic,
     );
-    final soft = CurvedAnimation(
-      parent: _enter,
-      curve: const Interval(0.0, 0.45, curve: Curves.easeOut),
-      reverseCurve: Curves.easeIn,
-    );
-    final iconCurve = CurvedAnimation(
-      parent: _enter,
-      curve: const Interval(0.28, 0.85, curve: Curves.elasticOut),
-      reverseCurve: Curves.easeIn,
-    );
 
-    // Enter from the right; slightly up (desktop) or down (mobile bottom).
     _slide = Tween<Offset>(
-      begin: widget.anchorBottom
-          ? const Offset(1.15, 0.35)
-          : const Offset(1.15, -0.15),
+      begin: const Offset(0, -0.35),
       end: Offset.zero,
-    ).animate(spring);
-
-    _fade = Tween<double>(begin: 0, end: 1).animate(soft);
-
-    _scale = Tween<double>(begin: 0.72, end: 1).animate(spring);
-
-    _tilt = Tween<double>(begin: 0.06, end: 0).animate(spring);
-
-    _iconPop = Tween<double>(begin: 0.2, end: 1).animate(iconCurve);
-
-    _blurReveal = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(
-        parent: _enter,
-        curve: const Interval(0.0, 0.55, curve: Curves.easeOut),
-      ),
-    );
-
-    _glowPulse = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 35),
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.35), weight: 65),
-    ]).animate(CurvedAnimation(parent: _glow, curve: Curves.easeOut));
+    ).animate(curve);
+    _fade = Tween<double>(begin: 0, end: 1).animate(curve);
+    _scale = Tween<double>(begin: 0.94, end: 1).animate(curve);
 
     _enter.forward();
-    _glow.forward();
     _life.forward().whenComplete(_autoDismiss);
   }
 
@@ -181,7 +129,6 @@ class _GlassyToastWidgetState extends State<_GlassyToastWidget>
   @override
   void dispose() {
     _enter.dispose();
-    _glow.dispose();
     _life.dispose();
     super.dispose();
   }
@@ -190,280 +137,161 @@ class _GlassyToastWidgetState extends State<_GlassyToastWidget>
   Widget build(BuildContext context) {
     final isError = widget.isError;
     final isDark = widget.isDark;
-    final accent = isError ? AppTheme.red800 : AppColors.action(context);
-    final accentLight =
-        isError ? AppTheme.error : AppTheme.paletteFF2D6A4F;
+    final accent = isError ? AppTheme.toneRose : AppColors.action(context);
+    final iconBg = accent.withValues(alpha: isDark ? 0.22 : 0.12);
     final iconData = widget.icon ??
         (isError ? Icons.error_outline_rounded : Icons.check_rounded);
-    const radius = 16.0;
+    final screenW = MediaQuery.sizeOf(context).width;
+    final toastW = (screenW - 32).clamp(280.0, 420.0);
 
     final card = AnimatedBuilder(
-      animation: Listenable.merge([_enter, _glow, _life]),
+      animation: Listenable.merge([_enter, _life]),
       builder: (context, _) {
-        final glow = _glowPulse.value;
         final life = 1.0 - _life.value;
-
-        return Transform(
-          alignment: Alignment.centerRight,
-          transform: Matrix4.identity()
-            ..setEntry(3, 2, 0.001)
-            ..rotateZ(_tilt.value)
-            ..scaleByDouble(_scale.value, _scale.value, 1, 1),
-          child: Opacity(
-            opacity: _fade.value.clamp(0.0, 1.0),
-            // Material ancestor required — without it Flutter draws a yellow underline on Text.
+        return FadeTransition(
+          opacity: _fade,
+          child: ScaleTransition(
+            scale: _scale,
             child: Material(
               color: AppTheme.transparent,
-              elevation: 0,
-              shadowColor: AppTheme.transparent,
-              child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(radius),
-                boxShadow: [
-                  BoxShadow(
-                    color: accent.withValues(
-                      alpha: (isDark ? 0.22 : 0.14) + glow * 0.28,
+              child: Container(
+                width: toastW,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.card(context) : AppTheme.white,
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.border(context)
+                        : AppTheme.black.withValues(alpha: 0.06),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.black.withValues(
+                        alpha: isDark ? 0.35 : 0.10,
+                      ),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
                     ),
-                    blurRadius: 18 + glow * 28,
-                    spreadRadius: -2 + glow * 4,
-                    offset: Offset(0, 6 + glow * 4),
-                  ),
-                  BoxShadow(
-                    color: accent.withValues(alpha: glow * 0.18),
-                    blurRadius: 40 + glow * 20,
-                    spreadRadius: 0,
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(radius),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(
-                    sigmaX: 8 + _blurReveal.value * 20,
-                    sigmaY: 8 + _blurReveal.value * 20,
-                  ),
-                  child: CustomPaint(
-                    foregroundPainter: GlassBevelBorderPainter(
-                      isDark: false,
-                      themeColor: accent,
-                      radius: radius,
-                      strokeWidth: 1.4 + glow * 0.6,
-                    ),
-                    child: Stack(
-                      children: [
-                        DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: isDark
-                                  ? const [
-                                      AppTheme.darkElevated,
-                                      AppTheme.darkCard,
-                                    ]
-                                  : isError
-                                  ? [
-                                      AppTheme.white.withValues(alpha: 0.72),
-                                      AppTheme.red50.withValues(alpha: 0.5),
-                                    ]
-                                  : [
-                                      AppTheme.white.withValues(alpha: 0.7),
-                                      AppTheme.white.withValues(alpha: 0.38),
-                                    ],
+                  ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Stack(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 8, 14),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: iconBg,
                             ),
+                            child: Icon(iconData, color: accent, size: 22),
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(18, 16, 20, 16),
-                            child: Row(
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Transform.scale(
-                                  scale: _iconPop.value,
-                                  child: Transform.rotate(
-                                    angle: (1 - _iconPop.value) * -0.4,
-                                    child: Container(
-                                      width: 42,
-                                      height: 42,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                          colors: [accentLight, accent],
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: accent.withValues(
-                                              alpha: 0.3 + glow * 0.35,
-                                            ),
-                                            blurRadius: 10 + glow * 14,
-                                            offset: const Offset(0, 3),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Icon(
-                                        iconData,
-                                        color: AppTheme.white,
-                                        size: 22,
-                                      ),
+                                Text(
+                                  widget.title,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                    height: 1.2,
+                                    color: AppColors.primaryText(context),
+                                    decoration: TextDecoration.none,
+                                  ),
+                                ),
+                                if (widget.subtitle != null &&
+                                    widget.subtitle!.trim().isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    widget.subtitle!,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w500,
+                                      height: 1.25,
+                                      color: AppColors.mutedText(context),
+                                      decoration: TextDecoration.none,
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _ToastText(
-                                    message: widget.message,
-                                    color: isDark ? AppTheme.white : accent,
-                                    size: 15,
-                                  ),
-                                ),
+                                ],
                               ],
                             ),
                           ),
-                        ),
-                        // Lifetime progress rail
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          child: IgnorePointer(
-                            child: SizedBox(
-                              height: 3,
-                              child: FractionallySizedBox(
-                                alignment: Alignment.centerLeft,
-                                widthFactor: life.clamp(0.0, 1.0),
-                                child: DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        accentLight.withValues(alpha: 0.95),
-                                        accent.withValues(alpha: 0.85),
-                                      ],
-                                    ),
-                                    borderRadius: const BorderRadius.only(
-                                      bottomLeft: Radius.circular(99),
-                                      bottomRight: Radius.circular(99),
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: accent.withValues(alpha: 0.45),
-                                        blurRadius: 6,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
+                          IconButton(
+                            onPressed: _autoDismiss,
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 36,
+                              minHeight: 36,
+                            ),
+                            icon: Icon(
+                              Icons.close_rounded,
+                              size: 18,
+                              color: AppColors.mutedText(context),
                             ),
                           ),
-                        ),
-                        // Soft shimmer sweep on entrance
-                        Positioned.fill(
-                          child: IgnorePointer(
-                            child: Opacity(
-                              opacity: (1 - softClamp(_enter.value * 1.4))
-                                  .clamp(0.0, 0.35),
-                              child: Transform.translate(
-                                offset: Offset(
-                                  -80 + _enter.value * 220,
-                                  0,
-                                ),
-                                child: Transform.rotate(
-                                  angle: -math.pi / 8,
-                                  child: Container(
-                                    width: 56,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          AppTheme.transparent,
-                                          AppTheme.white.withValues(
-                                            alpha: isDark ? 0.12 : 0.35,
-                                          ),
-                                          AppTheme.transparent,
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
+                    Positioned(
+                      left: 14,
+                      right: 14,
+                      bottom: 0,
+                      child: IgnorePointer(
+                        child: SizedBox(
+                          height: 3,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(99),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: FractionallySizedBox(
+                                widthFactor: life.clamp(0.0, 1.0),
+                                child: ColoredBox(color: accent),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
             ),
           ),
         );
       },
     );
 
-    final interactive = GestureDetector(
-      onHorizontalDragUpdate: (d) {
-        if ((d.primaryDelta ?? 0) > 8) _autoDismiss();
-      },
-      onVerticalDragUpdate: widget.anchorBottom
-          ? (d) {
-              if ((d.primaryDelta ?? 0) > 8) _autoDismiss();
-            }
-          : null,
-      onTap: _autoDismiss,
-      child: SlideTransition(position: _slide, child: card),
-    );
-
-    final screenW = MediaQuery.sizeOf(context).width;
-    final toastW = widget.anchorBottom
-        ? (screenW - 32).clamp(260.0, 360.0)
-        : screenW < 720
-        ? (screenW - 40).clamp(280.0, 420.0)
-        : (screenW * 0.32).clamp(380.0, 480.0);
-
-    if (widget.anchorBottom) {
-      return Positioned(
-        bottom: widget.bottomPadding + 20,
-        right: 16,
-        child: SizedBox(width: toastW, child: interactive),
-      );
-    }
-
     return Positioned(
-      top: widget.topPadding + 18,
-      right: 22,
-      child: SizedBox(width: toastW, child: interactive),
-    );
-  }
-
-  double softClamp(double v) => v < 0 ? 0 : (v > 1 ? 1 : v);
-}
-
-class _ToastText extends StatelessWidget {
-  final String message;
-  final Color color;
-  final double size;
-
-  const _ToastText({
-    required this.message,
-    required this.color,
-    required this.size,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      message,
-      style: TextStyle(
-        fontFamily: 'Literata',
-        fontSize: size,
-        fontWeight: FontWeight.w700,
-        color: color,
-        letterSpacing: 0.15,
-        height: 1.25,
-        decoration: TextDecoration.none,
-        decorationColor: AppTheme.transparent,
+      top: widget.topPadding + 12,
+      left: 0,
+      right: 0,
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: SlideTransition(
+          position: _slide,
+          child: GestureDetector(
+            onVerticalDragUpdate: (d) {
+              if ((d.primaryDelta ?? 0) < -8) _autoDismiss();
+            },
+            child: card,
+          ),
+        ),
       ),
-      maxLines: 3,
-      overflow: TextOverflow.ellipsis,
     );
   }
 }
