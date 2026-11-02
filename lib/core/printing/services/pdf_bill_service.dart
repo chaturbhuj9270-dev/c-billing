@@ -489,7 +489,9 @@ class PdfBillService {
                           ),
                           pw.SizedBox(height: 2),
                           pw.Text(
-                            shopDetails.termsAndConditions!,
+                            _formatTermsAndConditions(
+                              shopDetails.termsAndConditions!,
+                            ),
                             style: const pw.TextStyle(fontSize: 7),
                           ),
                         ],
@@ -2035,28 +2037,28 @@ class PdfBillService {
             ),
           ),
 
-        // Terms
+        // Terms — heading on its own line; each numbered point on a new line
         if (shopDetails.termsAndConditions != null &&
             shopDetails.termsAndConditions!.isNotEmpty) ...[
           pw.SizedBox(height: 6),
           pw.Container(
             width: receiptWidth,
-            child: pw.RichText(
-              text: pw.TextSpan(
-                children: [
-                  pw.TextSpan(
-                    text: 'Terms & Conditions: ',
-                    style: pw.TextStyle(
-                      fontSize: 7,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'Terms & Conditions:',
+                  style: pw.TextStyle(
+                    fontSize: 7,
+                    fontWeight: pw.FontWeight.bold,
                   ),
-                  pw.TextSpan(
-                    text: shopDetails.termsAndConditions!,
-                    style: const pw.TextStyle(fontSize: 7),
-                  ),
-                ],
-              ),
+                ),
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  _formatTermsAndConditions(shopDetails.termsAndConditions!),
+                  style: const pw.TextStyle(fontSize: 7),
+                ),
+              ],
             ),
           ),
         ],
@@ -2189,6 +2191,21 @@ class PdfBillService {
     final minute = date.minute.toString().padLeft(2, '0');
     final period = date.hour >= 12 ? 'PM' : 'AM';
     return '$day/$month/$year $hour:$minute $period';
+  }
+
+  /// Puts each numbered term on its own line (e.g. "1. … 2. …" → multiline).
+  String _formatTermsAndConditions(String raw) {
+    var text = raw.trim().replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+    // Break before "2.", "3.", … when stored as one paragraph.
+    text = text.replaceAllMapped(
+      RegExp(r'\s+(\d+)\.\s*'),
+      (m) => '\n${m[1]}. ',
+    );
+    return text
+        .split('\n')
+        .map((l) => l.trim())
+        .where((l) => l.isNotEmpty)
+        .join('\n');
   }
 
   // PDF bytes without writing a file. Used by the web preview.

@@ -3542,8 +3542,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       case 'lowstock':
         return _buildGlassyLowStockItem(
           name: item['name'] ?? 'Unknown',
-          currentStock: (item['currentStock'] ?? item['stock'] ?? 0) as int,
-          minStock: (item['minStockLevel'] ?? 10) as int,
+          currentStock:
+              ((item['currentStock'] ?? item['stock'] ?? 0) as num).toDouble(),
+          minStock: ((item['minStockLevel'] ?? 10) as num).toDouble(),
           colors: colors,
         );
       case 'events':
@@ -3910,14 +3911,17 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
   Widget _buildGlassyLowStockItem({
     required String name,
-    required int currentStock,
-    required int minStock,
+    required double currentStock,
+    required double minStock,
     required List<Color> colors,
   }) {
-    final isOutOfStock = currentStock == 0;
+    final isOutOfStock = currentStock <= 0;
     final stockPercent = minStock > 0
         ? (currentStock / minStock * 100).clamp(0, 100)
-        : 0;
+        : 0.0;
+    final stockLabel = currentStock == currentStock.roundToDouble()
+        ? currentStock.toInt().toString()
+        : currentStock.toStringAsFixed(2);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -3997,7 +4001,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              isOutOfStock ? 'Out' : '$currentStock',
+              isOutOfStock ? 'Out' : stockLabel,
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,

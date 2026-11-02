@@ -2,6 +2,10 @@
 ///
 /// After changing [androidApplicationId], register the same package in
 /// Firebase Console and replace `android/app/google-services.json`.
+///
+/// Legal + account-deletion pages are hosted on Firebase Hosting
+/// (`firebase deploy --only hosting`). Default URLs use the project site
+/// `https://c-billing-4744a.web.app`. Point a custom domain later if you own one.
 class AppStoreConfig {
   AppStoreConfig._();
 
@@ -10,10 +14,12 @@ class AppStoreConfig {
   static const String supportEmail = 'support@cbilling.app';
   static const String supportPhone = '9970662978';
 
-  /// Host this HTML publicly, then set the real URL before Play submission.
-  /// Until then, in-app Privacy / Terms screens satisfy the in-app requirement.
-  static const String privacyPolicyUrl =
-      'https://cbilling.app/privacy'; // TODO: publish and verify URL
-  static const String termsOfServiceUrl =
-      'https://cbilling.app/terms'; // TODO: publish and verify URL
+  /// Firebase Hosting site for this project (see `firebase.json` hosting).
+  static const String webSiteBaseUrl = 'https://c-billing-4744a.web.app';
+
+  static const String privacyPolicyUrl = '$webSiteBaseUrl/privacy';
+  static const String termsOfServiceUrl = '$webSiteBaseUrl/terms';
+
+  /// Paste this URL into Play Console → App content → Account deletion.
+  static const String accountDeletionUrl = '$webSiteBaseUrl/delete-account';
 }

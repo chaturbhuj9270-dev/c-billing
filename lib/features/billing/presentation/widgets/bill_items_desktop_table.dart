@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/pack_unit_conversion.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/qty.dart';
 import '../../../inventory_management/domain/entities/product.dart';
 import '../../../inventory_management/offline/entities/purchase_batch_entity.dart';
 import '../../domain/entities/bill_item.dart';
@@ -69,7 +70,8 @@ class BillItemsDesktopTable extends StatelessWidget {
   }
 
   double _qtyStep(BillItem item) {
-    if (item.sellUnit == 'gm' || item.sellUnit == 'ml') return 0.1;
+    // Step in base units: 1 gm/ml, 1 pack, or 1 base unit.
+    if (item.sellUnit == 'gm' || item.sellUnit == 'ml') return 0.001;
     if (billItemSellingAsPack(item)) return item.unitsPerPack.toDouble();
     return 1.0;
   }
@@ -283,7 +285,7 @@ class BillItemsDesktopTable extends StatelessWidget {
           : null,
       amount: Center(
         child: Text(
-          '₹${item.subtotal.toStringAsFixed(0)}',
+          '₹${item.subtotal == item.subtotal.roundToDouble() ? item.subtotal.toStringAsFixed(0) : item.subtotal.toStringAsFixed(2)}',
           style: TextStyle(
             fontFamily: 'Literata',
             fontSize: 14,
@@ -458,7 +460,7 @@ class _QtyEditorState extends State<_QtyEditor> {
       packUnit: packUnit,
       unitsPerPack: item.unitsPerPack,
     );
-    return q == q.roundToDouble() ? q.toInt().toString() : q.toStringAsFixed(2);
+    return Qty.formatDisplay(q);
   }
 
   double _toBase(double display) {
@@ -466,6 +468,18 @@ class _QtyEditorState extends State<_QtyEditor> {
     final packUnit = billItemSellingAsPack(item) ? item.sellUnit : null;
     return PackUnitConversion.displayToBaseQty(
       displayQty: display,
+      sellUnit: item.sellUnit,
+      baseUnit: item.unit,
+      packUnit: packUnit,
+      unitsPerPack: item.unitsPerPack,
+    );
+  }
+
+  double _maxDisplay() {
+    final item = widget.item;
+    final packUnit = billItemSellingAsPack(item) ? item.sellUnit : null;
+    return PackUnitConversion.maxStockInDisplayUnit(
+      baseStock: widget.maxStock,
       sellUnit: item.sellUnit,
       baseUnit: item.unit,
       packUnit: packUnit,
@@ -486,15 +500,21 @@ class _QtyEditorState extends State<_QtyEditor> {
     }
   }
 
-  void _commit() {
-    final parsed = double.tryParse(_controller.text.trim());
+  void _applyTypedQty(String text, {bool finalize = false}) {
+    final parsed = Qty.tryParse(text);
     if (parsed == null || parsed <= 0) {
-      _controller.text = _display();
+      if (finalize) _controller.text = _display();
       return;
     }
-    widget.onChanged(_toBase(parsed));
-    _controller.text = _display();
+    final maxDisplay = _maxDisplay();
+    final effective = parsed > maxDisplay ? maxDisplay : parsed;
+    widget.onChanged(_toBase(effective));
+    if (finalize) {
+      _controller.text = Qty.formatDisplay(effective);
+    }
   }
+
+  void _commit() => _applyTypedQty(_controller.text, finalize: true);
 
   @override
   Widget build(BuildContext context) {
@@ -512,7 +532,7 @@ class _QtyEditorState extends State<_QtyEditor> {
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,3}')),
               ],
               style: TextStyle(
                 fontFamily: 'Literata',
@@ -550,6 +570,7 @@ class _QtyEditorState extends State<_QtyEditor> {
                   borderSide: BorderSide(color: AppColors.action(context)),
                 ),
               ),
+              onChanged: (text) => _applyTypedQty(text),
               onSubmitted: (_) => _commit(),
             ),
           ),

@@ -80,58 +80,45 @@ class _PurchasePageState extends State<PurchasePage>
   double _purchaseSgstPercent = 0;
   String? _purchaseHsnCode;
 
-  static const List<String> _packUnitOptions = ['Strip', 'Bag', 'Box'];
-
-  /// Buy-as chips: pack containers first, then loose/base units.
+  /// Buy-as chips — only units the store enabled in Settings.
   List<String> get _purchaseUnitChipOptions {
-    final units = <String>[..._packUnitOptions];
-    for (final u in [
-      ...PurchaseSettingsService.instance.availableUnits,
-      'Kg',
-      'Grams',
-      'Ltr',
-      'Ml',
-      'Tablet',
-      'Pcs',
-      'Item',
-      'Qty',
-    ]) {
-      if (!_packUnitOptions.contains(u) && !units.contains(u)) {
-        units.add(u);
-      }
+    final units = List<String>.from(
+      PurchaseSettingsService.instance.availableUnits,
+    );
+    // Keep current selection visible when editing older stock / custom units.
+    final current = (_buyAsPack ? _purchasePackUnit : _selectedUnit)?.trim();
+    if (current != null &&
+        current.isNotEmpty &&
+        !units.any((u) => u.toLowerCase() == current.toLowerCase())) {
+      units.add(current);
     }
     return units;
   }
 
-  /// Stock unit inside a pack — never show Strip/Bag/Box here.
+  /// Stock unit inside a pack — settings units only (never pack containers).
   List<String> get _baseStockUnitOptions {
+    final settings = PurchaseSettingsService.instance;
     final preferred = <String>[];
     final pack = _purchasePackUnit;
     final suggested = PackUnitConversion.suggestedBaseUnitForPack(pack);
-    if (suggested != null) preferred.add(suggested);
-    // Context-aware extras (Bag → weight, Strip → tablet/pcs).
-    if (pack == 'Bag') {
-      preferred.addAll(['Kg', 'Grams']);
-    } else if (pack == 'Strip') {
-      preferred.addAll(['Tablet', 'Pcs', 'Item']);
-    } else if (pack == 'Box') {
-      preferred.addAll(['Pcs', 'Item', 'Qty', 'Tablet']);
+    if (suggested != null && settings.isUnitAvailable(suggested)) {
+      preferred.add(suggested);
     }
-    for (final u in [
-      ...PurchaseSettingsService.instance.availableUnits,
-      'Kg',
-      'Grams',
-      'Ltr',
-      'Ml',
-      'Tablet',
-      'Pcs',
-      'Item',
-      'Qty',
-    ]) {
-      if (!_packUnitOptions.contains(u) && !preferred.contains(u)) {
+    for (final u in settings.availableUnits) {
+      if (!PackUnitConversion.isKnownPackUnit(u) &&
+          !preferred.any((p) => p.toLowerCase() == u.toLowerCase())) {
         preferred.add(u);
       }
     }
+    final current = _selectedUnit?.trim();
+    if (current != null &&
+        current.isNotEmpty &&
+        !PackUnitConversion.isKnownPackUnit(current) &&
+        !preferred.any((u) => u.toLowerCase() == current.toLowerCase())) {
+      preferred.insert(0, current);
+    }
+    if (preferred.isEmpty && suggested != null) preferred.add(suggested);
+    if (preferred.isEmpty) preferred.add(settings.defaultUnit);
     return preferred;
   }
 
@@ -2318,9 +2305,14 @@ class _PurchasePageState extends State<PurchasePage>
   }
 
   void _applyProductPackDefaults(Product product) {
-    if (product.hasPackSell) {
+    final packUnit = product.packUnit?.trim();
+    final packEnabled = product.hasPackSell &&
+        packUnit != null &&
+        packUnit.isNotEmpty &&
+        PurchaseSettingsService.instance.isUnitAvailable(packUnit);
+    if (packEnabled) {
       _buyAsPack = true;
-      _purchasePackUnit = product.packUnit!.trim();
+      _purchasePackUnit = packUnit;
       _unitsPerPackController.text = '${product.unitsPerPack}';
       if (product.unit != null && product.unit!.trim().isNotEmpty) {
         _selectedUnit = product.unit!.trim();
@@ -2328,7 +2320,7 @@ class _PurchasePageState extends State<PurchasePage>
         _selectedUnit = PackUnitConversion.suggestedBaseUnitForPack(
               _purchasePackUnit,
             ) ??
-            'Pcs';
+            PurchaseSettingsService.instance.defaultUnit;
       }
     } else {
       _buyAsPack = false;
@@ -2354,7 +2346,7 @@ class _PurchasePageState extends State<PurchasePage>
   }
 
   void _onPurchaseUnitSelected(String unit) {
-    if (_packUnitOptions.contains(unit)) {
+    if (PackUnitConversion.isKnownPackUnit(unit)) {
       _selectPurchasePackUnit(unit);
       return;
     }
@@ -2384,13 +2376,19 @@ class _PurchasePageState extends State<PurchasePage>
         final current = _selectedUnit?.trim();
         final needsSuggest = current == null ||
             current.isEmpty ||
-            _packUnitOptions.contains(current) ||
+            PackUnitConversion.isKnownPackUnit(current) ||
             (packUnit == 'Bag' &&
                 !['Kg', 'Grams', 'gm', 'kg'].contains(current)) ||
             (packUnit == 'Strip' &&
                 !['Tablet', 'Pcs', 'Item', 'Qty'].contains(current));
         if (suggested != null && needsSuggest) {
-          _selectedUnit = suggested;
+          // Prefer suggested only when that unit is enabled in settings.
+          if (PurchaseSettingsService.instance.isUnitAvailable(suggested) ||
+              current == null ||
+              current.isEmpty ||
+              PackUnitConversion.isKnownPackUnit(current)) {
+            _selectedUnit = suggested;
+          }
         }
       }
 
@@ -3724,7 +3722,7 @@ class _PurchasePageState extends State<PurchasePage>
             onChanged: (_) => _calculateTotal(),
           ),
           const SizedBox(height: 16),
-          // Measurement + pack units (Strip/Bag/Box always listed for mobile)
+          // Measurement units from Settings → Available Units
           _buildChipSelector(
             label: _localizations.measurementUnit,
             options: _purchaseUnitChipOptions,

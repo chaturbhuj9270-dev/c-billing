@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/config/app_store_config.dart';
@@ -383,8 +384,16 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                     const SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: _openWebAccountDeletion,
+                      icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                      label: const Text(
+                        'Delete via website',
+                        style: TextStyle(fontFamily: 'Literata'),
+                      ),
+                    ),
                     Text(
-                      'Permanently deletes your C-Billing account and clears data on this device. Required for Play Store policy.',
+                      'Permanently deletes your C-Billing account and clears data on this device. Web deletion is also available for Play Store policy.',
                       style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 11,
@@ -442,6 +451,18 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
     );
+  }
+
+  Future<void> _openWebAccountDeletion() async {
+    final uri = Uri.parse(AppStoreConfig.accountDeletionUrl);
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && mounted) {
+      GlassyToast.show(
+        context,
+        'Could not open ${AppStoreConfig.accountDeletionUrl}',
+        isError: true,
+      );
+    }
   }
 
   Future<void> _confirmDeleteAccount() async {

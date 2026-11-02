@@ -68,13 +68,19 @@ class BillItem {
 
   // Get display quantity with appropriate unit conversion (gm/ml or pack↔base).
   String get displayQuantity {
+    String fmt(double q) {
+      if (q == q.roundToDouble()) return q.toInt().toString();
+      var s = q.toStringAsFixed(3);
+      s = s.replaceFirst(RegExp(r'0+$'), '');
+      s = s.replaceFirst(RegExp(r'\.$'), '');
+      return s;
+    }
+
     if (sellUnit == 'gm' && unit?.toLowerCase() == 'kg') {
-      final q = quantity * 1000;
-      return '${q.toStringAsFixed(q == q.roundToDouble() ? 0 : 1)} gm';
+      return '${fmt(quantity * 1000)} gm';
     }
     if (sellUnit == 'ml' && unit?.toLowerCase() == 'ltr') {
-      final q = quantity * 1000;
-      return '${q.toStringAsFixed(q == q.roundToDouble() ? 0 : 1)} ml';
+      return '${fmt(quantity * 1000)} ml';
     }
     final pack = unitsPerPack < 1 ? 1 : unitsPerPack;
     final sellingPack = pack > 1 &&

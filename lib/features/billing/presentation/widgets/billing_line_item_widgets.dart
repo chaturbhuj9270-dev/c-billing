@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/pack_unit_conversion.dart';
+import '../../../../core/utils/qty.dart';
 import '../../../inventory_management/domain/entities/product.dart';
 import '../../../inventory_management/offline/entities/purchase_batch_entity.dart';
 import '../../domain/entities/bill_item.dart';
@@ -293,7 +295,7 @@ class BillItemsLineList extends StatelessWidget {
                           onTap: () {
                             final step = (item.sellUnit == 'gm' ||
                                     item.sellUnit == 'ml')
-                                ? 0.1
+                                ? 0.001
                                 : (billItemSellingAsPack(item)
                                     ? item.unitsPerPack.toDouble()
                                     : 1.0);
@@ -313,6 +315,7 @@ class BillItemsLineList extends StatelessWidget {
                                   unit: item.unit,
                                   sellUnit: item.sellUnit,
                                   unitsPerPack: item.unitsPerPack,
+                                  employeeToken: item.employeeToken,
                                 ),
                               );
                             } else {
@@ -355,6 +358,7 @@ class BillItemsLineList extends StatelessWidget {
                                 unit: item.unit,
                                 sellUnit: item.sellUnit,
                                 unitsPerPack: item.unitsPerPack,
+                                employeeToken: item.employeeToken,
                               ),
                             );
                           },
@@ -364,7 +368,7 @@ class BillItemsLineList extends StatelessWidget {
                           onTap: () {
                             final step = (item.sellUnit == 'gm' ||
                                     item.sellUnit == 'ml')
-                                ? 0.1
+                                ? 0.001
                                 : (billItemSellingAsPack(item)
                                     ? item.unitsPerPack.toDouble()
                                     : 1.0);
@@ -384,6 +388,7 @@ class BillItemsLineList extends StatelessWidget {
                                   unit: item.unit,
                                   sellUnit: item.sellUnit,
                                   unitsPerPack: item.unitsPerPack,
+                                  employeeToken: item.employeeToken,
                                 ),
                               );
                             } else {
@@ -419,9 +424,9 @@ class BillItemsLineList extends StatelessWidget {
                   ),
                   SizedBox(width: 10),
                   SizedBox(
-                    width: 60,
+                    width: 68,
                     child: Text(
-                      '₹${item.subtotal.toStringAsFixed(0)}',
+                      '₹${item.subtotal == item.subtotal.roundToDouble() ? item.subtotal.toStringAsFixed(0) : item.subtotal.toStringAsFixed(2)}',
                       textAlign: TextAlign.right,
                       style: TextStyle(
                         fontFamily: 'Literata',
@@ -821,11 +826,7 @@ class _InlineBillQuantityFieldState extends State<InlineBillQuantityField> {
       packUnit: packUnit,
       unitsPerPack: item.unitsPerPack,
     );
-
-    if (displayQty == displayQty.roundToDouble()) {
-      return displayQty.toInt().toString();
-    }
-    return displayQty.toStringAsFixed(2);
+    return Qty.formatDisplay(displayQty);
   }
 
   String _getUnitSuffix() {
@@ -862,8 +863,7 @@ class _InlineBillQuantityFieldState extends State<InlineBillQuantityField> {
   void _validateAndSubmit() {
     _hasSubmitted = true;
 
-    final text = _controller.text.trim();
-    final displayQty = double.tryParse(text);
+    final displayQty = Qty.tryParse(_controller.text);
 
     if (displayQty == null || displayQty <= 0) {
       _controller.text = _getDisplayValue();
@@ -881,7 +881,7 @@ class _InlineBillQuantityFieldState extends State<InlineBillQuantityField> {
 
     final baseQty = _convertToBaseUnit(displayQty);
 
-    if (baseQty < 0.001) {
+    if (baseQty < 0.0005) {
       widget.onRemoveItem();
       return;
     }
@@ -891,7 +891,7 @@ class _InlineBillQuantityFieldState extends State<InlineBillQuantityField> {
   }
 
   void _onTextChanged(String text) {
-    final displayQty = double.tryParse(text.trim());
+    final displayQty = Qty.tryParse(text);
 
     if (displayQty == null || displayQty <= 0) {
       return;
@@ -904,7 +904,7 @@ class _InlineBillQuantityFieldState extends State<InlineBillQuantityField> {
 
     final baseQty = _convertToBaseUnit(effectiveDisplayQty);
 
-    if (baseQty >= 0.001) {
+    if (baseQty >= 0.0005) {
       widget.onQuantityChanged(baseQty);
     }
   }
@@ -914,7 +914,7 @@ class _InlineBillQuantityFieldState extends State<InlineBillQuantityField> {
     final unitSuffix = _getUnitSuffix();
 
     return Container(
-      constraints: const BoxConstraints(minWidth: 36, maxWidth: 60),
+      constraints: const BoxConstraints(minWidth: 48, maxWidth: 88),
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -924,9 +924,12 @@ class _InlineBillQuantityFieldState extends State<InlineBillQuantityField> {
             child: TextField(
               controller: _controller,
               focusNode: _focusNode,
-              keyboardType: TextInputType.numberWithOptions(
+              keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,3}')),
+              ],
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Literata',

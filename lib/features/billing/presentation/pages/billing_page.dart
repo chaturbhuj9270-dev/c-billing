@@ -32,6 +32,7 @@ import 'package:c_billing/features/product/offline/entities/product_entity.dart'
 import 'package:c_billing/features/product/data/services/product_sync_service.dart';
 import 'package:c_billing/core/services/inventory_integration_service.dart';
 import 'package:c_billing/core/services/pack_unit_conversion.dart';
+import 'package:c_billing/core/utils/qty.dart';
 import 'package:c_billing/core/services/barcode_service.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 import 'package:c_billing/features/employee/data/repositories/employee_repository.dart';
@@ -4448,7 +4449,7 @@ class _BillingPageState extends State<BillingPage> {
                             ),
                           ),
                           Text(
-                            '₹${item.subtotal.toStringAsFixed(0)}',
+                            '₹${item.subtotal == item.subtotal.roundToDouble() ? item.subtotal.toStringAsFixed(0) : item.subtotal.toStringAsFixed(2)}',
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontWeight: FontWeight.w800,
@@ -4467,7 +4468,7 @@ class _BillingPageState extends State<BillingPage> {
                               final step =
                                   (item.sellUnit == 'gm' ||
                                       item.sellUnit == 'ml')
-                                  ? 0.1
+                                  ? 0.001
                                   : (billItemSellingAsPack(item)
                                       ? item.unitsPerPack.toDouble()
                                       : 1.0);
@@ -4542,7 +4543,7 @@ class _BillingPageState extends State<BillingPage> {
                               final step =
                                   (item.sellUnit == 'gm' ||
                                       item.sellUnit == 'ml')
-                                  ? 0.1
+                                  ? 0.001
                                   : (billItemSellingAsPack(item)
                                       ? item.unitsPerPack.toDouble()
                                       : 1.0);
@@ -4943,7 +4944,7 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  // Show custom unit entry dialog
+  // Show custom unit entry dialog (supports decimals e.g. 7.250 gm)
   void _showCustomUnitDialog({
     required int index,
     required BillItem item,
@@ -4953,28 +4954,34 @@ class _BillingPageState extends State<BillingPage> {
     final isKg = unit == 'kg';
     final subUnit = isKg ? 'gm' : 'ml';
 
-    // Current quantity in grams/ml
-    final currentInSubUnit = (item.quantity * 1000).round();
-    final controller = TextEditingController(text: currentInSubUnit.toString());
+    final currentInSubUnit = item.quantity * 1000;
+    final controller = TextEditingController(
+      text: Qty.formatDisplay(currentInSubUnit),
+    );
     String? errorText;
+    final maxInSubUnit = maxStock * 1000;
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) {
           void validate() {
-            final value = int.tryParse(controller.text) ?? 0;
-            final maxInSubUnit = maxStock * 1000;
+            final value = Qty.parseOrZero(controller.text);
             setDialogState(() {
               if (value <= 0) {
                 errorText = _localizations.enterValidAmount;
               } else if (value > maxInSubUnit) {
-                errorText = '${_localizations.maxStock}: $maxInSubUnit$subUnit';
+                errorText =
+                    '${_localizations.maxStock}: ${Qty.formatDisplay(maxInSubUnit)}$subUnit';
               } else {
                 errorText = null;
               }
             });
           }
+
+          final typed = Qty.parseOrZero(controller.text);
+          final liveBase = typed / 1000.0;
+          final liveTotal = item.sellingPrice * liveBase;
 
           return AlertDialog(
             backgroundColor: AppColors.card(context),
@@ -4995,8 +5002,21 @@ class _BillingPageState extends State<BillingPage> {
               children: [
                 TextField(
                   controller: controller,
-                  keyboardType: TextInputType.number,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   autofocus: true,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(
+                      RegExp(r'^\d*\.?\d{0,3}'),
+                    ),
+                  ],
+                  onTap: () {
+                    controller.selection = TextSelection(
+                      baseOffset: 0,
+                      extentOffset: controller.text.length,
+                    );
+                  },
                   onChanged: (_) => validate(),
                   style: TextStyle(
                     fontFamily: 'Literata',
@@ -5006,6 +5026,7 @@ class _BillingPageState extends State<BillingPage> {
                   ),
                   decoration: InputDecoration(
                     errorText: errorText,
+                    hintText: 'e.g. 7.250',
                     suffixText: subUnit,
                     suffixStyle: TextStyle(
                       fontFamily: 'Literata',
@@ -5027,9 +5048,22 @@ class _BillingPageState extends State<BillingPage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Amount: ₹${liveTotal == liveTotal.roundToDouble() ? liveTotal.toStringAsFixed(0) : liveTotal.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.action(context),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Text(
-                  'Max: ${maxStock * 1000}$subUnit ($maxStock${isKg ? 'kg' : 'ltr'})',
+                  'Max: ${Qty.formatDisplay(maxInSubUnit)}$subUnit (${Qty.formatDisplay(maxStock)}${isKg ? 'kg' : 'ltr'})',
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 11,
@@ -5052,7 +5086,7 @@ class _BillingPageState extends State<BillingPage> {
               ElevatedButton(
                 onPressed: errorText == null
                     ? () {
-                        final value = int.tryParse(controller.text) ?? 0;
+                        final value = Qty.parseOrZero(controller.text);
                         if (value > 0) {
                           final qtyInBase = value / 1000.0;
                           setState(() {
@@ -8016,12 +8050,7 @@ class _InlineQuantityFieldState extends State<_InlineQuantityField> {
       packUnit: packUnit,
       unitsPerPack: item.unitsPerPack,
     );
-
-    // Format nicely - remove decimals if whole number
-    if (displayQty == displayQty.roundToDouble()) {
-      return displayQty.toInt().toString();
-    }
-    return displayQty.toStringAsFixed(2);
+    return Qty.formatDisplay(displayQty);
   }
 
   // Get the unit suffix for display
@@ -8059,8 +8088,7 @@ class _InlineQuantityFieldState extends State<_InlineQuantityField> {
   void _validateAndSubmit() {
     _hasSubmitted = true; // Mark as submitted to prevent double calls
 
-    final text = _controller.text.trim();
-    final displayQty = double.tryParse(text);
+    final displayQty = Qty.tryParse(_controller.text);
 
     if (displayQty == null || displayQty <= 0) {
       // Invalid input - revert to original value
@@ -8082,7 +8110,7 @@ class _InlineQuantityFieldState extends State<_InlineQuantityField> {
     final baseQty = _convertToBaseUnit(displayQty);
 
     // Check if quantity would be effectively zero (removed)
-    if (baseQty < 0.001) {
+    if (baseQty < 0.0005) {
       widget.onRemoveItem();
       return;
     }
@@ -8091,9 +8119,9 @@ class _InlineQuantityFieldState extends State<_InlineQuantityField> {
     _focusNode.unfocus();
   }
 
-  // Update quantity in real-time as user types (without validation side effects)
+  // Update quantity in real-time as user types — bill totals refresh immediately
   void _onTextChanged(String text) {
-    final displayQty = double.tryParse(text.trim());
+    final displayQty = Qty.tryParse(text);
 
     // Only update if it's a valid positive number
     if (displayQty == null || displayQty <= 0) {
@@ -8109,7 +8137,7 @@ class _InlineQuantityFieldState extends State<_InlineQuantityField> {
     final baseQty = _convertToBaseUnit(effectiveDisplayQty);
 
     // Don't remove item while typing - that's too aggressive
-    if (baseQty >= 0.001) {
+    if (baseQty >= 0.0005) {
       widget.onQuantityChanged(baseQty);
     }
   }
@@ -8119,7 +8147,7 @@ class _InlineQuantityFieldState extends State<_InlineQuantityField> {
     final unitSuffix = _getUnitSuffix();
 
     return Container(
-      constraints: const BoxConstraints(minWidth: 64, maxWidth: 96),
+      constraints: const BoxConstraints(minWidth: 72, maxWidth: 110),
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -8130,6 +8158,9 @@ class _InlineQuantityFieldState extends State<_InlineQuantityField> {
               controller: _controller,
               focusNode: _focusNode,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,3}')),
+              ],
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Literata',

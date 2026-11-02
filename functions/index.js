@@ -35,7 +35,7 @@ const SUBSCRIPTION_DAYS = 365;
 const FREE_TRIAL_DAYS = 30;
 const API_VERSION = "2025-01-01";
 const PLAY_YEARLY_PRODUCT_ID = "cbilling_yearly";
-const PLAY_PACKAGE_NAME = "com.example.c_billing";
+const PLAY_PACKAGE_NAME = "com.cbilling.app";
 
 /** Server clock + N days → Firestore Timestamp (authoritative expiry). */
 function expiryTimestampFrom(baseMs, days) {
@@ -1212,3 +1212,351 @@ exports.setTwoStepVerification = onCall(
     return { ok: true, enabled };
   }
 );
+
+// ─── Account deletion (Play Store web + in-app) ─────────────────────────────
+//
+// Play requires:
+//   1) In-app delete (Profile → Delete account)
+//   2) Public web URL where users can request / complete deletion
+//
+// Deploy hosting pages + these callables, then paste accountDeletionUrl in
+ // Play Console → App content → Data safety / Account deletion.
+
+const DELETION_CONFIRMATION = "DELETE";
+const DELETION_OTP_TTL_MS = 15 * 60 * 1000;
+const DELETION_OTP_MAX_ATTEMPTS = 5;
+
+function normalizeEmail(raw) {
+  return String(raw || "")
+    .trim()
+    .toLowerCase();
+}
+
+async function listEmployeeUidsForOwner(ownerId) {
+  const snap = await db
+    .collection("users")
+    .doc(ownerId)
+    .collection("employees")
+    .get();
+  return snap.docs.map((d) => d.id);
+}
+
+/**
+ * Deletes Auth user + Firestore profile tree we control for this uid.
+ * Employee accounts owned by this shop are disabled and marked deleted.
+ */
+async function deleteAccountForUid(uid, { source, requestedByEmail } = {}) {
+  const userRef = db.collection("users").doc(uid);
+  const snap = await userRef.get();
+  const profile = snap.exists ? snap.data() || {} : {};
+  const role = profile.role || "owner";
+  const email =
+    requestedByEmail ||
+    profile.email ||
+    (await admin
+      .auth()
+      .getUser(uid)
+      .then((u) => u.email || null)
+      .catch(() => null));
+
+  await db.collection("account_deletion_logs").add({
+    uid,
+    email: email || null,
+    role,
+    source: source || "unknown",
+    status: "started",
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Disable / mark employee accounts belonging to this shop owner.
+  if (role !== "employee") {
+    try {
+      const employeeUids = await listEmployeeUidsForOwner(uid);
+      for (const employeeUid of employeeUids) {
+        try {
+          await admin.auth().updateUser(employeeUid, { disabled: true });
+        } catch (e) {
+          console.warn("disable employee auth failed", employeeUid, e.message);
+        }
+        try {
+          await db.collection("users").doc(employeeUid).set(
+            {
+              active: false,
+              deletedAt: admin.firestore.FieldValue.serverTimestamp(),
+              deletionReason: "owner_account_deleted",
+            },
+            { merge: true }
+          );
+        } catch (e) {
+          console.warn("mark employee profile failed", employeeUid, e.message);
+        }
+      }
+    } catch (e) {
+      console.warn("list employees failed", e.message);
+    }
+  }
+
+  // Remove owner employee index entries when an employee deletes themselves.
+  if (role === "employee" && typeof profile.tenantOwnerId === "string") {
+    try {
+      await db
+        .collection("users")
+        .doc(profile.tenantOwnerId)
+        .collection("employees")
+        .doc(uid)
+        .delete();
+    } catch (e) {
+      console.warn("employee index delete failed", e.message);
+    }
+  }
+
+  // Wipe cloud profile + subcollections under users/{uid}.
+  try {
+    if (typeof db.recursiveDelete === "function") {
+      await db.recursiveDelete(userRef);
+    } else {
+      await userRef.set(
+        {
+          deletedAt: admin.firestore.FieldValue.serverTimestamp(),
+          deletionRequested: true,
+          email: email || null,
+        },
+        { merge: true }
+      );
+      await userRef.delete();
+    }
+  } catch (e) {
+    console.error("Firestore recursive delete failed; falling back", e);
+    try {
+      await userRef.set(
+        {
+          deletedAt: admin.firestore.FieldValue.serverTimestamp(),
+          deletionRequested: true,
+          email: email || null,
+        },
+        { merge: true }
+      );
+      await userRef.delete();
+    } catch (inner) {
+      console.error("Firestore profile delete failed", inner);
+    }
+  }
+
+  try {
+    await admin.auth().deleteUser(uid);
+  } catch (e) {
+    // Already gone is fine (idempotent).
+    if (e?.code !== "auth/user-not-found") {
+      console.error("Auth deleteUser failed", e);
+      throw new HttpsError(
+        "internal",
+        e.message || "Failed to delete authentication account"
+      );
+    }
+  }
+
+  await db.collection("account_deletion_logs").add({
+    uid,
+    email: email || null,
+    role,
+    source: source || "unknown",
+    status: "completed",
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return { ok: true, uid, email: email || null };
+}
+
+async function sendDeletionOtpEmail({ to, otp }) {
+  const subject = "C-Billing account deletion code";
+  const text =
+    `Your C-Billing account deletion code is ${otp}. It expires in 15 minutes. ` +
+    "If you did not request account deletion, ignore this email and secure your account.";
+  const html =
+    `<p>You requested deletion of your <strong>C-Billing</strong> account.</p>` +
+    `<p>Your confirmation code is:</p>` +
+    `<p style="font-size:28px;font-weight:700;letter-spacing:4px;">${otp}</p>` +
+    `<p>It expires in 15 minutes.</p>` +
+    `<p>If you did not request this, ignore this email.</p>`;
+
+  await db.collection("mail").add({
+    to: [to],
+    message: { subject, text, html },
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  const user = String(SMTP_USER.value() || "").trim();
+  const pass = String(SMTP_PASS.value() || "").trim();
+  const from = String(SMTP_FROM.value() || user).trim();
+  if (!user || !pass) {
+    return { queued: true, smtp: false };
+  }
+
+  const port = Number(SMTP_PORT.value() || 465);
+  const transporter = nodemailer.createTransport({
+    host: SMTP_HOST.value() || "smtp.gmail.com",
+    port,
+    secure: port === 465,
+    auth: { user, pass },
+  });
+
+  await transporter.sendMail({
+    from: from || user,
+    to,
+    subject,
+    text,
+    html,
+  });
+
+  return { queued: true, smtp: true };
+}
+
+/**
+ * In-app + signed-in web: delete the currently authenticated account.
+ * Body: { confirmation: "DELETE" }
+ */
+exports.deleteMyAccount = onCall({ region: "asia-south1" }, async (request) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "Sign in required to delete your account.");
+  }
+
+  const confirmation = String(request.data?.confirmation || "").trim();
+  if (confirmation !== DELETION_CONFIRMATION) {
+    throw new HttpsError(
+      "invalid-argument",
+      `Type ${DELETION_CONFIRMATION} to confirm account deletion.`
+    );
+  }
+
+  const source = String(request.data?.source || "app");
+  return deleteAccountForUid(request.auth.uid, {
+    source,
+    requestedByEmail: request.auth.token?.email || null,
+  });
+});
+
+/**
+ * Web (unsigned): email a one-time code to the account email.
+ * Always returns ok to avoid email enumeration.
+ */
+exports.requestAccountDeletionOtp = onCall(
+  { region: "asia-south1" },
+  async (request) => {
+    const email = normalizeEmail(request.data?.email);
+    if (!email || !email.includes("@")) {
+      throw new HttpsError("invalid-argument", "Valid email required");
+    }
+
+    let userRecord;
+    try {
+      userRecord = await admin.auth().getUserByEmail(email);
+    } catch (_) {
+      return {
+        ok: true,
+        message:
+          "If an account exists for that email, a deletion code was sent.",
+      };
+    }
+
+    const otp = generateOtp();
+    const expiresAt = admin.firestore.Timestamp.fromMillis(
+      Date.now() + DELETION_OTP_TTL_MS
+    );
+
+    await db.collection("account_deletion_otps").doc(userRecord.uid).set({
+      email,
+      hash: hashOtp(otp),
+      expiresAt,
+      attempts: 0,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    try {
+      await sendDeletionOtpEmail({ to: email, otp });
+    } catch (e) {
+      console.error("requestAccountDeletionOtp email failed", e);
+      throw new HttpsError(
+        "internal",
+        "Could not send deletion email. Try again or email support@cbilling.app."
+      );
+    }
+
+    return {
+      ok: true,
+      message:
+        "If an account exists for that email, a deletion code was sent.",
+      expiresInSeconds: Math.floor(DELETION_OTP_TTL_MS / 1000),
+    };
+  }
+);
+
+/**
+ * Web: confirm email OTP and permanently delete the account.
+ * Body: { email, otp }
+ */
+exports.confirmAccountDeletionWithOtp = onCall(
+  { region: "asia-south1" },
+  async (request) => {
+    const email = normalizeEmail(request.data?.email);
+    const otp = String(request.data?.otp || "").trim();
+    if (!email || !email.includes("@")) {
+      throw new HttpsError("invalid-argument", "Valid email required");
+    }
+    if (!/^\d{6}$/.test(otp)) {
+      throw new HttpsError("invalid-argument", "Enter the 6-digit code");
+    }
+
+    let userRecord;
+    try {
+      userRecord = await admin.auth().getUserByEmail(email);
+    } catch (_) {
+      throw new HttpsError(
+        "not-found",
+        "No account found for that email, or the code is invalid."
+      );
+    }
+
+    const otpRef = db.collection("account_deletion_otps").doc(userRecord.uid);
+
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(otpRef);
+      if (!snap.exists) {
+        throw new HttpsError(
+          "failed-precondition",
+          "No deletion code pending. Request a new one."
+        );
+      }
+      const data = snap.data() || {};
+      if (normalizeEmail(data.email) !== email) {
+        throw new HttpsError("permission-denied", "Email does not match code.");
+      }
+      const attempts = Number(data.attempts || 0);
+      if (attempts >= DELETION_OTP_MAX_ATTEMPTS) {
+        tx.delete(otpRef);
+        throw new HttpsError(
+          "resource-exhausted",
+          "Too many attempts. Request a new code."
+        );
+      }
+      const expiresAt = data.expiresAt?.toMillis?.() ?? 0;
+      if (!expiresAt || Date.now() > expiresAt) {
+        tx.delete(otpRef);
+        throw new HttpsError(
+          "deadline-exceeded",
+          "Code expired. Request a new one."
+        );
+      }
+      if (hashOtp(otp) !== data.hash) {
+        tx.update(otpRef, { attempts: attempts + 1 });
+        throw new HttpsError("permission-denied", "Invalid code");
+      }
+      tx.delete(otpRef);
+    });
+
+    return deleteAccountForUid(userRecord.uid, {
+      source: "web_otp",
+      requestedByEmail: email,
+    });
+  }
+);
+)

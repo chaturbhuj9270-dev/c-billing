@@ -8,6 +8,16 @@ class PackUnitConversion {
 
   static const int defaultUnitsPerPack = 1;
 
+  /// Pack container units that trigger pack↔base conversion UI.
+  /// Visibility in purchase/sale still comes from user settings.
+  static const List<String> knownPackUnits = ['Strip', 'Bag', 'Box'];
+
+  static bool isKnownPackUnit(String? unit) {
+    final u = unit?.trim().toLowerCase();
+    if (u == null || u.isEmpty) return false;
+    return knownPackUnits.any((p) => p.toLowerCase() == u);
+  }
+
   /// True when the product can be bought/sold as a pack.
   static bool hasPack({String? packUnit, int? unitsPerPack}) {
     final n = unitsPerPack ?? defaultUnitsPerPack;

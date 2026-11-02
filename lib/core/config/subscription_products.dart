@@ -6,7 +6,7 @@ class SubscriptionProducts {
   static const String yearlyProductId = 'cbilling_yearly';
 
   // Android applicationId (must match Play Console package name)
-  static const String androidPackageName = 'com.example.c_billing';
+  static const String androidPackageName = 'com.cbilling.app';
 
   // Display price fallback when store product is not loaded yet
   static const String fallbackPriceLabel = '₹3,999';

@@ -171,7 +171,8 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                       icon: Icons.straighten_rounded,
                       iconColor: AppTheme.paletteFF7B68EE,
                       title: 'Measurement Units',
-                      subtitle: 'Configure available units for purchases',
+                      subtitle:
+                          'Units shown on purchase and sale for this store',
                       children: [
                         // Available Units
                         _buildSubSectionHeader(

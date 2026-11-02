@@ -9,8 +9,9 @@ Complete the **manual** steps below before submitting to production.
 - Launcher label: **C-Billing**
 - Release signing wired via `android/key.properties` (see below)
 - Release minify + shrink + ProGuard rules
-- Privacy Policy + Terms in-app (Profile + flyout menu)
-- **Delete account** on Profile (Play account-deletion requirement)
+- Privacy Policy + Terms in-app (Profile + flyout menu) + Firebase Hosting pages
+- **Delete account** on Profile (all platforms) + public web page `/delete-account`
+- Cloud Functions: `deleteMyAccount`, `requestAccountDeletionOtp`, `confirmAccountDeletionWithOtp`
 - Android subscriptions already use **Google Play Billing** (`PaymentScreen`)
 - Storage permissions scoped with `maxSdkVersion`
 - Bluetooth CONNECT/SCAN declared for printers
@@ -41,13 +42,48 @@ Package change requires a new Android app entry:
 
 Until this is done, Firebase Auth / Crashlytics may fail against the old app registration.
 
-## 3) Host Privacy Policy + Terms on the web
+## 3) Deploy Privacy, Terms, and account-deletion web pages
 
-Play Console Data safety needs a **public HTTPS URL**.
+Play requires:
+- A **public privacy policy URL**
+- An **external account-deletion URL** (in addition to in-app Profile → Delete account)
 
-1. Publish the same text as in `lib/core/legal/legal_documents.dart`  
-2. Update URLs in `lib/core/config/app_store_config.dart`  
-3. Paste the privacy URL into Play Console → App content → Privacy policy
+Static pages live in `hosting/public/` and are configured in `firebase.json`.
+
+```bash
+# From repo root
+cd functions && npm install && cd ..
+firebase deploy --only functions:deleteMyAccount,functions:requestAccountDeletionOtp,functions:confirmAccountDeletionWithOtp,hosting
+# Or simply:
+firebase deploy --only functions,hosting
+```
+
+After deploy, verify:
+
+- Privacy: https://c-billing-4744a.web.app/privacy  
+- Terms: https://c-billing-4744a.web.app/terms  
+- Delete account: https://c-billing-4744a.web.app/delete-account  
+
+These URLs are already set in `lib/core/config/app_store_config.dart`.
+
+### Play Console fields
+
+1. App content → **Privacy policy** → paste `AppStoreConfig.privacyPolicyUrl`
+2. App content → **Data safety / Account deletion** → paste `AppStoreConfig.accountDeletionUrl`
+3. Declare in-app path: **Profile → Delete account**
+4. Optional: add a custom domain in Firebase Hosting and update `webSiteBaseUrl`
+
+### Email OTP on the web page
+
+`requestAccountDeletionOtp` sends mail via the Firestore `mail` collection (Trigger Email extension) and optional SMTP params already used by login OTP. Ensure one of those delivery paths works before relying on the email-code tab.
+
+### Auth authorized domains
+
+Firebase Console → Authentication → Settings → Authorized domains should include:
+
+- `c-billing-4744a.web.app`
+- `c-billing-4744a.firebaseapp.com`
+- any custom domain you attach
 
 ## 4) Play Console setup
 

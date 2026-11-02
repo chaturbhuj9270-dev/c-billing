@@ -37,7 +37,7 @@ C-Billing ("we", "our", or "the App") helps businesses create invoices, manage i
 6. Your choices
 • Update profile details in the App.
 • Export or delete business records you created (where the feature is available).
-• Delete your account from Profile → Delete account. This permanently deletes your Firebase Auth user and associated cloud profile data we control, and clears local app data on this device.
+• Delete your account from Profile → Delete account in the App, or on the web at the public account-deletion page linked in the App / Play listing. This permanently deletes your Firebase Auth user and associated cloud profile data we control, and clears local app data on this device when you delete from the App.
 
 7. Children's privacy
 • The App is intended for business use by adults. It is not directed to children under 13.
@@ -67,7 +67,7 @@ Paid access on Android is sold through Google Play Billing. Prices, renewals, an
 Do not misuse the App, attempt unauthorized access, or use it for unlawful activity. You are responsible for the accuracy of invoices, tax calculations, and records you generate.
 
 5. Data
-Your business data belongs to you. Our Privacy Policy explains how we process it. Account deletion removes your Auth account and associated cloud profile data we control; some residual backups may take time to purge from infrastructure.
+Your business data belongs to you. Our Privacy Policy explains how we process it. Account deletion removes your Auth account and associated cloud profile data we control; some residual backups may take time to purge from infrastructure. You may delete from the App (Profile → Delete account) or from the public web account-deletion page.
 
 6. Disclaimer
 The App is provided "as is". We are not your accountant or tax advisor. Verify GST, invoices, and ledgers before filing or sharing with authorities/customers.
