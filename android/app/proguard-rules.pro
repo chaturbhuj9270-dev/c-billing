@@ -17,6 +17,12 @@
 # Play Billing
 -keep class com.android.vending.billing.** { *; }
 
+# Flutter references Play Core deferred-component APIs optionally.
+# App does not use Play Feature Delivery — suppress R8 missing-class errors.
+-dontwarn com.google.android.play.core.splitcompat.SplitCompatApplication
+-dontwarn com.google.android.play.core.splitinstall.**
+-dontwarn com.google.android.play.core.tasks.**
+
 # Gson / reflection helpers some plugins use
 -keepattributes Signature
 -keepattributes *Annotation*
