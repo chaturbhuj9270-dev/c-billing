@@ -60,11 +60,12 @@ firebase deploy --only functions,hosting
 
 After deploy, verify:
 
-- Privacy: https://c-billing-4744a.web.app/privacy  
-- Terms: https://c-billing-4744a.web.app/terms  
-- Delete account: https://c-billing-4744a.web.app/delete-account  
+- Privacy: https://cbilling.web.app/privacy  
+- Terms: https://cbilling.web.app/terms  
+- Delete account: https://cbilling.web.app/delete-account  
 
 These URLs are already set in `lib/core/config/app_store_config.dart`.
+(Legacy mirror also deploys to `https://c-billing-4744a.web.app`.)
 
 ### Play Console fields
 
@@ -81,6 +82,7 @@ These URLs are already set in `lib/core/config/app_store_config.dart`.
 
 Firebase Console → Authentication → Settings → Authorized domains should include:
 
+- `cbilling.web.app`
 - `c-billing-4744a.web.app`
 - `c-billing-4744a.firebaseapp.com`
 - any custom domain you attach

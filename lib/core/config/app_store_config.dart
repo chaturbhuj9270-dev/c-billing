@@ -4,8 +4,7 @@
 /// Firebase Console and replace `android/app/google-services.json`.
 ///
 /// Legal + account-deletion pages are hosted on Firebase Hosting
-/// (`firebase deploy --only hosting`). Default URLs use the project site
-/// `https://c-billing-4744a.web.app`. Point a custom domain later if you own one.
+/// (`firebase deploy --only hosting`). Public site: `https://cbilling.web.app`.
 class AppStoreConfig {
   AppStoreConfig._();
 
@@ -14,8 +13,8 @@ class AppStoreConfig {
   static const String supportEmail = 'support@cbilling.app';
   static const String supportPhone = '9970662978';
 
-  /// Firebase Hosting site for this project (see `firebase.json` hosting).
-  static const String webSiteBaseUrl = 'https://c-billing-4744a.web.app';
+  /// Firebase Hosting site (site id `cbilling` — not the project-id URL).
+  static const String webSiteBaseUrl = 'https://cbilling.web.app';
 
   static const String privacyPolicyUrl = '$webSiteBaseUrl/privacy';
   static const String termsOfServiceUrl = '$webSiteBaseUrl/terms';

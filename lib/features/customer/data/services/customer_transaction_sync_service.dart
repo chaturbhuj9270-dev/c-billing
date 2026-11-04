@@ -262,10 +262,16 @@ class CustomerTransactionSyncService extends ChangeNotifier {
           }
           await _offlineController.permanentlyDelete(transaction.id);
         } else if (transaction.serverId == null) {
-          // Create on server
-          final response = await _apiService.createTransaction(
-            _convertToServerPayload(transaction),
-          );
+          // Create on server — remap local_* / numeric customer keys to Firebase id.
+          final payload = await _convertToServerPayload(transaction);
+          if (payload == null) {
+            debugPrint(
+              '[CustomerTransactionSync] Skipping push for tx ${transaction.id}: '
+              'customer not on server yet',
+            );
+            continue;
+          }
+          final response = await _apiService.createTransaction(payload);
           await _offlineController.updateWithServerResponse(
             transaction.id,
             response,
@@ -375,10 +381,16 @@ class CustomerTransactionSyncService extends ChangeNotifier {
     return await _offlineController.getUnsyncedCount();
   }
 
-  // Convert offline entity to server payload
-  Map<String, dynamic> _convertToServerPayload(
+  // Convert offline entity to server payload. Null when customer has no server id yet.
+  Future<Map<String, dynamic>?> _convertToServerPayload(
     CustomerTransactionEntity transaction,
-  ) {
+  ) async {
+    final firebaseCustomerId = await _offlineController
+        .resolveFirebaseCustomerId(transaction.customerId);
+    if (firebaseCustomerId == null || firebaseCustomerId.isEmpty) {
+      return null;
+    }
+
     // Map local transaction type to server format
     String serverTransactionType;
     switch (transaction.transactionType) {
@@ -429,7 +441,7 @@ class CustomerTransactionSyncService extends ChangeNotifier {
             : transaction.amount;
 
     return {
-      'customerId': transaction.customerId,
+      'customerId': firebaseCustomerId,
       'billId': transaction.referenceId,
       'amount': serverAmount,
       'transactionType': serverTransactionType,

@@ -1,13 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:c_billing/features/customer/domain/entities/customer.dart';
 import 'package:c_billing/features/customer/domain/entities/customer_transaction.dart';
-import 'package:c_billing/features/customer/data/repositories/customer_repository.dart';
-import 'package:c_billing/features/customer/data/repositories/customer_transaction_repository.dart';
-import 'package:c_billing/core/services/customer_transaction_service.dart';
 import 'package:c_billing/features/event_order/offline/controllers/event_order_offline_controller.dart';
 import 'package:c_billing/features/event_order/domain/entities/event_order.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
@@ -16,6 +12,7 @@ import 'package:c_billing/features/customer/offline/controllers/customer_transac
 import 'package:c_billing/features/customer/offline/entities/customer_entity.dart';
 import 'package:c_billing/features/customer/offline/entities/customer_transaction_entity.dart'
     as offline_tx;
+import 'package:c_billing/features/customer/data/services/customer_transaction_sync_service.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
@@ -36,11 +33,6 @@ class CustomerDetailsPage extends StatefulWidget {
 }
 
 class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
-  late FirebaseFirestore _firestore;
-  late FirebaseCustomerRepository _customerRepository;
-  late FirebaseCustomerTransactionRepository _transactionRepository;
-  late CustomerTransactionService _transactionService;
-
   Customer? _customer;
   List<CustomerTransaction> _transactions = [];
   List<EventOrder> _eventOrders = [];
@@ -66,16 +58,6 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
   @override
   void initState() {
     super.initState();
-    _firestore = FirebaseFirestore.instance;
-    _customerRepository = FirebaseCustomerRepository(firestore: _firestore);
-    _transactionRepository = FirebaseCustomerTransactionRepository(
-      firestore: _firestore,
-    );
-    _transactionService = CustomerTransactionService(
-      firestore: _firestore,
-      customerRepository: _customerRepository,
-      transactionRepository: _transactionRepository,
-    );
     _loadData();
   }
 
@@ -196,19 +178,13 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
       debugPrint(
         '[CustomerDetails] Loading events for customerId: ${widget.customerId}',
       );
-      var eventOrderEntities = await EventOrderOfflineController.instance
-          .getEventOrdersByCustomerId(widget.customerId);
-
-      if (eventOrderEntities.isEmpty &&
-          customer.id != widget.customerId) {
-        eventOrderEntities = await EventOrderOfflineController.instance
-            .getEventOrdersByCustomerId(customer.id);
-      }
-
-      if (eventOrderEntities.isEmpty && _localIdHint.isNotEmpty) {
-        eventOrderEntities = await EventOrderOfflineController.instance
-            .getEventOrdersByCustomerId(_localIdHint);
-      }
+      final eventOrderEntities = await EventOrderOfflineController.instance
+          .getEventOrdersByCustomerIds({
+            widget.customerId,
+            customer.id,
+            if (_localIdHint.isNotEmpty) _localIdHint,
+            if (localCustomer.serverId != null) localCustomer.serverId!,
+          });
 
       final eventOrders = eventOrderEntities.map((e) => e.toDomain()).toList();
 
@@ -268,7 +244,6 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
       backgroundColor: AppTheme.transparent,
       builder: (context) => ReceivePaymentSheet(
         customer: _customer!,
-        transactionService: _transactionService,
         onPaymentReceived: (amount) {
           // Optimistic UI update so pending drops immediately, then reconcile from DB.
           final current = _customer;
@@ -1067,13 +1042,11 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
 // Bottom sheet for receiving payment from customer
 class ReceivePaymentSheet extends StatefulWidget {
   final Customer customer;
-  final CustomerTransactionService transactionService;
   final ValueChanged<double> onPaymentReceived;
 
   const ReceivePaymentSheet({
     super.key,
     required this.customer,
-    required this.transactionService,
     required this.onPaymentReceived,
   });
 
@@ -1131,11 +1104,16 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
 
     try {
       // Offline-first: ledger + pending update happen locally first.
-      final localTx = await txCtrl.addPaymentTransaction(
+      // allocateToBills may split into per-bill rows — never dual-write one full
+      // Firebase RECEIVED (sync/import would double-credit and collapse AR).
+      final paymentNotes = referenceNumber == null || referenceNumber.isEmpty
+          ? notes
+          : '$notes (ref: $referenceNumber)';
+      await txCtrl.addPaymentTransaction(
         customerId: customerId,
         customerName: customerName,
         amount: paidAmount,
-        description: notes,
+        description: paymentNotes,
         paymentMethod: paymentMode.name,
         allocateToBills: true,
       );
@@ -1150,30 +1128,8 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
       );
       widget.onPaymentReceived(paidAmount);
 
-      // Background cloud sync — never blocks the amount refresh.
-      final canSyncCloud =
-          customerId.isNotEmpty && !customerId.startsWith('local_');
-      if (canSyncCloud) {
-        unawaited(() async {
-          try {
-            final result = await widget.transactionService.receivePayment(
-              customerId: customerId,
-              amount: paidAmount,
-              paymentMode: paymentMode,
-              notes: notes,
-              referenceNumber: referenceNumber,
-            );
-            if (result.success && result.transactionId != null) {
-              await txCtrl.markSyncedWithServerId(
-                localTx.id,
-                result.transactionId!,
-              );
-            }
-          } catch (e) {
-            debugPrint('[ReceivePayment] Cloud sync deferred: $e');
-          }
-        }());
-      }
+      // Push each local payment row via sync (avoids dual-write collapse).
+      unawaited(CustomerTransactionSyncService.instance.syncNow());
     } catch (e) {
       if (!mounted) return;
       GlassyToast.show(

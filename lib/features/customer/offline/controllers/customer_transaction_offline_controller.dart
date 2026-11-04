@@ -51,6 +51,8 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     final now = DateTime.now();
 
     // Split into per-bill payments so bill delete can reverse the right credits.
+    // Callers must NOT dual-write one full Firebase RECEIVED for this path —
+    // only the last row would get stamped and sync/import would double-credit.
     if (allocateToBills && amount > 0 && billId == null) {
       final last = await _allocatePaymentToBillsAsTransactions(
         customer: customer,
@@ -396,6 +398,10 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
 
   // ==================== READ ====================
 
+  /// Public alias set for finance/bills/events lookups (serverId / local_N / N).
+  Future<Set<String>> aliasesForCustomerKey(String customerId) =>
+      _aliasesForCustomerKey(customerId);
+
   Future<Set<String>> _aliasesForCustomerKey(String customerId) async {
     final customer = await _getCustomerByIdOrServerId(customerId);
     if (customer != null) return customerIdAliases(customer);
@@ -406,6 +412,18 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
       keys.add('local_$customerId');
     }
     return keys;
+  }
+
+  /// Firebase customer doc id for sync push; null if customer is not on server yet.
+  Future<String?> resolveFirebaseCustomerId(String customerId) async {
+    final customer = await _getCustomerByIdOrServerId(customerId);
+    final serverId = customer?.serverId?.trim();
+    if (serverId != null && serverId.isNotEmpty) return serverId;
+    final raw = customerId.trim();
+    if (raw.isEmpty || raw.startsWith('local_') || int.tryParse(raw) != null) {
+      return null;
+    }
+    return raw;
   }
 
   // Get all transactions for a customer (matches serverId / local_ / numeric)
@@ -667,6 +685,20 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     await _db.saveTransaction(transaction);
   }
 
+  /// Mark several local rows synced without attaching a shared server id.
+  /// Used when a single cloud RECEIVED must not overwrite split local amounts.
+  Future<void> markLocalIdsSynced(Iterable<int> localIds) async {
+    final now = DateTime.now();
+    for (final id in localIds) {
+      final transaction = await getTransactionById(id);
+      if (transaction == null) continue;
+      if (transaction.syncStatus == TransactionSyncStatus.deleted) continue;
+      transaction.syncStatus = TransactionSyncStatus.synced;
+      transaction.updatedAt = now;
+      await _db.saveTransaction(transaction);
+    }
+  }
+
   // ==================== HELPERS ====================
 
   /// All ID forms that may appear on ledger rows for one customer.
@@ -706,6 +738,9 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     final customer = await _getCustomerByIdOrServerId(customerId);
     if (customer == null) return 0;
 
+    // Heal prior dual-write collapses before summing the ledger.
+    await _purgeDualWriteGhostPayments(customerId);
+
     final keys = customerIdAliases(customer);
     double pending = 0;
     for (final tx in await _db.loadTransactions()) {
@@ -730,6 +765,10 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     DashboardRefreshService.instance.notifyDataChanged(DataChangeType.customer);
     return pending;
   }
+
+  /// Public entry to repair + recompute one customer's AR (safe to call on open).
+  Future<double> repairAndRecomputePending(String customerId) =>
+      recomputeCustomerPending(customerId);
 
   // Get unsynced transactions count
   Future<int> getUnsyncedCount() async {
@@ -799,13 +838,24 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
         if (existingTransaction != null) {
           // If local is modified, don't overwrite (local changes take priority)
           if (existingTransaction.syncStatus == TransactionSyncStatus.synced) {
-            // Update with server data
-            final updated = _createEntityFromServerData(
+            // Never replace a split/partial local amount with a larger cloud RECEIVED
+            // (happens when only the last allocate row was stamped with the full payment id).
+            final incoming = _createEntityFromServerData(
               data,
               existingTransaction.id,
               customerName,
             );
-            await _db.saveTransaction(updated);
+            if (existingTransaction.transactionType ==
+                    TransactionType.payment &&
+                incoming.transactionType == TransactionType.payment &&
+                (incoming.amount - existingTransaction.amount).abs() > 0.05) {
+              debugPrint(
+                '[TransactionOffline] Skipping amount overwrite for $serverId '
+                '(local ${existingTransaction.amount} vs cloud ${incoming.amount})',
+              );
+              continue;
+            }
+            await _db.saveTransaction(incoming);
           }
         } else {
           // Link unsynced local twin (same bill + type + amount) instead of duplicating.
@@ -815,6 +865,9 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
             twin.syncStatus = TransactionSyncStatus.synced;
             twin.updatedAt = DateTime.now();
             await _db.saveTransaction(twin);
+          } else if (await _linkOrSkipCoveredPayment(data, serverId)) {
+            // Full cloud RECEIVED already represented by split local payments.
+            continue;
           } else {
             final entity = _createEntityFromServerData(data, null, customerName);
             if (entity.amount.abs() > 0.009) {
@@ -825,7 +878,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
       }
     });
 
-    // Keep receivable balances aligned with imported ledger rows.
+    // Recompute AR from ledger (also purges dual-write ghost payments).
     for (final customerId in uniqueCustomerIds) {
       try {
         await recomputeCustomerPending(customerId!);
@@ -886,6 +939,154 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
       return tx;
     }
     return null;
+  }
+
+  /// Cloud wrote one full RECEIVED while offline split it across bills.
+  /// Link/mark those local rows instead of importing a second credit.
+  Future<bool> _linkOrSkipCoveredPayment(
+    Map<String, dynamic> data,
+    String serverId,
+  ) async {
+    final serverType =
+        (data['transactionType'] as String?)?.toUpperCase() ?? '';
+    if (serverType != 'RECEIVED') return false;
+
+    final customerId = (data['customerId'] as String?) ?? '';
+    final amount = (data['amount'] as num?)?.toDouble();
+    if (customerId.isEmpty || amount == null || amount <= 0.009) return false;
+
+    final serverTime = parseFlexibleDateTime(data['createdAt']) ??
+        DateTime.now();
+    final aliases = await _aliasesForCustomerKey(customerId);
+    final candidates = <CustomerTransactionEntity>[];
+
+    for (final tx in await _db.loadTransactions()) {
+      if (tx.syncStatus == TransactionSyncStatus.deleted) continue;
+      if (tx.transactionType != TransactionType.payment) continue;
+      if (!aliases.contains(tx.customerId)) continue;
+      // Already linked to this cloud doc — covered.
+      if (tx.serverId == serverId) return true;
+      // Skip rows already tied to a different cloud payment.
+      if (tx.serverId != null && tx.serverId!.isNotEmpty) continue;
+      final delta = tx.transactionDate.difference(serverTime).abs();
+      if (delta > const Duration(minutes: 15)) continue;
+      candidates.add(tx);
+    }
+
+    if (candidates.isEmpty) return false;
+    candidates.sort((a, b) => a.transactionDate.compareTo(b.transactionDate));
+
+    // Prefer a contiguous allocate group whose amounts sum to the cloud payment.
+    double sum = 0;
+    final group = <CustomerTransactionEntity>[];
+    for (final tx in candidates) {
+      if (group.isNotEmpty) {
+        final gap = tx.transactionDate
+            .difference(group.last.transactionDate)
+            .abs();
+        if (gap > const Duration(minutes: 2)) {
+          sum = 0;
+          group.clear();
+        }
+      }
+      group.add(tx);
+      sum += tx.amount;
+      if ((sum - amount).abs() <= 0.05) {
+        // Stamp only the first row with the cloud id; mark the rest synced
+        // without sharing that id (avoids amount overwrite on later pulls).
+        group.first.serverId = serverId;
+        group.first.syncStatus = TransactionSyncStatus.synced;
+        group.first.updatedAt = DateTime.now();
+        await _db.saveTransaction(group.first);
+        if (group.length > 1) {
+          await markLocalIdsSynced(group.skip(1).map((e) => e.id));
+        }
+        debugPrint(
+          '[TransactionOffline] Linked split local payments '
+          '(${group.length}) to cloud $serverId',
+        );
+        return true;
+      }
+      if (sum > amount + 0.05) {
+        sum = tx.amount;
+        group
+          ..clear()
+          ..add(tx);
+      }
+    }
+    return false;
+  }
+
+  /// Soft-delete a full cloud RECEIVED that duplicates already-split local credits.
+  Future<void> _purgeDualWriteGhostPayments(String customerId) async {
+    final aliases = await _aliasesForCustomerKey(customerId);
+    final payments = (await _db.loadTransactions())
+        .where(
+          (tx) =>
+              tx.syncStatus != TransactionSyncStatus.deleted &&
+              tx.transactionType == TransactionType.payment &&
+              aliases.contains(tx.customerId),
+        )
+        .toList()
+      ..sort((a, b) => a.transactionDate.compareTo(b.transactionDate));
+
+    if (payments.length < 2) return;
+
+    // Build contiguous bill-linked allocate groups (created together).
+    final groups = <List<CustomerTransactionEntity>>[];
+    var current = <CustomerTransactionEntity>[];
+    for (final tx in payments) {
+      final hasBillRef =
+          tx.referenceId != null && tx.referenceId!.isNotEmpty;
+      if (!hasBillRef) {
+        if (current.length >= 2) groups.add(List.of(current));
+        current = [];
+        continue;
+      }
+      if (current.isNotEmpty) {
+        final gap =
+            tx.transactionDate.difference(current.last.transactionDate).abs();
+        if (gap > const Duration(minutes: 2)) {
+          if (current.length >= 2) groups.add(List.of(current));
+          current = [];
+        }
+      }
+      current.add(tx);
+    }
+    if (current.length >= 2) groups.add(current);
+
+    final victims = <int>{};
+    for (final group in groups) {
+      final groupIds = group.map((e) => e.id).toSet();
+      final groupSum = group.fold<double>(0, (s, e) => s + e.amount);
+      final groupStart = group.first.transactionDate;
+      final groupEnd = group.last.transactionDate;
+
+      for (final candidate in payments) {
+        if (groupIds.contains(candidate.id)) continue;
+        if (victims.contains(candidate.id)) continue;
+        if ((candidate.amount - groupSum).abs() > 0.05) continue;
+        final inWindow = !candidate.transactionDate.isBefore(
+              groupStart.subtract(const Duration(minutes: 15)),
+            ) &&
+            !candidate.transactionDate.isAfter(
+              groupEnd.add(const Duration(minutes: 15)),
+            );
+        if (!inWindow) continue;
+        // Prefer deleting the unallocated / cloud full row, not bill splits.
+        final candidateHasBill =
+            candidate.referenceId != null && candidate.referenceId!.isNotEmpty;
+        if (candidateHasBill && candidate.serverId == null) continue;
+        victims.add(candidate.id);
+      }
+    }
+
+    for (final id in victims) {
+      debugPrint(
+        '[TransactionOffline] Purging dual-write ghost payment localId=$id',
+      );
+      await deleteTransaction(id);
+    }
   }
 
   // Create entity from server data

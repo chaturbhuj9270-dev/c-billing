@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/local_store.dart';
 import '../../../../core/services/local_database.dart';
+import '../../../customer/offline/controllers/customer_transaction_offline_controller.dart';
 import '../entities/event_order_entity.dart';
 import '../../domain/entities/event_order.dart';
 import '../../domain/entities/sub_event.dart';
@@ -155,16 +156,53 @@ class EventOrderOfflineController extends ChangeNotifier {
     return orders;
   }
 
-  // Get event orders by customer ID
+  // Get event orders by customer ID (matches serverId / local_N / numeric)
   Future<List<EventOrderEntity>> getEventOrdersByCustomerId(
     String customerId,
   ) async {
+    final keys = await _customerIdLookupKeys(customerId);
     final orders = (await _db.loadEventOrders()).where((order) {
-      return order.customerId == customerId &&
+      return keys.contains(order.customerId) &&
           order.syncStatus != EventOrderSyncStatus.deleted;
     }).toList();
     orders.sort((a, b) => b.eventDate.compareTo(a.eventDate));
     return orders;
+  }
+
+  /// Union event orders across every known customer id form.
+  Future<List<EventOrderEntity>> getEventOrdersByCustomerIds(
+    Iterable<String> customerIds,
+  ) async {
+    final keys = <String>{};
+    for (final id in customerIds) {
+      if (id.trim().isEmpty) continue;
+      keys.addAll(await _customerIdLookupKeys(id));
+    }
+    if (keys.isEmpty) return [];
+    final seen = <int>{};
+    final orders = <EventOrderEntity>[];
+    for (final order in await _db.loadEventOrders()) {
+      if (order.syncStatus == EventOrderSyncStatus.deleted) continue;
+      if (!keys.contains(order.customerId)) continue;
+      if (seen.add(order.id)) orders.add(order);
+    }
+    orders.sort((a, b) => b.eventDate.compareTo(a.eventDate));
+    return orders;
+  }
+
+  Future<Set<String>> _customerIdLookupKeys(String customerId) async {
+    try {
+      return await CustomerTransactionOfflineController.instance
+          .aliasesForCustomerKey(customerId);
+    } catch (_) {
+      final keys = <String>{customerId};
+      if (customerId.startsWith('local_')) {
+        keys.add(customerId.substring(6));
+      } else {
+        keys.add('local_$customerId');
+      }
+      return keys;
+    }
   }
 
   // Get event orders by status

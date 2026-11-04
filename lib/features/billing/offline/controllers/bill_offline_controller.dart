@@ -145,14 +145,49 @@ class BillOfflineController extends ChangeNotifier {
     return null;
   }
 
-  // Get bills by customer ID
+  // Get bills by customer ID (matches serverId / local_N / numeric aliases)
   Future<List<BillEntity>> getBillsByCustomerId(String customerId) async {
+    final keys = await _customerIdLookupKeys(customerId);
     final bills = (await _db.loadBills()).where((bill) {
-      return bill.customerId == customerId &&
+      return keys.contains(bill.customerId) &&
           bill.syncStatus != BillSyncStatus.deleted;
     }).toList();
     bills.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return bills;
+  }
+
+  /// Union bills across every known customer id form (server + local).
+  Future<List<BillEntity>> getBillsByCustomerIds(Iterable<String> customerIds) async {
+    final keys = <String>{};
+    for (final id in customerIds) {
+      if (id.trim().isEmpty) continue;
+      keys.addAll(await _customerIdLookupKeys(id));
+    }
+    if (keys.isEmpty) return [];
+    final seen = <int>{};
+    final bills = <BillEntity>[];
+    for (final bill in await _db.loadBills()) {
+      if (bill.syncStatus == BillSyncStatus.deleted) continue;
+      if (!keys.contains(bill.customerId)) continue;
+      if (seen.add(bill.id)) bills.add(bill);
+    }
+    bills.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return bills;
+  }
+
+  Future<Set<String>> _customerIdLookupKeys(String customerId) async {
+    try {
+      return await CustomerTransactionOfflineController.instance
+          .aliasesForCustomerKey(customerId);
+    } catch (_) {
+      final keys = <String>{customerId};
+      if (customerId.startsWith('local_')) {
+        keys.add(customerId.substring(6));
+      } else {
+        keys.add('local_$customerId');
+      }
+      return keys;
+    }
   }
 
   // Get bills by date range
