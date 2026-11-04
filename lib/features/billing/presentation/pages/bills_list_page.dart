@@ -2269,8 +2269,10 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                     ),
                   ),
                 ],
-                // Payment Status
-                if (_bill.paidAmount > 0 || _bill.pendingAmount > 0) ...[
+                // Payment Status — always show for chargeable bills
+                if (_bill.finalAmount > 0.009 ||
+                    _bill.paidAmount > 0.009 ||
+                    _bill.pendingAmount > 0.009) ...[
                   SizedBox(height: 12),
                   Container(height: 1, color: AppColors.border(context)),
                   const SizedBox(height: 12),
@@ -2279,14 +2281,12 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                     '₹${_bill.paidAmount.toStringAsFixed(2)}',
                     valueColor: AppTheme.green,
                   ),
-                  if (_bill.pendingAmount > 0) ...[
-                    const SizedBox(height: 10),
-                    _buildSummaryRow(
-                      _localizations.pendingAmount,
-                      '₹${_bill.pendingAmount.toStringAsFixed(2)}',
-                      valueColor: AppTheme.orange,
-                    ),
-                  ],
+                  const SizedBox(height: 10),
+                  _buildSummaryRow(
+                    _localizations.pendingAmount,
+                    '₹${_bill.pendingAmount.toStringAsFixed(2)}',
+                    valueColor: AppTheme.orange,
+                  ),
                 ],
               ],
             ),

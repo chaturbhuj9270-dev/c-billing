@@ -13,6 +13,7 @@ import 'package:c_billing/features/customer/offline/entities/customer_entity.dar
 import 'package:c_billing/features/customer/offline/entities/customer_transaction_entity.dart'
     as offline_tx;
 import 'package:c_billing/features/customer/data/services/customer_transaction_sync_service.dart';
+import 'package:c_billing/features/billing/data/services/bill_sync_service.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
@@ -1128,8 +1129,9 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
       );
       widget.onPaymentReceived(paidAmount);
 
-      // Push each local payment row via sync (avoids dual-write collapse).
+      // Push ledger rows + updated bill paid/pending.
       unawaited(CustomerTransactionSyncService.instance.syncNow());
+      unawaited(BillSyncService.instance.syncNow());
     } catch (e) {
       if (!mounted) return;
       GlassyToast.show(

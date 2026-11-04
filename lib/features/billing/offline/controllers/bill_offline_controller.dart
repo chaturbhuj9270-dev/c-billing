@@ -468,6 +468,15 @@ class BillOfflineController extends ChangeNotifier {
                 serverUpdatedAt.isAfter(existing.updatedAt)) {
               final updated = BillEntity.fromServer(billData);
               updated.id = existing.id;
+              // Never wipe local paid/pending with empty server amounts.
+              if (updated.paidAmount <= 0.009 &&
+                  updated.pendingAmount <= 0.009 &&
+                  (existing.paidAmount > 0.009 ||
+                      existing.pendingAmount > 0.009)) {
+                updated.paidAmount = existing.paidAmount;
+                updated.pendingAmount = existing.pendingAmount;
+                updated.paymentStatus = existing.paymentStatus;
+              }
               await _db.saveBill(updated);
             }
           }

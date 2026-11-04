@@ -393,6 +393,29 @@ class BillEntity {
           .toList();
     }
 
+    final finalAmount = (data['finalAmount'] as num?)?.toDouble() ?? 0.0;
+    var paidAmount = (data['paidAmount'] as num?)?.toDouble() ?? 0.0;
+    var pendingAmount = (data['pendingAmount'] as num?)?.toDouble() ?? 0.0;
+    var paymentStatus = _parsePaymentStatus(data['paymentStatus'] as String?);
+    // Older/partial server docs often omit paid/pending — derive from status.
+    if (paidAmount <= 0.009 &&
+        pendingAmount <= 0.009 &&
+        finalAmount > 0.009) {
+      switch (paymentStatus) {
+        case BillPaymentStatus.paid:
+          paidAmount = finalAmount;
+          pendingAmount = 0;
+        case BillPaymentStatus.pending:
+          paidAmount = 0;
+          pendingAmount = finalAmount;
+        case BillPaymentStatus.partiallyPaid:
+          // Unknown split — keep as fully due until ledger reconcile heals it.
+          paidAmount = 0;
+          pendingAmount = finalAmount;
+          paymentStatus = BillPaymentStatus.pending;
+      }
+    }
+
     return BillEntity(
       serverId: data['id'] as String?,
       customerId: data['customerId'] as String?,
@@ -403,14 +426,14 @@ class BillEntity {
       totalAmount: (data['totalAmount'] as num?)?.toDouble() ?? 0.0,
       discountAmount: (data['discountAmount'] as num?)?.toDouble() ?? 0.0,
       discountPercent: (data['discountPercent'] as num?)?.toDouble() ?? 0.0,
-      finalAmount: (data['finalAmount'] as num?)?.toDouble() ?? 0.0,
+      finalAmount: finalAmount,
       billDate: _parseDateTimeHelper(data['billDate']) ?? now,
       notes: data['notes'] as String?,
       returnStatus: data['returnStatus'] as bool? ?? false,
       returnDate: _parseDateTimeHelper(data['returnDate']),
-      paymentStatus: _parsePaymentStatus(data['paymentStatus'] as String?),
-      paidAmount: (data['paidAmount'] as num?)?.toDouble() ?? 0.0,
-      pendingAmount: (data['pendingAmount'] as num?)?.toDouble() ?? 0.0,
+      paymentStatus: paymentStatus,
+      paidAmount: paidAmount,
+      pendingAmount: pendingAmount,
       isGstApplied: data['isGstApplied'] as bool? ?? false,
       isTaxInclusive: data['isTaxInclusive'] as bool? ?? false,
       cgstPercent: (data['cgstPercent'] as num?)?.toDouble() ?? 0.0,
@@ -446,7 +469,8 @@ class BillEntity {
       case 'pending':
         return BillPaymentStatus.pending;
       default:
-        return BillPaymentStatus.paid;
+        // Missing status on older docs — treat as pending so amounts can heal.
+        return BillPaymentStatus.pending;
     }
   }
 

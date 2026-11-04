@@ -172,7 +172,8 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     for (final id in ids) {
       if (id.isEmpty) continue;
       for (final bill in await billsController.getBillsByCustomerId(id)) {
-        if (bill.pendingAmount > 0.009 && seen.add(bill.id)) {
+        final due = _billOpenDue(bill);
+        if (due > 0.009 && seen.add(bill.id)) {
           bills.add(bill);
         }
       }
@@ -181,25 +182,182 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     return bills;
   }
 
+  /// Open amount on a bill. Heals 0/0 rows that still have a finalAmount due.
+  double _billOpenDue(BillEntity bill) {
+    if (bill.pendingAmount > 0.009) return bill.pendingAmount;
+    final stored = bill.paidAmount + bill.pendingAmount;
+    if (stored <= 0.009 &&
+        bill.finalAmount > 0.009 &&
+        bill.paymentStatus != BillPaymentStatus.paid) {
+      return bill.finalAmount;
+    }
+    return 0;
+  }
+
+  BillEntity? _findBillForReference(
+    List<BillEntity> bills,
+    String? referenceId,
+  ) {
+    if (referenceId == null || referenceId.isEmpty) return null;
+    if (referenceId.startsWith('opening_')) return null;
+    for (final bill in bills) {
+      final keys = <String>{
+        if (bill.serverId != null && bill.serverId!.isNotEmpty) bill.serverId!,
+        'local_${bill.id}',
+        '${bill.id}',
+      };
+      if (keys.contains(referenceId)) return bill;
+    }
+    return null;
+  }
+
+  /// Rebuild each bill's paid/pending from ledger payments/returns for a customer.
+  Future<void> reconcileBillBalancesFromLedger(String customerId) async {
+    final customer = await _getCustomerByIdOrServerId(customerId);
+    final keys = customer != null
+        ? customerIdAliases(customer)
+        : await _aliasesForCustomerKey(customerId);
+
+    final billsController = BillOfflineController.instance;
+    final bills = await billsController.getBillsByCustomerIds(keys);
+    if (bills.isEmpty) return;
+
+    final linkedPaid = <int, double>{for (final b in bills) b.id: 0.0};
+    final linkedReturned = <int, double>{for (final b in bills) b.id: 0.0};
+    var unallocatedPayments = 0.0;
+
+    for (final tx in await _db.loadTransactions()) {
+      if (tx.syncStatus == TransactionSyncStatus.deleted) continue;
+      if (!keys.contains(tx.customerId)) continue;
+
+      switch (tx.transactionType) {
+        case TransactionType.payment:
+          final bill = _findBillForReference(bills, tx.referenceId);
+          if (bill != null) {
+            linkedPaid[bill.id] = linkedPaid[bill.id]! + tx.amount;
+          } else if (tx.referenceId == null || tx.referenceId!.isEmpty) {
+            unallocatedPayments += tx.amount;
+          }
+        case TransactionType.billReturn:
+          final bill = _findBillForReference(bills, tx.referenceId);
+          if (bill != null) {
+            linkedReturned[bill.id] =
+                linkedReturned[bill.id]! + tx.amount;
+          }
+        case TransactionType.billCreated:
+        case TransactionType.adjustment:
+          break;
+      }
+    }
+
+    // Apply unallocated payments FIFO to oldest bills after linked credits.
+    final ordered = List<BillEntity>.of(bills)
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    final effectivePaid = <int, double>{};
+    final chargeableByBill = <int, double>{};
+    final rebuildFromLedger = <int, bool>{};
+
+    for (final bill in ordered) {
+      final returned = linkedReturned[bill.id] ?? 0.0;
+      final linked = linkedPaid[bill.id] ?? 0.0;
+      final fromLedger =
+          (bill.finalAmount - returned).clamp(0.0, double.infinity);
+      final stored = bill.paidAmount + bill.pendingAmount;
+      // Prefer stored chargeable when present (return flows adjust paid+pending).
+      final chargeable = stored > 0.009 ? stored : fromLedger;
+      chargeableByBill[bill.id] = chargeable;
+
+      final hasLedgerSignal = linked > 0.009 || returned > 0.009;
+      final isZeroed = bill.paidAmount <= 0.009 && bill.pendingAmount <= 0.009;
+      // Rebuild when ledger has bill-linked rows, or heal empty 0/0 balances.
+      // Do NOT wipe a locally paid bill that simply has no payment tx row.
+      rebuildFromLedger[bill.id] = hasLedgerSignal || isZeroed;
+
+      if (hasLedgerSignal) {
+        effectivePaid[bill.id] =
+            linked > chargeable ? chargeable : linked;
+      } else if (isZeroed) {
+        effectivePaid[bill.id] =
+            bill.paymentStatus == BillPaymentStatus.paid ? chargeable : 0.0;
+      } else {
+        effectivePaid[bill.id] = bill.paidAmount;
+      }
+    }
+
+    if (unallocatedPayments > 0.009) {
+      for (final bill in ordered) {
+        if (unallocatedPayments <= 0.009) break;
+        final chargeable = chargeableByBill[bill.id] ?? 0.0;
+        final already = effectivePaid[bill.id] ?? 0.0;
+        final room = chargeable - already;
+        if (room <= 0.009) continue;
+        final applied =
+            unallocatedPayments > room ? room : unallocatedPayments;
+        effectivePaid[bill.id] = already + applied;
+        unallocatedPayments -= applied;
+        rebuildFromLedger[bill.id] = true;
+      }
+    }
+
+    var changed = false;
+    for (final bill in bills) {
+      if (rebuildFromLedger[bill.id] != true) continue;
+
+      final chargeable = chargeableByBill[bill.id] ?? 0.0;
+      final paid = (effectivePaid[bill.id] ?? 0.0).clamp(0.0, chargeable);
+      final pending = (chargeable - paid).clamp(0.0, double.infinity);
+      final status = pending <= 0.009
+          ? BillPaymentStatus.paid
+          : (paid <= 0.009
+                ? BillPaymentStatus.pending
+                : BillPaymentStatus.partiallyPaid);
+
+      if ((bill.paidAmount - paid).abs() <= 0.05 &&
+          (bill.pendingAmount - pending).abs() <= 0.05 &&
+          bill.paymentStatus == status) {
+        continue;
+      }
+
+      await billsController.updateBill(
+        id: bill.id,
+        paidAmount: paid <= 0.009 ? 0 : paid,
+        pendingAmount: pending <= 0.009 ? 0 : pending,
+        paymentStatus: status,
+      );
+      changed = true;
+    }
+
+    if (changed) {
+      debugPrint(
+        '[TransactionOffline] Reconciled bill paid/pending for $customerId',
+      );
+      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.bill);
+    }
+  }
+
   // Apply a later payment to the oldest open bills so invoice balances match the ledger.
   Future<void> _allocatePaymentToBills(
     CustomerEntity? customer,
     String customerId,
     double amount,
   ) async {
+    await reconcileBillBalancesFromLedger(customerId);
     final bills = await _openBillsForCustomer(customer, customerId);
     var remaining = amount;
     var appliedAny = false;
     final billsController = BillOfflineController.instance;
     for (final bill in bills) {
       if (remaining <= 0.009) break;
-      final applied = remaining > bill.pendingAmount
-          ? bill.pendingAmount
-          : remaining;
-      final pending = bill.pendingAmount - applied;
+      final due = _billOpenDue(bill);
+      if (due <= 0.009) continue;
+      final stored = bill.paidAmount + bill.pendingAmount;
+      final chargeable = stored > 0.009 ? stored : bill.finalAmount;
+      final applied = remaining > due ? due : remaining;
+      final newPaid = bill.paidAmount + applied;
+      final pending = chargeable - newPaid;
       await billsController.updateBill(
         id: bill.id,
-        paidAmount: bill.paidAmount + applied,
+        paidAmount: newPaid,
         pendingAmount: pending <= 0.009 ? 0 : pending,
         paymentStatus: pending <= 0.009
             ? BillPaymentStatus.paid
@@ -223,6 +381,8 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     String? paymentMethod,
     required DateTime transactionDate,
   }) async {
+    // Heal 0/0 bill balances before allocating, or every payment becomes "advance".
+    await reconcileBillBalancesFromLedger(customerId);
     final bills = await _openBillsForCustomer(customer, customerId);
     final billsController = BillOfflineController.instance;
     var remaining = amount;
@@ -231,9 +391,11 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
 
     for (final bill in bills) {
       if (remaining <= 0.009) break;
-      final applied = remaining > bill.pendingAmount
-          ? bill.pendingAmount
-          : remaining;
+      final due = _billOpenDue(bill);
+      if (due <= 0.009) continue;
+      final stored = bill.paidAmount + bill.pendingAmount;
+      final chargeable = stored > 0.009 ? stored : bill.finalAmount;
+      final applied = remaining > due ? due : remaining;
       runningPending -= applied;
       final billKey = bill.serverId ?? 'local_${bill.id}';
       final tx = CustomerTransactionEntity(
@@ -253,10 +415,11 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
       await _db.saveTransaction(tx);
       last = tx;
 
-      final pending = bill.pendingAmount - applied;
+      final newPaid = bill.paidAmount + applied;
+      final pending = chargeable - newPaid;
       await billsController.updateBill(
         id: bill.id,
-        paidAmount: bill.paidAmount + applied,
+        paidAmount: newPaid,
         pendingAmount: pending <= 0.009 ? 0 : pending,
         paymentStatus: pending <= 0.009
             ? BillPaymentStatus.paid
@@ -740,6 +903,8 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
 
     // Heal prior dual-write collapses before summing the ledger.
     await _purgeDualWriteGhostPayments(customerId);
+    // Keep invoice paid/pending aligned with ledger credits for this customer.
+    await reconcileBillBalancesFromLedger(customerId);
 
     final keys = customerIdAliases(customer);
     double pending = 0;

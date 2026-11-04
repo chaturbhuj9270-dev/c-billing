@@ -7,6 +7,7 @@ import '../../offline/controllers/customer_offline_controller.dart';
 import '../../offline/controllers/customer_transaction_offline_controller.dart';
 import '../../offline/entities/customer_transaction_entity.dart';
 import '../../data/services/customer_transaction_sync_service.dart';
+import '../../../billing/data/services/bill_sync_service.dart';
 import '../../../event_order/offline/controllers/event_order_offline_controller.dart';
 import '../../../event_order/offline/entities/event_order_entity.dart';
 import '../../../event_order/domain/entities/event_order.dart';
@@ -730,8 +731,9 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
         );
       }
 
-      // Let CustomerTransactionSyncService push each local payment row.
+      // Push ledger rows + updated bill paid/pending.
       unawaited(CustomerTransactionSyncService.instance.syncNow());
+      unawaited(BillSyncService.instance.syncNow());
     }
   }
 

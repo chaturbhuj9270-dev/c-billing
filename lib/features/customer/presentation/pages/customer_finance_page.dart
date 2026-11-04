@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../billing/offline/controllers/bill_offline_controller.dart';
 import '../../../billing/offline/entities/bill_entity.dart';
 import '../../../customer/offline/controllers/customer_offline_controller.dart';
+import '../../../customer/offline/controllers/customer_transaction_offline_controller.dart';
 import '../../../event_order/offline/controllers/event_order_offline_controller.dart';
 import '../../../event_order/offline/entities/event_order_entity.dart';
 import '../../../event_order/domain/entities/event_order.dart';
@@ -103,6 +104,19 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
             widget.customerLocalId!.isNotEmpty)
           widget.customerLocalId!,
       };
+
+      // Heal bill paid/pending from customer ledger before showing finance.
+      final repairKey = widget.customerId.isNotEmpty
+          ? widget.customerId
+          : (widget.customerLocalId ?? '');
+      if (repairKey.isNotEmpty) {
+        try {
+          await CustomerTransactionOfflineController.instance
+              .repairAndRecomputePending(repairKey);
+        } catch (e) {
+          debugPrint('[CustomerFinance] Ledger/bill repair failed: $e');
+        }
+      }
 
       final bills = await BillOfflineController.instance
           .getBillsByCustomerIds(customerKeys);
