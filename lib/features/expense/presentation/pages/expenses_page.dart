@@ -10,6 +10,7 @@ import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/ui/sync_status_icon.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/app_pill_button.dart';
+import 'package:c_billing/common_widgets/pull_to_refresh.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
@@ -648,9 +649,19 @@ class _ExpensesPageState extends State<ExpensesPage>
     }
   }
 
+  Future<void> _onPullRefresh() async {
+    try {
+      await ExpenseSyncService.instance.syncNow();
+    } catch (_) {}
+    await _loadExpenses();
+  }
+
   Widget _buildExpensesList() {
     if (_expenses.isEmpty) {
-      return _buildEmptyState();
+      return PullToRefresh(
+        onRefresh: _onPullRefresh,
+        child: PullToRefresh.scrollableEmpty(child: _buildEmptyState()),
+      );
     }
 
     // Group expenses by date
@@ -665,7 +676,12 @@ class _ExpensesPageState extends State<ExpensesPage>
 
     final sortedDates = groupedExpenses.keys.toList();
 
-    return ListView.builder(
+    return PullToRefresh(
+      onRefresh: _onPullRefresh,
+      child: ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
       itemCount: sortedDates.length,
       itemBuilder: (context, index) {
@@ -725,6 +741,7 @@ class _ExpensesPageState extends State<ExpensesPage>
           ],
         );
       },
+    ),
     );
   }
 

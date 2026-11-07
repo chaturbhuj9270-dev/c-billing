@@ -25,7 +25,7 @@ class PurchaseListWidget extends StatefulWidget {
   final String? supplierFilter;
   final DateTime? customStartDate;
   final DateTime? customEndDate;
-  final VoidCallback? onRefresh;
+  final Future<void> Function()? onRefresh;
   final Function(PurchaseBatchEntity)? onPurchaseTap;
   final Function(PurchaseBatchEntity)? onPurchaseLongPress;
   final String emptyTitle;
@@ -130,14 +130,32 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
     final filteredList = _filteredPurchases;
 
     if (filteredList.isEmpty) {
-      return _buildEmptyState();
+      return RefreshIndicator(
+        color: AppColors.accent(context),
+        onRefresh: () async {
+          await widget.onRefresh?.call();
+        },
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: _buildEmptyState(),
+              ),
+            );
+          },
+        ),
+      );
     }
 
     final groups = _groupByDate(filteredList);
 
     return RefreshIndicator(
       onRefresh: () async {
-        widget.onRefresh?.call();
+        await widget.onRefresh?.call();
       },
       color: AppColors.accent(context),
       child: ListView.builder(

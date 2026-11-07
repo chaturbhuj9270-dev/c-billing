@@ -157,11 +157,11 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
     try {
       await AccessControlService.instance.loadForCurrentUser();
       await LocalUserDataGuard.ensureBoundToCurrentUser();
+      // Entitlement before sync so Firestore trial fields exist for rules.
+      final isValid = await SubscriptionService().isSubscriptionValid();
       syncAfterLogin().catchError((e) {
         debugPrint('[ERROR] Post-verify sync failed: $e');
       });
-
-      final isValid = await SubscriptionService().isSubscriptionValid();
       if (!mounted) return;
 
       Navigator.of(context).pushAndRemoveUntil(

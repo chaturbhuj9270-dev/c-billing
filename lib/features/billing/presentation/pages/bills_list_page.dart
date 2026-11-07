@@ -25,6 +25,7 @@ import 'package:c_billing/features/billing/presentation/pages/bill_report_settin
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/ui/sync_status_icon.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/common_widgets/pull_to_refresh.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 // Quick date filter options for bill history
@@ -1310,52 +1311,70 @@ class _BillsListPageState extends State<BillsListPage>
     );
   }
 
+  Future<void> _onPullRefresh() async {
+    try {
+      await BillSyncService.instance.syncNow();
+    } catch (_) {}
+    await _loadBills();
+  }
+
   Widget _buildBillsList() {
     if (_filteredBills.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.receipt_long_outlined,
-              size: 64,
-              color: AppColors.mutedText(context),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _localizations.noBillsFound,
-              style: TextStyle(
-                fontFamily: 'Literata',
-                fontSize: 16,
-                color: AppColors.secondaryText(context),
-              ),
-            ),
-            if (_searchController.text.isNotEmpty || _startDate != null)
-              TextButton(
-                onPressed: () {
-                  _searchController.clear();
-                  _clearDateFilter();
-                },
-                child: Text(
-                  _localizations.clearFilters,
+      return PullToRefresh(
+        onRefresh: _onPullRefresh,
+        child: PullToRefresh.scrollableEmpty(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.receipt_long_outlined,
+                  size: 64,
+                  color: AppColors.mutedText(context),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  _localizations.noBillsFound,
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    color: _brandColor(context),
+                    fontSize: 16,
+                    color: AppColors.secondaryText(context),
                   ),
                 ),
-              ),
-          ],
+                if (_searchController.text.isNotEmpty || _startDate != null)
+                  TextButton(
+                    onPressed: () {
+                      _searchController.clear();
+                      _clearDateFilter();
+                    },
+                    child: Text(
+                      _localizations.clearFilters,
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        color: _brandColor(context),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: _filteredBills.length,
-      itemBuilder: (context, index) {
-        final bill = _filteredBills[index];
-        return _buildBillCard(bill);
-      },
+    return PullToRefresh(
+      onRefresh: _onPullRefresh,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _filteredBills.length,
+        itemBuilder: (context, index) {
+          final bill = _filteredBills[index];
+          return _buildBillCard(bill);
+        },
+      ),
     );
   }
 

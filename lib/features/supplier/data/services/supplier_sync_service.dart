@@ -86,7 +86,7 @@ class SupplierSyncService extends ChangeNotifier {
   bool get isSyncing => _status == SupplierSyncServiceStatus.syncing;
 
   // Initialize the sync service
-  void initialize() {
+  void initialize({bool runInitialSync = true}) {
     if (_initialized) return;
     _initialized = true;
     debugPrint('[SupplierSync] Initializing...');
@@ -106,8 +106,10 @@ class SupplierSyncService extends ChangeNotifier {
       _checkAndSync();
     });
 
-    // Initial sync - download from server if local is empty
-    _initialSync();
+    // Initial sync (skipped when SyncBootstrap will forceFullSync)
+    if (runInitialSync) {
+      _initialSync();
+    }
 
     debugPrint('[SupplierSync] Initialized');
   }
@@ -382,6 +384,16 @@ class SupplierSyncService extends ChangeNotifier {
 
   // Force full sync (ignore last sync time)
   Future<SupplierSyncResult> forceFullSync() async {
+    for (var i = 0; i < 25 && _isSyncing; i++) {
+      await Future.delayed(const Duration(milliseconds: 200));
+    }
+    if (_isSyncing) {
+      return SupplierSyncResult(
+        success: false,
+        errorMessage: 'Sync already in progress',
+        duration: Duration.zero,
+      );
+    }
     _lastSyncTime = null;
     return await syncNow();
   }

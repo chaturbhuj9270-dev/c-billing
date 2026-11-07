@@ -11,6 +11,7 @@ import '../../../event_order/domain/entities/event_order.dart';
 import 'package:intl/intl.dart';
 import 'package:c_billing/common_widgets/app_tab_bar.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/common_widgets/pull_to_refresh.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
@@ -539,41 +540,65 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
     return amount.toStringAsFixed(0);
   }
 
+  Future<void> _onPullRefresh() => _loadData();
+
   Widget _buildBillsList() {
     if (_bills.isEmpty) {
-      return _buildEmptyState(
-        icon: Icons.receipt_long_rounded,
-        title: 'No Bills Yet',
-        subtitle: 'Bills created for this customer will appear here',
+      return PullToRefresh(
+        onRefresh: _onPullRefresh,
+        child: PullToRefresh.scrollableEmpty(
+          child: _buildEmptyState(
+            icon: Icons.receipt_long_rounded,
+            title: 'No Bills Yet',
+            subtitle: 'Bills created for this customer will appear here',
+          ),
+        ),
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: _bills.length,
-      itemBuilder: (context, index) {
-        final bill = _bills[index];
-        return _BillCard(bill: bill);
-      },
+    return PullToRefresh(
+      onRefresh: _onPullRefresh,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        itemCount: _bills.length,
+        itemBuilder: (context, index) {
+          final bill = _bills[index];
+          return _BillCard(bill: bill);
+        },
+      ),
     );
   }
 
   Widget _buildEventOrdersList() {
     if (_eventOrders.isEmpty) {
-      return _buildEmptyState(
-        icon: Icons.event_rounded,
-        title: 'No Events/Orders Yet',
-        subtitle: 'Events and orders for this customer will appear here',
+      return PullToRefresh(
+        onRefresh: _onPullRefresh,
+        child: PullToRefresh.scrollableEmpty(
+          child: _buildEmptyState(
+            icon: Icons.event_rounded,
+            title: 'No Events/Orders Yet',
+            subtitle: 'Events and orders for this customer will appear here',
+          ),
+        ),
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: _eventOrders.length,
-      itemBuilder: (context, index) {
-        final order = _eventOrders[index];
-        return _EventOrderCard(order: order);
-      },
+    return PullToRefresh(
+      onRefresh: _onPullRefresh,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        itemCount: _eventOrders.length,
+        itemBuilder: (context, index) {
+          final order = _eventOrders[index];
+          return _EventOrderCard(order: order);
+        },
+      ),
     );
   }
 

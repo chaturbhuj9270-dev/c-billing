@@ -1398,9 +1398,15 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                             supplierFilter: _supplierFilter,
                             customStartDate: _customStartDate,
                             customEndDate: _customEndDate,
-                            onRefresh: () {
-                              PurchaseSyncService.instance.syncNow();
-                              PurchaseBatchSyncService.instance.syncNow();
+                            onRefresh: () async {
+                              try {
+                                await PurchaseSyncService.instance.syncNow();
+                              } catch (_) {}
+                              try {
+                                await PurchaseBatchSyncService.instance
+                                    .syncNow();
+                              } catch (_) {}
+                              await _loadPurchasesFromLocal();
                             },
                             onPurchaseTap: _showPurchaseDetails,
                             onPurchaseLongPress: _showPurchaseContextMenu,

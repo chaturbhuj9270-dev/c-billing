@@ -87,7 +87,7 @@ class CustomerTransactionSyncService extends ChangeNotifier {
   bool get isSyncing => _status == CustomerTransactionSyncStatus.syncing;
 
   // Initialize the sync service Call this after the local database is initialized
-  void initialize() {
+  void initialize({bool runInitialSync = true}) {
     if (_initialized) return;
     _initialized = true;
     debugPrint('[CustomerTransactionSync] Initializing...');
@@ -114,8 +114,10 @@ class CustomerTransactionSyncService extends ChangeNotifier {
       _checkAndSync();
     });
 
-    // Initial sync
-    _checkAndSync();
+    // Initial sync (skipped when SyncBootstrap will forceFullRefresh)
+    if (runInitialSync) {
+      _checkAndSync();
+    }
 
     debugPrint('[CustomerTransactionSync] Initialized');
   }

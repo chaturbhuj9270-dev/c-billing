@@ -93,7 +93,7 @@ class PurchaseBatchSyncService extends ChangeNotifier {
   bool get isSyncing => _status == PurchaseBatchSyncServiceStatus.syncing;
 
   // Initialize the sync service
-  void initialize() {
+  void initialize({bool runInitialSync = true}) {
     if (_initialized) return;
     _initialized = true;
     debugPrint('[PurchaseBatchSync] Initializing...');
@@ -123,8 +123,10 @@ class PurchaseBatchSyncService extends ChangeNotifier {
       _checkAndSync();
     });
 
-    // Initial sync
-    _initialSync();
+    // Initial sync (skipped when SyncBootstrap will forceFullSync)
+    if (runInitialSync) {
+      _initialSync();
+    }
 
     debugPrint('[PurchaseBatchSync] Initialized');
   }
@@ -195,13 +197,9 @@ class PurchaseBatchSyncService extends ChangeNotifier {
     super.dispose();
   }
 
+  // macOS often reports ConnectivityResult.other — treat any non-none as online.
   bool _isConnected(List<ConnectivityResult> results) {
-    return results.any(
-      (r) =>
-          r == ConnectivityResult.wifi ||
-          r == ConnectivityResult.mobile ||
-          r == ConnectivityResult.ethernet,
-    );
+    return results.any((r) => r != ConnectivityResult.none);
   }
 
   Future<void> _checkAndSync() async {

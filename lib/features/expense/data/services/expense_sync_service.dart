@@ -99,7 +99,7 @@ class ExpenseSyncService extends ChangeNotifier {
   }
 
   // Initialize the sync service
-  void initialize() {
+  void initialize({bool runInitialSync = true}) {
     if (_initialized) return;
     _initialized = true;
     debugPrint('[ExpenseSync] Initializing...');
@@ -119,8 +119,10 @@ class ExpenseSyncService extends ChangeNotifier {
       syncNow();
     });
 
-    // Initial sync
-    syncNow();
+    // Initial sync (skipped when SyncBootstrap will forceFullSync)
+    if (runInitialSync) {
+      syncNow();
+    }
   }
 
   void resetSyncState() {
@@ -138,13 +140,9 @@ class ExpenseSyncService extends ChangeNotifier {
     super.dispose();
   }
 
+  // macOS often reports ConnectivityResult.other — treat any non-none as online.
   bool _isConnected(List<ConnectivityResult> results) {
-    return results.any(
-      (r) =>
-          r == ConnectivityResult.wifi ||
-          r == ConnectivityResult.mobile ||
-          r == ConnectivityResult.ethernet,
-    );
+    return results.any((r) => r != ConnectivityResult.none);
   }
 
   // Trigger immediate sync
@@ -326,25 +324,23 @@ class ExpenseSyncService extends ChangeNotifier {
 
   // Force full sync (download all from server)
   Future<void> forceFullSync() async {
-    if (_userId == null) return;
-
-    try {
-      final serverExpenses = await _expensesCollection
-          .orderBy('createdAt', descending: true)
-          .get();
-
-      for (final doc in serverExpenses.docs) {
-        final data = doc.data() as Map<String, dynamic>;
-        data['id'] = doc.id;
-        final expense = ExpenseEntity.fromJson(data);
-        await _offlineController.importFromServer(expense);
-      }
-
-      debugPrint(
-        '[ExpenseSync] Full sync completed: ${serverExpenses.docs.length} expenses',
-      );
-    } catch (e) {
-      debugPrint('[ExpenseSync] Full sync failed: $e');
+    if (_userId == null) {
+      throw StateError('Expense sync: no user id');
     }
+
+    final serverExpenses = await _expensesCollection
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    for (final doc in serverExpenses.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      data['id'] = doc.id;
+      final expense = ExpenseEntity.fromJson(data);
+      await _offlineController.importFromServer(expense);
+    }
+
+    debugPrint(
+      '[ExpenseSync] Full sync completed: ${serverExpenses.docs.length} expenses',
+    );
   }
 }

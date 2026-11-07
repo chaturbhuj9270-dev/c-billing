@@ -14,6 +14,7 @@ import '../../../event_order/domain/entities/event_order.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/common_widgets/pull_to_refresh.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
@@ -86,9 +87,27 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
 
   // Sync transactions from server, then load from local storage
   Future<void> _syncAndLoadTransactions() async {
-    // First, trigger a sync to pull any missing transactions from server
+    // Prefer incremental sync; if local ledger is empty after login wipe,
+    // force a full server pull so macOS/desktop shows pending entries.
     try {
       await CustomerTransactionSyncService.instance.syncNow();
+      final key = widget.customerId.isNotEmpty
+          ? widget.customerId
+          : widget.customerLocalId;
+      if (key.isNotEmpty) {
+        final local = await CustomerTransactionOfflineController.instance
+            .getTransactionsByCustomerId(key);
+        final alt = widget.customerLocalId != widget.customerId
+            ? await CustomerTransactionOfflineController.instance
+                .getTransactionsByCustomerId(widget.customerLocalId)
+            : local;
+        if (local.isEmpty && alt.isEmpty) {
+          debugPrint(
+            '[Transactions] Local ledger empty — forcing full refresh',
+          );
+          await CustomerTransactionSyncService.instance.forceFullRefresh();
+        }
+      }
     } catch (e) {
       debugPrint('[Transactions] Sync failed (will load local data): $e');
     }
@@ -367,7 +386,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
           actions: [
             AppTopBar.action(
               icon: Icons.refresh_rounded,
-              onTap: _loadTransactions,
+              onTap: _syncAndLoadTransactions,
             ),
           ],
         ),
@@ -587,30 +606,39 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
 
   Widget _buildTransactionsList() {
     if (_combinedItems.isEmpty) {
-      return _buildEmptyState();
+      return PullToRefresh(
+        onRefresh: _syncAndLoadTransactions,
+        child: PullToRefresh.scrollableEmpty(child: _buildEmptyState()),
+      );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-      itemCount: _combinedItems.length,
-      itemBuilder: (context, index) {
-        final item = _combinedItems[index];
-        if (item.type == _CombinedItemType.transaction &&
-            item.transaction != null) {
-          return _TransactionCard(
-            transaction: item.transaction!,
-            runningBalance: item.runningBalance,
-            onDelete: () => _deleteTransaction(item.transaction!),
-          );
-        } else if (item.type == _CombinedItemType.eventOrder &&
-            item.eventOrder != null) {
-          return _EventOrderCard(
-            eventOrder: item.eventOrder!,
-            runningBalance: item.runningBalance,
-          );
-        }
-        return const SizedBox.shrink();
-      },
+    return PullToRefresh(
+      onRefresh: _syncAndLoadTransactions,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+        itemCount: _combinedItems.length,
+        itemBuilder: (context, index) {
+          final item = _combinedItems[index];
+          if (item.type == _CombinedItemType.transaction &&
+              item.transaction != null) {
+            return _TransactionCard(
+              transaction: item.transaction!,
+              runningBalance: item.runningBalance,
+              onDelete: () => _deleteTransaction(item.transaction!),
+            );
+          } else if (item.type == _CombinedItemType.eventOrder &&
+              item.eventOrder != null) {
+            return _EventOrderCard(
+              eventOrder: item.eventOrder!,
+              runningBalance: item.runningBalance,
+            );
+          }
+          return const SizedBox.shrink();
+        },
+      ),
     );
   }
 

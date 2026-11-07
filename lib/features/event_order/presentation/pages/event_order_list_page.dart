@@ -27,6 +27,7 @@ import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
+import 'package:c_billing/common_widgets/pull_to_refresh.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
 // Lets the desktop shell header open a new event order.
@@ -149,12 +150,29 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   child: _eventActionRow(context),
                 ),
               Expanded(
-                child: CustomScrollView(
-                  slivers: [
-                    SliverToBoxAdapter(child: _buildStatsSection()),
-                    SliverToBoxAdapter(child: _buildSearchAndFilters()),
-                    _buildOrdersSliver(),
-                  ],
+                child: Builder(
+                  builder: (context) => PullToRefresh(
+                    onRefresh: () async {
+                      try {
+                        await EventOrderSyncService.instance.syncNow();
+                      } catch (_) {}
+                      if (!context.mounted) return;
+                      await context.read<EventOrderCubit>().loadEventOrders(
+                        filterType: _selectedType,
+                        searchQuery: _searchQuery,
+                      );
+                    },
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: BouncingScrollPhysics(),
+                      ),
+                      slivers: [
+                        SliverToBoxAdapter(child: _buildStatsSection()),
+                        SliverToBoxAdapter(child: _buildSearchAndFilters()),
+                        _buildOrdersSliver(),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],

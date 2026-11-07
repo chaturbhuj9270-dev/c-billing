@@ -18,6 +18,7 @@ import 'package:c_billing/common_widgets/glass_summary_card.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/common_widgets/pull_to_refresh.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
@@ -1123,13 +1124,24 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           Expanded(
             child: _isLoading
           ? Center(child: CircularProgressIndicator(color: AppColors.action(context)))
-          : CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(child: _buildPageHeader()),
-                SliverToBoxAdapter(child: _buildFilterChips()),
-                SliverToBoxAdapter(child: _buildSearchField()),
-                _buildProductsSliver(),
-              ],
+          : PullToRefresh(
+              onRefresh: () async {
+                try {
+                  await ProductSyncService.instance.syncNow();
+                } catch (_) {}
+                await _loadProducts();
+              },
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
+                slivers: [
+                  SliverToBoxAdapter(child: _buildPageHeader()),
+                  SliverToBoxAdapter(child: _buildFilterChips()),
+                  SliverToBoxAdapter(child: _buildSearchField()),
+                  _buildProductsSliver(),
+                ],
+              ),
             ),
           ),
         ],

@@ -331,13 +331,16 @@ class _LoginPageV2State extends State<LoginPageV2>
       await AccessControlService.instance.loadForCurrentUser();
       // Drop previous account's offline data before UI opens.
       await LocalUserDataGuard.ensureBoundToCurrentUser();
+
+      // Entitlement first: getSubscriptionAccess writes trialExpiresAt so
+      // Firestore rules allow reads before post-login sync pulls data.
+      final subscriptionService = SubscriptionService();
+      final isValid = await subscriptionService.isSubscriptionValid();
+
       // Full server → local sync in background; do not block navigation.
       syncAfterLogin().catchError((e) {
         debugPrint('[ERROR] Post-login sync failed: $e');
       });
-
-      final subscriptionService = SubscriptionService();
-      final isValid = await subscriptionService.isSubscriptionValid();
 
       if (!mounted) return;
 

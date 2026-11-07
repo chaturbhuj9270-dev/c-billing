@@ -99,11 +99,27 @@ class SupplierListWidget extends StatelessWidget {
 
     // Empty state - no suppliers at all
     if (suppliers.isEmpty) {
-      return _buildEmptyState(
-        context: context,
-        icon: Icons.local_shipping_outlined,
-        title: emptyTitle,
-        subtitle: emptySubtitle,
+      return RefreshIndicator(
+        color: AppColors.accent(context),
+        onRefresh: onRefresh,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: _buildEmptyState(
+                  context: context,
+                  icon: Icons.local_shipping_outlined,
+                  title: emptyTitle,
+                  subtitle: emptySubtitle,
+                ),
+              ),
+            );
+          },
+        ),
       );
     }
 
@@ -111,11 +127,27 @@ class SupplierListWidget extends StatelessWidget {
 
     // Empty state - no search results
     if (filtered.isEmpty) {
-      return _buildEmptyState(
-        context: context,
-        icon: Icons.search_off_rounded,
-        title: noResultsTitle,
-        subtitle: noResultsSubtitle,
+      return RefreshIndicator(
+        color: AppColors.accent(context),
+        onRefresh: onRefresh,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: _buildEmptyState(
+                  context: context,
+                  icon: Icons.search_off_rounded,
+                  title: noResultsTitle,
+                  subtitle: noResultsSubtitle,
+                ),
+              ),
+            );
+          },
+        ),
       );
     }
 

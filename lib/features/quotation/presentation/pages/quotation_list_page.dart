@@ -13,6 +13,7 @@ import 'quotation_screen.dart';
 import 'quotation_settings_page.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+import 'package:c_billing/common_widgets/pull_to_refresh.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
@@ -166,8 +167,19 @@ class _QuotationListPageState extends State<QuotationListPage> {
           ? Center(
               child: CircularProgressIndicator(color: _primary),
             )
-          : _quotations.isEmpty
-          ? Center(
+          : PullToRefresh(
+              onRefresh: () async {
+                final items = await QuotationOfflineController.instance
+                    .getAllQuotations();
+                if (!mounted) return;
+                setState(() {
+                  _quotations = items;
+                  _isLoading = false;
+                });
+              },
+              child: _quotations.isEmpty
+          ? PullToRefresh.scrollableEmpty(
+              child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -188,8 +200,12 @@ class _QuotationListPageState extends State<QuotationListPage> {
                   ),
                 ],
               ),
+            ),
             )
           : ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
               itemCount: _quotations.length,
               itemBuilder: (context, index) {
@@ -331,6 +347,7 @@ class _QuotationListPageState extends State<QuotationListPage> {
                   ),
                 );
               },
+            ),
             ),
           ),
         ],

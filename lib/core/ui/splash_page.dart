@@ -251,6 +251,8 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
           try {
             await AccessControlService.instance.loadForCurrentUser();
             await LocalUserDataGuard.ensureBoundToCurrentUser();
+            // Entitlement before sync so Firestore trial fields exist for rules.
+            await _subscriptionService.isSubscriptionValid();
             syncAfterLogin().catchError((e) {
               debugPrint('[ERROR] Post-login sync failed: $e');
             });
@@ -355,6 +357,8 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         try {
           await AccessControlService.instance.loadForCurrentUser();
           await LocalUserDataGuard.ensureBoundToCurrentUser();
+          // Entitlement before sync so Firestore trial fields exist for rules.
+          await _subscriptionService.isSubscriptionValid();
           syncAfterLogin().catchError((e) {
             debugPrint('[ERROR] Post-login sync failed: $e');
           });
@@ -544,9 +548,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     try {
       await AccessControlService.instance.loadForCurrentUser();
       await LocalUserDataGuard.ensureBoundToCurrentUser();
-      syncAfterLogin().catchError((e) {
-        debugPrint('[ERROR] Post-login sync failed: $e');
-      });
     } catch (e) {
       debugPrint('[ERROR] Access control load failed: $e');
       if (mounted) {
@@ -565,6 +566,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       await _setLoadState(step: 3, progress: 0.98);
       // Service itself fail-opens during free trial (cache / Auth creationTime).
       // Never treat a slow network as "expired" — that flashed the paywall mid-trial.
+      // Entitlement before sync so Firestore trial fields exist for rules.
       final isSubscriptionValid = await _subscriptionService
           .isSubscriptionValid()
           .timeout(
@@ -584,6 +586,10 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         return;
       }
 
+      syncAfterLogin().catchError((e) {
+        debugPrint('[ERROR] Post-login sync failed: $e');
+      });
+
       debugPrint('[DEBUG] Subscription/trial valid, navigating to dashboard');
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -594,6 +600,11 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       debugPrint('[ERROR] Error checking subscription: $e');
       // Only show paywall when access is definitively expired.
       final stillValid = await _subscriptionService.isSubscriptionValid();
+      if (stillValid) {
+        syncAfterLogin().catchError((err) {
+          debugPrint('[ERROR] Post-login sync failed: $err');
+        });
+      }
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(

@@ -87,7 +87,7 @@ class BillSyncService extends ChangeNotifier {
   bool get isSyncing => _status == BillSyncServiceStatus.syncing;
 
   // Initialize the sync service
-  void initialize() {
+  void initialize({bool runInitialSync = true}) {
     if (_initialized) return;
     _initialized = true;
     debugPrint('[BillSync] Initializing...');
@@ -107,8 +107,10 @@ class BillSyncService extends ChangeNotifier {
       _checkAndSync();
     });
 
-    // Initial sync - download from server if local is empty
-    _initialSync();
+    // Initial sync (skipped when SyncBootstrap will forceFullRefresh)
+    if (runInitialSync) {
+      _initialSync();
+    }
 
     debugPrint('[BillSync] Initialized');
   }
@@ -179,14 +181,9 @@ class BillSyncService extends ChangeNotifier {
     super.dispose();
   }
 
-  // Check if connected to network
+  // macOS often reports ConnectivityResult.other — treat any non-none as online.
   bool _isConnected(List<ConnectivityResult> results) {
-    return results.any(
-      (r) =>
-          r == ConnectivityResult.wifi ||
-          r == ConnectivityResult.mobile ||
-          r == ConnectivityResult.ethernet,
-    );
+    return results.any((r) => r != ConnectivityResult.none);
   }
 
   // Trigger immediate sync

@@ -89,7 +89,7 @@ class PurchaseSyncService extends ChangeNotifier {
   bool get isSyncing => _status == PurchaseSyncServiceStatus.syncing;
 
   // Initialize the sync service
-  void initialize() {
+  void initialize({bool runInitialSync = true}) {
     if (_initialized) return;
     _initialized = true;
     debugPrint('[PurchaseSync] Initializing...');
@@ -117,6 +117,11 @@ class PurchaseSyncService extends ChangeNotifier {
       _checkAndSync();
     });
 
+    // Optional kick (skipped when SyncBootstrap will forceFullSync)
+    if (runInitialSync) {
+      _checkAndSync();
+    }
+
     debugPrint('[PurchaseSync] Initialized');
   }
 
@@ -135,13 +140,9 @@ class PurchaseSyncService extends ChangeNotifier {
     super.dispose();
   }
 
+  // macOS often reports ConnectivityResult.other — treat any non-none as online.
   bool _isConnected(List<ConnectivityResult> results) {
-    return results.any(
-      (r) =>
-          r == ConnectivityResult.wifi ||
-          r == ConnectivityResult.mobile ||
-          r == ConnectivityResult.ethernet,
-    );
+    return results.any((r) => r != ConnectivityResult.none);
   }
 
   Future<void> _checkAndSync() async {

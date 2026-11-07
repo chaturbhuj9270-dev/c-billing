@@ -439,7 +439,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? openAppDatabase());
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   Future<bool> _hasTable(String table) async {
     final rows = await customSelect(
@@ -571,8 +571,8 @@ class AppDatabase extends _$AppDatabase {
         );
       }
       if (from < 12) {
-        // Recreate tables so INTEGER qty columns become REAL (fractional kg/ml)
-        // and purchase GST columns exist. Existing ints cast cleanly to REAL.
+        // Recreate tables so INTEGER qty columns become REAL (fractional kg/ml).
+        // Existing ints cast cleanly to REAL.
         // ignore: experimental_member_use
         await m.alterTable(TableMigration(productRecords));
         // ignore: experimental_member_use
@@ -581,8 +581,113 @@ class AppDatabase extends _$AppDatabase {
         await m.alterTable(TableMigration(stockLedgerRecords));
         // ignore: experimental_member_use
         await m.alterTable(TableMigration(billRecords));
+        // Purchase GST columns did not exist on older DBs — mark them as
+        // newColumns so alterTable does not SELECT them from the old table
+        // (that caused: no such column "is_gst_applied").
         // ignore: experimental_member_use
-        await m.alterTable(TableMigration(purchaseRecords));
+        await m.alterTable(
+          TableMigration(
+            purchaseRecords,
+            newColumns: [
+              purchaseRecords.isGstApplied,
+              purchaseRecords.isTaxInclusive,
+              purchaseRecords.isInterstate,
+              purchaseRecords.taxableValue,
+              purchaseRecords.cgstPercent,
+              purchaseRecords.sgstPercent,
+              purchaseRecords.igstPercent,
+              purchaseRecords.otherTaxPercent,
+              purchaseRecords.otherTaxName,
+              purchaseRecords.cgstAmount,
+              purchaseRecords.sgstAmount,
+              purchaseRecords.igstAmount,
+              purchaseRecords.otherTaxAmount,
+              purchaseRecords.totalTaxAmount,
+              purchaseRecords.hsnCode,
+              purchaseRecords.supplierGstin,
+            ],
+          ),
+        );
+      }
+      // Recovery: if a device somehow reached a later schema without the
+      // purchase GST columns, add them safely without recreating the table.
+      if (from < 13) {
+        await _addColumnIfMissing(
+          m,
+          purchaseRecords,
+          purchaseRecords.isGstApplied,
+        );
+        await _addColumnIfMissing(
+          m,
+          purchaseRecords,
+          purchaseRecords.isTaxInclusive,
+        );
+        await _addColumnIfMissing(
+          m,
+          purchaseRecords,
+          purchaseRecords.isInterstate,
+        );
+        await _addColumnIfMissing(
+          m,
+          purchaseRecords,
+          purchaseRecords.taxableValue,
+        );
+        await _addColumnIfMissing(
+          m,
+          purchaseRecords,
+          purchaseRecords.cgstPercent,
+        );
+        await _addColumnIfMissing(
+          m,
+          purchaseRecords,
+          purchaseRecords.sgstPercent,
+        );
+        await _addColumnIfMissing(
+          m,
+          purchaseRecords,
+          purchaseRecords.igstPercent,
+        );
+        await _addColumnIfMissing(
+          m,
+          purchaseRecords,
+          purchaseRecords.otherTaxPercent,
+        );
+        await _addColumnIfMissing(
+          m,
+          purchaseRecords,
+          purchaseRecords.otherTaxName,
+        );
+        await _addColumnIfMissing(
+          m,
+          purchaseRecords,
+          purchaseRecords.cgstAmount,
+        );
+        await _addColumnIfMissing(
+          m,
+          purchaseRecords,
+          purchaseRecords.sgstAmount,
+        );
+        await _addColumnIfMissing(
+          m,
+          purchaseRecords,
+          purchaseRecords.igstAmount,
+        );
+        await _addColumnIfMissing(
+          m,
+          purchaseRecords,
+          purchaseRecords.otherTaxAmount,
+        );
+        await _addColumnIfMissing(
+          m,
+          purchaseRecords,
+          purchaseRecords.totalTaxAmount,
+        );
+        await _addColumnIfMissing(m, purchaseRecords, purchaseRecords.hsnCode);
+        await _addColumnIfMissing(
+          m,
+          purchaseRecords,
+          purchaseRecords.supplierGstin,
+        );
       }
     },
   );

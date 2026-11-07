@@ -117,10 +117,11 @@ class _LoginOtpPageState extends State<LoginOtpPage> {
     try {
       await AccessControlService.instance.loadForCurrentUser();
       await LocalUserDataGuard.ensureBoundToCurrentUser();
+      // Entitlement before sync so Firestore trial fields exist for rules.
+      final isValid = await SubscriptionService().isSubscriptionValid();
       syncAfterLogin().catchError((e) {
         debugPrint('[ERROR] Post-OTP sync failed: $e');
       });
-      final isValid = await SubscriptionService().isSubscriptionValid();
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
