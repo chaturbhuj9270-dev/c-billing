@@ -84,6 +84,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   int _selectedIndex = AccessControlService.instance.canAccessShellIndex(2)
       ? 2
       : AccessControlService.instance.firstAllowedShellIndex();
+  /// Manual sidebar collapse for web/desktop (false = follow width auto-expand).
+  bool _sideNavUserCollapsed = false;
   late SessionManager _sessionManager;
   late AppLocalizations _localizations;
 
@@ -719,10 +721,14 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
   // Desktop/tablet side navigation rail
   Widget _buildDesktopSideNav() {
-    final isExpanded = MediaQuery.of(context).size.width >= 1100;
+    final wideEnough = MediaQuery.of(context).size.width >= 900;
+    // Auto-expand on wide screens unless the user collapsed the rail.
+    final isExpanded = wideEnough && !_sideNavUserCollapsed;
     final shell = DesktopCanvas.isDesktopPlatform;
     final darkWeb = shell && AppColors.isDark(context);
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
       width: isExpanded ? (shell ? 236 : 220) : 72,
       decoration: BoxDecoration(
         color: darkWeb ? AppTheme.darkSurface : AppColors.card(context),
@@ -789,6 +795,18 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           ),
           if (shell) _webNavSection('SYSTEM', isExpanded),
           if (shell) ..._webPageTools(isExpanded, showDivider: !darkWeb),
+          if (shell || wideEnough)
+            _buildSideNavItem(
+              -2,
+              isExpanded
+                  ? Icons.keyboard_double_arrow_left_rounded
+                  : Icons.keyboard_double_arrow_right_rounded,
+              isExpanded ? 'Collapse' : 'Expand',
+              isExpanded,
+              onTap: () => setState(
+                () => _sideNavUserCollapsed = !_sideNavUserCollapsed,
+              ),
+            ),
           _buildSideNavItem(
             -1,
             Icons.menu_rounded,

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:c_billing/core/access/app_module.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
+/// UI grouping for the Business reports hub (does not affect generation).
+enum UnifiedReportCategory { sales, purchases, inventory, accounts }
+
 /// Report types available from the common Reports hub.
 enum UnifiedReportKind {
   salesBills,
@@ -145,6 +148,87 @@ extension UnifiedReportKindX on UnifiedReportKind {
         return false;
       default:
         return true;
+    }
+  }
+
+  /// Category used only for hub filters / grouping.
+  UnifiedReportCategory get category {
+    switch (this) {
+      case UnifiedReportKind.salesBills:
+      case UnifiedReportKind.salesReturns:
+      case UnifiedReportKind.quotations:
+      case UnifiedReportKind.events:
+        return UnifiedReportCategory.sales;
+      case UnifiedReportKind.purchases:
+      case UnifiedReportKind.purchaseReturns:
+        return UnifiedReportCategory.purchases;
+      case UnifiedReportKind.products:
+      case UnifiedReportKind.stock:
+        return UnifiedReportCategory.inventory;
+      case UnifiedReportKind.expenses:
+      case UnifiedReportKind.customers:
+      case UnifiedReportKind.suppliers:
+      case UnifiedReportKind.gstr1:
+        return UnifiedReportCategory.accounts;
+    }
+  }
+
+  /// Column labels shown in the configuration panel (mirrors export headers).
+  List<String> get includeLabels {
+    switch (this) {
+      case UnifiedReportKind.salesBills:
+        return const [
+          'Bill no.',
+          'Date',
+          'Customer',
+          'Items',
+          'Taxable value',
+          'CGST',
+          'SGST',
+          'IGST',
+          'Total',
+        ];
+      case UnifiedReportKind.salesReturns:
+        return const ['Bill no.', 'Date', 'Customer', 'Items', 'Qty', 'Amount'];
+      case UnifiedReportKind.purchases:
+        return const [
+          'Date',
+          'Product',
+          'Supplier',
+          'Qty',
+          'Taxable',
+          'CGST',
+          'SGST',
+          'IGST',
+          'Total',
+        ];
+      case UnifiedReportKind.purchaseReturns:
+        return const ['Date', 'Product', 'Supplier', 'Qty', 'Amount'];
+      case UnifiedReportKind.events:
+        return const ['Date', 'Customer', 'Event', 'Status', 'Amount'];
+      case UnifiedReportKind.quotations:
+        return const ['Date', 'Customer', 'Title', 'Status', 'Amount'];
+      case UnifiedReportKind.expenses:
+        return const ['Date', 'Title', 'Category', 'Amount', 'Payment'];
+      case UnifiedReportKind.products:
+        return const ['Name', 'Category', 'Stock', 'Purchase', 'Sales', 'HSN'];
+      case UnifiedReportKind.customers:
+        return const ['Name', 'Phone', 'GSTIN', 'Address', 'Pending'];
+      case UnifiedReportKind.suppliers:
+        return const ['Name', 'Code', 'Phone', 'Address'];
+      case UnifiedReportKind.stock:
+        return const ['Product', 'Company', 'Stock', 'Unit', 'Value'];
+      case UnifiedReportKind.gstr1:
+        return const [
+          'Type',
+          'Invoice',
+          'GSTIN',
+          'Taxable',
+          'CGST',
+          'SGST',
+          'IGST',
+          'Total',
+        ];
     }
   }
 
