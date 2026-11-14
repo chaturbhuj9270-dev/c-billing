@@ -229,7 +229,7 @@ class SubscriptionService {
     }
   }
 
-  // Wait until Firestore reflects an active subscription (after Cashfree verify).
+  // Wait until Firestore reflects an active subscription (after Play verify).
   Future<bool> waitUntilActive({
     Duration timeout = const Duration(seconds: 20),
     Duration pollInterval = const Duration(seconds: 1),

@@ -30,6 +30,7 @@ import 'package:c_billing/common_widgets/app_pill_button.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
+import 'package:c_billing/core/ui/app_scroll_behavior.dart';
 
 // Lets the desktop shell header open the add-product sheet.
 class ProductScreenActions {
@@ -694,9 +695,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       color: AppColors.accent(context),
       onRefresh: _onRefresh,
       child: ListView.builder(
-        physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
-        ),
+        physics: AppScrollPhysics.alwaysScrollable(),
         padding: EdgeInsets.only(bottom: 100),
         itemCount: filteredGroups.length,
         itemBuilder: (context, index) {

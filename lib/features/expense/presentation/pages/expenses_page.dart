@@ -14,6 +14,7 @@ import 'package:c_billing/common_widgets/pull_to_refresh.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
+import 'package:c_billing/core/ui/app_scroll_behavior.dart';
 
 // Lets the desktop shell header open the add-expense sheet.
 class ExpenseScreenActions {
@@ -679,9 +680,7 @@ class _ExpensesPageState extends State<ExpensesPage>
     return PullToRefresh(
       onRefresh: _onPullRefresh,
       child: ListView.builder(
-      physics: const AlwaysScrollableScrollPhysics(
-        parent: BouncingScrollPhysics(),
-      ),
+      physics: AppScrollPhysics.alwaysScrollable(),
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
       itemCount: sortedDates.length,
       itemBuilder: (context, index) {

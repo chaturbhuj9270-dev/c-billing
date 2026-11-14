@@ -29,6 +29,7 @@ import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
 import 'package:c_billing/common_widgets/pull_to_refresh.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
+import 'package:c_billing/core/ui/app_scroll_behavior.dart';
 
 // Lets the desktop shell header open a new event order.
 class EventOrderScreenActions {
@@ -163,9 +164,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                       );
                     },
                     child: CustomScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(
-                        parent: BouncingScrollPhysics(),
-                      ),
+                      physics: AppScrollPhysics.alwaysScrollable(),
                       slivers: [
                         SliverToBoxAdapter(child: _buildStatsSection()),
                         SliverToBoxAdapter(child: _buildSearchAndFilters()),

@@ -25,6 +25,7 @@ import 'package:c_billing/core/config/app_store_config.dart';
 import 'package:c_billing/core/legal/legal_document_page.dart';
 import 'package:c_billing/core/legal/legal_documents.dart';
 import '../../../employee/presentation/pages/employees_page.dart';
+import 'package:c_billing/core/ui/app_scroll_behavior.dart';
 
 class FlyoutMenu extends StatefulWidget {
   const FlyoutMenu({super.key});
@@ -496,7 +497,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                         Expanded(
                           child: ListView(
                             padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
-                            physics: const BouncingScrollPhysics(),
+                            physics: AppScrollPhysics.platform(),
                             children: [
                               ...() {
                                 var animIndex = 0;

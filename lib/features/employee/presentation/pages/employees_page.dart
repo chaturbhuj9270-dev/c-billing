@@ -14,6 +14,7 @@ import '../../../../core/access/app_module.dart';
 import '../../../../core/ui/glassy_toast.dart';
 import '../../data/repositories/employee_repository.dart';
 import '../../domain/entities/employee.dart';
+import 'package:c_billing/core/ui/app_scroll_behavior.dart';
 
 class EmployeeScreenActions {
   static VoidCallback? add;
@@ -233,9 +234,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
     return RefreshIndicator(
       onRefresh: _load,
       child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
-        ),
+        physics: AppScrollPhysics.alwaysScrollable(),
         slivers: [
           SliverPadding(
             padding: EdgeInsets.fromLTRB(

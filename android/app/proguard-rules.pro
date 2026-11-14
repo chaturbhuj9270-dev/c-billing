@@ -10,10 +10,6 @@
 -keep class com.google.firebase.** { *; }
 -dontwarn com.google.firebase.**
 
-# Cashfree SDK (kept for non-Play channels; unused on Android Play path)
--keep class com.cashfree.** { *; }
--dontwarn com.cashfree.**
-
 # Play Billing
 -keep class com.android.vending.billing.** { *; }
 

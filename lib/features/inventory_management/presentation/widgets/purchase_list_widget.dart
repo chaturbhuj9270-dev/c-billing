@@ -9,6 +9,7 @@ import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
 import 'package:c_billing/common_widgets/glass_summary_card.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
+import 'package:c_billing/core/ui/app_scroll_behavior.dart';
 
 class _PurchaseDayGroup {
   final String label;
@@ -138,9 +139,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
+              physics: AppScrollPhysics.alwaysScrollable(),
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: _buildEmptyState(),
@@ -160,9 +159,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
       color: AppColors.accent(context),
       child: ListView.builder(
         controller: _scrollController,
-        physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
-        ),
+        physics: AppScrollPhysics.alwaysScrollable(),
         padding: const EdgeInsets.only(bottom: 100), // Space for FAB
         itemCount: groups.length,
         itemBuilder: (context, index) {
@@ -286,7 +283,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
 
     return Center(
       child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
+        physics: AppScrollPhysics.alwaysScrollable(),
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Column(

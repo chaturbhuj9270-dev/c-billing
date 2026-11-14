@@ -19,6 +19,7 @@ import 'core/services/stock_report_settings_service.dart';
 import 'core/services/local_database.dart';
 import 'core/services/error_logging_service.dart';
 import 'core/theme/app_theme.dart';
+import 'core/ui/app_scroll_behavior.dart';
 import 'core/services/sync_bootstrap.dart';
 import 'firebase_options.dart';
 
@@ -145,6 +146,13 @@ class MyApp extends StatelessWidget {
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
           themeMode: ThemeService.instance.themeMode,
+          scrollBehavior: const AppScrollBehavior(),
+          builder: (context, child) {
+            return ScrollConfiguration(
+              behavior: const AppScrollBehavior(),
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
           home: const SplashPage(),
           debugShowCheckedModeBanner: false,
         );

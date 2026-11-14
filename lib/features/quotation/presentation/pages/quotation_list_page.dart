@@ -16,6 +16,7 @@ import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/common_widgets/pull_to_refresh.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
+import 'package:c_billing/core/ui/app_scroll_behavior.dart';
 
 // Lets the desktop shell header open a new quotation.
 class QuotationScreenActions {
@@ -203,9 +204,7 @@ class _QuotationListPageState extends State<QuotationListPage> {
             ),
             )
           : ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
+              physics: AppScrollPhysics.alwaysScrollable(),
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
               itemCount: _quotations.length,
               itemBuilder: (context, index) {

@@ -409,11 +409,6 @@ class MarathiLocalization {
   static const String callSupport = 'सपोर्ट कॉल करा';
   static const String securePayment = 'सुरक्षित पेमेंट';
   static const String couldNotOpenWhatsApp = 'व्हॉट्सअॅप उघडता आला नाही';
-  static const String payViaCashfree = 'कॅशफ्रीने सुरक्षित पेमेंट करा';
-  static const String cashfreePaymentModesHint =
-      'UPI, कार्ड, नेट बँकिंग आणि वॉलेट समर्थित';
-  static const String cashfreePaymentInstructions =
-      'कॅशफ्री चेकआउट उघडण्यासाठी सुरक्षित पेमेंट वर टॅप करा. यशस्वी पेमेंटनंतर तुमची सदस्यता आपोआप सक्रिय होईल.';
   static const String paySecurely = 'सुरक्षित पेमेंट करा';
   static const String processingPayment = 'प्रक्रिया सुरू...';
   static const String preparingSecurePayment = 'सुरक्षित पेमेंट तयार होत आहे...';
@@ -424,8 +419,6 @@ class MarathiLocalization {
       'पेमेंट प्राप्त झाले. सक्रियकरणास थोडा वेळ लागू शकतो - कृपया लवकरच अॅप पुन्हा उघडा.';
   static const String paymentFailedTryAgain =
       'पेमेंट अयशस्वी किंवा रद्द. कृपया पुन्हा प्रयत्न करा.';
-  static const String securePaymentPoweredByCashfree =
-      'कॅशफ्रीद्वारे सुरक्षित पेमेंट';
   static const String payViaGooglePlay = 'Google Play ने सदस्यता घ्या';
   static const String googlePlayPaymentModesHint =
       'Google Play Billing द्वारे सुरक्षित पेमेंट';

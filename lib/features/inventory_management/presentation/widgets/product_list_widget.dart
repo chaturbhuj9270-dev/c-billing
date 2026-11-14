@@ -3,6 +3,7 @@ import 'package:c_billing/features/product/offline/entities/product_entity.dart'
 import 'product_filter_widget.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/sync_status_icon.dart';
+import 'package:c_billing/core/ui/app_scroll_behavior.dart';
 
 // Enhanced list widget for displaying products Features: Shimmer loading, Enhanced cards, Stock badges, Sync icons, Empty states
 class ProductListWidget extends StatelessWidget {
@@ -106,9 +107,7 @@ class ProductListWidget extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
+              physics: AppScrollPhysics.alwaysScrollable(),
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: _buildEmptyState(
@@ -134,9 +133,7 @@ class ProductListWidget extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
+              physics: AppScrollPhysics.alwaysScrollable(),
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: _buildEmptyState(
@@ -156,9 +153,7 @@ class ProductListWidget extends StatelessWidget {
       color: AppColors.accent(context),
       onRefresh: onRefresh,
       child: ListView.builder(
-        physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
-        ),
+        physics: AppScrollPhysics.alwaysScrollable(),
         padding: const EdgeInsets.only(top: 8, bottom: 100),
         itemCount: filtered.length,
         itemBuilder: (context, index) {

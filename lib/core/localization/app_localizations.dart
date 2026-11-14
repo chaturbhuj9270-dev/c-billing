@@ -3575,39 +3575,6 @@ class AppLocalizations {
     }
   }
 
-  String get payViaCashfree {
-    switch (languageCode) {
-      case 'Hindi':
-        return HindiLocalization.payViaCashfree;
-      case 'Marathi':
-        return MarathiLocalization.payViaCashfree;
-      default:
-        return EnglishLocalization.payViaCashfree;
-    }
-  }
-
-  String get cashfreePaymentModesHint {
-    switch (languageCode) {
-      case 'Hindi':
-        return HindiLocalization.cashfreePaymentModesHint;
-      case 'Marathi':
-        return MarathiLocalization.cashfreePaymentModesHint;
-      default:
-        return EnglishLocalization.cashfreePaymentModesHint;
-    }
-  }
-
-  String get cashfreePaymentInstructions {
-    switch (languageCode) {
-      case 'Hindi':
-        return HindiLocalization.cashfreePaymentInstructions;
-      case 'Marathi':
-        return MarathiLocalization.cashfreePaymentInstructions;
-      default:
-        return EnglishLocalization.cashfreePaymentInstructions;
-    }
-  }
-
   String get paySecurely {
     switch (languageCode) {
       case 'Hindi':
@@ -3682,17 +3649,6 @@ class AppLocalizations {
         return MarathiLocalization.paymentFailedTryAgain;
       default:
         return EnglishLocalization.paymentFailedTryAgain;
-    }
-  }
-
-  String get securePaymentPoweredByCashfree {
-    switch (languageCode) {
-      case 'Hindi':
-        return HindiLocalization.securePaymentPoweredByCashfree;
-      case 'Marathi':
-        return MarathiLocalization.securePaymentPoweredByCashfree;
-      default:
-        return EnglishLocalization.securePaymentPoweredByCashfree;
     }
   }
 

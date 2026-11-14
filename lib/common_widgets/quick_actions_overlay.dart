@@ -18,6 +18,7 @@ import '../features/event_order/presentation/pages/event_order_list_page.dart';
 import '../features/quotation/presentation/pages/quotation_list_page.dart';
 import '../features/inventory_management/presentation/pages/barcode_generator_page.dart';
 import '../features/customer/presentation/pages/enhanced_customer_page.dart';
+import 'package:c_billing/core/ui/app_scroll_behavior.dart';
 
 // Data class for a quick-action item
 class QuickActionItem {
@@ -252,7 +253,7 @@ class QuickActionsPanel extends StatelessWidget {
           Expanded(
             child: GridView.builder(
               controller: scrollController,
-              physics: const BouncingScrollPhysics(),
+              physics: AppScrollPhysics.platform(),
               itemCount: actions.length,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,

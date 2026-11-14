@@ -27,6 +27,7 @@ import 'package:c_billing/core/ui/sync_status_icon.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/pull_to_refresh.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/app_scroll_behavior.dart';
 
 // Quick date filter options for bill history
 enum _BillDateFilter { none, today, thisWeek, thisMonth, thisYear, custom }
@@ -1365,9 +1366,7 @@ class _BillsListPageState extends State<BillsListPage>
     return PullToRefresh(
       onRefresh: _onPullRefresh,
       child: ListView.builder(
-        physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
-        ),
+        physics: AppScrollPhysics.alwaysScrollable(),
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: _filteredBills.length,
         itemBuilder: (context, index) {
@@ -1803,7 +1802,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
           ),
           Expanded(
             child: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
+        physics: AppScrollPhysics.platform(),
         slivers: [
           // ══════════ Content ══════════
           SliverToBoxAdapter(

@@ -122,5 +122,5 @@ Upload to **Internal testing** first, then Closed testing, then staged Productio
 
 ## Notes
 
-- Cashfree client code remains for non-Play channels; Android pay wall uses Play Billing only.
+- Android pay wall uses Google Play Billing only (Cashfree Flutter SDK removed from the app).
 - If minify breaks a plugin, adjust `android/app/proguard-rules.pro`.

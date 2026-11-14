@@ -17,6 +17,7 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/pull_to_refresh.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+import 'package:c_billing/core/ui/app_scroll_behavior.dart';
 
 // Date filter options for transactions
 enum TransactionDateFilter { thisMonth, thisYear, lastYear, custom, all }
@@ -615,9 +616,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
     return PullToRefresh(
       onRefresh: _syncAndLoadTransactions,
       child: ListView.builder(
-        physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
-        ),
+        physics: AppScrollPhysics.alwaysScrollable(),
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
         itemCount: _combinedItems.length,
         itemBuilder: (context, index) {

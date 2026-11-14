@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'company_filter_widget.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/sync_status_icon.dart';
+import 'package:c_billing/core/ui/app_scroll_behavior.dart';
 
 // Enhanced list widget for displaying companies Features: Shimmer loading, Enhanced cards with sync icons, Empty states
 class CompanyListWidget extends StatelessWidget {
@@ -95,9 +96,7 @@ class CompanyListWidget extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
+              physics: AppScrollPhysics.alwaysScrollable(),
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: _buildEmptyState(
@@ -123,9 +122,7 @@ class CompanyListWidget extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
+              physics: AppScrollPhysics.alwaysScrollable(),
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: _buildEmptyState(
@@ -145,9 +142,7 @@ class CompanyListWidget extends StatelessWidget {
       color: AppColors.accent(context),
       onRefresh: onRefresh,
       child: ListView.builder(
-        physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
-        ),
+        physics: AppScrollPhysics.alwaysScrollable(),
         padding: const EdgeInsets.only(top: 8, bottom: 100),
         itemCount: filtered.length,
         itemBuilder: (context, index) {

@@ -14,6 +14,7 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/pull_to_refresh.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/app_scroll_behavior.dart';
 
 // Premium Customer Finance/History Page Shows all bills and events/orders for a specific customer
 class CustomerFinancePage extends StatefulWidget {
@@ -559,9 +560,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
     return PullToRefresh(
       onRefresh: _onPullRefresh,
       child: ListView.builder(
-        physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
-        ),
+        physics: AppScrollPhysics.alwaysScrollable(),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         itemCount: _bills.length,
         itemBuilder: (context, index) {
@@ -589,9 +588,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
     return PullToRefresh(
       onRefresh: _onPullRefresh,
       child: ListView.builder(
-        physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
-        ),
+        physics: AppScrollPhysics.alwaysScrollable(),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         itemCount: _eventOrders.length,
         itemBuilder: (context, index) {

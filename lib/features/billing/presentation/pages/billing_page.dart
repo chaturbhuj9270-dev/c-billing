@@ -70,6 +70,7 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/app_pill_button.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+import 'package:c_billing/core/ui/app_scroll_behavior.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -2427,7 +2428,7 @@ class _BillingPageState extends State<BillingPage> {
           ? Stack(
               children: [
                 SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
+                  physics: AppScrollPhysics.platform(),
                   child: Column(children: [_buildBillComposer(), ...extras]),
                 ),
                 if (_showQuickStats) _buildQuickStatsPremiumPanel(),
@@ -2513,7 +2514,7 @@ class _BillingPageState extends State<BillingPage> {
                 ),
                 Expanded(
                   child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
+                    physics: AppScrollPhysics.platform(),
                     child: Column(
                       children: [_buildBillComposer(), ...extras],
                     ),
@@ -2548,7 +2549,7 @@ class _BillingPageState extends State<BillingPage> {
                 else ...[
                   Expanded(
                     child: SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(),
+                      physics: AppScrollPhysics.platform(),
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Column(
                         children: [
@@ -2598,7 +2599,7 @@ class _BillingPageState extends State<BillingPage> {
           child: Align(
             alignment: Alignment.topCenter,
             child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
+              physics: AppScrollPhysics.platform(),
               padding: const EdgeInsets.only(bottom: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -52,6 +52,7 @@ import '../../../employee/presentation/pages/employees_page.dart';
 import '../../../reports/presentation/pages/unified_reports_page.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/ui/app_scroll_behavior.dart';
 
 // High-performance dashboard page with cache-first loading Renders instantly with cached data, updates smoothly when fresh data arrives
 class OptimizedDashboardPage extends StatelessWidget {
@@ -1443,7 +1444,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     final isRefreshing = state.isRefreshing;
 
     return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
+      physics: AppScrollPhysics.platform(),
       padding: const EdgeInsets.all(20.0),
       child: Center(
         child: ConstrainedBox(
@@ -1643,7 +1644,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 980;
         return SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
+          physics: AppScrollPhysics.platform(),
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1711,7 +1712,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             alignment: Alignment.centerLeft,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
+              physics: AppScrollPhysics.platform(),
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
@@ -2330,7 +2331,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         const SizedBox(height: 12),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
+          physics: AppScrollPhysics.platform(),
           child: Row(
             children: [
               _buildFilterChip(

@@ -406,11 +406,6 @@ class EnglishLocalization {
   static const String callSupport = 'Call Support';
   static const String securePayment = 'Secure Payment';
   static const String couldNotOpenWhatsApp = 'Could not open WhatsApp';
-  static const String payViaCashfree = 'Pay Securely with Cashfree';
-  static const String cashfreePaymentModesHint =
-      'UPI, Cards, Net Banking & Wallets supported';
-  static const String cashfreePaymentInstructions =
-      'Tap Pay Securely to open Cashfree checkout. Your subscription activates automatically after successful payment.';
   static const String paySecurely = 'Pay Securely';
   static const String processingPayment = 'Processing...';
   static const String preparingSecurePayment = 'Preparing secure payment...';
@@ -421,8 +416,6 @@ class EnglishLocalization {
       'Payment received. Activation may take a moment - please reopen the app shortly.';
   static const String paymentFailedTryAgain =
       'Payment failed or cancelled. Please try again.';
-  static const String securePaymentPoweredByCashfree =
-      'Secure payment powered by Cashfree';
   static const String payViaGooglePlay = 'Subscribe with Google Play';
   static const String googlePlayPaymentModesHint =
       'Secure checkout via Google Play Billing';
