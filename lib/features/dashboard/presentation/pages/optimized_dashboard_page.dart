@@ -80,6 +80,26 @@ class _OptimizedDashboardView extends StatefulWidget {
       _OptimizedDashboardViewState();
 }
 
+class _InsightTone {
+  final Color accent;
+  final List<Color> fill;
+  final List<Color> tileFill;
+  final Color title;
+  final Color muted;
+  final Color surface;
+  final Color line;
+
+  const _InsightTone({
+    required this.accent,
+    required this.fill,
+    required this.tileFill,
+    required this.title,
+    required this.muted,
+    required this.surface,
+    required this.line,
+  });
+}
+
 class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     with TickerProviderStateMixin {
   int _selectedIndex = AccessControlService.instance.canAccessShellIndex(2)
@@ -3107,7 +3127,150 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     setState(() => _selectedIndex = index);
   }
 
-  // ============ GLASSY QUICK STATS WIDGETS ============
+  // ============ QUICK INSIGHT CARDS ============
+
+  _InsightTone _insightTone(List<Color> gradientColors) {
+    final isDark = AppColors.isDark(context);
+    final accent = gradientColors.last;
+    if (isDark) {
+      return _InsightTone(
+        accent: accent,
+        fill: [
+          Color.lerp(AppTheme.darkCard, accent, 0.14)!,
+          Color.lerp(AppTheme.darkCard, accent, 0.28)!,
+          Color.lerp(AppTheme.darkSurface, accent, 0.5)!,
+        ],
+        tileFill: [
+          Color.lerp(AppTheme.darkCard, accent, 0.18)!,
+          Color.lerp(AppTheme.darkSurface, accent, 0.36)!,
+        ],
+        title: AppTheme.white,
+        muted: AppTheme.white70,
+        surface: AppTheme.white.withValues(alpha: 0.08),
+        line: AppTheme.white.withValues(alpha: 0.14),
+      );
+    }
+    return _InsightTone(
+      accent: accent,
+      fill: [
+        Color.lerp(AppTheme.white, accent, 0.05)!,
+        Color.lerp(AppTheme.white, accent, 0.16)!,
+        Color.lerp(AppTheme.white, accent, 0.36)!,
+      ],
+      tileFill: [
+        AppTheme.white,
+        Color.lerp(AppTheme.white, accent, 0.16)!,
+      ],
+      title: AppTheme.lightText,
+      muted: AppTheme.grey600,
+      surface: AppTheme.white,
+      line: accent.withValues(alpha: 0.16),
+    );
+  }
+
+  Widget _insightGlassCard({
+    required _InsightTone tone,
+    required Widget child,
+    double radius = 16,
+    double strokeWidth = 1.2,
+    Color? rimColor,
+    List<Color>? fill,
+    List<BoxShadow>? shadow,
+    EdgeInsetsGeometry? margin,
+  }) {
+    final isDark = AppColors.isDark(context);
+    return Container(
+      margin: margin,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(radius),
+        boxShadow: shadow,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: CustomPaint(
+          foregroundPainter: GlassBevelBorderPainter(
+            isDark: isDark,
+            themeColor: rimColor ?? tone.accent,
+            radius: radius,
+            strokeWidth: strokeWidth,
+          ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: fill ?? tone.fill,
+              ),
+            ),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _insightIconTile({
+    required Color accent,
+    required Widget child,
+    double size = 40,
+  }) {
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: accent,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: child,
+    );
+  }
+
+  Widget _insightCountBadge(int count, Color accent) {
+    final label = count.toString();
+    final wide = label.length > 1;
+    return Container(
+      height: 28,
+      width: wide ? null : 28,
+      constraints: const BoxConstraints(minWidth: 28),
+      padding: EdgeInsets.symmetric(horizontal: wide ? 6 : 0),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: accent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          color: AppTheme.white,
+          fontFamily: 'Literata',
+          height: 1,
+        ),
+      ),
+    );
+  }
+
+  Widget _insightValuePill(String label, Color accent) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: accent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: AppTheme.white,
+          fontFamily: 'Literata',
+          decoration: TextDecoration.none,
+        ),
+      ),
+    );
+  }
 
   Widget _buildGlassyStatRow({
     required String title,
@@ -3116,111 +3279,54 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     required List<Color> gradientColors,
     required VoidCallback onTap,
   }) {
+    final tone = _insightTone(gradientColors);
     final isDark = AppColors.isDark(context);
-    final tones = isDark
-        ? AppColors.darkMetricGradient(gradientColors.hashCode)
-        : gradientColors;
-    return GestureDetector(
-      onTap: onTap,
-      child: _raisedGlass(
-        radius: 18,
-        fill: isDark
-            ? null
-            : LinearGradient(
-                colors: [
-                  AppTheme.white.withValues(alpha: 0.86),
-                  tones[0].withValues(alpha: 0.14),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-          child: Row(
+    return Material(
+      color: AppTheme.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: _insightGlassCard(
+          tone: tone,
+          shadow: [
+            BoxShadow(
+              color: AppTheme.black.withValues(alpha: isDark ? 0.4 : 0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
               children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: tones,
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.black.withValues(
-                          alpha: isDark ? 0.35 : 0.15,
-                        ),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    icon,
-                    color: isDark ? AppTheme.white : AppTheme.white,
-                    size: 18,
-                  ),
+                _insightIconTile(
+                  accent: tone.accent,
+                  child: Icon(icon, color: AppTheme.white, size: 20),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(
                     title,
                     style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.primaryText(context),
-                      fontFamily: 'Literata',
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppTheme.white.withValues(alpha: 0.1) : null,
-                    gradient: isDark
-                        ? null
-                        : LinearGradient(
-                            colors: [
-                              tones[0].withValues(alpha: 0.15),
-                              tones[1].withValues(alpha: 0.1),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isDark
-                          ? AppTheme.white.withValues(alpha: 0.2)
-                          : tones[0].withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    count.toString(),
-                    style: TextStyle(
                       fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? AppTheme.white : tones[0],
+                      fontWeight: FontWeight.w600,
+                      color: tone.title,
                       fontFamily: 'Literata',
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                _insightCountBadge(count, tone.accent),
+                const SizedBox(width: 4),
                 Icon(
                   Icons.chevron_right_rounded,
-                  color: AppColors.mutedText(context),
+                  color: isDark ? AppTheme.white54 : AppTheme.grey600,
                   size: 22,
                 ),
               ],
             ),
           ),
         ),
+      ),
     );
   }
 
@@ -3254,6 +3360,10 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         icon = Icons.shopping_cart_rounded;
         gradientColors = [AppTheme.teal400, AppTheme.teal600];
         break;
+      case 'events':
+        icon = Icons.event_rounded;
+        gradientColors = [AppTheme.cyan, AppTheme.cyan700];
+        break;
       default:
         icon = Icons.info_outline;
         gradientColors = [AppTheme.paletteFF667EEA, AppTheme.paletteFF764BA2];
@@ -3269,6 +3379,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         return Container();
       },
       transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final tone = _insightTone(gradientColors);
         final curvedAnimation = CurvedAnimation(
           parent: animation,
           curve: Curves.easeOutBack,
@@ -3291,224 +3402,192 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     maxHeight: MediaQuery.of(context).size.height * 0.7,
                     maxWidth: 400,
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(28),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              AppColors.action(context).withValues(alpha: 0.65),
-                              AppTheme.paletteFF0D2B20.withValues(alpha: 0.75),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(28),
-                          border: Border.all(
-                            color: AppTheme.white.withValues(alpha: 0.15),
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.black.withValues(alpha: 0.3),
-                              blurRadius: 30,
-                              spreadRadius: 5,
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Header with gradient
-                            Container(
-                              padding: const EdgeInsets.fromLTRB(
-                                20,
-                                20,
-                                20,
-                                16,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    AppTheme.white.withValues(alpha: 0.08),
-                                    AppTheme.white.withValues(alpha: 0.03),
-                                  ],
+                  child: _insightGlassCard(
+                    tone: tone,
+                    radius: 20,
+                    shadow: [
+                      BoxShadow(
+                        color: AppTheme.black.withValues(alpha: 0.16),
+                        blurRadius: 24,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                    child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 12, 14),
+                            child: Row(
+                              children: [
+                                _insightIconTile(
+                                  accent: tone.accent,
+                                  size: 44,
+                                  child: Icon(icon, color: AppTheme.white, size: 22),
                                 ),
-                                borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(28),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  // Icon with gradient background
-                                  Container(
-                                    width: 48,
-                                    height: 48,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                        colors: gradientColors,
-                                      ),
-                                      borderRadius: BorderRadius.circular(14),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: gradientColors[0].withValues(
-                                            alpha: 0.4,
-                                          ),
-                                          blurRadius: 12,
-                                          offset: const Offset(0, 4),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        title,
+                                        style: TextStyle(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w700,
+                                          color: tone.title,
+                                          fontFamily: 'Literata',
+                                          letterSpacing: -0.2,
+                                          decoration: TextDecoration.none,
                                         ),
-                                      ],
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '${data.length} ${data.length == 1 ? 'item' : 'items'}',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: tone.muted,
+                                          fontFamily: 'Literata',
+                                          decoration: TextDecoration.none,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                InkWell(
+                                  onTap: () => Navigator.of(context).pop(),
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    width: 34,
+                                    height: 34,
+                                    decoration: BoxDecoration(
+                                      color: tone.accent.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Icon(
-                                      icon,
-                                      color: AppTheme.white,
-                                      size: 24,
+                                      Icons.close_rounded,
+                                      color: tone.accent,
+                                      size: 18,
                                     ),
                                   ),
-                                  const SizedBox(width: 14),
-                                  // Title and count
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          title,
-                                          style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppTheme.white,
-                                            fontFamily: 'Literata',
-                                            letterSpacing: -0.3,
-                                            decoration: TextDecoration.none,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          '${data.length} ${data.length == 1 ? 'item' : 'items'}',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                            color: AppTheme.white.withValues(
-                                              alpha: 0.7,
-                                            ),
-                                            fontFamily: 'Literata',
-                                            decoration: TextDecoration.none,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  // Close button
-                                  InkWell(
-                                    onTap: () => Navigator.of(context).pop(),
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Container(
-                                      width: 36,
-                                      height: 36,
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.white.withValues(
-                                          alpha: 0.1,
-                                        ),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: const Icon(
-                                        Icons.close_rounded,
-                                        color: AppTheme.white,
-                                        size: 20,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // Divider
-                            Container(
-                              height: 1,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    AppTheme.transparent,
-                                    AppTheme.white.withValues(alpha: 0.2),
-                                    AppTheme.transparent,
-                                  ],
                                 ),
-                              ),
+                              ],
                             ),
-                            // Content
-                            Flexible(
-                              child: data.isEmpty
-                                  ? _buildGlassyEmptyState(gradientColors)
-                                  : ListView.builder(
-                                      shrinkWrap: true,
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 8,
-                                      ),
-                                      itemCount: data.length,
-                                      itemBuilder: (context, index) {
-                                        final item = data[index];
-                                        return _buildGlassyListItem(
-                                          item,
-                                          type,
-                                          index,
-                                          gradientColors,
-                                        );
-                                      },
-                                    ),
-                            ),
-                          ],
-                        ),
+                          ),
+                          Container(height: 1, color: tone.line),
+                          Flexible(
+                            child: data.isEmpty
+                                ? _buildGlassyEmptyState(gradientColors)
+                                : ListView.builder(
+                                    shrinkWrap: true,
+                                    padding: const EdgeInsets.fromLTRB(0, 8, 0, 10),
+                                    itemCount: data.length,
+                                    itemBuilder: (context, index) {
+                                      final item = data[index];
+                                      return _buildGlassyListItem(
+                                        item,
+                                        type,
+                                        index,
+                                        gradientColors,
+                                      );
+                                    },
+                                  ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
         );
       },
     );
   }
 
+  Widget _insightSummaryTile({
+    required List<Color> colors,
+    required Widget leading,
+    required String title,
+    Widget? subtitle,
+    required Widget trailing,
+    Color? accentOverride,
+  }) {
+    final tone = _insightTone(colors);
+    final accent = accentOverride ?? tone.accent;
+    return _insightGlassCard(
+      tone: tone,
+      radius: 14,
+      strokeWidth: 1.05,
+      rimColor: accent,
+      fill: tone.tileFill,
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+        children: [
+          leading,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: tone.title,
+                    fontFamily: 'Literata',
+                    decoration: TextDecoration.none,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  subtitle,
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          trailing,
+        ],
+        ),
+      ),
+    );
+  }
+
+  TextStyle _insightMetaStyle(List<Color> colors, {Color? color}) {
+    return TextStyle(
+      fontSize: 11,
+      fontWeight: FontWeight.w500,
+      color: color ?? _insightTone(colors).muted,
+      fontFamily: 'Literata',
+      decoration: TextDecoration.none,
+    );
+  }
+
   Widget _buildGlassyEmptyState(List<Color> colors) {
-    return Container(
-      padding: const EdgeInsets.all(40),
+    final tone = _insightTone(colors);
+    return Padding(
+      padding: const EdgeInsets.all(36),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  colors[0].withValues(alpha: 0.3),
-                  colors[1].withValues(alpha: 0.2),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Icon(
-              Icons.inbox_outlined,
-              size: 32,
-              color: AppTheme.white,
-            ),
+          _insightIconTile(
+            accent: tone.accent.withValues(alpha: 0.16),
+            size: 56,
+            child: Icon(Icons.inbox_outlined, size: 28, color: tone.accent),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Text(
             _localizations.noDataAvailableDashboard,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: AppTheme.white.withValues(alpha: 0.7),
+              color: tone.muted,
               fontFamily: 'Literata',
               decoration: TextDecoration.none,
             ),
@@ -3586,98 +3665,26 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     required bool isOverdue,
     required List<Color> colors,
   }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isOverdue
-            ? AppTheme.red.withValues(alpha: 0.15)
-            : AppTheme.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isOverdue
-              ? AppTheme.red.withValues(alpha: 0.3)
-              : AppTheme.white.withValues(alpha: 0.12),
+    final accent = isOverdue ? AppTheme.red600 : _insightTone(colors).accent;
+    final status = daysPending == 0
+        ? 'Due today'
+        : daysPending == 1
+        ? '1 day overdue'
+        : '$daysPending days overdue';
+    return _insightSummaryTile(
+      colors: colors,
+      accentOverride: accent,
+      leading: _insightIconTile(
+        accent: accent,
+        child: Icon(
+          isOverdue ? Icons.warning_rounded : Icons.schedule_rounded,
+          color: AppTheme.white,
+          size: 20,
         ),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: isOverdue
-                    ? [AppTheme.error, AppTheme.red600]
-                    : colors,
-              ),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              isOverdue ? Icons.warning_rounded : Icons.schedule_rounded,
-              color: AppTheme.white,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  customerName,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.white,
-                    fontFamily: 'Literata',
-                    decoration: TextDecoration.none,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  daysPending == 0
-                      ? 'Due today'
-                      : daysPending == 1
-                      ? '1 day overdue'
-                      : '$daysPending days overdue',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isOverdue
-                        ? AppTheme.toneRose
-                        : AppTheme.white.withValues(alpha: 0.6),
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Literata',
-                    decoration: TextDecoration.none,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: isOverdue
-                    ? [AppTheme.error, AppTheme.red600]
-                    : colors,
-              ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              _formatAmount(amount),
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.white,
-                fontFamily: 'Literata',
-                decoration: TextDecoration.none,
-              ),
-            ),
-          ),
-        ],
-      ),
+      title: customerName,
+      subtitle: Text(status, style: _insightMetaStyle(colors, color: isOverdue ? AppTheme.red600 : null)),
+      trailing: _insightValuePill(_formatAmount(amount), accent),
     );
   }
 
@@ -3686,63 +3693,19 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     required double amount,
     required List<Color> colors,
   }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.white.withValues(alpha: 0.12)),
+    final accent = _insightTone(colors).accent;
+    return _insightSummaryTile(
+      colors: colors,
+      leading: _insightIconTile(
+        accent: accent,
+        child: const Icon(
+          Icons.person_outline_rounded,
+          color: AppTheme.white,
+          size: 20,
+        ),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: colors),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.person_outline_rounded,
-              color: AppTheme.white,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              customerName,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.white,
-                fontFamily: 'Literata',
-                decoration: TextDecoration.none,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: colors),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              _formatAmount(amount),
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.white,
-                fontFamily: 'Literata',
-                decoration: TextDecoration.none,
-              ),
-            ),
-          ),
-        ],
-      ),
+      title: customerName,
+      trailing: _insightValuePill(_formatAmount(amount), accent),
     );
   }
 
@@ -3752,79 +3715,22 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     DateTime? billDate,
     required List<Color> colors,
   }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.white.withValues(alpha: 0.12)),
+    final accent = _insightTone(colors).accent;
+    return _insightSummaryTile(
+      colors: colors,
+      leading: _insightIconTile(
+        accent: accent,
+        child: const Icon(
+          Icons.receipt_long_rounded,
+          color: AppTheme.white,
+          size: 20,
+        ),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: colors),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.receipt_long_rounded,
-              color: AppTheme.white,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  customerName,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.white,
-                    fontFamily: 'Literata',
-                    decoration: TextDecoration.none,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (billDate != null)
-                  Text(
-                    _formatDate(billDate),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppTheme.white.withValues(alpha: 0.6),
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Literata',
-                      decoration: TextDecoration.none,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: colors),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              _formatAmount(amount),
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.white,
-                fontFamily: 'Literata',
-                decoration: TextDecoration.none,
-              ),
-            ),
-          ),
-        ],
-      ),
+      title: customerName,
+      subtitle: billDate == null
+          ? null
+          : Text(_formatDate(billDate), style: _insightMetaStyle(colors)),
+      trailing: _insightValuePill(_formatAmount(amount), accent),
     );
   }
 
@@ -3835,96 +3741,34 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     required double revenue,
     required List<Color> colors,
   }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.white.withValues(alpha: 0.12)),
+    final tone = _insightTone(colors);
+    final sold = quantity == quantity.truncate()
+        ? quantity.toInt().toString()
+        : quantity.toStringAsFixed(1);
+    return _insightSummaryTile(
+      colors: colors,
+      leading: _insightIconTile(
+        accent: tone.accent,
+        child: Text(
+          '#$rank',
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.white,
+            fontFamily: 'Literata',
+            decoration: TextDecoration.none,
+          ),
+        ),
       ),
-      child: Row(
+      title: name,
+      subtitle: Row(
         children: [
-          // Rank badge
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: colors),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Center(
-              child: Text(
-                '#$rank',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.white,
-                  fontFamily: 'Literata',
-                  decoration: TextDecoration.none,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.white,
-                    fontFamily: 'Literata',
-                    decoration: TextDecoration.none,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.shopping_bag_outlined,
-                      size: 12,
-                      color: AppTheme.white.withValues(alpha: 0.6),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${quantity == quantity.truncate() ? quantity.toInt() : quantity.toStringAsFixed(1)} sold',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppTheme.white.withValues(alpha: 0.6),
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'Literata',
-                        decoration: TextDecoration.none,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: colors),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              _formatCompactAmount(revenue),
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.white,
-                fontFamily: 'Literata',
-                decoration: TextDecoration.none,
-              ),
-            ),
-          ),
+          Icon(Icons.shopping_bag_outlined, size: 12, color: tone.muted),
+          const SizedBox(width: 4),
+          Text('$sold sold', style: _insightMetaStyle(colors)),
         ],
       ),
+      trailing: _insightValuePill(_formatCompactAmount(revenue), tone.accent),
     );
   }
 
@@ -3942,96 +3786,29 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         ? currentStock.toInt().toString()
         : currentStock.toStringAsFixed(2);
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isOutOfStock
-            ? AppTheme.red.withValues(alpha: 0.15)
-            : AppTheme.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isOutOfStock
-              ? AppTheme.red.withValues(alpha: 0.3)
-              : AppTheme.white.withValues(alpha: 0.12),
+    final accent = isOutOfStock ? AppTheme.red600 : _insightTone(colors).accent;
+    return _insightSummaryTile(
+      colors: colors,
+      accentOverride: accent,
+      leading: _insightIconTile(
+        accent: accent,
+        child: Icon(
+          isOutOfStock ? Icons.error_outline : Icons.inventory_2_outlined,
+          color: AppTheme.white,
+          size: 20,
         ),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: isOutOfStock
-                    ? [AppTheme.error, AppTheme.red600]
-                    : colors,
-              ),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              isOutOfStock ? Icons.error_outline : Icons.inventory_2_outlined,
-              color: AppTheme.white,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.white,
-                    fontFamily: 'Literata',
-                    decoration: TextDecoration.none,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                // Progress bar
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: stockPercent / 100,
-                    backgroundColor: AppTheme.white.withValues(alpha: 0.15),
-                    valueColor: AlwaysStoppedAnimation(
-                      isOutOfStock ? AppTheme.toneRose : colors[0],
-                    ),
-                    minHeight: 4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: isOutOfStock
-                    ? [AppTheme.error, AppTheme.red600]
-                    : colors,
-              ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              isOutOfStock ? 'Out' : stockLabel,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.white,
-                fontFamily: 'Literata',
-                decoration: TextDecoration.none,
-              ),
-            ),
-          ),
-        ],
+      title: name,
+      subtitle: ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: LinearProgressIndicator(
+          value: stockPercent / 100,
+          backgroundColor: accent.withValues(alpha: 0.16),
+          valueColor: AlwaysStoppedAnimation(accent),
+          minHeight: 4,
+        ),
       ),
+      trailing: _insightValuePill(isOutOfStock ? 'Out' : stockLabel, accent),
     );
   }
 
@@ -4045,112 +3822,37 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     final isToday = daysUntil == 0;
     final isTomorrow = daysUntil == 1;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isToday
-            ? AppTheme.cyan.withValues(alpha: 0.15)
-            : AppTheme.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isToday
-              ? AppTheme.cyan.withValues(alpha: 0.3)
-              : AppTheme.white.withValues(alpha: 0.12),
+    final accent = _insightTone(colors).accent;
+    final when = isToday
+        ? 'Today'
+        : isTomorrow
+        ? 'Tomorrow'
+        : '$daysUntil days';
+    return _insightSummaryTile(
+      colors: colors,
+      leading: _insightIconTile(
+        accent: accent,
+        child: Icon(
+          isToday ? Icons.celebration_rounded : Icons.event_rounded,
+          color: AppTheme.white,
+          size: 20,
         ),
       ),
-      child: Row(
+      title: customerName,
+      subtitle: Text(
+        eventName,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: _insightMetaStyle(colors),
+      ),
+      trailing: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: isToday
-                    ? [AppTheme.cyan400, AppTheme.cyan600]
-                    : colors,
-              ),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              isToday ? Icons.celebration_rounded : Icons.event_rounded,
-              color: AppTheme.white,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  customerName,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.white,
-                    fontFamily: 'Literata',
-                    decoration: TextDecoration.none,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  eventName,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppTheme.white.withValues(alpha: 0.7),
-                    fontFamily: 'Literata',
-                    decoration: TextDecoration.none,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isToday
-                        ? [AppTheme.cyan400, AppTheme.cyan600]
-                        : colors,
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  isToday
-                      ? 'Today'
-                      : isTomorrow
-                      ? 'Tomorrow'
-                      : '$daysUntil days',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.white,
-                    fontFamily: 'Literata',
-                    decoration: TextDecoration.none,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              if (eventDate != null)
-                Text(
-                  _formatDate(eventDate),
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: AppTheme.white.withValues(alpha: 0.6),
-                    fontFamily: 'Literata',
-                    decoration: TextDecoration.none,
-                  ),
-                ),
-            ],
-          ),
+          _insightValuePill(when, accent),
+          if (eventDate != null) ...[
+            const SizedBox(height: 4),
+            Text(_formatDate(eventDate), style: _insightMetaStyle(colors)),
+          ],
         ],
       ),
     );
