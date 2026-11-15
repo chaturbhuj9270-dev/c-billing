@@ -88,10 +88,18 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
 
   // Load dashboard with current parameters
   Future<void> loadDashboard() async {
-    // If we have cached data, show it immediately with refreshing indicator
+    // Keep cached/error data visible while refreshing. Never cast to
+    // DashboardReadyState — after a failed refresh the state is
+    // DashboardErrorState with hasData == true.
     if (state.hasData) {
-      final currentState = state as DashboardReadyState;
-      emit(currentState.withRefreshing(true));
+      emit(
+        DashboardReadyState(
+          params: state.params,
+          data: state.data!,
+          isRefreshing: true,
+          lastUpdated: state.lastUpdated,
+        ),
+      );
     }
 
     try {
@@ -126,12 +134,22 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
 
     _debounceTimer = Timer(const Duration(milliseconds: 200), () async {
       try {
-        // Mark as refreshing but keep existing data visible
+        // Mark as refreshing but keep existing data visible. Do not cast to
+        // DashboardReadyState — Retry / pull-to-refresh after a failed refresh
+        // lands here while state is DashboardErrorState with cached data.
         if (state.hasData) {
-          final currentState = state as DashboardReadyState;
-          emit(currentState.withRefreshing(true));
+          emit(
+            DashboardReadyState(
+              params: state.params,
+              data: state.data!,
+              isRefreshing: true,
+              lastUpdated: state.lastUpdated,
+            ),
+          );
         }
         await _refreshData(showRefreshIndicator: true);
+      } catch (e) {
+        _handleError(e);
       } finally {
         if (!completer.isCompleted) completer.complete();
         _refreshCompleter = null;

@@ -54,24 +54,24 @@ import '../../../../core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/ui/app_scroll_behavior.dart';
 
-/// Dashboard scroll that stays with the finger.
+/// Dashboard scroll that only moves with the finger.
 ///
-/// A finger release on this page is a fling. Android's default simulation
-/// turns a normal 2,000–4,000 px/s release into 700–1,700 px of travel, and
-/// the dashboard is only about that tall, so the offset hits
-/// [ScrollMetrics.maxScrollExtent] and the last cards fill the screen.
-/// Capping the release speed at 2,200 px/s still travels ~760 px, which is
-/// the whole page, so the swipe still ends at the bottom.
-///
-/// The drag stays 1:1. After the finger lifts, the page only glides a short
-/// distance. Content that loads in underneath does not move the offset.
-class _DashboardScrollPhysics extends ClampingScrollPhysics {
+/// The dashboard overflow on a phone is often only ~500–600 px. Android's
+/// default fling travels farther than that, so a normal flick lands on Quick
+/// Insights. This physics:
+/// - accepts drag even when content fits (pull-to-refresh still works)
+/// - keeps the offset stable when insight rows load
+/// - cancels ballistic coast so the page stops when the finger lifts
+class _DashboardScrollPhysics extends ScrollPhysics {
   const _DashboardScrollPhysics();
 
   @override
   _DashboardScrollPhysics applyTo(ScrollPhysics? ancestor) {
     return const _DashboardScrollPhysics();
   }
+
+  @override
+  bool shouldAcceptUserOffset(ScrollMetrics position) => true;
 
   @override
   double adjustPositionForNewDimensions({
@@ -87,15 +87,30 @@ class _DashboardScrollPhysics extends ClampingScrollPhysics {
         .toDouble();
   }
 
-  /// Short glide for a release. A light flick moves a little; a hard flick
-  /// still stops within about a third of the phone screen.
-  static double _coastPixels(double speed) {
-    final double t = ((speed - 50.0) / 2800.0).clamp(0.0, 1.0);
-    return 36.0 + 200.0 * t;
+  @override
+  double applyBoundaryConditions(ScrollMetrics position, double value) {
+    if (value < position.pixels && position.pixels <= position.minScrollExtent) {
+      return value - position.pixels;
+    }
+    if (position.maxScrollExtent <= position.pixels && position.pixels < value) {
+      return value - position.pixels;
+    }
+    if (value < position.minScrollExtent &&
+        position.minScrollExtent < position.pixels) {
+      return value - position.minScrollExtent;
+    }
+    if (position.pixels < position.maxScrollExtent &&
+        position.maxScrollExtent < value) {
+      return value - position.maxScrollExtent;
+    }
+    return 0.0;
   }
 
   @override
-  Simulation? createBallisticSimulation(ScrollMetrics position, double velocity) {
+  Simulation? createBallisticSimulation(
+    ScrollMetrics position,
+    double velocity,
+  ) {
     final Tolerance tolerance = toleranceFor(position);
     if (position.outOfRange) {
       final double end = position.pixels > position.maxScrollExtent
@@ -109,52 +124,8 @@ class _DashboardScrollPhysics extends ClampingScrollPhysics {
         tolerance: tolerance,
       );
     }
-    if (velocity.abs() < minFlingVelocity) return null;
-    if (velocity > 0.0 && position.pixels >= position.maxScrollExtent) {
-      return null;
-    }
-    if (velocity < 0.0 && position.pixels <= position.minScrollExtent) {
-      return null;
-    }
-
-    final double end = (position.pixels + velocity.sign * _coastPixels(velocity.abs()))
-        .clamp(position.minScrollExtent, position.maxScrollExtent)
-        .toDouble();
-    if ((end - position.pixels).abs() < tolerance.distance) return null;
-    return _DashboardCoast(start: position.pixels, end: end, tolerance: tolerance);
+    return null;
   }
-}
-
-/// Ease-out glide used when the finger lifts. [x] at time 0 is [start], so
-/// the page never teleports.
-class _DashboardCoast extends Simulation {
-  _DashboardCoast({
-    required this.start,
-    required this.end,
-    required super.tolerance,
-  }) : _duration = (0.16 + (end - start).abs() / 1100).clamp(0.16, 0.38).toDouble();
-
-  final double start;
-  final double end;
-  final double _duration;
-
-  @override
-  double x(double time) {
-    final double t = (time / _duration).clamp(0.0, 1.0);
-    final double inv = 1.0 - t;
-    final double eased = 1.0 - inv * inv * inv;
-    return start + (end - start) * eased;
-  }
-
-  @override
-  double dx(double time) {
-    if (time >= _duration) return 0.0;
-    final double inv = 1.0 - time / _duration;
-    return (end - start) * (3.0 * inv * inv) / _duration;
-  }
-
-  @override
-  bool isDone(double time) => time >= _duration;
 }
 
 // High-performance dashboard page with cache-first loading Renders instantly with cached data, updates smoothly when fresh data arrives
@@ -227,8 +198,14 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   List<Map<String, dynamic>> _pendingPayments = [];
   List<Map<String, dynamic>> _lowStockItems = [];
   List<Map<String, dynamic>> _upcomingEvents = [];
-  bool _isLoadingExpandableData = false;
+  int _topProductsTotal = 0;
+  int _pendingPaymentsTotal = 0;
+  int _lowStockTotal = 0;
+  int _upcomingEventsTotal = 0;
   bool _expandableReloadQueued = false;
+  Future<void>? _expandableLoadFuture;
+  static const int _insightPreviewLimit = 5;
+  static const int _insightFetchCap = 10000;
 
   // Dashboard refresh subscription
   StreamSubscription<void>? _refreshSubscription;
@@ -294,55 +271,58 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     }
   }
 
-  // Load data for all expandable sections in parallel
-  Future<void> _loadExpandableSectionData() async {
-    if (_isLoadingExpandableData) {
+  // Load data for all expandable sections in parallel.
+  // Callers (pull-to-refresh) can await this and still see a follow-up reload
+  // if another refresh was queued while the first was in flight.
+  Future<void> _loadExpandableSectionData() {
+    if (_expandableLoadFuture != null) {
       _expandableReloadQueued = true;
-      return;
+      return _expandableLoadFuture!;
     }
 
-    setState(() => _isLoadingExpandableData = true);
+    late final Future<void> future;
+    future = () async {
+      if (!mounted) return;
 
-    try {
-      final results = await Future.wait([
-        _repository.getUpcomingPaymentDues(limit: 5),
-        _repository.getTopSellingProducts(limit: 5),
-        _repository.getCustomersWithPendingBalance(limit: 5),
-        _repository.getRecentPendingBills(limit: 5),
-        _repository.getLowStockProducts(limit: 5),
-        _repository.getUpcomingEvents(limit: 5),
-      ]);
+      try {
+        // High fetch cap so badge totals match the same source as the list.
+        // Detail sheet still shows a short preview.
+        final results = await Future.wait([
+          _repository.getTopSellingProducts(limit: _insightFetchCap),
+          _repository.getCustomersWithPendingBalance(limit: _insightFetchCap),
+          _repository.getLowStockProducts(limit: _insightFetchCap),
+          _repository.getUpcomingEvents(limit: _insightFetchCap),
+        ]);
 
-      // Debug logging for Quick Insights data
-      debugPrint('[Dashboard] Quick Insights Data Loaded:');
-      debugPrint('  - Upcoming Payments: ${results[0].length}');
-      debugPrint('  - Top Products: ${results[1].length}');
-      debugPrint('  - Pending Payments: ${results[2].length}');
-      debugPrint('  - Last Dues: ${results[3].length}');
-      debugPrint('  - Low Stock Items: ${results[4].length}');
-      debugPrint('  - Upcoming Events: ${results[5].length}');
-
-      if (mounted) {
+        if (!mounted) return;
         setState(() {
-          _topProducts = results[1];
-          _pendingPayments = results[2];
-          _lowStockItems = results[4];
-          _upcomingEvents = results[5];
-          _isLoadingExpandableData = false;
+          _topProductsTotal = results[0].length;
+          _pendingPaymentsTotal = results[1].length;
+          _lowStockTotal = results[2].length;
+          _upcomingEventsTotal = results[3].length;
+          _topProducts = results[0].take(_insightPreviewLimit).toList();
+          _pendingPayments = results[1].take(_insightPreviewLimit).toList();
+          _lowStockItems = results[2].take(_insightPreviewLimit).toList();
+          _upcomingEvents = results[3].take(_insightPreviewLimit).toList();
         });
+      } catch (e, stackTrace) {
+        debugPrint(
+          '[OptimizedDashboardPage] Error loading expandable data: $e',
+        );
+        debugPrint('[OptimizedDashboardPage] Stack trace: $stackTrace');
+      } finally {
+        if (identical(_expandableLoadFuture, future)) {
+          _expandableLoadFuture = null;
+        }
+        if (_expandableReloadQueued && mounted) {
+          _expandableReloadQueued = false;
+          await _loadExpandableSectionData();
+        }
       }
-    } catch (e, stackTrace) {
-      debugPrint('[OptimizedDashboardPage] Error loading expandable data: $e');
-      debugPrint('[OptimizedDashboardPage] Stack trace: $stackTrace');
-      if (mounted) {
-        setState(() => _isLoadingExpandableData = false);
-      }
-    } finally {
-      if (_expandableReloadQueued && mounted) {
-        _expandableReloadQueued = false;
-        _loadExpandableSectionData();
-      }
-    }
+    }();
+
+    _expandableLoadFuture = future;
+    return future;
   }
 
   @override
@@ -468,7 +448,13 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   }
 
   Widget _buildWebContent() {
-    _webPanes[_selectedIndex] ??= _createWebPane(_selectedIndex);
+    // Rebuild the dashboard pane every time so language / theme listeners
+    // update labels. Other panes stay cached for snappy tab switches.
+    if (_selectedIndex == WebShell.dashboard) {
+      _webPanes[WebShell.dashboard] = _dashboardPane();
+    } else {
+      _webPanes[_selectedIndex] ??= _createWebPane(_selectedIndex);
+    }
     // Only the selected page is laid out. IndexedStack still lays out every visited page, so one page's layout error freezes every other screen on its last frame (the loading shimmer).
     final stack = Stack(
       fit: StackFit.expand,
@@ -1637,7 +1623,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     Expanded(
                       child: _buildGlassyStatRow(
                         title: _localizations.topProducts,
-                        count: _topProducts.length,
+                        count: _topProductsTotal,
                         icon: Icons.star_rounded,
                         gradientColors: const [
                           AppTheme.orange300,
@@ -1647,6 +1633,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                           _localizations.topProducts,
                           _topProducts,
                           'products',
+                          totalCount: _topProductsTotal,
                         ),
                       ),
                     ),
@@ -1654,7 +1641,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     Expanded(
                       child: _buildGlassyStatRow(
                         title: _localizations.pendingPayments,
-                        count: _pendingPayments.length,
+                        count: _pendingPaymentsTotal,
                         icon: Icons.pending_actions_rounded,
                         gradientColors: const [
                           AppTheme.error,
@@ -1664,6 +1651,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                           _localizations.pendingPayments,
                           _pendingPayments,
                           'pending',
+                          totalCount: _pendingPaymentsTotal,
                         ),
                       ),
                     ),
@@ -1675,7 +1663,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     Expanded(
                       child: _buildGlassyStatRow(
                         title: _localizations.lowStockItems,
-                        count: _lowStockItems.length,
+                        count: _lowStockTotal,
                         icon: Icons.shopping_cart_rounded,
                         gradientColors: const [
                           AppTheme.teal400,
@@ -1685,6 +1673,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                           _localizations.lowStockItems,
                           _lowStockItems,
                           'lowstock',
+                          totalCount: _lowStockTotal,
                         ),
                       ),
                     ),
@@ -1692,7 +1681,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     Expanded(
                       child: _buildGlassyStatRow(
                         title: _localizations.upcomingEvents,
-                        count: _upcomingEvents.length,
+                        count: _upcomingEventsTotal,
                         icon: Icons.event_rounded,
                         gradientColors: const [
                           AppTheme.cyan,
@@ -1702,6 +1691,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                           _localizations.upcomingEvents,
                           _upcomingEvents,
                           'events',
+                          totalCount: _upcomingEventsTotal,
                         ),
                       ),
                     ),
@@ -1710,49 +1700,53 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               ] else ...[
                 _buildGlassyStatRow(
                   title: _localizations.topProducts,
-                  count: _topProducts.length,
+                  count: _topProductsTotal,
                   icon: Icons.star_rounded,
                   gradientColors: const [AppTheme.orange300, AppTheme.orange],
                   onTap: () => _showQuickInsightDetail(
                     _localizations.topProducts,
                     _topProducts,
                     'products',
+                    totalCount: _topProductsTotal,
                   ),
                 ),
                 const SizedBox(height: 10),
                 _buildGlassyStatRow(
                   title: _localizations.pendingPayments,
-                  count: _pendingPayments.length,
+                  count: _pendingPaymentsTotal,
                   icon: Icons.pending_actions_rounded,
                   gradientColors: const [AppTheme.error, AppTheme.red600],
                   onTap: () => _showQuickInsightDetail(
                     _localizations.pendingPayments,
                     _pendingPayments,
                     'pending',
+                    totalCount: _pendingPaymentsTotal,
                   ),
                 ),
                 const SizedBox(height: 10),
                 _buildGlassyStatRow(
                   title: _localizations.lowStockItems,
-                  count: _lowStockItems.length,
+                  count: _lowStockTotal,
                   icon: Icons.shopping_cart_rounded,
                   gradientColors: const [AppTheme.teal400, AppTheme.teal600],
                   onTap: () => _showQuickInsightDetail(
                     _localizations.lowStockItems,
                     _lowStockItems,
                     'lowstock',
+                    totalCount: _lowStockTotal,
                   ),
                 ),
                 const SizedBox(height: 10),
                 _buildGlassyStatRow(
                   title: _localizations.upcomingEvents,
-                  count: _upcomingEvents.length,
+                  count: _upcomingEventsTotal,
                   icon: Icons.event_rounded,
                   gradientColors: const [AppTheme.cyan, AppTheme.cyan700],
                   onTap: () => _showQuickInsightDetail(
                     _localizations.upcomingEvents,
                     _upcomingEvents,
                     'events',
+                    totalCount: _upcomingEventsTotal,
                   ),
                 ),
               ],
@@ -2244,6 +2238,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     _localizations.lowStockItems,
                     _lowStockItems,
                     'lowstock',
+                    totalCount: _lowStockTotal > 0
+                        ? _lowStockTotal
+                        : data.lowStockCount,
                   ),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -3449,8 +3446,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   void _showQuickInsightDetail(
     String title,
     List<Map<String, dynamic>> data,
-    String type,
-  ) {
+    String type, {
+    int? totalCount,
+  }) {
     // Get icon and gradient colors based on type
     IconData icon;
     List<Color> gradientColors;
@@ -3483,6 +3481,16 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       default:
         icon = Icons.info_outline;
         gradientColors = [AppTheme.paletteFF667EEA, AppTheme.paletteFF764BA2];
+    }
+
+    final total = totalCount ?? data.length;
+    final String subtitle;
+    if (data.isEmpty) {
+      subtitle = '0 items';
+    } else if (total > data.length) {
+      subtitle = 'Top ${data.length} of $total';
+    } else {
+      subtitle = '$total ${total == 1 ? 'item' : 'items'}';
     }
 
     showGeneralDialog(
@@ -3558,7 +3566,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        '${data.length} ${data.length == 1 ? 'item' : 'items'}',
+                                        subtitle,
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w500,
