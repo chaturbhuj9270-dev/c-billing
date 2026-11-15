@@ -54,6 +54,109 @@ import '../../../../core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/ui/app_scroll_behavior.dart';
 
+/// Dashboard scroll that stays with the finger.
+///
+/// A finger release on this page is a fling. Android's default simulation
+/// turns a normal 2,000–4,000 px/s release into 700–1,700 px of travel, and
+/// the dashboard is only about that tall, so the offset hits
+/// [ScrollMetrics.maxScrollExtent] and the last cards fill the screen.
+/// Capping the release speed at 2,200 px/s still travels ~760 px, which is
+/// the whole page, so the swipe still ends at the bottom.
+///
+/// The drag stays 1:1. After the finger lifts, the page only glides a short
+/// distance. Content that loads in underneath does not move the offset.
+class _DashboardScrollPhysics extends ClampingScrollPhysics {
+  const _DashboardScrollPhysics();
+
+  @override
+  _DashboardScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return const _DashboardScrollPhysics();
+  }
+
+  @override
+  double adjustPositionForNewDimensions({
+    required ScrollMetrics oldPosition,
+    required ScrollMetrics newPosition,
+    required bool isScrolling,
+    required double velocity,
+  }) {
+    final double next = oldPosition.pixels;
+    if (!next.isFinite) return newPosition.minScrollExtent;
+    return next
+        .clamp(newPosition.minScrollExtent, newPosition.maxScrollExtent)
+        .toDouble();
+  }
+
+  /// Short glide for a release. A light flick moves a little; a hard flick
+  /// still stops within about a third of the phone screen.
+  static double _coastPixels(double speed) {
+    final double t = ((speed - 50.0) / 2800.0).clamp(0.0, 1.0);
+    return 36.0 + 200.0 * t;
+  }
+
+  @override
+  Simulation? createBallisticSimulation(ScrollMetrics position, double velocity) {
+    final Tolerance tolerance = toleranceFor(position);
+    if (position.outOfRange) {
+      final double end = position.pixels > position.maxScrollExtent
+          ? position.maxScrollExtent
+          : position.minScrollExtent;
+      return ScrollSpringSimulation(
+        spring,
+        position.pixels,
+        end,
+        velocity < 0.0 ? velocity : 0.0,
+        tolerance: tolerance,
+      );
+    }
+    if (velocity.abs() < minFlingVelocity) return null;
+    if (velocity > 0.0 && position.pixels >= position.maxScrollExtent) {
+      return null;
+    }
+    if (velocity < 0.0 && position.pixels <= position.minScrollExtent) {
+      return null;
+    }
+
+    final double end = (position.pixels + velocity.sign * _coastPixels(velocity.abs()))
+        .clamp(position.minScrollExtent, position.maxScrollExtent)
+        .toDouble();
+    if ((end - position.pixels).abs() < tolerance.distance) return null;
+    return _DashboardCoast(start: position.pixels, end: end, tolerance: tolerance);
+  }
+}
+
+/// Ease-out glide used when the finger lifts. [x] at time 0 is [start], so
+/// the page never teleports.
+class _DashboardCoast extends Simulation {
+  _DashboardCoast({
+    required this.start,
+    required this.end,
+    required super.tolerance,
+  }) : _duration = (0.16 + (end - start).abs() / 1100).clamp(0.16, 0.38).toDouble();
+
+  final double start;
+  final double end;
+  final double _duration;
+
+  @override
+  double x(double time) {
+    final double t = (time / _duration).clamp(0.0, 1.0);
+    final double inv = 1.0 - t;
+    final double eased = 1.0 - inv * inv * inv;
+    return start + (end - start) * eased;
+  }
+
+  @override
+  double dx(double time) {
+    if (time >= _duration) return 0.0;
+    final double inv = 1.0 - time / _duration;
+    return (end - start) * (3.0 * inv * inv) / _duration;
+  }
+
+  @override
+  bool isDone(double time) => time >= _duration;
+}
+
 // High-performance dashboard page with cache-first loading Renders instantly with cached data, updates smoothly when fresh data arrives
 class OptimizedDashboardPage extends StatelessWidget {
   const OptimizedDashboardPage({super.key});
@@ -113,6 +216,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   // Animation controllers
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
+  final ScrollController _dashboardScrollController = ScrollController(
+    keepScrollOffset: false,
+  );
 
   // Real data for quick insights (using offline repository for consistency)
   final DashboardOfflineRepository _repository =
@@ -245,6 +351,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     _refreshSubscription?.cancel();
     LanguageService.instance.removeListener(_onLanguageChanged);
     _fadeController.dispose();
+    _dashboardScrollController.dispose();
     super.dispose();
   }
 
@@ -1463,10 +1570,15 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     final data = state.data ?? DashboardSummary.empty;
     final isRefreshing = state.isRefreshing;
 
-    return SingleChildScrollView(
-      physics: AppScrollPhysics.platform(),
+    return ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context).copyWith(overscroll: false),
+      child: SingleChildScrollView(
+      controller: _dashboardScrollController,
+      primary: false,
+      physics: const _DashboardScrollPhysics(),
       padding: const EdgeInsets.all(20.0),
-      child: Center(
+      child: Align(
+        alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxWidth: MediaQuery.of(context).size.width >= 800
@@ -1474,6 +1586,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 : double.infinity,
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildFilterSection(state),
@@ -1649,6 +1762,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -1664,7 +1778,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 980;
         return SingleChildScrollView(
-          physics: AppScrollPhysics.platform(),
+          controller: _dashboardScrollController,
+          primary: false,
+          physics: const _DashboardScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
