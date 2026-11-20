@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:c_billing/core/access/tenant_context.dart';
@@ -61,7 +63,7 @@ class ProductApiService {
       }
       // Full pull: no orderBy (avoids index/field requirements on first sync)
 
-      final snapshot = await query.get();
+      final snapshot = await query.get().timeout(const Duration(seconds: 25));
 
       return snapshot.docs.map((doc) {
         final data = doc.data();

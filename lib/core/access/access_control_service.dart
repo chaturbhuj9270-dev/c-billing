@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -78,8 +80,16 @@ class AccessControlService {
 
     try {
       // Prefer custom claims when Cloud Functions have set them.
-      final token = await user.getIdTokenResult(true);
-      final claims = token.claims ?? {};
+      // Timeout: a hung token refresh freezes splash / post-login forever.
+      Map<String, dynamic> claims = {};
+      try {
+        final token = await user
+            .getIdTokenResult(true)
+            .timeout(const Duration(seconds: 10));
+        claims = token.claims ?? {};
+      } catch (e) {
+        debugPrint('[AccessControl] getIdTokenResult timed out/failed: $e');
+      }
       final claimOwner = claims['tenantOwnerId'] as String?;
       final claimRole = claims['role'] as String?;
 
@@ -99,7 +109,11 @@ class AccessControlService {
       }
 
       // Fallback: employee profile doc under users/{uid}
-      final profile = await _firestore.collection('users').doc(user.uid).get();
+      final profile = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .get()
+          .timeout(const Duration(seconds: 10));
       final data = profile.data();
       if (data != null &&
           data['role'] == 'employee' &&
@@ -204,7 +218,11 @@ class AccessControlService {
 
   Future<String?> _safeRoleHint(String uid) async {
     try {
-      final snap = await _firestore.collection('users').doc(uid).get();
+      final snap = await _firestore
+          .collection('users')
+          .doc(uid)
+          .get()
+          .timeout(const Duration(seconds: 5));
       return snap.data()?['role'] as String?;
     } catch (_) {
       return null;

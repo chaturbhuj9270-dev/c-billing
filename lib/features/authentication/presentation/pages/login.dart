@@ -326,16 +326,23 @@ class _LoginPageV2State extends State<LoginPageV2>
   }
 
   Future<void> _checkSubscriptionAndNavigate() async {
+    final subscriptionService = SubscriptionService();
     try {
       // Tenant context must be ready before sync hits Firestore paths.
-      await AccessControlService.instance.loadForCurrentUser();
+      await AccessControlService.instance
+          .loadForCurrentUser()
+          .timeout(const Duration(seconds: 12));
       // Drop previous account's offline data before UI opens.
-      await LocalUserDataGuard.ensureBoundToCurrentUser();
+      await LocalUserDataGuard.ensureBoundToCurrentUser().timeout(
+        const Duration(seconds: 8),
+      );
 
       // Entitlement first: getSubscriptionAccess writes trialExpiresAt so
       // Firestore rules allow reads before post-login sync pulls data.
-      final subscriptionService = SubscriptionService();
-      final isValid = await subscriptionService.isSubscriptionValid();
+      final isValid = await subscriptionService.isSubscriptionValid().timeout(
+        const Duration(seconds: 14),
+        onTimeout: () => subscriptionService.hasOfflineEntitlement(),
+      );
 
       // Full server → local sync in background; do not block navigation.
       syncAfterLogin().catchError((e) {
@@ -367,7 +374,10 @@ class _LoginPageV2State extends State<LoginPageV2>
         return;
       }
       // Network/access glitches must not interrupt an active free month.
-      final stillValid = await SubscriptionService().isSubscriptionValid();
+      final stillValid = await subscriptionService.isSubscriptionValid().timeout(
+        const Duration(seconds: 8),
+        onTimeout: () => subscriptionService.hasOfflineEntitlement(),
+      );
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(

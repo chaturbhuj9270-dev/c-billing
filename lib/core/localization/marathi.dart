@@ -79,6 +79,9 @@ class MarathiLocalization {
   static const String quantitySold = 'विकलेले प्रमाण';
   static const String revenue = 'महसूल';
   static const String pendingAmount = 'प्रलंबित रक्कम';
+  static const String totalCollected = 'एकूण जमा';
+  static const String pendingUpcoming = 'आगामी प्रलंबित';
+  static const String pendingUpcomingHint = 'थकबाकी असलेले सर्व ग्राहक — पाहण्यासाठी टॅप करा';
   static const String billNumber = 'बिल क्रमांक';
   static const String date = 'तारीख';
   static const String currentStock = 'सध्याचा स्टॉक';

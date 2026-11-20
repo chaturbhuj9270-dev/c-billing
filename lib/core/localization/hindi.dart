@@ -79,6 +79,9 @@ class HindiLocalization {
   static const String quantitySold = 'बेची गई मात्रा';
   static const String revenue = 'राजस्व';
   static const String pendingAmount = 'लंबित राशि';
+  static const String totalCollected = 'कुल प्राप्त';
+  static const String pendingUpcoming = 'आगामी बकाया';
+  static const String pendingUpcomingHint = 'बकाया वाले सभी ग्राहक — देखने के लिए टैप करें';
   static const String billNumber = 'बिल नंबर';
   static const String date = 'तारीख';
   static const String currentStock = 'वर्तमान स्टॉक';

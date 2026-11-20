@@ -626,6 +626,39 @@ class AppLocalizations {
     }
   }
 
+  String get totalCollected {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.totalCollected;
+      case 'Marathi':
+        return MarathiLocalization.totalCollected;
+      default:
+        return EnglishLocalization.totalCollected;
+    }
+  }
+
+  String get pendingUpcoming {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.pendingUpcoming;
+      case 'Marathi':
+        return MarathiLocalization.pendingUpcoming;
+      default:
+        return EnglishLocalization.pendingUpcoming;
+    }
+  }
+
+  String get pendingUpcomingHint {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.pendingUpcomingHint;
+      case 'Marathi':
+        return MarathiLocalization.pendingUpcomingHint;
+      default:
+        return EnglishLocalization.pendingUpcomingHint;
+    }
+  }
+
   String get billNumber {
     switch (languageCode) {
       case 'Hindi':

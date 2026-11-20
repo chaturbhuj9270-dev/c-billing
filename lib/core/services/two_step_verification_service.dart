@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -33,7 +35,11 @@ class TwoStepVerificationService {
 
   Future<bool> isEnabledForUid(String uid) async {
     try {
-      final snap = await _firestore.collection('users').doc(uid).get();
+      final snap = await _firestore
+          .collection('users')
+          .doc(uid)
+          .get()
+          .timeout(const Duration(seconds: 6));
       return snap.data()?['twoStepVerificationEnabled'] == true;
     } catch (e) {
       debugPrint('[TwoStep] isEnabledForUid failed: $e');
@@ -44,7 +50,9 @@ class TwoStepVerificationService {
   // Sends OTP email. Pass [force] when enabling 2FA from settings.
   Future<String> sendLoginOtp({bool force = false}) async {
     final callable = _functions.httpsCallable('sendLoginOtp');
-    final result = await callable.call(<String, dynamic>{'force': force});
+    final result = await callable
+        .call(<String, dynamic>{'force': force})
+        .timeout(const Duration(seconds: 15));
     final data = Map<String, dynamic>.from(result.data as Map? ?? {});
     return (data['email'] as String?) ??
         (_auth.currentUser?.email ?? '');

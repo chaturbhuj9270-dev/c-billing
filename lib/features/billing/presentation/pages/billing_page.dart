@@ -112,6 +112,8 @@ class _BillingPageState extends State<BillingPage> {
       []; // All products including zero-stock (for code lookup)
   bool _isLoading = false;
   bool _isSavingBill = false;
+  bool _productsLoadInFlight = false;
+  bool _productsReloadQueued = false;
 
   // Discount state
   bool _isPercentageDiscount = true;
@@ -596,19 +598,53 @@ class _BillingPageState extends State<BillingPage> {
   }
 
   Future<void> _loadProducts({bool showLoader = true}) async {
+    // Stream + init can call this together; a second call must not leave the
+    // first hang with _isLoading stuck true forever.
+    if (_productsLoadInFlight) {
+      _productsReloadQueued = true;
+      return;
+    }
+    _productsLoadInFlight = true;
     try {
-      if (showLoader) setState(() => _isLoading = true);
+      if (showLoader && mounted) setState(() => _isLoading = true);
 
       // Use offline-first controller to get products with stock > 0
       var allProducts = await ProductOfflineController.instance
-          .getAllProducts();
+          .getAllProducts()
+          .timeout(
+            const Duration(seconds: 8),
+            onTimeout: () {
+              debugPrint('[BillingPage] getAllProducts timed out');
+              return <ProductEntity>[];
+            },
+          );
 
-      // If no products locally, try to sync from Firebase
+      // Never block the billing UI on a full Firebase pull. Post-login sync
+      // (and the product stream) will refill when data arrives.
       if (allProducts.isEmpty) {
-        debugPrint('[BillingPage] No local products, syncing from Firebase...');
-        await ProductSyncService.instance.forceFullRefresh();
-        allProducts = await ProductOfflineController.instance.getAllProducts();
-        debugPrint('[BillingPage] After sync: ${allProducts.length} products');
+        debugPrint(
+          '[BillingPage] No local products — background sync, UI continues',
+        );
+        unawaited(
+          ProductSyncService.instance.forceFullRefresh().timeout(
+            const Duration(seconds: 25),
+            onTimeout: () {
+              debugPrint('[BillingPage] Background product sync timed out');
+              return ProductSyncResult(
+                success: false,
+                errorMessage: 'timeout',
+                duration: const Duration(seconds: 25),
+              );
+            },
+          ).catchError((e) {
+            debugPrint('[BillingPage] Background product sync failed: $e');
+            return ProductSyncResult(
+              success: false,
+              errorMessage: e.toString(),
+              duration: Duration.zero,
+            );
+          }),
+        );
       }
 
       // Map all products (including zero-stock) for product code lookup
@@ -623,7 +659,14 @@ class _BillingPageState extends State<BillingPage> {
 
       // Load FIFO batch data for billing
       final batches = await PurchaseBatchOfflineController.instance
-          .getAllBatches(includeConsumed: false);
+          .getAllBatches(includeConsumed: false)
+          .timeout(
+            const Duration(seconds: 8),
+            onTimeout: () {
+              debugPrint('[BillingPage] getAllBatches timed out');
+              return <PurchaseBatchEntity>[];
+            },
+          );
 
       debugPrint(
         '[BillingPage] Total products: ${allProducts.length}, with stock > 0: ${availableProducts.length}, batches: ${batches.length}',
@@ -649,17 +692,24 @@ class _BillingPageState extends State<BillingPage> {
             _productByBarcode[code] = product;
             _productByBarcode[code.toLowerCase()] = product;
           }
-          if (showLoader) _isLoading = false;
         });
       }
     } catch (e) {
       debugPrint('[BillingPage] Error loading products: $e');
       if (mounted) {
-        setState(() => _isLoading = false);
         _showSnackbar(
           '${_localizations.errorLoadingProducts}: $e',
           isError: true,
         );
+      }
+    } finally {
+      _productsLoadInFlight = false;
+      if (mounted && showLoader) {
+        setState(() => _isLoading = false);
+      }
+      if (_productsReloadQueued && mounted) {
+        _productsReloadQueued = false;
+        unawaited(_loadProducts(showLoader: false));
       }
     }
   }

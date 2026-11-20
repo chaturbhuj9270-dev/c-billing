@@ -41,7 +41,13 @@ class DashboardSummary extends Equatable {
   final double stockValue;
   final int lowStockCount;
 
-  // Total pending amount across all bills (unpaid / partially paid)
+  // Money collected in the selected filter period (payment ledger).
+  final double totalCollectedAmount;
+
+  // Outstanding on bills whose billDate falls in the selected filter period.
+  final double periodPendingAmount;
+
+  // All-time customer AR (bills + open event remaining) — matches customer page.
   final double totalPendingAmount;
 
   // Event/Order tracking fields Total count of all events and orders
@@ -87,6 +93,8 @@ class DashboardSummary extends Equatable {
     this.profitPercentage = 0,
     this.stockValue = 0,
     this.lowStockCount = 0,
+    this.totalCollectedAmount = 0,
+    this.periodPendingAmount = 0,
     this.totalPendingAmount = 0,
     this.totalEventOrders = 0,
     this.upcomingEvents = 0,
@@ -129,6 +137,8 @@ class DashboardSummary extends Equatable {
     double? profitPercentage,
     double? stockValue,
     int? lowStockCount,
+    double? totalCollectedAmount,
+    double? periodPendingAmount,
     double? totalPendingAmount,
     int? totalEventOrders,
     int? upcomingEvents,
@@ -161,6 +171,9 @@ class DashboardSummary extends Equatable {
       profitPercentage: profitPercentage ?? this.profitPercentage,
       stockValue: stockValue ?? this.stockValue,
       lowStockCount: lowStockCount ?? this.lowStockCount,
+      totalCollectedAmount:
+          totalCollectedAmount ?? this.totalCollectedAmount,
+      periodPendingAmount: periodPendingAmount ?? this.periodPendingAmount,
       totalPendingAmount: totalPendingAmount ?? this.totalPendingAmount,
       totalEventOrders: totalEventOrders ?? this.totalEventOrders,
       upcomingEvents: upcomingEvents ?? this.upcomingEvents,
@@ -197,6 +210,8 @@ class DashboardSummary extends Equatable {
       'profitPercentage': profitPercentage,
       'stockValue': stockValue,
       'lowStockCount': lowStockCount,
+      'totalCollectedAmount': totalCollectedAmount,
+      'periodPendingAmount': periodPendingAmount,
       'totalPendingAmount': totalPendingAmount,
       'totalEventOrders': totalEventOrders,
       'upcomingEvents': upcomingEvents,
@@ -233,6 +248,10 @@ class DashboardSummary extends Equatable {
       profitPercentage: (json['profitPercentage'] as num?)?.toDouble() ?? 0,
       stockValue: (json['stockValue'] as num?)?.toDouble() ?? 0,
       lowStockCount: json['lowStockCount'] as int? ?? 0,
+      totalCollectedAmount:
+          (json['totalCollectedAmount'] as num?)?.toDouble() ?? 0,
+      periodPendingAmount:
+          (json['periodPendingAmount'] as num?)?.toDouble() ?? 0,
       totalPendingAmount: (json['totalPendingAmount'] as num?)?.toDouble() ?? 0,
       totalEventOrders: json['totalEventOrders'] as int? ?? 0,
       upcomingEvents: json['upcomingEvents'] as int? ?? 0,
@@ -270,6 +289,8 @@ class DashboardSummary extends Equatable {
     profitPercentage,
     stockValue,
     lowStockCount,
+    totalCollectedAmount,
+    periodPendingAmount,
     totalPendingAmount,
     totalEventOrders,
     upcomingEvents,

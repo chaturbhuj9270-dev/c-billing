@@ -5,6 +5,7 @@ import '../../../../core/database/local_store.dart';
 import '../../../../core/services/local_database.dart';
 import '../../../billing/offline/controllers/bill_offline_controller.dart';
 import '../../../customer/offline/controllers/customer_offline_controller.dart';
+import '../../../customer/offline/entities/customer_transaction_entity.dart';
 import '../../../inventory_management/offline/controllers/purchase_offline_controller.dart';
 import '../../../inventory_management/offline/controllers/purchase_batch_offline_controller.dart';
 import '../../../inventory_management/offline/entities/purchase_batch_entity.dart';
@@ -48,12 +49,14 @@ class DashboardLocalDataSource {
       _getSalesDataForPeriod(startDate, endDate),
       _getPurchaseDataForPeriod(startDate, endDate),
       _getStockDataFromBatches(),
-      // Pending amounts (9)
+      // All-time pending AR matching customer page (9)
       _getTotalPendingAmount(),
       // Event/Order data (10)
       _getEventOrderData(),
       // Purchase returns from stock ledger (11)
       _getPurchaseReturnData(startDate, endDate),
+      // Filter-scoped cash collections from payment ledger (12)
+      _getCollectedAmountForPeriod(startDate, endDate),
     ]);
 
     // Extract counts
@@ -81,6 +84,8 @@ class DashboardLocalDataSource {
 
     // Extract purchase return data from stock ledger
     final purchaseReturnData = results[11] as _PurchaseReturnResult;
+
+    final totalCollectedAmount = results[12] as double;
 
     // Net Sales = Gross Sales - Returns
     final netSales = salesData.grossSales - salesData.totalReturns;
@@ -122,6 +127,8 @@ class DashboardLocalDataSource {
       profitPercentage: profitPercentage,
       stockValue: stockData.stockValue,
       lowStockCount: stockData.lowStockCount,
+      totalCollectedAmount: totalCollectedAmount,
+      periodPendingAmount: salesData.periodPending,
       totalPendingAmount: totalPendingAmount,
       totalEventOrders: eventOrderData.totalCount,
       upcomingEvents: eventOrderData.upcomingEvents,
@@ -192,6 +199,7 @@ class DashboardLocalDataSource {
         watchTable(db.companyRecords);
         watchTable(db.eventOrderRecords);
         watchTable(db.stockLedgerRecords);
+        watchTable(db.customerTransactionRecords);
       },
       onCancel: () {
         localDebounceTimer?.cancel();
@@ -221,12 +229,17 @@ class DashboardLocalDataSource {
     double grossSales = 0;
     double totalReturns = 0;
     double netProfit = 0;
+    double periodPending = 0;
     int totalItemsSold = 0;
     int totalReturnedItems = 0;
 
     for (final bill in bills) {
       // Gross sales = sum of finalAmount (already includes discount)
       grossSales += bill.finalAmount;
+      // Outstanding still owed on invoices in this filter window.
+      if (bill.pendingAmount > 0) {
+        periodPending += bill.pendingAmount;
+      }
 
       // Match live return math: item charge ratio (discount/tax, excludes extras).
       final chargeRatio = bill.itemChargeRatio;
@@ -255,10 +268,32 @@ class DashboardLocalDataSource {
       grossSales: grossSales,
       totalReturns: totalReturns,
       netProfit: netProfit,
+      periodPending: periodPending,
       billCount: bills.length,
       totalItemsSold: totalItemsSold,
       totalReturnedItems: totalReturnedItems,
     );
+  }
+
+  // Cash / UPI / bank collections received in the filter period (payment ledger).
+  // Uses transaction date — not bill date — so late collections count in the
+  // period they were actually received.
+  Future<double> _getCollectedAmountForPeriod(
+    DateTime? startDate,
+    DateTime? endDate,
+  ) async {
+    final start = startDate ?? DateTime(2000);
+    final end = endDate ?? DateTime.now().add(const Duration(days: 1));
+    final transactions = await LocalDatabase.instance.db.loadTransactions();
+    double total = 0;
+    for (final tx in transactions) {
+      if (tx.syncStatus == TransactionSyncStatus.deleted) continue;
+      if (tx.transactionType != TransactionType.payment) continue;
+      final date = tx.transactionDate;
+      if (date.isBefore(start) || date.isAfter(end)) continue;
+      if (tx.amount > 0) total += tx.amount;
+    }
+    return total;
   }
 
   // ==================== PURCHASE CALCULATION ====================
@@ -478,6 +513,7 @@ class _SalesResult {
   final double grossSales;
   final double totalReturns;
   final double netProfit;
+  final double periodPending;
   final int billCount;
   final int totalItemsSold;
   final int totalReturnedItems;
@@ -486,6 +522,7 @@ class _SalesResult {
     required this.grossSales,
     required this.totalReturns,
     required this.netProfit,
+    required this.periodPending,
     required this.billCount,
     required this.totalItemsSold,
     required this.totalReturnedItems,

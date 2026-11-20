@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../../customer/presentation/pages/enhanced_customer_page.dart';
+import '../../../customer/presentation/widgets/customer_filter_widget.dart';
 import '../../../inventory_management/presentation/pages/enhanced_purchase_screen.dart';
 import '../../../inventory_management/presentation/pages/purchase_settings_page.dart';
 import '../../../inventory_management/presentation/pages/purchase_report_settings_page.dart';
@@ -2292,11 +2293,23 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               const SizedBox(width: 12),
               Expanded(
                 child: _buildWebStockStat(
+                  _localizations.totalCollected,
+                  _formatWebAmount(data.totalCollectedAmount),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildWebStockStat(
                   _localizations.pendingAmount,
-                  _formatWebAmount(data.totalPendingAmount),
+                  _formatWebAmount(data.periodPendingAmount),
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          _buildPendingUpcomingTile(
+            amountLabel: _formatWebAmount(data.totalPendingAmount),
+            compact: false,
           ),
         ],
       ),
@@ -2337,6 +2350,99 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         ],
       ),
     );
+  }
+
+  Widget _buildPendingUpcomingTile({
+    required String amountLabel,
+    required bool compact,
+  }) {
+    return Material(
+      color: AppColors.isDark(context)
+          ? AppTheme.orange.withValues(alpha: 0.12)
+          : AppTheme.orange50,
+      borderRadius: BorderRadius.circular(compact ? 12 : 14),
+      child: InkWell(
+        onTap: _openCustomersWithPendingFilter,
+        borderRadius: BorderRadius.circular(compact ? 12 : 14),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 12 : 14,
+            vertical: compact ? 12 : 14,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.schedule_rounded,
+                size: compact ? 18 : 20,
+                color: AppTheme.orange700,
+              ),
+              SizedBox(width: compact ? 8 : 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _localizations.pendingUpcoming,
+                      style: TextStyle(
+                        color: AppTheme.orange700,
+                        fontSize: compact ? 11 : 12,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _localizations.pendingUpcomingHint,
+                      style: TextStyle(
+                        color: AppColors.mutedText(context),
+                        fontSize: compact ? 10 : 11,
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                amountLabel,
+                style: TextStyle(
+                  color: AppTheme.orange700,
+                  fontSize: compact ? 16 : 18,
+                  fontWeight: FontWeight.w800,
+                  fontFamily: 'Literata',
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppTheme.orange700,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openCustomersWithPendingFilter() {
+    if (!AccessControlService.instance.canAccessShellIndex(WebShell.customers)) {
+      GlassyToast.show(context, 'Access not allowed for this module');
+      return;
+    }
+    if (DesktopCanvas.isDesktopPlatform) {
+      _webPanes[WebShell.customers] = EnhancedCustomerPage(
+        isEmbedded: true,
+        initialSortField: CustomerSortField.pendingAmount,
+        initialSortAscending: false,
+      );
+      WebShell.popToRoot();
+      setState(() => _selectedIndex = WebShell.customers);
+      return;
+    }
+    setState(() => _selectedIndex = WebShell.customers);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      CustomerScreenActions.openPendingAmountSort();
+    });
   }
 
   Widget _buildErrorBanner(DashboardErrorState state) {
@@ -3118,85 +3224,84 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           Row(
             children: [
               Expanded(
-                child: Container(
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.accentSoft(context, 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border(context)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _localizations.stockValue,
-                        style: TextStyle(
-                          color: AppColors.secondaryText(context),
-                          fontSize: 11,
-                          fontFamily: 'Literata',
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        child: Text(
-                          _formatAmount(data.stockValue),
-                          key: ValueKey(data.stockValue),
-                          style: TextStyle(
-                            color: AppColors.primaryText(context),
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                child: _buildMobileMoneyStat(
+                  label: _localizations.stockValue,
+                  amount: data.stockValue,
+                  fill: AppColors.accentSoft(context, 0.08),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.chipFill(context),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border(context)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _localizations.pendingAmount,
-                        style: TextStyle(
-                          color: AppColors.secondaryText(context),
-                          fontSize: 11,
-                          fontFamily: 'Literata',
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        child: Text(
-                          _formatAmount(data.totalPendingAmount),
-                          key: ValueKey(data.totalPendingAmount),
-                          style: TextStyle(
-                            color: AppColors.primaryText(context),
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                child: _buildMobileMoneyStat(
+                  label: _localizations.totalCollected,
+                  amount: data.totalCollectedAmount,
+                  fill: AppColors.chipFill(context),
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildMobileMoneyStat(
+                  label: _localizations.pendingAmount,
+                  amount: data.periodPendingAmount,
+                  fill: AppColors.chipFill(context),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildPendingUpcomingTile(
+            amountLabel: _formatAmount(data.totalPendingAmount),
+            compact: true,
+          ),
         ],
       ),
         ),
+    );
+  }
+
+  Widget _buildMobileMoneyStat({
+    required String label,
+    required double amount,
+    required Color fill,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: AppColors.secondaryText(context),
+              fontSize: 11,
+              fontFamily: 'Literata',
+            ),
+          ),
+          const SizedBox(height: 4),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: Text(
+              _formatAmount(amount),
+              key: ValueKey('$label-$amount'),
+              style: TextStyle(
+                color: AppColors.primaryText(context),
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

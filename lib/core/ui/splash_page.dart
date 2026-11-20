@@ -49,6 +49,8 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
 
   Timer? _timer;
   Timer? _creepTimer;
+  Timer? _watchdogTimer;
+  bool _didNavigate = false;
   late CredentialsManager _credentialsManager;
   late AppLocalizations _localizations;
   final SubscriptionService _subscriptionService = SubscriptionService();
@@ -159,7 +161,28 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       }
     });
 
+    // Hard ceiling: never leave the user stuck on splash forever.
+    _watchdogTimer = Timer(const Duration(seconds: 28), () {
+      if (!mounted || _didNavigate || _showUnlockButton) return;
+      debugPrint('[ERROR] Splash watchdog — forcing login');
+      _goToLogin();
+    });
+
     Future.microtask(() => _initializeApp());
+  }
+
+  Future<void> _prepareSession() async {
+    await AccessControlService.instance
+        .loadForCurrentUser()
+        .timeout(const Duration(seconds: 12));
+    await LocalUserDataGuard.ensureBoundToCurrentUser().timeout(
+      const Duration(seconds: 8),
+    );
+    // Entitlement before sync so Firestore trial fields exist for rules.
+    await _subscriptionService.isSubscriptionValid().timeout(
+      const Duration(seconds: 14),
+      onTimeout: () => _subscriptionService.hasOfflineEntitlement(),
+    );
   }
 
   void _startCreep(double ceiling) {
@@ -249,24 +272,26 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
             return;
           }
           try {
-            await AccessControlService.instance.loadForCurrentUser();
-            await LocalUserDataGuard.ensureBoundToCurrentUser();
-            // Entitlement before sync so Firestore trial fields exist for rules.
-            await _subscriptionService.isSubscriptionValid();
+            await _prepareSession();
             syncAfterLogin().catchError((e) {
               debugPrint('[ERROR] Post-login sync failed: $e');
             });
           } catch (e) {
             debugPrint('[ERROR] Access/sync start failed: $e');
-            if (mounted) {
-              GlassyToast.show(
-                context,
-                'Account access denied. Contact your shop admin.',
-                isError: true,
-              );
+            final msg = e.toString();
+            if (msg.contains('deactivated') || msg.contains('Employee')) {
+              if (mounted) {
+                GlassyToast.show(
+                  context,
+                  'Account access denied. Contact your shop admin.',
+                  isError: true,
+                );
+              }
+              _goToLogin();
+              return;
             }
-            _goToLogin();
-            return;
+            // Network glitches: still open dashboard with offline entitlement.
+            debugPrint('[DEBUG] Continuing after access soft-fail: $e');
           }
           await _setLoadState(step: 3, progress: 0.92);
           _reloadSettingsInBackground();
@@ -355,24 +380,25 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
           return;
         }
         try {
-          await AccessControlService.instance.loadForCurrentUser();
-          await LocalUserDataGuard.ensureBoundToCurrentUser();
-          // Entitlement before sync so Firestore trial fields exist for rules.
-          await _subscriptionService.isSubscriptionValid();
+          await _prepareSession();
           syncAfterLogin().catchError((e) {
             debugPrint('[ERROR] Post-login sync failed: $e');
           });
         } catch (e) {
           debugPrint('[ERROR] Access/sync start failed: $e');
-          if (mounted) {
-            GlassyToast.show(
-              context,
-              'Account access denied. Contact your shop admin.',
-              isError: true,
-            );
+          final msg = e.toString();
+          if (msg.contains('deactivated') || msg.contains('Employee')) {
+            if (mounted) {
+              GlassyToast.show(
+                context,
+                'Account access denied. Contact your shop admin.',
+                isError: true,
+              );
+            }
+            _goToLogin();
+            return;
           }
-          _goToLogin();
-          return;
+          debugPrint('[DEBUG] Continuing after access soft-fail: $e');
         }
         await _setLoadState(step: 3, progress: 0.95);
         _reloadSettingsInBackground();
@@ -398,6 +424,9 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   }
 
   void _goToLogin() {
+    if (_didNavigate) return;
+    _didNavigate = true;
+    _watchdogTimer?.cancel();
     _stopCreep();
     if (mounted) {
       Navigator.of(
@@ -407,6 +436,9 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   }
 
   void _goToEmailVerification(String email) {
+    if (_didNavigate) return;
+    _didNavigate = true;
+    _watchdogTimer?.cancel();
     _stopCreep();
     if (mounted) {
       Navigator.of(context).pushReplacement(
@@ -444,6 +476,9 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     await _setLoadState(step: 3, progress: 1);
     _stopCreep();
     if (!mounted) return true;
+    if (_didNavigate) return true;
+    _didNavigate = true;
+    _watchdogTimer?.cancel();
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => LoginOtpPage(
@@ -543,22 +578,24 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   }
 
   Future<void> _navigateToDashboard() async {
-    if (!mounted) return;
+    if (!mounted || _didNavigate) return;
 
     try {
-      await AccessControlService.instance.loadForCurrentUser();
-      await LocalUserDataGuard.ensureBoundToCurrentUser();
+      await _prepareSession();
     } catch (e) {
       debugPrint('[ERROR] Access control load failed: $e');
-      if (mounted) {
-        GlassyToast.show(
-          context,
-          'Account access denied. Contact your shop admin.',
-          isError: true,
-        );
-        _goToLogin();
+      final msg = e.toString();
+      if (msg.contains('deactivated') || msg.contains('Employee')) {
+        if (mounted) {
+          GlassyToast.show(
+            context,
+            'Account access denied. Contact your shop admin.',
+            isError: true,
+          );
+          _goToLogin();
+        }
+        return;
       }
-      return;
     }
 
     try {
@@ -566,7 +603,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       await _setLoadState(step: 3, progress: 0.98);
       // Service itself fail-opens during free trial (cache / Auth creationTime).
       // Never treat a slow network as "expired" — that flashed the paywall mid-trial.
-      // Entitlement before sync so Firestore trial fields exist for rules.
       final isSubscriptionValid = await _subscriptionService
           .isSubscriptionValid()
           .timeout(
@@ -578,11 +614,12 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         debugPrint(
           '[DEBUG] Subscription/trial expired, redirecting to subscription screen',
         );
-        if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
-          );
-        }
+        if (!mounted || _didNavigate) return;
+        _didNavigate = true;
+        _watchdogTimer?.cancel();
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
+        );
         return;
       }
 
@@ -591,21 +628,29 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       });
 
       debugPrint('[DEBUG] Subscription/trial valid, navigating to dashboard');
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const OptimizedDashboardPage()),
-        );
-      }
+      if (!mounted || _didNavigate) return;
+      _didNavigate = true;
+      _watchdogTimer?.cancel();
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const OptimizedDashboardPage()),
+      );
     } catch (e) {
       debugPrint('[ERROR] Error checking subscription: $e');
       // Only show paywall when access is definitively expired.
-      final stillValid = await _subscriptionService.isSubscriptionValid();
+      final stillValid = await _subscriptionService
+          .isSubscriptionValid()
+          .timeout(
+            const Duration(seconds: 8),
+            onTimeout: () => _subscriptionService.hasOfflineEntitlement(),
+          );
       if (stillValid) {
         syncAfterLogin().catchError((err) {
           debugPrint('[ERROR] Post-login sync failed: $err');
         });
       }
-      if (!mounted) return;
+      if (!mounted || _didNavigate) return;
+      _didNavigate = true;
+      _watchdogTimer?.cancel();
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => stillValid
@@ -630,6 +675,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   @override
   void dispose() {
     _timer?.cancel();
+    _watchdogTimer?.cancel();
     _stopCreep();
     _introController.dispose();
     _pulseController.dispose();

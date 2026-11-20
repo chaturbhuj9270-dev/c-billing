@@ -31,12 +31,26 @@ import 'package:c_billing/core/ui/desktop_canvas.dart';
 // Lets the desktop shell header open the add-customer sheet.
 class CustomerScreenActions {
   static VoidCallback? add;
+
+  /// Live callback so dashboard can open customers already filtered by pending.
+  static void Function(CustomerSortField field, {bool ascending})? applySort;
+
+  static void openPendingAmountSort() {
+    applySort?.call(CustomerSortField.pendingAmount, ascending: false);
+  }
 }
 
 class EnhancedCustomerPage extends StatefulWidget {
   final bool isEmbedded;
+  final CustomerSortField? initialSortField;
+  final bool initialSortAscending;
 
-  const EnhancedCustomerPage({super.key, this.isEmbedded = false});
+  const EnhancedCustomerPage({
+    super.key,
+    this.isEmbedded = false,
+    this.initialSortField,
+    this.initialSortAscending = true,
+  });
 
   @override
   State<EnhancedCustomerPage> createState() => _EnhancedCustomerPageState();
@@ -67,8 +81,8 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   // Raw customer entities from the local database stream (used to recompute _customers)
   List<CustomerEntity> _customerEntities = [];
   String _searchQuery = '';
-  CustomerSortField _sortField = CustomerSortField.name;
-  bool _sortAscending = true;
+  late CustomerSortField _sortField;
+  late bool _sortAscending;
   bool _isNavigatingAway = false;
 
   // local stream for real-time updates
@@ -109,7 +123,10 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       end: 1.0,
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
+    _sortField = widget.initialSortField ?? CustomerSortField.name;
+    _sortAscending = widget.initialSortAscending;
     CustomerScreenActions.add = _showAddCustomerSheet;
+    CustomerScreenActions.applySort = _applyExternalSort;
     _checkUserAuthentication();
     _setupLocalStream();
     _setupEventOrderStream();
@@ -123,9 +140,22 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     });
   }
 
+  void _applyExternalSort(CustomerSortField field, {bool ascending = true}) {
+    if (!mounted) return;
+    setState(() {
+      _sortField = field;
+      _sortAscending = ascending;
+    });
+  }
+
   @override
   void dispose() {
-    CustomerScreenActions.add = null;
+    if (CustomerScreenActions.add == _showAddCustomerSheet) {
+      CustomerScreenActions.add = null;
+    }
+    if (CustomerScreenActions.applySort == _applyExternalSort) {
+      CustomerScreenActions.applySort = null;
+    }
     _isNavigatingAway = true;
     _animController.dispose();
     _customerStreamSub?.cancel();

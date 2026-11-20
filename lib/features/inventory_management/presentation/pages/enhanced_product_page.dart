@@ -6,7 +6,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/services/dashboard_refresh_service.dart';
+import '../../../../core/services/pack_unit_conversion.dart';
 import '../../../../core/services/product_settings_service.dart';
+import '../../../../core/services/purchase_settings_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/utils/qty.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
@@ -1527,10 +1529,20 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     final mrpController = TextEditingController();
     final compositionController = TextEditingController();
     final drugScheduleController = TextEditingController();
-    final unitController = TextEditingController(text: 'Pcs');
+    final settings = PurchaseSettingsService.instance;
+    final defaultBase = settings.isUnitAvailable(settings.defaultUnit) &&
+            !PackUnitConversion.isKnownPackUnit(settings.defaultUnit)
+        ? settings.defaultUnit
+        : (settings.availableUnits.firstWhere(
+            (u) => !PackUnitConversion.isKnownPackUnit(u),
+            orElse: () => 'Pcs',
+          ));
+    final unitController = TextEditingController(text: defaultBase);
     final packUnitController = TextEditingController();
     final unitsPerPackController = TextEditingController(text: '1');
     final packSalesPriceController = TextEditingController();
+    String selectedBaseUnit = defaultBase;
+    String? selectedPackUnit;
     bool applyGst = false;
 
     // Sync CGST and SGST values
@@ -1764,70 +1776,47 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           icon: Icons.medication_outlined,
                         ),
                         const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildTextField(
-                                controller: unitController,
-                                label: 'Sell unit (base)',
-                                icon: Icons.straighten_rounded,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildTextField(
-                                controller: packUnitController,
-                                label: 'Pack unit (optional)',
-                                icon: Icons.inventory_2_outlined,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        _buildTextField(
-                          controller: unitsPerPackController,
-                          label: 'Units per pack (e.g. 10)',
-                          icon: Icons.grid_view_rounded,
-                          keyboardType: TextInputType.number,
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildTextField(
-                                controller: purchasePriceController,
-                                label: _localizations.purchasePrice,
-                                icon: Icons.shopping_cart_outlined,
-                                keyboardType: TextInputType.number,
-                                prefix: '₹ ',
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildTextField(
-                                controller: salesPriceController,
-                                label: 'Sale / unit',
-                                icon: Icons.sell_outlined,
-                                keyboardType: TextInputType.number,
-                                prefix: '₹ ',
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        _buildTextField(
-                          controller: packSalesPriceController,
-                          label: 'Sale / pack (Strip/Bag/Box)',
-                          icon: Icons.sell_outlined,
-                          keyboardType: TextInputType.number,
-                          prefix: '₹ ',
-                        ),
-                        const SizedBox(height: 12),
-                        _buildTextField(
-                          controller: initialStockController,
-                          label: _localizations.initialStock,
-                          icon: Icons.inventory_rounded,
-                          keyboardType: TextInputType.number,
+                        _buildProductPackPricingSection(
+                          setDialogState: setDialogState,
+                          selectedBaseUnit: selectedBaseUnit,
+                          selectedPackUnit: selectedPackUnit,
+                          onBaseUnitChanged: (u) {
+                            selectedBaseUnit = u;
+                            unitController.text = u;
+                          },
+                          onPackUnitChanged: (pack) {
+                            selectedPackUnit = pack;
+                            packUnitController.text = pack ?? '';
+                            if (pack == null) {
+                              unitsPerPackController.text = '1';
+                              packSalesPriceController.clear();
+                            } else {
+                              final suggested =
+                                  PackUnitConversion.suggestedBaseUnitForPack(
+                                    pack,
+                                  );
+                              if (suggested != null &&
+                                  settings.isUnitAvailable(suggested)) {
+                                selectedBaseUnit = suggested;
+                                unitController.text = suggested;
+                              }
+                              final current =
+                                  int.tryParse(
+                                    unitsPerPackController.text.trim(),
+                                  ) ??
+                                  1;
+                              if (current <= 1) {
+                                unitsPerPackController.text =
+                                    pack == 'Bag' ? '50' : '10';
+                              }
+                            }
+                          },
+                          unitsPerPackController: unitsPerPackController,
+                          purchasePriceController: purchasePriceController,
+                          salesPriceController: salesPriceController,
+                          packSalesPriceController: packSalesPriceController,
+                          initialStockController: initialStockController,
+                          showInitialStock: true,
                         ),
                         const SizedBox(height: 12),
                         _buildApplyGstToggle(
@@ -2088,8 +2077,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
     final purchasePrice = double.tryParse(purchasePriceController.text) ?? 0.0;
     final salesPrice = double.tryParse(salesPriceController.text) ?? 0.0;
-    final initialStock =
-        Qty.tryParse(initialStockController.text) ?? 0.0;
+    final enteredStock = Qty.tryParse(initialStockController.text) ?? 0.0;
     final cgstVal = applyGst
         ? (double.tryParse(cgstController.text) ?? 0.0)
         : 0.0;
@@ -2136,9 +2124,28 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       final mrpVal = double.tryParse(mrpController.text.trim());
       final unitVal = unitController.text.trim();
       final packUnitVal = packUnitController.text.trim();
-      final unitsPerPackVal = int.tryParse(unitsPerPackController.text.trim()) ?? 1;
+      final unitsPerPackVal = PackUnitConversion.normalizeUnitsPerPack(
+        int.tryParse(unitsPerPackController.text.trim()),
+      );
       final packSalesParsed =
           double.tryParse(packSalesPriceController.text.trim());
+      // Same contract as purchase: inventory/ledger always store base units.
+      final sellingAsPack = PackUnitConversion.hasPack(
+        packUnit: packUnitVal,
+        unitsPerPack: unitsPerPackVal,
+      );
+      if (sellingAsPack && PackUnitConversion.isKnownPackUnit(unitVal)) {
+        GlassyToast.show(
+          context,
+          'Stock unit must be the unit inside the pack (e.g. Kg, Tablet), not $unitVal',
+          isError: true,
+        );
+        return;
+      }
+      final initialStock = sellingAsPack
+          ? PackUnitConversion.toBaseQuantity(enteredStock, unitsPerPackVal)
+          : enteredStock;
+      // purchasePrice / salesPrice are always per base unit (like purchase page).
       final newProduct = await ProductOfflineController.instance.addProduct(
         name: name,
         companyName: selectedCompany?['companyName'] ?? '',
@@ -2158,9 +2165,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         composition: compositionVal.isNotEmpty ? compositionVal : null,
         drugSchedule: scheduleVal.isNotEmpty ? scheduleVal : null,
         unit: unitVal.isNotEmpty ? unitVal : null,
-        packUnit: packUnitVal.isNotEmpty ? packUnitVal : null,
-        unitsPerPack: unitsPerPackVal < 1 ? 1 : unitsPerPackVal,
-        packSalesPrice: (packSalesParsed != null && packSalesParsed > 0)
+        packUnit: sellingAsPack ? packUnitVal : null,
+        unitsPerPack: sellingAsPack ? unitsPerPackVal : 1,
+        packSalesPrice: sellingAsPack &&
+                packSalesParsed != null &&
+                packSalesParsed > 0
             ? packSalesParsed
             : null,
       );
@@ -2211,9 +2220,20 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     final drugScheduleController = TextEditingController(
       text: product.drugSchedule ?? '',
     );
-    final unitController = TextEditingController(text: product.unit ?? 'Pcs');
+    final settings = PurchaseSettingsService.instance;
+    final initialBase = (product.unit != null && product.unit!.trim().isNotEmpty)
+        ? product.unit!.trim()
+        : (settings.isUnitAvailable(settings.defaultUnit) &&
+                  !PackUnitConversion.isKnownPackUnit(settings.defaultUnit)
+              ? settings.defaultUnit
+              : 'Pcs');
+    final unitController = TextEditingController(text: initialBase);
+    final hasExistingPack = PackUnitConversion.hasPack(
+      packUnit: product.packUnit,
+      unitsPerPack: product.unitsPerPack,
+    );
     final packUnitController = TextEditingController(
-      text: product.packUnit ?? '',
+      text: hasExistingPack ? (product.packUnit ?? '') : '',
     );
     final unitsPerPackController = TextEditingController(
       text: '${product.unitsPerPack < 1 ? 1 : product.unitsPerPack}',
@@ -2223,6 +2243,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
           ? product.packSalesPrice!.toString()
           : '',
     );
+    String selectedBaseUnit = initialBase;
+    String? selectedPackUnit =
+        hasExistingPack ? product.packUnit?.trim() : null;
     var applyGst = product.cgstPercent > 0 ||
         product.sgstPercent > 0 ||
         (product.hsnCode != null && product.hsnCode!.isNotEmpty);
@@ -2407,63 +2430,46 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           icon: Icons.medication_outlined,
                         ),
                         const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildTextField(
-                                controller: unitController,
-                                label: 'Sell unit (base)',
-                                icon: Icons.straighten_rounded,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildTextField(
-                                controller: packUnitController,
-                                label: 'Pack unit (optional)',
-                                icon: Icons.inventory_2_outlined,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        _buildTextField(
-                          controller: unitsPerPackController,
-                          label: 'Units per pack (e.g. 10)',
-                          icon: Icons.grid_view_rounded,
-                          keyboardType: TextInputType.number,
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildTextField(
-                                controller: purchasePriceController,
-                                label: _localizations.purchasePrice,
-                                icon: Icons.shopping_cart_outlined,
-                                keyboardType: TextInputType.number,
-                                prefix: '₹ ',
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildTextField(
-                                controller: salesPriceController,
-                                label: 'Sale / unit',
-                                icon: Icons.sell_outlined,
-                                keyboardType: TextInputType.number,
-                                prefix: '₹ ',
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        _buildTextField(
-                          controller: packSalesPriceController,
-                          label: 'Sale / pack (Strip/Bag/Box)',
-                          icon: Icons.sell_outlined,
-                          keyboardType: TextInputType.number,
-                          prefix: '₹ ',
+                        _buildProductPackPricingSection(
+                          setDialogState: setDialogState,
+                          selectedBaseUnit: selectedBaseUnit,
+                          selectedPackUnit: selectedPackUnit,
+                          onBaseUnitChanged: (u) {
+                            selectedBaseUnit = u;
+                            unitController.text = u;
+                          },
+                          onPackUnitChanged: (pack) {
+                            selectedPackUnit = pack;
+                            packUnitController.text = pack ?? '';
+                            if (pack == null) {
+                              unitsPerPackController.text = '1';
+                              packSalesPriceController.clear();
+                            } else {
+                              final suggested =
+                                  PackUnitConversion.suggestedBaseUnitForPack(
+                                    pack,
+                                  );
+                              if (suggested != null &&
+                                  settings.isUnitAvailable(suggested)) {
+                                selectedBaseUnit = suggested;
+                                unitController.text = suggested;
+                              }
+                              final current =
+                                  int.tryParse(
+                                    unitsPerPackController.text.trim(),
+                                  ) ??
+                                  1;
+                              if (current <= 1) {
+                                unitsPerPackController.text =
+                                    pack == 'Bag' ? '50' : '10';
+                              }
+                            }
+                          },
+                          unitsPerPackController: unitsPerPackController,
+                          purchasePriceController: purchasePriceController,
+                          salesPriceController: salesPriceController,
+                          packSalesPriceController: packSalesPriceController,
+                          showInitialStock: false,
                         ),
                         const SizedBox(height: 12),
                         _buildApplyGstToggle(
@@ -2502,7 +2508,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           ),
                         ],
                         const SizedBox(height: 12),
-                        // Current stock (read-only)
+                        // Current stock (read-only) — always base units for ledger
                         Container(
                           padding: EdgeInsets.all(14),
                           decoration: BoxDecoration(
@@ -2531,7 +2537,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                                       ),
                                     ),
                                     Text(
-                                      '${product.currentStock} (Read Only)',
+                                      '${PackUnitConversion.formatStockLabel(baseStock: product.currentStock, baseUnit: selectedBaseUnit, packUnit: selectedPackUnit, unitsPerPack: int.tryParse(unitsPerPackController.text.trim()) ?? product.unitsPerPack)} (Read Only)',
                                       style: TextStyle(
                                         fontFamily: 'Literata',
                                         fontWeight: FontWeight.w600,
@@ -2708,10 +2714,23 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       final mrpVal = double.tryParse(mrpController.text.trim());
       final unitVal = unitController.text.trim();
       final packUnitVal = packUnitController.text.trim();
-      final unitsPerPackVal =
-          int.tryParse(unitsPerPackController.text.trim()) ?? 1;
+      final unitsPerPackVal = PackUnitConversion.normalizeUnitsPerPack(
+        int.tryParse(unitsPerPackController.text.trim()),
+      );
       final packSalesParsed =
           double.tryParse(packSalesPriceController.text.trim());
+      final sellingAsPack = PackUnitConversion.hasPack(
+        packUnit: packUnitVal,
+        unitsPerPack: unitsPerPackVal,
+      );
+      if (sellingAsPack && PackUnitConversion.isKnownPackUnit(unitVal)) {
+        GlassyToast.show(
+          context,
+          'Stock unit must be the unit inside the pack (e.g. Kg, Tablet), not $unitVal',
+          isError: true,
+        );
+        return;
+      }
       await ProductOfflineController.instance.updateProduct(
         id: product.id,
         name: name,
@@ -2729,9 +2748,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         composition: compositionVal.isNotEmpty ? compositionVal : null,
         drugSchedule: scheduleVal.isNotEmpty ? scheduleVal : null,
         unit: unitVal.isNotEmpty ? unitVal : null,
-        packUnit: packUnitVal.isNotEmpty ? packUnitVal : null,
-        unitsPerPack: unitsPerPackVal < 1 ? 1 : unitsPerPackVal,
-        packSalesPrice: (packSalesParsed != null && packSalesParsed > 0)
+        packUnit: sellingAsPack ? packUnitVal : null,
+        unitsPerPack: sellingAsPack ? unitsPerPackVal : 1,
+        packSalesPrice: sellingAsPack &&
+                packSalesParsed != null &&
+                packSalesParsed > 0
             ? packSalesParsed
             : null,
         updateVariantFields: true,
@@ -2755,6 +2776,281 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
   // ━━━ HELPER WIDGETS ━━━
 
+  /// Pack / unit / price UI matching purchase (Strip/Bag/Box → base stock).
+  /// Prices and stock are always persisted in base units for FIFO/ledger.
+  Widget _buildProductPackPricingSection({
+    required void Function(VoidCallback) setDialogState,
+    required String selectedBaseUnit,
+    required String? selectedPackUnit,
+    required ValueChanged<String> onBaseUnitChanged,
+    required ValueChanged<String?> onPackUnitChanged,
+    required TextEditingController unitsPerPackController,
+    required TextEditingController purchasePriceController,
+    required TextEditingController salesPriceController,
+    required TextEditingController packSalesPriceController,
+    TextEditingController? initialStockController,
+    bool showInitialStock = false,
+  }) {
+    final settings = PurchaseSettingsService.instance;
+    final unitOptions = List<String>.from(settings.availableUnits);
+    final chipSelection = selectedPackUnit ?? selectedBaseUnit;
+    if (chipSelection.trim().isNotEmpty &&
+        !unitOptions.any(
+          (u) => u.toLowerCase() == chipSelection.toLowerCase(),
+        )) {
+      unitOptions.add(chipSelection);
+    }
+
+    final baseOptions = <String>[];
+    final suggested = PackUnitConversion.suggestedBaseUnitForPack(
+      selectedPackUnit,
+    );
+    if (suggested != null && settings.isUnitAvailable(suggested)) {
+      baseOptions.add(suggested);
+    }
+    for (final u in settings.availableUnits) {
+      if (!PackUnitConversion.isKnownPackUnit(u) &&
+          !baseOptions.any((p) => p.toLowerCase() == u.toLowerCase())) {
+        baseOptions.add(u);
+      }
+    }
+    if (selectedBaseUnit.trim().isNotEmpty &&
+        !PackUnitConversion.isKnownPackUnit(selectedBaseUnit) &&
+        !baseOptions.any(
+          (u) => u.toLowerCase() == selectedBaseUnit.toLowerCase(),
+        )) {
+      baseOptions.insert(0, selectedBaseUnit);
+    }
+
+    final unitsPerPack = PackUnitConversion.normalizeUnitsPerPack(
+      int.tryParse(unitsPerPackController.text.trim()),
+    );
+    final buyAsPack =
+        selectedPackUnit != null &&
+        selectedPackUnit.trim().isNotEmpty &&
+        unitsPerPack > 1;
+    final packLabel = selectedPackUnit ?? 'pack';
+    final unitLabel =
+        selectedBaseUnit.trim().isNotEmpty ? selectedBaseUnit : 'unit';
+    final enteredPrice = double.tryParse(purchasePriceController.text) ?? 0;
+    final packCost = buyAsPack ? enteredPrice * unitsPerPack : enteredPrice;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildProductUnitChipSelector(
+          label: 'Measurement unit',
+          options: unitOptions,
+          selectedValue: chipSelection,
+          icon: Icons.straighten_rounded,
+          color: AppColors.accent(context),
+          onSelected: (unit) {
+            setDialogState(() {
+              if (PackUnitConversion.isKnownPackUnit(unit)) {
+                onPackUnitChanged(unit);
+              } else {
+                onPackUnitChanged(null);
+                onBaseUnitChanged(unit);
+              }
+            });
+          },
+        ),
+        if (buyAsPack ||
+            (selectedPackUnit != null &&
+                PackUnitConversion.isKnownPackUnit(selectedPackUnit))) ...[
+          const SizedBox(height: 12),
+          _buildTextField(
+            controller: unitsPerPackController,
+            label:
+                '$unitLabel per $packLabel (${PackUnitConversion.unitsPerPackExample(packUnit: selectedPackUnit, baseUnit: selectedBaseUnit)})',
+            icon: Icons.grid_view_rounded,
+            keyboardType: const TextInputType.numberWithOptions(decimal: false),
+            onChanged: (_) => setDialogState(() {}),
+          ),
+          const SizedBox(height: 12),
+          _buildProductUnitChipSelector(
+            label: 'Stock unit (inside $packLabel)',
+            options: baseOptions,
+            selectedValue: selectedBaseUnit,
+            icon: Icons.inventory_2_outlined,
+            color: AppTheme.toneCyan,
+            onSelected: (unit) {
+              setDialogState(() => onBaseUnitChanged(unit));
+            },
+          ),
+          const SizedBox(height: 8),
+          Text(
+            PackUnitConversion.hasPack(
+                  packUnit: selectedPackUnit,
+                  unitsPerPack: unitsPerPack,
+                )
+                ? 'Example: 2 $packLabel × $unitsPerPack $unitLabel = ${2 * unitsPerPack} $unitLabel stock'
+                : 'Enter how many $unitLabel are in one $packLabel (must be > 1)',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 12,
+              color: AppTheme.grey600,
+            ),
+          ),
+        ],
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildTextField(
+                controller: purchasePriceController,
+                label: 'Purchase / $unitLabel',
+                icon: Icons.shopping_cart_outlined,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                prefix: '₹ ',
+                onChanged: (_) => setDialogState(() {}),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildTextField(
+                controller: buyAsPack
+                    ? packSalesPriceController
+                    : salesPriceController,
+                label: buyAsPack ? 'Sale / $packLabel' : 'Sale / $unitLabel',
+                icon: Icons.sell_outlined,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                prefix: '₹ ',
+              ),
+            ),
+          ],
+        ),
+        if (buyAsPack) ...[
+          const SizedBox(height: 12),
+          _buildTextField(
+            controller: salesPriceController,
+            label: 'Sale / $unitLabel (loose)',
+            icon: Icons.sell_outlined,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            prefix: '₹ ',
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Rate is ₹/$unitLabel. One $packLabel costs ₹${packCost.toStringAsFixed(2)} '
+            '($unitsPerPack $unitLabel × ₹${enteredPrice.toStringAsFixed(2)}). '
+            'Sale /$packLabel is independent of loose sale /$unitLabel.',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 12,
+              color: AppTheme.grey600,
+            ),
+          ),
+        ],
+        if (showInitialStock && initialStockController != null) ...[
+          const SizedBox(height: 12),
+          _buildTextField(
+            controller: initialStockController,
+            label: buyAsPack
+                ? 'Initial stock ($packLabel)'
+                : 'Initial stock ($unitLabel)',
+            icon: Icons.inventory_rounded,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          ),
+          if (buyAsPack) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Saved as base stock for ledger/FIFO '
+              '(packs × $unitsPerPack $unitLabel). Prefer Purchase for opening stock with batches.',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 12,
+                color: AppTheme.grey600,
+              ),
+            ),
+          ],
+        ],
+      ],
+    );
+  }
+
+  Widget _buildProductUnitChipSelector({
+    required String label,
+    required List<String> options,
+    required String? selectedValue,
+    required IconData icon,
+    required Color color,
+    required ValueChanged<String> onSelected,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Literata',
+            color: AppColors.secondaryText(context),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: options.map((option) {
+              final isSelected =
+                  selectedValue?.toLowerCase() == option.toLowerCase();
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () => onSelected(option),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.action(context)
+                          : (AppColors.isDark(context)
+                                ? AppTheme.darkScaffold
+                                : AppTheme.grey100),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isSelected ? Icons.check_rounded : icon,
+                          size: 16,
+                          color: isSelected
+                              ? AppTheme.white
+                              : AppColors.mutedText(context),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          option,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Literata',
+                            color: isSelected
+                                ? AppTheme.white
+                                : AppColors.primaryText(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -2762,11 +3058,13 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     TextInputType? keyboardType,
     String? prefix,
     int? maxLength,
+    ValueChanged<String>? onChanged,
   }) {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
       maxLength: maxLength,
+      onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         prefixText: prefix,

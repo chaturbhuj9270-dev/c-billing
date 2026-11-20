@@ -79,6 +79,9 @@ class EnglishLocalization {
   static const String quantitySold = 'Quantity Sold';
   static const String revenue = 'Revenue';
   static const String pendingAmount = 'Pending Amount';
+  static const String totalCollected = 'Total Collected';
+  static const String pendingUpcoming = 'Pending Upcoming';
+  static const String pendingUpcomingHint = 'All customers with dues — tap to view';
   static const String billNumber = 'Bill Number';
   static const String date = 'Date';
   static const String currentStock = 'Current Stock';
