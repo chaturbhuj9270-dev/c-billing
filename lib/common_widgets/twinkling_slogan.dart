@@ -2,19 +2,27 @@ import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
 
-/// Star-twinkle slogan in golden 3D glass (highlight → gold → deep edge).
+/// Star-twinkle slogan: magenta/pink fill with metallic gold border
+/// (same treatment as the Indira Gandhi reference lettering).
 class TwinklingSlogan extends StatefulWidget {
   final String text;
   final TextStyle style;
   final TextAlign textAlign;
 
-  /// Kept for call-site compatibility; glow is always golden.
+  /// Kept for call-site compatibility; glow stays golden.
   final Color? glowColor;
 
+  // Gold border / edge (metallic bevel).
   static const Color goldHighlight = Color(0xFFFFF6D6);
   static const Color goldMid = Color(0xFFE8C76B);
   static const Color gold = Color(0xFFC9A84C);
   static const Color goldDeep = Color(0xFF8B6914);
+
+  // Magenta / pink fill (reference lettering).
+  static const Color magentaHighlight = Color(0xFFFF6BB5);
+  static const Color magentaMid = Color(0xFFE6007E);
+  static const Color magenta = Color(0xFFC2185B);
+  static const Color magentaDeep = Color(0xFF8E0038);
 
   const TwinklingSlogan({
     super.key,
@@ -52,6 +60,12 @@ class _TwinklingSloganState extends State<TwinklingSlogan>
     super.dispose();
   }
 
+  Alignment get _stackAlignment => switch (widget.textAlign) {
+        TextAlign.center => Alignment.center,
+        TextAlign.end || TextAlign.right => Alignment.centerRight,
+        _ => Alignment.centerLeft,
+      };
+
   @override
   Widget build(BuildContext context) {
     final baseStyle = widget.style.copyWith(
@@ -67,23 +81,49 @@ class _TwinklingSloganState extends State<TwinklingSlogan>
         final glowBlur = 4.0 + (12.0 * t);
         final glowAlpha = 0.18 + (0.45 * t);
 
+        // Soft gold outline ring around the magenta fill.
+        const outlineOffsets = <Offset>[
+          Offset(-1.4, 0),
+          Offset(1.4, 0),
+          Offset(0, -1.4),
+          Offset(0, 1.4),
+          Offset(-1.1, -1.1),
+          Offset(1.1, -1.1),
+          Offset(-1.1, 1.1),
+          Offset(1.1, 1.1),
+        ];
+
         final stack = Stack(
-          alignment: switch (widget.textAlign) {
-            TextAlign.center => Alignment.center,
-            TextAlign.end || TextAlign.right => Alignment.centerRight,
-            _ => Alignment.centerLeft,
-          },
+          alignment: _stackAlignment,
           children: [
+            // Deep gold drop for 3D edge.
             Transform.translate(
-              offset: const Offset(0.6, 1.1),
+              offset: const Offset(0.8, 1.3),
               child: Text(
                 widget.text,
                 textAlign: widget.textAlign,
                 style: baseStyle.copyWith(
-                  color: TwinklingSlogan.goldDeep.withValues(alpha: 0.75),
+                  color: TwinklingSlogan.goldDeep.withValues(alpha: 0.8),
                 ),
               ),
             ),
+            // Gold border stroke (offset copies).
+            for (final o in outlineOffsets)
+              Transform.translate(
+                offset: o,
+                child: Text(
+                  widget.text,
+                  textAlign: widget.textAlign,
+                  style: baseStyle.copyWith(
+                    color: Color.lerp(
+                      TwinklingSlogan.gold,
+                      TwinklingSlogan.goldMid,
+                      0.35 + 0.25 * t,
+                    )!,
+                  ),
+                ),
+              ),
+            // Soft gold glow.
             Text(
               widget.text,
               textAlign: widget.textAlign,
@@ -102,6 +142,7 @@ class _TwinklingSloganState extends State<TwinklingSlogan>
                 ],
               ),
             ),
+            // Magenta / pink fill (reference face color).
             ShaderMask(
               blendMode: BlendMode.srcIn,
               shaderCallback: (bounds) {
@@ -110,15 +151,15 @@ class _TwinklingSloganState extends State<TwinklingSlogan>
                   end: Alignment.bottomCenter,
                   colors: [
                     Color.lerp(
-                      TwinklingSlogan.goldHighlight,
+                      TwinklingSlogan.magentaHighlight,
                       AppTheme.white,
-                      0.35 + 0.25 * t,
+                      0.2 + 0.15 * t,
                     )!,
-                    TwinklingSlogan.goldMid,
-                    TwinklingSlogan.gold,
+                    TwinklingSlogan.magentaMid,
+                    TwinklingSlogan.magenta,
                     Color.lerp(
-                      TwinklingSlogan.gold,
-                      TwinklingSlogan.goldDeep,
+                      TwinklingSlogan.magenta,
+                      TwinklingSlogan.magentaDeep,
                       0.55,
                     )!,
                   ],

@@ -434,8 +434,8 @@ class _LoginPageV2State extends State<LoginPageV2>
                             end: Alignment.bottomRight,
                             colors: [
                               AppColors.action(context),
-                              AppTheme.headerLightEnd,
-                              AppTheme.primaryDark,
+                              AppColors.headerEnd(context),
+                              AppColors.primaryDark(context),
                             ],
                           ),
                         ),

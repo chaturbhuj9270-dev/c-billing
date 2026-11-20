@@ -7104,7 +7104,7 @@ class _BillingPageState extends State<BillingPage> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
@@ -7114,7 +7114,7 @@ class _BillingPageState extends State<BillingPage> {
             AppTheme.white60,
             AppTheme.palette33FFFFFF,
           ],
-          stops: [0.0, 0.25, 0.5, 0.75, 1.0],
+          stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
         ),
       ),
       padding: const EdgeInsets.all(2),
@@ -7136,14 +7136,14 @@ class _BillingPageState extends State<BillingPage> {
               ),
               borderRadius: BorderRadius.circular(26),
               border: Border.all(width: 1.5, color: AppTheme.paletteCCFFFFFF),
-              boxShadow: const [
+              boxShadow: [
                 BoxShadow(
                   color: AppTheme.palette261B4D3E,
                   blurRadius: 40,
                   spreadRadius: 5,
-                  offset: Offset(0, 15),
+                  offset: const Offset(0, 15),
                 ),
-                BoxShadow(
+                const BoxShadow(
                   color: AppTheme.paletteCCFFFFFF,
                   blurRadius: 20,
                   spreadRadius: -5,
@@ -7340,7 +7340,10 @@ class _BillingPageState extends State<BillingPage> {
         value: '',
         label: _localizations.customers,
         color: AppColors.action(context),
-        gradient: [AppColors.action(context), AppTheme.primaryDark],
+        gradient: [
+          AppColors.action(context),
+          AppColors.primaryDark(context),
+        ],
         onTap: () {
           _toggleQuickStats();
           _openSection(const EnhancedCustomerPage(), WebShell.customers);

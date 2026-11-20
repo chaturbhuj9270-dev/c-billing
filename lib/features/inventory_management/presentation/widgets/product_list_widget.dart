@@ -256,9 +256,9 @@ class _ProductCard extends StatelessWidget {
 
     final accentColors = [
       AppColors.action(context),
-      AppTheme.primaryDark,
-      AppTheme.paletteFF2C6F5E,
-      AppTheme.paletteFF1A5E52,
+      AppColors.primaryDark(context),
+      AppColors.primaryLight(context),
+      AppColors.headerEnd(context),
     ];
     final accentColor = accentColors[product.name.hashCode.abs() % 4];
     final initials = product.name.isNotEmpty

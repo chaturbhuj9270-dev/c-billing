@@ -464,7 +464,10 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
         gradient: LinearGradient(
           colors: _customer!.hasPendingBalance
               ? [AppTheme.coral, AppTheme.paletteFFEE5A5A]
-              : [AppColors.action(context), AppTheme.primaryDark],
+              : [
+                  AppColors.action(context),
+                  AppColors.primaryDark(context),
+                ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

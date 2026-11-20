@@ -62,6 +62,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           label: _localizations.profile,
           route: 'Profile',
           color: AppTheme.primary,
+          usesBrandAccent: true,
         ),
       if (access.canAccessShellIndex(WebShell.password))
         _MenuItem(
@@ -85,6 +86,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
         label: 'Business reports',
         route: 'Reports',
         color: AppTheme.primary,
+        usesBrandAccent: true,
       ),
       if (access.canAccessShellIndex(WebShell.shop))
         _MenuItem(
@@ -449,17 +451,16 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
     );
   }
 
-  static const Color _panelGold = Color(0xFFC9A84C);
-
   @override
   Widget build(BuildContext context) {
     final isDark = ThemeService.instance.isDark;
+    final brandRim = AppColors.primaryLight(context);
     const radius = 28.0;
     const panelRadius = BorderRadius.only(
       topRight: Radius.circular(radius),
       bottomRight: Radius.circular(radius),
     );
-    // Flush to the left edge; theme fill + golden 3D glass rim only.
+    // Flush to the left edge; theme fill + brand-accent 3D glass rim.
     return FadeTransition(
       opacity: _fadeAnimation,
       child: DecoratedBox(
@@ -467,7 +468,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           borderRadius: panelRadius,
           boxShadow: [
             BoxShadow(
-              color: _panelGold.withValues(alpha: isDark ? 0.22 : 0.16),
+              color: brandRim.withValues(alpha: isDark ? 0.22 : 0.16),
               blurRadius: 18,
               offset: const Offset(4, 0),
             ),
@@ -485,7 +486,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
             child: CustomPaint(
               foregroundPainter: GlassBevelBorderPainter(
                 isDark: isDark,
-                themeColor: _panelGold,
+                themeColor: brandRim,
                 radius: radius,
                 borderRadius: panelRadius,
                 strokeWidth: 1.6,
@@ -788,7 +789,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
 
   Widget _buildMenuItem({required _MenuItem item}) {
     final isDark = ThemeService.instance.isDark;
-    final iconColor = item.color == AppTheme.primary
+    final iconColor = item.usesBrandAccent
         ? AppColors.actionBright(context)
         : item.color;
     return Padding(
@@ -983,6 +984,8 @@ class _MenuItem {
   final String route;
   final Color color;
   final String? trailing;
+  /// When true, icon/well use the selected light accent (or dark action).
+  final bool usesBrandAccent;
 
   const _MenuItem({
     required this.icon,
@@ -990,6 +993,7 @@ class _MenuItem {
     required this.route,
     this.trailing,
     required this.color,
+    this.usesBrandAccent = false,
   });
 }
 

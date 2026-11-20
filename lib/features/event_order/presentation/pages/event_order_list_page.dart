@@ -82,9 +82,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   int _unsyncedCount = 0;
   VoidCallback? _offlineControllerListener;
 
-  // Primary colors - aligned with app theme (availability screen style)
+  // Primary colors - aligned with selected light accent
   Color get _primaryColor => AppColors.action(context);
-  static const _primaryDark = AppTheme.paletteFF2D6B5A;
+  Color get _primaryDark => AppColors.primaryDark(context);
   static const _eventColor = AppTheme.purple;
   static const _salesColor = AppTheme.blue;
 

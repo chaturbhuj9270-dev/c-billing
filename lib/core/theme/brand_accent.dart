@@ -63,10 +63,10 @@ class BrandAccent extends ThemeExtension<BrandAccent> {
   /// Current app green (default).
   static const green = BrandAccent(
     palette: AppAccentPalette.green,
-    primary: Color(0xFF1B4D3E),
-    primaryLight: Color(0xFF2E7D5B),
-    primaryDark: Color(0xFF0F3B2F),
-    headerEnd: Color(0xFF134E3A),
+    primary: Color(0xFF1B4D3E), // AppTheme.greenPrimary
+    primaryLight: Color(0xFF2E7D5B), // AppTheme.greenPrimaryLight
+    primaryDark: Color(0xFF0F3B2F), // AppTheme.greenPrimaryDark
+    headerEnd: Color(0xFF134E3A), // AppTheme.greenHeaderEnd
   );
 
   /// Gold / yellow — same depth structure as green, from brand gold family.

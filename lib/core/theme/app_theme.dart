@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../services/theme_service.dart';
 import 'brand_accent.dart';
 
 export 'brand_accent.dart';
@@ -10,9 +11,18 @@ export 'brand_accent.dart';
 class AppTheme {
   AppTheme._();
 
-  static const Color primary = Color(0xFF1B4D3E);
-  static const Color primaryLight = Color(0xFF2E7D5B);
-  static const Color primaryDark = Color(0xFF0F3B2F);
+  /// Default green (const) — prefer [primary] / [AppColors.action] for UI so
+  /// the user's selected light accent applies.
+  static const Color greenPrimary = Color(0xFF1B4D3E);
+  static const Color greenPrimaryLight = Color(0xFF2E7D5B);
+  static const Color greenPrimaryDark = Color(0xFF0F3B2F);
+
+  /// Live brand primary from the selected light accent (ThemeService).
+  static Color get primary => ThemeService.instance.accentColors.primary;
+  static Color get primaryLight =>
+      ThemeService.instance.accentColors.primaryLight;
+  static Color get primaryDark =>
+      ThemeService.instance.accentColors.primaryDark;
 
   // Category icon tones from the reference screens.
   static const Color toneBlue = Color(0xFF7C8CFF);
@@ -101,7 +111,9 @@ class AppTheme {
   static const Color headerDarkEnd = Color(0xFF10241C);
   static const Color headerDarkMid = Color(0xFF0E241C);
   static const Color headerDarkStart = Color(0xFF14352C);
-  static const Color headerLightEnd = Color(0xFF134E3A);
+  static const Color greenHeaderEnd = Color(0xFF134E3A);
+  static Color get headerLightEnd =>
+      ThemeService.instance.accentColors.headerEnd;
   static const Color indigo400 = Color(0xFF5C6BC0);
   static const Color ink = Color(0xFF1A1A2E);
   static const Color lightBlue300 = Color(0xFF4FC3F7);
@@ -150,9 +162,9 @@ class AppTheme {
   static const Color white60 = Color(0x99FFFFFF);
   static const Color white70 = Color(0xB3FFFFFF);
   static const Color yellow900 = Color(0xFFF57F17);
-  static const Color palette261B4D3E = Color(0x261B4D3E);
+  static Color get palette261B4D3E => primary.withValues(alpha: 0x26 / 255);
   static const Color palette33FFFFFF = Color(0x33FFFFFF);
-  static const Color palette4D1B4D3E = Color(0x4D1B4D3E);
+  static Color get palette4D1B4D3E => primary.withValues(alpha: 0x4D / 255);
   static const Color paletteBFFFFFFF = Color(0xBFFFFFFF);
   static const Color paletteCCF8FFFC = Color(0xCCF8FFFC);
   static const Color paletteCCFFFFFF = Color(0xCCFFFFFF);
@@ -245,7 +257,9 @@ class AppTheme {
   // Print inks used by PDF generators.
   static const Color blue100 = Color(0xFFBBDEFB);
 
-  static ThemeData get light => lightFor(BrandAccent.green);
+  /// Light theme using the currently selected accent (green / yellow / maroon).
+  static ThemeData get light =>
+      lightFor(ThemeService.instance.accentColors);
 
   static ThemeData lightFor(BrandAccent accent) {
     final scheme = ColorScheme.fromSeed(
@@ -556,6 +570,21 @@ class AppColors {
   // Outline rings and brand icons. Brighter on dark so they read on the black page.
   static Color actionBright(BuildContext context) =>
       isDark(context) ? AppTheme.darkActionBright : brand(context).primary;
+
+  // Mid / deep shades of the selected light accent (for gradients & chips).
+  static Color primaryLight(BuildContext context) => isDark(context)
+      ? AppTheme.darkActionBright
+      : brand(context).primaryLight;
+
+  static Color primaryDark(BuildContext context) =>
+      isDark(context) ? AppTheme.headerDarkEnd : brand(context).primaryDark;
+
+  static Color headerEnd(BuildContext context) =>
+      isDark(context) ? AppTheme.headerDarkEnd : brand(context).headerEnd;
+
+  // Soft wash behind brand surfaces (replaces hard-coded green alphas).
+  static Color softFill(BuildContext context, [double alpha = 0.15]) =>
+      action(context).withValues(alpha: alpha);
 
   static Color glassFill(BuildContext context) => isDark(context)
       ? AppTheme.darkCard.withValues(alpha: 0.96)

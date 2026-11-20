@@ -983,11 +983,11 @@ class _PointsGlassBadge extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: (isDark ? AppTheme.white : AppTheme.primary)
+            color: (isDark ? AppTheme.white : AppColors.action(context))
                 .withValues(alpha: isDark ? 0.12 : 0.10),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: (isDark ? AppTheme.white : AppTheme.primary)
+              color: (isDark ? AppTheme.white : AppColors.action(context))
                   .withValues(alpha: 0.22),
             ),
           ),
@@ -997,7 +997,7 @@ class _PointsGlassBadge extends StatelessWidget {
               Icon(
                 Icons.star_rounded,
                 size: 14,
-                color: isDark ? AppTheme.white : AppTheme.primary,
+                color: isDark ? AppTheme.white : AppColors.action(context),
               ),
               const SizedBox(width: 4),
               Text(
@@ -1005,7 +1005,7 @@ class _PointsGlassBadge extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? AppTheme.white : AppTheme.primary,
+                  color: isDark ? AppTheme.white : AppColors.action(context),
                 ),
               ),
             ],

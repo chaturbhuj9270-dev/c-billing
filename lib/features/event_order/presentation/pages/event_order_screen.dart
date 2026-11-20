@@ -506,8 +506,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     );
   }
 
-  Widget _sectionHeading(IconData icon, String title) {
+  Widget _sectionHeading(IconData icon, String title, {Color? color}) {
     final isDark = AppColors.isDark(context);
+    final accent = color ?? AppColors.action(context);
     return Row(
       children: [
         Container(
@@ -515,10 +516,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           height: 32,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: AppColors.action(context).withValues(alpha: isDark ? 0.22 : 0.1),
+            color: accent.withValues(alpha: isDark ? 0.22 : 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: AppColors.action(context), size: 18),
+          child: Icon(icon, color: accent, size: 18),
         ),
         const SizedBox(width: 10),
         Flexible(
@@ -2254,7 +2255,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     required IconData icon,
     required Widget child,
     Widget? trailing,
-    Color accentColor = AppTheme.primary,
+    Color? accentColor,
   }) {
     return Container(
       width: double.infinity,
@@ -2265,7 +2266,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         children: [
           Row(
             children: [
-              Expanded(child: _sectionHeading(icon, title)),
+              Expanded(
+                child: _sectionHeading(icon, title, color: accentColor),
+              ),
               if (trailing != null) ...[
                 const SizedBox(width: 8),
                 trailing,

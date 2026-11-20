@@ -248,9 +248,9 @@ class _CompanyCard extends StatelessWidget {
 
     final accentColors = [
       AppColors.action(context),
-      AppTheme.primaryDark,
-      AppTheme.paletteFF2C6F5E,
-      AppTheme.paletteFF1A5E52,
+      AppColors.primaryDark(context),
+      AppColors.primaryLight(context),
+      AppColors.headerEnd(context),
     ];
     final accentColor =
         accentColors[((company['id'] ?? '').hashCode.abs()) % 4];
