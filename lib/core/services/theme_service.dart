@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// Persists and broadcasts the app [ThemeMode] (light / dark / system).
+import '../theme/brand_accent.dart';
+
+// Persists and broadcasts ThemeMode + light accent palette.
 class ThemeService extends ChangeNotifier {
   static const String _themeKey = 'selected_theme_mode';
+  static const String _accentKey = 'selected_light_accent';
   static ThemeService? _instance;
 
   ThemeMode _themeMode = ThemeMode.system;
+  AppAccentPalette _accent = AppAccentPalette.green;
 
   ThemeService._();
 
@@ -16,6 +20,10 @@ class ThemeService extends ChangeNotifier {
   }
 
   ThemeMode get themeMode => _themeMode;
+
+  AppAccentPalette get accent => _accent;
+
+  BrandAccent get accentColors => BrandAccent.forPalette(_accent);
 
   bool get isDark {
     if (_themeMode == ThemeMode.dark) return true;
@@ -35,10 +43,19 @@ class ThemeService extends ChangeNotifier {
     }
   }
 
+  String get accentLabel => _accent.label;
+
+  /// Compact trailing for the flyout menu.
+  String get preferencesTrailing {
+    if (isDark) return modeLabel;
+    return '$modeLabel · $accentLabel';
+  }
+
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     final stored = prefs.getString(_themeKey);
     _themeMode = _fromStorage(stored);
+    _accent = AppAccentPaletteX.fromStorage(prefs.getString(_accentKey));
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
@@ -46,6 +63,14 @@ class ThemeService extends ChangeNotifier {
     _themeMode = mode;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_themeKey, _toStorage(mode));
+    notifyListeners();
+  }
+
+  Future<void> setAccent(AppAccentPalette accent) async {
+    if (_accent == accent) return;
+    _accent = accent;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_accentKey, accent.storageKey);
     notifyListeners();
   }
 

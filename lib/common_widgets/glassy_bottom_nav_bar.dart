@@ -25,14 +25,14 @@ class GlassyBottomNavBar extends StatefulWidget {
   final int selectedIndex;
   final ValueChanged<int> onTap;
   final List<GlassyNavItem> items;
-  final Color accentColor;
+  final Color? accentColor;
 
   const GlassyBottomNavBar({
     super.key,
     required this.selectedIndex,
     required this.onTap,
     required this.items,
-    this.accentColor = AppTheme.primary,
+    this.accentColor,
   });
 
   @override
@@ -93,6 +93,7 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
     required double width,
     required double height,
     required bool isDark,
+    required Color themeColor,
   }) {
     const radius = 14.0;
     return Positioned(
@@ -103,9 +104,9 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
       child: IgnorePointer(
         child: isDark
             ? CustomPaint(
-                foregroundPainter: const GlassBevelBorderPainter(
+                foregroundPainter: GlassBevelBorderPainter(
                   isDark: false,
-                  themeColor: AppTheme.primary,
+                  themeColor: themeColor,
                   radius: radius,
                   strokeWidth: 1.4,
                 ),
@@ -130,7 +131,7 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(radius),
-                    gradient: glassBevelGradient(false, AppTheme.primary),
+                    gradient: glassBevelGradient(false, themeColor),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(1.4),
@@ -154,7 +155,12 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
     );
   }
 
-  Widget _slidingGlassPill(double width, double height, bool isDark) {
+  Widget _slidingGlassPill(
+    double width,
+    double height,
+    bool isDark,
+    Color themeColor,
+  ) {
     final count = widget.items.length;
     if (count == 0 || width <= 0 || height <= 0) {
       return const SizedBox.shrink();
@@ -179,6 +185,7 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
               width: chipWidth,
               height: chipHeight,
               isDark: isDark,
+              themeColor: themeColor,
             ),
           ],
         );
@@ -198,6 +205,7 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
     final isDark = AppColors.isDark(context);
+    final themeColor = widget.accentColor ?? AppColors.action(context);
 
     const barRadius = 18.0;
     final borderColor = isDark
@@ -234,7 +242,7 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
               child: CustomPaint(
                 foregroundPainter: GlassBevelBorderPainter(
                   isDark: false,
-                  themeColor: AppTheme.primary,
+                  themeColor: themeColor,
                   radius: barRadius,
                   strokeWidth: 1.35,
                 ),
@@ -291,6 +299,7 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
                                       constraints.maxWidth,
                                       constraints.maxHeight,
                                       isDark,
+                                      themeColor,
                                     );
                                   },
                                 ),
@@ -337,7 +346,7 @@ class _GlassyNavItemButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iconColor = selected
-        ? (AppColors.isDark(context) ? AppTheme.white : AppTheme.primary)
+        ? (AppColors.isDark(context) ? AppTheme.white : AppColors.action(context))
         : AppColors.mutedText(context);
 
     return GestureDetector(

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 import 'glass_bevel_frame.dart';
 
-// In-page tabs that use the same selected chip as the dashboard bottom bar. Light: frosted white pill, glassy green rim, green icon and label. Dark: transparent pill, glassy rim o...
+// In-page tabs that use the same selected chip as the dashboard bottom bar.
 class AppTabBar extends StatelessWidget {
   final TabController controller;
   final List<Widget> tabs;
@@ -19,6 +19,7 @@ class AppTabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
+    final themeColor = AppColors.action(context);
     const radius = 16.0;
 
     return Padding(
@@ -26,9 +27,9 @@ class AppTabBar extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(radius),
         child: CustomPaint(
-          foregroundPainter: const GlassBevelBorderPainter(
+          foregroundPainter: GlassBevelBorderPainter(
             isDark: false,
-            themeColor: AppTheme.primary,
+            themeColor: themeColor,
             radius: radius,
             strokeWidth: 1.4,
           ),
@@ -48,10 +49,13 @@ class AppTabBar extends StatelessWidget {
             child: TabBar(
               controller: controller,
               tabs: tabs,
-              indicator: AppTabSelectionIndicator(isDark: isDark),
+              indicator: AppTabSelectionIndicator(
+                isDark: isDark,
+                themeColor: themeColor,
+              ),
               indicatorSize: TabBarIndicatorSize.tab,
               indicatorPadding: const EdgeInsets.symmetric(vertical: 1),
-              labelColor: isDark ? AppTheme.white : AppTheme.primary,
+              labelColor: isDark ? AppTheme.white : themeColor,
               unselectedLabelColor: AppColors.mutedText(context),
               labelStyle: const TextStyle(
                 fontFamily: 'Literata',
@@ -76,19 +80,24 @@ class AppTabBar extends StatelessWidget {
 
 class AppTabSelectionIndicator extends Decoration {
   final bool isDark;
+  final Color themeColor;
 
-  const AppTabSelectionIndicator({required this.isDark});
+  const AppTabSelectionIndicator({
+    required this.isDark,
+    required this.themeColor,
+  });
 
   @override
   BoxPainter createBoxPainter([VoidCallback? onChanged]) {
-    return _AppTabSelectionPainter(isDark);
+    return _AppTabSelectionPainter(isDark, themeColor);
   }
 }
 
 class _AppTabSelectionPainter extends BoxPainter {
   final bool isDark;
+  final Color themeColor;
 
-  _AppTabSelectionPainter(this.isDark);
+  _AppTabSelectionPainter(this.isDark, this.themeColor);
 
   @override
   void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
@@ -102,9 +111,9 @@ class _AppTabSelectionPainter extends BoxPainter {
     if (isDark) {
       canvas.save();
       canvas.translate(offset.dx, offset.dy);
-      const GlassBevelBorderPainter(
+      GlassBevelBorderPainter(
         isDark: false,
-        themeColor: AppTheme.primary,
+        themeColor: themeColor,
         radius: radius,
         strokeWidth: 1.4,
       ).paint(canvas, size);
@@ -122,7 +131,7 @@ class _AppTabSelectionPainter extends BoxPainter {
     canvas.drawRRect(
       rrect,
       Paint()
-        ..shader = glassBevelGradient(false, AppTheme.primary).createShader(rect),
+        ..shader = glassBevelGradient(false, themeColor).createShader(rect),
     );
 
     final inner = RRect.fromRectAndRadius(

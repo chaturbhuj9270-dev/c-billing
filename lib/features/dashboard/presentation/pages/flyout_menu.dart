@@ -124,7 +124,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
         label: 'Theme',
         route: 'Theme',
         color: AppTheme.toneViolet,
-        trailing: ThemeService.instance.modeLabel,
+        trailing: ThemeService.instance.preferencesTrailing,
       ),
       _MenuItem(
         icon: Icons.privacy_tip_outlined,
@@ -394,16 +394,23 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       context: dialogContext,
       builder: (_) => _SelectedTheme(
         child: _ThemeDialog(
-        currentMode: ThemeService.instance.themeMode,
-        onModeSelected: (mode) async {
-          await ThemeService.instance.setThemeMode(mode);
-          if (!dialogContext.mounted) return;
-          GlassyToast.show(
-            dialogContext,
-            'Theme set to ${ThemeService.instance.modeLabel}',
-          );
-        },
-      ),
+          onModeSelected: (mode) async {
+            await ThemeService.instance.setThemeMode(mode);
+            if (!dialogContext.mounted) return;
+            GlassyToast.show(
+              dialogContext,
+              'Theme set to ${ThemeService.instance.modeLabel}',
+            );
+          },
+          onAccentSelected: (accent) async {
+            await ThemeService.instance.setAccent(accent);
+            if (!dialogContext.mounted) return;
+            GlassyToast.show(
+              dialogContext,
+              'Accent set to ${ThemeService.instance.accentLabel}',
+            );
+          },
+        ),
       ),
     );
   }
@@ -953,7 +960,9 @@ class _SelectedTheme extends StatelessWidget {
       listenable: ThemeService.instance,
       builder: (context, _) {
         return Theme(
-          data: ThemeService.instance.isDark ? AppTheme.dark : AppTheme.light,
+          data: ThemeService.instance.isDark
+              ? AppTheme.dark
+              : AppTheme.lightFor(ThemeService.instance.accentColors),
           child: child,
         );
       },
@@ -985,100 +994,157 @@ class _MenuItem {
 }
 
 class _ThemeDialog extends StatelessWidget {
-  final ThemeMode currentMode;
   final ValueChanged<ThemeMode> onModeSelected;
+  final ValueChanged<AppAccentPalette> onAccentSelected;
 
-  const _ThemeDialog({required this.currentMode, required this.onModeSelected});
+  const _ThemeDialog({
+    required this.onModeSelected,
+    required this.onAccentSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppTheme.deepPurple600.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
+    return ListenableBuilder(
+      listenable: ThemeService.instance,
+      builder: (context, _) {
+        final mode = ThemeService.instance.themeMode;
+        final accent = ThemeService.instance.accent;
+        final showAccentPicker = !ThemeService.instance.isDark;
+
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.action(context).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.brightness_6_rounded,
+                  color: AppColors.action(context),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Theme',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryText(context),
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildThemeOption(
+                  context,
+                  mode: ThemeMode.light,
+                  selectedMode: mode,
+                  icon: Icons.light_mode_rounded,
+                  title: 'Light',
+                  subtitle: 'Bright surfaces with your accent color',
+                ),
+                const SizedBox(height: 12),
+                _buildThemeOption(
+                  context,
+                  mode: ThemeMode.dark,
+                  selectedMode: mode,
+                  icon: Icons.dark_mode_rounded,
+                  title: 'Dark',
+                  subtitle: 'Dim surfaces for low light',
+                ),
+                const SizedBox(height: 12),
+                _buildThemeOption(
+                  context,
+                  mode: ThemeMode.system,
+                  selectedMode: mode,
+                  icon: Icons.settings_suggest_rounded,
+                  title: 'System',
+                  subtitle: 'Follow device light/dark setting',
+                ),
+                if (showAccentPicker) ...[
+                  const SizedBox(height: 20),
+                  Text(
+                    'Light accent color',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: AppColors.primaryText(context),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Same shade structure as the current theme',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 12,
+                      color: AppColors.secondaryText(context),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      for (final palette in AppAccentPalette.values) ...[
+                        if (palette != AppAccentPalette.values.first)
+                          const SizedBox(width: 10),
+                        Expanded(
+                          child: _buildAccentOption(
+                            context,
+                            palette: palette,
+                            selected: accent,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ],
             ),
-            child: Icon(
-              Icons.brightness_6_rounded,
-              color: AppTheme.deepPurple600,
-              size: 24,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                AppLocalizations(
+                  LanguageService.instance.currentLanguage,
+                ).cancel,
+                style: TextStyle(
+                  color: AppColors.secondaryText(context),
+                  fontFamily: 'Literata',
+                ),
+              ),
             ),
-          ),
-          SizedBox(width: 12),
-          Text(
-            'Theme',
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w700,
-              color: AppColors.primaryText(context),
-            ),
-          ),
-        ],
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildThemeOption(
-            context,
-            mode: ThemeMode.light,
-            icon: Icons.light_mode_rounded,
-            title: 'Light',
-            subtitle: 'Bright surfaces and green accents',
-          ),
-          const SizedBox(height: 12),
-          _buildThemeOption(
-            context,
-            mode: ThemeMode.dark,
-            icon: Icons.dark_mode_rounded,
-            title: 'Dark',
-            subtitle: 'Dim surfaces for low light',
-          ),
-          SizedBox(height: 12),
-          _buildThemeOption(
-            context,
-            mode: ThemeMode.system,
-            icon: Icons.settings_suggest_rounded,
-            title: 'System',
-            subtitle: 'Follow device light/dark setting',
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(
-            AppLocalizations(LanguageService.instance.currentLanguage).cancel,
-            style: TextStyle(
-              color: AppColors.secondaryText(context),
-              fontFamily: 'Literata',
-            ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 
   Widget _buildThemeOption(
     BuildContext context, {
     required ThemeMode mode,
+    required ThemeMode selectedMode,
     required IconData icon,
     required String title,
     required String subtitle,
   }) {
-    final isSelected = currentMode == mode;
-    const accent = AppTheme.deepPurple600;
+    final isSelected = selectedMode == mode;
+    final accent = AppColors.action(context);
 
     return GestureDetector(
-      onTap: () {
-        Navigator.of(context).pop();
-        onModeSelected(mode);
-      },
+      onTap: () => onModeSelected(mode),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: isSelected
               ? accent.withValues(alpha: 0.12)
@@ -1098,7 +1164,7 @@ class _ThemeDialog extends StatelessWidget {
               color: isSelected ? accent : AppColors.secondaryText(context),
               size: 26,
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1130,12 +1196,82 @@ class _ThemeDialog extends StatelessWidget {
             if (isSelected)
               Container(
                 padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: accent,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.check, color: AppTheme.white, size: 16),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAccentOption(
+    BuildContext context, {
+    required AppAccentPalette palette,
+    required AppAccentPalette selected,
+  }) {
+    final colors = BrandAccent.forPalette(palette);
+    final isSelected = selected == palette;
+
+    return GestureDetector(
+      onTap: () => onAccentSelected(palette),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? colors.primary.withValues(alpha: 0.12)
+              : AppColors.chipFill(context),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? colors.primary : AppColors.divider(context),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    colors.primaryLight,
+                    colors.primary,
+                    colors.primaryDark,
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: colors.primary.withValues(alpha: 0.35),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: isSelected
+                  ? const Icon(Icons.check_rounded, color: AppTheme.white, size: 18)
+                  : null,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              palette.label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: isSelected
+                    ? colors.primary
+                    : AppColors.primaryText(context),
+              ),
+            ),
           ],
         ),
       ),

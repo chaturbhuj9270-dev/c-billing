@@ -143,7 +143,7 @@ class MyApp extends StatelessWidget {
       builder: (context, _) {
         return MaterialApp(
           title: AppStoreConfig.appName,
-          theme: AppTheme.light,
+          theme: AppTheme.lightFor(ThemeService.instance.accentColors),
           darkTheme: AppTheme.dark,
           themeMode: ThemeService.instance.themeMode,
           scrollBehavior: const AppScrollBehavior(),

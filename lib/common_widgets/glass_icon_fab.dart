@@ -51,9 +51,9 @@ class GlassIconFab extends StatelessWidget {
                   onTap: onPressed,
                   customBorder: const CircleBorder(),
                   child: CustomPaint(
-                    foregroundPainter: const GlassBevelBorderPainter(
+                    foregroundPainter: GlassBevelBorderPainter(
                       isDark: false,
-                      themeColor: AppTheme.primary,
+                      themeColor: AppColors.action(context),
                       radius: size / 2,
                       strokeWidth: 1.4,
                     ),

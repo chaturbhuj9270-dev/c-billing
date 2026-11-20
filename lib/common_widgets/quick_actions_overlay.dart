@@ -112,7 +112,10 @@ List<QuickActionItem> buildQuickActionItems(
       icon: Icons.event_available_rounded,
       label: l10n.availability,
       color: AppColors.action(context),
-      gradient: [AppTheme.primaryLight, AppColors.action(context)],
+      gradient: [
+        AppColors.brand(context).primaryLight,
+        AppColors.action(context),
+      ],
       onTap: () => open(const AvailabilityPage(), WebShell.availability),
     ),
   );
