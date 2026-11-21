@@ -737,22 +737,8 @@ class _BillsListPageState extends State<BillsListPage>
   }
 
   void _showBillDetails(Bill bill) async {
-    final result = await showDialog<_BillDialogResult>(
-      context: context,
-      builder: (dialogContext) => _BillDetailsDialog(bill: bill),
-    );
-
-    if (!mounted || result == null) return;
-
-    if (result.action == _BillDialogAction.billReturned) {
-      _loadBills();
-    } else if (result.action == _BillDialogAction.openReturn) {
-      final returned = await showAppPage<bool>(
-        context,
-        ReturnBillPage(initialBill: bill),
-      );
-      if (returned == true && mounted) _loadBills();
-    }
+    final changed = await showBillDetailsView(context, bill);
+    if (changed && mounted) _loadBills();
   }
 
   @override
@@ -1666,6 +1652,26 @@ class _BillsListPageState extends State<BillsListPage>
     );
   }
 
+}
+
+/// Opens the shared bill details view (items, print, return).
+/// Returns `true` when the bill was changed (e.g. return processed).
+Future<bool> showBillDetailsView(BuildContext context, Bill bill) async {
+  final navigator = Navigator.of(context);
+  final result = await showDialog<_BillDialogResult>(
+    context: context,
+    builder: (_) => _BillDetailsDialog(bill: bill),
+  );
+  if (result == null) return false;
+  if (result.action == _BillDialogAction.openReturn) {
+    if (!navigator.mounted) return false;
+    final returned = await showAppPage<bool>(
+      navigator.context,
+      ReturnBillPage(initialBill: bill),
+    );
+    return returned == true;
+  }
+  return result.action == _BillDialogAction.billReturned;
 }
 
 // Actions that can be triggered from the bill details dialog

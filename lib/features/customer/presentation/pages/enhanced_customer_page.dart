@@ -17,7 +17,6 @@ import '../widgets/customer_summary_widget.dart';
 import '../widgets/customer_filter_widget.dart';
 import '../widgets/customer_list_widget.dart';
 import 'customer_details_page.dart';
-import 'customer_finance_page.dart';
 import 'customer_transactions_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/ui/sync_status_icon.dart';
@@ -850,7 +849,6 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                             onRefresh: _fetchFromFirebase,
                             onCustomerTap: _showCustomerDetails,
                             onCustomerLongPress: _showCustomerContextMenu,
-                            onFinanceTap: _openCustomerFinance,
                             onTransactionsTap: _openCustomerTransactions,
                             emptyTitle: _localizations.noCustomersYet,
                             emptySubtitle: _localizations.createFirstCustomer,
@@ -880,43 +878,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     );
   }
 
-  // ━━━ CUSTOMER FINANCE/HISTORY PAGE ━━━
-
-  void _openCustomerFinance(Map<String, dynamic> customer) {
-    // Get the explicit serverId if available
-    final serverId = customer['serverId'] as String?;
-    // Get the local integer local id
-    final localId = customer['localId']?.toString() ?? '';
-
-    // Use serverId if available, otherwise use local ID
-    final customerId = (serverId != null && serverId.isNotEmpty)
-        ? serverId
-        : localId;
-
-    debugPrint(
-      '[CustomerFinance] Opening finance page - serverId: $serverId, localId: $localId, using customerId: $customerId',
-    );
-
-    final firstName = customer['firstName'] as String? ?? '';
-    final lastName = customer['lastName'] as String? ?? '';
-    final fullName = '$firstName $lastName'.trim();
-    final contact = customer['contact'] as String? ?? '';
-    final pendingAmount =
-        (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0.0;
-
-    showAppPage(
-      context,
-      CustomerFinancePage(
-        customerId: customerId,
-        customerLocalId: localId,
-        customerName: fullName.isNotEmpty ? fullName : 'Customer',
-        customerContact: contact,
-        currentPendingAmount: pendingAmount,
-      ),
-    );
-  }
-
-  // ━━━ CUSTOMER TRANSACTIONS PAGE ━━━
+  // ━━━ CUSTOMER HISTORY PAGE ━━━
 
   void _openCustomerTransactions(Map<String, dynamic> customer) {
     // Get the explicit serverId if available

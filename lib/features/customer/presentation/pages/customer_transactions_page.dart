@@ -8,6 +8,10 @@ import '../../offline/controllers/customer_transaction_offline_controller.dart';
 import '../../offline/entities/customer_transaction_entity.dart';
 import '../../data/services/customer_transaction_sync_service.dart';
 import '../../../billing/data/services/bill_sync_service.dart';
+import '../../../billing/domain/entities/bill.dart';
+import '../../../billing/offline/controllers/bill_offline_controller.dart';
+import '../../../billing/offline/entities/bill_entity.dart';
+import '../../../billing/presentation/pages/bills_list_page.dart';
 import '../../../event_order/offline/controllers/event_order_offline_controller.dart';
 import '../../../event_order/offline/entities/event_order_entity.dart';
 import '../../../event_order/domain/entities/event_order.dart';
@@ -151,6 +155,54 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
     return widget.currentPendingAmount;
   }
 
+  List<BillEntity> _filterBillsByDate(List<BillEntity> bills) {
+    final now = DateTime.now();
+    switch (_selectedFilter) {
+      case TransactionDateFilter.thisMonth:
+        return bills
+            .where(
+              (b) =>
+                  b.billDate.year == now.year && b.billDate.month == now.month,
+            )
+            .toList();
+      case TransactionDateFilter.thisYear:
+        return bills.where((b) => b.billDate.year == now.year).toList();
+      case TransactionDateFilter.lastYear:
+        return bills.where((b) => b.billDate.year == now.year - 1).toList();
+      case TransactionDateFilter.custom:
+        if (_customStartDate == null || _customEndDate == null) return bills;
+        final start = DateTime(
+          _customStartDate!.year,
+          _customStartDate!.month,
+          _customStartDate!.day,
+        );
+        final end = DateTime(
+          _customEndDate!.year,
+          _customEndDate!.month,
+          _customEndDate!.day,
+          23,
+          59,
+          59,
+        );
+        return bills
+            .where(
+              (b) =>
+                  !b.billDate.isBefore(start) && !b.billDate.isAfter(end),
+            )
+            .toList();
+      case TransactionDateFilter.all:
+        return bills;
+    }
+  }
+
+  Future<void> _openBillView(BillEntity entity) async {
+    final bill = Bill.fromBillEntity(entity);
+    final changed = await showBillDetailsView(context, bill);
+    if (changed && mounted) {
+      _loadTransactions(silent: true);
+    }
+  }
+
   Future<void> _loadTransactions({bool silent = false}) async {
     if (!silent) setState(() => _isLoading = true);
 
@@ -236,6 +288,16 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
         '[CustomerTransactions] Events found: ${eventOrders.length}',
       );
 
+      // Load bills for this customer (billed items history)
+      var bills = await BillOfflineController.instance.getBillsByCustomerIds({
+        customerId,
+        widget.customerLocalId,
+      });
+      bills = _filterBillsByDate(bills);
+      debugPrint(
+        '[CustomerTransactions] Bills found: ${bills.length}',
+      );
+
       // Debug: show all event orders customer IDs for troubleshooting
       if (eventOrders.isEmpty) {
         final allOrders = await EventOrderOfflineController.instance
@@ -261,13 +323,26 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
       // Build combined list
       final combined = <_CombinedItem>[];
 
-      // Add payment transactions
+      // Add payment / adjustment / return ledger rows.
+      // Skip billCreated rows — bills are shown as dedicated billed-item cards.
       for (final tx in transactions) {
+        if (tx.transactionType == TransactionType.billCreated) continue;
         combined.add(
           _CombinedItem(
             type: _CombinedItemType.transaction,
             date: tx.createdAt,
             transaction: tx,
+          ),
+        );
+      }
+
+      // Add customer bills (tap opens bill view with line items)
+      for (final bill in bills) {
+        combined.add(
+          _CombinedItem(
+            type: _CombinedItemType.bill,
+            date: bill.billDate,
+            bill: bill,
           ),
         );
       }
@@ -327,6 +402,9 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
               balance -= tx.amount;
               break;
           }
+        } else if (item.type == _CombinedItemType.bill && item.bill != null) {
+          // Bill creation increased AR by finalAmount; undo → subtract.
+          balance -= item.bill!.finalAmount;
         } else if (item.type == _CombinedItemType.eventOrder &&
             item.eventOrder != null) {
           final order = item.eventOrder!;
@@ -382,7 +460,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
     return Column(
       children: [
         AppTopBar(
-          title: 'Transactions',
+          title: 'History',
           subtitle: widget.customerName,
           actions: [
             AppTopBar.action(
@@ -627,6 +705,14 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
               transaction: item.transaction!,
               runningBalance: item.runningBalance,
               onDelete: () => _deleteTransaction(item.transaction!),
+              onTap: () => _openBillFromTransaction(item.transaction!),
+            );
+          } else if (item.type == _CombinedItemType.bill &&
+              item.bill != null) {
+            return _BillHistoryCard(
+              bill: item.bill!,
+              runningBalance: item.runningBalance,
+              onTap: () => _openBillView(item.bill!),
             );
           } else if (item.type == _CombinedItemType.eventOrder &&
               item.eventOrder != null) {
@@ -663,7 +749,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
             ),
             SizedBox(height: 20),
             Text(
-              'No Transactions Yet',
+              'No History Yet',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -673,7 +759,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
             ),
             const SizedBox(height: 8),
             Text(
-              'Record payments received from this customer',
+              'Bills, payments, and events for this customer will appear here',
               style: TextStyle(
                 fontSize: 14,
                 color: AppTheme.grey600,
@@ -762,6 +848,49 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
       unawaited(CustomerTransactionSyncService.instance.syncNow());
       unawaited(BillSyncService.instance.syncNow());
     }
+  }
+
+  Future<void> _openBillFromTransaction(
+    CustomerTransactionEntity transaction,
+  ) async {
+    final ref = transaction.referenceId;
+    if (ref == null || ref.isEmpty) return;
+    if (transaction.transactionType != TransactionType.billCreated &&
+        transaction.transactionType != TransactionType.billReturn &&
+        transaction.referenceType != 'bill') {
+      return;
+    }
+
+    final keys = <String>{ref};
+    if (ref.startsWith('local_')) {
+      keys.add(ref.substring(6));
+    } else {
+      keys.add('local_$ref');
+    }
+    final localId = int.tryParse(
+      ref.startsWith('local_') ? ref.substring(6) : ref,
+    );
+
+    final all = await BillOfflineController.instance.getBillsByCustomerIds({
+      widget.customerId,
+      widget.customerLocalId,
+    });
+    BillEntity? match;
+    for (final bill in all) {
+      final serverId = bill.serverId;
+      if (serverId != null && keys.contains(serverId)) {
+        match = bill;
+        break;
+      }
+      if (keys.contains('local_${bill.id}') ||
+          keys.contains('${bill.id}') ||
+          (localId != null && bill.id == localId)) {
+        match = bill;
+        break;
+      }
+    }
+    if (match == null || !mounted) return;
+    await _openBillView(match);
   }
 
   Future<void> _deleteTransaction(CustomerTransactionEntity transaction) async {
@@ -929,11 +1058,13 @@ class _TransactionCard extends StatelessWidget {
   final CustomerTransactionEntity transaction;
   final double runningBalance;
   final VoidCallback onDelete;
+  final VoidCallback? onTap;
 
   const _TransactionCard({
     required this.transaction,
     required this.runningBalance,
     required this.onDelete,
+    this.onTap,
   });
 
   @override
@@ -988,7 +1119,12 @@ class _TransactionCard extends StatelessWidget {
         padding: EdgeInsets.only(right: 20),
         child: Icon(Icons.delete_rounded, color: AppTheme.white),
       ),
-      child: Container(
+      child: Material(
+        color: AppTheme.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
         margin: EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
           color: AppColors.card(context),
@@ -1125,6 +1261,227 @@ class _TransactionCard extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+            ],
+          ),
+        ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Bill history card — shows billed items; tap opens bill view
+class _BillHistoryCard extends StatelessWidget {
+  final BillEntity bill;
+  final double runningBalance;
+  final VoidCallback onTap;
+
+  const _BillHistoryCard({
+    required this.bill,
+    required this.runningBalance,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
+    final isPaid = bill.paymentStatus == BillPaymentStatus.paid;
+    final isPartial = bill.paymentStatus == BillPaymentStatus.partiallyPaid;
+    final statusColor = isPaid
+        ? AppTheme.green
+        : isPartial
+            ? AppTheme.orange
+            : AppTheme.red;
+    final statusText = isPaid
+        ? 'Paid'
+        : isPartial
+            ? 'Partial'
+            : 'Pending';
+
+    final itemPreview = bill.items
+        .take(3)
+        .map((i) {
+          final qty = i.quantity == i.quantity.roundToDouble()
+              ? i.quantity.toInt().toString()
+              : i.quantity.toStringAsFixed(2);
+          return '${i.productName ?? 'Item'} × $qty';
+        })
+        .join(' · ');
+    final extraCount = bill.items.length > 3 ? bill.items.length - 3 : 0;
+
+    return Material(
+      color: AppTheme.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.card(context),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppColors.accentSoft(context, 0.35),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.black.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.accentSoft(context, 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.receipt_long_rounded,
+                      color: AppColors.accent(context),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Bill #${bill.serverId ?? bill.id}',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryText(context),
+                            fontFamily: 'Literata',
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          dateFormat.format(bill.billDate),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.grey,
+                            fontFamily: 'Literata',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '₹${NumberFormat('#,##,##0.00', 'en_IN').format(bill.finalAmount)}',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.accent(context),
+                          fontFamily: 'Literata',
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: statusColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          statusText,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: statusColor,
+                            fontFamily: 'Literata',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              if (bill.items.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.chipFill(context),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${bill.items.length} billed item${bill.items.length == 1 ? '' : 's'}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.secondaryText(context),
+                          fontFamily: 'Literata',
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        extraCount > 0
+                            ? '$itemPreview · +$extraCount more'
+                            : itemPreview,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.primaryText(context),
+                          fontFamily: 'Literata',
+                          height: 1.35,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Text(
+                    'Tap to view bill',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.accent(context),
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 16,
+                    color: AppColors.accent(context),
+                  ),
+                  const Spacer(),
+                  Text(
+                    'Bal: ₹${NumberFormat('#,##,##0', 'en_IN').format(runningBalance.round())}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: runningBalance > 0
+                          ? AppTheme.error
+                          : AppTheme.green400,
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -1647,13 +2004,14 @@ class _EventOrderCard extends StatelessWidget {
 }
 
 // Combined item type for unified display
-enum _CombinedItemType { transaction, eventOrder }
+enum _CombinedItemType { transaction, bill, eventOrder }
 
 // Combined item model for unified display
 class _CombinedItem {
   final _CombinedItemType type;
   final DateTime date;
   final CustomerTransactionEntity? transaction;
+  final BillEntity? bill;
   final EventOrderEntity? eventOrder;
   double runningBalance = 0;
 
@@ -1661,6 +2019,7 @@ class _CombinedItem {
     required this.type,
     required this.date,
     this.transaction,
+    this.bill,
     this.eventOrder,
   });
 }

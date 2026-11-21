@@ -411,20 +411,11 @@ class CustomerListWidget extends StatelessWidget {
                         containerSize: 30,
                         spacing: 6,
                       ),
-                    if (onFinanceTap != null) ...[
-                      const SizedBox(width: 6),
-                      _roundAction(
-                        context,
-                        icon: Icons.account_balance_wallet_outlined,
-                        color: AppColors.action(context),
-                        onTap: () => onFinanceTap!(customer),
-                      ),
-                    ],
                     if (onTransactionsTap != null) ...[
                       const SizedBox(width: 6),
                       _roundAction(
                         context,
-                        icon: Icons.swap_horiz_rounded,
+                        icon: Icons.history_rounded,
                         color: AppTheme.toneAmber,
                         onTap: () => onTransactionsTap!(customer),
                       ),
@@ -805,16 +796,6 @@ class _CustomerCard extends StatelessWidget {
                           label: 'History',
                           color: AppTheme.toneAmber,
                           onTap: onTransactionsTap!,
-                        ),
-                      ),
-                    if (onFinanceTap != null)
-                      Expanded(
-                        child: _actionTile(
-                          context,
-                          icon: Icons.menu_book_rounded,
-                          label: 'Ledger',
-                          color: AppColors.secondaryText(context),
-                          onTap: onFinanceTap!,
                         ),
                       ),
                     if (contact.isNotEmpty) ...[
