@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -23,17 +25,35 @@ import 'core/ui/app_scroll_behavior.dart';
 import 'core/services/sync_bootstrap.dart';
 import 'firebase_options.dart';
 
+Future<void>? _firebaseReady;
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Local error buffer first; Crashlytics hooks are layered after Firebase init.
   ErrorLoggingService.initialize();
 
-  // Firebase MUST be initialized before runApp because services like SubscriptionService access FirebaseFirestore.instance at construction time. Timeout avoids an indefinite blank s...
+  // Start Firebase without blocking the first frame — splash paints immediately.
+  unawaited(ensureFirebaseReady());
+
+  // Theme preference before first frame so the correct mode is used immediately.
+  await _safeInit(() => ThemeService.instance.init(), 'ThemeService');
+
+  // Run app - splash screen renders while Firebase + remaining services init
+  runApp(const MyApp());
+}
+
+/// Completes once Firebase (and desktop Firestore settings) are ready.
+/// Safe to call multiple times; work runs once.
+Future<void> ensureFirebaseReady() {
+  return _firebaseReady ??= _initFirebase();
+}
+
+Future<void> _initFirebase() async {
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
-    ).timeout(const Duration(seconds: 15));
+    ).timeout(const Duration(seconds: 8));
 
     // Crash reporting for Play production builds (keeps local ErrorLogging too).
     if (!kIsWeb) {
@@ -68,16 +88,13 @@ Future<void> main() async {
       debugPrint('Firestore settings error: $e');
     }
   }
-
-  // Theme preference before first frame so the correct mode is used immediately.
-  await _safeInit(() => ThemeService.instance.init(), 'ThemeService');
-
-  // Run app - splash screen renders while remaining services init
-  runApp(const MyApp());
 }
 
-// Initialize non-Firebase services. Called from SplashPage so the UI is visible.
+// Initialize services. Called from SplashPage so the UI is already visible.
 Future<void> initializeServices() async {
+  // Firebase must be ready before Auth / Firestore / DI paths that touch it.
+  await ensureFirebaseReady();
+
   // Run all independent initializations in parallel for faster startup
   await Future.wait([
     _safeInit(() => di.init(), 'DI'),
@@ -87,32 +104,34 @@ Future<void> initializeServices() async {
   ]);
 
   // These can run in background after basic services are ready
-  Future.wait([
-    _safeInit(
-      () => PurchaseSettingsService.instance.init(),
-      'PurchaseSettingsService',
-    ),
-    _safeInit(
-      () => ProductSettingsService.instance.init(),
-      'ProductSettingsService',
-    ),
-    _safeInit(
-      () => EventOrderSettingsService.instance.init(),
-      'EventOrderSettingsService',
-    ),
-    _safeInit(
-      () => PurchaseReportSettingsService.instance.init(),
-      'PurchaseReportSettingsService',
-    ),
-    _safeInit(
-      () => BillReportSettingsService.instance.init(),
-      'BillReportSettingsService',
-    ),
-    _safeInit(
-      () => StockReportSettingsService.instance.init(),
-      'StockReportSettingsService',
-    ),
-  ]);
+  unawaited(
+    Future.wait([
+      _safeInit(
+        () => PurchaseSettingsService.instance.init(),
+        'PurchaseSettingsService',
+      ),
+      _safeInit(
+        () => ProductSettingsService.instance.init(),
+        'ProductSettingsService',
+      ),
+      _safeInit(
+        () => EventOrderSettingsService.instance.init(),
+        'EventOrderSettingsService',
+      ),
+      _safeInit(
+        () => PurchaseReportSettingsService.instance.init(),
+        'PurchaseReportSettingsService',
+      ),
+      _safeInit(
+        () => BillReportSettingsService.instance.init(),
+        'BillReportSettingsService',
+      ),
+      _safeInit(
+        () => StockReportSettingsService.instance.init(),
+        'StockReportSettingsService',
+      ),
+    ]),
+  );
 }
 
 // Safe initialization wrapper

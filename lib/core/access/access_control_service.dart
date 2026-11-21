@@ -80,12 +80,13 @@ class AccessControlService {
 
     try {
       // Prefer custom claims when Cloud Functions have set them.
-      // Timeout: a hung token refresh freezes splash / post-login forever.
+      // Use the cached token first — force-refresh on every splash added multi-second
+      // network waits. Background refresh happens after navigation when needed.
       Map<String, dynamic> claims = {};
       try {
         final token = await user
-            .getIdTokenResult(true)
-            .timeout(const Duration(seconds: 10));
+            .getIdTokenResult()
+            .timeout(const Duration(seconds: 4));
         claims = token.claims ?? {};
       } catch (e) {
         debugPrint('[AccessControl] getIdTokenResult timed out/failed: $e');
@@ -100,10 +101,19 @@ class AccessControlService {
           ownerId: claimOwner,
           modulesFromClaims: _modulesFromClaims(claims['modules']),
         );
-        // Claims may omit token; refresh already ran inside _applyEmployee.
+        // Claims may omit token; live employee doc refresh is inside _applyEmployee.
         _loaded = true;
         debugPrint(
           '[AccessControl] Employee via claims → owner=$claimOwner modules=${_allowedModules.length}',
+        );
+        // Soft-refresh claims in background for next launch.
+        unawaited(
+          user.getIdTokenResult(true).then(
+            (_) {},
+            onError: (Object e, StackTrace _) {
+              debugPrint('[AccessControl] background token refresh failed: $e');
+            },
+          ),
         );
         return;
       }
@@ -113,7 +123,7 @@ class AccessControlService {
           .collection('users')
           .doc(user.uid)
           .get()
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 5));
       final data = profile.data();
       if (data != null &&
           data['role'] == 'employee' &&
@@ -179,7 +189,7 @@ class AccessControlService {
           .collection('employees')
           .doc(_authUid)
           .get()
-          .timeout(const Duration(seconds: 8));
+          .timeout(const Duration(seconds: 4));
       if (empDoc.exists) {
         final d = empDoc.data();
         if (d?['active'] == false) {
@@ -222,7 +232,7 @@ class AccessControlService {
           .collection('users')
           .doc(uid)
           .get()
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 3));
       return snap.data()?['role'] as String?;
     } catch (_) {
       return null;

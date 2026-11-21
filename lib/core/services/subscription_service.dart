@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -97,6 +99,41 @@ class SubscriptionService {
   Future<bool> hasOfflineEntitlement() =>
       _allowFromLocalFallbacks(reason: 'offline-only');
 
+  /// Splash / session restore gate: trust local entitlement immediately when
+  /// present, and only block on a short network budget when offline says no.
+  Future<bool> isSubscriptionValidQuick({
+    Duration networkBudget = const Duration(seconds: 4),
+  }) async {
+    if (await hasOfflineEntitlement()) {
+      // Refresh server cache in the background; do not hold the splash.
+      unawaited(
+        isSubscriptionValid().then(
+          (_) {},
+          onError: (Object e, StackTrace _) {
+            debugPrint('[SubscriptionService] background refresh failed: $e');
+          },
+        ),
+      );
+      return true;
+    }
+
+    try {
+      return await isSubscriptionValid().timeout(
+        networkBudget,
+        onTimeout: () {
+          debugPrint(
+            '[SubscriptionService] Quick check timed out after '
+            '${networkBudget.inSeconds}s — denying without local entitlement',
+          );
+          return false;
+        },
+      );
+    } catch (e) {
+      debugPrint('[SubscriptionService] Quick check failed: $e');
+      return false;
+    }
+  }
+
   Future<bool> _allowFromLocalFallbacks({String reason = ''}) async {
     final cached = await _cachedAccessExpiry();
     if (_isActiveExpiry(cached)) {
@@ -128,7 +165,7 @@ class SubscriptionService {
   Future<Map<String, dynamic>?> fetchAccessFromApi() async {
     try {
       final callable = _functions.httpsCallable('getSubscriptionAccess');
-      final result = await callable.call().timeout(const Duration(seconds: 12));
+      final result = await callable.call().timeout(const Duration(seconds: 8));
       final raw = result.data;
       if (raw is! Map) return null;
       return Map<String, dynamic>.from(raw);

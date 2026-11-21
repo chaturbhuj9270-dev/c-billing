@@ -396,21 +396,17 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       context: dialogContext,
       builder: (_) => _SelectedTheme(
         child: _ThemeDialog(
-          onModeSelected: (mode) async {
-            await ThemeService.instance.setThemeMode(mode);
-            if (!dialogContext.mounted) return;
-            GlassyToast.show(
-              dialogContext,
-              'Theme set to ${ThemeService.instance.modeLabel}',
+          onApply: (mode, accent, customPrimary) async {
+            await ThemeService.instance.applyPreferences(
+              mode: mode,
+              accent: accent,
+              customPrimary: customPrimary,
             );
-          },
-          onAccentSelected: (accent) async {
-            await ThemeService.instance.setAccent(accent);
             if (!dialogContext.mounted) return;
-            GlassyToast.show(
-              dialogContext,
-              'Accent set to ${ThemeService.instance.accentLabel}',
-            );
+            final label = ThemeService.instance.isDark
+                ? ThemeService.instance.modeLabel
+                : ThemeService.instance.preferencesTrailing;
+            GlassyToast.show(dialogContext, 'Theme set to $label');
           },
         ),
       ),
@@ -997,288 +993,482 @@ class _MenuItem {
   });
 }
 
-class _ThemeDialog extends StatelessWidget {
-  final ValueChanged<ThemeMode> onModeSelected;
-  final ValueChanged<AppAccentPalette> onAccentSelected;
+class _ThemeDialog extends StatefulWidget {
+  final Future<void> Function(
+    ThemeMode mode,
+    AppAccentPalette accent,
+    Color? customPrimary,
+  ) onApply;
 
-  const _ThemeDialog({
-    required this.onModeSelected,
-    required this.onAccentSelected,
-  });
+  const _ThemeDialog({required this.onApply});
 
   @override
-  Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: ThemeService.instance,
-      builder: (context, _) {
-        final mode = ThemeService.instance.themeMode;
-        final accent = ThemeService.instance.accent;
-        final showAccentPicker = !ThemeService.instance.isDark;
+  State<_ThemeDialog> createState() => _ThemeDialogState();
+}
 
+class _ThemeDialogState extends State<_ThemeDialog> {
+  late ThemeMode _draftMode;
+  late AppAccentPalette _draftAccent;
+  late Color _draftCustomPrimary;
+
+  @override
+  void initState() {
+    super.initState();
+    final service = ThemeService.instance;
+    _draftMode = service.themeMode;
+    _draftAccent = service.accent;
+    _draftCustomPrimary = service.customPrimary;
+  }
+
+  bool get _draftIsDark {
+    if (_draftMode == ThemeMode.dark) return true;
+    if (_draftMode == ThemeMode.light) return false;
+    return WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+        Brightness.dark;
+  }
+
+  BrandAccent get _draftColors => BrandAccent.forPalette(
+        _draftAccent,
+        customPrimary: _draftCustomPrimary,
+      );
+
+  bool get _hasChanges {
+    final service = ThemeService.instance;
+    if (_draftMode != service.themeMode) return true;
+    if (_draftAccent != service.accent) return true;
+    if (_draftAccent == AppAccentPalette.custom &&
+        _draftCustomPrimary.toARGB32() != service.customPrimary.toARGB32()) {
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> _pickCustomColor() async {
+    var temp = _draftCustomPrimary;
+    final picked = await showDialog<Color>(
+      context: context,
+      builder: (ctx) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.action(context).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.brightness_6_rounded,
-                  color: AppColors.action(context),
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Theme',
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primaryText(context),
-                ),
-              ),
-            ],
+          title: const Text(
+            'Custom accent',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w700,
+            ),
           ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildThemeOption(
-                  context,
-                  mode: ThemeMode.light,
-                  selectedMode: mode,
-                  icon: Icons.light_mode_rounded,
-                  title: 'Light',
-                  subtitle: 'Bright surfaces with your accent color',
-                ),
-                const SizedBox(height: 12),
-                _buildThemeOption(
-                  context,
-                  mode: ThemeMode.dark,
-                  selectedMode: mode,
-                  icon: Icons.dark_mode_rounded,
-                  title: 'Dark',
-                  subtitle: 'Dim surfaces for low light',
-                ),
-                const SizedBox(height: 12),
-                _buildThemeOption(
-                  context,
-                  mode: ThemeMode.system,
-                  selectedMode: mode,
-                  icon: Icons.settings_suggest_rounded,
-                  title: 'System',
-                  subtitle: 'Follow device light/dark setting',
-                ),
-                if (showAccentPicker) ...[
-                  const SizedBox(height: 20),
-                  Text(
-                    'Light accent color',
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      color: AppColors.primaryText(context),
+          content: StatefulBuilder(
+            builder: (context, setLocal) {
+              final hsl = HSLColor.fromColor(temp);
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: temp,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: temp.withValues(alpha: 0.4),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 20),
                   Text(
-                    'Same shade structure as the current theme',
+                    'Hue',
                     style: TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 12,
                       color: AppColors.secondaryText(context),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      for (final palette in AppAccentPalette.values) ...[
-                        if (palette != AppAccentPalette.values.first)
-                          const SizedBox(width: 10),
-                        Expanded(
-                          child: _buildAccentOption(
-                            context,
-                            palette: palette,
-                            selected: accent,
-                          ),
-                        ),
-                      ],
-                    ],
+                  Slider(
+                    value: hsl.hue,
+                    max: 360,
+                    onChanged: (v) {
+                      setLocal(() {
+                        temp = hsl.withHue(v).toColor();
+                      });
+                    },
+                  ),
+                  Text(
+                    'Saturation',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 12,
+                      color: AppColors.secondaryText(context),
+                    ),
+                  ),
+                  Slider(
+                    value: hsl.saturation,
+                    onChanged: (v) {
+                      setLocal(() {
+                        temp = hsl.withSaturation(v).toColor();
+                      });
+                    },
+                  ),
+                  Text(
+                    'Lightness',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 12,
+                      color: AppColors.secondaryText(context),
+                    ),
+                  ),
+                  Slider(
+                    value: hsl.lightness.clamp(0.12, 0.55),
+                    min: 0.12,
+                    max: 0.55,
+                    onChanged: (v) {
+                      setLocal(() {
+                        temp = hsl.withLightness(v).toColor();
+                      });
+                    },
                   ),
                 ],
-              ],
-            ),
+              );
+            },
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(ctx).pop(),
               child: Text(
-                AppLocalizations(
-                  LanguageService.instance.currentLanguage,
-                ).cancel,
+                'Cancel',
                 style: TextStyle(
-                  color: AppColors.secondaryText(context),
+                  color: AppColors.secondaryText(ctx),
                   fontFamily: 'Literata',
                 ),
+              ),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(temp),
+              style: FilledButton.styleFrom(
+                backgroundColor: temp,
+                foregroundColor: AppTheme.white,
+              ),
+              child: const Text(
+                'Use colour',
+                style: TextStyle(fontFamily: 'Literata'),
               ),
             ),
           ],
         );
       },
     );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _draftCustomPrimary = picked;
+      _draftAccent = AppAccentPalette.custom;
+    });
   }
 
-  Widget _buildThemeOption(
-    BuildContext context, {
-    required ThemeMode mode,
-    required ThemeMode selectedMode,
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    final isSelected = selectedMode == mode;
-    final accent = AppColors.action(context);
+  Future<void> _apply() async {
+    await widget.onApply(
+      _draftMode,
+      _draftAccent,
+      _draftAccent == AppAccentPalette.custom ? _draftCustomPrimary : null,
+    );
+    if (mounted) Navigator.of(context).pop();
+  }
 
-    return GestureDetector(
-      onTap: () => onModeSelected(mode),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? accent.withValues(alpha: 0.12)
-              : AppColors.isDark(context)
-              ? AppTheme.white.withValues(alpha: 0.06)
-              : AppTheme.grey.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? accent : AppColors.divider(context),
-            width: isSelected ? 2 : 1,
+  @override
+  Widget build(BuildContext context) {
+    final colors = _draftColors;
+    final showAccentPicker = !_draftIsDark;
+    final locs = AppLocalizations(LanguageService.instance.currentLanguage);
+
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      title: Text(
+        'Theme',
+        style: TextStyle(
+          fontFamily: 'Literata',
+          fontWeight: FontWeight.w700,
+          fontSize: 22,
+          color: AppColors.primaryText(context),
+        ),
+      ),
+      content: SizedBox(
+        width: 340,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildModeSegmented(context, colors),
+              if (showAccentPicker) ...[
+                const SizedBox(height: 22),
+                Text(
+                  'Light accent colour',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: AppColors.primaryText(context),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _buildAccentSwatches(context),
+                const SizedBox(height: 20),
+                _buildPreview(context, colors),
+              ],
+            ],
           ),
         ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? accent : AppColors.secondaryText(context),
-              size: 26,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(
+            locs.cancel,
+            style: TextStyle(
+              color: AppColors.secondaryText(context),
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w600,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.w500,
-                      fontFamily: 'Literata',
-                      color: isSelected
-                          ? accent
-                          : AppColors.primaryText(context),
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.secondaryText(context),
-                      fontFamily: 'Literata',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (isSelected)
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: accent,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.check, color: AppTheme.white, size: 16),
-              ),
-          ],
+          ),
         ),
+        FilledButton(
+          onPressed: _hasChanges ? _apply : () => Navigator.of(context).pop(),
+          style: FilledButton.styleFrom(
+            backgroundColor: colors.primary,
+            foregroundColor: AppTheme.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          ),
+          child: const Text(
+            'Apply',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildModeSegmented(BuildContext context, BrandAccent colors) {
+    final modes = const [
+      (ThemeMode.light, 'Light'),
+      (ThemeMode.dark, 'Dark'),
+      (ThemeMode.system, 'System'),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.isDark(context)
+            ? AppTheme.white.withValues(alpha: 0.06)
+            : AppTheme.grey.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          for (final entry in modes)
+            Expanded(
+              child: GestureDetector(
+                onTap: () => setState(() => _draftMode = entry.$1),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(
+                    color: _draftMode == entry.$1
+                        ? (AppColors.isDark(context)
+                            ? AppTheme.darkCard
+                            : AppTheme.white)
+                        : AppTheme.transparent,
+                    borderRadius: BorderRadius.circular(11),
+                    border: Border.all(
+                      color: _draftMode == entry.$1
+                          ? colors.primary
+                          : AppTheme.transparent,
+                      width: 1.5,
+                    ),
+                    boxShadow: _draftMode == entry.$1
+                        ? [
+                            BoxShadow(
+                              color: AppTheme.black.withValues(alpha: 0.06),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Text(
+                    entry.$2,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: _draftMode == entry.$1
+                          ? colors.primary
+                          : AppColors.secondaryText(context),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
 
-  Widget _buildAccentOption(
-    BuildContext context, {
-    required AppAccentPalette palette,
-    required AppAccentPalette selected,
-  }) {
-    final colors = BrandAccent.forPalette(palette);
-    final isSelected = selected == palette;
+  Widget _buildAccentSwatches(BuildContext context) {
+    return Wrap(
+      spacing: 14,
+      runSpacing: 14,
+      children: [
+        for (final palette in AppAccentPaletteX.presets)
+          _swatchCircle(
+            color: BrandAccent.forPalette(palette).primary,
+            selected: _draftAccent == palette,
+            onTap: () => setState(() => _draftAccent = palette),
+          ),
+        _swatchCircle(
+          color: _draftCustomPrimary,
+          selected: _draftAccent == AppAccentPalette.custom,
+          isCustom: true,
+          onTap: _pickCustomColor,
+        ),
+      ],
+    );
+  }
 
+  Widget _swatchCircle({
+    required Color color,
+    required bool selected,
+    required VoidCallback onTap,
+    bool isCustom = false,
+  }) {
     return GestureDetector(
-      onTap: () => onAccentSelected(palette),
+      onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        width: 44,
+        height: 44,
         decoration: BoxDecoration(
-          color: isSelected
-              ? colors.primary.withValues(alpha: 0.12)
-              : AppColors.chipFill(context),
-          borderRadius: BorderRadius.circular(14),
+          color: isCustom && !selected ? AppTheme.grey200 : color,
+          shape: BoxShape.circle,
           border: Border.all(
-            color: isSelected ? colors.primary : AppColors.divider(context),
-            width: isSelected ? 2 : 1,
+            color: selected ? color : AppTheme.grey300,
+            width: selected ? 2.5 : 1,
           ),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    colors.primaryLight,
-                    colors.primary,
-                    colors.primaryDark,
-                  ],
-                ),
-                boxShadow: [
+          boxShadow: selected
+              ? [
                   BoxShadow(
-                    color: colors.primary.withValues(alpha: 0.35),
+                    color: color.withValues(alpha: 0.35),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
-                ],
-              ),
-              child: isSelected
-                  ? const Icon(Icons.check_rounded, color: AppTheme.white, size: 18)
-                  : null,
+                ]
+              : null,
+        ),
+        child: isCustom && !selected
+            ? Icon(Icons.add_rounded, color: AppTheme.grey700, size: 22)
+            : selected
+                ? const Icon(Icons.check_rounded, color: AppTheme.white, size: 22)
+                : null,
+      ),
+    );
+  }
+
+  Widget _buildPreview(BuildContext context, BrandAccent colors) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'PREVIEW',
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w700,
+            fontSize: 11,
+            letterSpacing: 0.8,
+            color: AppColors.secondaryText(context),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          width: double.infinity,
+          height: 44,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [colors.headerStart, colors.headerEnd],
             ),
-            const SizedBox(height: 8),
-            Text(
-              palette.label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Literata',
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: isSelected
-                    ? colors.primary
-                    : AppColors.primaryText(context),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                height: 42,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: colors.primary,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  'Save bill',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.white,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Container(
+                height: 42,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: colors.container,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Add',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w700,
+                    color: colors.primary,
+                    fontSize: 14,
+                  ),
+                ),
               ),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 12),
+        Text(
+          _draftAccent.label,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w700,
+            fontSize: 15,
+            color: colors.primary,
+          ),
+        ),
+      ],
     );
   }
 }

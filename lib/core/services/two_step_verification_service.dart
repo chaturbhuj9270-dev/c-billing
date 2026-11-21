@@ -39,7 +39,7 @@ class TwoStepVerificationService {
           .collection('users')
           .doc(uid)
           .get()
-          .timeout(const Duration(seconds: 6));
+          .timeout(const Duration(seconds: 3));
       return snap.data()?['twoStepVerificationEnabled'] == true;
     } catch (e) {
       debugPrint('[TwoStep] isEnabledForUid failed: $e');

@@ -1383,6 +1383,18 @@ class _BillingPageState extends State<BillingPage> {
         ? '${productId}_batch_$batchId'
         : productId;
 
+    if (availableStock <= 0) {
+      _showSnackbar(
+        billStockLimitMessage(
+          localizations: _localizations,
+          productName: productName,
+          available: 0,
+        ),
+        isError: true,
+      );
+      return;
+    }
+
     setState(() {
       _ensureGstModeForProductTax(cgstPercent: cgst, sgstPercent: sgst);
       final existingIndex = _billItems.indexWhere(
@@ -1396,7 +1408,7 @@ class _BillingPageState extends State<BillingPage> {
         final step = (existing.sellUnit == 'gm' || existing.sellUnit == 'ml')
             ? 0.1
             : 1.0;
-        if (existing.quantity + step <= availableStock) {
+        if (existing.quantity + step <= availableStock + Qty.epsilon) {
           _billItems[existingIndex] = BillItem.create(
             productId: uniqueKey,
             productName: productName,
@@ -1413,13 +1425,29 @@ class _BillingPageState extends State<BillingPage> {
           );
         } else {
           _showSnackbar(
-            '${_localizations.maxStock}: ${availableStock.toInt()}',
+            billStockLimitMessage(
+              localizations: _localizations,
+              productName: productName,
+              available: availableStock,
+            ),
             isError: true,
           );
           return;
         }
       } else {
-        // Add new item with base unit
+        // Never start a line above available stock (blocks "qty 1" on 0 stock).
+        final initialQty = availableStock < 1.0 ? availableStock : 1.0;
+        if (initialQty <= 0) {
+          _showSnackbar(
+            billStockLimitMessage(
+              localizations: _localizations,
+              productName: productName,
+              available: 0,
+            ),
+            isError: true,
+          );
+          return;
+        }
         _billItems.add(
           BillItem.create(
             productId: uniqueKey,
@@ -1427,7 +1455,7 @@ class _BillingPageState extends State<BillingPage> {
             companyName: companyName,
             sellingPrice: unitPrice,
             purchasePrice: purchasePrice,
-            quantity: 1,
+            quantity: initialQty,
             cgstPercent: cgst,
             sgstPercent: sgst,
             hsnCode: hsnCode,
@@ -1485,9 +1513,62 @@ class _BillingPageState extends State<BillingPage> {
     return (_finalAmount - _receivedAmount).clamp(0.0, _finalAmount);
   }
 
+  /// Returns a user message when any cart line exceeds available stock; else null.
+  String? _validateCartStockLocally() {
+    for (final item in _billItems) {
+      final maxStock = resolveBillItemMaxStock(
+        item: item,
+        products: _products,
+        availableBatches: _availableBatches,
+        allProducts: _allProducts,
+      );
+      if (item.quantity > maxStock + Qty.epsilon) {
+        return billStockLimitMessage(
+          localizations: _localizations,
+          productName: item.productName,
+          available: maxStock,
+        );
+      }
+    }
+    return null;
+  }
+
   Future<void> _saveBill() async {
     if (_billItems.isEmpty) {
       _showSnackbar(_localizations.pleaseAddAtLeastOneItem, isError: true);
+      return;
+    }
+
+    // Hard stop: never print/save a bill that would drive stock negative.
+    final stockBlock = _validateCartStockLocally();
+    if (stockBlock != null) {
+      _showSnackbar(stockBlock, isError: true);
+      return;
+    }
+    final remoteStockErrors = await InventoryIntegrationService.instance
+        .validateStockForBill(
+      _billItems
+          .map(
+            (item) => BillItem.create(
+              productId: item.productId.split('_batch_').first,
+              productName: item.productName,
+              companyName: item.companyName,
+              sellingPrice: item.sellingPrice,
+              purchasePrice: item.purchasePrice,
+              quantity: item.quantity,
+              cgstPercent: item.cgstPercent,
+              sgstPercent: item.sgstPercent,
+              hsnCode: item.hsnCode,
+              unit: item.unit,
+              sellUnit: item.sellUnit,
+              unitsPerPack: item.unitsPerPack,
+              employeeToken: item.employeeToken,
+            ),
+          )
+          .toList(),
+    );
+    if (remoteStockErrors.isNotEmpty) {
+      _showSnackbar(remoteStockErrors.values.first, isError: true);
       return;
     }
 
@@ -3934,7 +4015,7 @@ class _BillingPageState extends State<BillingPage> {
         final step = (existing.sellUnit == 'gm' || existing.sellUnit == 'ml')
             ? 0.1
             : 1.0;
-        if (existing.quantity + step <= effectiveStock) {
+        if (existing.quantity + step <= effectiveStock + Qty.epsilon) {
           _billItems[existingIndex] = BillItem.create(
             productId: uniqueKey,
             productName: resolved.name,
@@ -3954,13 +4035,30 @@ class _BillingPageState extends State<BillingPage> {
           );
         } else {
           _showSnackbar(
-            '${_localizations.maxStock}: $effectiveStock',
+            billStockLimitMessage(
+              localizations: _localizations,
+              productName: resolved.name,
+              available: effectiveStock,
+            ),
             isError: true,
           );
           _indexNoController.clear();
           return;
         }
       } else {
+        final initialQty = effectiveStock < 1.0 ? effectiveStock : 1.0;
+        if (initialQty <= 0) {
+          _showSnackbar(
+            billStockLimitMessage(
+              localizations: _localizations,
+              productName: resolved.name,
+              available: 0,
+            ),
+            isError: true,
+          );
+          _indexNoController.clear();
+          return;
+        }
         _billItems.add(
           BillItem.create(
             productId: uniqueKey,
@@ -3970,7 +4068,7 @@ class _BillingPageState extends State<BillingPage> {
                 : null,
             sellingPrice: fifoPrice,
             purchasePrice: fifoPurchasePrice,
-            quantity: 1,
+            quantity: initialQty,
             cgstPercent: resolved.cgstPercent,
             sgstPercent: resolved.sgstPercent,
             hsnCode: resolved.hsnCode,
@@ -4347,46 +4445,12 @@ class _BillingPageState extends State<BillingPage> {
             ),
             itemBuilder: (context, index) {
               final item = _billItems[index];
-              final realProductId = item.productId.split('_batch_').first;
-              final product = _products.firstWhere(
-                (p) => p.id == realProductId,
-                orElse: () => Product(
-                  id: realProductId,
-                  indexNo: 0,
-                  name: item.productName,
-                  companyName: '',
-                  category: '',
-                  purchasePrice: 0,
-                  salesPrice: item.sellingPrice,
-                  currentStock: 999,
-                  createdAt: DateTime.now(),
-                  updatedAt: DateTime.now(),
-                ),
+              final maxStock = resolveBillItemMaxStock(
+                item: item,
+                products: _products,
+                availableBatches: _availableBatches,
+                allProducts: _allProducts,
               );
-
-              double maxStock;
-              final parts = item.productId.split('_batch_');
-              final batchLocalId = parts.length > 1
-                  ? int.tryParse(parts.last)
-                  : null;
-              if (batchLocalId != null) {
-                final batch = _availableBatches
-                    .cast<PurchaseBatchEntity?>()
-                    .firstWhere(
-                      (b) => b!.id == batchLocalId && b.quantityRemaining > 0,
-                      orElse: () => null,
-                    );
-                maxStock = batch?.quantityRemaining ?? 0;
-              } else {
-                final batchStock = _availableBatches
-                    .where(
-                      (b) =>
-                          b.productId == realProductId &&
-                          b.quantityRemaining > 0,
-                    )
-                    .fold<double>(0.0, (s, b) => s + b.quantityRemaining);
-                maxStock = batchStock > 0 ? batchStock : product.currentStock;
-              }
 
               return Dismissible(
                 key: Key('${item.productId}_$index'),
@@ -4588,6 +4652,16 @@ class _BillingPageState extends State<BillingPage> {
                               _disposeItemTokenInputs(item.productId);
                               setState(() => _billItems.removeAt(index));
                             },
+                            onStockExceeded: () {
+                              _showSnackbar(
+                                billStockLimitMessage(
+                                  localizations: _localizations,
+                                  productName: item.productName,
+                                  available: maxStock,
+                                ),
+                                isError: true,
+                              );
+                            },
                           ),
                           GestureDetector(
                             onTap: () {
@@ -4598,7 +4672,8 @@ class _BillingPageState extends State<BillingPage> {
                                   : (billItemSellingAsPack(item)
                                       ? item.unitsPerPack.toDouble()
                                       : 1.0);
-                              if (item.quantity + step <= maxStock) {
+                              if (item.quantity + step <=
+                                  maxStock + Qty.epsilon) {
                                 setState(() {
                                   _billItems[index] = BillItem.create(
                                     productId: item.productId,
@@ -4618,7 +4693,11 @@ class _BillingPageState extends State<BillingPage> {
                                 });
                               } else {
                                 _showSnackbar(
-                                  '${_localizations.maxStock}: $maxStock',
+                                  billStockLimitMessage(
+                                    localizations: _localizations,
+                                    productName: item.productName,
+                                    available: maxStock,
+                                  ),
                                   isError: true,
                                 );
                               }
@@ -8030,12 +8109,14 @@ class _InlineQuantityField extends StatefulWidget {
   final double maxStock;
   final ValueChanged<double> onQuantityChanged;
   final VoidCallback onRemoveItem;
+  final VoidCallback? onStockExceeded;
 
   const _InlineQuantityField({
     required this.item,
     required this.maxStock,
     required this.onQuantityChanged,
     required this.onRemoveItem,
+    this.onStockExceeded,
   });
 
   @override
@@ -8152,10 +8233,17 @@ class _InlineQuantityFieldState extends State<_InlineQuantityField> {
     }
 
     final maxDisplayStock = _getMaxStockInDisplayUnit();
-    if (displayQty > maxDisplayStock) {
-      // Exceeds stock - cap at max and show feedback
+    if (displayQty > maxDisplayStock + Qty.epsilon) {
+      // Exceeds stock - cap at max and show feedback (never allow oversell).
+      if (maxDisplayStock <= 0) {
+        widget.onStockExceeded?.call();
+        widget.onRemoveItem();
+        return;
+      }
       final baseQty = _convertToBaseUnit(maxDisplayStock);
       widget.onQuantityChanged(baseQty);
+      _controller.text = Qty.formatDisplay(maxDisplayStock);
+      widget.onStockExceeded?.call();
       _focusNode.unfocus();
       return;
     }

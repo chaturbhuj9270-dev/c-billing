@@ -133,34 +133,52 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
     final productData = await BarcodeService.instance.scanForBilling(barcode);
 
     if (productData != null) {
-      // Success!
-      HapticFeedback.heavyImpact();
+      final availableStock =
+          (productData['availableStock'] as num?)?.toDouble() ?? 0.0;
+      final productName = productData['productName'] as String? ?? 'Product';
+      if (availableStock <= 0) {
+        setState(() {
+          _scannedItems.insert(
+            0,
+            _ScannedItem(
+              barcode: barcode,
+              productName: productName,
+              success: false,
+              timestamp: now,
+            ),
+          );
+        });
+        _showScanFeedback(false, 'Out of stock! $productName');
+      } else {
+        // Success!
+        HapticFeedback.heavyImpact();
 
-      // Create the unique product key (same format as billing page)
-      final productId = productData['productId'] as String;
-      final batchId = productData['batchId'] as String?;
-      final productKey = batchId != null
-          ? '${productId}_batch_$batchId'
-          : productId;
+        // Create the unique product key (same format as billing page)
+        final productId = productData['productId'] as String;
+        final batchId = productData['batchId'] as String?;
+        final productKey = batchId != null
+            ? '${productId}_batch_$batchId'
+            : productId;
 
-      setState(() {
-        _scannedItems.insert(
-          0,
-          _ScannedItem(
-            barcode: barcode,
-            productName: productData['productName'] ?? 'Unknown',
-            productKey: productKey,
-            success: true,
-            timestamp: now,
-          ),
-        );
-      });
+        setState(() {
+          _scannedItems.insert(
+            0,
+            _ScannedItem(
+              barcode: barcode,
+              productName: productName,
+              productKey: productKey,
+              success: true,
+              timestamp: now,
+            ),
+          );
+        });
 
-      // Call callback
-      widget.onProductScanned(productData);
+        // Call callback
+        widget.onProductScanned(productData);
 
-      // Show success feedback
-      _showScanFeedback(true, productData['productName'] ?? 'Product');
+        // Show success feedback
+        _showScanFeedback(true, productName);
+      }
     } else {
       // Not found
       setState(() {
@@ -188,7 +206,12 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
   void _showScanFeedback(bool success, String message) {
     if (!mounted) return;
     GlassyToast.dismiss();
-    GlassyToast.show(context, success ? 'Added: $message' : 'Product not found: $message', isError: true);
+    final text = success
+        ? 'Added: $message'
+        : (message.startsWith('Out of stock')
+            ? message
+            : 'Product not found: $message');
+    GlassyToast.show(context, text, isError: !success);
   }
 
   void _toggleFlash() async {
@@ -205,6 +228,24 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
     final productData = await BarcodeService.instance.scanForBilling(barcode);
 
     if (productData != null) {
+      final availableStock =
+          (productData['availableStock'] as num?)?.toDouble() ?? 0.0;
+      final productName = productData['productName'] as String? ?? 'Product';
+      if (availableStock <= 0) {
+        setState(() {
+          _scannedItems.insert(
+            0,
+            _ScannedItem(
+              barcode: barcode,
+              productName: productName,
+              success: false,
+              timestamp: DateTime.now(),
+            ),
+          );
+        });
+        _showScanFeedback(false, 'Out of stock! $productName');
+        _manualBarcodeController.clear();
+      } else {
       HapticFeedback.heavyImpact();
 
       // Create the unique product key (same format as billing page)
@@ -219,7 +260,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
           0,
           _ScannedItem(
             barcode: barcode,
-            productName: productData['productName'] ?? 'Unknown',
+            productName: productName,
             productKey: productKey,
             success: true,
             timestamp: DateTime.now(),
@@ -227,8 +268,9 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
         );
       });
       widget.onProductScanned(productData);
-      _showScanFeedback(true, productData['productName'] ?? 'Product');
+      _showScanFeedback(true, productName);
       _manualBarcodeController.clear();
+      }
     } else {
       setState(() {
         _scannedItems.insert(
@@ -1109,11 +1151,25 @@ class _HardwareBarcodeReaderDialogState
         return;
       }
 
+      final availableStock =
+          (productData['availableStock'] as num?)?.toDouble() ?? 0.0;
+      final productName = productData['productName'] as String? ?? 'Product';
+      if (availableStock <= 0) {
+        setState(() {
+          _statusMessage = 'Out of stock! $productName';
+          _statusIsError = true;
+          _isProcessing = false;
+        });
+        _controller.clear();
+        _focusNode.requestFocus();
+        return;
+      }
+
       widget.onProductScanned(productData);
       setState(() {
         _successCount += 1;
         _statusMessage =
-            'Added ${productData['productName']} ($_successCount scanned)';
+            'Added $productName ($_successCount scanned)';
         _statusIsError = false;
         _isProcessing = false;
       });

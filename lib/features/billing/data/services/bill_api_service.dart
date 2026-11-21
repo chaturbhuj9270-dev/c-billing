@@ -57,21 +57,27 @@ class BillApiService {
 
             if (productId != null && productId.isNotEmpty && quantity > 0) {
               final productRef = productsCollection.doc(productId);
-              // Check if product exists first
-              final productDoc = await productRef.get();
-              if (productDoc.exists) {
-                await productRef.update({
-                  'currentStock': FieldValue.increment(-quantity),
+              // Clamp at 0 — never let cloud stock go negative.
+              await _firestore.runTransaction((txn) async {
+                final productDoc = await txn.get(productRef);
+                if (!productDoc.exists) {
+                  debugPrint(
+                    '[BillApi] Product $productId not found in Firebase, skipping stock update',
+                  );
+                  return;
+                }
+                final current =
+                    (productDoc.data()?['currentStock'] as num?)?.toDouble() ??
+                        0.0;
+                final next = (current - quantity).clamp(0.0, double.maxFinite);
+                txn.update(productRef, {
+                  'currentStock': next,
                   'updatedAt': DateTime.now().toIso8601String(),
                 });
-                debugPrint(
-                  '[BillApi] Decremented stock for product $productId by $quantity',
-                );
-              } else {
-                debugPrint(
-                  '[BillApi] Product $productId not found in Firebase, skipping stock update',
-                );
-              }
+              });
+              debugPrint(
+                '[BillApi] Decremented stock for product $productId by $quantity (floored at 0)',
+              );
             }
           } catch (e) {
             debugPrint(

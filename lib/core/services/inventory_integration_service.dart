@@ -238,6 +238,14 @@ class InventoryIntegrationService {
         '[Integration] Processing bill: ${items.length} items, total: $finalAmount',
       );
 
+      // Block oversell before creating a bill — stock must never go negative.
+      final stockErrors = await validateStockForBill(items);
+      if (stockErrors.isNotEmpty) {
+        final message = stockErrors.values.join('\n');
+        debugPrint('[Integration] Stock validation failed: $message');
+        return IntegratedBillResult.failure(message);
+      }
+
       // 1. Create BillEntity
       final embeddedItems = items
           .map(
@@ -508,11 +516,57 @@ class InventoryIntegrationService {
     return await _fifoService.getAvailableStock(productId);
   }
 
-  // Validate stock availability for bill items using FIFO data
+  // Validate stock availability for bill items.
+  // Aggregates quantity per real product id (batch-suffixed keys collapse),
+  // and falls back to ProductEntity.currentStock when no FIFO batches exist.
+  // Returns productId → user-facing error message.
   Future<Map<String, String>> validateStockForBill(List<BillItem> items) async {
-    return await _fifoService.validateStockForSale({
-      for (final item in items) item.productId: item.quantity,
-    });
+    final quantities = <String, double>{};
+    final names = <String, String>{};
+    for (final item in items) {
+      final id = item.productId.split('_batch_').first;
+      quantities[id] = (quantities[id] ?? 0) + item.quantity;
+      names[id] = item.productName;
+    }
+
+    final errors = <String, String>{};
+    for (final entry in quantities.entries) {
+      final productId = entry.key;
+      final requiredQty = entry.value;
+      var available = await _fifoService.getAvailableStock(productId);
+
+      // Legacy / no-batch products: use product.currentStock as the ceiling.
+      if (available <= 0) {
+        final product = await _productController.getProductByServerId(productId);
+        if (product != null) {
+          available = product.currentStock;
+        } else {
+          final localId = int.tryParse(productId);
+          if (localId != null) {
+            final local = await _productController.getProductById(localId);
+            available = local?.currentStock ?? 0;
+          }
+        }
+      }
+
+      if (available + 0.0005 < requiredQty) {
+        final name = names[productId] ?? productId;
+        if (available <= 0) {
+          errors[productId] =
+              'Out of stock! $name has no stock left. Restock before billing.';
+        } else {
+          final availTxt = available == available.roundToDouble()
+              ? available.toInt().toString()
+              : available.toStringAsFixed(2);
+          final reqTxt = requiredQty == requiredQty.roundToDouble()
+              ? requiredQty.toInt().toString()
+              : requiredQty.toStringAsFixed(2);
+          errors[productId] =
+              '$name: only $availTxt in stock, but bill has $reqTxt. Reduce quantity or restock.';
+        }
+      }
+    }
+    return errors;
   }
 
   // Check if a product has sufficient stock

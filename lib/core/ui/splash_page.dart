@@ -32,7 +32,7 @@ class SplashPage extends StatefulWidget {
 
   const SplashPage({
     super.key,
-    this.duration = const Duration(milliseconds: 1500),
+    this.duration = const Duration(milliseconds: 400),
   });
 
   @override
@@ -51,6 +51,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   Timer? _creepTimer;
   Timer? _watchdogTimer;
   bool _didNavigate = false;
+  bool _sessionPrepared = false;
   late CredentialsManager _credentialsManager;
   late AppLocalizations _localizations;
   final SubscriptionService _subscriptionService = SubscriptionService();
@@ -162,7 +163,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     });
 
     // Hard ceiling: never leave the user stuck on splash forever.
-    _watchdogTimer = Timer(const Duration(seconds: 28), () {
+    _watchdogTimer = Timer(const Duration(seconds: 18), () {
       if (!mounted || _didNavigate || _showUnlockButton) return;
       debugPrint('[ERROR] Splash watchdog — forcing login');
       _goToLogin();
@@ -171,18 +172,17 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     Future.microtask(() => _initializeApp());
   }
 
-  Future<void> _prepareSession() async {
+  Future<void> _prepareSession({bool force = false}) async {
+    if (_sessionPrepared && !force && AccessControlService.instance.isLoaded) {
+      return;
+    }
     await AccessControlService.instance
         .loadForCurrentUser()
-        .timeout(const Duration(seconds: 12));
+        .timeout(const Duration(seconds: 6));
     await LocalUserDataGuard.ensureBoundToCurrentUser().timeout(
-      const Duration(seconds: 8),
+      const Duration(seconds: 3),
     );
-    // Entitlement before sync so Firestore trial fields exist for rules.
-    await _subscriptionService.isSubscriptionValid().timeout(
-      const Duration(seconds: 14),
-      onTimeout: () => _subscriptionService.hasOfflineEntitlement(),
-    );
+    _sessionPrepared = true;
   }
 
   void _startCreep(double ceiling) {
@@ -213,12 +213,15 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     setState(() {
       _activeStep = step.clamp(0, _stepLabels.length - 1);
     });
-    await _progressController.animateTo(
-      next,
-      duration: const Duration(milliseconds: 520),
-      curve: Curves.easeOutCubic,
+    // Animate without blocking startup work — awaiting 500ms+ per step
+    // previously stacked several seconds onto splash alone.
+    unawaited(
+      _progressController.animateTo(
+        next,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+      ),
     );
-    if (!mounted) return;
     // Keep the bar alive between milestones.
     final ceiling = (next + 0.14).clamp(0.0, 0.96);
     if (next < 0.96) _startCreep(ceiling);
@@ -226,16 +229,13 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
 
   Future<void> _initializeApp() async {
     try {
-      await _setLoadState(step: 0, progress: 0.08);
-      // Let the first fill paint before heavy work.
-      await Future<void>.delayed(const Duration(milliseconds: 220));
-      await _setLoadState(step: 0, progress: 0.18);
+      unawaited(_setLoadState(step: 0, progress: 0.12));
 
       await initializeServices();
-      await _setLoadState(step: 1, progress: 0.36);
+      unawaited(_setLoadState(step: 1, progress: 0.36));
 
+      // CredentialsManager.init() already ran inside initializeServices().
       _credentialsManager = CredentialsManager();
-      await _credentialsManager.init();
       if (mounted) {
         setState(() {
           _localizations = AppLocalizations.of(
@@ -245,11 +245,11 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       }
 
       debugPrint('[DEBUG] Splash page - checking for remembered login');
-      await _setLoadState(step: 1, progress: 0.45);
+      unawaited(_setLoadState(step: 1, progress: 0.45));
 
       if (await _credentialsManager.isRemembered()) {
         debugPrint('[DEBUG] Remembered login found, attempting auto-login');
-        await _setLoadState(step: 2, progress: 0.58);
+        unawaited(_setLoadState(step: 2, progress: 0.58));
 
         final currentUser = await _restoredUser();
         if (currentUser != null) {
@@ -257,43 +257,21 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
             '[DEBUG] Firebase user already authenticated: ${currentUser.uid}',
           );
           try {
-            await currentUser.reload();
+            await currentUser.reload().timeout(const Duration(seconds: 3));
           } catch (e) {
             debugPrint('[ERROR] User reload on splash failed: $e');
           }
           final refreshed = FirebaseAuth.instance.currentUser ?? currentUser;
           if (!refreshed.emailVerified) {
             debugPrint('[DEBUG] Email not verified — opening verification page');
-            await _setLoadState(step: 3, progress: 1);
+            unawaited(_setLoadState(step: 3, progress: 1));
             _goToEmailVerification(refreshed.email ?? '');
             return;
           }
           if (await _requireLoginOtpIfEnabled(refreshed)) {
             return;
           }
-          try {
-            await _prepareSession();
-            syncAfterLogin().catchError((e) {
-              debugPrint('[ERROR] Post-login sync failed: $e');
-            });
-          } catch (e) {
-            debugPrint('[ERROR] Access/sync start failed: $e');
-            final msg = e.toString();
-            if (msg.contains('deactivated') || msg.contains('Employee')) {
-              if (mounted) {
-                GlassyToast.show(
-                  context,
-                  'Account access denied. Contact your shop admin.',
-                  isError: true,
-                );
-              }
-              _goToLogin();
-              return;
-            }
-            // Network glitches: still open dashboard with offline entitlement.
-            debugPrint('[DEBUG] Continuing after access soft-fail: $e');
-          }
-          await _setLoadState(step: 3, progress: 0.92);
+          unawaited(_setLoadState(step: 3, progress: 0.92));
           _reloadSettingsInBackground();
           _goToDashboard();
           return;
@@ -301,7 +279,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
 
         if (kIsWeb) {
           debugPrint('[DEBUG] No web session to restore, going to login');
-          await _setLoadState(step: 3, progress: 1);
+          unawaited(_setLoadState(step: 3, progress: 1));
           _goToLogin();
           return;
         }
@@ -316,12 +294,12 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         } catch (e) {
           debugPrint('[ERROR] Sign out before login failed: $e');
         }
-        await _setLoadState(step: 3, progress: 1);
+        unawaited(_setLoadState(step: 3, progress: 1));
         _timer = Timer(widget.duration, _goToLogin);
       }
     } catch (e) {
       debugPrint('[ERROR] Error during initialization: $e');
-      await _setLoadState(step: 3, progress: 1);
+      unawaited(_setLoadState(step: 3, progress: 1));
       _timer = Timer(widget.duration, _goToLogin);
     }
   }
@@ -333,7 +311,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       return await FirebaseAuth.instance
           .authStateChanges()
           .first
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 2));
     } on TimeoutException {
       return FirebaseAuth.instance.currentUser;
     }
@@ -345,8 +323,8 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
 
       if (credentials == null) {
         debugPrint('[DEBUG] Stored credentials are invalid');
-        await _setLoadState(step: 3, progress: 1);
-        _timer = Timer(const Duration(seconds: 1), _goToLogin);
+        unawaited(_setLoadState(step: 3, progress: 1));
+        _timer = Timer(const Duration(milliseconds: 400), _goToLogin);
         return;
       }
 
@@ -354,53 +332,34 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       final password = credentials['password'] as String;
 
       debugPrint('[DEBUG] Attempting auto-login with email: ***');
-      await _setLoadState(step: 2, progress: 0.7);
+      unawaited(_setLoadState(step: 2, progress: 0.7));
 
       final userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password)
-          .timeout(const Duration(seconds: 8));
+          .timeout(const Duration(seconds: 6));
 
       if (userCredential.user != null) {
         debugPrint(
           '[DEBUG] Auto-login successful for: ${userCredential.user!.uid}',
         );
         try {
-          await userCredential.user!.reload();
+          await userCredential.user!
+              .reload()
+              .timeout(const Duration(seconds: 3));
         } catch (e) {
           debugPrint('[ERROR] Auto-login user reload failed: $e');
         }
         final refreshed =
             FirebaseAuth.instance.currentUser ?? userCredential.user!;
         if (!refreshed.emailVerified) {
-          await _setLoadState(step: 3, progress: 1);
+          unawaited(_setLoadState(step: 3, progress: 1));
           _goToEmailVerification(refreshed.email ?? email);
           return;
         }
         if (await _requireLoginOtpIfEnabled(refreshed, emailHint: email)) {
           return;
         }
-        try {
-          await _prepareSession();
-          syncAfterLogin().catchError((e) {
-            debugPrint('[ERROR] Post-login sync failed: $e');
-          });
-        } catch (e) {
-          debugPrint('[ERROR] Access/sync start failed: $e');
-          final msg = e.toString();
-          if (msg.contains('deactivated') || msg.contains('Employee')) {
-            if (mounted) {
-              GlassyToast.show(
-                context,
-                'Account access denied. Contact your shop admin.',
-                isError: true,
-              );
-            }
-            _goToLogin();
-            return;
-          }
-          debugPrint('[DEBUG] Continuing after access soft-fail: $e');
-        }
-        await _setLoadState(step: 3, progress: 0.95);
+        unawaited(_setLoadState(step: 3, progress: 0.95));
         _reloadSettingsInBackground();
         _goToDashboard();
       } else {
@@ -410,16 +369,16 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     } on FirebaseAuthException catch (e) {
       debugPrint('[ERROR] Auto-login failed: ${e.code} - ${e.message}');
       await _credentialsManager.clearCredentials();
-      await _setLoadState(step: 3, progress: 1);
-      _timer = Timer(const Duration(seconds: 1), _goToLogin);
+      unawaited(_setLoadState(step: 3, progress: 1));
+      _timer = Timer(const Duration(milliseconds: 400), _goToLogin);
     } on TimeoutException catch (_) {
       debugPrint('[ERROR] Auto-login timed out - going to login');
-      await _setLoadState(step: 3, progress: 1);
-      _timer = Timer(const Duration(milliseconds: 500), _goToLogin);
+      unawaited(_setLoadState(step: 3, progress: 1));
+      _timer = Timer(const Duration(milliseconds: 300), _goToLogin);
     } catch (e) {
       debugPrint('[ERROR] Unexpected error during auto-login: $e');
-      await _setLoadState(step: 3, progress: 1);
-      _timer = Timer(const Duration(seconds: 1), _goToLogin);
+      unawaited(_setLoadState(step: 3, progress: 1));
+      _timer = Timer(const Duration(milliseconds: 400), _goToLogin);
     }
   }
 
@@ -473,7 +432,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       return true;
     }
 
-    await _setLoadState(step: 3, progress: 1);
+    unawaited(_setLoadState(step: 3, progress: 1));
     _stopCreep();
     if (!mounted) return true;
     if (_didNavigate) return true;
@@ -596,19 +555,17 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         }
         return;
       }
+      // Network glitches: continue with offline entitlement path below.
+      debugPrint('[DEBUG] Continuing after access soft-fail: $e');
     }
 
     try {
       debugPrint('[DEBUG] Checking subscription status...');
-      await _setLoadState(step: 3, progress: 0.98);
-      // Service itself fail-opens during free trial (cache / Auth creationTime).
-      // Never treat a slow network as "expired" — that flashed the paywall mid-trial.
-      final isSubscriptionValid = await _subscriptionService
-          .isSubscriptionValid()
-          .timeout(
-            const Duration(seconds: 12),
-            onTimeout: () => _subscriptionService.hasOfflineEntitlement(),
-          );
+      unawaited(_setLoadState(step: 3, progress: 0.98));
+      // Prefer local entitlement; only wait briefly when offline says no.
+      // Never treat a slow network as "expired" when cache/Auth trial is valid.
+      final isSubscriptionValid =
+          await _subscriptionService.isSubscriptionValidQuick();
 
       if (!isSubscriptionValid) {
         debugPrint(
@@ -638,11 +595,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       debugPrint('[ERROR] Error checking subscription: $e');
       // Only show paywall when access is definitively expired.
       final stillValid = await _subscriptionService
-          .isSubscriptionValid()
-          .timeout(
-            const Duration(seconds: 8),
-            onTimeout: () => _subscriptionService.hasOfflineEntitlement(),
-          );
+          .hasOfflineEntitlement();
       if (stillValid) {
         syncAfterLogin().catchError((err) {
           debugPrint('[ERROR] Post-login sync failed: $err');

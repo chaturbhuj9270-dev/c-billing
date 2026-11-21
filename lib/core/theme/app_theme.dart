@@ -7,15 +7,15 @@ import 'brand_accent.dart';
 export 'brand_accent.dart';
 
 // Shared palette from the billing / purchase screens. Dark surfaces are green-charcoal.
-// Light brand accent is selectable (green / yellow / maroon) via [BrandAccent].
+// Light brand accent is selectable via [BrandAccent] (see theme dialog swatches).
 class AppTheme {
   AppTheme._();
 
   /// Default green (const) — prefer [primary] / [AppColors.action] for UI so
-  /// the user's selected light accent applies.
-  static const Color greenPrimary = Color(0xFF1B4D3E);
-  static const Color greenPrimaryLight = Color(0xFF2E7D5B);
-  static const Color greenPrimaryDark = Color(0xFF0F3B2F);
+  /// the user's selected light accent applies. Matches spec Primary `#17694A`.
+  static const Color greenPrimary = Color(0xFF17694A);
+  static const Color greenPrimaryLight = Color(0xFF1E5E46);
+  static const Color greenPrimaryDark = Color(0xFF143F30);
 
   /// Live brand primary from the selected light accent (ThemeService).
   static Color get primary => ThemeService.instance.accentColors.primary;
@@ -111,9 +111,13 @@ class AppTheme {
   static const Color headerDarkEnd = Color(0xFF10241C);
   static const Color headerDarkMid = Color(0xFF0E241C);
   static const Color headerDarkStart = Color(0xFF14352C);
-  static const Color greenHeaderEnd = Color(0xFF134E3A);
+  static const Color greenHeaderEnd = Color(0xFF143F30);
   static Color get headerLightEnd =>
       ThemeService.instance.accentColors.headerEnd;
+  static Color get headerLightStart =>
+      ThemeService.instance.accentColors.headerStart;
+  static Color get accentContainer =>
+      ThemeService.instance.accentColors.container;
   static const Color indigo400 = Color(0xFF5C6BC0);
   static const Color ink = Color(0xFF1A1A2E);
   static const Color lightBlue300 = Color(0xFF4FC3F7);
@@ -257,7 +261,7 @@ class AppTheme {
   // Print inks used by PDF generators.
   static const Color blue100 = Color(0xFFBBDEFB);
 
-  /// Light theme using the currently selected accent (green / yellow / maroon).
+  /// Light theme using the currently selected accent palette.
   static ThemeData get light =>
       lightFor(ThemeService.instance.accentColors);
 
@@ -266,8 +270,9 @@ class AppTheme {
       seedColor: accent.primary,
       brightness: Brightness.light,
       primary: accent.primary,
-      secondary: accent.primaryLight,
+      secondary: accent.headerStart,
       surface: AppTheme.white,
+      primaryContainer: accent.container,
     );
 
     return _base(
@@ -608,7 +613,7 @@ class AppColors {
       Theme.of(context).appBarTheme.backgroundColor ??
       (isDark(context) ? AppTheme.darkScaffold : brand(context).primary);
 
-  // Header bar. Dark stays charcoal-green; light follows the selected accent.
+  // Header bar. Dark stays charcoal-green; light uses Header start → Header end.
   static List<Color> headerGradient(BuildContext context) {
     if (isDark(context)) {
       return const [
@@ -618,8 +623,13 @@ class AppColors {
       ];
     }
     final a = brand(context);
-    return [a.primary, a.primaryDark, a.headerEnd];
+    return [a.headerStart, a.headerEnd];
   }
+
+  /// Soft pastel fill from the selected light accent (spec "Container").
+  static Color accentContainer(BuildContext context) => isDark(context)
+      ? AppTheme.darkAction.withValues(alpha: 0.22)
+      : brand(context).container;
 
   // Selected chips and the active tab use the brand accent in both themes.
   static Color selectedFill(BuildContext context) =>

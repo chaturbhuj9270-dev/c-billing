@@ -371,7 +371,9 @@ class ProductOfflineController extends ChangeNotifier {
     final existing = await _findById(id);
     if (existing == null) return null;
 
-    final newQuantity = existing.currentStock + adjustment;
+    // Never allow negative stock from adjustments (billing / corrections).
+    final newQuantity =
+        (existing.currentStock + adjustment).clamp(0.0, double.maxFinite);
     return updateProduct(id: id, currentStock: newQuantity);
   }
 

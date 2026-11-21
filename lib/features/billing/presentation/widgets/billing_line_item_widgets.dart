@@ -10,28 +10,28 @@ import '../../domain/entities/bill_item.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 // Max available stock for a bill line (batch-aware), same logic as billing page.
+// Never invents stock (old 999 fallback allowed negative / oversell).
 double resolveBillItemMaxStock({
   required BillItem item,
   required List<Product> products,
   required List<PurchaseBatchEntity> availableBatches,
+  List<Product> allProducts = const [],
 }) {
   final realProductId = item.productId.split('_batch_').first;
-  Product product;
-  try {
-    product = products.firstWhere((p) => p.id == realProductId);
-  } catch (_) {
-    product = Product(
-      id: realProductId,
-      indexNo: 0,
-      name: item.productName,
-      companyName: '',
-      category: '',
-      purchasePrice: 0,
-      salesPrice: item.sellingPrice,
-      currentStock: 999,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
+  Product? product;
+  for (final p in products) {
+    if (p.id == realProductId) {
+      product = p;
+      break;
+    }
+  }
+  if (product == null) {
+    for (final p in allProducts) {
+      if (p.id == realProductId) {
+        product = p;
+        break;
+      }
+    }
   }
 
   final parts = item.productId.split('_batch_');
@@ -39,12 +39,15 @@ double resolveBillItemMaxStock({
   if (batchLocalId != null) {
     PurchaseBatchEntity? batch;
     for (final b in availableBatches) {
-      if (b.id == batchLocalId && b.quantityRemaining > 0) {
+      // Include zero-remaining batch so max reflects truth (0), not invent stock.
+      if (b.id == batchLocalId) {
         batch = b;
         break;
       }
     }
-    return batch?.quantityRemaining ?? 0;
+    return batch != null
+        ? (batch.quantityRemaining > 0 ? batch.quantityRemaining : 0.0)
+        : 0.0;
   }
 
   final batchStock = availableBatches
@@ -52,7 +55,24 @@ double resolveBillItemMaxStock({
         (b) => b.productId == realProductId && b.quantityRemaining > 0,
       )
       .fold<double>(0.0, (s, b) => s + b.quantityRemaining);
-  return batchStock > 0 ? batchStock : product.currentStock;
+  if (batchStock > 0) return batchStock;
+  final productStock = product?.currentStock ?? 0.0;
+  return productStock > 0 ? productStock : 0.0;
+}
+
+/// User-facing stock limit / out-of-stock copy for billing snackbars.
+String billStockLimitMessage({
+  required AppLocalizations localizations,
+  required String productName,
+  required double available,
+}) {
+  if (available <= 0) {
+    return '${localizations.outOfStockAlert} $productName';
+  }
+  final avail = available == available.roundToDouble()
+      ? available.toInt().toString()
+      : Qty.formatDisplay(available);
+  return '$productName — ${localizations.maxStock}: $avail';
 }
 
 bool billItemSellingAsPack(BillItem item) {
