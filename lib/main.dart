@@ -132,7 +132,7 @@ class MyApp extends StatelessWidget {
       builder: (context, _) {
         return MaterialApp(
           title: 'C-Billing',
-          theme: AppTheme.light,
+          theme: AppTheme.lightFor(ThemeService.instance.accentColors),
           darkTheme: AppTheme.dark,
           themeMode: ThemeService.instance.themeMode,
           home: const SplashPage(),

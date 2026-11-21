@@ -397,7 +397,17 @@ class AppDatabase extends _$AppDatabase {
         // wiping existing shop data when switching branches / versions.
         await _ensureTables(m);
         if (from < 15) {
-          await repairDerivedBalances();
+          try {
+            await repairDerivedBalances();
+          } catch (e, st) {
+            // Never abort opening the DB — shop data stays readable even if
+            // derived stock/ledger repair fails on an older device file.
+            assert(() {
+              // ignore: avoid_print
+              print('[AppDatabase] repairDerivedBalances failed: $e\n$st');
+              return true;
+            }());
+          }
         }
       },
     );

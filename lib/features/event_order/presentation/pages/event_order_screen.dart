@@ -2254,7 +2254,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     required IconData icon,
     required Widget child,
     Widget? trailing,
-    Color accentColor = AppTheme.primary,
+    Color? accentColor,
   }) {
     return Container(
       width: double.infinity,

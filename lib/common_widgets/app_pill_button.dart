@@ -44,7 +44,7 @@ class AppPillButton extends StatelessWidget {
         child: CustomPaint(
           foregroundPainter: GlassBevelBorderPainter(
             isDark: isDark,
-            themeColor: AppTheme.primary,
+            themeColor: action,
             radius: 28,
             strokeWidth: 1.4,
           ),

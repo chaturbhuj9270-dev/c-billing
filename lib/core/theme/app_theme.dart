@@ -1,13 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-// Shared palette from the billing / purchase screens. Dark surfaces are green-charcoal. Primary green is the action color. Icon tones (blue, amber, rose) mark categories.
+import '../services/theme_service.dart';
+import 'brand_accent.dart';
+
+export 'brand_accent.dart';
+
+// Shared palette from the billing / purchase screens. Dark surfaces are green-charcoal.
+// Light brand accent is selectable via [BrandAccent] (see theme dialog swatches).
 class AppTheme {
   AppTheme._();
 
-  static const Color primary = Color(0xFF1B4D3E);
-  static const Color primaryLight = Color(0xFF2E7D5B);
-  static const Color primaryDark = Color(0xFF0F3B2F);
+  /// Default green (const) — prefer [primary] / [AppColors.action] for UI so
+  /// the user's selected light accent applies. Matches spec Primary `#17694A`.
+  static const Color greenPrimary = Color(0xFF17694A);
+  static const Color greenPrimaryLight = Color(0xFF1E5E46);
+  static const Color greenPrimaryDark = Color(0xFF143F30);
+
+  /// Live brand primary from the selected light accent (ThemeService).
+  static Color get primary => ThemeService.instance.accentColors.primary;
+  static Color get primaryLight =>
+      ThemeService.instance.accentColors.primaryLight;
+  static Color get primaryDark =>
+      ThemeService.instance.accentColors.primaryDark;
 
   // Category icon tones from the reference screens.
   static const Color toneBlue = Color(0xFF7C8CFF);
@@ -19,7 +34,7 @@ class AppTheme {
   // Light
   static const Color lightScaffold = Color(0xFFF3F6F4);
 
-  // Dark — sampled from the Add purchase screen. Page is near-black, cards sit one step above it, fields sink back to the page.
+  // Dark - sampled from the Add purchase screen. Page is near-black, cards sit one step above it, fields sink back to the page.
   static const Color darkScaffold = Color(0xFF080C0C);
   static const Color darkSurface = Color(0xFF101412);
   static const Color darkCard = Color(0xFF131715);
@@ -96,7 +111,13 @@ class AppTheme {
   static const Color headerDarkEnd = Color(0xFF10241C);
   static const Color headerDarkMid = Color(0xFF0E241C);
   static const Color headerDarkStart = Color(0xFF14352C);
-  static const Color headerLightEnd = Color(0xFF134E3A);
+  static const Color greenHeaderEnd = Color(0xFF143F30);
+  static Color get headerLightEnd =>
+      ThemeService.instance.accentColors.headerEnd;
+  static Color get headerLightStart =>
+      ThemeService.instance.accentColors.headerStart;
+  static Color get accentContainer =>
+      ThemeService.instance.accentColors.container;
   static const Color indigo400 = Color(0xFF5C6BC0);
   static const Color ink = Color(0xFF1A1A2E);
   static const Color lightBlue300 = Color(0xFF4FC3F7);
@@ -145,9 +166,9 @@ class AppTheme {
   static const Color white60 = Color(0x99FFFFFF);
   static const Color white70 = Color(0xB3FFFFFF);
   static const Color yellow900 = Color(0xFFF57F17);
-  static const Color palette261B4D3E = Color(0x261B4D3E);
+  static Color get palette261B4D3E => primary.withValues(alpha: 0x26 / 255);
   static const Color palette33FFFFFF = Color(0x33FFFFFF);
-  static const Color palette4D1B4D3E = Color(0x4D1B4D3E);
+  static Color get palette4D1B4D3E => primary.withValues(alpha: 0x4D / 255);
   static const Color paletteBFFFFFFF = Color(0xBFFFFFFF);
   static const Color paletteCCF8FFFC = Color(0xCCF8FFFC);
   static const Color paletteCCFFFFFF = Color(0xCCFFFFFF);
@@ -240,13 +261,18 @@ class AppTheme {
   // Print inks used by PDF generators.
   static const Color blue100 = Color(0xFFBBDEFB);
 
-  static ThemeData get light {
+  /// Light theme using the currently selected accent palette.
+  static ThemeData get light =>
+      lightFor(ThemeService.instance.accentColors);
+
+  static ThemeData lightFor(BrandAccent accent) {
     final scheme = ColorScheme.fromSeed(
-      seedColor: primary,
+      seedColor: accent.primary,
       brightness: Brightness.light,
-      primary: primary,
-      secondary: primaryLight,
+      primary: accent.primary,
+      secondary: accent.headerStart,
       surface: AppTheme.white,
+      primaryContainer: accent.container,
     );
 
     return _base(
@@ -255,6 +281,8 @@ class AppTheme {
       scaffold: lightScaffold,
       card: AppTheme.white,
       divider: AppTheme.grey200,
+      brandPrimary: accent.primary,
+      brandAccent: accent,
       overlayStyle: SystemUiOverlayStyle.dark.copyWith(
         statusBarColor: AppTheme.transparent,
         statusBarIconBrightness: Brightness.light,
@@ -265,7 +293,7 @@ class AppTheme {
   }
 
   static ThemeData get dark {
-    // Explicit neutral ColorScheme — avoids green-tinted surfaces from seed.
+    // Explicit neutral ColorScheme - avoids green-tinted surfaces from seed.
     const scheme = ColorScheme(
       brightness: Brightness.dark,
       primary: darkAction,
@@ -287,6 +315,8 @@ class AppTheme {
       scaffold: darkScaffold,
       card: darkCard,
       divider: darkBorder,
+      brandPrimary: darkAction,
+      brandAccent: BrandAccent.green,
       overlayStyle: SystemUiOverlayStyle.light.copyWith(
         statusBarColor: AppTheme.transparent,
         statusBarIconBrightness: Brightness.light,
@@ -302,9 +332,12 @@ class AppTheme {
     required Color scaffold,
     required Color card,
     required Color divider,
+    required Color brandPrimary,
+    required BrandAccent brandAccent,
     required SystemUiOverlayStyle overlayStyle,
   }) {
     final isDark = brightness == Brightness.dark;
+    final action = isDark ? darkAction : brandPrimary;
 
     return ThemeData(
       useMaterial3: true,
@@ -315,13 +348,14 @@ class AppTheme {
       canvasColor: scaffold,
       cardColor: card,
       dividerColor: divider,
-      primaryColor: isDark ? darkAction : primary,
+      primaryColor: action,
+      extensions: <ThemeExtension<dynamic>>[brandAccent],
       appBarTheme: AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: AppTheme.transparent,
         centerTitle: false,
-        backgroundColor: isDark ? darkScaffold : primary,
+        backgroundColor: isDark ? darkScaffold : brandPrimary,
         foregroundColor: AppTheme.white,
         systemOverlayStyle: overlayStyle,
         titleTextStyle: const TextStyle(
@@ -347,14 +381,16 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: isDark ? darkCard : card,
-        modalBackgroundColor: isDark ? darkCard : card,
+        backgroundColor: AppTheme.transparent,
+        modalBackgroundColor: AppTheme.transparent,
+        surfaceTintColor: AppTheme.transparent,
+        elevation: 0,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: isDark ? darkCard : primary,
+        backgroundColor: isDark ? darkCard : brandPrimary,
         contentTextStyle: const TextStyle(
           fontFamily: 'Literata',
           color: AppTheme.white,
@@ -362,12 +398,12 @@ class AppTheme {
         behavior: SnackBarBehavior.floating,
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: isDark ? darkAction : primary,
+        backgroundColor: action,
         foregroundColor: AppTheme.white,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: isDark ? darkAction : primary,
+          backgroundColor: action,
           foregroundColor: AppTheme.white,
           disabledBackgroundColor: isDark ? darkCard : AppTheme.grey300,
           disabledForegroundColor: isDark
@@ -387,7 +423,7 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: isDark ? darkAction : primary,
+          backgroundColor: action,
           foregroundColor: AppTheme.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
@@ -418,7 +454,7 @@ class AppTheme {
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return isDark ? darkAction : primary;
+            return action;
           }
           return isDark ? AppTheme.white24 : AppTheme.black12;
         }),
@@ -441,7 +477,7 @@ class AppTheme {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: isDark ? darkActionBright : primary,
+            color: isDark ? darkActionBright : brandPrimary,
             width: 1.5,
           ),
         ),
@@ -450,7 +486,7 @@ class AppTheme {
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return isDark ? darkAction : primary;
+            return action;
           }
           return null;
         }),
@@ -459,7 +495,7 @@ class AppTheme {
       radioTheme: RadioThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return isDark ? darkAction : primary;
+            return action;
           }
           return null;
         }),
@@ -502,6 +538,8 @@ class AppColors {
   static bool isDark(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark;
 
+  static BrandAccent brand(BuildContext context) => BrandAccent.of(context);
+
   static Color scaffold(BuildContext context) =>
       Theme.of(context).scaffoldBackgroundColor;
 
@@ -530,13 +568,28 @@ class AppColors {
       ? AppTheme.darkScaffold
       : AppTheme.grey.withValues(alpha: 0.08);
 
-  // Filled green. Light theme keeps [AppTheme.primary]; dark uses the purchase-screen green.
+  // Filled brand action. Light uses selected accent; dark keeps fixed green.
   static Color action(BuildContext context) =>
-      isDark(context) ? AppTheme.darkAction : AppTheme.primary;
+      isDark(context) ? AppTheme.darkAction : brand(context).primary;
 
-  // Outline rings and green icons. Brighter on dark so they read on the black page.
+  // Outline rings and brand icons. Brighter on dark so they read on the black page.
   static Color actionBright(BuildContext context) =>
-      isDark(context) ? AppTheme.darkActionBright : AppTheme.primary;
+      isDark(context) ? AppTheme.darkActionBright : brand(context).primary;
+
+  // Mid / deep shades of the selected light accent (for gradients & chips).
+  static Color primaryLight(BuildContext context) => isDark(context)
+      ? AppTheme.darkActionBright
+      : brand(context).primaryLight;
+
+  static Color primaryDark(BuildContext context) =>
+      isDark(context) ? AppTheme.headerDarkEnd : brand(context).primaryDark;
+
+  static Color headerEnd(BuildContext context) =>
+      isDark(context) ? AppTheme.headerDarkEnd : brand(context).headerEnd;
+
+  // Soft wash behind brand surfaces (replaces hard-coded green alphas).
+  static Color softFill(BuildContext context, [double alpha = 0.15]) =>
+      action(context).withValues(alpha: alpha);
 
   static Color glassFill(BuildContext context) => isDark(context)
       ? AppTheme.darkCard.withValues(alpha: 0.96)
@@ -558,26 +611,39 @@ class AppColors {
   // Solid top-bar color from [AppBarTheme]. The same color on every screen.
   static Color appBar(BuildContext context) =>
       Theme.of(context).appBarTheme.backgroundColor ??
-      (isDark(context) ? AppTheme.darkScaffold : AppTheme.primary);
+      (isDark(context) ? AppTheme.darkScaffold : brand(context).primary);
 
-  // Deep green bar. Dark enough for light labels, tinted to match the screens.
-  static List<Color> headerGradient(BuildContext context) => isDark(context)
-      ? const [AppTheme.headerDarkStart, AppTheme.headerDarkMid, AppTheme.headerDarkEnd]
-      : const [AppTheme.primary, AppTheme.primaryDark, AppTheme.headerLightEnd];
+  // Header bar. Dark stays charcoal-green; light uses Header start → Header end.
+  static List<Color> headerGradient(BuildContext context) {
+    if (isDark(context)) {
+      return const [
+        AppTheme.headerDarkStart,
+        AppTheme.headerDarkMid,
+        AppTheme.headerDarkEnd,
+      ];
+    }
+    final a = brand(context);
+    return [a.headerStart, a.headerEnd];
+  }
 
-  // Selected chips and the active tab use the theme green in both themes.
+  /// Soft pastel fill from the selected light accent (spec "Container").
+  static Color accentContainer(BuildContext context) => isDark(context)
+      ? AppTheme.darkAction.withValues(alpha: 0.22)
+      : brand(context).container;
+
+  // Selected chips and the active tab use the brand accent in both themes.
   static Color selectedFill(BuildContext context) =>
-      isDark(context) ? AppTheme.darkAction : AppTheme.primary;
+      isDark(context) ? AppTheme.darkAction : brand(context).primary;
 
   static Color selectedOnFill(BuildContext context) => AppTheme.white;
 
-  // Emphasis color. Dark titles stay light; actions use [primary].
+  // Emphasis color. Dark titles stay light; actions use brand primary.
   static Color accent(BuildContext context) =>
-      isDark(context) ? AppTheme.darkTextPrimary : AppTheme.primary;
+      isDark(context) ? AppTheme.darkTextPrimary : brand(context).primary;
 
   // Soft accent wash behind icons/chips.
   static Color accentSoft(BuildContext context, [double alpha = 0.12]) =>
-      (isDark(context) ? AppTheme.darkActionBright : AppTheme.primary)
+      (isDark(context) ? AppTheme.darkActionBright : brand(context).primary)
           .withValues(alpha: alpha);
 
   // On-gradient / on-colored-card text (always light for contrast).

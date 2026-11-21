@@ -2239,7 +2239,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         listenable: ThemeService.instance,
         builder: (context, _) {
           return Theme(
-            data: ThemeService.instance.isDark ? AppTheme.dark : AppTheme.light,
+            data: ThemeService.instance.isDark
+                ? AppTheme.dark
+                : AppTheme.lightFor(ThemeService.instance.accentColors),
             child: const SizedBox.expand(child: FlyoutMenu()),
           );
         },

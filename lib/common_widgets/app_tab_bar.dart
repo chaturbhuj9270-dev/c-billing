@@ -26,7 +26,7 @@ class AppTabBar extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(radius),
         child: CustomPaint(
-          foregroundPainter: const GlassBevelBorderPainter(
+          foregroundPainter: GlassBevelBorderPainter(
             isDark: false,
             themeColor: AppTheme.primary,
             radius: radius,
@@ -102,7 +102,7 @@ class _AppTabSelectionPainter extends BoxPainter {
     if (isDark) {
       canvas.save();
       canvas.translate(offset.dx, offset.dy);
-      const GlassBevelBorderPainter(
+      GlassBevelBorderPainter(
         isDark: false,
         themeColor: AppTheme.primary,
         radius: radius,

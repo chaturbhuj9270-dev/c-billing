@@ -25,14 +25,14 @@ class GlassyBottomNavBar extends StatefulWidget {
   final int selectedIndex;
   final ValueChanged<int> onTap;
   final List<GlassyNavItem> items;
-  final Color accentColor;
+  final Color? accentColor;
 
   const GlassyBottomNavBar({
     super.key,
     required this.selectedIndex,
     required this.onTap,
     required this.items,
-    this.accentColor = AppTheme.primary,
+    this.accentColor,
   });
 
   @override
@@ -103,9 +103,9 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
           opacity: opacity.clamp(0.0, 1.0),
           child: isDark
               ? CustomPaint(
-                  foregroundPainter: const GlassBevelBorderPainter(
+                  foregroundPainter: GlassBevelBorderPainter(
                     isDark: false,
-                    themeColor: AppTheme.primary,
+                    themeColor: widget.accentColor ?? AppTheme.primary,
                     radius: radius,
                     strokeWidth: 1.4,
                   ),
@@ -245,7 +245,7 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
               child: CustomPaint(
                 foregroundPainter: GlassBevelBorderPainter(
                   isDark: false,
-                  themeColor: AppTheme.primary,
+                  themeColor: widget.accentColor ?? AppTheme.primary,
                   radius: 28,
                 ),
                 child: Container(
