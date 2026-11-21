@@ -30,6 +30,7 @@ import '../../domain/repositories/dashboard_repository_interface.dart';
 import '../../data/repositories/dashboard_offline_repository.dart';
 import '../cubit/optimized_dashboard_cubit.dart';
 import '../cubit/optimized_dashboard_state.dart';
+import '../widgets/sales_analysis_chart.dart';
 import '../widgets/shimmer_widgets.dart';
 import 'package:c_billing/common_widgets/app_pill_button.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
@@ -96,6 +97,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   List<Map<String, dynamic>> _upcomingEvents = [];
   bool _isLoadingExpandableData = false;
   bool _expandableReloadQueued = false;
+
+  /// Bumped when insight/sales data is reloaded so the chart refreshes.
+  int _salesChartReloadToken = 0;
 
   // Dashboard refresh subscription
   StreamSubscription<void>? _refreshSubscription;
@@ -191,6 +195,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           _pendingPayments = results[2];
           _lowStockItems = results[4];
           _upcomingEvents = results[5];
+          _salesChartReloadToken++;
           _isLoadingExpandableData = false;
         });
       }
@@ -1409,6 +1414,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               const SizedBox(height: 20),
               _buildMetricsRow(data, isRefreshing),
               const SizedBox(height: 16),
+              SalesAnalysisChart(
+                reloadToken: _salesChartReloadToken,
+                compact: MediaQuery.of(context).size.width < 800,
+              ),
+              const SizedBox(height: 16),
               // Profit + Margin: side by side on desktop, stacked on mobile
               if (MediaQuery.of(context).size.width >= 800) ...[
                 Row(
@@ -1605,9 +1615,14 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 ),
               ),
               const SizedBox(height: 16),
-              _buildWebMetrics(data, isRefreshing, wide),
+              _buildWebMetrics(data, isRefreshing, wide || constraints.maxWidth >= 760),
               const SizedBox(height: 16),
-              if (wide)
+              SalesAnalysisChart(
+                reloadToken: _salesChartReloadToken,
+                compact: constraints.maxWidth < 760,
+              ),
+              const SizedBox(height: 16),
+              if (wide || constraints.maxWidth >= 760)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

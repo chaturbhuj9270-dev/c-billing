@@ -361,34 +361,35 @@ class InventoryIntegrationService {
       final bill = await _billController.getBillById(billLocalId);
       var customerRefund = totalRefundAmount;
       if (bill != null) {
-        // Update return quantities on bill items
+        // Update return quantities on bill items (match by line id first)
+        final remainingReturns = List<ReturnItemDetail>.from(returnItems);
         final updatedItems = bill.items.map((item) {
-          final returnItem = returnItems.firstWhere(
-            (ri) => ri.productId == item.productId,
-            orElse: () => ReturnItemDetail(
-              productId: '',
-              productName: '',
-              returnQuantity: 0,
-              costPrice: 0,
-              sellingPrice: 0,
-              batchId: '',
-            ),
-          );
+          final matchIndex = remainingReturns.indexWhere((ri) {
+            if (ri.returnQuantity <= 0) return false;
+            final itemKey = item.itemId ?? '';
+            if (ri.itemId != null &&
+                ri.itemId!.isNotEmpty &&
+                itemKey.isNotEmpty) {
+              return ri.itemId == itemKey;
+            }
+            return ri.productId == item.productId;
+          });
+          if (matchIndex < 0) return item;
 
-          if (returnItem.productId.isNotEmpty) {
-            return BillItemEmbedded(
-              itemId: item.itemId,
-              productId: item.productId,
-              productName: item.productName,
-              purchasePrice: item.purchasePrice,
-              sellingPrice: item.sellingPrice,
-              quantity: item.quantity,
-              subtotal: item.subtotal,
-              returnedQuantity:
-                  item.returnedQuantity + returnItem.returnQuantity,
-            );
-          }
-          return item;
+          final returnItem = remainingReturns.removeAt(matchIndex);
+          return BillItemEmbedded(
+            itemId: item.itemId,
+            productId: item.productId,
+            productName: item.productName,
+            purchasePrice: item.purchasePrice,
+            sellingPrice: item.sellingPrice,
+            quantity: item.quantity,
+            subtotal: item.subtotal,
+            returnedQuantity: item.returnedQuantity + returnItem.returnQuantity,
+            hsnCode: item.hsnCode,
+            unit: item.unit,
+            sellUnit: item.sellUnit,
+          );
         }).toList();
 
         // Check if all items are fully returned
@@ -416,24 +417,32 @@ class InventoryIntegrationService {
                   ? BillPaymentStatus.partiallyPaid
                   : BillPaymentStatus.pending);
 
+        final refundFromPaid = customerRefund - appliedToDue;
+        final paidAfterReturn = (bill.paidAmount - refundFromPaid)
+            .clamp(0.0, double.infinity)
+            .toDouble();
+
         await _billController.updateBill(
           id: billLocalId,
           items: updatedItems,
           returnStatus: allReturned,
           returnDate: DateTime.now(),
           pendingAmount: pendingAfterReturn,
+          paidAmount: paidAfterReturn,
           paymentStatus: paymentStatus,
         );
 
+        // Always post the full customer refund to the ledger (creates a credit
+        // when the bill was already paid). Pending-only posts understated returns.
         final customerId = bill.customerId;
         if (customerId != null &&
             customerId.isNotEmpty &&
-            appliedToDue > 0) {
+            customerRefund > 0.009) {
           await CustomerTransactionOfflineController.instance
               .addReturnTransaction(
                 customerId: customerId,
                 customerName: bill.customerName ?? '',
-                amount: appliedToDue,
+                amount: customerRefund,
                 billId: bill.serverId ?? 'local_${bill.id}',
                 description: 'Return for bill ${bill.serverId ?? bill.id}',
               );
@@ -728,6 +737,8 @@ class ReturnItemDetail {
   final double sellingPrice;
   final String batchId;
   final int? localBatchId;
+  /// Stable line id from the bill item (avoids wrong row when product repeats).
+  final String? itemId;
 
   ReturnItemDetail({
     required this.productId,
@@ -739,5 +750,6 @@ class ReturnItemDetail {
     required this.sellingPrice,
     required this.batchId,
     this.localBatchId,
+    this.itemId,
   });
 }

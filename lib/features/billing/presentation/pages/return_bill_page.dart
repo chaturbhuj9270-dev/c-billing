@@ -22,6 +22,7 @@ import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 
 // Return Bill Page for processing bill returns Allows searching by bill number or customer mobile and processing returns
 class ReturnBillPage extends StatefulWidget {
@@ -240,6 +241,29 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     }
   }
 
+  int _toStockQty(double qty) {
+    if (qty <= 0.001) return 0;
+    final rounded = qty.round();
+    // Keep tiny fractional returns from vanishing on int stock ledgers.
+    return rounded == 0 ? 1 : rounded;
+  }
+
+  Future<BillEntity?> _resolveLocalBill(Bill bill) async {
+    final localBills = await BillOfflineController.instance.getAllBills();
+    for (final b in localBills) {
+      if (b.serverId == bill.id || b.id.toString() == bill.id) {
+        return b;
+      }
+    }
+    for (final b in localBills) {
+      if (b.serverId != null &&
+          bill.billNumber.toLowerCase().contains(b.serverId!.toLowerCase())) {
+        return b;
+      }
+    }
+    return null;
+  }
+
   Future<void> _processReturn() async {
     if (_currentBill == null || !_hasItemsToReturn) {
       debugPrint(
@@ -252,7 +276,6 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     for (final item in _currentBill!.items) {
       final returnQty = _returnQuantities[item.id] ?? 0.0;
       if (returnQty > item.remainingQuantity + 0.001) {
-        // Small tolerance for floats
         setState(() {
           _errorMessage =
               'Cannot return more than sold quantity for "${item.productName}". '
@@ -272,144 +295,147 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     }
 
     debugPrint(
-      '[ReturnBill] Starting return process for bill: ${_currentBill!.id}',
+      '[ReturnBill] Starting offline-first return for bill: ${_currentBill!.id}',
     );
-    debugPrint('[ReturnBill] Return quantities: $_returnQuantities');
 
     setState(() {
       _isProcessing = true;
       _errorMessage = null;
+      _successMessage = null;
     });
 
     try {
-      // Process return via old BillingService (Firebase transactions for stock/bill updates)
-      debugPrint('[ReturnBill] Calling BillingService.processReturn...');
-      final result = await _billingService.processReturn(
-        billId: _currentBill!.id,
-        returnItems: _returnQuantities,
-      );
-      debugPrint(
-        '[ReturnBill] BillingService result: success=${result.success}, error=${result.errorMessage}',
-      );
-
-      // Also process via FIFO Integration (restore batches + ledger entries + local stock)
-      if (result.success) {
-        try {
-          final returnItemDetails = <ReturnItemDetail>[];
-          for (final item in _currentBill!.items) {
-            final returnQty = _returnQuantities[item.id] ?? 0.0;
-            if (returnQty > 0.001) {
-              // Small tolerance for floats
-              returnItemDetails.add(
-                ReturnItemDetail(
-                  productId: item.productId,
-                  productName: item.productName,
-                  returnQuantity: returnQty.round(), // Stock operations use int
-                  costPrice: item.purchasePrice,
-                  sellingPrice: item.sellingPrice,
-                  batchId: 'BILL_${_currentBill!.id}_${item.productId}',
-                ),
-              );
-            }
-          }
-
-          if (returnItemDetails.isNotEmpty) {
-            // Find the local bill ID for updating the local entity
-            final localBills = await BillOfflineController.instance
-                .getAllBills();
-            BillEntity? localBill;
-
-            // First try to find by serverId
-            for (final b in localBills) {
-              if (b.serverId == _currentBill!.id ||
-                  b.serverId == _currentBill!.billNumber) {
-                localBill = b;
-                break;
-              }
-            }
-
-            // If not found by serverId, try matching by local ID (for offline bills)
-            if (localBill == null) {
-              for (final b in localBills) {
-                // Match by local ID (the Bill.id is serverId ?? localId.toString())
-                if (b.id.toString() == _currentBill!.id) {
-                  localBill = b;
-                  break;
-                }
-              }
-            }
-
-            if (localBill != null) {
-              await InventoryIntegrationService.instance.processReturn(
-                billId: _currentBill!.id,
-                billLocalId: localBill.id,
-                returnItems: returnItemDetails,
-                notes: 'Return for bill: ${_currentBill!.billNumber}',
-              );
-              debugPrint(
-                '[ReturnBill] FIFO return processed successfully for local bill ID: ${localBill.id}',
-              );
-            } else {
-              debugPrint(
-                '[ReturnBill] Warning: Could not find local bill for FIFO return - Firebase return still succeeded',
-              );
-            }
-          }
-        } catch (e) {
-          debugPrint(
-            '[ReturnBill] FIFO return processing failed (Firebase return succeeded): $e',
-          );
-          // Don't fail the whole return - Firebase already processed it
-        }
-      }
-
-      if (mounted) {
-        if (result.success) {
-          final refundAmount = result.refundAmount ?? _totalRefundAmount;
-          setState(() {
-            _isProcessing = false;
-            _hasReturnProcessed =
-                true; // Mark that a return was successfully processed
-            _successMessage =
-                'Return processed successfully! Refund: ₹${refundAmount.toStringAsFixed(2)}';
-
-            // Update local bill state
-            final updatedItems = _currentBill!.items.map((item) {
-              final returnQty = _returnQuantities[item.id] ?? 0.0;
-              return item.copyWith(
-                returnedQuantity: item.returnedQuantity + returnQty,
-              );
-            }).toList();
-
-            _currentBill = _currentBill!.copyWith(
-              items: updatedItems,
-              returnStatus: updatedItems.every((item) => item.isFullyReturned),
-              returnDate: DateTime.now(),
-            );
-
-            // Reset return quantities
-            _initializeReturnQuantities(_currentBill!);
-          });
-
-          // Show success snackbar
-          GlassyToast.show(
-            context,
-            'Return processed! Print or share the receipt before leaving.',
-          );
-        } else {
+      final localBill = await _resolveLocalBill(_currentBill!);
+      if (localBill == null) {
+        if (mounted) {
           setState(() {
             _isProcessing = false;
             _errorMessage =
-                result.errorMessage ?? _localizations.failedToProcessReturn;
+                'Could not find this bill in local records. Open it from Bills list and try again.';
           });
+          GlassyToast.show(context, _errorMessage!, isError: true);
+        }
+        return;
+      }
+
+      final returnItemDetails = <ReturnItemDetail>[];
+      for (final item in _currentBill!.items) {
+        final returnQty = _returnQuantities[item.id] ?? 0.0;
+        final stockQty = _toStockQty(returnQty);
+        if (stockQty > 0) {
+          returnItemDetails.add(
+            ReturnItemDetail(
+              productId: item.productId,
+              productName: item.productName,
+              returnQuantity: stockQty,
+              costPrice: item.purchasePrice,
+              sellingPrice: item.sellingPrice,
+              batchId: 'BILL_${_currentBill!.id}_${item.productId}',
+              itemId: item.id,
+            ),
+          );
         }
       }
+
+      if (returnItemDetails.isEmpty) {
+        if (mounted) {
+          setState(() {
+            _isProcessing = false;
+            _errorMessage = _localizations.selectItemsToReturn;
+          });
+        }
+        return;
+      }
+
+      // Local FIFO + bill + customer ledger is the source of truth (same as create bill).
+      final localResult = await InventoryIntegrationService.instance
+          .processReturn(
+            billId: _currentBill!.id,
+            billLocalId: localBill.id,
+            returnItems: returnItemDetails,
+            notes: 'Return for bill: ${_currentBill!.billNumber}',
+          );
+
+      if (!localResult.success) {
+        if (mounted) {
+          setState(() {
+            _isProcessing = false;
+            _errorMessage =
+                localResult.errorMessage ?? _localizations.failedToProcessReturn;
+          });
+          GlassyToast.show(context, _errorMessage!, isError: true);
+        }
+        return;
+      }
+
+      // Best-effort cloud sync only when the bill already has a server id.
+      final serverId = localBill.serverId;
+      if (serverId != null && serverId.isNotEmpty) {
+        try {
+          final firebaseItems = <String, double>{};
+          for (final item in _currentBill!.items) {
+            final qty = _returnQuantities[item.id] ?? 0.0;
+            if (qty > 0.001) {
+              firebaseItems[item.id.isNotEmpty ? item.id : item.productId] = qty;
+            }
+          }
+          await _billingService.processReturn(
+            billId: serverId,
+            returnItems: firebaseItems,
+          );
+        } catch (e) {
+          debugPrint('[ReturnBill] Firebase sync skipped/failed: $e');
+        }
+      }
+
+      if (!mounted) return;
+
+      final refundAmount = localResult.refundAmount > 0
+          ? localResult.refundAmount
+          : _totalRefundAmount;
+
+      // Reload from local DB so UI matches ledger / FIFO updates exactly.
+      final refreshed = await BillOfflineController.instance.getBillById(
+        localBill.id,
+      );
+      final nextBill = refreshed != null
+          ? Bill.fromBillEntity(refreshed)
+          : _currentBill!.copyWith(
+              items: _currentBill!.items.map((item) {
+                final returnQty = _returnQuantities[item.id] ?? 0.0;
+                return item.copyWith(
+                  returnedQuantity: item.returnedQuantity + returnQty,
+                );
+              }).toList(),
+              returnStatus: _currentBill!.items.every((item) {
+                final returnQty = _returnQuantities[item.id] ?? 0.0;
+                return (item.returnedQuantity + returnQty) >=
+                    item.quantity - 0.001;
+              }),
+              returnDate: DateTime.now(),
+            );
+
+      if (!mounted) return;
+      setState(() {
+        _isProcessing = false;
+        _hasReturnProcessed = true;
+        _successMessage =
+            'Return processed successfully! Refund: ₹${refundAmount.toStringAsFixed(2)}';
+        _currentBill = nextBill;
+        _initializeReturnQuantities(_currentBill!);
+      });
+
+      GlassyToast.show(
+        context,
+        'Return processed! Print or share the receipt before leaving.',
+      );
     } catch (e) {
       if (mounted) {
         setState(() {
           _isProcessing = false;
           _errorMessage = '${_localizations.errorProcessingReturn}: $e';
         });
+        GlassyToast.show(context, _errorMessage!, isError: true);
       }
     }
   }
@@ -519,6 +545,8 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     }
   }
 
+  bool get _desktopReturn => DesktopCanvas.wide(context);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -528,35 +556,264 @@ class _ReturnBillPageState extends State<ReturnBillPage>
           _buildAppBar(),
           Expanded(
             child: FadeTransition(
-        opacity: _opacityAnimation,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Search Section
-              if (widget.initialBill == null) _buildSearchSection(),
-
-              // Error Message
-              if (_errorMessage != null) _buildErrorMessage(),
-
-              // Success Message
-              if (_successMessage != null) _buildSuccessMessage(),
-
-              // Bill Details
-              if (_currentBill != null) ...[
-                const SizedBox(height: 16),
-                _buildBillDetails(),
-                const SizedBox(height: 24),
-                _buildReturnButton(),
-              ],
-            ],
+              opacity: _opacityAnimation,
+              child: _desktopReturn
+                  ? _buildDesktopReturn()
+                  : _buildMobileReturn(),
+            ),
           ),
-        ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildMobileReturn() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (widget.initialBill == null) _buildSearchSection(),
+          if (_errorMessage != null) _buildErrorMessage(),
+          if (_successMessage != null) _buildSuccessMessage(),
+          if (_currentBill != null) ...[
+            const SizedBox(height: 16),
+            _buildBillDetails(),
+            const SizedBox(height: 24),
+            _buildReturnButton(),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopReturn() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            flex: 3,
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (widget.initialBill == null) ...[
+                    _buildSearchSection(),
+                    const SizedBox(height: 12),
+                  ],
+                  if (_errorMessage != null) _buildErrorMessage(),
+                  if (_successMessage != null) _buildSuccessMessage(),
+                  if (_currentBill != null)
+                    _buildBillDetails()
+                  else
+                    _buildDesktopEmptyState(),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          SizedBox(
+            width: 320,
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: _buildDesktopSummaryCard(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopEmptyState() {
+    final muted = AppColors.mutedText(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 48),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.assignment_return_outlined,
+            size: 48,
+            color: AppColors.accent(context).withValues(alpha: 0.55),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            _localizations.searchBill,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primaryText(context),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _localizations.enterBillOrMobile,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 13,
+              color: muted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopSummaryCard() {
+    final action = AppColors.action(context);
+    final muted = AppColors.mutedText(context);
+    final bill = _currentBill;
+    final selectedLines = bill == null
+        ? 0
+        : bill.items
+            .where((i) => (_returnQuantities[i.id] ?? 0) > 0.001)
+            .length;
+
+    Widget line(String label, String value, {Color? valueColor}) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 13,
+                  color: muted,
+                ),
+              ),
+            ),
+            Text(
+              value,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: valueColor ?? AppColors.primaryText(context),
+              ),
             ),
           ],
         ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            _localizations.returnBill,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: AppColors.accent(context),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            bill?.billNumber ?? _localizations.processBillReturns,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 12,
+              color: muted,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Container(
+            height: 1,
+            color: AppColors.border(context),
+          ),
+          const SizedBox(height: 10),
+          line('Lines selected', '$selectedLines'),
+          line(
+            'Qty to return',
+            _totalReturnQuantity == _totalReturnQuantity.roundToDouble()
+                ? _totalReturnQuantity.toInt().toString()
+                : _totalReturnQuantity.toStringAsFixed(2),
+          ),
+          line(
+            'Bill amount',
+            bill == null
+                ? '—'
+                : '₹${bill.finalAmount.toStringAsFixed(2)}',
+          ),
+          const SizedBox(height: 6),
+          line(
+            'Refund',
+            '₹${_totalRefundAmount.toStringAsFixed(2)}',
+            valueColor: action,
+          ),
+          const SizedBox(height: 16),
+          if (bill != null && bill.hasReturnableItems) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _selectAllItems,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.accent(context),
+                      side: BorderSide(color: AppColors.border(context)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'All',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _clearAllItems,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: muted,
+                      side: BorderSide(color: AppColors.border(context)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Clear',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
+          _buildReturnButton(),
+        ],
+      ),
     );
   }
 

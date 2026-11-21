@@ -364,11 +364,11 @@ class CustomerTransactionRecords extends Table {
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? openAppDatabase());
 
-  // v14: qty columns declared as REAL to match on-disk affinity (theme DBs /
-  // fractional stock). Do NOT alterTable bills/purchases — those tables carry
-  // extra GST/payment columns not in this schema; alterTable would drop them.
+  // v15: REAL qty affinity + derived-balance repair. Never alterTable bills /
+  // purchases here — those tables carry extra GST/payment columns not in this
+  // schema; alterTable would drop shop data.
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   Future<bool> _hasTable(String table) async {
     final rows = await customSelect(
@@ -387,19 +387,21 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) async => m.createAll(),
-        onUpgrade: (m, from, to) async {
-          // Idempotent: create any tables missing on this branch without
-          // wiping existing shop data when switching branches / versions.
-          await _ensureTables(m);
-          // Qty columns are already REAL on migrated DBs; Drift RealColumn
-          // reads them correctly. No structural rewrite needed for v13→v14.
-          if (from < 14) {
-            await repairDerivedBalances();
-          }
-        },
-      );
+  MigrationStrategy get migration {
+    return MigrationStrategy(
+      onCreate: (Migrator m) async {
+        await m.createAll();
+      },
+      onUpgrade: (Migrator m, int from, int to) async {
+        // Idempotent: create any tables missing on this branch without
+        // wiping existing shop data when switching branches / versions.
+        await _ensureTables(m);
+        if (from < 15) {
+          await repairDerivedBalances();
+        }
+      },
+    );
+  }
 
   /// Rebuilds derived stock + customer running balances from source tables.
   /// Does not delete shop data and does not rewrite bill GST columns.

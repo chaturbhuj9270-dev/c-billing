@@ -170,15 +170,34 @@ class BillOfflineController extends ChangeNotifier {
     return bills;
   }
 
-  // Search bills by customer name or contact
+  // Search bills by customer name, contact, local id, server id, or bill number
   Future<List<BillEntity>> searchBills(String query) async {
     if (query.isEmpty) return getAllBills();
 
-    final needle = query.toLowerCase();
+    final needle = query.toLowerCase().trim();
+    final needleDigits = needle.replaceAll(RegExp(r'[^0-9a-z]'), '');
     final bills = (await _db.loadBills()).where((bill) {
       if (bill.syncStatus == BillSyncStatus.deleted) return false;
-      return (bill.customerName?.toLowerCase().contains(needle) ?? false) ||
-          (bill.customerContact?.toLowerCase().contains(needle) ?? false);
+
+      final localId = bill.id.toString();
+      final serverId = (bill.serverId ?? '').toLowerCase();
+      final name = (bill.customerName ?? '').toLowerCase();
+      final contact = (bill.customerContact ?? '').toLowerCase();
+      final dateStr = bill.billDate
+          .toIso8601String()
+          .substring(0, 10)
+          .replaceAll('-', '');
+      final billNumber =
+          'bill-$dateStr-${(bill.serverId ?? localId).toLowerCase()}';
+      final shortId = (bill.serverId ?? localId).toLowerCase();
+
+      return name.contains(needle) ||
+          contact.contains(needle) ||
+          localId == needle ||
+          serverId.contains(needle) ||
+          shortId.contains(needleDigits) ||
+          billNumber.contains(needle) ||
+          'local_$localId' == needle;
     }).toList();
     bills.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return bills;
