@@ -620,6 +620,25 @@ class MarathiLocalization {
   static const String ifscCode = 'IFSC कोड';
   static const String accountHolderName = 'खातेदाराचे नाव';
   static const String paymentQrCode = 'पेमेंट QR कोड';
+  static const String upiId = 'UPI आयडी';
+  static const String upiIdHint = 'उदा. shopname@upi';
+  static const String upiIdHelper =
+      'बिल पेमेंट QR साठी आवश्यक. ग्राहकाच्या UPI अॅपमध्ये (PhonePe, GPay इ.) रक्कम आपोआप भरेल.';
+  static const String viewQr = 'QR स्कॅन करा';
+  static const String preparingPaymentQr = 'पेमेंट QR तयार होत आहे...';
+  static const String scanQrToPayBillAmount =
+      'हा QR स्कॅन करा — पेमेंट रक्कम आधीच भरलेली आहे';
+  static const String scanShopQrAndPayAmount =
+      'दुकानाचा QR स्कॅन करा आणि वर दिसलेली रक्कम भरा';
+  static const String addUpiIdInShopDetails =
+      'रक्कम असलेला QR तयार करण्यासाठी दुकान तपशील (बँक तपशील) मध्ये तुमचा UPI ID जोडा';
+  static const String noAmountToCollect = 'या बिलासाठी वसूल करण्याची रक्कम नाही';
+  static const String failedToGenerateQr = 'QR तयार करण्यात अयशस्वी';
+  static const String upiIdCopied = 'UPI ID कॉपी झाली';
+  static const String paymentReceived = 'पेमेंट प्राप्त';
+  static const String paymentReceivedReceiptReady =
+      'पेमेंट प्राप्त — पावती उघडत आहे';
+  static const String paymentReceipt = 'पेमेंट पावती';
   static const String uploadQrCode = 'QR कोड अपलोड करा';
   static const String removeQrCode = 'काढा';
   static const String qrCodeUploaded = 'QR कोड यशस्वीरीत्या अपलोड झाला';

@@ -257,6 +257,7 @@ class BillOfflineController extends ChangeNotifier {
     BillPaymentStatus? paymentStatus,
     double? paidAmount,
     double? pendingAmount,
+    String? paymentMode,
   }) async {
     final existing = await getBillById(id);
     if (existing == null) {
@@ -295,6 +296,7 @@ class BillOfflineController extends ChangeNotifier {
       paymentStatus: paymentStatus,
       paidAmount: paidAmount,
       pendingAmount: pendingAmount,
+      paymentMode: paymentMode,
       syncStatus: newSyncStatus,
     );
 
@@ -312,6 +314,7 @@ class BillOfflineController extends ChangeNotifier {
     required int id,
     required double paidAmount,
     required BillPaymentStatus paymentStatus,
+    String? paymentMode,
   }) async {
     final existing = await getBillById(id);
     if (existing == null) return null;
@@ -325,6 +328,7 @@ class BillOfflineController extends ChangeNotifier {
       paidAmount: paidAmount,
       pendingAmount: pendingAmount > 0 ? pendingAmount : 0,
       paymentStatus: paymentStatus,
+      paymentMode: paymentMode,
     );
   }
 

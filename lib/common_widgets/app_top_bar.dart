@@ -97,19 +97,7 @@ class AppTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (DesktopCanvas.isDesktopPlatform) {
-      if (actions.isEmpty) return const SizedBox.shrink();
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            for (var i = 0; i < actions.length; i++) ...[
-              if (i > 0) const SizedBox(width: 8),
-              actions[i],
-            ],
-          ],
-        ),
-      );
+      return _buildDesktopBar(context);
     }
     final isDark = AppColors.isDark(context);
     final bar = AppColors.appBar(context);
@@ -221,6 +209,78 @@ class AppTopBar extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Desktop / web: back + title on the left, actions on the right.
+  /// Back only appears when [showBack] is true and the route can pop (or [onBack] is set).
+  Widget _buildDesktopBar(BuildContext context) {
+    final canPop = Navigator.maybeOf(context)?.canPop() ?? false;
+    final shouldShowBack = showBack && (onBack != null || canPop);
+    final leadingWidget = leading ??
+        (shouldShowBack
+            ? AppTopBar.action(
+                icon: Icons.arrow_back_rounded,
+                onTap: onBack ?? () => Navigator.maybePop(context),
+              )
+            : null);
+
+    if (leadingWidget == null && actions.isEmpty && title.trim().isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Row(
+        children: [
+          if (leadingWidget != null) ...[
+            leadingWidget,
+            const SizedBox(width: 12),
+          ],
+          Expanded(
+            child: GestureDetector(
+              onTap: onTitleTap,
+              behavior: HitTestBehavior.opaque,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (title.trim().isNotEmpty)
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.primaryText(context),
+                        fontSize: 18,
+                        height: 1.15,
+                        fontWeight: FontWeight.w800,
+                        fontFamily: 'Literata',
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                  if (subtitle != null && subtitle!.isNotEmpty)
+                    Text(
+                      subtitle!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.mutedText(context),
+                        fontSize: 12,
+                        height: 1.2,
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          for (var i = 0; i < actions.length; i++) ...[
+            if (i > 0) const SizedBox(width: 8),
+            actions[i],
+          ],
+        ],
       ),
     );
   }

@@ -36,6 +36,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
   final _accountNumberController = TextEditingController();
   final _ifscCodeController = TextEditingController();
   final _accountHolderNameController = TextEditingController();
+  final _upiIdController = TextEditingController();
 
   // Terms and Conditions Controller
   final _termsConditionsController = TextEditingController();
@@ -106,6 +107,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           _accountNumberController.text = doc['accountNumber'] ?? '';
           _ifscCodeController.text = doc['ifscCode'] ?? '';
           _accountHolderNameController.text = doc['accountHolderName'] ?? '';
+          _upiIdController.text = doc['upiId'] ?? '';
           // Terms and Conditions
           _termsConditionsController.text = doc['termsAndConditions'] ?? '';
           // Only update images if Firebase has data and differs from cache
@@ -192,6 +194,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         'accountNumber': _accountNumberController.text,
         'ifscCode': _ifscCodeController.text,
         'accountHolderName': _accountHolderNameController.text,
+        'upiId': _upiIdController.text.trim(),
         // Terms and Conditions
         'termsAndConditions': _termsConditionsController.text,
         'qrCodeBase64': _qrCodeBase64,
@@ -199,6 +202,8 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         'signatureBase64': _signatureBase64,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+
+      ShopRepository().clearCache();
 
       if (mounted) {
         GlassyToast.show(context, _localizations.shopDetailsSaved);
@@ -581,6 +586,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
     bool isRequired = false,
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
+    String? hint,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -607,6 +613,12 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           maxLines: maxLines,
           minLines: maxLines,
           decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 13,
+              color: AppTheme.grey400,
+            ),
             prefixIcon: Icon(icon, color: AppTheme.grey600),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -1064,6 +1076,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
     _accountNumberController.dispose();
     _ifscCodeController.dispose();
     _accountHolderNameController.dispose();
+    _upiIdController.dispose();
     // Terms and Conditions
     _termsConditionsController.dispose();
     super.dispose();
@@ -1276,6 +1289,22 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                       label: _localizations.accountHolderName,
                       controller: _accountHolderNameController,
                       icon: Icons.person_outline,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildInputField(
+                      label: _localizations.upiId,
+                      controller: _upiIdController,
+                      icon: Icons.account_balance_wallet_outlined,
+                      hint: _localizations.upiIdHint,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _localizations.upiIdHelper,
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 12,
+                        color: AppColors.mutedText(context),
+                      ),
                     ),
                     SizedBox(height: 20),
                     // QR Code Section
