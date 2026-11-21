@@ -49,6 +49,9 @@ class FilePreviewPage extends StatefulWidget {
   // Optional customer phone number for direct WhatsApp sharing
   final String? customerPhone;
 
+  // Optional payment QR action (UPI amount QR for bill collection).
+  final VoidCallback? onViewPaymentQr;
+
   // Desktop and web show this preview in a centered dialog. Phone uses a full page.
   final bool presentedAsDialog;
 
@@ -67,6 +70,7 @@ class FilePreviewPage extends StatefulWidget {
     this.subtitle,
     this.onClose,
     this.customerPhone,
+    this.onViewPaymentQr,
     this.presentedAsDialog = false,
     this.fitPage = false,
     this.details,
@@ -82,6 +86,7 @@ class FilePreviewPage extends StatefulWidget {
     String? subtitle,
     VoidCallback? onClose,
     String? customerPhone,
+    VoidCallback? onViewPaymentQr,
     bool centered = true,
     FilePreviewDetails? details,
   }) {
@@ -94,6 +99,7 @@ class FilePreviewPage extends StatefulWidget {
       subtitle: subtitle,
       onClose: onClose,
       customerPhone: customerPhone,
+      onViewPaymentQr: onViewPaymentQr,
       presentedAsDialog: desktop,
       fitPage: centered || desktop,
       details: details,
@@ -165,6 +171,9 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   static const double _minZoom = 0.5;
   static const double _maxZoom = 3.0;
   static const double _zoomStep = 0.25;
+  // Always-light paper canvas so bill/PDF ink stays readable in dark theme.
+  static const Color _pdfCanvasColor = AppTheme.lightScaffold;
+  static const Color _pdfPaperColor = AppTheme.white;
   final TransformationController _transformationController =
       TransformationController();
 
@@ -773,6 +782,26 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               ],
             ),
           ),
+          if (widget.onViewPaymentQr != null) ...[
+            Material(
+              color: AppColors.chipFill(context),
+              shape: const CircleBorder(),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: widget.onViewPaymentQr,
+                child: SizedBox(
+                  width: 36,
+                  height: 36,
+                  child: Icon(
+                    Icons.qr_code_2_rounded,
+                    size: 20,
+                    color: AppColors.action(context),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
           Material(
             color: AppColors.chipFill(context),
             shape: const CircleBorder(),
@@ -813,8 +842,11 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   }
 
   Widget _buildPreviewPane() {
+    final canvasColor = widget.fileType == FilePreviewType.pdf
+        ? _pdfCanvasColor
+        : AppColors.chipFill(context);
     return ColoredBox(
-      color: AppColors.chipFill(context),
+      color: canvasColor,
       child: Column(
         children: [
           _buildPreviewToolbar(),
@@ -1220,6 +1252,13 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       title: widget.fileName,
       subtitle: widget.subtitle ?? '$typeLabel · ${_getFileSizeString()}',
       onBack: () => widget._closePreview(context),
+      actions: [
+        if (widget.onViewPaymentQr != null)
+          AppTopBar.action(
+            icon: Icons.qr_code_2_rounded,
+            onTap: widget.onViewPaymentQr,
+          ),
+      ],
     );
   }
 
@@ -1438,8 +1477,10 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       },
     );
 
+    // Keep the document canvas light in both themes so dark PDF ink stays readable
+    // (same look as light theme). Chrome around the preview can still follow theme.
     if (!showToolbar) {
-      return ColoredBox(color: AppColors.chipFill(context), child: pages);
+      return ColoredBox(color: _pdfCanvasColor, child: pages);
     }
 
     return Column(
@@ -1484,7 +1525,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
           ),
         ),
         Expanded(
-          child: ColoredBox(color: AppColors.chipFill(context), child: pages),
+          child: ColoredBox(color: _pdfCanvasColor, child: pages),
         ),
       ],
     );
@@ -1606,6 +1647,41 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   }
 
   Widget _buildPdfPage(Uint8List pageBytes, int pageNumber) {
+    Widget paperImage({
+      required BoxFit fit,
+      double? width,
+      double? height,
+    }) {
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          color: _pdfPaperColor,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.black.withValues(alpha: 0.12),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: ColoredBox(
+            color: _pdfPaperColor,
+            child: Image.memory(
+              pageBytes,
+              fit: fit,
+              width: width,
+              height: height,
+              gaplessPlayback: true,
+              errorBuilder: (context, error, stackTrace) =>
+                  _pdfPageError(pageNumber),
+            ),
+          ),
+        ),
+      );
+    }
+
     if (widget.fitPage) {
       final hideFooter = widget.presentedAsDialog;
       return Padding(
@@ -1618,13 +1694,10 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                   return Center(
                     child: Transform.scale(
                       scale: widget.presentedAsDialog ? _zoomLevel : 1.0,
-                      child: Image.memory(
-                        pageBytes,
+                      child: paperImage(
                         fit: BoxFit.contain,
                         width: constraints.maxWidth,
                         height: constraints.maxHeight,
-                        errorBuilder: (context, error, stackTrace) =>
-                            _pdfPageError(pageNumber),
                       ),
                     ),
                   );
@@ -1635,10 +1708,10 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               const SizedBox(height: 8),
               Text(
                 'Page $pageNumber of $_totalPages',
-                style: TextStyle(
+                style: const TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 11,
-                  color: AppColors.mutedText(context),
+                  color: AppTheme.grey700,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -1649,75 +1722,30 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     }
 
     return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Column(
-          children: [
-            // Page image
-            Image.memory(
-              pageBytes,
-              fit: BoxFit.fitWidth,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  height: 200,
-                  color: AppColors.chipFill(context),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.broken_image_outlined,
-                          size: 32,
-                          color: AppTheme.grey400,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Failed to load page $pageNumber',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontSize: 12,
-                            color: AppTheme.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        children: [
+          paperImage(fit: BoxFit.fitWidth),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            decoration: const BoxDecoration(
+              color: AppTheme.grey100,
+              border: Border(top: BorderSide(color: AppTheme.grey200)),
             ),
-            // Page number footer
-            Container(
-              padding: EdgeInsets.symmetric(vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.scaffold(context),
-                border: Border(top: BorderSide(color: AppTheme.grey200)),
-              ),
-              child: Center(
-                child: Text(
-                  'Page $pageNumber of $_totalPages',
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 11,
-                    color: AppTheme.grey,
-                    fontWeight: FontWeight.w500,
-                  ),
+            child: Center(
+              child: Text(
+                'Page $pageNumber of $_totalPages',
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 11,
+                  color: AppTheme.grey700,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -2135,42 +2163,50 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   }
 
   Widget _buildBottomBar() {
+    final hasCustomerPhone =
+        widget.customerPhone != null && widget.customerPhone!.isNotEmpty;
+
     return Container(
       padding: EdgeInsets.fromLTRB(
-        16,
-        16,
-        16,
-        MediaQuery.of(context).padding.bottom + 16,
+        12,
+        10,
+        12,
+        MediaQuery.of(context).padding.bottom + 10,
       ),
       decoration: BoxDecoration(
         color: AppColors.card(context),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, -4),
-          ),
-        ],
+        border: Border(top: BorderSide(color: AppColors.border(context))),
       ),
       child: Row(
         children: [
-          // Share button
+          if (widget.onViewPaymentQr != null)
+            Expanded(
+              child: _buildBottomAction(
+                icon: Icons.qr_code_2_rounded,
+                label: 'QR',
+                isLoading: false,
+                onPressed: widget.onViewPaymentQr!,
+              ),
+            ),
           Expanded(
-            child: _buildActionButton(
+            child: _buildBottomAction(
               icon: Icons.share_rounded,
               label: 'Share',
               isLoading: _isSharing,
               onPressed: _handleShare,
-              isPrimary: false,
             ),
           ),
-          const SizedBox(width: 10),
-          // WhatsApp button
-          Expanded(child: _buildWhatsAppButton()),
-          const SizedBox(width: 10),
-          // Print button
           Expanded(
-            child: _buildActionButton(
+            child: _buildBottomAction(
+              iconWidget: const FaIcon(FontAwesomeIcons.whatsapp, size: 22),
+              label: hasCustomerPhone ? 'Send' : 'WhatsApp',
+              isLoading: _isSharingWhatsApp,
+              onPressed: _handleWhatsAppShare,
+              accentColor: AppTheme.paletteFF25D366,
+            ),
+          ),
+          Expanded(
+            child: _buildBottomAction(
               icon: Icons.print_rounded,
               label: 'Print',
               isLoading: _isPrinting,
@@ -2183,96 +2219,71 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     );
   }
 
-  Widget _buildWhatsAppButton() {
-    final hasCustomerPhone =
-        widget.customerPhone != null && widget.customerPhone!.isNotEmpty;
-
-    return ElevatedButton(
-      onPressed: _isSharingWhatsApp ? null : _handleWhatsAppShare,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppTheme.paletteFF25D366,
-        foregroundColor: AppTheme.white,
-        elevation: 2,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      child: _isSharingWhatsApp
-          ? const SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: AppTheme.white,
-              ),
-            )
-          : Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const FaIcon(FontAwesomeIcons.whatsapp, size: 18),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    hasCustomerPhone ? 'Send' : 'WhatsApp',
-                    style: const TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
+  Widget _buildBottomAction({
+    IconData? icon,
+    Widget? iconWidget,
     required String label,
     required bool isLoading,
     required VoidCallback onPressed,
-    required bool isPrimary,
+    bool isPrimary = false,
+    Color? accentColor,
   }) {
-    return ElevatedButton(
-      onPressed: isLoading ? null : onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isPrimary ? AppColors.action(context) : AppTheme.white,
-        foregroundColor: isPrimary ? AppTheme.white : AppColors.action(context),
-        elevation: isPrimary ? 2 : 0,
-        padding: EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: isPrimary
-              ? BorderSide.none
-              : BorderSide(color: AppColors.accent(context), width: 1.5),
-        ),
-      ),
-      child: isLoading
-          ? SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: isPrimary ? AppTheme.white : AppColors.action(context),
-              ),
-            )
-          : Row(
+    final Color fg = isPrimary
+        ? AppTheme.white
+        : (accentColor ?? AppColors.action(context));
+    final Color bg = isPrimary
+        ? AppColors.action(context)
+        : AppColors.chipFill(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Material(
+        color: bg,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          onTap: isLoading ? null : onPressed,
+          borderRadius: BorderRadius.circular(14),
+          child: SizedBox(
+            height: 64,
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 20),
-                const SizedBox(width: 8),
+                if (isLoading)
+                  SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: fg,
+                    ),
+                  )
+                else if (iconWidget != null)
+                  IconTheme(
+                    data: IconThemeData(color: fg, size: 22),
+                    child: iconWidget,
+                  )
+                else
+                  Icon(icon, size: 22, color: fg),
+                const SizedBox(height: 4),
                 Text(
                   label,
-                  style: const TextStyle(
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
                     fontFamily: 'Literata',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: fg,
                   ),
                 ),
               ],
             ),
+          ),
+        ),
+      ),
     );
   }
+
 }
 
 // File type for preview

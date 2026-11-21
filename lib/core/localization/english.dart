@@ -624,6 +624,25 @@ class EnglishLocalization {
   static const String ifscCode = 'IFSC Code';
   static const String accountHolderName = 'Account Holder Name';
   static const String paymentQrCode = 'Payment QR Code';
+  static const String upiId = 'UPI ID';
+  static const String upiIdHint = 'e.g. shopname@upi';
+  static const String upiIdHelper =
+      'Required for bill payment QR. Customer UPI apps (PhonePe, GPay, etc.) will autofill this amount.';
+  static const String viewQr = 'Scan QR';
+  static const String preparingPaymentQr = 'Preparing payment QR...';
+  static const String scanQrToPayBillAmount =
+      'Scan this QR — amount is already filled for payment';
+  static const String scanShopQrAndPayAmount =
+      'Scan shop QR and pay the amount shown above';
+  static const String addUpiIdInShopDetails =
+      'Add your UPI ID in Shop Details (Bank Details) to generate amount QR';
+  static const String noAmountToCollect = 'No amount to collect for this bill';
+  static const String failedToGenerateQr = 'Failed to generate QR';
+  static const String upiIdCopied = 'UPI ID copied';
+  static const String paymentReceived = 'Payment Received';
+  static const String paymentReceivedReceiptReady =
+      'Payment received — opening receipt';
+  static const String paymentReceipt = 'Payment receipt';
   static const String uploadQrCode = 'Upload QR Code';
   static const String removeQrCode = 'Remove';
   static const String qrCodeUploaded = 'QR code uploaded successfully';

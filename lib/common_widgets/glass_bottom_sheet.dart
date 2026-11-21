@@ -14,6 +14,26 @@ const BorderRadius _sheetRadius = BorderRadius.vertical(
   top: Radius.circular(28),
 );
 
+/// Drag handle shown at the top of phone bottom sheets.
+class GlassSheetHandle extends StatelessWidget {
+  const GlassSheetHandle({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        width: 40,
+        height: 4,
+        margin: const EdgeInsets.only(top: 10, bottom: 8),
+        decoration: BoxDecoration(
+          color: AppColors.mutedText(context).withValues(alpha: 0.35),
+          borderRadius: BorderRadius.circular(999),
+        ),
+      ),
+    );
+  }
+}
+
 // Bottom drawer card with the same raised glass rim as the bottom tabs.
 class GlassSheetCard extends StatelessWidget {
   final Widget child;
@@ -97,6 +117,74 @@ class GlassSheetCard extends StatelessWidget {
   }
 }
 
+/// True bottom drawer sized to a fraction of the screen.
+/// Return this from [showAppBottomSheet] builders (scroll-controlled).
+class GlassDraggableSheet extends StatefulWidget {
+  final ScrollableWidgetBuilder builder;
+  final double initialChildSize;
+  final double minChildSize;
+  final double maxChildSize;
+  final bool showClose;
+  final VoidCallback? onClose;
+
+  const GlassDraggableSheet({
+    super.key,
+    required this.builder,
+    this.initialChildSize = 0.58,
+    this.minChildSize = 0.38,
+    this.maxChildSize = 0.92,
+    this.showClose = false,
+    this.onClose,
+  });
+
+  @override
+  State<GlassDraggableSheet> createState() => _GlassDraggableSheetState();
+}
+
+class _GlassDraggableSheetState extends State<GlassDraggableSheet> {
+  ScrollController? _desktopScroll;
+
+  @override
+  void initState() {
+    super.initState();
+    if (DesktopCanvas.isDesktopPlatform) {
+      _desktopScroll = ScrollController();
+    }
+  }
+
+  @override
+  void dispose() {
+    _desktopScroll?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (DesktopCanvas.isDesktopPlatform) {
+      return widget.builder(context, _desktopScroll!);
+    }
+
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: widget.initialChildSize,
+      minChildSize: widget.minChildSize,
+      maxChildSize: widget.maxChildSize,
+      builder: (context, controller) {
+        return GlassSheetCard(
+          showClose: widget.showClose,
+          onClose: widget.onClose,
+          child: SafeArea(
+            top: false,
+            child: widget.builder(context, controller),
+          ),
+        );
+      },
+    );
+  }
+}
+
+bool _isGlassDrawerRoot(Widget content) => content is GlassDraggableSheet;
+
 // Modal bottom sheet whose card uses [GlassSheetCard].
 Future<T?> showAppBottomSheet<T>({
   required BuildContext context,
@@ -126,14 +214,26 @@ Future<T?> showAppBottomSheet<T>({
     enableDrag: enableDrag,
     useRootNavigator: useRootNavigator,
     backgroundColor: AppTheme.transparent,
+    barrierColor: AppTheme.black.withValues(alpha: 0.45),
     elevation: 0,
-    shape: const RoundedRectangleBorder(borderRadius: _sheetRadius),
-    clipBehavior: Clip.antiAlias,
-    builder: (sheetContext) => GlassSheetCard(
-      showClose: showClose,
-      onClose: onClose,
-      child: builder(sheetContext),
-    ),
+    builder: (sheetContext) {
+      final bottomInset = MediaQuery.viewInsetsOf(sheetContext).bottom;
+      final content = builder(sheetContext);
+      final Widget sheet;
+      if (isScrollControlled && _isGlassDrawerRoot(content)) {
+        sheet = content;
+      } else {
+        sheet = GlassSheetCard(
+          showClose: showClose,
+          onClose: onClose,
+          child: SafeArea(top: false, child: content),
+        );
+      }
+      return Padding(
+        padding: EdgeInsets.only(bottom: bottomInset),
+        child: sheet,
+      );
+    },
   );
 }
 

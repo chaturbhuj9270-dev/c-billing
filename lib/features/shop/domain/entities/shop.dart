@@ -23,6 +23,8 @@ class Shop {
   final String? shopLogoBase64;
   final String? signatureBase64;
   final String? qrCodeBase64;
+  /// UPI VPA used to generate bill payment QR with amount (e.g. shop@upi).
+  final String? upiId;
   final String? bankName;
   final String? accountNumber;
   final String? ifscCode;
@@ -43,6 +45,7 @@ class Shop {
     this.shopLogoBase64,
     this.signatureBase64,
     this.qrCodeBase64,
+    this.upiId,
     this.bankName,
     this.accountNumber,
     this.ifscCode,
@@ -66,6 +69,7 @@ class Shop {
       shopLogoBase64: json['shopLogoBase64'] as String?,
       signatureBase64: json['signatureBase64'] as String?,
       qrCodeBase64: json['qrCodeBase64'] as String?,
+      upiId: json['upiId'] as String?,
       bankName: json['bankName'] as String?,
       accountNumber: json['accountNumber'] as String?,
       ifscCode: json['ifscCode'] as String?,
@@ -90,6 +94,7 @@ class Shop {
       'shopLogoBase64': shopLogoBase64,
       'signatureBase64': signatureBase64,
       'qrCodeBase64': qrCodeBase64,
+      'upiId': upiId,
       'bankName': bankName,
       'accountNumber': accountNumber,
       'ifscCode': ifscCode,
@@ -113,6 +118,7 @@ class Shop {
     String? shopLogoBase64,
     String? signatureBase64,
     String? qrCodeBase64,
+    String? upiId,
     String? bankName,
     String? accountNumber,
     String? ifscCode,
@@ -133,6 +139,7 @@ class Shop {
       shopLogoBase64: shopLogoBase64 ?? this.shopLogoBase64,
       signatureBase64: signatureBase64 ?? this.signatureBase64,
       qrCodeBase64: qrCodeBase64 ?? this.qrCodeBase64,
+      upiId: upiId ?? this.upiId,
       bankName: bankName ?? this.bankName,
       accountNumber: accountNumber ?? this.accountNumber,
       ifscCode: ifscCode ?? this.ifscCode,

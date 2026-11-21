@@ -46,6 +46,7 @@ import 'package:c_billing/features/purchase_return/presentation/pages/purchase_r
 import 'package:c_billing/features/event_order/presentation/pages/event_order_list_page.dart';
 import 'package:c_billing/features/dashboard/data/models/dashboard_data.dart';
 import 'package:c_billing/common_widgets/file_preview_page.dart';
+import 'package:c_billing/features/billing/presentation/widgets/bill_payment_qr_sheet.dart';
 import 'package:c_billing/features/inventory_management/presentation/pages/barcode_generator_page.dart';
 import 'package:c_billing/features/customer/presentation/pages/enhanced_customer_page.dart';
 import 'package:c_billing/features/quotation/presentation/pages/quotation_list_page.dart';
@@ -1432,6 +1433,11 @@ class _BillingPageState extends State<BillingPage> {
           fileType: FilePreviewType.pdf,
           subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
           customerPhone: bill.customerContact,
+          onViewPaymentQr: () => showBillPaymentQrSheet(
+            context: context,
+            bill: bill,
+            shopRepository: _shopRepository,
+          ),
           details: FilePreviewDetails(
             title: 'Bill preview',
             documentNo: bill.billNumber,
@@ -1486,6 +1492,11 @@ class _BillingPageState extends State<BillingPage> {
         fileType: FilePreviewType.pdf,
         subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
         customerPhone: bill.customerContact,
+        onViewPaymentQr: () => showBillPaymentQrSheet(
+          context: context,
+          bill: bill,
+          shopRepository: _shopRepository,
+        ),
         details: FilePreviewDetails(
           title: 'Bill preview',
           documentNo: bill.billNumber,

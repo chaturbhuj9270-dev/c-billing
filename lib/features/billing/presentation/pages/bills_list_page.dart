@@ -21,6 +21,7 @@ import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
 import 'package:c_billing/features/billing/data/services/bill_sync_service.dart';
 import 'package:c_billing/features/billing/data/services/bill_report_pdf_generator.dart';
 import 'package:c_billing/common_widgets/file_preview_page.dart';
+import 'package:c_billing/features/billing/presentation/widgets/bill_payment_qr_sheet.dart';
 import 'package:c_billing/features/billing/presentation/pages/bill_report_settings_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
@@ -256,6 +257,11 @@ class _BillsListPageState extends State<BillsListPage>
           fileType: FilePreviewType.pdf,
           subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
           customerPhone: bill.customerContact,
+          onViewPaymentQr: () => showBillPaymentQrSheet(
+            context: context,
+            bill: bill,
+            shopRepository: _shopRepository,
+          ),
           details: FilePreviewDetails(
             title: 'Bill preview',
             documentNo: bill.billNumber,
@@ -297,6 +303,11 @@ class _BillsListPageState extends State<BillsListPage>
         fileType: FilePreviewType.pdf,
         subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
         customerPhone: bill.customerContact,
+        onViewPaymentQr: () => showBillPaymentQrSheet(
+          context: context,
+          bill: bill,
+          shopRepository: _shopRepository,
+        ),
         details: FilePreviewDetails(
           title: 'Bill preview',
           documentNo: bill.billNumber,
@@ -2449,6 +2460,11 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
           fileType: FilePreviewType.pdf,
           subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(_bill.billDate),
           customerPhone: _bill.customerContact,
+          onViewPaymentQr: () => showBillPaymentQrSheet(
+            context: context,
+            bill: _bill,
+            shopRepository: _shopRepository,
+          ),
           details: FilePreviewDetails(
             title: 'Bill preview',
             documentNo: _bill.billNumber,
@@ -2505,6 +2521,11 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
         fileType: FilePreviewType.pdf,
         subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(_bill.billDate),
         customerPhone: _bill.customerContact,
+        onViewPaymentQr: () => showBillPaymentQrSheet(
+          context: context,
+          bill: _bill,
+          shopRepository: _shopRepository,
+        ),
         details: FilePreviewDetails(
           title: 'Bill preview',
           documentNo: _bill.billNumber,

@@ -5603,6 +5603,160 @@ class AppLocalizations {
     }
   }
 
+  String get upiId {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.upiId;
+      case 'Marathi':
+        return MarathiLocalization.upiId;
+      default:
+        return EnglishLocalization.upiId;
+    }
+  }
+
+  String get upiIdHint {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.upiIdHint;
+      case 'Marathi':
+        return MarathiLocalization.upiIdHint;
+      default:
+        return EnglishLocalization.upiIdHint;
+    }
+  }
+
+  String get upiIdHelper {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.upiIdHelper;
+      case 'Marathi':
+        return MarathiLocalization.upiIdHelper;
+      default:
+        return EnglishLocalization.upiIdHelper;
+    }
+  }
+
+  String get viewQr {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.viewQr;
+      case 'Marathi':
+        return MarathiLocalization.viewQr;
+      default:
+        return EnglishLocalization.viewQr;
+    }
+  }
+
+  String get preparingPaymentQr {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.preparingPaymentQr;
+      case 'Marathi':
+        return MarathiLocalization.preparingPaymentQr;
+      default:
+        return EnglishLocalization.preparingPaymentQr;
+    }
+  }
+
+  String get scanQrToPayBillAmount {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.scanQrToPayBillAmount;
+      case 'Marathi':
+        return MarathiLocalization.scanQrToPayBillAmount;
+      default:
+        return EnglishLocalization.scanQrToPayBillAmount;
+    }
+  }
+
+  String get scanShopQrAndPayAmount {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.scanShopQrAndPayAmount;
+      case 'Marathi':
+        return MarathiLocalization.scanShopQrAndPayAmount;
+      default:
+        return EnglishLocalization.scanShopQrAndPayAmount;
+    }
+  }
+
+  String get addUpiIdInShopDetails {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.addUpiIdInShopDetails;
+      case 'Marathi':
+        return MarathiLocalization.addUpiIdInShopDetails;
+      default:
+        return EnglishLocalization.addUpiIdInShopDetails;
+    }
+  }
+
+  String get noAmountToCollect {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.noAmountToCollect;
+      case 'Marathi':
+        return MarathiLocalization.noAmountToCollect;
+      default:
+        return EnglishLocalization.noAmountToCollect;
+    }
+  }
+
+  String get failedToGenerateQr {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.failedToGenerateQr;
+      case 'Marathi':
+        return MarathiLocalization.failedToGenerateQr;
+      default:
+        return EnglishLocalization.failedToGenerateQr;
+    }
+  }
+
+  String get upiIdCopied {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.upiIdCopied;
+      case 'Marathi':
+        return MarathiLocalization.upiIdCopied;
+      default:
+        return EnglishLocalization.upiIdCopied;
+    }
+  }
+
+  String get paymentReceived {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.paymentReceived;
+      case 'Marathi':
+        return MarathiLocalization.paymentReceived;
+      default:
+        return EnglishLocalization.paymentReceived;
+    }
+  }
+
+  String get paymentReceivedReceiptReady {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.paymentReceivedReceiptReady;
+      case 'Marathi':
+        return MarathiLocalization.paymentReceivedReceiptReady;
+      default:
+        return EnglishLocalization.paymentReceivedReceiptReady;
+    }
+  }
+
+  String get paymentReceipt {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.paymentReceipt;
+      case 'Marathi':
+        return MarathiLocalization.paymentReceipt;
+      default:
+        return EnglishLocalization.paymentReceipt;
+    }
+  }
+
   String get uploadQrCode {
     switch (languageCode) {
       case 'Hindi':
