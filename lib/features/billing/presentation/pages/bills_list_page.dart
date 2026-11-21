@@ -29,6 +29,7 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/pull_to_refresh.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/app_scroll_behavior.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 
 // Quick date filter options for bill history
 enum _BillDateFilter { none, today, thisWeek, thisMonth, thisYear, custom }
@@ -1693,10 +1694,15 @@ class _BillsListPageState extends State<BillsListPage>
 /// Returns `true` when the bill was changed (e.g. return processed).
 Future<bool> showBillDetailsView(BuildContext context, Bill bill) async {
   final navigator = Navigator.of(context);
-  final result = await showDialog<_BillDialogResult>(
-    context: context,
-    builder: (_) => _BillDetailsDialog(bill: bill),
-  );
+  final _BillDialogResult? result;
+  if (DesktopCanvas.isDesktopPlatform) {
+    result = await _showDesktopBillDetailsDialog(context, bill);
+  } else {
+    result = await showDialog<_BillDialogResult>(
+      context: context,
+      builder: (_) => _BillDetailsDialog(bill: bill),
+    );
+  }
   if (result == null) return false;
   if (result.action == _BillDialogAction.openReturn) {
     if (!navigator.mounted) return false;
@@ -1707,6 +1713,38 @@ Future<bool> showBillDetailsView(BuildContext context, Bill bill) async {
     return returned == true;
   }
   return result.action == _BillDialogAction.billReturned;
+}
+
+Future<_BillDialogResult?> _showDesktopBillDetailsDialog(
+  BuildContext context,
+  Bill bill,
+) {
+  return showGeneralDialog<_BillDialogResult>(
+    context: context,
+    useRootNavigator: true,
+    barrierDismissible: true,
+    barrierLabel: 'Close bill details',
+    barrierColor: AppTheme.black.withValues(alpha: 0.55),
+    transitionDuration: const Duration(milliseconds: 180),
+    pageBuilder: (dialogContext, _, _) {
+      final size = MediaQuery.sizeOf(dialogContext);
+      final width = (size.width - 48).clamp(920.0, 1180.0);
+      final height = (size.height - 48).clamp(560.0, 860.0);
+      return Center(
+        child: Material(
+          color: AppColors.scaffold(dialogContext),
+          elevation: 0,
+          borderRadius: BorderRadius.circular(20),
+          clipBehavior: Clip.antiAlias,
+          child: SizedBox(
+            width: width,
+            height: height,
+            child: _BillDetailsDialog(bill: bill, desktopDialog: true),
+          ),
+        ),
+      );
+    },
+  );
 }
 
 // Actions that can be triggered from the bill details dialog
@@ -1721,8 +1759,12 @@ class _BillDialogResult {
 
 class _BillDetailsDialog extends StatefulWidget {
   final Bill bill;
+  final bool desktopDialog;
 
-  const _BillDetailsDialog({required this.bill});
+  const _BillDetailsDialog({
+    required this.bill,
+    this.desktopDialog = false,
+  });
 
   @override
   State<_BillDetailsDialog> createState() => _BillDetailsDialogState();
@@ -1768,27 +1810,17 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
     super.dispose();
   }
 
-  void _navigateToReturnBill() async {
-    if (kIsWeb) {
-      Navigator.pop(
-        context,
-        const _BillDialogResult(action: _BillDialogAction.openReturn),
-      );
-      return;
-    }
-    final result = await showAppPage<bool>(
+  void _navigateToReturnBill() {
+    // Always hand off to the host so ReturnBillPage opens cleanly
+    // (avoids nested dialogs on web/desktop and keeps ledger flow intact).
+    Navigator.pop(
       context,
-      ReturnBillPage(initialBill: _bill),
+      const _BillDialogResult(action: _BillDialogAction.openReturn),
     );
-
-    if (result == true && mounted) {
-      // Don't update local state - let the list page refresh from data source which will correctly reflect partial vs full return status
-      Navigator.pop(
-        context,
-        const _BillDialogResult(action: _BillDialogAction.billReturned),
-      );
-    }
   }
+
+  bool get _isDesktopLayout =>
+      widget.desktopDialog || DesktopCanvas.isDesktopPlatform;
 
   PrintBillData _createPrintData() {
     final double? totalDueAmount = _bill.pendingAmount > 0
@@ -1829,6 +1861,221 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
 
   @override
   Widget build(BuildContext context) {
+    if (_isDesktopLayout) {
+      return _buildDesktopDetails();
+    }
+    return _buildMobileDetails();
+  }
+
+  String get _customerLabel =>
+      (_bill.customerName?.trim().isNotEmpty ?? false)
+      ? _bill.customerName!.trim()
+      : _localizations.walkInCustomer;
+
+  Widget _buildDesktopDetails() {
+    final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
+    return ColoredBox(
+      color: AppColors.scaffold(context),
+      child: Column(
+        children: [
+          _buildDesktopHeader(),
+          Expanded(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      flex: 7,
+                      child: ListView(
+                        physics: AppScrollPhysics.platform(),
+                        children: [
+                          _buildDesktopMetaStrip(dateFormat),
+                          const SizedBox(height: 16),
+                          _buildSectionHeader(
+                            _localizations.soldItems,
+                            '${_bill.items.length} ${_localizations.items}',
+                          ),
+                          const SizedBox(height: 10),
+                          _buildItemsCard(dense: false),
+                          if (_bill.notes != null &&
+                              _bill.notes!.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            _buildSectionHeader(_localizations.notes, null),
+                            const SizedBox(height: 10),
+                            _buildNotesCard(),
+                          ],
+                          if (_bill.hasAnyReturns) ...[
+                            const SizedBox(height: 16),
+                            _buildReturnToggleCard(),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    SizedBox(
+                      width: 320,
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: SingleChildScrollView(
+                              physics: AppScrollPhysics.platform(),
+                              child: _buildPaymentSummaryCard(),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildActionButtonsSection(compact: true),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        border: Border(bottom: BorderSide(color: AppColors.border(context))),
+      ),
+      child: Row(
+        children: [
+          AppTopBar.action(
+            icon: Icons.arrow_back_rounded,
+            onTap: () => Navigator.maybePop(context),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _customerLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primaryText(context),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${_localizations.billDetails} · ${_bill.billNumber}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 12,
+                    color: AppColors.mutedText(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Image.asset(
+            'assets/images/app_logo.png',
+            height: 36,
+            width: 36,
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.medium,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopMetaStrip(DateFormat dateFormat) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Wrap(
+        spacing: 20,
+        runSpacing: 12,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          _desktopMetaChip(
+            Icons.person_rounded,
+            _localizations.customerName,
+            _customerLabel,
+          ),
+          _desktopMetaChip(
+            Icons.calendar_today_rounded,
+            _localizations.date,
+            dateFormat.format(_bill.billDate),
+          ),
+          if (_bill.customerContact != null &&
+              _bill.customerContact!.trim().isNotEmpty)
+            _desktopMetaChip(
+              Icons.phone_rounded,
+              _localizations.mobile,
+              _bill.customerContact!,
+            ),
+          _desktopMetaChip(
+            Icons.payments_rounded,
+            'Payment',
+            _bill.paymentMode,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _desktopMetaChip(IconData icon, String label, String value) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.accentSoft(context, 0.12),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 16, color: AppColors.action(context)),
+        ),
+        const SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 11,
+                color: AppColors.mutedText(context),
+              ),
+            ),
+            Text(
+              value,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primaryText(context),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileDetails() {
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
 
     return Scaffold(
@@ -1836,102 +2083,87 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
       body: Column(
         children: [
           AppTopBar(
-            title: (_bill.customerName?.trim().isNotEmpty ?? false)
-                ? _bill.customerName!.trim()
-                : _localizations.walkInCustomer,
+            title: _customerLabel,
             subtitle: '${_localizations.billDetails} · ${_bill.billNumber}',
           ),
           Expanded(
             child: CustomScrollView(
-        physics: AppScrollPhysics.platform(),
-        slivers: [
-          // ══════════ Content ══════════
-          SliverToBoxAdapter(
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // ══════════ Bill & Customer Info Row ══════════
-                      _buildInfoCard(
-                        icon: Icons.person_rounded,
-                        iconColor: AppColors.action(context),
-                        title: _localizations.customerName,
-                        value: (_bill.customerName?.trim().isNotEmpty ?? false)
-                            ? _bill.customerName!.trim()
-                            : _localizations.walkInCustomer,
-                        fullWidth: true,
-                        maxLines: 4,
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildInfoCard(
-                              icon: Icons.calendar_today_rounded,
+              physics: AppScrollPhysics.platform(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildInfoCard(
+                              icon: Icons.person_rounded,
                               iconColor: AppColors.action(context),
-                              title: _localizations.date,
-                              value: dateFormat.format(_bill.billDate),
+                              title: _localizations.customerName,
+                              value: _customerLabel,
+                              fullWidth: true,
+                              maxLines: 4,
                             ),
-                          ),
-                          if (_bill.customerContact != null) ...[
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildInfoCard(
-                                icon: Icons.phone_rounded,
-                                iconColor: AppTheme.green,
-                                title: _localizations.mobile,
-                                value: _bill.customerContact!,
-                              ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildInfoCard(
+                                    icon: Icons.calendar_today_rounded,
+                                    iconColor: AppColors.action(context),
+                                    title: _localizations.date,
+                                    value: dateFormat.format(_bill.billDate),
+                                  ),
+                                ),
+                                if (_bill.customerContact != null) ...[
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildInfoCard(
+                                      icon: Icons.phone_rounded,
+                                      iconColor: AppTheme.green,
+                                      title: _localizations.mobile,
+                                      value: _bill.customerContact!,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
+                            const SizedBox(height: 20),
+                            _buildSectionHeader(
+                              _localizations.soldItems,
+                              '${_bill.items.length} ${_localizations.items}',
+                            ),
+                            const SizedBox(height: 12),
+                            _buildItemsCard(),
+                            const SizedBox(height: 20),
+                            if (_bill.notes != null &&
+                                _bill.notes!.isNotEmpty) ...[
+                              _buildSectionHeader(_localizations.notes, null),
+                              const SizedBox(height: 12),
+                              _buildNotesCard(),
+                              const SizedBox(height: 20),
+                            ],
+                            _buildSectionHeader(_localizations.billTotal, null),
+                            const SizedBox(height: 12),
+                            _buildPaymentSummaryCard(),
+                            const SizedBox(height: 20),
+                            if (_bill.hasAnyReturns) ...[
+                              _buildReturnToggleCard(),
+                              const SizedBox(height: 20),
+                            ],
+                            _buildActionButtonsSection(),
+                            const SizedBox(height: 24),
                           ],
-                        ],
+                        ),
                       ),
-                      const SizedBox(height: 20),
-
-                      // ══════════ Items Section ══════════
-                      _buildSectionHeader(
-                        _localizations.soldItems,
-                        '${_bill.items.length} ${_localizations.items}',
-                      ),
-                      const SizedBox(height: 12),
-                      _buildItemsCard(),
-                      const SizedBox(height: 20),
-
-                      // ══════════ Notes Section ══════════
-                      if (_bill.notes != null && _bill.notes!.isNotEmpty) ...[
-                        _buildSectionHeader(_localizations.notes, null),
-                        const SizedBox(height: 12),
-                        _buildNotesCard(),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // ══════════ Payment Summary ══════════
-                      _buildSectionHeader(_localizations.billTotal, null),
-                      const SizedBox(height: 12),
-                      _buildPaymentSummaryCard(),
-                      const SizedBox(height: 20),
-
-                      // ══════════ Include Returns Toggle ══════════
-                      if (_bill.hasAnyReturns) ...[
-                        _buildReturnToggleCard(),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // ══════════ Action Buttons ══════════
-                      _buildActionButtonsSection(),
-                      const SizedBox(height: 24),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ),
-          ),
-        ],
+              ],
             ),
           ),
         ],
@@ -2040,24 +2272,30 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
     );
   }
 
-  Widget _buildItemsCard() {
+  Widget _buildItemsCard({bool dense = false}) {
+    final qtyW = dense ? 40.0 : 72.0;
+    final rateW = dense ? 60.0 : 88.0;
+    final amtW = dense ? 70.0 : 100.0;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border(context)),
         boxShadow: [
           BoxShadow(
             color: AppTheme.black.withValues(alpha: 0.04),
             blurRadius: 12,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         children: [
-          // Table Header
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: EdgeInsets.symmetric(
+              horizontal: dense ? 16 : 18,
+              vertical: dense ? 12 : 14,
+            ),
             decoration: BoxDecoration(
               color: AppColors.accentSoft(context, 0.05),
               borderRadius: const BorderRadius.vertical(
@@ -2079,7 +2317,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                   ),
                 ),
                 SizedBox(
-                  width: 40,
+                  width: qtyW,
                   child: Text(
                     _localizations.quantity,
                     textAlign: TextAlign.center,
@@ -2092,7 +2330,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                   ),
                 ),
                 SizedBox(
-                  width: 60,
+                  width: rateW,
                   child: Text(
                     _localizations.rate,
                     textAlign: TextAlign.right,
@@ -2105,7 +2343,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                   ),
                 ),
                 SizedBox(
-                  width: 70,
+                  width: amtW,
                   child: Text(
                     _localizations.amount,
                     textAlign: TextAlign.right,
@@ -2120,14 +2358,18 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
               ],
             ),
           ),
-          // Items List
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: _bill.items.length,
             separatorBuilder: (_, _) =>
                 Divider(height: 1, color: AppColors.chipFill(context)),
-            itemBuilder: (context, index) => _buildItemRow(_bill.items[index]),
+            itemBuilder: (context, index) => _buildItemRow(
+              _bill.items[index],
+              qtyWidth: qtyW,
+              rateWidth: rateW,
+              amountWidth: amtW,
+            ),
           ),
         ],
       ),
@@ -2624,10 +2866,18 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
     }
   }
 
-  Widget _buildActionButtonsSection() {
+  Widget _buildActionButtonsSection({bool compact = false}) {
+    final canReturn = !_bill.returnStatus && _bill.hasReturnableItems;
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // Preview Bill Button (Primary)
+        if (canReturn) ...[
+          _buildReturnBillButton(),
+          SizedBox(height: compact ? 8 : 10),
+        ] else if (_bill.returnStatus) ...[
+          _buildReturnedInfoCard(),
+          SizedBox(height: compact ? 8 : 10),
+        ],
         _buildPremiumButton(
           icon: _isGeneratingPdf
               ? Icons.hourglass_empty_rounded
@@ -2638,7 +2888,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
           isPrimary: true,
           onTap: _isGeneratingPdf ? () {} : _showPdfPreview,
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: compact ? 8 : 10),
         _buildPremiumButton(
           icon: Icons.qr_code_2_rounded,
           label: _localizations.viewQr,
@@ -2649,12 +2899,6 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
             shopRepository: _shopRepository,
           ),
         ),
-        const SizedBox(height: 10),
-        // Return Bill Button
-        if (!_bill.returnStatus && _bill.hasReturnableItems)
-          _buildReturnBillButton()
-        else if (_bill.returnStatus)
-          _buildReturnedInfoCard(),
       ],
     );
   }
@@ -2722,7 +2966,12 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
     );
   }
 
-  Widget _buildItemRow(BillItem item) {
+  Widget _buildItemRow(
+    BillItem item, {
+    double qtyWidth = 40,
+    double rateWidth = 60,
+    double amountWidth = 70,
+  }) {
     final bool hasReturn = item.returnedQuantity > 0;
     final bool isFullReturn = item.isFullyReturned;
 
@@ -2734,7 +2983,6 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Main item row
           Row(
             children: [
               Expanded(
@@ -2785,7 +3033,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                 ),
               ),
               SizedBox(
-                width: 40,
+                width: qtyWidth,
                 child: Text(
                   item.displayQuantity,
                   textAlign: TextAlign.center,
@@ -2801,7 +3049,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                 ),
               ),
               SizedBox(
-                width: 60,
+                width: rateWidth,
                 child: Text(
                   '₹${item.sellingPrice.toStringAsFixed(0)}',
                   textAlign: TextAlign.right,
@@ -2813,7 +3061,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                 ),
               ),
               SizedBox(
-                width: 70,
+                width: amountWidth,
                 child: Text(
                   '₹${item.subtotal.toStringAsFixed(2)}',
                   textAlign: TextAlign.right,

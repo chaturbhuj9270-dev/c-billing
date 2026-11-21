@@ -473,7 +473,7 @@ class MarathiLocalization {
   static const String statusFullyReturned = 'स्थिती: पूर्ण परतावा';
   static const String includeReturnedItemsInPrint =
       'प्रिंटमध्ये परत केलेल्या वस्तू समाविष्ट करा';
-  static const String returnThisBill = 'हे बिल परत करा';
+  static const String returnThisBill = 'सेल्स रिटर्न';
   static const String billReturned = 'बिल परत केले';
   static const String paidAmount = 'भरलेली रक्कम';
   static const String selectDateRange = 'तारीख श्रेणी निवडा';

@@ -471,7 +471,7 @@ class HindiLocalization {
   static const String statusFullyReturned = 'स्थिति: पूर्ण वापसी';
   static const String includeReturnedItemsInPrint =
       'प्रिंट में वापस किए गए आइटम शामिल करें';
-  static const String returnThisBill = 'इस बिल को वापस करें';
+  static const String returnThisBill = 'सेल्स रिटर्न';
   static const String billReturned = 'बिल वापस किया गया';
   static const String paidAmount = 'भुगतान की गई राशि';
   static const String selectDateRange = 'तारीख सीमा चुनें';

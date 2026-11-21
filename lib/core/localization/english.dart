@@ -469,7 +469,7 @@ class EnglishLocalization {
   static const String statusFullyReturned = 'Status: Fully Returned';
   static const String includeReturnedItemsInPrint =
       'Include Returned Items in Print';
-  static const String returnThisBill = 'Return This Bill';
+  static const String returnThisBill = 'Sales Return';
   static const String billReturned = 'Bill Returned';
   static const String paidAmount = 'Paid Amount';
   static const String selectDateRange = 'Select Date Range';
