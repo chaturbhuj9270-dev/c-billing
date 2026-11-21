@@ -14,6 +14,9 @@ class CustomerListWidget extends StatelessWidget {
   final String searchQuery;
   final CustomerSortField sortField;
   final bool sortAscending;
+  final CustomerDateFilter dateFilter;
+  final DateTime? customStartDate;
+  final DateTime? customEndDate;
   final Future<void> Function() onRefresh;
   final void Function(Map<String, dynamic>) onCustomerTap;
   final void Function(Map<String, dynamic>)? onCustomerLongPress;
@@ -33,6 +36,9 @@ class CustomerListWidget extends StatelessWidget {
     required this.searchQuery,
     required this.sortField,
     required this.sortAscending,
+    this.dateFilter = CustomerDateFilter.all,
+    this.customStartDate,
+    this.customEndDate,
     required this.onRefresh,
     required this.onCustomerTap,
     this.onCustomerLongPress,
@@ -62,6 +68,18 @@ class CustomerListWidget extends StatelessWidget {
       }).toList();
     }
 
+    // Filter by customer creation date
+    if (dateFilter != CustomerDateFilter.all) {
+      filtered = filtered.where((c) {
+        return customerMatchesDateFilter(
+          createdAt: parseCustomerCreatedAt(c),
+          filter: dateFilter,
+          customStart: customStartDate,
+          customEnd: customEndDate,
+        );
+      }).toList();
+    }
+
     // When pending amount filter is active, show only customers with pending balance
     if (sortField == CustomerSortField.pendingAmount) {
       filtered = filtered.where((c) {
@@ -83,8 +101,8 @@ class CustomerListWidget extends StatelessWidget {
           result = aName.compareTo(bName);
           break;
         case CustomerSortField.createdDate:
-          final aDate = a['createdAt'] as DateTime? ?? DateTime(2000);
-          final bDate = b['createdAt'] as DateTime? ?? DateTime(2000);
+          final aDate = parseCustomerCreatedAt(a) ?? DateTime(2000);
+          final bDate = parseCustomerCreatedAt(b) ?? DateTime(2000);
           result = aDate.compareTo(bDate);
           break;
         case CustomerSortField.pendingAmount:

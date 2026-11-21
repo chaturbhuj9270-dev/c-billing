@@ -82,6 +82,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   String _searchQuery = '';
   late CustomerSortField _sortField;
   late bool _sortAscending;
+  CustomerDateFilter _dateFilter = CustomerDateFilter.all;
+  DateTime? _customStartDate;
+  DateTime? _customEndDate;
   bool _isNavigatingAway = false;
 
   // local stream for real-time updates
@@ -808,6 +811,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                         CustomerSummaryWidget(
                           customers: _customers,
                           searchQuery: _searchQuery,
+                          dateFilter: _dateFilter,
+                          customStartDate: _customStartDate,
+                          customEndDate: _customEndDate,
                           customersLabel: _localizations.customers,
                           pendingLabel: _localizations.pendingAmount,
                           syncedLabel: _localizations.synced,
@@ -821,6 +827,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                           searchQuery: _searchQuery,
                           sortField: _sortField,
                           sortAscending: _sortAscending,
+                          dateFilter: _dateFilter,
+                          customStartDate: _customStartDate,
+                          customEndDate: _customEndDate,
                           onSearchChanged: (query) {
                             setState(() => _searchQuery = query);
                           },
@@ -829,6 +838,27 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                           },
                           onSortDirectionToggle: () {
                             setState(() => _sortAscending = !_sortAscending);
+                          },
+                          onDateFilterChanged: (filter) {
+                            setState(() => _dateFilter = filter);
+                          },
+                          onCustomDateRangeSelected: (start, end) {
+                            setState(() {
+                              _customStartDate = DateTime(
+                                start.year,
+                                start.month,
+                                start.day,
+                              );
+                              _customEndDate = DateTime(
+                                end.year,
+                                end.month,
+                                end.day,
+                                23,
+                                59,
+                                59,
+                              );
+                              _dateFilter = CustomerDateFilter.custom;
+                            });
                           },
                           searchHint: _localizations.searchCustomers,
                           sortByNameLabel: _localizations.sortByName,
@@ -846,6 +876,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                             searchQuery: _searchQuery,
                             sortField: _sortField,
                             sortAscending: _sortAscending,
+                            dateFilter: _dateFilter,
+                            customStartDate: _customStartDate,
+                            customEndDate: _customEndDate,
                             onRefresh: _fetchFromFirebase,
                             onCustomerTap: _showCustomerDetails,
                             onCustomerLongPress: _showCustomerContextMenu,

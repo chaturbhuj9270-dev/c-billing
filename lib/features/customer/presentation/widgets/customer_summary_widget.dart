@@ -3,11 +3,15 @@ import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
 import 'package:c_billing/common_widgets/glass_summary_card.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
+import 'customer_filter_widget.dart';
 
 // Summary widget for customer statistics Displays: Total customers, Pending amount, Synced status
 class CustomerSummaryWidget extends StatelessWidget {
   final List<Map<String, dynamic>> customers;
   final String searchQuery;
+  final CustomerDateFilter dateFilter;
+  final DateTime? customStartDate;
+  final DateTime? customEndDate;
 
   // Labels
   final String customersLabel;
@@ -19,6 +23,9 @@ class CustomerSummaryWidget extends StatelessWidget {
     super.key,
     required this.customers,
     this.searchQuery = '',
+    this.dateFilter = CustomerDateFilter.all,
+    this.customStartDate,
+    this.customEndDate,
     this.customersLabel = 'Customers',
     this.pendingLabel = 'Pending',
     this.syncedLabel = 'Synced',
@@ -26,19 +33,34 @@ class CustomerSummaryWidget extends StatelessWidget {
   });
 
   List<Map<String, dynamic>> get _filteredCustomers {
-    if (searchQuery.isEmpty) return customers;
+    var filtered = customers;
 
-    final query = searchQuery.toLowerCase();
-    return customers.where((c) {
-      final firstName = (c['firstName'] ?? '').toString().toLowerCase();
-      final lastName = (c['lastName'] ?? '').toString().toLowerCase();
-      final contact = (c['contact'] ?? '').toString().toLowerCase();
-      final fullName = '$firstName $lastName';
-      return firstName.contains(query) ||
-          lastName.contains(query) ||
-          fullName.contains(query) ||
-          contact.contains(query);
-    }).toList();
+    if (searchQuery.isNotEmpty) {
+      final query = searchQuery.toLowerCase();
+      filtered = filtered.where((c) {
+        final firstName = (c['firstName'] ?? '').toString().toLowerCase();
+        final lastName = (c['lastName'] ?? '').toString().toLowerCase();
+        final contact = (c['contact'] ?? '').toString().toLowerCase();
+        final fullName = '$firstName $lastName';
+        return firstName.contains(query) ||
+            lastName.contains(query) ||
+            fullName.contains(query) ||
+            contact.contains(query);
+      }).toList();
+    }
+
+    if (dateFilter != CustomerDateFilter.all) {
+      filtered = filtered.where((c) {
+        return customerMatchesDateFilter(
+          createdAt: parseCustomerCreatedAt(c),
+          filter: dateFilter,
+          customStart: customStartDate,
+          customEnd: customEndDate,
+        );
+      }).toList();
+    }
+
+    return filtered;
   }
 
   @override
