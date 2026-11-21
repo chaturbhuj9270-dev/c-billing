@@ -180,8 +180,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   int _selectedIndex = AccessControlService.instance.canAccessShellIndex(2)
       ? 2
       : AccessControlService.instance.firstAllowedShellIndex();
-  /// Manual sidebar collapse for web/desktop (false = follow width auto-expand).
+  /// Manual left nav collapse for web/desktop (false = follow width auto-expand).
   bool _sideNavUserCollapsed = false;
+
+  /// Collapsible right insights panel on the desktop dashboard.
+  bool _insightsPanelCollapsed = false;
   late SessionManager _sessionManager;
   late AppLocalizations _localizations;
 
@@ -1201,62 +1204,106 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
   Widget _buildWebBrand(bool isExpanded) {
     final darkWeb = AppColors.isDark(context);
-    return Padding(
-      padding: EdgeInsets.fromLTRB(isExpanded ? 16 : 0, 18, 12, 8),
-      child: Row(
-        mainAxisAlignment: isExpanded
-            ? MainAxisAlignment.start
-            : MainAxisAlignment.center,
-        children: [
-          if (darkWeb)
-            Container(
-              width: 34,
-              height: 34,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppTheme.darkAction,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.receipt_long_rounded,
-                color: AppTheme.white,
-                size: 18,
-              ),
-            )
-          else
-            ClipRRect(
+    final logo = darkWeb
+        ? Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppTheme.darkAction,
               borderRadius: BorderRadius.circular(10),
-              child: Image.asset(
-                'assets/images/app_logo.png',
-                width: 36,
-                height: 36,
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => Icon(
-                  Icons.storefront_rounded,
-                  color: AppColors.action(context),
-                  size: 28,
-                ),
+            ),
+            child: const Icon(
+              Icons.receipt_long_rounded,
+              color: AppTheme.white,
+              size: 18,
+            ),
+          )
+        : ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.asset(
+              'assets/images/app_logo.png',
+              width: 36,
+              height: 36,
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) => Icon(
+                Icons.storefront_rounded,
+                color: AppColors.action(context),
+                size: 28,
               ),
             ),
-          if (isExpanded) ...[
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                darkWeb ? 'C-Billing' : 'Billing',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: AppColors.primaryText(context),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Literata',
-                  letterSpacing: -0.3,
+          );
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(isExpanded ? 14 : 8, 16, isExpanded ? 8 : 8, 8),
+      child: isExpanded
+          ? Row(
+              children: [
+                logo,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'C-Billing',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppColors.primaryText(context),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Literata',
+                      letterSpacing: -0.3,
+                    ),
+                  ),
                 ),
-              ),
+                Tooltip(
+                  message: 'Collapse menu',
+                  child: Material(
+                    color: AppColors.chipFill(context),
+                    borderRadius: BorderRadius.circular(10),
+                    child: InkWell(
+                      onTap: () => setState(() => _sideNavUserCollapsed = true),
+                      borderRadius: BorderRadius.circular(10),
+                      child: SizedBox(
+                        width: 32,
+                        height: 32,
+                        child: Icon(
+                          Icons.keyboard_double_arrow_left_rounded,
+                          size: 18,
+                          color: AppColors.secondaryText(context),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : Column(
+              children: [
+                logo,
+                const SizedBox(height: 10),
+                Tooltip(
+                  message: 'Expand menu',
+                  child: Material(
+                    color: AppColors.chipFill(context),
+                    borderRadius: BorderRadius.circular(10),
+                    child: InkWell(
+                      onTap: () =>
+                          setState(() => _sideNavUserCollapsed = false),
+                      borderRadius: BorderRadius.circular(10),
+                      child: SizedBox(
+                        width: 32,
+                        height: 32,
+                        child: Icon(
+                          Icons.keyboard_double_arrow_right_rounded,
+                          size: 18,
+                          color: AppColors.secondaryText(context),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ],
-      ),
     );
   }
 
@@ -1771,16 +1818,23 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 980;
-        return SingleChildScrollView(
+        final wide = constraints.maxWidth >= 1100;
+        final showInsights = wide && !_insightsPanelCollapsed;
+
+        final mainColumn = SingleChildScrollView(
           controller: _dashboardScrollController,
           primary: false,
           physics: const _DashboardScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+          padding: EdgeInsets.fromLTRB(
+            24,
+            20,
+            showInsights ? 16 : 24,
+            28,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildWebFilterRow(state),
+              _buildWebFilterRow(state, showInsightsToggle: wide),
               const SizedBox(height: 22),
               Text(
                 _localizations.salesProfitAnalysis,
@@ -1793,9 +1847,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 ),
               ),
               const SizedBox(height: 16),
-              _buildWebMetrics(data, isRefreshing, wide),
+              _buildWebMetrics(data, isRefreshing, wide || constraints.maxWidth >= 760),
               const SizedBox(height: 16),
-              if (wide)
+              if (wide || constraints.maxWidth >= 760)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1815,6 +1869,20 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 const SizedBox(height: 16),
                 _buildWebStockCard(data),
               ],
+              if (!wide) ...[
+                const SizedBox(height: 22),
+                Text(
+                  _localizations.quickInsights,
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildWebInsightsInline(),
+              ],
               if (state is DashboardErrorState) ...[
                 const SizedBox(height: 16),
                 _buildErrorBanner(state),
@@ -1822,11 +1890,308 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             ],
           ),
         );
+
+        if (!wide) return mainColumn;
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: mainColumn),
+            if (showInsights)
+              _buildWebInsightsSidebar(data)
+            else
+              _buildInsightsCollapsedHandle(),
+          ],
+        );
       },
     );
   }
 
-  Widget _buildWebFilterRow(OptimizedDashboardState state) {
+  Widget _buildInsightsCollapsedHandle() {
+    return Padding(
+      padding: const EdgeInsets.only(right: 10, top: 20, bottom: 20),
+      child: Tooltip(
+        message: 'Show insights',
+        child: Material(
+          color: AppColors.card(context),
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            onTap: () => setState(() => _insightsPanelCollapsed = false),
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              width: 40,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.border(context)),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.insights_outlined,
+                    size: 18,
+                    color: AppColors.action(context),
+                  ),
+                  const SizedBox(height: 8),
+                  Icon(
+                    Icons.chevron_left_rounded,
+                    size: 18,
+                    color: AppColors.mutedText(context),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWebInsightsSidebar(DashboardSummary data) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      width: 300,
+      margin: const EdgeInsets.fromLTRB(0, 16, 16, 16),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border(context)),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 8, 8),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.insights_outlined,
+                  size: 18,
+                  color: AppColors.action(context),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _localizations.quickInsights,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primaryText(context),
+                    ),
+                  ),
+                ),
+                Tooltip(
+                  message: 'Collapse insights',
+                  child: IconButton(
+                    onPressed: () =>
+                        setState(() => _insightsPanelCollapsed = true),
+                    icon: Icon(
+                      Icons.keyboard_double_arrow_right_rounded,
+                      size: 20,
+                      color: AppColors.secondaryText(context),
+                    ),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: AppColors.border(context)),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+              children: [
+                _buildWebInsightTile(
+                  title: _localizations.topProducts,
+                  count: _topProductsTotal,
+                  icon: Icons.star_rounded,
+                  color: AppTheme.orange,
+                  onTap: () => _showQuickInsightDetail(
+                    _localizations.topProducts,
+                    _topProducts,
+                    'products',
+                    totalCount: _topProductsTotal,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _buildWebInsightTile(
+                  title: _localizations.pendingPayments,
+                  count: _pendingPaymentsTotal,
+                  icon: Icons.pending_actions_rounded,
+                  color: AppTheme.toneRose,
+                  onTap: () => _showQuickInsightDetail(
+                    _localizations.pendingPayments,
+                    _pendingPayments,
+                    'pending',
+                    totalCount: _pendingPaymentsTotal,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _buildWebInsightTile(
+                  title: _localizations.lowStockItems,
+                  count: _lowStockTotal > 0
+                      ? _lowStockTotal
+                      : data.lowStockCount,
+                  icon: Icons.inventory_2_outlined,
+                  color: AppTheme.teal600,
+                  onTap: () => _showQuickInsightDetail(
+                    _localizations.lowStockItems,
+                    _lowStockItems,
+                    'lowstock',
+                    totalCount: _lowStockTotal > 0
+                        ? _lowStockTotal
+                        : data.lowStockCount,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _buildWebInsightTile(
+                  title: _localizations.upcomingEvents,
+                  count: _upcomingEvents.length,
+                  icon: Icons.event_rounded,
+                  color: AppTheme.blue600,
+                  onTap: () => _showQuickInsightDetail(
+                    _localizations.upcomingEvents,
+                    _upcomingEvents,
+                    'events',
+                    totalCount: _upcomingEvents.length,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebInsightTile({
+    required String title,
+    required int count,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: AppColors.chipFill(context),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 18, color: color),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryText(context),
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: color,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 2),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: AppColors.mutedText(context),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWebInsightsInline() {
+    return Column(
+      children: [
+        _buildGlassyStatRow(
+          title: _localizations.topProducts,
+          count: _topProductsTotal,
+          icon: Icons.star_rounded,
+          gradientColors: const [AppTheme.orange300, AppTheme.orange],
+          onTap: () => _showQuickInsightDetail(
+            _localizations.topProducts,
+            _topProducts,
+            'products',
+            totalCount: _topProductsTotal,
+          ),
+        ),
+        const SizedBox(height: 10),
+        _buildGlassyStatRow(
+          title: _localizations.pendingPayments,
+          count: _pendingPaymentsTotal,
+          icon: Icons.pending_actions_rounded,
+          gradientColors: const [AppTheme.error, AppTheme.red600],
+          onTap: () => _showQuickInsightDetail(
+            _localizations.pendingPayments,
+            _pendingPayments,
+            'pending',
+            totalCount: _pendingPaymentsTotal,
+          ),
+        ),
+        const SizedBox(height: 10),
+        _buildGlassyStatRow(
+          title: _localizations.lowStockItems,
+          count: _lowStockTotal,
+          icon: Icons.shopping_cart_rounded,
+          gradientColors: const [AppTheme.teal400, AppTheme.teal600],
+          onTap: () => _showQuickInsightDetail(
+            _localizations.lowStockItems,
+            _lowStockItems,
+            'lowstock',
+            totalCount: _lowStockTotal,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWebFilterRow(
+    OptimizedDashboardState state, {
+    bool showInsightsToggle = false,
+  }) {
     final filters = <(DashboardFilter, String)>[
       (DashboardFilter.today, _localizations.today),
       (DashboardFilter.thisWeek, _localizations.thisWeek),
@@ -1861,7 +2226,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             ),
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
         Text(
           _getFilterLabel(state.params),
           textAlign: TextAlign.end,
@@ -1872,6 +2237,37 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             fontFamily: 'Literata',
           ),
         ),
+        if (showInsightsToggle) ...[
+          const SizedBox(width: 10),
+          Tooltip(
+            message: _insightsPanelCollapsed
+                ? 'Show insights'
+                : 'Hide insights',
+            child: Material(
+              color: _insightsPanelCollapsed
+                  ? AppColors.action(context).withValues(alpha: 0.12)
+                  : AppColors.chipFill(context),
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                onTap: () => setState(
+                  () => _insightsPanelCollapsed = !_insightsPanelCollapsed,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: Icon(
+                    Icons.insights_outlined,
+                    size: 20,
+                    color: _insightsPanelCollapsed
+                        ? AppColors.action(context)
+                        : AppColors.secondaryText(context),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
