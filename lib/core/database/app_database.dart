@@ -75,7 +75,8 @@ class ProductRecords extends Table {
   TextColumn get barcode => text().nullable()();
   RealColumn get purchasePrice => real().withDefault(const Constant(0))();
   RealColumn get salesPrice => real().withDefault(const Constant(0))();
-  IntColumn get currentStock => integer().withDefault(const Constant(0))();
+  // REAL: matches on-disk DB (fractional kg/ml stock). Reading as int truncates.
+  RealColumn get currentStock => real().withDefault(const Constant(0))();
   TextColumn get unit => text().nullable()();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
   IntColumn get syncStatus => integer()();
@@ -105,7 +106,7 @@ class PurchaseRecords extends Table {
   TextColumn get supplierName => text().nullable()();
   TextColumn get companyId => text().nullable()();
   TextColumn get companyName => text().nullable()();
-  IntColumn get quantity => integer().withDefault(const Constant(0))();
+  RealColumn get quantity => real().withDefault(const Constant(0))();
   TextColumn get unit => text().withDefault(const Constant(''))();
   RealColumn get purchasePrice => real().withDefault(const Constant(0))();
   RealColumn get salesPrice => real().withDefault(const Constant(0))();
@@ -134,8 +135,8 @@ class PurchaseBatchRecords extends Table {
   TextColumn get productUniqueKey => text().withDefault(const Constant(''))();
   RealColumn get purchasePrice => real().withDefault(const Constant(0))();
   RealColumn get sellingPrice => real().withDefault(const Constant(0))();
-  IntColumn get quantityPurchased => integer().withDefault(const Constant(0))();
-  IntColumn get quantityRemaining => integer().withDefault(const Constant(0))();
+  RealColumn get quantityPurchased => real().withDefault(const Constant(0))();
+  RealColumn get quantityRemaining => real().withDefault(const Constant(0))();
   DateTimeColumn get purchaseDate => dateTime()();
   TextColumn get supplierId => text().nullable()();
   TextColumn get supplierName => text().nullable()();
@@ -167,13 +168,13 @@ class StockLedgerRecords extends Table {
   IntColumn get ledgerType => integer()();
   TextColumn get referenceId => text().withDefault(const Constant(''))();
   TextColumn get referenceType => text().withDefault(const Constant(''))();
-  IntColumn get quantity => integer().withDefault(const Constant(0))();
+  RealColumn get quantity => real().withDefault(const Constant(0))();
   RealColumn get costPrice => real().withDefault(const Constant(0))();
   RealColumn get sellingPrice => real().withDefault(const Constant(0))();
   RealColumn get totalCost => real().withDefault(const Constant(0))();
   RealColumn get totalRevenue => real().withDefault(const Constant(0))();
   RealColumn get profit => real().withDefault(const Constant(0))();
-  IntColumn get balanceQuantity => integer().withDefault(const Constant(0))();
+  RealColumn get balanceQuantity => real().withDefault(const Constant(0))();
   RealColumn get balanceValue => real().withDefault(const Constant(0))();
   DateTimeColumn get transactionDate => dateTime()();
   TextColumn get notes => text().nullable()();
@@ -192,7 +193,7 @@ class BillRecords extends Table {
   TextColumn get customerName => text().nullable()();
   TextColumn get customerContact => text().nullable()();
   TextColumn get itemsJson => text().withDefault(const Constant('[]'))();
-  IntColumn get totalQuantity => integer().withDefault(const Constant(0))();
+  RealColumn get totalQuantity => real().withDefault(const Constant(0))();
   RealColumn get totalAmount => real().withDefault(const Constant(0))();
   RealColumn get discountAmount => real().withDefault(const Constant(0))();
   RealColumn get discountPercent => real().withDefault(const Constant(0))();
@@ -363,8 +364,134 @@ class CustomerTransactionRecords extends Table {
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? openAppDatabase());
 
+  // v14: qty columns declared as REAL to match on-disk affinity (theme DBs /
+  // fractional stock). Do NOT alterTable bills/purchases — those tables carry
+  // extra GST/payment columns not in this schema; alterTable would drop them.
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 14;
+
+  Future<bool> _hasTable(String table) async {
+    final rows = await customSelect(
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+      variables: [Variable.withString(table)],
+    ).get();
+    return rows.isNotEmpty;
+  }
+
+  Future<void> _ensureTables(Migrator m) async {
+    for (final table in allTables) {
+      if (!await _hasTable(table.actualTableName)) {
+        await m.createTable(table);
+      }
+    }
+  }
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) async => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          // Idempotent: create any tables missing on this branch without
+          // wiping existing shop data when switching branches / versions.
+          await _ensureTables(m);
+          // Qty columns are already REAL on migrated DBs; Drift RealColumn
+          // reads them correctly. No structural rewrite needed for v13→v14.
+          if (from < 14) {
+            await repairDerivedBalances();
+          }
+        },
+      );
+
+  /// Rebuilds derived stock + customer running balances from source tables.
+  /// Does not delete shop data and does not rewrite bill GST columns.
+  Future<void> repairDerivedBalances() async {
+    await transaction(() async {
+      // 1) Relink orphan batches whose product_id no longer matches a product.
+      await customStatement('''
+        UPDATE purchase_batches
+        SET product_id = (
+          SELECT COALESCE(p.server_id, 'local_' || p.id)
+          FROM products p
+          WHERE LOWER(TRIM(p.name)) = LOWER(TRIM(purchase_batches.product_name))
+          LIMIT 1
+        )
+        WHERE product_id IS NOT NULL
+          AND product_id != ''
+          AND NOT EXISTS (
+            SELECT 1 FROM products p
+            WHERE p.server_id = purchase_batches.product_id
+               OR CAST(p.id AS TEXT) = purchase_batches.product_id
+               OR ('local_' || p.id) = purchase_batches.product_id
+          )
+          AND EXISTS (
+            SELECT 1 FROM products p
+            WHERE LOWER(TRIM(p.name)) = LOWER(TRIM(purchase_batches.product_name))
+          )
+      ''');
+
+      // 2) Product stock = sum of unconsumed batch remaining qty.
+      await customStatement('''
+        UPDATE products
+        SET current_stock = COALESCE((
+          SELECT SUM(b.quantity_remaining)
+          FROM purchase_batches b
+          WHERE b.is_consumed = 0
+            AND (
+              b.product_id = products.server_id
+              OR b.product_id = CAST(products.id AS TEXT)
+              OR b.product_id = ('local_' || products.id)
+            )
+        ), 0)
+      ''');
+
+      // 3) Rebuild customer ledger running balances from txn history.
+      final customers = await customSelect(
+        'SELECT id, server_id FROM customers WHERE is_deleted = 0',
+      ).get();
+
+      for (final customer in customers) {
+        final localId = customer.read<int>('id');
+        final serverId = customer.read<String?>('server_id');
+        final ids = <String>{
+          '$localId',
+          'local_$localId',
+          if (serverId != null && serverId.isNotEmpty) serverId,
+        };
+
+        final placeholders = List.filled(ids.length, '?').join(',');
+        final txns = await customSelect(
+          '''
+          SELECT id, transaction_type, amount
+          FROM customer_transactions
+          WHERE customer_id IN ($placeholders)
+            AND sync_status != 2
+          ORDER BY transaction_date ASC, id ASC
+          ''',
+          variables: ids.map(Variable.withString).toList(),
+        ).get();
+
+        var running = 0.0;
+        for (final txn in txns) {
+          final type = txn.read<int>('transaction_type');
+          final amount = txn.read<double>('amount');
+          // 0 payment, 1 billCreated, 2 billReturn, 3 adjustment
+          if (type == 0 || type == 2) {
+            running -= amount;
+          } else {
+            running += amount;
+          }
+          await customStatement(
+            'UPDATE customer_transactions SET balance_after = ? WHERE id = ?',
+            [running, txn.read<int>('id')],
+          );
+        }
+
+        await customStatement(
+          'UPDATE customers SET current_pending_amount = ? WHERE id = ?',
+          [running, localId],
+        );
+      }
+    });
+  }
 
   Future<void> clearAll() async {
     await transaction(() async {

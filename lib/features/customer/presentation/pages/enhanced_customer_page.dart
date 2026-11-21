@@ -805,6 +805,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                             onCustomerLongPress: _showCustomerContextMenu,
                             onFinanceTap: _openCustomerFinance,
                             onTransactionsTap: _openCustomerTransactions,
+                            onCollectTap: _openCollectPayment,
                             emptyTitle: _localizations.noCustomersYet,
                             emptySubtitle: _localizations.createFirstCustomer,
                             noResultsTitle: _localizations.noResultsFound,
@@ -873,7 +874,10 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
   // ━━━ CUSTOMER TRANSACTIONS PAGE ━━━
 
-  void _openCustomerTransactions(Map<String, dynamic> customer) {
+  void _openCustomerTransactions(
+    Map<String, dynamic> customer, {
+    bool autoOpenReceivePayment = false,
+  }) {
     // Get the explicit serverId if available
     final serverId = customer['serverId'] as String?;
     // Get the local integer local id
@@ -903,8 +907,14 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
         customerName: fullName.isNotEmpty ? fullName : 'Customer',
         customerContact: contact,
         currentPendingAmount: pendingAmount,
+        autoOpenReceivePayment: autoOpenReceivePayment,
       ),
     );
+  }
+
+  /// Desktop/mobile Collect — opens ledger and receive-payment sheet.
+  void _openCollectPayment(Map<String, dynamic> customer) {
+    _openCustomerTransactions(customer, autoOpenReceivePayment: true);
   }
 
   // ━━━ CUSTOMER DETAILS BOTTOM SHEET ━━━
@@ -920,6 +930,10 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
         onViewDetails: () {
           Navigator.pop(context);
           _navigateToCustomerDetails(customer);
+        },
+        onCollect: () {
+          Navigator.pop(context);
+          _openCollectPayment(customer);
         },
         onEdit: () {
           Navigator.pop(context);
@@ -995,6 +1009,17 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                       _navigateToCustomerDetails(customer);
                     },
                   ),
+                  if (((customer['currentPendingAmount'] as num?)?.toDouble() ??
+                          0) >
+                      0)
+                    _buildContextMenuItem(
+                      icon: Icons.currency_rupee_rounded,
+                      label: 'Collect',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _openCollectPayment(customer);
+                      },
+                    ),
                   _buildContextMenuItem(
                     icon: Icons.edit_rounded,
                     label: _localizations.edit,
@@ -1241,6 +1266,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
   final Map<String, dynamic> customer;
   final AppLocalizations localizations;
   final VoidCallback onViewDetails;
+  final VoidCallback? onCollect;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -1248,6 +1274,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
     required this.customer,
     required this.localizations,
     required this.onViewDetails,
+    this.onCollect,
     required this.onEdit,
     required this.onDelete,
   });
@@ -1494,6 +1521,19 @@ class _CustomerDetailsSheet extends StatelessWidget {
                     const SizedBox(height: 16),
 
                     // Action buttons
+                    if (pendingAmount.round() != 0 && onCollect != null) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: _buildActionButton(
+                          context: context,
+                          icon: Icons.currency_rupee_rounded,
+                          label: 'Collect',
+                          onTap: onCollect!,
+                          isPrimary: true,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                     Row(
                       children: [
                         Expanded(
@@ -1502,7 +1542,8 @@ class _CustomerDetailsSheet extends StatelessWidget {
                             icon: Icons.visibility_rounded,
                             label: localizations.viewBalance,
                             onTap: onViewDetails,
-                            isPrimary: true,
+                            isPrimary: pendingAmount.round() == 0 ||
+                                onCollect == null,
                           ),
                         ),
                         const SizedBox(width: 12),

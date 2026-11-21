@@ -165,9 +165,10 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
               'email': email,
               'contact': contact,
               'createdAt': FieldValue.serverTimestamp(),
-              // No free access — user must subscribe via Cashfree after login
-              'subscriptionDate': null,
-              'subscriptionStatus': 'inactive',
+              // 30-day free trial — paywall only after trial ends
+              'subscriptionDate': FieldValue.serverTimestamp(),
+              'subscriptionStatus': 'trial',
+              'trialStartedAt': FieldValue.serverTimestamp(),
             });
             debugPrint(
               '[DEBUG] Firestore write successful for UID: ${currentUser.uid}',

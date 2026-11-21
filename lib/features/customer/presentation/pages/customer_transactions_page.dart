@@ -32,6 +32,9 @@ class CustomerTransactionsPage extends StatefulWidget {
   final String customerContact;
   final double currentPendingAmount;
 
+  /// When true (e.g. desktop Collect), open the receive-payment sheet on launch.
+  final bool autoOpenReceivePayment;
+
   const CustomerTransactionsPage({
     super.key,
     required this.customerId,
@@ -39,6 +42,7 @@ class CustomerTransactionsPage extends StatefulWidget {
     required this.customerName,
     required this.customerContact,
     required this.currentPendingAmount,
+    this.autoOpenReceivePayment = false,
   });
 
   @override
@@ -73,6 +77,11 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
     _initTransactionService();
     _listenForLedgerChanges();
     _syncAndLoadTransactions();
+    if (widget.autoOpenReceivePayment && widget.currentPendingAmount > 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showReceivePaymentSheet();
+      });
+    }
   }
 
   void _listenForLedgerChanges() {

@@ -2,7 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-// Service to manage user subscription status. Access requires an active `subscriptionDate` within [subscriptionDuration]. Activation after Cashfree payment is performed by Cloud F...
+// Service to manage user subscription status.
+//
+// Access rules:
+// - New users get a 30-day free trial from signup (`subscriptionStatus: trial`)
+// - Paid users stay active for 365 days from `subscriptionDate`
+// - Activation after payment is performed by Cloud Functions
 class SubscriptionService {
   static final SubscriptionService _instance = SubscriptionService._internal();
   factory SubscriptionService() => _instance;
@@ -17,20 +22,27 @@ class SubscriptionService {
   // Display price (with thousands separator)
   static const String subscriptionPriceDisplay = '3,999';
 
-  // Subscription validity duration
+  // Paid subscription validity
   static const Duration subscriptionDuration = Duration(days: 365);
+
+  // Free trial before paywall
+  static const Duration trialDuration = Duration(days: 30);
+
+  static const String statusTrial = 'trial';
+  static const String statusActive = 'active';
+  static const String statusInactive = 'inactive';
 
   // Get current user ID
   String? get _userId => _auth.currentUser?.uid;
 
-  DateTime? _parseSubscriptionDate(dynamic subscriptionDate) {
-    if (subscriptionDate == null) return null;
-    if (subscriptionDate is Timestamp) return subscriptionDate.toDate();
-    if (subscriptionDate is String) return DateTime.tryParse(subscriptionDate);
+  DateTime? _parseDate(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is String) return DateTime.tryParse(value);
     return null;
   }
 
-  // Check if user's subscription is valid. Fail-closed: no user, a missing date, an expired date, or a read error all return false. Login still happens before this check.
+  // Check if user's subscription/trial is still valid.
   Future<bool> isSubscriptionValid() async {
     try {
       final userId = _userId;
@@ -56,22 +68,24 @@ class SubscriptionService {
 
       final data = userDoc.data();
       if (data == null) {
-        debugPrint('[SubscriptionService] User data is null - subscription required');
-        return false;
-      }
-
-      final subDate = _parseSubscriptionDate(data['subscriptionDate']);
-      if (subDate == null) {
         debugPrint(
-          '[SubscriptionService] No valid subscription date - subscription required',
+          '[SubscriptionService] User data is null - subscription required',
         );
         return false;
       }
 
-      final expiryDate = subDate.add(subscriptionDuration);
-      final isValid = DateTime.now().isBefore(expiryDate);
+      final resolved = await _resolveAccessWindow(userId, data);
+      if (resolved == null) {
+        debugPrint(
+          '[SubscriptionService] No valid trial/subscription - payment required',
+        );
+        return false;
+      }
+
+      final isValid = DateTime.now().isBefore(resolved.expiry);
       debugPrint(
-        '[SubscriptionService] Subscription valid: $isValid (expires: $expiryDate)',
+        '[SubscriptionService] Access valid: $isValid '
+        '(status: ${resolved.status}, expires: ${resolved.expiry})',
       );
       return isValid;
     } catch (e) {
@@ -81,7 +95,7 @@ class SubscriptionService {
     }
   }
 
-  // Get subscription expiry date
+  // Get subscription / trial expiry date
   Future<DateTime?> getExpiryDate() async {
     try {
       final userId = _userId;
@@ -91,16 +105,15 @@ class SubscriptionService {
       final data = userDoc.data();
       if (data == null) return null;
 
-      final subDate = _parseSubscriptionDate(data['subscriptionDate']);
-      if (subDate == null) return null;
-      return subDate.add(subscriptionDuration);
+      final resolved = await _resolveAccessWindow(userId, data);
+      return resolved?.expiry;
     } catch (e) {
       debugPrint('[SubscriptionService] Error getting expiry date: $e');
       return null;
     }
   }
 
-  // Get remaining days in subscription
+  // Get remaining days in subscription / trial
   Future<int> getRemainingDays() async {
     final expiryDate = await getExpiryDate();
     if (expiryDate == null) return 0;
@@ -110,7 +123,7 @@ class SubscriptionService {
     return expiryDate.difference(now).inDays;
   }
 
-  // Wait until Firestore reflects an active subscription (after Cashfree verify).
+  // Wait until Firestore reflects an active subscription (after payment verify).
   Future<bool> waitUntilActive({
     Duration timeout = const Duration(seconds: 20),
     Duration pollInterval = const Duration(seconds: 1),
@@ -123,18 +136,19 @@ class SubscriptionService {
     return await isSubscriptionValid();
   }
 
-  // New users start without an active subscription (must pay via Cashfree).
+  // New users start with a 30-day free trial.
   static Future<void> setInitialSubscription(String userId) async {
     try {
       await FirebaseFirestore.instance.collection('users').doc(userId).set({
-        'subscriptionDate': null,
-        'subscriptionStatus': 'inactive',
+        'subscriptionDate': FieldValue.serverTimestamp(),
+        'subscriptionStatus': statusTrial,
+        'trialStartedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
       debugPrint(
-        '[SubscriptionService] Initial inactive subscription set for user: $userId',
+        '[SubscriptionService] 30-day trial started for user: $userId',
       );
     } catch (e) {
-      debugPrint('[SubscriptionService] Error setting initial subscription: $e');
+      debugPrint('[SubscriptionService] Error setting initial trial: $e');
     }
   }
 
@@ -148,33 +162,107 @@ class SubscriptionService {
 
       final userDoc = await _firestore.collection('users').doc(userId).get();
       final data = userDoc.data();
-      final subDate = _parseSubscriptionDate(data?['subscriptionDate']);
+      if (data == null) {
+        return {'isActive': false, 'message': 'No user data'};
+      }
 
-      if (subDate == null) {
+      final resolved = await _resolveAccessWindow(userId, data);
+      if (resolved == null) {
         return {
           'isActive': false,
           'message': 'No subscription found',
           'subscriptionDate': null,
           'expiryDate': null,
           'remainingDays': 0,
+          'status': statusInactive,
         };
       }
 
-      final expiryDate = subDate.add(subscriptionDuration);
       final now = DateTime.now();
-      final isActive = now.isBefore(expiryDate);
-      final remainingDays = isActive ? expiryDate.difference(now).inDays : 0;
+      final isActive = now.isBefore(resolved.expiry);
+      final remainingDays =
+          isActive ? resolved.expiry.difference(now).inDays : 0;
 
       return {
         'isActive': isActive,
-        'message': isActive ? 'Subscription active' : 'Subscription expired',
-        'subscriptionDate': subDate,
-        'expiryDate': expiryDate,
+        'message': isActive
+            ? (resolved.status == statusTrial
+                ? 'Free trial active'
+                : 'Subscription active')
+            : 'Subscription expired',
+        'subscriptionDate': resolved.start,
+        'expiryDate': resolved.expiry,
         'remainingDays': remainingDays,
+        'status': resolved.status,
       };
     } catch (e) {
       debugPrint('[SubscriptionService] Error getting subscription status: $e');
       return {'isActive': false, 'message': 'Error checking subscription'};
     }
   }
+
+  /// Resolves the access window for a user document.
+  ///
+  /// Also backfills a trial for older accounts that still have
+  /// `subscriptionDate: null` but are within 30 days of `createdAt`.
+  Future<_AccessWindow?> _resolveAccessWindow(
+    String userId,
+    Map<String, dynamic> data,
+  ) async {
+    final status = (data['subscriptionStatus'] as String?)?.toLowerCase();
+    var start = _parseDate(data['subscriptionDate']);
+
+    // Legacy / broken docs: no subscriptionDate → trial from createdAt (or now).
+    if (start == null) {
+      final createdAt = _parseDate(data['createdAt']) ?? DateTime.now();
+      start = createdAt;
+      final trialExpiry = start.add(trialDuration);
+      if (DateTime.now().isBefore(trialExpiry)) {
+        // Persist trial so subsequent checks are consistent.
+        try {
+          await _firestore.collection('users').doc(userId).set({
+            'subscriptionDate': Timestamp.fromDate(start),
+            'subscriptionStatus': statusTrial,
+            'trialStartedAt': Timestamp.fromDate(start),
+          }, SetOptions(merge: true));
+        } catch (e) {
+          debugPrint('[SubscriptionService] Trial backfill failed: $e');
+        }
+        return _AccessWindow(
+          start: start,
+          expiry: trialExpiry,
+          status: statusTrial,
+        );
+      }
+      return null;
+    }
+
+    final effectiveStatus =
+        (status == null || status.isEmpty || status == statusInactive)
+            ? statusTrial
+            : status;
+
+    // Paid active subscriptions use 1 year; trial uses 30 days.
+    final duration = effectiveStatus == statusActive
+        ? subscriptionDuration
+        : trialDuration;
+
+    return _AccessWindow(
+      start: start,
+      expiry: start.add(duration),
+      status: effectiveStatus == statusActive ? statusActive : statusTrial,
+    );
+  }
+}
+
+class _AccessWindow {
+  final DateTime start;
+  final DateTime expiry;
+  final String status;
+
+  const _AccessWindow({
+    required this.start,
+    required this.expiry,
+    required this.status,
+  });
 }

@@ -2170,11 +2170,11 @@ class $ProductRecordsTable extends ProductRecords
     'currentStock',
   );
   @override
-  late final GeneratedColumn<int> currentStock = GeneratedColumn<int>(
+  late final GeneratedColumn<double> currentStock = GeneratedColumn<double>(
     'current_stock',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.double,
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
@@ -2601,7 +2601,7 @@ class $ProductRecordsTable extends ProductRecords
         data['${effectivePrefix}sales_price'],
       )!,
       currentStock: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.double,
         data['${effectivePrefix}current_stock'],
       )!,
       unit: attachedDatabase.typeMapping.read(
@@ -2679,7 +2679,7 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
   final String? barcode;
   final double purchasePrice;
   final double salesPrice;
-  final int currentStock;
+  final double currentStock;
   final String? unit;
   final bool isActive;
   final int syncStatus;
@@ -2736,7 +2736,7 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
     }
     map['purchase_price'] = Variable<double>(purchasePrice);
     map['sales_price'] = Variable<double>(salesPrice);
-    map['current_stock'] = Variable<int>(currentStock);
+    map['current_stock'] = Variable<double>(currentStock);
     if (!nullToAbsent || unit != null) {
       map['unit'] = Variable<String>(unit);
     }
@@ -2832,7 +2832,7 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
       barcode: serializer.fromJson<String?>(json['barcode']),
       purchasePrice: serializer.fromJson<double>(json['purchasePrice']),
       salesPrice: serializer.fromJson<double>(json['salesPrice']),
-      currentStock: serializer.fromJson<int>(json['currentStock']),
+      currentStock: serializer.fromJson<double>(json['currentStock']),
       unit: serializer.fromJson<String?>(json['unit']),
       isActive: serializer.fromJson<bool>(json['isActive']),
       syncStatus: serializer.fromJson<int>(json['syncStatus']),
@@ -2866,7 +2866,7 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
       'barcode': serializer.toJson<String?>(barcode),
       'purchasePrice': serializer.toJson<double>(purchasePrice),
       'salesPrice': serializer.toJson<double>(salesPrice),
-      'currentStock': serializer.toJson<int>(currentStock),
+      'currentStock': serializer.toJson<double>(currentStock),
       'unit': serializer.toJson<String?>(unit),
       'isActive': serializer.toJson<bool>(isActive),
       'syncStatus': serializer.toJson<int>(syncStatus),
@@ -2894,7 +2894,7 @@ class ProductRecord extends DataClass implements Insertable<ProductRecord> {
     Value<String?> barcode = const Value.absent(),
     double? purchasePrice,
     double? salesPrice,
-    int? currentStock,
+    double? currentStock,
     Value<String?> unit = const Value.absent(),
     bool? isActive,
     int? syncStatus,
@@ -3094,7 +3094,7 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
   final Value<String?> barcode;
   final Value<double> purchasePrice;
   final Value<double> salesPrice;
-  final Value<int> currentStock;
+  final Value<double> currentStock;
   final Value<String?> unit;
   final Value<bool> isActive;
   final Value<int> syncStatus;
@@ -3174,7 +3174,7 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
     Expression<String>? barcode,
     Expression<double>? purchasePrice,
     Expression<double>? salesPrice,
-    Expression<int>? currentStock,
+    Expression<double>? currentStock,
     Expression<String>? unit,
     Expression<bool>? isActive,
     Expression<int>? syncStatus,
@@ -3229,7 +3229,7 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
     Value<String?>? barcode,
     Value<double>? purchasePrice,
     Value<double>? salesPrice,
-    Value<int>? currentStock,
+    Value<double>? currentStock,
     Value<String?>? unit,
     Value<bool>? isActive,
     Value<int>? syncStatus,
@@ -3304,7 +3304,7 @@ class ProductRecordsCompanion extends UpdateCompanion<ProductRecord> {
       map['sales_price'] = Variable<double>(salesPrice.value);
     }
     if (currentStock.present) {
-      map['current_stock'] = Variable<int>(currentStock.value);
+      map['current_stock'] = Variable<double>(currentStock.value);
     }
     if (unit.present) {
       map['unit'] = Variable<String>(unit.value);
@@ -3486,11 +3486,11 @@ class $PurchaseRecordsTable extends PurchaseRecords
     'quantity',
   );
   @override
-  late final GeneratedColumn<int> quantity = GeneratedColumn<int>(
+  late final GeneratedColumn<double> quantity = GeneratedColumn<double>(
     'quantity',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.double,
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
@@ -3839,7 +3839,7 @@ class $PurchaseRecordsTable extends PurchaseRecords
         data['${effectivePrefix}company_name'],
       ),
       quantity: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.double,
         data['${effectivePrefix}quantity'],
       )!,
       unit: attachedDatabase.typeMapping.read(
@@ -3904,7 +3904,7 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
   final String? supplierName;
   final String? companyId;
   final String? companyName;
-  final int quantity;
+  final double quantity;
   final String unit;
   final double purchasePrice;
   final double salesPrice;
@@ -3959,7 +3959,7 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
     if (!nullToAbsent || companyName != null) {
       map['company_name'] = Variable<String>(companyName);
     }
-    map['quantity'] = Variable<int>(quantity);
+    map['quantity'] = Variable<double>(quantity);
     map['unit'] = Variable<String>(unit);
     map['purchase_price'] = Variable<double>(purchasePrice);
     map['sales_price'] = Variable<double>(salesPrice);
@@ -4039,7 +4039,7 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
       supplierName: serializer.fromJson<String?>(json['supplierName']),
       companyId: serializer.fromJson<String?>(json['companyId']),
       companyName: serializer.fromJson<String?>(json['companyName']),
-      quantity: serializer.fromJson<int>(json['quantity']),
+      quantity: serializer.fromJson<double>(json['quantity']),
       unit: serializer.fromJson<String>(json['unit']),
       purchasePrice: serializer.fromJson<double>(json['purchasePrice']),
       salesPrice: serializer.fromJson<double>(json['salesPrice']),
@@ -4065,7 +4065,7 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
       'supplierName': serializer.toJson<String?>(supplierName),
       'companyId': serializer.toJson<String?>(companyId),
       'companyName': serializer.toJson<String?>(companyName),
-      'quantity': serializer.toJson<int>(quantity),
+      'quantity': serializer.toJson<double>(quantity),
       'unit': serializer.toJson<String>(unit),
       'purchasePrice': serializer.toJson<double>(purchasePrice),
       'salesPrice': serializer.toJson<double>(salesPrice),
@@ -4089,7 +4089,7 @@ class PurchaseRecord extends DataClass implements Insertable<PurchaseRecord> {
     Value<String?> supplierName = const Value.absent(),
     Value<String?> companyId = const Value.absent(),
     Value<String?> companyName = const Value.absent(),
-    int? quantity,
+    double? quantity,
     String? unit,
     double? purchasePrice,
     double? salesPrice,
@@ -4259,7 +4259,7 @@ class PurchaseRecordsCompanion extends UpdateCompanion<PurchaseRecord> {
   final Value<String?> supplierName;
   final Value<String?> companyId;
   final Value<String?> companyName;
-  final Value<int> quantity;
+  final Value<double> quantity;
   final Value<String> unit;
   final Value<double> purchasePrice;
   final Value<double> salesPrice;
@@ -4327,7 +4327,7 @@ class PurchaseRecordsCompanion extends UpdateCompanion<PurchaseRecord> {
     Expression<String>? supplierName,
     Expression<String>? companyId,
     Expression<String>? companyName,
-    Expression<int>? quantity,
+    Expression<double>? quantity,
     Expression<String>? unit,
     Expression<double>? purchasePrice,
     Expression<double>? salesPrice,
@@ -4373,7 +4373,7 @@ class PurchaseRecordsCompanion extends UpdateCompanion<PurchaseRecord> {
     Value<String?>? supplierName,
     Value<String?>? companyId,
     Value<String?>? companyName,
-    Value<int>? quantity,
+    Value<double>? quantity,
     Value<String>? unit,
     Value<double>? purchasePrice,
     Value<double>? salesPrice,
@@ -4438,7 +4438,7 @@ class PurchaseRecordsCompanion extends UpdateCompanion<PurchaseRecord> {
       map['company_name'] = Variable<String>(companyName.value);
     }
     if (quantity.present) {
-      map['quantity'] = Variable<int>(quantity.value);
+      map['quantity'] = Variable<double>(quantity.value);
     }
     if (unit.present) {
       map['unit'] = Variable<String>(unit.value);
@@ -4633,26 +4633,28 @@ class $PurchaseBatchRecordsTable extends PurchaseBatchRecords
     'quantityPurchased',
   );
   @override
-  late final GeneratedColumn<int> quantityPurchased = GeneratedColumn<int>(
-    'quantity_purchased',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(0),
-  );
+  late final GeneratedColumn<double> quantityPurchased =
+      GeneratedColumn<double>(
+        'quantity_purchased',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      );
   static const VerificationMeta _quantityRemainingMeta = const VerificationMeta(
     'quantityRemaining',
   );
   @override
-  late final GeneratedColumn<int> quantityRemaining = GeneratedColumn<int>(
-    'quantity_remaining',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(0),
-  );
+  late final GeneratedColumn<double> quantityRemaining =
+      GeneratedColumn<double>(
+        'quantity_remaining',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      );
   static const VerificationMeta _purchaseDateMeta = const VerificationMeta(
     'purchaseDate',
   );
@@ -5060,11 +5062,11 @@ class $PurchaseBatchRecordsTable extends PurchaseBatchRecords
         data['${effectivePrefix}selling_price'],
       )!,
       quantityPurchased: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.double,
         data['${effectivePrefix}quantity_purchased'],
       )!,
       quantityRemaining: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.double,
         data['${effectivePrefix}quantity_remaining'],
       )!,
       purchaseDate: attachedDatabase.typeMapping.read(
@@ -5136,8 +5138,8 @@ class PurchaseBatchRecord extends DataClass
   final String productUniqueKey;
   final double purchasePrice;
   final double sellingPrice;
-  final int quantityPurchased;
-  final int quantityRemaining;
+  final double quantityPurchased;
+  final double quantityRemaining;
   final DateTime purchaseDate;
   final String? supplierId;
   final String? supplierName;
@@ -5191,8 +5193,8 @@ class PurchaseBatchRecord extends DataClass
     map['product_unique_key'] = Variable<String>(productUniqueKey);
     map['purchase_price'] = Variable<double>(purchasePrice);
     map['selling_price'] = Variable<double>(sellingPrice);
-    map['quantity_purchased'] = Variable<int>(quantityPurchased);
-    map['quantity_remaining'] = Variable<int>(quantityRemaining);
+    map['quantity_purchased'] = Variable<double>(quantityPurchased);
+    map['quantity_remaining'] = Variable<double>(quantityRemaining);
     map['purchase_date'] = Variable<DateTime>(purchaseDate);
     if (!nullToAbsent || supplierId != null) {
       map['supplier_id'] = Variable<String>(supplierId);
@@ -5279,8 +5281,8 @@ class PurchaseBatchRecord extends DataClass
       productUniqueKey: serializer.fromJson<String>(json['productUniqueKey']),
       purchasePrice: serializer.fromJson<double>(json['purchasePrice']),
       sellingPrice: serializer.fromJson<double>(json['sellingPrice']),
-      quantityPurchased: serializer.fromJson<int>(json['quantityPurchased']),
-      quantityRemaining: serializer.fromJson<int>(json['quantityRemaining']),
+      quantityPurchased: serializer.fromJson<double>(json['quantityPurchased']),
+      quantityRemaining: serializer.fromJson<double>(json['quantityRemaining']),
       purchaseDate: serializer.fromJson<DateTime>(json['purchaseDate']),
       supplierId: serializer.fromJson<String?>(json['supplierId']),
       supplierName: serializer.fromJson<String?>(json['supplierName']),
@@ -5309,8 +5311,8 @@ class PurchaseBatchRecord extends DataClass
       'productUniqueKey': serializer.toJson<String>(productUniqueKey),
       'purchasePrice': serializer.toJson<double>(purchasePrice),
       'sellingPrice': serializer.toJson<double>(sellingPrice),
-      'quantityPurchased': serializer.toJson<int>(quantityPurchased),
-      'quantityRemaining': serializer.toJson<int>(quantityRemaining),
+      'quantityPurchased': serializer.toJson<double>(quantityPurchased),
+      'quantityRemaining': serializer.toJson<double>(quantityRemaining),
       'purchaseDate': serializer.toJson<DateTime>(purchaseDate),
       'supplierId': serializer.toJson<String?>(supplierId),
       'supplierName': serializer.toJson<String?>(supplierName),
@@ -5337,8 +5339,8 @@ class PurchaseBatchRecord extends DataClass
     String? productUniqueKey,
     double? purchasePrice,
     double? sellingPrice,
-    int? quantityPurchased,
-    int? quantityRemaining,
+    double? quantityPurchased,
+    double? quantityRemaining,
     DateTime? purchaseDate,
     Value<String?> supplierId = const Value.absent(),
     Value<String?> supplierName = const Value.absent(),
@@ -5540,8 +5542,8 @@ class PurchaseBatchRecordsCompanion
   final Value<String> productUniqueKey;
   final Value<double> purchasePrice;
   final Value<double> sellingPrice;
-  final Value<int> quantityPurchased;
-  final Value<int> quantityRemaining;
+  final Value<double> quantityPurchased;
+  final Value<double> quantityRemaining;
   final Value<DateTime> purchaseDate;
   final Value<String?> supplierId;
   final Value<String?> supplierName;
@@ -5621,8 +5623,8 @@ class PurchaseBatchRecordsCompanion
     Expression<String>? productUniqueKey,
     Expression<double>? purchasePrice,
     Expression<double>? sellingPrice,
-    Expression<int>? quantityPurchased,
-    Expression<int>? quantityRemaining,
+    Expression<double>? quantityPurchased,
+    Expression<double>? quantityRemaining,
     Expression<DateTime>? purchaseDate,
     Expression<String>? supplierId,
     Expression<String>? supplierName,
@@ -5675,8 +5677,8 @@ class PurchaseBatchRecordsCompanion
     Value<String>? productUniqueKey,
     Value<double>? purchasePrice,
     Value<double>? sellingPrice,
-    Value<int>? quantityPurchased,
-    Value<int>? quantityRemaining,
+    Value<double>? quantityPurchased,
+    Value<double>? quantityRemaining,
     Value<DateTime>? purchaseDate,
     Value<String?>? supplierId,
     Value<String?>? supplierName,
@@ -5752,10 +5754,10 @@ class PurchaseBatchRecordsCompanion
       map['selling_price'] = Variable<double>(sellingPrice.value);
     }
     if (quantityPurchased.present) {
-      map['quantity_purchased'] = Variable<int>(quantityPurchased.value);
+      map['quantity_purchased'] = Variable<double>(quantityPurchased.value);
     }
     if (quantityRemaining.present) {
-      map['quantity_remaining'] = Variable<int>(quantityRemaining.value);
+      map['quantity_remaining'] = Variable<double>(quantityRemaining.value);
     }
     if (purchaseDate.present) {
       map['purchase_date'] = Variable<DateTime>(purchaseDate.value);
@@ -5979,11 +5981,11 @@ class $StockLedgerRecordsTable extends StockLedgerRecords
     'quantity',
   );
   @override
-  late final GeneratedColumn<int> quantity = GeneratedColumn<int>(
+  late final GeneratedColumn<double> quantity = GeneratedColumn<double>(
     'quantity',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.double,
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
@@ -6049,11 +6051,11 @@ class $StockLedgerRecordsTable extends StockLedgerRecords
     'balanceQuantity',
   );
   @override
-  late final GeneratedColumn<int> balanceQuantity = GeneratedColumn<int>(
+  late final GeneratedColumn<double> balanceQuantity = GeneratedColumn<double>(
     'balance_quantity',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.double,
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
@@ -6393,7 +6395,7 @@ class $StockLedgerRecordsTable extends StockLedgerRecords
         data['${effectivePrefix}reference_type'],
       )!,
       quantity: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.double,
         data['${effectivePrefix}quantity'],
       )!,
       costPrice: attachedDatabase.typeMapping.read(
@@ -6417,7 +6419,7 @@ class $StockLedgerRecordsTable extends StockLedgerRecords
         data['${effectivePrefix}profit'],
       )!,
       balanceQuantity: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.double,
         data['${effectivePrefix}balance_quantity'],
       )!,
       balanceValue: attachedDatabase.typeMapping.read(
@@ -6463,13 +6465,13 @@ class StockLedgerRecord extends DataClass
   final int ledgerType;
   final String referenceId;
   final String referenceType;
-  final int quantity;
+  final double quantity;
   final double costPrice;
   final double sellingPrice;
   final double totalCost;
   final double totalRevenue;
   final double profit;
-  final int balanceQuantity;
+  final double balanceQuantity;
   final double balanceValue;
   final DateTime transactionDate;
   final String? notes;
@@ -6520,13 +6522,13 @@ class StockLedgerRecord extends DataClass
     map['ledger_type'] = Variable<int>(ledgerType);
     map['reference_id'] = Variable<String>(referenceId);
     map['reference_type'] = Variable<String>(referenceType);
-    map['quantity'] = Variable<int>(quantity);
+    map['quantity'] = Variable<double>(quantity);
     map['cost_price'] = Variable<double>(costPrice);
     map['selling_price'] = Variable<double>(sellingPrice);
     map['total_cost'] = Variable<double>(totalCost);
     map['total_revenue'] = Variable<double>(totalRevenue);
     map['profit'] = Variable<double>(profit);
-    map['balance_quantity'] = Variable<int>(balanceQuantity);
+    map['balance_quantity'] = Variable<double>(balanceQuantity);
     map['balance_value'] = Variable<double>(balanceValue);
     map['transaction_date'] = Variable<DateTime>(transactionDate);
     if (!nullToAbsent || notes != null) {
@@ -6590,13 +6592,13 @@ class StockLedgerRecord extends DataClass
       ledgerType: serializer.fromJson<int>(json['ledgerType']),
       referenceId: serializer.fromJson<String>(json['referenceId']),
       referenceType: serializer.fromJson<String>(json['referenceType']),
-      quantity: serializer.fromJson<int>(json['quantity']),
+      quantity: serializer.fromJson<double>(json['quantity']),
       costPrice: serializer.fromJson<double>(json['costPrice']),
       sellingPrice: serializer.fromJson<double>(json['sellingPrice']),
       totalCost: serializer.fromJson<double>(json['totalCost']),
       totalRevenue: serializer.fromJson<double>(json['totalRevenue']),
       profit: serializer.fromJson<double>(json['profit']),
-      balanceQuantity: serializer.fromJson<int>(json['balanceQuantity']),
+      balanceQuantity: serializer.fromJson<double>(json['balanceQuantity']),
       balanceValue: serializer.fromJson<double>(json['balanceValue']),
       transactionDate: serializer.fromJson<DateTime>(json['transactionDate']),
       notes: serializer.fromJson<String?>(json['notes']),
@@ -6620,13 +6622,13 @@ class StockLedgerRecord extends DataClass
       'ledgerType': serializer.toJson<int>(ledgerType),
       'referenceId': serializer.toJson<String>(referenceId),
       'referenceType': serializer.toJson<String>(referenceType),
-      'quantity': serializer.toJson<int>(quantity),
+      'quantity': serializer.toJson<double>(quantity),
       'costPrice': serializer.toJson<double>(costPrice),
       'sellingPrice': serializer.toJson<double>(sellingPrice),
       'totalCost': serializer.toJson<double>(totalCost),
       'totalRevenue': serializer.toJson<double>(totalRevenue),
       'profit': serializer.toJson<double>(profit),
-      'balanceQuantity': serializer.toJson<int>(balanceQuantity),
+      'balanceQuantity': serializer.toJson<double>(balanceQuantity),
       'balanceValue': serializer.toJson<double>(balanceValue),
       'transactionDate': serializer.toJson<DateTime>(transactionDate),
       'notes': serializer.toJson<String?>(notes),
@@ -6648,13 +6650,13 @@ class StockLedgerRecord extends DataClass
     int? ledgerType,
     String? referenceId,
     String? referenceType,
-    int? quantity,
+    double? quantity,
     double? costPrice,
     double? sellingPrice,
     double? totalCost,
     double? totalRevenue,
     double? profit,
-    int? balanceQuantity,
+    double? balanceQuantity,
     double? balanceValue,
     DateTime? transactionDate,
     Value<String?> notes = const Value.absent(),
@@ -6842,13 +6844,13 @@ class StockLedgerRecordsCompanion extends UpdateCompanion<StockLedgerRecord> {
   final Value<int> ledgerType;
   final Value<String> referenceId;
   final Value<String> referenceType;
-  final Value<int> quantity;
+  final Value<double> quantity;
   final Value<double> costPrice;
   final Value<double> sellingPrice;
   final Value<double> totalCost;
   final Value<double> totalRevenue;
   final Value<double> profit;
-  final Value<int> balanceQuantity;
+  final Value<double> balanceQuantity;
   final Value<double> balanceValue;
   final Value<DateTime> transactionDate;
   final Value<String?> notes;
@@ -6923,13 +6925,13 @@ class StockLedgerRecordsCompanion extends UpdateCompanion<StockLedgerRecord> {
     Expression<int>? ledgerType,
     Expression<String>? referenceId,
     Expression<String>? referenceType,
-    Expression<int>? quantity,
+    Expression<double>? quantity,
     Expression<double>? costPrice,
     Expression<double>? sellingPrice,
     Expression<double>? totalCost,
     Expression<double>? totalRevenue,
     Expression<double>? profit,
-    Expression<int>? balanceQuantity,
+    Expression<double>? balanceQuantity,
     Expression<double>? balanceValue,
     Expression<DateTime>? transactionDate,
     Expression<String>? notes,
@@ -6977,13 +6979,13 @@ class StockLedgerRecordsCompanion extends UpdateCompanion<StockLedgerRecord> {
     Value<int>? ledgerType,
     Value<String>? referenceId,
     Value<String>? referenceType,
-    Value<int>? quantity,
+    Value<double>? quantity,
     Value<double>? costPrice,
     Value<double>? sellingPrice,
     Value<double>? totalCost,
     Value<double>? totalRevenue,
     Value<double>? profit,
-    Value<int>? balanceQuantity,
+    Value<double>? balanceQuantity,
     Value<double>? balanceValue,
     Value<DateTime>? transactionDate,
     Value<String?>? notes,
@@ -7058,7 +7060,7 @@ class StockLedgerRecordsCompanion extends UpdateCompanion<StockLedgerRecord> {
       map['reference_type'] = Variable<String>(referenceType.value);
     }
     if (quantity.present) {
-      map['quantity'] = Variable<int>(quantity.value);
+      map['quantity'] = Variable<double>(quantity.value);
     }
     if (costPrice.present) {
       map['cost_price'] = Variable<double>(costPrice.value);
@@ -7076,7 +7078,7 @@ class StockLedgerRecordsCompanion extends UpdateCompanion<StockLedgerRecord> {
       map['profit'] = Variable<double>(profit.value);
     }
     if (balanceQuantity.present) {
-      map['balance_quantity'] = Variable<int>(balanceQuantity.value);
+      map['balance_quantity'] = Variable<double>(balanceQuantity.value);
     }
     if (balanceValue.present) {
       map['balance_value'] = Variable<double>(balanceValue.value);
@@ -7207,11 +7209,11 @@ class $BillRecordsTable extends BillRecords
     'totalQuantity',
   );
   @override
-  late final GeneratedColumn<int> totalQuantity = GeneratedColumn<int>(
+  late final GeneratedColumn<double> totalQuantity = GeneratedColumn<double>(
     'total_quantity',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.double,
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
@@ -7829,7 +7831,7 @@ class $BillRecordsTable extends BillRecords
         data['${effectivePrefix}items_json'],
       )!,
       totalQuantity: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.double,
         data['${effectivePrefix}total_quantity'],
       )!,
       totalAmount: attachedDatabase.typeMapping.read(
@@ -7944,7 +7946,7 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
   final String? customerName;
   final String? customerContact;
   final String itemsJson;
-  final int totalQuantity;
+  final double totalQuantity;
   final double totalAmount;
   final double discountAmount;
   final double discountPercent;
@@ -8019,7 +8021,7 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
       map['customer_contact'] = Variable<String>(customerContact);
     }
     map['items_json'] = Variable<String>(itemsJson);
-    map['total_quantity'] = Variable<int>(totalQuantity);
+    map['total_quantity'] = Variable<double>(totalQuantity);
     map['total_amount'] = Variable<double>(totalAmount);
     map['discount_amount'] = Variable<double>(discountAmount);
     map['discount_percent'] = Variable<double>(discountPercent);
@@ -8115,7 +8117,7 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
       customerName: serializer.fromJson<String?>(json['customerName']),
       customerContact: serializer.fromJson<String?>(json['customerContact']),
       itemsJson: serializer.fromJson<String>(json['itemsJson']),
-      totalQuantity: serializer.fromJson<int>(json['totalQuantity']),
+      totalQuantity: serializer.fromJson<double>(json['totalQuantity']),
       totalAmount: serializer.fromJson<double>(json['totalAmount']),
       discountAmount: serializer.fromJson<double>(json['discountAmount']),
       discountPercent: serializer.fromJson<double>(json['discountPercent']),
@@ -8152,7 +8154,7 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
       'customerName': serializer.toJson<String?>(customerName),
       'customerContact': serializer.toJson<String?>(customerContact),
       'itemsJson': serializer.toJson<String>(itemsJson),
-      'totalQuantity': serializer.toJson<int>(totalQuantity),
+      'totalQuantity': serializer.toJson<double>(totalQuantity),
       'totalAmount': serializer.toJson<double>(totalAmount),
       'discountAmount': serializer.toJson<double>(discountAmount),
       'discountPercent': serializer.toJson<double>(discountPercent),
@@ -8187,7 +8189,7 @@ class BillRecord extends DataClass implements Insertable<BillRecord> {
     Value<String?> customerName = const Value.absent(),
     Value<String?> customerContact = const Value.absent(),
     String? itemsJson,
-    int? totalQuantity,
+    double? totalQuantity,
     double? totalAmount,
     double? discountAmount,
     double? discountPercent,
@@ -8447,7 +8449,7 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
   final Value<String?> customerName;
   final Value<String?> customerContact;
   final Value<String> itemsJson;
-  final Value<int> totalQuantity;
+  final Value<double> totalQuantity;
   final Value<double> totalAmount;
   final Value<double> discountAmount;
   final Value<double> discountPercent;
@@ -8549,7 +8551,7 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
     Expression<String>? customerName,
     Expression<String>? customerContact,
     Expression<String>? itemsJson,
-    Expression<int>? totalQuantity,
+    Expression<double>? totalQuantity,
     Expression<double>? totalAmount,
     Expression<double>? discountAmount,
     Expression<double>? discountPercent,
@@ -8617,7 +8619,7 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
     Value<String?>? customerName,
     Value<String?>? customerContact,
     Value<String>? itemsJson,
-    Value<int>? totalQuantity,
+    Value<double>? totalQuantity,
     Value<double>? totalAmount,
     Value<double>? discountAmount,
     Value<double>? discountPercent,
@@ -8700,7 +8702,7 @@ class BillRecordsCompanion extends UpdateCompanion<BillRecord> {
       map['items_json'] = Variable<String>(itemsJson.value);
     }
     if (totalQuantity.present) {
-      map['total_quantity'] = Variable<int>(totalQuantity.value);
+      map['total_quantity'] = Variable<double>(totalQuantity.value);
     }
     if (totalAmount.present) {
       map['total_amount'] = Variable<double>(totalAmount.value);
@@ -14936,7 +14938,7 @@ typedef $$ProductRecordsTableCreateCompanionBuilder =
       Value<String?> barcode,
       Value<double> purchasePrice,
       Value<double> salesPrice,
-      Value<int> currentStock,
+      Value<double> currentStock,
       Value<String?> unit,
       Value<bool> isActive,
       required int syncStatus,
@@ -14963,7 +14965,7 @@ typedef $$ProductRecordsTableUpdateCompanionBuilder =
       Value<String?> barcode,
       Value<double> purchasePrice,
       Value<double> salesPrice,
-      Value<int> currentStock,
+      Value<double> currentStock,
       Value<String?> unit,
       Value<bool> isActive,
       Value<int> syncStatus,
@@ -15034,7 +15036,7 @@ class $$ProductRecordsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get currentStock => $composableBuilder(
+  ColumnFilters<double> get currentStock => $composableBuilder(
     column: $table.currentStock,
     builder: (column) => ColumnFilters(column),
   );
@@ -15164,7 +15166,7 @@ class $$ProductRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get currentStock => $composableBuilder(
+  ColumnOrderings<double> get currentStock => $composableBuilder(
     column: $table.currentStock,
     builder: (column) => ColumnOrderings(column),
   );
@@ -15282,7 +15284,7 @@ class $$ProductRecordsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get currentStock => $composableBuilder(
+  GeneratedColumn<double> get currentStock => $composableBuilder(
     column: $table.currentStock,
     builder: (column) => column,
   );
@@ -15388,7 +15390,7 @@ class $$ProductRecordsTableTableManager
                 Value<String?> barcode = const Value.absent(),
                 Value<double> purchasePrice = const Value.absent(),
                 Value<double> salesPrice = const Value.absent(),
-                Value<int> currentStock = const Value.absent(),
+                Value<double> currentStock = const Value.absent(),
                 Value<String?> unit = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<int> syncStatus = const Value.absent(),
@@ -15440,7 +15442,7 @@ class $$ProductRecordsTableTableManager
                 Value<String?> barcode = const Value.absent(),
                 Value<double> purchasePrice = const Value.absent(),
                 Value<double> salesPrice = const Value.absent(),
-                Value<int> currentStock = const Value.absent(),
+                Value<double> currentStock = const Value.absent(),
                 Value<String?> unit = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 required int syncStatus,
@@ -15516,7 +15518,7 @@ typedef $$PurchaseRecordsTableCreateCompanionBuilder =
       Value<String?> supplierName,
       Value<String?> companyId,
       Value<String?> companyName,
-      Value<int> quantity,
+      Value<double> quantity,
       Value<String> unit,
       Value<double> purchasePrice,
       Value<double> salesPrice,
@@ -15539,7 +15541,7 @@ typedef $$PurchaseRecordsTableUpdateCompanionBuilder =
       Value<String?> supplierName,
       Value<String?> companyId,
       Value<String?> companyName,
-      Value<int> quantity,
+      Value<double> quantity,
       Value<String> unit,
       Value<double> purchasePrice,
       Value<double> salesPrice,
@@ -15602,7 +15604,7 @@ class $$PurchaseRecordsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get quantity => $composableBuilder(
+  ColumnFilters<double> get quantity => $composableBuilder(
     column: $table.quantity,
     builder: (column) => ColumnFilters(column),
   );
@@ -15712,7 +15714,7 @@ class $$PurchaseRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get quantity => $composableBuilder(
+  ColumnOrderings<double> get quantity => $composableBuilder(
     column: $table.quantity,
     builder: (column) => ColumnOrderings(column),
   );
@@ -15814,7 +15816,7 @@ class $$PurchaseRecordsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get quantity =>
+  GeneratedColumn<double> get quantity =>
       $composableBuilder(column: $table.quantity, builder: (column) => column);
 
   GeneratedColumn<String> get unit =>
@@ -15910,7 +15912,7 @@ class $$PurchaseRecordsTableTableManager
                 Value<String?> supplierName = const Value.absent(),
                 Value<String?> companyId = const Value.absent(),
                 Value<String?> companyName = const Value.absent(),
-                Value<int> quantity = const Value.absent(),
+                Value<double> quantity = const Value.absent(),
                 Value<String> unit = const Value.absent(),
                 Value<double> purchasePrice = const Value.absent(),
                 Value<double> salesPrice = const Value.absent(),
@@ -15954,7 +15956,7 @@ class $$PurchaseRecordsTableTableManager
                 Value<String?> supplierName = const Value.absent(),
                 Value<String?> companyId = const Value.absent(),
                 Value<String?> companyName = const Value.absent(),
-                Value<int> quantity = const Value.absent(),
+                Value<double> quantity = const Value.absent(),
                 Value<String> unit = const Value.absent(),
                 Value<double> purchasePrice = const Value.absent(),
                 Value<double> salesPrice = const Value.absent(),
@@ -16025,8 +16027,8 @@ typedef $$PurchaseBatchRecordsTableCreateCompanionBuilder =
       Value<String> productUniqueKey,
       Value<double> purchasePrice,
       Value<double> sellingPrice,
-      Value<int> quantityPurchased,
-      Value<int> quantityRemaining,
+      Value<double> quantityPurchased,
+      Value<double> quantityRemaining,
       required DateTime purchaseDate,
       Value<String?> supplierId,
       Value<String?> supplierName,
@@ -16052,8 +16054,8 @@ typedef $$PurchaseBatchRecordsTableUpdateCompanionBuilder =
       Value<String> productUniqueKey,
       Value<double> purchasePrice,
       Value<double> sellingPrice,
-      Value<int> quantityPurchased,
-      Value<int> quantityRemaining,
+      Value<double> quantityPurchased,
+      Value<double> quantityRemaining,
       Value<DateTime> purchaseDate,
       Value<String?> supplierId,
       Value<String?> supplierName,
@@ -16127,12 +16129,12 @@ class $$PurchaseBatchRecordsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get quantityPurchased => $composableBuilder(
+  ColumnFilters<double> get quantityPurchased => $composableBuilder(
     column: $table.quantityPurchased,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get quantityRemaining => $composableBuilder(
+  ColumnFilters<double> get quantityRemaining => $composableBuilder(
     column: $table.quantityRemaining,
     builder: (column) => ColumnFilters(column),
   );
@@ -16257,12 +16259,12 @@ class $$PurchaseBatchRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get quantityPurchased => $composableBuilder(
+  ColumnOrderings<double> get quantityPurchased => $composableBuilder(
     column: $table.quantityPurchased,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get quantityRemaining => $composableBuilder(
+  ColumnOrderings<double> get quantityRemaining => $composableBuilder(
     column: $table.quantityRemaining,
     builder: (column) => ColumnOrderings(column),
   );
@@ -16377,12 +16379,12 @@ class $$PurchaseBatchRecordsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get quantityPurchased => $composableBuilder(
+  GeneratedColumn<double> get quantityPurchased => $composableBuilder(
     column: $table.quantityPurchased,
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get quantityRemaining => $composableBuilder(
+  GeneratedColumn<double> get quantityRemaining => $composableBuilder(
     column: $table.quantityRemaining,
     builder: (column) => column,
   );
@@ -16493,8 +16495,8 @@ class $$PurchaseBatchRecordsTableTableManager
                 Value<String> productUniqueKey = const Value.absent(),
                 Value<double> purchasePrice = const Value.absent(),
                 Value<double> sellingPrice = const Value.absent(),
-                Value<int> quantityPurchased = const Value.absent(),
-                Value<int> quantityRemaining = const Value.absent(),
+                Value<double> quantityPurchased = const Value.absent(),
+                Value<double> quantityRemaining = const Value.absent(),
                 Value<DateTime> purchaseDate = const Value.absent(),
                 Value<String?> supplierId = const Value.absent(),
                 Value<String?> supplierName = const Value.absent(),
@@ -16545,8 +16547,8 @@ class $$PurchaseBatchRecordsTableTableManager
                 Value<String> productUniqueKey = const Value.absent(),
                 Value<double> purchasePrice = const Value.absent(),
                 Value<double> sellingPrice = const Value.absent(),
-                Value<int> quantityPurchased = const Value.absent(),
-                Value<int> quantityRemaining = const Value.absent(),
+                Value<double> quantityPurchased = const Value.absent(),
+                Value<double> quantityRemaining = const Value.absent(),
                 required DateTime purchaseDate,
                 Value<String?> supplierId = const Value.absent(),
                 Value<String?> supplierName = const Value.absent(),
@@ -16628,13 +16630,13 @@ typedef $$StockLedgerRecordsTableCreateCompanionBuilder =
       required int ledgerType,
       Value<String> referenceId,
       Value<String> referenceType,
-      Value<int> quantity,
+      Value<double> quantity,
       Value<double> costPrice,
       Value<double> sellingPrice,
       Value<double> totalCost,
       Value<double> totalRevenue,
       Value<double> profit,
-      Value<int> balanceQuantity,
+      Value<double> balanceQuantity,
       Value<double> balanceValue,
       required DateTime transactionDate,
       Value<String?> notes,
@@ -16655,13 +16657,13 @@ typedef $$StockLedgerRecordsTableUpdateCompanionBuilder =
       Value<int> ledgerType,
       Value<String> referenceId,
       Value<String> referenceType,
-      Value<int> quantity,
+      Value<double> quantity,
       Value<double> costPrice,
       Value<double> sellingPrice,
       Value<double> totalCost,
       Value<double> totalRevenue,
       Value<double> profit,
-      Value<int> balanceQuantity,
+      Value<double> balanceQuantity,
       Value<double> balanceValue,
       Value<DateTime> transactionDate,
       Value<String?> notes,
@@ -16738,7 +16740,7 @@ class $$StockLedgerRecordsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get quantity => $composableBuilder(
+  ColumnFilters<double> get quantity => $composableBuilder(
     column: $table.quantity,
     builder: (column) => ColumnFilters(column),
   );
@@ -16768,7 +16770,7 @@ class $$StockLedgerRecordsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get balanceQuantity => $composableBuilder(
+  ColumnFilters<double> get balanceQuantity => $composableBuilder(
     column: $table.balanceQuantity,
     builder: (column) => ColumnFilters(column),
   );
@@ -16868,7 +16870,7 @@ class $$StockLedgerRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get quantity => $composableBuilder(
+  ColumnOrderings<double> get quantity => $composableBuilder(
     column: $table.quantity,
     builder: (column) => ColumnOrderings(column),
   );
@@ -16898,7 +16900,7 @@ class $$StockLedgerRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get balanceQuantity => $composableBuilder(
+  ColumnOrderings<double> get balanceQuantity => $composableBuilder(
     column: $table.balanceQuantity,
     builder: (column) => ColumnOrderings(column),
   );
@@ -16988,7 +16990,7 @@ class $$StockLedgerRecordsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get quantity =>
+  GeneratedColumn<double> get quantity =>
       $composableBuilder(column: $table.quantity, builder: (column) => column);
 
   GeneratedColumn<double> get costPrice =>
@@ -17010,7 +17012,7 @@ class $$StockLedgerRecordsTableAnnotationComposer
   GeneratedColumn<double> get profit =>
       $composableBuilder(column: $table.profit, builder: (column) => column);
 
-  GeneratedColumn<int> get balanceQuantity => $composableBuilder(
+  GeneratedColumn<double> get balanceQuantity => $composableBuilder(
     column: $table.balanceQuantity,
     builder: (column) => column,
   );
@@ -17089,13 +17091,13 @@ class $$StockLedgerRecordsTableTableManager
                 Value<int> ledgerType = const Value.absent(),
                 Value<String> referenceId = const Value.absent(),
                 Value<String> referenceType = const Value.absent(),
-                Value<int> quantity = const Value.absent(),
+                Value<double> quantity = const Value.absent(),
                 Value<double> costPrice = const Value.absent(),
                 Value<double> sellingPrice = const Value.absent(),
                 Value<double> totalCost = const Value.absent(),
                 Value<double> totalRevenue = const Value.absent(),
                 Value<double> profit = const Value.absent(),
-                Value<int> balanceQuantity = const Value.absent(),
+                Value<double> balanceQuantity = const Value.absent(),
                 Value<double> balanceValue = const Value.absent(),
                 Value<DateTime> transactionDate = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
@@ -17141,13 +17143,13 @@ class $$StockLedgerRecordsTableTableManager
                 required int ledgerType,
                 Value<String> referenceId = const Value.absent(),
                 Value<String> referenceType = const Value.absent(),
-                Value<int> quantity = const Value.absent(),
+                Value<double> quantity = const Value.absent(),
                 Value<double> costPrice = const Value.absent(),
                 Value<double> sellingPrice = const Value.absent(),
                 Value<double> totalCost = const Value.absent(),
                 Value<double> totalRevenue = const Value.absent(),
                 Value<double> profit = const Value.absent(),
-                Value<int> balanceQuantity = const Value.absent(),
+                Value<double> balanceQuantity = const Value.absent(),
                 Value<double> balanceValue = const Value.absent(),
                 required DateTime transactionDate,
                 Value<String?> notes = const Value.absent(),
@@ -17216,7 +17218,7 @@ typedef $$BillRecordsTableCreateCompanionBuilder =
       Value<String?> customerName,
       Value<String?> customerContact,
       Value<String> itemsJson,
-      Value<int> totalQuantity,
+      Value<double> totalQuantity,
       Value<double> totalAmount,
       Value<double> discountAmount,
       Value<double> discountPercent,
@@ -17250,7 +17252,7 @@ typedef $$BillRecordsTableUpdateCompanionBuilder =
       Value<String?> customerName,
       Value<String?> customerContact,
       Value<String> itemsJson,
-      Value<int> totalQuantity,
+      Value<double> totalQuantity,
       Value<double> totalAmount,
       Value<double> discountAmount,
       Value<double> discountPercent,
@@ -17316,7 +17318,7 @@ class $$BillRecordsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get totalQuantity => $composableBuilder(
+  ColumnFilters<double> get totalQuantity => $composableBuilder(
     column: $table.totalQuantity,
     builder: (column) => ColumnFilters(column),
   );
@@ -17481,7 +17483,7 @@ class $$BillRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get totalQuantity => $composableBuilder(
+  ColumnOrderings<double> get totalQuantity => $composableBuilder(
     column: $table.totalQuantity,
     builder: (column) => ColumnOrderings(column),
   );
@@ -17640,7 +17642,7 @@ class $$BillRecordsTableAnnotationComposer
   GeneratedColumn<String> get itemsJson =>
       $composableBuilder(column: $table.itemsJson, builder: (column) => column);
 
-  GeneratedColumn<int> get totalQuantity => $composableBuilder(
+  GeneratedColumn<double> get totalQuantity => $composableBuilder(
     column: $table.totalQuantity,
     builder: (column) => column,
   );
@@ -17795,7 +17797,7 @@ class $$BillRecordsTableTableManager
                 Value<String?> customerName = const Value.absent(),
                 Value<String?> customerContact = const Value.absent(),
                 Value<String> itemsJson = const Value.absent(),
-                Value<int> totalQuantity = const Value.absent(),
+                Value<double> totalQuantity = const Value.absent(),
                 Value<double> totalAmount = const Value.absent(),
                 Value<double> discountAmount = const Value.absent(),
                 Value<double> discountPercent = const Value.absent(),
@@ -17861,7 +17863,7 @@ class $$BillRecordsTableTableManager
                 Value<String?> customerName = const Value.absent(),
                 Value<String?> customerContact = const Value.absent(),
                 Value<String> itemsJson = const Value.absent(),
-                Value<int> totalQuantity = const Value.absent(),
+                Value<double> totalQuantity = const Value.absent(),
                 Value<double> totalAmount = const Value.absent(),
                 Value<double> discountAmount = const Value.absent(),
                 Value<double> discountPercent = const Value.absent(),

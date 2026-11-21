@@ -16,6 +16,7 @@ class CustomerListWidget extends StatelessWidget {
   final void Function(Map<String, dynamic>)? onCustomerLongPress;
   final void Function(Map<String, dynamic>)? onFinanceTap;
   final void Function(Map<String, dynamic>)? onTransactionsTap;
+  final void Function(Map<String, dynamic>)? onCollectTap;
 
   // Labels
   final String emptyTitle;
@@ -36,6 +37,7 @@ class CustomerListWidget extends StatelessWidget {
     this.onCustomerLongPress,
     this.onFinanceTap,
     this.onTransactionsTap,
+    this.onCollectTap,
     this.emptyTitle = 'No customers yet',
     this.emptySubtitle = 'Add your first customer to get started',
     this.noResultsTitle = 'No results found',
@@ -164,6 +166,11 @@ class CustomerListWidget extends StatelessWidget {
               onTransactionsTap: onTransactionsTap != null
                   ? () => onTransactionsTap!(filtered[index])
                   : null,
+              onCollectTap: onCollectTap != null
+                  ? () => onCollectTap!(filtered[index])
+                  : (onTransactionsTap != null
+                      ? () => onTransactionsTap!(filtered[index])
+                      : null),
               pendingLabel: pendingLabel,
             ),
           );
@@ -379,6 +386,16 @@ class CustomerListWidget extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    if (hasPending &&
+                        (onCollectTap != null || onTransactionsTap != null)) ...[
+                      _desktopCollectButton(
+                        context,
+                        onTap: () => (onCollectTap ?? onTransactionsTap)!(
+                          customer,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
                     if (contact.isNotEmpty)
                       CommunicationActionIcons(
                         phoneNumber: contact,
@@ -431,6 +448,40 @@ class CustomerListWidget extends StatelessWidget {
           shape: BoxShape.circle,
         ),
         child: Icon(icon, size: 15, color: color),
+      ),
+    );
+  }
+
+  Widget _desktopCollectButton(
+    BuildContext context, {
+    required VoidCallback onTap,
+  }) {
+    final accent = AppColors.action(context);
+    return Material(
+      color: accent,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.currency_rupee_rounded, size: 14, color: AppTheme.white),
+              SizedBox(width: 2),
+              Text(
+                'Collect',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  color: AppTheme.white,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -507,6 +558,7 @@ class _CustomerCard extends StatelessWidget {
   final VoidCallback? onLongPress;
   final VoidCallback? onFinanceTap;
   final VoidCallback? onTransactionsTap;
+  final VoidCallback? onCollectTap;
   final String pendingLabel;
 
   const _CustomerCard({
@@ -515,8 +567,16 @@ class _CustomerCard extends StatelessWidget {
     this.onLongPress,
     this.onFinanceTap,
     this.onTransactionsTap,
+    this.onCollectTap,
     this.pendingLabel = 'pending',
   });
+
+  String _formatPending(double amount) {
+    if (amount == amount.roundToDouble()) {
+      return amount.toStringAsFixed(0);
+    }
+    return amount.toStringAsFixed(2);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -677,6 +737,96 @@ class _CustomerCard extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ),
+                  ],
+                  if (pendingAmount.round() != 0 && onCollectTap != null) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+                      decoration: BoxDecoration(
+                        color: AppTheme.toneRose.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: AppTheme.toneRose.withValues(alpha: 0.22),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Pending amount',
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppTheme.toneRose.withValues(
+                                      alpha: 0.9,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '₹${_formatPending(pendingAmount)}',
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppTheme.toneRose,
+                                    height: 1.1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Material(
+                            color: AppTheme.transparent,
+                            child: InkWell(
+                              onTap: onCollectTap,
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: accent,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: accent.withValues(alpha: 0.28),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.currency_rupee_rounded,
+                                      size: 15,
+                                      color: AppTheme.white,
+                                    ),
+                                    SizedBox(width: 2),
+                                    Text(
+                                      'Collect',
+                                      style: TextStyle(
+                                        fontFamily: 'Literata',
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13,
+                                        color: AppTheme.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                   if (contact.isNotEmpty ||
