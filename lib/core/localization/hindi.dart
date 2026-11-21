@@ -47,6 +47,10 @@ class HindiLocalization {
   static const String pendingPayments = 'लंबित भुगतान';
   static const String lastDues = 'अंतिम बकाया';
   static const String lowStockItems = 'कम स्टॉक आइटम';
+  static const String bestSellers = 'सबसे ज्यादा बिकने वाले';
+  static const String awaitingPayment = 'भुगतान की प्रतीक्षा';
+  static const String belowReorderLevel = 'पुनर्आदेश स्तर से कम';
+  static const String comingUp = 'आगामी';
 
   // Navigation
   static const String home = 'होम';

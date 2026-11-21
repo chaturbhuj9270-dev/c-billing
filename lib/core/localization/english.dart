@@ -47,6 +47,10 @@ class EnglishLocalization {
   static const String pendingPayments = 'Pending Payments';
   static const String lastDues = 'Last Dues';
   static const String lowStockItems = 'Low Stock Items';
+  static const String bestSellers = 'Best sellers';
+  static const String awaitingPayment = 'Awaiting payment';
+  static const String belowReorderLevel = 'Below reorder level';
+  static const String comingUp = 'Coming up';
 
   // Navigation
   static const String home = 'Home';

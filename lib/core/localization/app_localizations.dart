@@ -424,6 +424,50 @@ class AppLocalizations {
     }
   }
 
+  String get bestSellers {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.bestSellers;
+      case 'Marathi':
+        return MarathiLocalization.bestSellers;
+      default:
+        return EnglishLocalization.bestSellers;
+    }
+  }
+
+  String get awaitingPayment {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.awaitingPayment;
+      case 'Marathi':
+        return MarathiLocalization.awaitingPayment;
+      default:
+        return EnglishLocalization.awaitingPayment;
+    }
+  }
+
+  String get belowReorderLevel {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.belowReorderLevel;
+      case 'Marathi':
+        return MarathiLocalization.belowReorderLevel;
+      default:
+        return EnglishLocalization.belowReorderLevel;
+    }
+  }
+
+  String get comingUp {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.comingUp;
+      case 'Marathi':
+        return MarathiLocalization.comingUp;
+      default:
+        return EnglishLocalization.comingUp;
+    }
+  }
+
   // Navigation
   String get home {
     switch (languageCode) {

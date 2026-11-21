@@ -187,12 +187,10 @@ class SalesChartAggregator {
 class SalesAnalysisChart extends StatefulWidget {
   const SalesAnalysisChart({
     super.key,
-    this.title = 'Sales Analysis',
     this.reloadToken,
     this.compact = false,
   });
 
-  final String title;
   final Object? reloadToken;
   final bool compact;
 
@@ -310,6 +308,15 @@ class _SalesAnalysisChartState extends State<SalesAnalysisChart>
         SalesChartMetric.returnOrder => 'Returns',
       };
 
+  /// Chart heading follows the selected metric tab (Sales / Profit / …).
+  String get _chartTitle => switch (_metric) {
+        SalesChartMetric.sales => 'Sales Analysis',
+        SalesChartMetric.profit => 'Profit Analysis',
+        SalesChartMetric.order => 'Order Analysis',
+        SalesChartMetric.quantity => 'Quantity Analysis',
+        SalesChartMetric.returnOrder => 'Return Order Analysis',
+      };
+
   String get _periodCaption {
     final now = DateTime.now();
     return switch (_period) {
@@ -355,7 +362,7 @@ class _SalesAnalysisChartState extends State<SalesAnalysisChart>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.title,
+                      _chartTitle,
                       style: TextStyle(
                         color: AppColors.primaryText(context),
                         fontSize: widget.compact ? 15 : 16,

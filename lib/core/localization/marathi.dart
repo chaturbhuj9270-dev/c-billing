@@ -47,6 +47,10 @@ class MarathiLocalization {
   static const String pendingPayments = 'प्रलंबित देयके';
   static const String lastDues = 'शेवटची थकबाकी';
   static const String lowStockItems = 'कमी स्टॉक वस्तू';
+  static const String bestSellers = 'सर्वाधिक विक्री';
+  static const String awaitingPayment = 'देयकाची वाट';
+  static const String belowReorderLevel = 'पुनर्ऑर्डर पातळीपेक्षा कमी';
+  static const String comingUp = 'येणारे';
 
   // Navigation
   static const String home = 'मुख्यपृष्ठ';

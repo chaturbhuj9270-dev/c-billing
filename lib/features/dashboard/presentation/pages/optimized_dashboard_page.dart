@@ -1457,6 +1457,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     Expanded(
                       child: _buildGlassyStatRow(
                         title: _localizations.topProducts,
+                        subtitle: _localizations.bestSellers,
                         count: _topProducts.length,
                         icon: Icons.star_rounded,
                         gradientColors: const [
@@ -1474,6 +1475,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     Expanded(
                       child: _buildGlassyStatRow(
                         title: _localizations.pendingPayments,
+                        subtitle: _localizations.awaitingPayment,
                         count: _pendingPayments.length,
                         icon: Icons.pending_actions_rounded,
                         gradientColors: const [
@@ -1495,6 +1497,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     Expanded(
                       child: _buildGlassyStatRow(
                         title: _localizations.lowStockItems,
+                        subtitle: _localizations.belowReorderLevel,
                         count: _lowStockItems.length,
                         icon: Icons.shopping_cart_rounded,
                         gradientColors: const [
@@ -1512,6 +1515,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     Expanded(
                       child: _buildGlassyStatRow(
                         title: _localizations.upcomingEvents,
+                        subtitle: _localizations.comingUp,
                         count: _upcomingEvents.length,
                         icon: Icons.event_rounded,
                         gradientColors: const [
@@ -1530,6 +1534,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               ] else ...[
                 _buildGlassyStatRow(
                   title: _localizations.topProducts,
+                  subtitle: _localizations.bestSellers,
                   count: _topProducts.length,
                   icon: Icons.star_rounded,
                   gradientColors: const [AppTheme.orange300, AppTheme.orange],
@@ -1542,6 +1547,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 const SizedBox(height: 10),
                 _buildGlassyStatRow(
                   title: _localizations.pendingPayments,
+                  subtitle: _localizations.awaitingPayment,
                   count: _pendingPayments.length,
                   icon: Icons.pending_actions_rounded,
                   gradientColors: const [AppTheme.error, AppTheme.red600],
@@ -1554,6 +1560,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 const SizedBox(height: 10),
                 _buildGlassyStatRow(
                   title: _localizations.lowStockItems,
+                  subtitle: _localizations.belowReorderLevel,
                   count: _lowStockItems.length,
                   icon: Icons.shopping_cart_rounded,
                   gradientColors: const [AppTheme.teal400, AppTheme.teal600],
@@ -1566,6 +1573,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 const SizedBox(height: 10),
                 _buildGlassyStatRow(
                   title: _localizations.upcomingEvents,
+                  subtitle: _localizations.comingUp,
                   count: _upcomingEvents.length,
                   icon: Icons.event_rounded,
                   gradientColors: const [AppTheme.cyan, AppTheme.cyan700],
@@ -3066,6 +3074,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
   Widget _buildGlassyStatRow({
     required String title,
+    required String subtitle,
     required int count,
     required IconData icon,
     required List<Color> gradientColors,
@@ -3075,107 +3084,155 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     final tones = isDark
         ? AppColors.darkMetricGradient(gradientColors.hashCode)
         : gradientColors;
-    return GestureDetector(
-      onTap: onTap,
-      child: _raisedGlass(
-        radius: 18,
-        fill: isDark
-            ? null
-            : LinearGradient(
-                colors: [
-                  AppTheme.white.withValues(alpha: 0.86),
-                  tones[0].withValues(alpha: 0.14),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-          child: Row(
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: tones,
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.black.withValues(
-                          alpha: isDark ? 0.35 : 0.15,
-                        ),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
+    final accent = tones.first;
+    final accentSoft = tones.length > 1 ? tones[1] : tones.first;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: isDark
+                  ? [
+                      accent.withValues(alpha: 0.28),
+                      AppColors.card(context).withValues(alpha: 0.92),
+                      accentSoft.withValues(alpha: 0.18),
+                    ]
+                  : [
+                      accent.withValues(alpha: 0.18),
+                      AppTheme.white.withValues(alpha: 0.94),
+                      accentSoft.withValues(alpha: 0.12),
                     ],
-                  ),
-                  child: Icon(
-                    icon,
-                    color: isDark ? AppTheme.white : AppTheme.white,
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.primaryText(context),
-                      fontFamily: 'Literata',
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppTheme.white.withValues(alpha: 0.1) : null,
-                    gradient: isDark
-                        ? null
-                        : LinearGradient(
-                            colors: [
-                              tones[0].withValues(alpha: 0.15),
-                              tones[1].withValues(alpha: 0.1),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isDark
-                          ? AppTheme.white.withValues(alpha: 0.2)
-                          : tones[0].withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    count.toString(),
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? AppTheme.white : tones[0],
-                      fontFamily: 'Literata',
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: AppColors.mutedText(context),
-                  size: 22,
-                ),
-              ],
             ),
+            border: Border.all(
+              color: isDark
+                  ? accent.withValues(alpha: 0.28)
+                  : accent.withValues(alpha: 0.16),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: accent.withValues(alpha: isDark ? 0.28 : 0.18),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+              BoxShadow(
+                color: AppTheme.black.withValues(alpha: isDark ? 0.28 : 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: tones,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: accent.withValues(alpha: 0.35),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Icon(icon, color: AppTheme.white, size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryText(context),
+                        fontFamily: 'Literata',
+                        height: 1.15,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.mutedText(context),
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 34,
+                height: 34,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: tones,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: accent.withValues(alpha: 0.3),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  count.toString(),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.white,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isDark
+                      ? AppTheme.white.withValues(alpha: 0.08)
+                      : AppTheme.white.withValues(alpha: 0.85),
+                  border: Border.all(
+                    color: isDark
+                        ? AppTheme.white.withValues(alpha: 0.16)
+                        : AppColors.border(context),
+                  ),
+                ),
+                child: Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.secondaryText(context),
+                  size: 20,
+                ),
+              ),
+            ],
           ),
         ),
+      ),
     );
   }
 
