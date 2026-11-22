@@ -95,6 +95,10 @@ class _PurchasePageState extends State<PurchasePage>
   final ScrollController _scrollController = ScrollController();
   bool _hasScrolledToBottom = false;
 
+  /// Optional dates / company / warranty / notes — collapsed by default so
+  /// shopkeepers can record a purchase in a few taps.
+  bool _moreDetailsExpanded = false;
+
   @override
   void initState() {
     super.initState();
@@ -2997,8 +3001,15 @@ class _PurchasePageState extends State<PurchasePage>
     }
   }
 
+  double get _purchaseLineTotal {
+    final quantity = int.tryParse(_quantityController.text) ?? 0;
+    final price = double.tryParse(_priceController.text) ?? 0;
+    return quantity * price;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final wide = DesktopCanvas.wide(context);
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
       body: SafeArea(
@@ -3006,12 +3017,10 @@ class _PurchasePageState extends State<PurchasePage>
         bottom: !DesktopCanvas.isDesktopPlatform,
         child: Column(
           children: [
-            // Scrollable content
             Expanded(
               child: CustomScrollView(
                 controller: _scrollController,
                 slivers: [
-                  // Sticky App Bar Section
                   if (!widget.isEmbedded)
                     SliverPersistentHeader(
                       pinned: true,
@@ -3022,30 +3031,27 @@ class _PurchasePageState extends State<PurchasePage>
                             : MediaQuery.paddingOf(context).top + 74,
                       ),
                     ),
-                  // Main Form Content
                   SliverToBoxAdapter(
                     child: SlideTransition(
                       position: _offsetAnimation,
                       child: FadeTransition(
                         opacity: _opacityAnimation,
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Column(
-                            children: [
-                              const SizedBox(height: 8),
-                              // Selection Cards Section
-                              _buildSelectionSection(),
-                              const SizedBox(height: 16),
-                              // Date & Quantity Section
-                              _buildDetailsSection(),
-                              const SizedBox(height: 16),
-                              // Pricing Section
-                              _buildPricingSection(),
-                              const SizedBox(height: 16),
-                              // Notes Section
-                              _buildNotesSection(),
-                              const SizedBox(height: 24),
-                            ],
+                          padding: EdgeInsets.fromLTRB(
+                            wide ? 24 : 16,
+                            8,
+                            wide ? 24 : 16,
+                            20,
+                          ),
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: wide ? 1100 : double.infinity,
+                              ),
+                              child: wide
+                                  ? _buildDesktopPurchaseForm()
+                                  : _buildMobilePurchaseForm(),
+                            ),
                           ),
                         ),
                       ),
@@ -3054,7 +3060,6 @@ class _PurchasePageState extends State<PurchasePage>
                 ],
               ),
             ),
-            // Sticky Bottom Submit Button
             _buildStickyBottomButton(),
           ],
         ),
@@ -3062,77 +3067,123 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  // Sticky bottom submit button
-  Widget _buildStickyBottomButton() {
-    if (DesktopCanvas.isDesktopPlatform) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        child: AppPillButton(
-          label: _localizations.recordPurchase,
-          icon: Icons.check_circle_rounded,
-          expanded: true,
-          loading: _isLoading,
-          onPressed: _isLoading ? null : _processPurchase,
-        ),
-      );
-    }
-    final isDark = AppColors.isDark(context);
-    return Container(
-      color: AppColors.scaffold(context),
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: AppColors.action(context),
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.action(context).withValues(alpha: isDark ? 0.45 : 0.28),
-              blurRadius: isDark ? 22 : 14,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: ElevatedButton(
-          onPressed: _isLoading ? null : _processPurchase,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.transparent,
-            shadowColor: AppTheme.transparent,
-            disabledBackgroundColor: AppTheme.transparent,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(28),
-            ),
+  Widget _buildMobilePurchaseForm() {
+    return Column(
+      children: [
+        _buildProductHeroCard(),
+        const SizedBox(height: 14),
+        _buildStockEntryCard(),
+        const SizedBox(height: 14),
+        _buildSupplierCard(),
+        const SizedBox(height: 14),
+        _buildMoreDetailsSection(),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+
+  Widget _buildDesktopPurchaseForm() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 11,
+          child: Column(
+            children: [
+              _buildProductHeroCard(),
+              const SizedBox(height: 14),
+              _buildStockEntryCard(),
+            ],
           ),
-          child: _isLoading
-              ? const SizedBox(
-                  height: 22,
-                  width: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.white),
-                  ),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.check_circle_rounded,
-                      color: AppTheme.white,
-                      size: 22,
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          flex: 9,
+          child: Column(
+            children: [
+              _buildSupplierCard(),
+              const SizedBox(height: 14),
+              _buildMoreDetailsSection(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Sticky CTA with live purchase total — always visible while recording.
+  Widget _buildStickyBottomButton() {
+    final total = _purchaseLineTotal;
+    final qty = int.tryParse(_quantityController.text) ?? 0;
+    final price = double.tryParse(_priceController.text) ?? 0;
+    final isDark = AppColors.isDark(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.scaffold(context),
+        border: Border(
+          top: BorderSide(color: AppColors.border(context)),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: isDark ? 0.35 : 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _localizations.totalAmount,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontFamily: 'Literata',
+                      color: AppColors.mutedText(context),
                     ),
-                    const SizedBox(width: 10),
+                  ),
+                  Text(
+                    '₹${total.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      fontFamily: 'Literata',
+                      color: AppColors.primaryText(context),
+                    ),
+                  ),
+                  if (qty > 0 && price > 0)
                     Text(
-                      _localizations.recordPurchase,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                      '$qty × ₹${price.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        fontSize: 11,
                         fontFamily: 'Literata',
-                        color: AppTheme.white,
+                        color: AppColors.mutedText(context),
                       ),
                     ),
-                  ],
-                ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 3,
+              child: AppPillButton(
+                label: _localizations.recordPurchase,
+                icon: Icons.check_circle_rounded,
+                expanded: true,
+                loading: _isLoading,
+                onPressed: _isLoading ? null : _processPurchase,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -3205,27 +3256,276 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  // Selection section with product, supplier, company cards
-  Widget _buildSelectionSection() {
-    final productSubtitle = _selectedProduct != null
-        ? 'Stock: ${_selectedProduct!.currentStock} • ${_selectedProduct!.companyName}'
-        : null;
+  /// Step 1 — pick what you bought (largest action on the screen).
+  Widget _buildProductHeroCard() {
+    final selected = _selectedProduct != null;
+    final isDark = AppColors.isDark(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: _formCardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionHeading(Icons.list_alt_rounded, _localizations.selectionDetails),
+          _sectionHeading(
+            Icons.inventory_2_rounded,
+            _localizations.productText,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Tap to choose from stock, or add a new item',
+            style: TextStyle(
+              fontSize: 12,
+              fontFamily: 'Literata',
+              color: AppColors.mutedText(context),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Material(
+            color: selected
+                ? AppColors.action(context).withValues(alpha: isDark ? 0.18 : 0.08)
+                : (isDark ? AppColors.inputFill(context) : AppTheme.grey100),
+            borderRadius: BorderRadius.circular(18),
+            child: InkWell(
+              onTap: _showProductSelectionBottomSheet,
+              borderRadius: BorderRadius.circular(18),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 16, 10, 16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.action(context).withValues(
+                          alpha: isDark ? 0.28 : 0.12,
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(
+                        selected
+                            ? Icons.check_rounded
+                            : Icons.inventory_2_outlined,
+                        color: AppColors.action(context),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: selected
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _selectedProduct!.name,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    fontFamily: 'Literata',
+                                    color: AppColors.primaryText(context),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'In stock: ${_selectedProduct!.currentStock}'
+                                  '${_selectedProduct!.companyName.isNotEmpty ? ' • ${_selectedProduct!.companyName}' : ''}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontFamily: 'Literata',
+                                    color: AppColors.mutedText(context),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Text(
+                              'Select product',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Literata',
+                                color: AppColors.mutedText(context),
+                              ),
+                            ),
+                    ),
+                    IconButton(
+                      tooltip: 'Add product',
+                      onPressed: _addNewProduct,
+                      icon: Icon(
+                        Icons.add_circle_outline_rounded,
+                        color: AppColors.action(context),
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.mutedText(context),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Step 2 — quantity + unit + prices (the money block users care about).
+  Widget _buildStockEntryCard() {
+    final quantity = int.tryParse(_quantityController.text) ?? 0;
+    final price = double.tryParse(_priceController.text) ?? 0;
+    final total = quantity * price;
+    const quickQty = [1, 5, 10, 20, 50];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _formCardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeading(
+            Icons.shopping_bag_rounded,
+            _localizations.purchase,
+          ),
+          const SizedBox(height: 14),
+          _buildTextField(
+            controller: _quantityController,
+            label: _localizations.purchaseQuantity,
+            hint: _localizations.enterQuantity,
+            icon: Icons.shopping_cart_rounded,
+            keyboardType: TextInputType.number,
+            onChanged: (_) => _calculateTotal(),
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (final q in quickQty)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text('$q'),
+                      selected: quantity == q,
+                      onSelected: (_) {
+                        setState(() {
+                          _quantityController.text = '$q';
+                        });
+                      },
+                      selectedColor: AppColors.action(context),
+                      labelStyle: TextStyle(
+                        fontFamily: 'Literata',
+                        fontWeight: FontWeight.w600,
+                        color: quantity == q
+                            ? AppTheme.white
+                            : AppColors.primaryText(context),
+                      ),
+                      backgroundColor: AppColors.inputFill(context),
+                      side: BorderSide(color: AppColors.border(context)),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          _buildChipSelector(
+            label: _localizations.measurementUnit,
+            options: PurchaseSettingsService.instance.availableUnits,
+            selectedValue: _selectedUnit,
+            onSelected: (unit) => setState(() => _selectedUnit = unit),
+            color: AppColors.accent(context),
+            icon: Icons.straighten_rounded,
+          ),
           const SizedBox(height: 16),
-          _buildPickerRow(
-            label: _localizations.productText,
-            placeholder: 'Select product',
-            value: _selectedProduct?.name,
-            subtitle: productSubtitle,
-            icon: Icons.inventory_2_outlined,
-            onSelect: _showProductSelectionBottomSheet,
-            onAdd: _addNewProduct,
+          Row(
+            children: [
+              Expanded(
+                child: _buildPriceField(
+                  controller: _priceController,
+                  label: _localizations.purchasePrice,
+                  hint: '0.00',
+                  onChanged: (_) => _calculateTotal(),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildPriceField(
+                  controller: _salesPriceController,
+                  label: _localizations.salesPrice,
+                  hint: '0.00',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.action(context).withValues(
+                alpha: AppColors.isDark(context) ? 0.18 : 0.08,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: AppColors.action(context).withValues(alpha: 0.22),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.payments_rounded,
+                  size: 18,
+                  color: AppColors.action(context),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    quantity > 0
+                        ? '$quantity × ₹${price.toStringAsFixed(2)}'
+                        : _localizations.totalAmount,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontFamily: 'Literata',
+                      color: AppColors.secondaryText(context),
+                    ),
+                  ),
+                ),
+                Text(
+                  '₹${total.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Literata',
+                    color: AppColors.primaryText(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Step 3 — supplier (drives ledger linkage).
+  Widget _buildSupplierCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _formCardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeading(
+            Icons.local_shipping_rounded,
+            _localizations.supplier,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Required for supplier ledger & stock batches',
+            style: TextStyle(
+              fontSize: 12,
+              fontFamily: 'Literata',
+              color: AppColors.mutedText(context),
+            ),
           ),
           const SizedBox(height: 14),
           _buildPickerRow(
@@ -3236,15 +3536,160 @@ class _PurchasePageState extends State<PurchasePage>
             onSelect: _showSupplierSelectionBottomSheet,
             onAdd: _showAddSupplierDialog,
           ),
-          const SizedBox(height: 14),
-          _buildPickerRow(
-            label: _localizations.company,
-            placeholder: 'Select company',
-            value: _selectedCompany?['companyName']?.toString(),
-            icon: Icons.badge_outlined,
-            onSelect: _showCompanySelectionBottomSheet,
-            onAdd: _showAddCompanyDialog,
+        ],
+      ),
+    );
+  }
+
+  /// Optional extras — company, dates, warranty, notes.
+  Widget _buildMoreDetailsSection() {
+    final showDates =
+        PurchaseSettingsService.instance.showManufacturingDate ||
+        PurchaseSettingsService.instance.showExpiryDate;
+
+    return Container(
+      decoration: _formCardDecoration(),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () => setState(
+              () => _moreDetailsExpanded = !_moreDetailsExpanded,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _sectionHeading(
+                      Icons.tune_rounded,
+                      'More details',
+                    ),
+                  ),
+                  Text(
+                    '(${_localizations.optional})',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontFamily: 'Literata',
+                      color: AppColors.mutedText(context),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    _moreDetailsExpanded
+                        ? Icons.expand_less_rounded
+                        : Icons.expand_more_rounded,
+                    color: AppColors.mutedText(context),
+                  ),
+                ],
+              ),
+            ),
           ),
+          if (_moreDetailsExpanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildPickerRow(
+                    label: _localizations.company,
+                    placeholder: 'Select company',
+                    value: _selectedCompany?['companyName']?.toString(),
+                    icon: Icons.badge_outlined,
+                    onSelect: _showCompanySelectionBottomSheet,
+                    onAdd: _showAddCompanyDialog,
+                  ),
+                  if (showDates) ...[
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        if (PurchaseSettingsService
+                            .instance.showManufacturingDate)
+                          Expanded(
+                            child: _buildDateField(
+                              label: _localizations.mfgDate,
+                              value: _productionDate,
+                              onTap: () => _selectDate(isProduction: true),
+                            ),
+                          ),
+                        if (PurchaseSettingsService
+                                .instance.showManufacturingDate &&
+                            PurchaseSettingsService.instance.showExpiryDate)
+                          const SizedBox(width: 12),
+                        if (PurchaseSettingsService.instance.showExpiryDate)
+                          Expanded(
+                            child: _buildDateField(
+                              label: _localizations.expiryDate,
+                              value: _expiryDate,
+                              onTap: () => _selectDate(isProduction: false),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                  if (PurchaseSettingsService.instance.showWarranty) ...[
+                    const SizedBox(height: 14),
+                    _buildChipSelector<int>(
+                      label: _localizations.warrantyPeriod,
+                      options: PurchaseSettingsService.instance.warrantyOptions,
+                      selectedValue: _selectedWarranty,
+                      onSelected: (warranty) =>
+                          setState(() => _selectedWarranty = warranty),
+                      color: AppTheme.purple,
+                      icon: Icons.verified_user_rounded,
+                      labelBuilder: (value) => PurchaseSettingsService.instance
+                          .getWarrantyLabel(value),
+                    ),
+                  ],
+                  const SizedBox(height: 14),
+                  Text(
+                    _localizations.notes,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Literata',
+                      color: AppColors.secondaryText(context),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _notesController,
+                    maxLines: 3,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      color: AppColors.primaryText(context),
+                    ),
+                    decoration: InputDecoration(
+                      hintText: _localizations.addNotesAboutPurchase,
+                      hintStyle: TextStyle(
+                        color: AppColors.mutedText(context),
+                        fontFamily: 'Literata',
+                      ),
+                      filled: true,
+                      fillColor: AppColors.inputFill(context),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                          color: AppColors.border(context),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                          color: AppColors.action(context),
+                          width: 1.4,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.all(14),
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
@@ -3356,84 +3801,6 @@ class _PurchasePageState extends State<PurchasePage>
           ],
         ),
       ],
-    );
-  }
-
-  // Details section with dates, quantity, unit, warranty
-  Widget _buildDetailsSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: _formCardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _sectionHeading(Icons.receipt_long_rounded, _localizations.purchase),
-          const SizedBox(height: 16),
-          // Date pickers row (if enabled)
-          if (PurchaseSettingsService.instance.showManufacturingDate ||
-              PurchaseSettingsService.instance.showExpiryDate)
-            Row(
-              children: [
-                if (PurchaseSettingsService.instance.showManufacturingDate)
-                  Expanded(
-                    child: _buildDateField(
-                      label: _localizations.mfgDate,
-                      value: _productionDate,
-                      onTap: () => _selectDate(isProduction: true),
-                    ),
-                  ),
-                if (PurchaseSettingsService.instance.showManufacturingDate &&
-                    PurchaseSettingsService.instance.showExpiryDate)
-                  const SizedBox(width: 12),
-                if (PurchaseSettingsService.instance.showExpiryDate)
-                  Expanded(
-                    child: _buildDateField(
-                      label: _localizations.expiryDate,
-                      value: _expiryDate,
-                      onTap: () => _selectDate(isProduction: false),
-                    ),
-                  ),
-              ],
-            ),
-          if (PurchaseSettingsService.instance.showManufacturingDate ||
-              PurchaseSettingsService.instance.showExpiryDate)
-            const SizedBox(height: 16),
-          // Quantity field
-          _buildTextField(
-            controller: _quantityController,
-            label: _localizations.purchaseQuantity,
-            hint: _localizations.enterQuantity,
-            icon: Icons.shopping_cart_rounded,
-            keyboardType: TextInputType.number,
-            onChanged: (_) => _calculateTotal(),
-          ),
-          SizedBox(height: 16),
-          // Measurement Unit
-          _buildChipSelector(
-            label: _localizations.measurementUnit,
-            options: PurchaseSettingsService.instance.availableUnits,
-            selectedValue: _selectedUnit,
-            onSelected: (unit) => setState(() => _selectedUnit = unit),
-            color: AppColors.accent(context),
-            icon: Icons.straighten_rounded,
-          ),
-          // Warranty (if enabled)
-          if (PurchaseSettingsService.instance.showWarranty) ...[
-            const SizedBox(height: 16),
-            _buildChipSelector<int>(
-              label: _localizations.warrantyPeriod,
-              options: PurchaseSettingsService.instance.warrantyOptions,
-              selectedValue: _selectedWarranty,
-              onSelected: (warranty) =>
-                  setState(() => _selectedWarranty = warranty),
-              color: AppTheme.purple,
-              icon: Icons.verified_user_rounded,
-              labelBuilder: (value) =>
-                  PurchaseSettingsService.instance.getWarrantyLabel(value),
-            ),
-          ],
-        ],
-      ),
     );
   }
 
@@ -3688,118 +4055,6 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  // Pricing section
-  Widget _buildPricingSection() {
-    final quantity = int.tryParse(_quantityController.text) ?? 0;
-    final price = double.tryParse(_priceController.text) ?? 0;
-    final total = quantity * price;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: _formCardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _sectionHeading(Icons.currency_rupee_rounded, _localizations.pricing),
-          const SizedBox(height: 16),
-          // Price fields row
-          Row(
-            children: [
-              Expanded(
-                child: _buildPriceField(
-                  controller: _priceController,
-                  label: _localizations.purchasePrice,
-                  hint: '0.00',
-                  onChanged: (_) => _calculateTotal(),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildPriceField(
-                  controller: _salesPriceController,
-                  label: _localizations.salesPrice,
-                  hint: '0.00',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Total amount card
-          Container(
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.action(context).withValues(alpha: 0.08),
-                  AppTheme.green.withValues(alpha: 0.08),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: AppColors.accentSoft(context, 0.2),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.accentSoft(context, 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.receipt_long_rounded,
-                        color: AppColors.accent(context),
-                        size: 18,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _localizations.totalAmount,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            fontFamily: 'Literata',
-                            color: AppTheme.grey600,
-                          ),
-                        ),
-                        Text(
-                          '$quantity × ₹${price.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontFamily: 'Literata',
-                            color: AppTheme.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                Text(
-                  '₹${total.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    fontFamily: 'Literata',
-                    color: AppColors.accent(context),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   // Price field widget
   Widget _buildPriceField({
     required TextEditingController controller,
@@ -3816,46 +4071,47 @@ class _PurchasePageState extends State<PurchasePage>
             fontSize: 12,
             fontWeight: FontWeight.w600,
             fontFamily: 'Literata',
-            color: AppTheme.grey600,
+            color: AppColors.secondaryText(context),
           ),
         ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
-          keyboardType: TextInputType.number,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           onChanged: onChanged,
           style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w600,
             fontSize: 15,
+            color: AppColors.primaryText(context),
           ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: AppTheme.grey400),
+            hintStyle: TextStyle(color: AppColors.mutedText(context)),
             prefixText: '₹ ',
             prefixStyle: TextStyle(
               fontWeight: FontWeight.w700,
-              color: AppTheme.grey600,
+              color: AppColors.secondaryText(context),
               fontSize: 15,
             ),
             filled: true,
-            fillColor: AppColors.scaffold(context),
+            fillColor: AppColors.inputFill(context),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide(color: AppColors.border(context)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppTheme.green,
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: AppColors.action(context),
                 width: 1.5,
               ),
             ),
-            contentPadding: EdgeInsets.symmetric(
+            contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 14,
             ),
@@ -3865,63 +4121,6 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  // Notes section
-  Widget _buildNotesSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: _formCardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              _sectionHeading(Icons.notes_rounded, _localizations.notes),
-              const SizedBox(width: 8),
-              Text(
-                '(${_localizations.optional})',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontFamily: 'Literata',
-                  color: AppColors.mutedText(context),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _notesController,
-            maxLines: 3,
-            style: TextStyle(fontFamily: 'Literata'),
-            decoration: InputDecoration(
-              hintText: _localizations.addNotesAboutPurchase,
-              hintStyle: TextStyle(
-                color: AppTheme.grey400,
-                fontFamily: 'Literata',
-              ),
-              filled: true,
-              fillColor: AppColors.scaffold(context),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: AppColors.border(context)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: AppTheme.orange,
-                  width: 1.5,
-                ),
-              ),
-              contentPadding: const EdgeInsets.all(14),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 // Sticky header delegate for pinned sections
