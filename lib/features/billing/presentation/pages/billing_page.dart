@@ -1406,14 +1406,21 @@ class _BillingPageState extends State<BillingPage> {
       );
 
       debugPrint('[BillingPage] Getting shop details...');
-      final shop = await _shopRepository.getShopDetails().timeout(
+      // Force refresh so shop QR / UPI from Shop Details are never stale.
+      final shop = await _shopRepository
+          .getShopDetails(forceRefresh: true)
+          .timeout(
         const Duration(seconds: 10),
         onTimeout: () {
           debugPrint('[BillingPage] Shop details timeout, using empty shop');
           return Shop.empty;
         },
       );
-      debugPrint('[BillingPage] Shop: ${shop.shopName}');
+      debugPrint(
+        '[BillingPage] Shop: ${shop.shopName}, '
+        'qr=${shop.qrCodeBase64?.isNotEmpty == true}, '
+        'upi=${shop.upiId?.isNotEmpty == true}',
+      );
 
       debugPrint('[BillingPage] Generating PDF file...');
       if (kIsWeb) {

@@ -3355,6 +3355,17 @@ class AppLocalizations {
     }
   }
 
+  String get offerFirst100Users {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.offerFirst100Users;
+      case 'Marathi':
+        return MarathiLocalization.offerFirst100Users;
+      default:
+        return EnglishLocalization.offerFirst100Users;
+    }
+  }
+
   String get justPerMonth {
     switch (languageCode) {
       case 'Hindi':
@@ -3374,6 +3385,39 @@ class AppLocalizations {
         return MarathiLocalization.whatsIncluded;
       default:
         return EnglishLocalization.whatsIncluded;
+    }
+  }
+
+  String get everythingIncludedSubtitle {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.everythingIncludedSubtitle;
+      case 'Marathi':
+        return MarathiLocalization.everythingIncludedSubtitle;
+      default:
+        return EnglishLocalization.everythingIncludedSubtitle;
+    }
+  }
+
+  String get renewToKeepBilling {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.renewToKeepBilling;
+      case 'Marathi':
+        return MarathiLocalization.renewToKeepBilling;
+      default:
+        return EnglishLocalization.renewToKeepBilling;
+    }
+  }
+
+  String get subscriptionEndedRenewBody {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.subscriptionEndedRenewBody;
+      case 'Marathi':
+        return MarathiLocalization.subscriptionEndedRenewBody;
+      default:
+        return EnglishLocalization.subscriptionEndedRenewBody;
     }
   }
 
@@ -3451,6 +3495,17 @@ class AppLocalizations {
         return MarathiLocalization.subscribeNow;
       default:
         return EnglishLocalization.subscribeNow;
+    }
+  }
+
+  String get renewNow {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.renewNow;
+      case 'Marathi':
+        return MarathiLocalization.renewNow;
+      default:
+        return EnglishLocalization.renewNow;
     }
   }
 

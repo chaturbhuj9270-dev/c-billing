@@ -228,14 +228,21 @@ class _BillsListPageState extends State<BillsListPage>
       final printData = _createPrintBillData(bill);
 
       debugPrint('[BillsListPage] Fetching shop details...');
-      final shop = await _shopRepository.getShopDetails().timeout(
+      // Force refresh so shop QR / UPI from Shop Details are never stale.
+      final shop = await _shopRepository
+          .getShopDetails(forceRefresh: true)
+          .timeout(
         const Duration(seconds: 5),
         onTimeout: () {
           debugPrint('[BillsListPage] Shop details timeout, using empty shop');
           return Shop.empty;
         },
       );
-      debugPrint('[BillsListPage] Got shop: ${shop.shopName}');
+      debugPrint(
+        '[BillsListPage] Got shop: ${shop.shopName}, '
+        'qr=${shop.qrCodeBase64?.isNotEmpty == true}, '
+        'upi=${shop.upiId?.isNotEmpty == true}',
+      );
 
       debugPrint('[BillsListPage] Generating PDF file...');
       if (kIsWeb) {
@@ -2431,7 +2438,10 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
       final printData = _createPrintData();
 
       debugPrint('[BillDetailsDialog] Fetching shop details...');
-      final shop = await _shopRepository.getShopDetails().timeout(
+      // Force refresh so shop QR / UPI from Shop Details are never stale.
+      final shop = await _shopRepository
+          .getShopDetails(forceRefresh: true)
+          .timeout(
         const Duration(seconds: 10),
         onTimeout: () {
           debugPrint(
@@ -2440,7 +2450,11 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
           return Shop.empty;
         },
       );
-      debugPrint('[BillDetailsDialog] Got shop: ${shop.shopName}');
+      debugPrint(
+        '[BillDetailsDialog] Got shop: ${shop.shopName}, '
+        'qr=${shop.qrCodeBase64?.isNotEmpty == true}, '
+        'upi=${shop.upiId?.isNotEmpty == true}',
+      );
 
       debugPrint('[BillDetailsDialog] Generating PDF file...');
       if (kIsWeb) {

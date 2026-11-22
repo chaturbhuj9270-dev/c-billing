@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/print_bill_data.dart';
 import '../models/printer_models.dart';
+import '../upi_payment_uri.dart';
 import '../../../features/shop/domain/entities/shop.dart';
 import '../../services/bill_report_settings_service.dart';
 
@@ -191,10 +192,13 @@ class EscPosBillFormatter {
     // 5 — Totals & payment
     b.addAll(_buildTotals(billData));
 
-    // 6 — Footer
+    // 6 — UPI amount QR (same payload as Scan QR / PDF bill)
+    b.addAll(_buildPaymentQr(billData, shopDetails));
+
+    // 7 — Footer
     b.addAll(_buildFooter(billData));
 
-    // 7 — Feed & cut
+    // 8 — Feed & cut
     b.addAll(EscPosCommands.feedLines(config.feedLines));
     if (config.cutPaper) b.addAll(EscPosCommands.cutPaperPartial);
     if (config.openCashDrawer) b.addAll(EscPosCommands.openDrawer);
@@ -493,6 +497,48 @@ class EscPosBillFormatter {
       b.addAll(_center('Payment: ${d.paymentMethod}'));
     }
 
+    return b;
+  }
+
+  /// Prints a UPI QR with bill total (`am=`) when shop UPI ID is configured.
+  List<int> _buildPaymentQr(PrintBillData d, Shop shop) {
+    final b = <int>[];
+    if (d.isQuotation || d.isReturnBill) return b;
+
+    final upiId = shop.upiId?.trim() ?? '';
+    if (!looksLikeUpiId(upiId)) return b;
+
+    final amount = billPrintAmountToPay(
+      grandTotal: d.grandTotal,
+      returnedAmount: d.totalReturnedAmount,
+    );
+    if (amount <= 0) return b;
+
+    final payload = buildUpiPaymentUri(
+      upiId: upiId,
+      payeeName: upiPayeeName(
+        accountHolderName: shop.accountHolderName,
+        shopName: shop.shopName,
+      ),
+      amount: amount,
+      note: 'Bill ${d.billNumber}',
+      transactionRef:
+          'BILL${d.billNumber.replaceAll(RegExp(r'[^A-Za-z0-9]'), '')}',
+    );
+
+    b.addAll(_lf());
+    b.addAll(_thinDiv());
+    b.addAll(_center('Scan to Pay', bold: true));
+    b.addAll(_center('Rs.${_fmt(amount)}'));
+    b.addAll(EscPosCommands.alignCenter);
+    b.addAll(
+      EscPosCommands.printQRCode(
+        payload,
+        moduleSize: _cols >= 42 ? 5 : 4,
+      ),
+    );
+    b.addAll(EscPosCommands.alignLeft);
+    b.addAll(_lf());
     return b;
   }
 

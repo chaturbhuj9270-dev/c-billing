@@ -1,5 +1,7 @@
-import 'dart:io';
 import 'dart:convert';
+import 'dart:io';
+
+import 'package:barcode/barcode.dart';
 import 'package:flutter/foundation.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -8,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:printing/printing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/print_bill_data.dart';
+import '../upi_payment_uri.dart';
 import '../../../features/quotation/data/services/quotation_format_settings.dart';
 import '../../../features/shop/domain/entities/shop.dart';
 import '../../services/bill_report_settings_service.dart';
@@ -636,40 +639,16 @@ class PdfBillService {
                   child: pw.Row(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      // QR Code
-                      if (shopDetails.qrCodeBase64 != null &&
-                          shopDetails.qrCodeBase64!.isNotEmpty)
+                      // QR Code — prefers UPI amount QR (same as Scan QR)
+                      if (_hasBillPaymentQr(billData, shopDetails))
                         pw.Container(
                           margin: const pw.EdgeInsets.only(right: 12),
-                          child: pw.Column(
-                            children: [
-                              pw.Container(
-                                width: 65,
-                                height: 65,
-                                padding: const pw.EdgeInsets.all(3),
-                                decoration: pw.BoxDecoration(
-                                  border: pw.Border.all(
-                                    color: accentColor,
-                                    width: 1,
-                                  ),
-                                  borderRadius: pw.BorderRadius.circular(4),
-                                ),
-                                child: pw.Image(
-                                  pw.MemoryImage(
-                                    base64Decode(shopDetails.qrCodeBase64!),
-                                  ),
-                                  fit: pw.BoxFit.contain,
-                                ),
-                              ),
-                              pw.SizedBox(height: 2),
-                              pw.Text(
-                                'Scan to Pay',
-                                style: pw.TextStyle(
-                                  fontSize: 7,
-                                  color: accentColor,
-                                ),
-                              ),
-                            ],
+                          child: _buildBillPaymentQr(
+                            billData: billData,
+                            shopDetails: shopDetails,
+                            size: 65,
+                            accentColor: accentColor,
+                            bordered: true,
                           ),
                         ),
                       // Bank Details
@@ -1836,9 +1815,8 @@ class PdfBillService {
         _buildDashedDivider(),
         pw.SizedBox(height: 6),
 
-        // QR + bank
-        if ((shopDetails.qrCodeBase64 != null &&
-                shopDetails.qrCodeBase64!.isNotEmpty) ||
+        // QR + bank — QR embeds bill total when UPI ID is configured
+        if (_hasBillPaymentQr(billData, shopDetails) ||
             (shopDetails.bankName != null &&
                 shopDetails.bankName!.isNotEmpty) ||
             (shopDetails.accountNumber != null &&
@@ -1848,29 +1826,17 @@ class PdfBillService {
             child: pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                if (shopDetails.qrCodeBase64 != null &&
-                    shopDetails.qrCodeBase64!.isNotEmpty)
+                if (_hasBillPaymentQr(billData, shopDetails))
                   pw.Container(
                     width: 62,
                     margin: const pw.EdgeInsets.only(right: 8),
-                    child: pw.Column(
-                      children: [
-                        pw.Container(
-                          width: 58,
-                          height: 58,
-                          child: pw.Image(
-                            pw.MemoryImage(
-                              base64Decode(shopDetails.qrCodeBase64!),
-                            ),
-                            fit: pw.BoxFit.contain,
-                          ),
-                        ),
-                        pw.SizedBox(height: 2),
-                        pw.Text(
-                          'Scan to Pay',
-                          style: const pw.TextStyle(fontSize: 6),
-                        ),
-                      ],
+                    child: _buildBillPaymentQr(
+                      billData: billData,
+                      shopDetails: shopDetails,
+                      size: 58,
+                      accentColor: PdfColors.black,
+                      bordered: false,
+                      captionSize: 6,
                     ),
                   ),
                 if ((shopDetails.bankName != null &&
@@ -2254,6 +2220,122 @@ class PdfBillService {
       filename:
           '${prefix}_${billData.billNumber.replaceAll('/', '_')}.pdf',
     );
+  }
+
+  /// True when we can render either a UPI amount QR or the uploaded shop QR.
+  bool _hasBillPaymentQr(PrintBillData billData, Shop shopDetails) {
+    return _upiAmountQrPayload(billData, shopDetails) != null ||
+        (shopDetails.qrCodeBase64 != null &&
+            shopDetails.qrCodeBase64!.isNotEmpty);
+  }
+
+  /// Builds the same amount-locked UPI URI used by Scan QR, when possible.
+  String? _upiAmountQrPayload(PrintBillData billData, Shop shopDetails) {
+    if (billData.isQuotation || billData.isReturnBill) return null;
+
+    final upiId = shopDetails.upiId?.trim() ?? '';
+    if (!looksLikeUpiId(upiId)) return null;
+
+    final amount = billPrintAmountToPay(
+      grandTotal: billData.grandTotal,
+      returnedAmount: billData.totalReturnedAmount,
+    );
+    if (amount <= 0) return null;
+
+    return buildUpiPaymentUri(
+      upiId: upiId,
+      payeeName: upiPayeeName(
+        accountHolderName: shopDetails.accountHolderName,
+        shopName: shopDetails.shopName,
+      ),
+      amount: amount,
+      note: 'Bill ${billData.billNumber}',
+      transactionRef:
+          'BILL${billData.billNumber.replaceAll(RegExp(r'[^A-Za-z0-9]'), '')}',
+    );
+  }
+
+  /// Prefer dynamic UPI QR with bill total (`am=`); fall back to uploaded shop QR.
+  pw.Widget _buildBillPaymentQr({
+    required PrintBillData billData,
+    required Shop shopDetails,
+    required double size,
+    required PdfColor accentColor,
+    bool bordered = false,
+    double captionSize = 7,
+  }) {
+    final upiPayload = _upiAmountQrPayload(billData, shopDetails);
+    final amount = billPrintAmountToPay(
+      grandTotal: billData.grandTotal,
+      returnedAmount: billData.totalReturnedAmount,
+    );
+
+    final pw.Widget? qrChild;
+    if (upiPayload != null) {
+      qrChild = pw.BarcodeWidget(
+        barcode: Barcode.qrCode(),
+        data: upiPayload,
+        width: size - (bordered ? 6 : 0),
+        height: size - (bordered ? 6 : 0),
+        drawText: false,
+      );
+    } else {
+      final bytes = _decodeShopImageBase64(shopDetails.qrCodeBase64);
+      qrChild = bytes == null
+          ? null
+          : pw.Image(pw.MemoryImage(bytes), fit: pw.BoxFit.contain);
+    }
+
+    if (qrChild == null) {
+      return pw.SizedBox();
+    }
+
+    return pw.Column(
+      children: [
+        pw.Container(
+          width: size,
+          height: size,
+          padding: bordered ? const pw.EdgeInsets.all(3) : pw.EdgeInsets.zero,
+          decoration: bordered
+              ? pw.BoxDecoration(
+                  border: pw.Border.all(color: accentColor, width: 1),
+                  borderRadius: pw.BorderRadius.circular(4),
+                )
+              : null,
+          child: qrChild,
+        ),
+        pw.SizedBox(height: 2),
+        pw.Text(
+          'Scan to Pay',
+          style: pw.TextStyle(fontSize: captionSize, color: accentColor),
+        ),
+        if (upiPayload != null)
+          pw.Text(
+            'Rs.${amount.toStringAsFixed(2)}',
+            style: pw.TextStyle(
+              fontSize: captionSize,
+              fontWeight: pw.FontWeight.bold,
+              color: accentColor,
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// Decodes shop QR/logo base64, stripping optional `data:image/...;base64,` prefix.
+  Uint8List? _decodeShopImageBase64(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    try {
+      var value = raw.trim();
+      final comma = value.indexOf(',');
+      if (value.startsWith('data:') && comma != -1) {
+        value = value.substring(comma + 1);
+      }
+      return base64Decode(value);
+    } catch (e) {
+      debugPrint('[PdfBillService] Failed to decode shop QR image: $e');
+      return null;
+    }
   }
 }
 

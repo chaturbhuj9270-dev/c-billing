@@ -90,7 +90,9 @@ class QuotationPrintService {
       }
 
       final printData = createPrintData(quotation);
-      final shop = await _shopRepository.getShopDetails().timeout(
+      final shop = await _shopRepository
+          .getShopDetails(forceRefresh: true)
+          .timeout(
         const Duration(seconds: 10),
         onTimeout: () => Shop.empty,
       );

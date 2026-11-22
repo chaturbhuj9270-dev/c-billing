@@ -41,7 +41,6 @@ class _PaymentScreenState extends State<PaymentScreen>
   bool _loadingProduct = true;
   String? _statusMessage;
   String? _productError;
-  String _priceLabel = SubscriptionProducts.fallbackPriceLabel;
 
   final PlayBillingService _playBilling = PlayBillingService();
   final CashfreePaymentService _cashfree = CashfreePaymentService();
@@ -89,7 +88,6 @@ class _PaymentScreenState extends State<PaymentScreen>
       setState(() {
         _loadingProduct = false;
         _productError = null;
-        _priceLabel = SubscriptionProducts.fallbackPriceLabel;
       });
       return;
     }
@@ -103,7 +101,6 @@ class _PaymentScreenState extends State<PaymentScreen>
     if (!mounted) return;
     setState(() {
       _loadingProduct = false;
-      _priceLabel = SubscriptionProducts.fallbackPriceLabel;
     });
   }
 
@@ -116,7 +113,6 @@ class _PaymentScreenState extends State<PaymentScreen>
       await _playBilling.initialize();
       if (!mounted) return;
       setState(() {
-        _priceLabel = _playBilling.displayPrice;
         _loadingProduct = false;
       });
     } catch (e) {
@@ -124,7 +120,6 @@ class _PaymentScreenState extends State<PaymentScreen>
       setState(() {
         _loadingProduct = false;
         _productError = e.toString();
-        _priceLabel = SubscriptionProducts.fallbackPriceLabel;
       });
     }
   }
@@ -453,9 +448,21 @@ class _PaymentScreenState extends State<PaymentScreen>
                     ),
                   ),
                 )
-              else
+              else ...[
                 Text(
-                  _priceLabel,
+                  '₹${SubscriptionService.subscriptionRegularPriceDisplay}',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.accentSoft(context, 0.45),
+                    fontFamily: 'Literata',
+                    decoration: TextDecoration.lineThrough,
+                    decorationColor: AppColors.accentSoft(context, 0.45),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  SubscriptionProducts.fallbackPriceLabel,
                   style: TextStyle(
                     fontSize: 42,
                     fontWeight: FontWeight.w700,
@@ -464,6 +471,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                     height: 1,
                   ),
                 ),
+              ],
               const SizedBox(height: 6),
               Container(
                 padding: const EdgeInsets.symmetric(

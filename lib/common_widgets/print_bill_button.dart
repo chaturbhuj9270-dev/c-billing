@@ -55,7 +55,7 @@ class _PrintBillButtonState extends State<PrintBillButton> {
     if (widget.shopDetails != null) {
       _shop = widget.shopDetails;
     } else {
-      _shop = await _shopRepository.getShopDetails();
+      _shop = await _shopRepository.getShopDetails(forceRefresh: true);
     }
     if (mounted) setState(() {});
   }
@@ -68,8 +68,9 @@ class _PrintBillButtonState extends State<PrintBillButton> {
       if (selectedPrinter == null) return;
     }
 
-    // Ensure shop details are loaded
-    _shop ??= await _shopRepository.getShopDetails();
+    // Ensure shop details are loaded (fresh QR / UPI from Shop Details)
+    _shop = widget.shopDetails ??
+        await _shopRepository.getShopDetails(forceRefresh: true);
 
     setState(() => _isPrinting = true);
 

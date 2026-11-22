@@ -377,13 +377,21 @@ class MarathiLocalization {
 
   // Subscription Screen
   static const String premiumFinancialSolutions = 'प्रीमियम वित्तीय उपाय';
-  static const String subscriptionExpired = 'सदस्यता समाप्त';
+  static const String subscriptionExpired = 'सदस्यता संपली.';
   static const String premiumPlan = 'प्रीमियम योजना';
-  static const String perYear = 'प्रति वर्ष';
+  static const String perYear = '/ वर्ष';
   static const String hurryUpFirstUsers =
       'घाई करा! ही ऑफर फक्त पहिल्या 100 वापरकर्त्यांसाठी आहे';
-  static const String justPerMonth = 'फक्त ₹333/महिना';
-  static const String whatsIncluded = 'काय समाविष्ट आहे';
+  static const String offerFirst100Users =
+      'मर्यादित कालावधी ऑफर — फक्त पहिल्या 100 वापरकर्त्यांसाठी.';
+  static const String justPerMonth = 'फक्त ₹333 प्रति महिना.';
+  static const String whatsIncluded = 'काय समाविष्ट आहे.';
+  static const String everythingIncludedSubtitle =
+      'आज तुम्ही वापरता ते सर्व, कोणत्याही मर्यादेशिवाय.';
+  static const String renewToKeepBilling =
+      'तुमचे बिझनेस बिलिंग सुरू ठेवण्यासाठी नूतनीकरण करा.';
+  static const String subscriptionEndedRenewBody =
+      'तुमची सदस्यता संपली आहे. बिल तयार करणे, स्टॉक ट्रॅक करणे आणि अहवाल चालवणे सुरू ठेवण्यासाठी प्रीमियम योजना नूतनीकरण करा.';
   static const String unlimitedBillGeneration = 'अमर्यादित बिल निर्मिती';
   static const String completeInventoryManagement =
       'संपूर्ण इन्व्हेंटरी व्यवस्थापन';
@@ -394,7 +402,8 @@ class MarathiLocalization {
   static const String cloudBackupPrioritySupport =
       'क्लाउड बॅकअप आणि प्राधान्य समर्थन';
   static const String subscribeNow = 'आता सदस्यता घ्या';
-  static const String needHelpContactUs = 'मदत हवी आहे? आमच्याशी संपर्क साधा';
+  static const String renewNow = 'आता नूतनीकरण करा';
+  static const String needHelpContactUs = 'मदत हवी आहे? सपोर्टशी संपर्क साधा.';
   static const String poweredBy = 'द्वारे समर्थित ';
   static const String chaturbhujSolutions = 'चतुर्भुज सोल्यूशन्स';
 

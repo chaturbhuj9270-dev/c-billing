@@ -375,23 +375,32 @@ class EnglishLocalization {
 
   // Subscription Screen
   static const String premiumFinancialSolutions = 'PREMIUM FINANCIAL SOLUTIONS';
-  static const String subscriptionExpired = 'Subscription Expired';
+  static const String subscriptionExpired = 'Subscription expired.';
   static const String premiumPlan = 'PREMIUM PLAN';
-  static const String perYear = 'per year';
+  static const String perYear = '/ year';
   static const String hurryUpFirstUsers =
       'Hurry up! This offer is for first 100 users only';
-  static const String justPerMonth = 'Just ₹333/month';
-  static const String whatsIncluded = 'What\'s Included';
-  static const String unlimitedBillGeneration = 'Unlimited Bill Generation';
+  static const String offerFirst100Users =
+      'Limited period offer — first 100 users only.';
+  static const String justPerMonth = 'Just ₹333 per month.';
+  static const String whatsIncluded = 'What\'s included.';
+  static const String everythingIncludedSubtitle =
+      'Everything you use today, with no limits.';
+  static const String renewToKeepBilling =
+      'Renew to keep your business billing.';
+  static const String subscriptionEndedRenewBody =
+      'Your subscription has ended. Renew the Premium plan to keep creating bills, tracking stock, and running reports.';
+  static const String unlimitedBillGeneration = 'Unlimited bill generation';
   static const String completeInventoryManagement =
-      'Complete Inventory Management';
-  static const String customerSupplierTracking = 'Customer & Supplier Tracking';
-  static const String advancedReportsAnalytics = 'Advanced Reports & Analytics';
-  static const String posPrinterSupport = 'POS Printer Support';
+      'Complete inventory management';
+  static const String customerSupplierTracking = 'Customer & supplier tracking';
+  static const String advancedReportsAnalytics = 'Advanced reports & analytics';
+  static const String posPrinterSupport = 'POS printer support';
   static const String cloudBackupPrioritySupport =
-      'Cloud Backup & Priority Support';
+      'Cloud backup & priority support';
   static const String subscribeNow = 'Subscribe Now';
-  static const String needHelpContactUs = 'Need help? Contact us';
+  static const String renewNow = 'Renew now';
+  static const String needHelpContactUs = 'Need help? Contact support.';
   static const String poweredBy = 'Powered by ';
   static const String chaturbhujSolutions = 'CHATURBHUJ SOLUTIONS';
 

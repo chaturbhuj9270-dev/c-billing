@@ -16,11 +16,15 @@ class SubscriptionService {
   FirebaseFirestore get _firestore => FirebaseFirestore.instance;
   FirebaseAuth get _auth => FirebaseAuth.instance;
 
-  // Subscription price in INR
+  // Limited-period offer price in INR (actual charge amount)
   static const double subscriptionPrice = 3999.0;
 
-  // Display price (with thousands separator)
+  // Regular list price shown struck-through during the limited offer
+  static const double subscriptionRegularPrice = 6999.0;
+
+  // Display prices (with thousands separator)
   static const String subscriptionPriceDisplay = '3,999';
+  static const String subscriptionRegularPriceDisplay = '6,999';
 
   // Paid subscription validity
   static const Duration subscriptionDuration = Duration(days: 365);

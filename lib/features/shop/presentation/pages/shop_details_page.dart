@@ -203,7 +203,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      ShopRepository().clearCache();
+      ShopRepository.clearSharedCache();
 
       if (mounted) {
         GlassyToast.show(context, _localizations.shopDetailsSaved);
@@ -258,7 +258,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       );
 
       // Clear shop repository cache so next bill print gets fresh data
-      ShopRepository().clearCache();
+      ShopRepository.clearSharedCache();
 
       setState(() {
         _qrCodeBase64 = base64Image;
@@ -296,7 +296,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       await ShopImageCacheController.instance.removeQrCode(currentUser.uid);
 
       // Clear shop repository cache so next bill print gets fresh data
-      ShopRepository().clearCache();
+      ShopRepository.clearSharedCache();
 
       setState(() {
         _qrCodeBase64 = null;
@@ -355,7 +355,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       );
 
       // Clear shop repository cache so next bill print gets fresh data
-      ShopRepository().clearCache();
+      ShopRepository.clearSharedCache();
 
       setState(() {
         _shopLogoBase64 = base64Image;
@@ -393,7 +393,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       await ShopImageCacheController.instance.removeLogo(currentUser.uid);
 
       // Clear shop repository cache so next bill print gets fresh data
-      ShopRepository().clearCache();
+      ShopRepository.clearSharedCache();
 
       setState(() {
         _shopLogoBase64 = null;
@@ -525,7 +525,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       );
 
       // Clear shop repository cache so next bill print gets fresh data
-      ShopRepository().clearCache();
+      ShopRepository.clearSharedCache();
 
       setState(() {
         _signatureBase64 = base64Image;
@@ -563,7 +563,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       await ShopImageCacheController.instance.removeSignature(currentUser.uid);
 
       // Clear shop repository cache so next bill print gets fresh data
-      ShopRepository().clearCache();
+      ShopRepository.clearSharedCache();
 
       setState(() {
         _signatureBase64 = null;
