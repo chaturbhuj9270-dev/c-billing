@@ -137,7 +137,10 @@ class ShopImageCacheController {
     await _db.deleteShopImageById(existing.id);
   }
 
-  // Sync images from Firebase to local cache Call this after fetching from Firebase
+  /// Sync images from Firebase into local cache.
+  ///
+  /// Important: empty/null Firebase values must NOT wipe images that only
+  /// exist locally (large QR/logo often fail Firestore's 1MB doc limit).
   Future<void> syncFromFirebase({
     required String userId,
     String? shopLogoBase64,
@@ -145,29 +148,42 @@ class ShopImageCacheController {
     String? qrCodeBase64,
   }) async {
     final existing = await getCachedImages(userId);
-
     final now = DateTime.now();
+
+    String? prefer(String? remote, String? local) {
+      if (remote != null && remote.trim().isNotEmpty) return remote;
+      if (local != null && local.trim().isNotEmpty) return local;
+      return null;
+    }
+
+    final mergedLogo = prefer(shopLogoBase64, existing?.shopLogoBase64);
+    final mergedSignature =
+        prefer(signatureBase64, existing?.signatureBase64);
+    final mergedQr = prefer(qrCodeBase64, existing?.qrCodeBase64);
 
     if (existing != null) {
       final updated = ShopImageCacheEntity(
         userId: userId,
-        shopLogoBase64: shopLogoBase64,
-        signatureBase64: signatureBase64,
-        qrCodeBase64: qrCodeBase64,
+        shopLogoBase64: mergedLogo,
+        signatureBase64: mergedSignature,
+        qrCodeBase64: mergedQr,
         lastSyncedAt: now,
         updatedAt: now,
       )..id = existing.id;
       await _db.saveShopImage(updated);
-    } else {
-      final newCache = ShopImageCacheEntity(
-        userId: userId,
-        shopLogoBase64: shopLogoBase64,
-        signatureBase64: signatureBase64,
-        qrCodeBase64: qrCodeBase64,
-        lastSyncedAt: now,
-        updatedAt: now,
+    } else if (mergedLogo != null ||
+        mergedSignature != null ||
+        mergedQr != null) {
+      await _db.saveShopImage(
+        ShopImageCacheEntity(
+          userId: userId,
+          shopLogoBase64: mergedLogo,
+          signatureBase64: mergedSignature,
+          qrCodeBase64: mergedQr,
+          lastSyncedAt: now,
+          updatedAt: now,
+        ),
       );
-      await _db.saveShopImage(newCache);
     }
   }
 }

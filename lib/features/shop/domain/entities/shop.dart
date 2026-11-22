@@ -104,7 +104,8 @@ class Shop {
     };
   }
 
-  // Copy with modifications
+  // Copy with modifications.
+  // Image fields use explicit nullable wrappers so empty→filled hydration works.
   Shop copyWith({
     String? id,
     String? shopName,
@@ -116,8 +117,11 @@ class Shop {
     String? gstNumber,
     String? logoUrl,
     String? shopLogoBase64,
+    bool setShopLogoBase64 = false,
     String? signatureBase64,
+    bool setSignatureBase64 = false,
     String? qrCodeBase64,
+    bool setQrCodeBase64 = false,
     String? upiId,
     String? bankName,
     String? accountNumber,
@@ -136,9 +140,13 @@ class Shop {
       email: email ?? this.email,
       gstNumber: gstNumber ?? this.gstNumber,
       logoUrl: logoUrl ?? this.logoUrl,
-      shopLogoBase64: shopLogoBase64 ?? this.shopLogoBase64,
-      signatureBase64: signatureBase64 ?? this.signatureBase64,
-      qrCodeBase64: qrCodeBase64 ?? this.qrCodeBase64,
+      shopLogoBase64:
+          setShopLogoBase64 ? shopLogoBase64 : (shopLogoBase64 ?? this.shopLogoBase64),
+      signatureBase64: setSignatureBase64
+          ? signatureBase64
+          : (signatureBase64 ?? this.signatureBase64),
+      qrCodeBase64:
+          setQrCodeBase64 ? qrCodeBase64 : (qrCodeBase64 ?? this.qrCodeBase64),
       upiId: upiId ?? this.upiId,
       bankName: bankName ?? this.bankName,
       accountNumber: accountNumber ?? this.accountNumber,

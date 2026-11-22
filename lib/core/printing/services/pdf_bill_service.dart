@@ -1815,72 +1815,60 @@ class PdfBillService {
         _buildDashedDivider(),
         pw.SizedBox(height: 6),
 
-        // QR + bank — QR embeds bill total when UPI ID is configured
-        if (_hasBillPaymentQr(billData, shopDetails) ||
-            (shopDetails.bankName != null &&
+        // QR (amount UPI or uploaded shop QR) then bank details
+        if (_hasBillPaymentQr(billData, shopDetails)) ...[
+          pw.Center(
+            child: _buildBillPaymentQr(
+              billData: billData,
+              shopDetails: shopDetails,
+              size: 72,
+              accentColor: PdfColors.black,
+              bordered: true,
+              captionSize: 7,
+            ),
+          ),
+          pw.SizedBox(height: 6),
+        ],
+        if ((shopDetails.bankName != null &&
                 shopDetails.bankName!.isNotEmpty) ||
             (shopDetails.accountNumber != null &&
                 shopDetails.accountNumber!.isNotEmpty))
           pw.Container(
             width: receiptWidth,
-            child: pw.Row(
+            child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                if (_hasBillPaymentQr(billData, shopDetails))
-                  pw.Container(
-                    width: 62,
-                    margin: const pw.EdgeInsets.only(right: 8),
-                    child: _buildBillPaymentQr(
-                      billData: billData,
-                      shopDetails: shopDetails,
-                      size: 58,
-                      accentColor: PdfColors.black,
-                      bordered: false,
-                      captionSize: 6,
-                    ),
+                pw.Text(
+                  'Bank Details',
+                  style: pw.TextStyle(
+                    fontSize: 8,
+                    fontWeight: pw.FontWeight.bold,
                   ),
-                if ((shopDetails.bankName != null &&
-                        shopDetails.bankName!.isNotEmpty) ||
-                    (shopDetails.accountNumber != null &&
-                        shopDetails.accountNumber!.isNotEmpty))
-                  pw.Expanded(
-                    child: pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Text(
-                          'Bank Details',
-                          style: pw.TextStyle(
-                            fontSize: 8,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
-                        ),
-                        pw.SizedBox(height: 2),
-                        if (shopDetails.bankName != null &&
-                            shopDetails.bankName!.isNotEmpty)
-                          pw.Text(
-                            shopDetails.bankName!,
-                            style: const pw.TextStyle(fontSize: 7),
-                          ),
-                        if (shopDetails.accountHolderName != null &&
-                            shopDetails.accountHolderName!.isNotEmpty)
-                          pw.Text(
-                            'AC: ${shopDetails.accountHolderName}',
-                            style: const pw.TextStyle(fontSize: 7),
-                          ),
-                        if (shopDetails.accountNumber != null &&
-                            shopDetails.accountNumber!.isNotEmpty)
-                          pw.Text(
-                            'No: ${shopDetails.accountNumber}',
-                            style: const pw.TextStyle(fontSize: 7),
-                          ),
-                        if (shopDetails.ifscCode != null &&
-                            shopDetails.ifscCode!.isNotEmpty)
-                          pw.Text(
-                            'IFSC: ${shopDetails.ifscCode}',
-                            style: const pw.TextStyle(fontSize: 7),
-                          ),
-                      ],
-                    ),
+                ),
+                pw.SizedBox(height: 2),
+                if (shopDetails.bankName != null &&
+                    shopDetails.bankName!.isNotEmpty)
+                  pw.Text(
+                    shopDetails.bankName!,
+                    style: const pw.TextStyle(fontSize: 7),
+                  ),
+                if (shopDetails.accountHolderName != null &&
+                    shopDetails.accountHolderName!.isNotEmpty)
+                  pw.Text(
+                    'AC: ${shopDetails.accountHolderName}',
+                    style: const pw.TextStyle(fontSize: 7),
+                  ),
+                if (shopDetails.accountNumber != null &&
+                    shopDetails.accountNumber!.isNotEmpty)
+                  pw.Text(
+                    'No: ${shopDetails.accountNumber}',
+                    style: const pw.TextStyle(fontSize: 7),
+                  ),
+                if (shopDetails.ifscCode != null &&
+                    shopDetails.ifscCode!.isNotEmpty)
+                  pw.Text(
+                    'IFSC: ${shopDetails.ifscCode}',
+                    style: const pw.TextStyle(fontSize: 7),
                   ),
               ],
             ),

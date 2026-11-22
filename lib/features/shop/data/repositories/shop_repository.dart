@@ -63,26 +63,37 @@ class ShopRepository {
     }
   }
 
-  /// Fill missing image fields from SQLite shop image cache.
+  /// Prefer non-empty Firebase images, otherwise fall back to local cache.
   Future<Shop> _hydrateImages(Shop shop, String userId) async {
-    final needsLogo =
-        shop.shopLogoBase64 == null || shop.shopLogoBase64!.isEmpty;
-    final needsSignature =
-        shop.signatureBase64 == null || shop.signatureBase64!.isEmpty;
-    final needsQr = shop.qrCodeBase64 == null || shop.qrCodeBase64!.isEmpty;
-
-    if (!needsLogo && !needsSignature && !needsQr) return shop;
-
     try {
       final cached =
           await ShopImageCacheController.instance.getCachedImages(userId);
       if (cached == null || !cached.hasAnyImages) return shop;
 
+      String? prefer(String? remote, String? local) {
+        if (remote != null && remote.trim().isNotEmpty) return remote;
+        if (local != null && local.trim().isNotEmpty) return local;
+        return remote ?? local;
+      }
+
+      final logo = prefer(shop.shopLogoBase64, cached.shopLogoBase64);
+      final signature = prefer(shop.signatureBase64, cached.signatureBase64);
+      final qr = prefer(shop.qrCodeBase64, cached.qrCodeBase64);
+
+      debugPrint(
+        '[ShopRepository] Hydrated images '
+        'logo=${logo?.isNotEmpty == true}, '
+        'sig=${signature?.isNotEmpty == true}, '
+        'qr=${qr?.isNotEmpty == true}',
+      );
+
       return shop.copyWith(
-        shopLogoBase64: needsLogo ? cached.shopLogoBase64 : shop.shopLogoBase64,
-        signatureBase64:
-            needsSignature ? cached.signatureBase64 : shop.signatureBase64,
-        qrCodeBase64: needsQr ? cached.qrCodeBase64 : shop.qrCodeBase64,
+        shopLogoBase64: logo,
+        setShopLogoBase64: true,
+        signatureBase64: signature,
+        setSignatureBase64: true,
+        qrCodeBase64: qr,
+        setQrCodeBase64: true,
       );
     } catch (e) {
       debugPrint('[ShopRepository] Image cache hydrate failed: $e');
