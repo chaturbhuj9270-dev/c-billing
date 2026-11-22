@@ -321,309 +321,356 @@ class _PurchasePageState extends State<PurchasePage>
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setSheetState) => Container(
-          height: MediaQuery.of(context).size.height * 0.9,
-          decoration: BoxDecoration(
-            color: AppColors.card(context),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(24),
-              topRight: Radius.circular(24),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) {
+          final isDark = AppColors.isDark(sheetContext);
+          final headerGreen = isDark
+              ? AppTheme.headerDarkStart
+              : AppColors.action(sheetContext);
+          final pageBg = isDark
+              ? AppColors.scaffold(sheetContext)
+              : const Color(0xFFF3F7F4);
+          final cardBg = isDark ? AppColors.card(sheetContext) : AppTheme.white;
+
+          return Container(
+            height: MediaQuery.of(sheetContext).size.height * 0.92,
+            decoration: BoxDecoration(
+              color: pageBg,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
             ),
-          ),
-          child: Column(
-            children: [
-              // Drag handle
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Container(
-                  width: 40,
-                  height: 4,
+            child: Column(
+              children: [
+                // Dark green header (matches mock)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(18, 14, 12, 18),
                   decoration: BoxDecoration(
-                    color: AppTheme.grey300,
-                    borderRadius: BorderRadius.circular(2),
+                    color: headerGreen,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(24),
+                    ),
+                  ),
+                  child: SafeArea(
+                    bottom: false,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppTheme.white.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.inventory_2_rounded,
+                            color: AppTheme.white,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _localizations.addNewProduct,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Literata',
+                                  color: AppTheme.white,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _localizations.createNewProductRecord,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontFamily: 'Literata',
+                                  color: AppTheme.white.withValues(alpha: 0.78),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(sheetContext),
+                          icon: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: AppTheme.white.withValues(alpha: 0.16),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.close_rounded,
+                              size: 18,
+                              color: AppTheme.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              // Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppTheme.paletteFFF093FB,
-                            AppTheme.paletteFFF093FB.withValues(alpha: 0.8),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                    child: Column(
+                      children: [
+                        _buildAddProductCard(
+                          background: cardBg,
+                          title: 'BASIC DETAILS',
+                          children: [
+                            _buildAddProductTextField(
+                              controller: nameController,
+                              label: _localizations.productName,
+                              hint: _localizations.enterProductName,
+                              icon: Icons.inventory_2_outlined,
+                              isRequired: true,
+                              onChanged: (_) => setSheetState(() {}),
+                            ),
+                            const SizedBox(height: 14),
+                            _buildAddProductPickerRow(
+                              label: _localizations.company,
+                              value: sheetSelectedCompany?['companyName']
+                                  ?.toString(),
+                              placeholder: _localizations.selectCompany,
+                              icon: Icons.apartment_outlined,
+                              onSelect: () async {
+                                final company =
+                                    await _showInlineCompanyPicker(sheetContext);
+                                if (company != null) {
+                                  setSheetState(
+                                    () => sheetSelectedCompany = company,
+                                  );
+                                }
+                              },
+                              onAdd: () {
+                                _showAddCompanyDialog();
+                                setSheetState(() {});
+                              },
+                            ),
+                            const SizedBox(height: 14),
+                            _buildAddProductPickerRow(
+                              label: _localizations.supplier,
+                              value: sheetSelectedSupplier?['fullName']
+                                  ?.toString(),
+                              placeholder: _localizations.selectSupplier,
+                              icon: Icons.person_outline_rounded,
+                              onSelect: () async {
+                                final supplier =
+                                    await _showInlineSupplierPicker(
+                                  sheetContext,
+                                );
+                                if (supplier != null) {
+                                  setSheetState(
+                                    () => sheetSelectedSupplier = supplier,
+                                  );
+                                }
+                              },
+                              onAdd: () {
+                                _showAddSupplierDialog();
+                                setSheetState(() {});
+                              },
+                            ),
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.inventory_2_rounded,
-                        color: AppTheme.white,
-                        size: 22,
-                      ),
-                    ),
-                    SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _localizations.addNewProduct,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Literata',
-                              color: AppColors.accent(context),
-                            ),
-                          ),
-                          Text(
-                            _localizations.createNewProductRecord,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: AppTheme.grey,
-                              fontFamily: 'Literata',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Container(
-                        padding: EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: AppColors.chipFill(context),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.close,
-                          size: 20,
-                          color: AppTheme.grey600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 16),
-              Container(height: 1, color: AppColors.border(context)),
-              // Scrollable content
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Product Name
-                      _buildBottomSheetTextField(
-                        controller: nameController,
-                        label: _localizations.productName,
-                        hint: _localizations.enterProductName,
-                        icon: Icons.inventory_2_outlined,
-                        isRequired: true,
-                        onChanged: (_) => setSheetState(() {}),
-                      ),
-                      const SizedBox(height: 16),
-                      // Company selector
-                      _buildSelectorField(
-                        label: _localizations.selectCompany,
-                        value: sheetSelectedCompany?['companyName'],
-                        icon: Icons.business_outlined,
-                        color: AppTheme.paletteFF7B68EE,
-                        onTap: () async {
-                          final company = await _showInlineCompanyPicker(
-                            context,
-                          );
-                          if (company != null) {
-                            setSheetState(() {
-                              sheetSelectedCompany = company;
-                            });
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      // Supplier selector
-                      _buildSelectorField(
-                        label: _localizations.selectSupplier,
-                        value: sheetSelectedSupplier?['fullName'],
-                        icon: Icons.person_outline,
-                        color: AppColors.action(context),
-                        onTap: () async {
-                          final supplier = await _showInlineSupplierPicker(
-                            context,
-                          );
-                          if (supplier != null) {
-                            setSheetState(() {
-                              sheetSelectedSupplier = supplier;
-                            });
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      // Prices row
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildBottomSheetTextField(
-                              controller: purchasePriceController,
-                              label: _localizations.purchasePrice,
-                              hint: '0.00',
-                              icon: Icons.shopping_cart_outlined,
-                              keyboardType: TextInputType.number,
-                              onChanged: (_) => setSheetState(() {}),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildBottomSheetTextField(
-                              controller: salesPriceController,
-                              label: _localizations.salesPrice,
-                              hint: '0.00',
-                              icon: Icons.sell_outlined,
-                              keyboardType: TextInputType.number,
-                              onChanged: (_) => setSheetState(() {}),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      InkWell(
-                        onTap: () => setSheetState(() => applyGst = !applyGst),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Row(
+                        const SizedBox(height: 14),
+                        _buildAddProductCard(
+                          background: cardBg,
+                          title: _localizations.pricing.toUpperCase(),
                           children: [
-                            Checkbox(
-                              value: applyGst,
-                              onChanged: (value) => setSheetState(
-                                () => applyGst = value ?? false,
-                              ),
-                              activeColor: AppColors.action(context),
-                              checkColor: AppTheme.white,
-                              side: BorderSide(color: AppColors.border(context)),
-                              materialTapTargetSize:
-                                  MaterialTapTargetSize.shrinkWrap,
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildAddProductPriceField(
+                                    controller: purchasePriceController,
+                                    label: _localizations.purchasePrice,
+                                    onChanged: (_) => setSheetState(() {}),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildAddProductPriceField(
+                                    controller: salesPriceController,
+                                    label: _localizations.salesPrice,
+                                    onChanged: (_) => setSheetState(() {}),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color: cardBg,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: AppColors.border(sheetContext),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _localizations.applyGst,
+                                      style: TextStyle(
+                                        fontFamily: 'Literata',
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primaryText(
+                                          sheetContext,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      _localizations.applyGstHint,
+                                      style: TextStyle(
+                                        fontFamily: 'Literata',
+                                        fontSize: 12,
+                                        color: AppColors.mutedText(
+                                          sheetContext,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Switch.adaptive(
+                                value: applyGst,
+                                activeTrackColor: AppColors.action(
+                                  sheetContext,
+                                ),
+                                activeThumbColor: AppTheme.white,
+                                onChanged: (value) =>
+                                    setSheetState(() => applyGst = value),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (applyGst) ...[
+                          const SizedBox(height: 14),
+                          _buildAddProductCard(
+                            background: cardBg,
+                            title: 'GST',
+                            children: [
+                              Row(
                                 children: [
-                                  Text(
-                                    _localizations.applyGst,
-                                    style: TextStyle(
-                                      fontFamily: 'Literata',
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.primaryText(context),
+                                  Expanded(
+                                    child: _buildAddProductTextField(
+                                      controller: cgstController,
+                                      label: 'CGST %',
+                                      hint: '0',
+                                      icon: Icons.percent,
+                                      keyboardType: TextInputType.number,
+                                      onChanged: (_) => setSheetState(() {}),
                                     ),
                                   ),
-                                  Text(
-                                    _localizations.applyGstHint,
-                                    style: TextStyle(
-                                      fontFamily: 'Literata',
-                                      fontSize: 12,
-                                      color: AppColors.mutedText(context),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildAddProductTextField(
+                                      controller: sgstController,
+                                      label: 'SGST %',
+                                      hint: '0',
+                                      icon: Icons.percent,
+                                      keyboardType: TextInputType.number,
+                                      onChanged: (_) => setSheetState(() {}),
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (applyGst) ...[
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildBottomSheetTextField(
-                                controller: cgstController,
-                                label: 'CGST %',
-                                hint: '0',
-                                icon: Icons.percent,
+                              const SizedBox(height: 14),
+                              _buildAddProductTextField(
+                                controller: hsnController,
+                                label: _localizations.hsnCode,
+                                hint: 'e.g. 30049099',
+                                icon: Icons.tag,
                                 keyboardType: TextInputType.number,
+                                maxLength: 8,
                                 onChanged: (_) => setSheetState(() {}),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildBottomSheetTextField(
-                                controller: sgstController,
-                                label: 'SGST %',
-                                hint: '0',
-                                icon: Icons.percent,
-                                keyboardType: TextInputType.number,
-                                onChanged: (_) => setSheetState(() {}),
+                            ],
+                          ),
+                        ],
+                        if (customColumns.isNotEmpty) ...[
+                          const SizedBox(height: 14),
+                          _buildAddProductCard(
+                            background: cardBg,
+                            title: 'CUSTOM FIELDS',
+                            children: [
+                              for (final column in customColumns)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _buildCustomFieldWidgetForPurchase(
+                                    column,
+                                    customTextControllers[column.id],
+                                    customFieldValues,
+                                    setSheetState,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+                  decoration: BoxDecoration(
+                    color: pageBg,
+                    border: Border(
+                      top: BorderSide(color: AppColors.border(sheetContext)),
+                    ),
+                  ),
+                  child: SafeArea(
+                    top: false,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(sheetContext),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.action(sheetContext),
+                              side: BorderSide(
+                                color: AppColors.action(sheetContext)
+                                    .withValues(alpha: 0.45),
+                              ),
+                              backgroundColor: cardBg,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
                               ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        _buildBottomSheetTextField(
-                          controller: hsnController,
-                          label: _localizations.hsnCode,
-                          hint: 'e.g. 30049099',
-                          icon: Icons.tag,
-                          keyboardType: TextInputType.number,
-                          maxLength: 8,
-                          onChanged: (_) => setSheetState(() {}),
-                        ),
-                      ],
-                      // Custom Fields Section
-                      if (customColumns.isNotEmpty) ...[
-                        const SizedBox(height: 16),
-                        ...customColumns.map((column) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _buildCustomFieldWidgetForPurchase(
-                              column,
-                              customTextControllers[column.id],
-                              customFieldValues,
-                              setSheetState,
-                            ),
-                          );
-                        }),
-                      ],
-                      const SizedBox(height: 24),
-                      // Action buttons
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppTheme.grey700,
-                                side: BorderSide(color: AppTheme.grey300),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: Text(
-                                _localizations.cancel,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Literata',
-                                ),
+                            child: Text(
+                              _localizations.cancel,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'Literata',
                               ),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            flex: 2,
-                            child: ElevatedButton(
-                              onPressed: nameController.text.trim().isEmpty
-                                  ? null
-                                  : () => _saveNewProduct(
-                                      context,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            onPressed: nameController.text.trim().isEmpty
+                                ? null
+                                : () => _saveNewProduct(
+                                      sheetContext,
                                       nameController,
                                       purchasePriceController,
                                       salesPriceController,
@@ -637,44 +684,325 @@ class _PurchasePageState extends State<PurchasePage>
                                       customTextControllers,
                                       customFieldValues,
                                     ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.action(context),
-                                foregroundColor: AppTheme.white,
-                                disabledBackgroundColor: AppTheme.grey300,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.add_rounded, size: 20),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    _localizations.addProduct,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontFamily: 'Literata',
-                                    ),
-                                  ),
-                                ],
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: isDark
+                                  ? AppColors.action(sheetContext)
+                                  : const Color(0xFFD8F0E3),
+                              foregroundColor: isDark
+                                  ? AppTheme.white
+                                  : AppColors.action(sheetContext),
+                              disabledBackgroundColor: AppTheme.grey300,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
                               ),
                             ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.add_rounded, size: 20),
+                                const SizedBox(width: 6),
+                                Text(
+                                  _localizations.addProduct,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontFamily: 'Literata',
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildAddProductCard({
+    required Color background,
+    required String title,
+    required List<Widget> children,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border(context)),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(
+              alpha: AppColors.isDark(context) ? 0.25 : 0.04,
+            ),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+              fontFamily: 'Literata',
+              color: AppColors.action(context),
+            ),
+          ),
+          const SizedBox(height: 14),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddProductTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    bool isRequired = false,
+    TextInputType keyboardType = TextInputType.text,
+    int? maxLength,
+    Function(String)? onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.secondaryText(context),
+                fontFamily: 'Literata',
+              ),
+            ),
+            if (isRequired)
+              const Text(' *', style: TextStyle(color: AppTheme.red)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          maxLength: maxLength,
+          onChanged: onChanged,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w500,
+            color: AppColors.primaryText(context),
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            counterText: '',
+            hintStyle: TextStyle(
+              color: AppColors.mutedText(context),
+              fontFamily: 'Literata',
+            ),
+            prefixIcon: Icon(icon, color: AppColors.action(context), size: 20),
+            filled: true,
+            fillColor: AppColors.inputFill(context),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: AppColors.border(context)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: AppColors.border(context)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: AppColors.action(context),
+                width: 1.5,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 14,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAddProductPriceField({
+    required TextEditingController controller,
+    required String label,
+    Function(String)? onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.secondaryText(context),
+            fontFamily: 'Literata',
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          onChanged: onChanged,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w600,
+            color: AppColors.primaryText(context),
+          ),
+          decoration: InputDecoration(
+            hintText: '0.00',
+            hintStyle: TextStyle(color: AppColors.mutedText(context)),
+            prefixText: '₹ ',
+            prefixStyle: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: AppColors.secondaryText(context),
+            ),
+            filled: true,
+            fillColor: AppColors.inputFill(context),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: AppColors.border(context)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: AppColors.border(context)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: AppColors.action(context),
+                width: 1.5,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 14,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAddProductPickerRow({
+    required String label,
+    required String? value,
+    required String placeholder,
+    required IconData icon,
+    required VoidCallback onSelect,
+    required VoidCallback onAdd,
+  }) {
+    final hasValue = value != null && value.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.secondaryText(context),
+            fontFamily: 'Literata',
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: Material(
+                color: AppColors.inputFill(context),
+                borderRadius: BorderRadius.circular(14),
+                child: InkWell(
+                  onTap: onSelect,
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 13,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.border(context)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(icon, size: 18, color: AppColors.action(context)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            hasValue ? value : placeholder,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: hasValue
+                                  ? AppColors.primaryText(context)
+                                  : AppColors.mutedText(context),
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          Icons.expand_more_rounded,
+                          color: AppColors.mutedText(context),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 10),
+            Material(
+              color: AppColors.isDark(context)
+                  ? AppColors.card(context)
+                  : const Color(0xFFE8F6EE),
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                onTap: onAdd,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.action(context).withValues(alpha: 0.45),
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.add_rounded,
+                    color: AppColors.action(context),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-      ),
+      ],
     );
   }
 
@@ -799,86 +1127,6 @@ class _PurchasePageState extends State<PurchasePage>
         );
       }
     }
-  }
-
-  // Builds a selector field for company/supplier selection
-  Widget _buildSelectorField({
-    required String label,
-    required String? value,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    final hasValue = value != null && value.isNotEmpty;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.accent(context),
-            fontFamily: 'Literata',
-          ),
-        ),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: hasValue ? color : AppTheme.grey300,
-                width: hasValue ? 2 : 1,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              color: hasValue ? color.withValues(alpha: 0.05) : AppColors.scaffold(context),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: hasValue
-                        ? color.withValues(alpha: 0.15)
-                        : AppColors.border(context),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: hasValue ? color : AppTheme.grey,
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    value ?? _localizations.tapToSelect,
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      color: hasValue ? AppTheme.black87 : AppTheme.grey,
-                      fontSize: 14,
-                      fontWeight: hasValue
-                          ? FontWeight.w600
-                          : FontWeight.normal,
-                    ),
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 16,
-                  color: AppTheme.grey400,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
   }
 
   // Build a custom field widget based on column type (for purchase page)
