@@ -245,6 +245,8 @@ class _BillsListPageState extends State<BillsListPage>
       );
 
       debugPrint('[BillsListPage] Generating PDF file...');
+      final printPageFormat =
+          await _pdfService.resolvePrintPageFormat(printData);
       if (kIsWeb) {
         final bytes = await _pdfService
             .buildPdfBytes(billData: printData, shopDetails: shop)
@@ -269,6 +271,7 @@ class _BillsListPageState extends State<BillsListPage>
             bill: bill,
             shopRepository: _shopRepository,
           ),
+          printPageFormat: printPageFormat,
           details: FilePreviewDetails(
             title: 'Bill preview',
             documentNo: bill.billNumber,
@@ -315,6 +318,7 @@ class _BillsListPageState extends State<BillsListPage>
           bill: bill,
           shopRepository: _shopRepository,
         ),
+        printPageFormat: printPageFormat,
         details: FilePreviewDetails(
           title: 'Bill preview',
           documentNo: bill.billNumber,
@@ -2457,6 +2461,8 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
       );
 
       debugPrint('[BillDetailsDialog] Generating PDF file...');
+      final printPageFormat =
+          await _pdfService.resolvePrintPageFormat(printData);
       if (kIsWeb) {
         final bytes = await _pdfService
             .buildPdfBytes(billData: printData, shopDetails: shop)
@@ -2479,6 +2485,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
             bill: _bill,
             shopRepository: _shopRepository,
           ),
+          printPageFormat: printPageFormat,
           details: FilePreviewDetails(
             title: 'Bill preview',
             documentNo: _bill.billNumber,
@@ -2540,6 +2547,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
           bill: _bill,
           shopRepository: _shopRepository,
         ),
+        printPageFormat: printPageFormat,
         details: FilePreviewDetails(
           title: 'Bill preview',
           documentNo: _bill.billNumber,

@@ -33,6 +33,12 @@ class PdfBillService {
     return prefs.getString('bill_type') ?? 'pos';
   }
 
+  /// Paper size hint for system print dialog — 80mm roll for POS, A4 for normal.
+  Future<PdfPageFormat> resolvePrintPageFormat(PrintBillData billData) async {
+    final format = await resolvePdfFormat(billData);
+    return format == 'normal' ? PdfPageFormat.a4 : PdfPageFormat.roll80;
+  }
+
   Future<pw.Document> buildPdfDocument({
     required PrintBillData billData,
     required Shop shopDetails,
@@ -60,16 +66,29 @@ class PdfBillService {
     final generateViaContact =
         prefs.getBool('bill_generate_via_contact') ?? false;
 
+    // 80mm POS thermal paper — preview/print must match printer roll width.
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.roll80,
-        margin: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-        build: (context) => _buildBillContent(
-          billData,
-          shopDetails,
-          showCustomer,
-          generateViaContact,
-        ),
+        margin: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        build: (context) {
+          return pw.LayoutBuilder(
+            builder: (context, constraints) {
+              final contentWidth =
+                  constraints?.maxWidth ?? PdfPageFormat.roll80.availableWidth;
+              return pw.SizedBox(
+                width: contentWidth,
+                child: _buildBillContent(
+                  billData,
+                  shopDetails,
+                  showCustomer,
+                  generateViaContact,
+                  contentWidth: contentWidth,
+                ),
+              );
+            },
+          );
+        },
       ),
     );
 
@@ -1214,10 +1233,11 @@ class PdfBillService {
     PrintBillData billData,
     Shop shopDetails,
     bool showCustomer,
-    bool generateViaContact,
-  ) {
-    // 80mm thermal receipt layout matching retail POS mockup
-    const receiptWidth = double.infinity;
+    bool generateViaContact, {
+    double? contentWidth,
+  }) {
+    // 80mm thermal receipt — stretch so QR|bank Row gets a real width bound.
+    final receiptWidth = contentWidth ?? double.infinity;
     final muted = PdfColor.fromInt(AppTheme.grey600.toARGB32());
     final hasLogo = shopDetails.shopLogoBase64 != null &&
         shopDetails.shopLogoBase64!.isNotEmpty;
@@ -1229,7 +1249,7 @@ class PdfBillService {
         : billData.totalQuantity.toStringAsFixed(2);
 
     return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.center,
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
         // Header: logo | title + address (1 line each), Prop/Ph right under address
         pw.Container(
@@ -1815,7 +1835,7 @@ class PdfBillService {
         _buildDashedDivider(),
         pw.SizedBox(height: 6),
 
-        // QR + bank details side-by-side (full receipt / POS footer)
+        // QR (left) + bank (right) — fits 80mm roll (~206pt usable)
         if (_hasBillPaymentQr(billData, shopDetails) ||
             (shopDetails.bankName != null &&
                 shopDetails.bankName!.isNotEmpty) ||
@@ -1824,19 +1844,19 @@ class PdfBillService {
           pw.Container(
             width: receiptWidth,
             child: pw.Row(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
               children: [
                 if (_hasBillPaymentQr(billData, shopDetails))
                   pw.Container(
-                    width: 78,
-                    margin: const pw.EdgeInsets.only(right: 8),
+                    width: 68,
+                    margin: const pw.EdgeInsets.only(right: 6),
                     child: _buildBillPaymentQr(
                       billData: billData,
                       shopDetails: shopDetails,
-                      size: 64,
+                      size: 56,
                       accentColor: PdfColors.black,
                       bordered: true,
-                      captionSize: 6,
+                      captionSize: 5.5,
                     ),
                   ),
                 if ((shopDetails.bankName != null &&
@@ -1850,7 +1870,7 @@ class PdfBillService {
                         pw.Text(
                           'Bank Details',
                           style: pw.TextStyle(
-                            fontSize: 8,
+                            fontSize: 7,
                             fontWeight: pw.FontWeight.bold,
                           ),
                         ),
@@ -1859,25 +1879,29 @@ class PdfBillService {
                             shopDetails.bankName!.isNotEmpty)
                           pw.Text(
                             shopDetails.bankName!,
-                            style: const pw.TextStyle(fontSize: 7),
+                            style: const pw.TextStyle(fontSize: 6),
+                            maxLines: 2,
                           ),
                         if (shopDetails.accountHolderName != null &&
                             shopDetails.accountHolderName!.isNotEmpty)
                           pw.Text(
                             'AC: ${shopDetails.accountHolderName}',
-                            style: const pw.TextStyle(fontSize: 7),
+                            style: const pw.TextStyle(fontSize: 6),
+                            maxLines: 1,
                           ),
                         if (shopDetails.accountNumber != null &&
                             shopDetails.accountNumber!.isNotEmpty)
                           pw.Text(
                             'No: ${shopDetails.accountNumber}',
-                            style: const pw.TextStyle(fontSize: 7),
+                            style: const pw.TextStyle(fontSize: 6),
+                            maxLines: 1,
                           ),
                         if (shopDetails.ifscCode != null &&
                             shopDetails.ifscCode!.isNotEmpty)
                           pw.Text(
                             'IFSC: ${shopDetails.ifscCode}',
-                            style: const pw.TextStyle(fontSize: 7),
+                            style: const pw.TextStyle(fontSize: 6),
+                            maxLines: 1,
                           ),
                       ],
                     ),
@@ -2275,8 +2299,8 @@ class PdfBillService {
       qrChild = pw.BarcodeWidget(
         barcode: Barcode.qrCode(),
         data: upiPayload,
-        width: size - (bordered ? 6 : 0),
-        height: size - (bordered ? 6 : 0),
+        width: size - (bordered ? 4 : 0),
+        height: size - (bordered ? 4 : 0),
         drawText: false,
       );
     } else {
@@ -2291,23 +2315,27 @@ class PdfBillService {
     }
 
     return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.center,
+      mainAxisSize: pw.MainAxisSize.min,
       children: [
         pw.Container(
           width: size,
           height: size,
-          padding: bordered ? const pw.EdgeInsets.all(3) : pw.EdgeInsets.zero,
+          padding: bordered ? const pw.EdgeInsets.all(2) : pw.EdgeInsets.zero,
           decoration: bordered
               ? pw.BoxDecoration(
-                  border: pw.Border.all(color: accentColor, width: 1),
-                  borderRadius: pw.BorderRadius.circular(4),
+                  border: pw.Border.all(color: accentColor, width: 0.8),
+                  borderRadius: pw.BorderRadius.circular(3),
                 )
               : null,
           child: qrChild,
         ),
-        pw.SizedBox(height: 2),
+        pw.SizedBox(height: 1),
         pw.Text(
           'Scan to Pay',
           style: pw.TextStyle(fontSize: captionSize, color: accentColor),
+          textAlign: pw.TextAlign.center,
+          maxLines: 1,
         ),
         if (upiPayload != null)
           pw.Text(
@@ -2317,6 +2345,8 @@ class PdfBillService {
               fontWeight: pw.FontWeight.bold,
               color: accentColor,
             ),
+            textAlign: pw.TextAlign.center,
+            maxLines: 1,
           ),
       ],
     );

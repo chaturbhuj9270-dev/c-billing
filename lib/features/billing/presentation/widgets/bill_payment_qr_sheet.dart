@@ -136,9 +136,11 @@ Future<void> _openPaymentReceiptPreview({
       totalDueAmount: bill.pendingAmount > 0 ? bill.pendingAmount : null,
     );
     final shop = await shopRepository.getShopDetails();
+    final pdfService = PdfBillService();
+    final printPageFormat = await pdfService.resolvePrintPageFormat(printData);
 
     if (kIsWeb) {
-      final bytes = await PdfBillService().buildPdfBytes(
+      final bytes = await pdfService.buildPdfBytes(
         billData: printData,
         shopDetails: shop,
       );
@@ -151,6 +153,7 @@ Future<void> _openPaymentReceiptPreview({
         fileType: FilePreviewType.pdf,
         subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
         customerPhone: bill.customerContact,
+        printPageFormat: printPageFormat,
         details: FilePreviewDetails(
           title: localizations.paymentReceipt,
           documentNo: bill.billNumber,
@@ -165,7 +168,7 @@ Future<void> _openPaymentReceiptPreview({
       return;
     }
 
-    final file = await PdfBillService().savePdfToFile(
+    final file = await pdfService.savePdfToFile(
       billData: printData,
       shopDetails: shop,
     );
@@ -178,6 +181,7 @@ Future<void> _openPaymentReceiptPreview({
       fileType: FilePreviewType.pdf,
       subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
       customerPhone: bill.customerContact,
+      printPageFormat: printPageFormat,
       details: FilePreviewDetails(
         title: localizations.paymentReceipt,
         documentNo: bill.billNumber,

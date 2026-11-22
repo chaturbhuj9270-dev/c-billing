@@ -1423,6 +1423,8 @@ class _BillingPageState extends State<BillingPage> {
       );
 
       debugPrint('[BillingPage] Generating PDF file...');
+      final printPageFormat =
+          await _pdfService.resolvePrintPageFormat(printData);
       if (kIsWeb) {
         final bytes = await _pdfService
             .buildPdfBytes(billData: printData, shopDetails: shop)
@@ -1445,6 +1447,7 @@ class _BillingPageState extends State<BillingPage> {
             bill: bill,
             shopRepository: _shopRepository,
           ),
+          printPageFormat: printPageFormat,
           details: FilePreviewDetails(
             title: 'Bill preview',
             documentNo: bill.billNumber,
@@ -1504,6 +1507,7 @@ class _BillingPageState extends State<BillingPage> {
           bill: bill,
           shopRepository: _shopRepository,
         ),
+        printPageFormat: printPageFormat,
         details: FilePreviewDetails(
           title: 'Bill preview',
           documentNo: bill.billNumber,

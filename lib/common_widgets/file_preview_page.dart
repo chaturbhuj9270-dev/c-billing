@@ -61,6 +61,9 @@ class FilePreviewPage extends StatefulWidget {
   // Right-side summary used by the desktop split preview.
   final FilePreviewDetails? details;
 
+  /// Preferred paper size for the system print dialog (e.g. roll80 for POS).
+  final PdfPageFormat? printPageFormat;
+
   const FilePreviewPage({
     super.key,
     this.file,
@@ -74,6 +77,7 @@ class FilePreviewPage extends StatefulWidget {
     this.presentedAsDialog = false,
     this.fitPage = false,
     this.details,
+    this.printPageFormat,
   }) : assert(file != null || bytes != null, 'Provide a file or document bytes');
 
   // Opens print/report preview. Web, Windows, and Mac always use a centered popup. Phone pushes a full page.
@@ -89,6 +93,7 @@ class FilePreviewPage extends StatefulWidget {
     VoidCallback? onViewPaymentQr,
     bool centered = true,
     FilePreviewDetails? details,
+    PdfPageFormat? printPageFormat,
   }) {
     final desktop = DesktopCanvas.isDesktopPlatform;
     final page = FilePreviewPage(
@@ -103,6 +108,7 @@ class FilePreviewPage extends StatefulWidget {
       presentedAsDialog: desktop,
       fitPage: centered || desktop,
       details: details,
+      printPageFormat: printPageFormat,
     );
     if (!desktop) {
       return Navigator.of(context).push(
@@ -582,6 +588,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         await Printing.layoutPdf(
           onLayout: (format) async => bytes,
           name: widget.fileName,
+          format: widget.printPageFormat ?? PdfPageFormat.standard,
         );
       } else {
         // For CSV, generate a simple PDF for printing

@@ -96,6 +96,8 @@ class QuotationPrintService {
         const Duration(seconds: 10),
         onTimeout: () => Shop.empty,
       );
+      final printPageFormat =
+          await _pdfService.resolvePrintPageFormat(printData);
 
       if (kIsWeb) {
         final bytes = await _pdfService
@@ -115,6 +117,7 @@ class QuotationPrintService {
           fileType: FilePreviewType.pdf,
           subtitle: DateFormat('dd MMM yyyy').format(quotation.referenceDate),
           customerPhone: quotation.customerContact,
+          printPageFormat: printPageFormat,
           details: FilePreviewDetails(
             title: 'Quotation preview',
             documentNo: quotation.quotationNumber,
@@ -154,6 +157,7 @@ class QuotationPrintService {
         fileType: FilePreviewType.pdf,
         subtitle: DateFormat('dd MMM yyyy').format(quotation.referenceDate),
         customerPhone: quotation.customerContact,
+        printPageFormat: printPageFormat,
         details: FilePreviewDetails(
           title: 'Quotation preview',
           documentNo: quotation.quotationNumber,
