@@ -78,11 +78,12 @@ class GlassSheetCard extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
+                    // Keep glass translucent so the page behind stays visible.
                     AppColors.card(context).withValues(
-                      alpha: isDark ? 0.62 : 0.78,
+                      alpha: isDark ? 0.55 : 0.72,
                     ),
                     AppColors.card(context).withValues(
-                      alpha: isDark ? 0.82 : 0.92,
+                      alpha: isDark ? 0.78 : 0.88,
                     ),
                   ],
                 ),
@@ -237,7 +238,8 @@ Future<T?> showAppBottomSheet<T>({
   );
 }
 
-// Floating panel on the right. The page behind stays visible and dimmed.
+// Floating panel on the right. Scrim dims the page behind; panel only covers
+// the right strip so the previous UI stays visible (not replaced/blanked).
 Future<T?> _showDesktopSideDrawer<T>({
   required BuildContext context,
   required WidgetBuilder builder,
@@ -245,12 +247,13 @@ Future<T?> _showDesktopSideDrawer<T>({
   required bool useRootNavigator,
   bool wide = false,
 }) {
+  const scrim = Color(0x73000000); // ~0.45 black — matches mobile sheets
   return showGeneralDialog<T>(
     context: context,
     useRootNavigator: useRootNavigator,
     barrierDismissible: isDismissible,
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-    barrierColor: AppTheme.transparent,
+    barrierColor: scrim,
     transitionDuration: const Duration(milliseconds: 260),
     pageBuilder: (dialogContext, animation, secondaryAnimation) {
       final media = MediaQuery.of(dialogContext);
@@ -266,44 +269,44 @@ Future<T?> _showDesktopSideDrawer<T>({
           media.padding.vertical -
           media.viewInsets.bottom -
           24;
-      return Padding(
-        padding: EdgeInsets.only(
-          top: media.padding.top + 12,
-          right: 12,
-          bottom: media.padding.bottom + media.viewInsets.bottom + 16,
-        ),
+      // Full-screen hit target is the barrier; page child is only the panel so
+      // the dimmed back page remains visible around it.
+      return SafeArea(
         child: Align(
           alignment: Alignment.centerRight,
-          child: Material(
-            color: AppColors.card(dialogContext),
-            elevation: 8,
-            shadowColor: AppTheme.black.withValues(alpha: 0.08),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: BorderSide(color: AppColors.border(dialogContext)),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: SizedBox(
-              width: width,
-              height: height < 240 ? 240 : height,
-              child: Column(
-                children: [
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: IconButton(
-                      onPressed: isDismissible
-                          ? () => Navigator.of(dialogContext).maybePop()
-                          : null,
-                      tooltip: 'Close',
-                      icon: Icon(
-                        Icons.close_rounded,
-                        size: 20,
-                        color: AppColors.secondaryText(dialogContext),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(0, 12, 12, 16),
+            child: Material(
+              color: AppColors.card(dialogContext),
+              elevation: 12,
+              shadowColor: AppTheme.black.withValues(alpha: 0.18),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(color: AppColors.border(dialogContext)),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: SizedBox(
+                width: width,
+                height: height < 240 ? 240 : height,
+                child: Column(
+                  children: [
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: IconButton(
+                        onPressed: isDismissible
+                            ? () => Navigator.of(dialogContext).maybePop()
+                            : null,
+                        tooltip: 'Close',
+                        icon: Icon(
+                          Icons.close_rounded,
+                          size: 20,
+                          color: AppColors.secondaryText(dialogContext),
+                        ),
                       ),
                     ),
-                  ),
-                  Expanded(child: builder(dialogContext)),
-                ],
+                    Expanded(child: builder(dialogContext)),
+                  ],
+                ),
               ),
             ),
           ),
@@ -311,13 +314,19 @@ Future<T?> _showDesktopSideDrawer<T>({
       );
     },
     transitionBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
       final slide = Tween<Offset>(
-        begin: const Offset(0.12, 0),
+        begin: const Offset(0.08, 0),
         end: Offset.zero,
-      ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
-      return FadeTransition(
-        opacity: animation,
-        child: SlideTransition(position: slide, child: child),
+      ).animate(curved);
+      // Slide/fade only the panel — barrier owns the dimming scrim.
+      return SlideTransition(
+        position: slide,
+        child: FadeTransition(opacity: curved, child: child),
       );
     },
   );

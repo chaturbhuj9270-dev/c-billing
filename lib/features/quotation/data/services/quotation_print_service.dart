@@ -118,6 +118,11 @@ class QuotationPrintService {
           subtitle: DateFormat('dd MMM yyyy').format(quotation.referenceDate),
           customerPhone: quotation.customerContact,
           printPageFormat: printPageFormat,
+          rebuildPdfForPrint: (format) => _pdfService.buildPdfBytesForPageFormat(
+            billData: printData,
+            shopDetails: shop,
+            pageFormat: format,
+          ),
           details: FilePreviewDetails(
             title: 'Quotation preview',
             documentNo: quotation.quotationNumber,
@@ -158,6 +163,11 @@ class QuotationPrintService {
         subtitle: DateFormat('dd MMM yyyy').format(quotation.referenceDate),
         customerPhone: quotation.customerContact,
         printPageFormat: printPageFormat,
+        rebuildPdfForPrint: (format) => _pdfService.buildPdfBytesForPageFormat(
+          billData: printData,
+          shopDetails: shop,
+          pageFormat: format,
+        ),
         details: FilePreviewDetails(
           title: 'Quotation preview',
           documentNo: quotation.quotationNumber,

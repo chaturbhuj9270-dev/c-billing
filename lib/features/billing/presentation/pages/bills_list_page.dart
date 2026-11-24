@@ -272,6 +272,11 @@ class _BillsListPageState extends State<BillsListPage>
             shopRepository: _shopRepository,
           ),
           printPageFormat: printPageFormat,
+          rebuildPdfForPrint: (format) => _pdfService.buildPdfBytesForPageFormat(
+            billData: printData,
+            shopDetails: shop,
+            pageFormat: format,
+          ),
           details: FilePreviewDetails(
             title: 'Bill preview',
             documentNo: bill.billNumber,
@@ -319,6 +324,11 @@ class _BillsListPageState extends State<BillsListPage>
           shopRepository: _shopRepository,
         ),
         printPageFormat: printPageFormat,
+        rebuildPdfForPrint: (format) => _pdfService.buildPdfBytesForPageFormat(
+          billData: printData,
+          shopDetails: shop,
+          pageFormat: format,
+        ),
         details: FilePreviewDetails(
           title: 'Bill preview',
           documentNo: bill.billNumber,
@@ -2486,6 +2496,11 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
             shopRepository: _shopRepository,
           ),
           printPageFormat: printPageFormat,
+          rebuildPdfForPrint: (format) => _pdfService.buildPdfBytesForPageFormat(
+            billData: printData,
+            shopDetails: shop,
+            pageFormat: format,
+          ),
           details: FilePreviewDetails(
             title: 'Bill preview',
             documentNo: _bill.billNumber,
@@ -2548,6 +2563,11 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
           shopRepository: _shopRepository,
         ),
         printPageFormat: printPageFormat,
+        rebuildPdfForPrint: (format) => _pdfService.buildPdfBytesForPageFormat(
+          billData: printData,
+          shopDetails: shop,
+          pageFormat: format,
+        ),
         details: FilePreviewDetails(
           title: 'Bill preview',
           documentNo: _bill.billNumber,

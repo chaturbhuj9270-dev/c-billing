@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'package:intl/intl.dart';
 import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
@@ -434,142 +433,125 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setSheetState) {
-          final query = _supplierSearchController.text.toLowerCase();
-          final filteredSuppliers = query.isEmpty
-              ? widget.suppliers
-              : widget.suppliers.where((s) {
-                  final name = (s['fullName'] ?? s['firstName'] ?? '')
-                      .toLowerCase();
-                  return name.contains(query);
-                }).toList();
+      builder: (context) => GlassDraggableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, controller) => StatefulBuilder(
+          builder: (context, setSheetState) {
+            final query = _supplierSearchController.text.toLowerCase();
+            final filteredSuppliers = query.isEmpty
+                ? widget.suppliers
+                : widget.suppliers.where((s) {
+                    final name = (s['fullName'] ?? s['firstName'] ?? '')
+                        .toLowerCase();
+                    return name.contains(query);
+                  }).toList();
 
-          return ClipRRect(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.7,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.card(context),
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(24),
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Handle
-                    Container(
-                      margin: const EdgeInsets.only(top: 12),
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppTheme.grey300,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
+            return Column(
+              children: [
+                const GlassSheetHandle(),
 
-                    // Header
-                    Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            _localizations.selectSupplier,
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 18,
-                              color: AppColors.accent(context),
-                            ),
-                          ),
-                          if (widget.selectedSupplierId != null)
-                            TextButton(
-                              onPressed: () {
-                                widget.onSupplierChanged(null);
-                                Navigator.pop(context);
-                              },
-                              child: Text(
-                                _localizations.clearText,
-                                style: const TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                  color: AppTheme.red,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-
-                    // Search field
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: TextField(
-                        controller: _supplierSearchController,
-                        onChanged: (_) => setSheetState(() {}),
-                        decoration: InputDecoration(
-                          hintText: _localizations.searchSupplier,
-                          hintStyle: TextStyle(color: AppTheme.grey),
-                          prefixIcon: Icon(
-                            Icons.search_rounded,
-                            color: AppTheme.grey,
-                          ),
-                          filled: true,
-                          fillColor: AppColors.chipFill(context),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
+                // Header
+                Padding(
+                  padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _localizations.selectSupplier,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 18,
+                          color: AppColors.accent(context),
                         ),
                       ),
+                      if (widget.selectedSupplierId != null)
+                        TextButton(
+                          onPressed: () {
+                            widget.onSupplierChanged(null);
+                            Navigator.pop(context);
+                          },
+                          child: Text(
+                            _localizations.clearText,
+                            style: const TextStyle(
+                              fontFamily: 'Literata',
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: AppTheme.red,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+
+                // Search field
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: TextField(
+                    controller: _supplierSearchController,
+                    onChanged: (_) => setSheetState(() {}),
+                    decoration: InputDecoration(
+                      hintText: _localizations.searchSupplier,
+                      hintStyle: TextStyle(color: AppTheme.grey),
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        color: AppTheme.grey,
+                      ),
+                      filled: true,
+                      fillColor: AppColors.chipFill(context),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                     ),
+                  ),
+                ),
 
-                    const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-                    // Supplier list
-                    Flexible(
-                      child: filteredSuppliers.isEmpty
-                          ? Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(32),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.person_off_rounded,
-                                      size: 48,
-                                      color: AppTheme.grey400,
+                // Supplier list
+                Expanded(
+                  child: filteredSuppliers.isEmpty
+                      ? ListView(
+                          controller: controller,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(32),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.person_off_rounded,
+                                    size: 48,
+                                    color: AppTheme.grey400,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    _localizations.noSuppliersFound,
+                                    style: TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                      color: AppTheme.grey600,
                                     ),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      _localizations.noSuppliersFound,
-                                      style: TextStyle(
-                                        fontFamily: 'Literata',
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 14,
-                                        color: AppTheme.grey600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                            )
-                          : ListView.builder(
-                              shrinkWrap: true,
-                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                              itemCount: filteredSuppliers.length,
-                              itemBuilder: (context, index) {
+                            ),
+                          ],
+                        )
+                      : ListView.builder(
+                          controller: controller,
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                          itemCount: filteredSuppliers.length,
+                          itemBuilder: (context, index) {
                                 final supplier = filteredSuppliers[index];
                                 final isSelected =
                                     supplier['id'] == widget.selectedSupplierId;
@@ -669,13 +651,11 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                 );
                               },
                             ),
-                    ),
-                  ],
                 ),
-              ),
-            ),
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
   }

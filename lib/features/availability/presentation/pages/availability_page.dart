@@ -213,27 +213,10 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setSheetState) => Container(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          decoration: BoxDecoration(
-            color: AppColors.card(context),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
+        builder: (context, setSheetState) => Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Handle bar
-              const SizedBox(height: 12),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.grey300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+              const GlassSheetHandle(),
               // Header
               Padding(
                 padding: EdgeInsets.all(20),
@@ -416,7 +399,6 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               ),
             ],
           ),
-        ),
       ),
     );
   }

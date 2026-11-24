@@ -2617,30 +2617,16 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.85,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.card(context),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+      builder: (context) => GlassDraggableSheet(
+        initialChildSize: 0.72,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, controller) => Column(
           children: [
-            // Handle bar
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: _borderColor,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+            const GlassSheetHandle(),
             // Header
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
               child: Row(
                 children: [
                   Container(
@@ -2692,141 +2678,150 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                 ],
               ),
             ),
-            // Barcode Preview Card
-            Container(
-              margin: EdgeInsets.symmetric(horizontal: 20),
-              padding: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppTheme.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: _borderColor),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  // Top line info
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _primaryColor.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      topLineInfo,
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                        color: _primaryColor,
+            Expanded(
+              child: SingleChildScrollView(
+                controller: controller,
+                child: Column(
+                  children: [
+                    // Barcode Preview Card
+                    Container(
+                      margin: EdgeInsets.symmetric(horizontal: 20),
+                      padding: EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppTheme.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: _borderColor),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.black.withValues(alpha: 0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Barcode
-                  SizedBox(
-                    width: 240,
-                    height: 80,
-                    child: _buildSafeBarcodeWidget(
-                      data: _generatedBarcode,
-                      format: _selectedFormat,
-                      width: 240,
-                      height: 80,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  // Barcode number
-                  Text(
-                    _generatedBarcode,
-                    style: const TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 2,
-                      color: AppTheme.black,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Format badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _accentColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      _selectedFormat.displayName,
-                      style: const TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: _accentColor,
+                      child: Column(
+                        children: [
+                          // Top line info
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _primaryColor.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              topLineInfo,
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                                color: _primaryColor,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // Barcode
+                          SizedBox(
+                            width: 240,
+                            height: 80,
+                            child: _buildSafeBarcodeWidget(
+                              data: _generatedBarcode,
+                              format: _selectedFormat,
+                              width: 240,
+                              height: 80,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          // Barcode number
+                          Text(
+                            _generatedBarcode,
+                            style: const TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 2,
+                              color: AppTheme.black,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // Format badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _accentColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              _selectedFormat.displayName,
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: _accentColor,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 24),
+                    // Action Buttons
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        children: [
+                          // Share Button
+                          _buildPreviewActionButton(
+                            icon: Icons.share_rounded,
+                            label: 'Share Barcode',
+                            subtitle: 'Share as PDF image',
+                            color: AppTheme.indigo400,
+                            onTap: () {
+                              Navigator.pop(context);
+                              _shareBarcode();
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          // Print PDF Button
+                          _buildPreviewActionButton(
+                            icon: Icons.picture_as_pdf_rounded,
+                            label: 'Print as PDF',
+                            subtitle: 'Standard paper printer',
+                            color: _primaryColor,
+                            onTap: () {
+                              Navigator.pop(context);
+                              _printBarcode();
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          // Print POS Button
+                          _buildPreviewActionButton(
+                            icon: Icons.receipt_long_rounded,
+                            label: 'Print on POS',
+                            subtitle: _printerService.isConnected
+                                ? 'Connected: ${_printerService.connectedPrinter?.name ?? "Printer"}'
+                                : 'Tap to connect thermal printer',
+                            color: _accentColor,
+                            onTap: () {
+                              Navigator.pop(context);
+                              _printBarcodePos();
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 24),
-            // Action Buttons
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  // Share Button
-                  _buildPreviewActionButton(
-                    icon: Icons.share_rounded,
-                    label: 'Share Barcode',
-                    subtitle: 'Share as PDF image',
-                    color: AppTheme.indigo400,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _shareBarcode();
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  // Print PDF Button
-                  _buildPreviewActionButton(
-                    icon: Icons.picture_as_pdf_rounded,
-                    label: 'Print as PDF',
-                    subtitle: 'Standard paper printer',
-                    color: _primaryColor,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _printBarcode();
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  // Print POS Button
-                  _buildPreviewActionButton(
-                    icon: Icons.receipt_long_rounded,
-                    label: 'Print on POS',
-                    subtitle: _printerService.isConnected
-                        ? 'Connected: ${_printerService.connectedPrinter?.name ?? "Printer"}'
-                        : 'Tap to connect thermal printer',
-                    color: _accentColor,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _printBarcodePos();
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
           ],
         ),
       ),

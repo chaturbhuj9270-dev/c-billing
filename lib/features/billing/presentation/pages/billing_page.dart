@@ -1448,6 +1448,11 @@ class _BillingPageState extends State<BillingPage> {
             shopRepository: _shopRepository,
           ),
           printPageFormat: printPageFormat,
+          rebuildPdfForPrint: (format) => _pdfService.buildPdfBytesForPageFormat(
+            billData: printData,
+            shopDetails: shop,
+            pageFormat: format,
+          ),
           details: FilePreviewDetails(
             title: 'Bill preview',
             documentNo: bill.billNumber,
@@ -1508,6 +1513,11 @@ class _BillingPageState extends State<BillingPage> {
           shopRepository: _shopRepository,
         ),
         printPageFormat: printPageFormat,
+        rebuildPdfForPrint: (format) => _pdfService.buildPdfBytesForPageFormat(
+          billData: printData,
+          shopDetails: shop,
+          pageFormat: format,
+        ),
         details: FilePreviewDetails(
           title: 'Bill preview',
           documentNo: bill.billNumber,
@@ -5958,27 +5968,13 @@ class _CustomerPickerBottomSheetState
 
   @override
   Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: drawerSheetSize(0.6),
-      maxChildSize: drawerSheetSize(0.9),
-      minChildSize: drawerSheetSize(0.4),
-      builder: (_, controller) => Container(
-        decoration: BoxDecoration(
-          color: AppColors.card(context),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
+    return GlassDraggableSheet(
+      initialChildSize: 0.68,
+      minChildSize: 0.4,
+      maxChildSize: 0.9,
+      builder: (_, controller) => Column(
           children: [
-            // Handle bar
-            const SizedBox(height: 12),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppTheme.grey300,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+            const GlassSheetHandle(),
             // Header
             Padding(
               padding: EdgeInsets.all(20),
@@ -6252,7 +6248,6 @@ class _CustomerPickerBottomSheetState
             ),
           ],
         ),
-      ),
     );
   }
 }

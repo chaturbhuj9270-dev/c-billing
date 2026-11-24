@@ -154,6 +154,11 @@ Future<void> _openPaymentReceiptPreview({
         subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
         customerPhone: bill.customerContact,
         printPageFormat: printPageFormat,
+        rebuildPdfForPrint: (format) => pdfService.buildPdfBytesForPageFormat(
+          billData: printData,
+          shopDetails: shop,
+          pageFormat: format,
+        ),
         details: FilePreviewDetails(
           title: localizations.paymentReceipt,
           documentNo: bill.billNumber,
@@ -182,6 +187,11 @@ Future<void> _openPaymentReceiptPreview({
       subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
       customerPhone: bill.customerContact,
       printPageFormat: printPageFormat,
+      rebuildPdfForPrint: (format) => pdfService.buildPdfBytesForPageFormat(
+        billData: printData,
+        shopDetails: shop,
+        pageFormat: format,
+      ),
       details: FilePreviewDetails(
         title: localizations.paymentReceipt,
         documentNo: bill.billNumber,

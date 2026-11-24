@@ -334,10 +334,6 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
       builder: (context, setSheetState) {
         return dockDrawerAction(
           context: context,
-          phoneDecoration: BoxDecoration(
-            color: AppColors.card(context),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
           action: DrawerBottomBar(
             leading: _isEditing
                 ? TextButton(
@@ -373,18 +369,9 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (!DesktopCanvas.isDesktopPlatform)
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: AppTheme.grey300,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ),
+                      const GlassSheetHandle(),
                     if (!DesktopCanvas.isDesktopPlatform)
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 8),
                     // Header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -681,66 +668,48 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
     showAppBottomSheet(
       context: context,
       backgroundColor: AppTheme.transparent,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: AppColors.card(context),
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppTheme.grey300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildContextMenuItem(
-                  icon: Icons.edit_rounded,
-                  label: 'Edit Company',
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _showEditCompanySheet(company);
-                  },
-                ),
-                if ((company['contact'] ?? '').toString().isNotEmpty)
-                  _buildContextMenuItem(
-                    icon: Icons.phone_rounded,
-                    label: 'Call ${company['contact']}',
-                    onTap: () {
-                      final phone = (company['contact'] ?? '').toString();
-                      Navigator.pop(ctx);
-                      CommunicationService.instance.makeCall(
-                        phone,
-                        context: context,
-                      );
-                    },
-                  ),
-                _buildContextMenuItem(
-                  icon: Icons.delete_rounded,
-                  label: 'Delete',
-                  color: AppTheme.red,
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _companyNameController.text = company['companyName'] ?? '';
-                    _editingCompanyId = company['id'];
-                    _editingCompanyLocalId = company['localId'] as int?;
-                    _isEditing = true;
-                    _deleteCompany(context, setState);
-                  },
-                ),
-              ],
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const GlassSheetHandle(),
+            const SizedBox(height: 8),
+            _buildContextMenuItem(
+              icon: Icons.edit_rounded,
+              label: 'Edit Company',
+              onTap: () {
+                Navigator.pop(ctx);
+                _showEditCompanySheet(company);
+              },
             ),
-          ),
+            if ((company['contact'] ?? '').toString().isNotEmpty)
+              _buildContextMenuItem(
+                icon: Icons.phone_rounded,
+                label: 'Call ${company['contact']}',
+                onTap: () {
+                  final phone = (company['contact'] ?? '').toString();
+                  Navigator.pop(ctx);
+                  CommunicationService.instance.makeCall(
+                    phone,
+                    context: context,
+                  );
+                },
+              ),
+            _buildContextMenuItem(
+              icon: Icons.delete_rounded,
+              label: 'Delete',
+              color: AppTheme.red,
+              onTap: () {
+                Navigator.pop(ctx);
+                _companyNameController.text = company['companyName'] ?? '';
+                _editingCompanyId = company['id'];
+                _editingCompanyLocalId = company['localId'] as int?;
+                _isEditing = true;
+                _deleteCompany(context, setState);
+              },
+            ),
+          ],
         ),
       ),
     );

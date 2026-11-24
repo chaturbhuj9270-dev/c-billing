@@ -64,6 +64,10 @@ class FilePreviewPage extends StatefulWidget {
   /// Preferred paper size for the system print dialog (e.g. roll80 for POS).
   final PdfPageFormat? printPageFormat;
 
+  /// When set, print rebuilds the PDF for the paper size chosen in the dialog
+  /// (so A4 expands the receipt instead of leaving empty side margins).
+  final Future<Uint8List> Function(PdfPageFormat format)? rebuildPdfForPrint;
+
   const FilePreviewPage({
     super.key,
     this.file,
@@ -78,6 +82,7 @@ class FilePreviewPage extends StatefulWidget {
     this.fitPage = false,
     this.details,
     this.printPageFormat,
+    this.rebuildPdfForPrint,
   }) : assert(file != null || bytes != null, 'Provide a file or document bytes');
 
   // Opens print/report preview. Web, Windows, and Mac always use a centered popup. Phone pushes a full page.
@@ -94,6 +99,7 @@ class FilePreviewPage extends StatefulWidget {
     bool centered = true,
     FilePreviewDetails? details,
     PdfPageFormat? printPageFormat,
+    Future<Uint8List> Function(PdfPageFormat format)? rebuildPdfForPrint,
   }) {
     final desktop = DesktopCanvas.isDesktopPlatform;
     final page = FilePreviewPage(
@@ -109,6 +115,7 @@ class FilePreviewPage extends StatefulWidget {
       fitPage: centered || desktop,
       details: details,
       printPageFormat: printPageFormat,
+      rebuildPdfForPrint: rebuildPdfForPrint,
     );
     if (!desktop) {
       return Navigator.of(context).push(
@@ -586,7 +593,13 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       if (widget.fileType == FilePreviewType.pdf) {
         final bytes = _pdfBytes ?? await widget.file!.readAsBytes();
         await Printing.layoutPdf(
-          onLayout: (format) async => bytes,
+          onLayout: (format) async {
+            final rebuild = widget.rebuildPdfForPrint;
+            if (rebuild != null) {
+              return rebuild(format);
+            }
+            return bytes;
+          },
           name: widget.fileName,
           format: widget.printPageFormat ?? PdfPageFormat.standard,
         );

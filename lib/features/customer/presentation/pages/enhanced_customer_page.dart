@@ -924,25 +924,31 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => _CustomerDetailsSheet(
-        customer: customer,
-        localizations: _localizations,
-        onViewDetails: () {
-          Navigator.pop(context);
-          _navigateToCustomerDetails(customer);
-        },
-        onCollect: () {
-          Navigator.pop(context);
-          _openCollectPayment(customer);
-        },
-        onEdit: () {
-          Navigator.pop(context);
-          _showEditCustomerSheet(customer);
-        },
-        onDelete: () {
-          Navigator.pop(context);
-          _deleteCustomer(customer);
-        },
+      builder: (context) => GlassDraggableSheet(
+        initialChildSize: 0.65,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, controller) => _CustomerDetailsSheet(
+          customer: customer,
+          localizations: _localizations,
+          scrollController: controller,
+          onViewDetails: () {
+            Navigator.pop(context);
+            _navigateToCustomerDetails(customer);
+          },
+          onCollect: () {
+            Navigator.pop(context);
+            _openCollectPayment(customer);
+          },
+          onEdit: () {
+            Navigator.pop(context);
+            _showEditCustomerSheet(customer);
+          },
+          onDelete: () {
+            Navigator.pop(context);
+            _deleteCustomer(customer);
+          },
+        ),
       ),
     );
   }
@@ -953,96 +959,70 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     showAppBottomSheet(
       context: context,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => ClipRRect(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.card(context),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(20),
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const GlassSheetHandle(),
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              '${customer['firstName'] ?? ''} ${customer['lastName'] ?? ''}'
+                  .trim(),
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: AppColors.accent(context),
               ),
-            ),
-            child: SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(top: 12),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppTheme.grey300,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text(
-                      '${customer['firstName'] ?? ''} ${customer['lastName'] ?? ''}'
-                          .trim(),
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        color: AppColors.accent(context),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const Divider(height: 1),
-                  _buildContextMenuItem(
-                    icon: Icons.visibility_rounded,
-                    label: _localizations.viewDetails,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showCustomerDetails(customer);
-                    },
-                  ),
-                  _buildContextMenuItem(
-                    icon: Icons.account_balance_wallet_rounded,
-                    label: _localizations.viewBalance,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _navigateToCustomerDetails(customer);
-                    },
-                  ),
-                  if (((customer['currentPendingAmount'] as num?)?.toDouble() ??
-                          0) >
-                      0)
-                    _buildContextMenuItem(
-                      icon: Icons.currency_rupee_rounded,
-                      label: 'Collect',
-                      onTap: () {
-                        Navigator.pop(context);
-                        _openCollectPayment(customer);
-                      },
-                    ),
-                  _buildContextMenuItem(
-                    icon: Icons.edit_rounded,
-                    label: _localizations.edit,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showEditCustomerSheet(customer);
-                    },
-                  ),
-                  _buildContextMenuItem(
-                    icon: Icons.delete_outline_rounded,
-                    label: _localizations.delete,
-                    isDestructive: true,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _deleteCustomer(customer);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-        ),
+          const Divider(height: 1),
+          _buildContextMenuItem(
+            icon: Icons.visibility_rounded,
+            label: _localizations.viewDetails,
+            onTap: () {
+              Navigator.pop(context);
+              _showCustomerDetails(customer);
+            },
+          ),
+          _buildContextMenuItem(
+            icon: Icons.account_balance_wallet_rounded,
+            label: _localizations.viewBalance,
+            onTap: () {
+              Navigator.pop(context);
+              _navigateToCustomerDetails(customer);
+            },
+          ),
+          if (((customer['currentPendingAmount'] as num?)?.toDouble() ?? 0) > 0)
+            _buildContextMenuItem(
+              icon: Icons.currency_rupee_rounded,
+              label: 'Collect',
+              onTap: () {
+                Navigator.pop(context);
+                _openCollectPayment(customer);
+              },
+            ),
+          _buildContextMenuItem(
+            icon: Icons.edit_rounded,
+            label: _localizations.edit,
+            onTap: () {
+              Navigator.pop(context);
+              _showEditCustomerSheet(customer);
+            },
+          ),
+          _buildContextMenuItem(
+            icon: Icons.delete_outline_rounded,
+            label: _localizations.delete,
+            isDestructive: true,
+            onTap: () {
+              Navigator.pop(context);
+              _deleteCustomer(customer);
+            },
+          ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }
@@ -1117,28 +1097,14 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     return dockDrawerAction(
       context: context,
       action: action,
-      phoneDecoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       body: Form(
             key: _formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (!DesktopCanvas.isDesktopPlatform)
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppTheme.grey300,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                if (!DesktopCanvas.isDesktopPlatform) const SizedBox(height: 16),
+                if (!DesktopCanvas.isDesktopPlatform) const GlassSheetHandle(),
+                if (!DesktopCanvas.isDesktopPlatform) const SizedBox(height: 8),
                 // Title
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1265,6 +1231,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 class _CustomerDetailsSheet extends StatelessWidget {
   final Map<String, dynamic> customer;
   final AppLocalizations localizations;
+  final ScrollController scrollController;
   final VoidCallback onViewDetails;
   final VoidCallback? onCollect;
   final VoidCallback onEdit;
@@ -1273,6 +1240,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
   const _CustomerDetailsSheet({
     required this.customer,
     required this.localizations,
+    required this.scrollController,
     required this.onViewDetails,
     this.onCollect,
     required this.onEdit,
@@ -1293,39 +1261,20 @@ class _CustomerDetailsSheet extends StatelessWidget {
     final accentColor = AppColors.action(context);
     final initials = firstName.isNotEmpty ? firstName[0].toUpperCase() : 'C';
 
-    return ClipRRect(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.7,
-          ),
-          decoration: BoxDecoration(
-            color: AppColors.card(context),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
+    return Column(
+      children: [
+        const GlassSheetHandle(),
+        Expanded(
           child: SingleChildScrollView(
+            controller: scrollController,
             child: SafeArea(
+              top: false,
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Handle
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: AppTheme.grey300,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
                     // Header with avatar
                     Row(
                       children: [
@@ -1564,13 +1513,13 @@ class _CustomerDetailsSheet extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 8),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
+        ],
     );
   }
 

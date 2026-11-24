@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -935,33 +934,18 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: Container(
-          height: MediaQuery.of(context).size.height * 0.75,
-          decoration: BoxDecoration(
-            color: AppColors.card(context),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  margin: const EdgeInsets.only(top: 12),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppTheme.grey300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              // Header
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Row(
+      builder: (context) => GlassDraggableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, controller) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const GlassSheetHandle(),
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+              child: Row(
                   children: [
                     // Avatar
                     Container(
@@ -1064,36 +1048,37 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                   ],
                 ),
               ),
-              const Divider(height: 1),
-              // Content
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Stock status
-                      if (isOutOfStock)
-                        _buildWarningBanner(
-                          icon: Icons.error_outline_rounded,
-                          color: AppTheme.red,
-                          message: _localizations.outOfStock,
-                        )
-                      else if (isLowStock)
-                        _buildWarningBanner(
-                          icon: Icons.warning_amber_rounded,
-                          color: AppTheme.orange,
-                          message: _localizations.lowStock,
-                        ),
-
-                      // Info cards
-                      _buildInfoCard(
-                        icon: Icons.business_rounded,
-                        label: _localizations.company,
-                        value: product.companyName.isNotEmpty
-                            ? product.companyName
-                            : '—',
+            const Divider(height: 1),
+            // Content
+            Expanded(
+              child: SingleChildScrollView(
+                controller: controller,
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Stock status
+                    if (isOutOfStock)
+                      _buildWarningBanner(
+                        icon: Icons.error_outline_rounded,
+                        color: AppTheme.red,
+                        message: _localizations.outOfStock,
+                      )
+                    else if (isLowStock)
+                      _buildWarningBanner(
+                        icon: Icons.warning_amber_rounded,
+                        color: AppTheme.orange,
+                        message: _localizations.lowStock,
                       ),
+
+                    // Info cards
+                    _buildInfoCard(
+                      icon: Icons.business_rounded,
+                      label: _localizations.company,
+                      value: product.companyName.isNotEmpty
+                          ? product.companyName
+                          : '—',
+                    ),
                       _buildInfoCard(
                         icon: Icons.category_rounded,
                         label: _localizations.category,
@@ -1251,7 +1236,6 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             ],
           ),
         ),
-      ),
     );
   }
 
@@ -1378,88 +1362,72 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     showAppBottomSheet(
       context: context,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: AppColors.card(context),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.grey300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const GlassSheetHandle(),
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              product.name,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: AppColors.accent(context),
               ),
-              Padding(
-                padding: EdgeInsets.all(16),
-                child: Text(
-                  product.name,
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    color: AppColors.accent(context),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Divider(height: 1),
-              ListTile(
-                leading: Icon(
-                  Icons.visibility_rounded,
-                  color: AppColors.accent(context),
-                ),
-                title: Text(
-                  'View Details',
-                  style: TextStyle(fontFamily: 'Literata'),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showProductDetails(product);
-                },
-              ),
-              ListTile(
-                leading: Icon(
-                  Icons.edit_rounded,
-                  color: AppColors.accent(context),
-                ),
-                title: Text(
-                  _localizations.edit,
-                  style: const TextStyle(fontFamily: 'Literata'),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showEditProductSheet(product);
-                },
-              ),
-              ListTile(
-                leading: const Icon(
-                  Icons.delete_outline_rounded,
-                  color: AppTheme.red,
-                ),
-                title: Text(
-                  _localizations.delete,
-                  style: const TextStyle(
-                    fontFamily: 'Literata',
-                    color: AppTheme.red,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showDeleteConfirmation(product);
-                },
-              ),
-              const SizedBox(height: 16),
-            ],
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        ),
+          Divider(height: 1),
+          ListTile(
+            leading: Icon(
+              Icons.visibility_rounded,
+              color: AppColors.accent(context),
+            ),
+            title: Text(
+              'View Details',
+              style: TextStyle(fontFamily: 'Literata'),
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              _showProductDetails(product);
+            },
+          ),
+          ListTile(
+            leading: Icon(
+              Icons.edit_rounded,
+              color: AppColors.accent(context),
+            ),
+            title: Text(
+              _localizations.edit,
+              style: const TextStyle(fontFamily: 'Literata'),
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              _showEditProductSheet(product);
+            },
+          ),
+          ListTile(
+            leading: const Icon(
+              Icons.delete_outline_rounded,
+              color: AppTheme.red,
+            ),
+            title: Text(
+              _localizations.delete,
+              style: const TextStyle(
+                fontFamily: 'Literata',
+                color: AppTheme.red,
+              ),
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              _showDeleteConfirmation(product);
+            },
+          ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }
@@ -1626,27 +1594,23 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          final desktop = DesktopCanvas.isDesktopPlatform;
-          final sheet = Column(
-            children: [
-              if (!desktop)
-                Center(
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 12),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppTheme.grey300,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(16, desktop ? 20 : 16, 16, 16),
-                child: Row(
-                  children: [
+      builder: (context) => GlassDraggableSheet(
+        initialChildSize: 0.75,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, controller) => StatefulBuilder(
+          builder: (context, setDialogState) {
+            final desktop = DesktopCanvas.isDesktopPlatform;
+            return Column(
+              children: [
+                if (!desktop)
+                  const GlassSheetHandle()
+                else
+                  const SizedBox(height: 4),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(16, desktop ? 20 : 8, 16, 16),
+                  child: Row(
+                    children: [
                       Text(
                         _localizations.addNewProduct,
                         style: TextStyle(
@@ -1673,6 +1637,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 // Content
                 Expanded(
                   child: SingleChildScrollView(
+                    controller: controller,
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1848,22 +1813,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 ),
               ],
             );
-          return desktop
-              ? sheet
-              : BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                  child: Container(
-                    height: MediaQuery.of(context).size.height * 0.85,
-                    decoration: BoxDecoration(
-                      color: AppColors.card(context),
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(24),
-                      ),
-                    ),
-                    child: sheet,
-                  ),
-                );
-        },
+          },
+        ),
       ),
     );
   }
@@ -1911,14 +1862,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.card(context),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        border: Border(
+          top: BorderSide(color: AppColors.border(context)),
+        ),
       ),
       child: SafeArea(child: row),
     );
@@ -2151,23 +2097,19 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          final desktop = DesktopCanvas.isDesktopPlatform;
-          final sheet = Column(
-            children: [
-              if (!desktop)
-                Center(
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 12),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppTheme.grey300,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
+      builder: (context) => GlassDraggableSheet(
+        initialChildSize: 0.75,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, controller) => StatefulBuilder(
+          builder: (context, setDialogState) {
+            final desktop = DesktopCanvas.isDesktopPlatform;
+            return Column(
+              children: [
+                if (!desktop)
+                  const GlassSheetHandle()
+                else
+                  const SizedBox(height: 4),
               Padding(
                 padding: EdgeInsets.fromLTRB(16, desktop ? 20 : 16, 16, 16),
                 child: Row(
@@ -2198,6 +2140,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 // Content
                 Expanded(
                   child: SingleChildScrollView(
+                    controller: controller,
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2378,22 +2321,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 ),
               ],
             );
-          return desktop
-              ? sheet
-              : BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                  child: Container(
-                    height: MediaQuery.of(context).size.height * 0.85,
-                    decoration: BoxDecoration(
-                      color: AppColors.card(context),
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(24),
-                      ),
-                    ),
-                    child: sheet,
-                  ),
-                );
-        },
+          },
+        ),
       ),
     );
   }
@@ -2709,74 +2638,62 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
   ) async {
     return showAppBottomSheet<Map<String, dynamic>>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: AppColors.card(context),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.grey300,
-                  borderRadius: BorderRadius.circular(2),
+      builder: (context) => GlassDraggableSheet(
+        initialChildSize: 0.55,
+        minChildSize: 0.35,
+        maxChildSize: 0.9,
+        builder: (_, controller) => Column(
+          children: [
+            const GlassSheetHandle(),
+            Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                _localizations.selectCompany,
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: AppColors.accent(context),
                 ),
               ),
-              Padding(
-                padding: EdgeInsets.all(16),
-                child: Text(
-                  _localizations.selectCompany,
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    color: AppColors.accent(context),
-                  ),
-                ),
-              ),
-              const Divider(height: 1),
-              Flexible(
-                child: companies.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(32),
-                          child: Text(
-                            'No companies found',
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              color: AppTheme.grey600,
-                            ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: companies.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Text(
+                          'No companies found',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            color: AppTheme.grey600,
                           ),
                         ),
-                      )
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: companies.length,
-                        itemBuilder: (context, index) {
-                          final company = companies[index];
-                          return ListTile(
-                            leading: Icon(
-                              Icons.business_rounded,
-                              color: AppColors.accent(context),
-                            ),
-                            title: Text(
-                              company['companyName'] ?? '',
-                              style: const TextStyle(fontFamily: 'Literata'),
-                            ),
-                            onTap: () => Navigator.pop(context, company),
-                          );
-                        },
                       ),
-              ),
-              SizedBox(height: 16),
-            ],
-          ),
+                    )
+                  : ListView.builder(
+                      controller: controller,
+                      itemCount: companies.length,
+                      itemBuilder: (context, index) {
+                        final company = companies[index];
+                        return ListTile(
+                          leading: Icon(
+                            Icons.business_rounded,
+                            color: AppColors.accent(context),
+                          ),
+                          title: Text(
+                            company['companyName'] ?? '',
+                            style: const TextStyle(fontFamily: 'Literata'),
+                          ),
+                          onTap: () => Navigator.pop(context, company),
+                        );
+                      },
+                    ),
+            ),
+          ],
         ),
       ),
     );
@@ -2788,74 +2705,62 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
   ) async {
     return showAppBottomSheet<Map<String, dynamic>>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: AppColors.card(context),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.grey300,
-                  borderRadius: BorderRadius.circular(2),
+      builder: (context) => GlassDraggableSheet(
+        initialChildSize: 0.55,
+        minChildSize: 0.35,
+        maxChildSize: 0.9,
+        builder: (_, controller) => Column(
+          children: [
+            const GlassSheetHandle(),
+            Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                _localizations.selectSupplier,
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: AppColors.accent(context),
                 ),
               ),
-              Padding(
-                padding: EdgeInsets.all(16),
-                child: Text(
-                  _localizations.selectSupplier,
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    color: AppColors.accent(context),
-                  ),
-                ),
-              ),
-              const Divider(height: 1),
-              Flexible(
-                child: suppliers.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(32),
-                          child: Text(
-                            'No suppliers found',
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              color: AppTheme.grey600,
-                            ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: suppliers.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Text(
+                          'No suppliers found',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            color: AppTheme.grey600,
                           ),
                         ),
-                      )
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: suppliers.length,
-                        itemBuilder: (context, index) {
-                          final supplier = suppliers[index];
-                          return ListTile(
-                            leading: Icon(
-                              Icons.person_rounded,
-                              color: AppColors.accent(context),
-                            ),
-                            title: Text(
-                              supplier['fullName'] ?? '',
-                              style: const TextStyle(fontFamily: 'Literata'),
-                            ),
-                            onTap: () => Navigator.pop(context, supplier),
-                          );
-                        },
                       ),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
+                    )
+                  : ListView.builder(
+                      controller: controller,
+                      itemCount: suppliers.length,
+                      itemBuilder: (context, index) {
+                        final supplier = suppliers[index];
+                        return ListTile(
+                          leading: Icon(
+                            Icons.person_rounded,
+                            color: AppColors.accent(context),
+                          ),
+                          title: Text(
+                            supplier['fullName'] ?? '',
+                            style: const TextStyle(fontFamily: 'Literata'),
+                          ),
+                          onTap: () => Navigator.pop(context, supplier),
+                        );
+                      },
+                    ),
+            ),
+          ],
         ),
       ),
     );

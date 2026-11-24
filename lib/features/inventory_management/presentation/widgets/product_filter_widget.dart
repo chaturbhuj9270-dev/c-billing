@@ -349,110 +349,98 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
   void _showCategoryPicker(BuildContext context) {
     showAppBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: AppColors.card(context),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.grey300,
-                  borderRadius: BorderRadius.circular(2),
+      builder: (context) => GlassDraggableSheet(
+        initialChildSize: 0.55,
+        minChildSize: 0.35,
+        maxChildSize: 0.9,
+        builder: (_, controller) => Column(
+          children: [
+            const GlassSheetHandle(),
+            Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'Select Category',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: AppColors.accent(context),
                 ),
               ),
-              Padding(
-                padding: EdgeInsets.all(16),
-                child: Text(
-                  'Select Category',
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    color: AppColors.accent(context),
-                  ),
-                ),
+            ),
+            const Divider(height: 1),
+            // All categories option
+            ListTile(
+              leading: Icon(
+                Icons.all_inclusive_rounded,
+                color: widget.selectedCategory == null
+                    ? AppColors.action(context)
+                    : AppTheme.grey600,
               ),
-              const Divider(height: 1),
-              // All categories option
-              ListTile(
-                leading: Icon(
-                  Icons.all_inclusive_rounded,
+              title: Text(
+                'All Categories',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: widget.selectedCategory == null
+                      ? FontWeight.w700
+                      : FontWeight.w500,
                   color: widget.selectedCategory == null
                       ? AppColors.action(context)
-                      : AppTheme.grey600,
+                      : AppTheme.grey800,
                 ),
-                title: Text(
-                  'All Categories',
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontWeight: widget.selectedCategory == null
-                        ? FontWeight.w700
-                        : FontWeight.w500,
-                    color: widget.selectedCategory == null
-                        ? AppColors.action(context)
-                        : AppTheme.grey800,
-                  ),
-                ),
-                trailing: widget.selectedCategory == null
-                    ? Icon(Icons.check_rounded, color: AppColors.accent(context))
-                    : null,
-                onTap: () {
-                  widget.onCategoryChanged(null);
-                  Navigator.pop(context);
-                },
               ),
-              // Category list
-              Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: widget.categories.length,
-                  itemBuilder: (context, index) {
-                    final category = widget.categories[index];
-                    final isSelected = widget.selectedCategory == category;
-                    return ListTile(
-                      leading: Icon(
-                        Icons.label_rounded,
+              trailing: widget.selectedCategory == null
+                  ? Icon(Icons.check_rounded, color: AppColors.accent(context))
+                  : null,
+              onTap: () {
+                widget.onCategoryChanged(null);
+                Navigator.pop(context);
+              },
+            ),
+            // Category list
+            Expanded(
+              child: ListView.builder(
+                controller: controller,
+                itemCount: widget.categories.length,
+                itemBuilder: (context, index) {
+                  final category = widget.categories[index];
+                  final isSelected = widget.selectedCategory == category;
+                  return ListTile(
+                    leading: Icon(
+                      Icons.label_rounded,
+                      color: isSelected
+                          ? AppColors.action(context)
+                          : AppTheme.grey600,
+                    ),
+                    title: Text(
+                      category,
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                         color: isSelected
                             ? AppColors.action(context)
-                            : AppTheme.grey600,
+                            : AppTheme.grey800,
                       ),
-                      title: Text(
-                        category,
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontWeight: isSelected
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          color: isSelected
-                              ? AppColors.action(context)
-                              : AppTheme.grey800,
-                        ),
-                      ),
-                      trailing: isSelected
-                          ? Icon(
-                              Icons.check_rounded,
-                              color: AppColors.accent(context),
-                            )
-                          : null,
-                      onTap: () {
-                        widget.onCategoryChanged(category);
-                        Navigator.pop(context);
-                      },
-                    );
-                  },
-                ),
+                    ),
+                    trailing: isSelected
+                        ? Icon(
+                            Icons.check_rounded,
+                            color: AppColors.accent(context),
+                          )
+                        : null,
+                    onTap: () {
+                      widget.onCategoryChanged(category);
+                      Navigator.pop(context);
+                    },
+                  );
+                },
               ),
-              const SizedBox(height: 16),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

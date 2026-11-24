@@ -53,10 +53,13 @@ class PdfBillService {
     return generateBillPdf(billData: billData, shopDetails: shopDetails);
   }
 
-  // Generate a PDF document from bill data (POS receipt format)
+  // Generate a PDF document from bill data (POS receipt format).
+  // [pageFormat] lets system print use the selected paper (e.g. A4) while
+  // keeping the same POS layout stretched to that width. Default is 80mm roll.
   Future<pw.Document> generateBillPdf({
     required PrintBillData billData,
     required Shop shopDetails,
+    PdfPageFormat? pageFormat,
   }) async {
     final pdf = pw.Document();
 
@@ -66,16 +69,34 @@ class PdfBillService {
     final generateViaContact =
         prefs.getBool('bill_generate_via_contact') ?? false;
 
-    // 80mm POS thermal paper — preview/print must match printer roll width.
+    final format = pageFormat ?? PdfPageFormat.roll80;
+    // Keep roll height for long receipts even when printing on A4 width.
+    final resolvedFormat = PdfPageFormat(
+      format.width,
+      format.height == double.infinity
+          ? double.infinity
+          : (format.height < PdfPageFormat.a4.height
+              ? double.infinity
+              : format.height),
+      marginAll: 0,
+    );
+
     pdf.addPage(
       pw.Page(
-        pageFormat: PdfPageFormat.roll80,
-        margin: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        pageFormat: resolvedFormat,
+        margin: pw.EdgeInsets.symmetric(
+          horizontal: resolvedFormat.width >= PdfPageFormat.a4.width * 0.9
+              ? 36
+              : 8,
+          vertical: resolvedFormat.width >= PdfPageFormat.a4.width * 0.9
+              ? 28
+              : 10,
+        ),
         build: (context) {
           return pw.LayoutBuilder(
             builder: (context, constraints) {
               final contentWidth =
-                  constraints?.maxWidth ?? PdfPageFormat.roll80.availableWidth;
+                  constraints?.maxWidth ?? resolvedFormat.availableWidth;
               return pw.SizedBox(
                 width: contentWidth,
                 child: _buildBillContent(
@@ -93,6 +114,30 @@ class PdfBillService {
     );
 
     return pdf;
+  }
+
+  /// Bytes for a specific paper size (system print dialog paper changes).
+  Future<Uint8List> buildPdfBytesForPageFormat({
+    required PrintBillData billData,
+    required Shop shopDetails,
+    required PdfPageFormat pageFormat,
+  }) async {
+    final format = await resolvePdfFormat(billData);
+    final pdf = format == 'normal'
+        ? await generateNormalBillPdf(
+            billData: billData,
+            shopDetails: shopDetails,
+          )
+        : await generateBillPdf(
+            billData: billData,
+            shopDetails: shopDetails,
+            pageFormat: pageFormat,
+          );
+    final bytes = await pdf.save();
+    if (bytes.isEmpty) {
+      throw Exception('PDF generation failed: empty bytes');
+    }
+    return bytes;
   }
 
   // Generate a Normal/Tabular A4 bill PDF (Krushi Seva Kendra style — half A4 page, compact)
@@ -1835,80 +1880,88 @@ class PdfBillService {
         _buildDashedDivider(),
         pw.SizedBox(height: 6),
 
-        // QR (left) + bank (right) — fits 80mm roll (~206pt usable)
+        // QR (left) + bank (right). Scales up on wide paper (A4 print).
         if (_hasBillPaymentQr(billData, shopDetails) ||
             (shopDetails.bankName != null &&
                 shopDetails.bankName!.isNotEmpty) ||
             (shopDetails.accountNumber != null &&
                 shopDetails.accountNumber!.isNotEmpty))
-          pw.Container(
-            width: receiptWidth,
-            child: pw.Row(
-              crossAxisAlignment: pw.CrossAxisAlignment.center,
-              children: [
-                if (_hasBillPaymentQr(billData, shopDetails))
-                  pw.Container(
-                    width: 68,
-                    margin: const pw.EdgeInsets.only(right: 6),
-                    child: _buildBillPaymentQr(
-                      billData: billData,
-                      shopDetails: shopDetails,
-                      size: 56,
-                      accentColor: PdfColors.black,
-                      bordered: true,
-                      captionSize: 5.5,
+          () {
+            final wide = receiptWidth.isFinite && receiptWidth > 280;
+            final qrSize = wide ? 84.0 : 56.0;
+            final qrBox = wide ? 100.0 : 68.0;
+            final titleSize = wide ? 10.0 : 7.0;
+            final bodySize = wide ? 9.0 : 6.0;
+            final captionSize = wide ? 8.0 : 5.5;
+            return pw.Container(
+              width: receiptWidth,
+              child: pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  if (_hasBillPaymentQr(billData, shopDetails))
+                    pw.Container(
+                      width: qrBox,
+                      margin: pw.EdgeInsets.only(right: wide ? 16 : 6),
+                      child: _buildBillPaymentQr(
+                        billData: billData,
+                        shopDetails: shopDetails,
+                        size: qrSize,
+                        accentColor: PdfColors.black,
+                        bordered: true,
+                        captionSize: captionSize,
+                      ),
                     ),
-                  ),
-                if ((shopDetails.bankName != null &&
-                        shopDetails.bankName!.isNotEmpty) ||
-                    (shopDetails.accountNumber != null &&
-                        shopDetails.accountNumber!.isNotEmpty))
-                  pw.Expanded(
-                    child: pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Text(
-                          'Bank Details',
-                          style: pw.TextStyle(
-                            fontSize: 7,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
-                        ),
-                        pw.SizedBox(height: 2),
-                        if (shopDetails.bankName != null &&
-                            shopDetails.bankName!.isNotEmpty)
+                  if ((shopDetails.bankName != null &&
+                          shopDetails.bankName!.isNotEmpty) ||
+                      (shopDetails.accountNumber != null &&
+                          shopDetails.accountNumber!.isNotEmpty))
+                    pw.Expanded(
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
                           pw.Text(
-                            shopDetails.bankName!,
-                            style: const pw.TextStyle(fontSize: 6),
-                            maxLines: 2,
+                            'Bank Details',
+                            style: pw.TextStyle(
+                              fontSize: titleSize,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
                           ),
-                        if (shopDetails.accountHolderName != null &&
-                            shopDetails.accountHolderName!.isNotEmpty)
-                          pw.Text(
-                            'AC: ${shopDetails.accountHolderName}',
-                            style: const pw.TextStyle(fontSize: 6),
-                            maxLines: 1,
-                          ),
-                        if (shopDetails.accountNumber != null &&
-                            shopDetails.accountNumber!.isNotEmpty)
-                          pw.Text(
-                            'No: ${shopDetails.accountNumber}',
-                            style: const pw.TextStyle(fontSize: 6),
-                            maxLines: 1,
-                          ),
-                        if (shopDetails.ifscCode != null &&
-                            shopDetails.ifscCode!.isNotEmpty)
-                          pw.Text(
-                            'IFSC: ${shopDetails.ifscCode}',
-                            style: const pw.TextStyle(fontSize: 6),
-                            maxLines: 1,
-                          ),
-                      ],
+                          pw.SizedBox(height: wide ? 4 : 2),
+                          if (shopDetails.bankName != null &&
+                              shopDetails.bankName!.isNotEmpty)
+                            pw.Text(
+                              shopDetails.bankName!,
+                              style: pw.TextStyle(fontSize: bodySize),
+                              maxLines: 2,
+                            ),
+                          if (shopDetails.accountHolderName != null &&
+                              shopDetails.accountHolderName!.isNotEmpty)
+                            pw.Text(
+                              'AC: ${shopDetails.accountHolderName}',
+                              style: pw.TextStyle(fontSize: bodySize),
+                              maxLines: 1,
+                            ),
+                          if (shopDetails.accountNumber != null &&
+                              shopDetails.accountNumber!.isNotEmpty)
+                            pw.Text(
+                              'No: ${shopDetails.accountNumber}',
+                              style: pw.TextStyle(fontSize: bodySize),
+                              maxLines: 1,
+                            ),
+                          if (shopDetails.ifscCode != null &&
+                              shopDetails.ifscCode!.isNotEmpty)
+                            pw.Text(
+                              'IFSC: ${shopDetails.ifscCode}',
+                              style: pw.TextStyle(fontSize: bodySize),
+                              maxLines: 1,
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-              ],
-            ),
-          ),
+                ],
+              ),
+            );
+          }(),
 
         // Terms
         if (shopDetails.termsAndConditions != null &&

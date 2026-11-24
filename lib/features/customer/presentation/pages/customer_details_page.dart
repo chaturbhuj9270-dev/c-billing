@@ -1069,32 +1069,14 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: SingleChildScrollView(
+    return SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Handle bar
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.grey300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
+            const GlassSheetHandle(),
+            const SizedBox(height: 12),
             // Header
             const Text(
               'Receive Payment',
@@ -1339,7 +1321,6 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
             const SizedBox(height: 16),
           ],
         ),
-      ),
     );
   }
 

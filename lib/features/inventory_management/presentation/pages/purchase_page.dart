@@ -321,35 +321,29 @@ class _PurchasePageState extends State<PurchasePage>
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
-      builder: (sheetContext) => StatefulBuilder(
-        builder: (sheetContext, setSheetState) {
-          final isDark = AppColors.isDark(sheetContext);
-          final headerGreen = isDark
-              ? AppTheme.headerDarkStart
-              : AppColors.action(sheetContext);
-          final pageBg = isDark
-              ? AppColors.scaffold(sheetContext)
-              : const Color(0xFFF3F7F4);
-          final cardBg = isDark ? AppColors.card(sheetContext) : AppTheme.white;
+      builder: (sheetContext) => GlassDraggableSheet(
+        initialChildSize: 0.75,
+        minChildSize: 0.4,
+        maxChildSize: 0.92,
+        builder: (_, controller) => StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            final isDark = AppColors.isDark(sheetContext);
+            final headerGreen = isDark
+                ? AppTheme.headerDarkStart
+                : AppColors.action(sheetContext);
+            final cardBg =
+                isDark ? AppColors.card(sheetContext) : AppTheme.white;
 
-          return Container(
-            height: MediaQuery.of(sheetContext).size.height * 0.92,
-            decoration: BoxDecoration(
-              color: pageBg,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
-              ),
-            ),
-            child: Column(
+            return Column(
               children: [
-                // Dark green header (matches mock)
+                // Branded green header replaces GlassSheetHandle
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(18, 14, 12, 18),
                   decoration: BoxDecoration(
                     color: headerGreen,
                     borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(24),
+                      top: Radius.circular(28),
                     ),
                   ),
                   child: SafeArea(
@@ -416,6 +410,7 @@ class _PurchasePageState extends State<PurchasePage>
                 ),
                 Expanded(
                   child: SingleChildScrollView(
+                    controller: controller,
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                     child: Column(
                       children: [
@@ -630,7 +625,6 @@ class _PurchasePageState extends State<PurchasePage>
                 Container(
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
                   decoration: BoxDecoration(
-                    color: pageBg,
                     border: Border(
                       top: BorderSide(color: AppColors.border(sheetContext)),
                     ),
@@ -720,9 +714,9 @@ class _PurchasePageState extends State<PurchasePage>
                   ),
                 ),
               ],
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -1615,28 +1609,17 @@ class _PurchasePageState extends State<PurchasePage>
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          height: MediaQuery.of(context).size.height * 0.85,
-          decoration: BoxDecoration(
-            color: AppColors.card(context),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
+      builder: (context) => GlassDraggableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, controller) => StatefulBuilder(
+          builder: (context, setModalState) => Column(
             children: [
-              // Drag handle
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.grey300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+              const GlassSheetHandle(),
               // Header
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
                 child: Row(
                   children: [
                     Container(
@@ -1740,30 +1723,37 @@ class _PurchasePageState extends State<PurchasePage>
               // Product list
               Expanded(
                 child: _filteredProducts.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.inventory_2_outlined,
-                              size: 64,
-                              color: AppTheme.grey300,
+                    ? ListView(
+                        controller: controller,
+                        children: [
+                          const SizedBox(height: 64),
+                          Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.inventory_2_outlined,
+                                  size: 64,
+                                  color: AppTheme.grey300,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  _productSearchController.text.isEmpty
+                                      ? _localizations.noProductsAvailable
+                                      : _localizations.noProductsFound,
+                                  style: TextStyle(
+                                    color: AppTheme.grey,
+                                    fontSize: 15,
+                                    fontFamily: 'Literata',
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 16),
-                            Text(
-                              _productSearchController.text.isEmpty
-                                  ? _localizations.noProductsAvailable
-                                  : _localizations.noProductsFound,
-                              style: TextStyle(
-                                color: AppTheme.grey,
-                                fontSize: 15,
-                                fontFamily: 'Literata',
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       )
                     : ListView.separated(
+                        controller: controller,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 12,
@@ -1982,28 +1972,17 @@ class _PurchasePageState extends State<PurchasePage>
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          height: MediaQuery.of(context).size.height * 0.75,
-          decoration: BoxDecoration(
-            color: AppColors.card(context),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
+      builder: (context) => GlassDraggableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, controller) => StatefulBuilder(
+          builder: (context, setModalState) => Column(
             children: [
-              // Drag handle
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.grey300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+              const GlassSheetHandle(),
               // Header
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
                 child: Row(
                   children: [
                     Container(
@@ -2102,30 +2081,37 @@ class _PurchasePageState extends State<PurchasePage>
               // Supplier list
               Expanded(
                 child: _filteredSuppliers.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.person_off_outlined,
-                              size: 64,
-                              color: AppTheme.grey300,
+                    ? ListView(
+                        controller: controller,
+                        children: [
+                          const SizedBox(height: 64),
+                          Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.person_off_outlined,
+                                  size: 64,
+                                  color: AppTheme.grey300,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  _supplierSearchController.text.isEmpty
+                                      ? _localizations.noSuppliersAvailable
+                                      : _localizations.noSuppliersFound,
+                                  style: TextStyle(
+                                    color: AppTheme.grey,
+                                    fontSize: 15,
+                                    fontFamily: 'Literata',
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 16),
-                            Text(
-                              _supplierSearchController.text.isEmpty
-                                  ? _localizations.noSuppliersAvailable
-                                  : _localizations.noSuppliersFound,
-                              style: TextStyle(
-                                color: AppTheme.grey,
-                                fontSize: 15,
-                                fontFamily: 'Literata',
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       )
                     : ListView.separated(
+                        controller: controller,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 12,
@@ -2225,28 +2211,17 @@ class _PurchasePageState extends State<PurchasePage>
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          height: MediaQuery.of(context).size.height * 0.75,
-          decoration: BoxDecoration(
-            color: AppColors.card(context),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
+      builder: (context) => GlassDraggableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, controller) => StatefulBuilder(
+          builder: (context, setModalState) => Column(
             children: [
-              // Drag handle
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.grey300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+              const GlassSheetHandle(),
               // Header
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
                 child: Row(
                   children: [
                     Container(
@@ -2350,30 +2325,37 @@ class _PurchasePageState extends State<PurchasePage>
               // Company list
               Expanded(
                 child: _filteredCompanies.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.business_outlined,
-                              size: 64,
-                              color: AppTheme.grey300,
+                    ? ListView(
+                        controller: controller,
+                        children: [
+                          const SizedBox(height: 64),
+                          Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.business_outlined,
+                                  size: 64,
+                                  color: AppTheme.grey300,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  _companySearchController.text.isEmpty
+                                      ? _localizations.noCompaniesAvailable
+                                      : _localizations.noCompaniesFound,
+                                  style: TextStyle(
+                                    color: AppTheme.grey,
+                                    fontSize: 15,
+                                    fontFamily: 'Literata',
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 16),
-                            Text(
-                              _companySearchController.text.isEmpty
-                                  ? _localizations.noCompaniesAvailable
-                                  : _localizations.noCompaniesFound,
-                              style: TextStyle(
-                                color: AppTheme.grey,
-                                fontSize: 15,
-                                fontFamily: 'Literata',
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       )
                     : ListView.separated(
+                        controller: controller,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 12,
@@ -2662,54 +2644,36 @@ class _PurchasePageState extends State<PurchasePage>
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
       builder: (context) => StatefulBuilder(
-        builder: (context, setSheetState) => Container(
-          decoration: BoxDecoration(
-            color: AppColors.card(context),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(24),
-              topRight: Radius.circular(24),
+        builder: (context, setSheetState) => SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 8,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
             ),
-          ),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 16,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Drag handle
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const GlassSheetHandle(),
+                const SizedBox(height: 8),
+                // Header
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
-                        color: AppTheme.grey300,
-                        borderRadius: BorderRadius.circular(2),
+                        color: AppTheme.headerDarkStart,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.person_add_rounded,
+                        color: AppTheme.white,
+                        size: 22,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Header
-                  Row(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: AppTheme.headerDarkStart,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.person_add_rounded,
-                          color: AppTheme.white,
-                          size: 22,
-                        ),
-                      ),
                       SizedBox(width: 14),
                       Expanded(
                         child: Column(
@@ -2860,7 +2824,6 @@ class _PurchasePageState extends State<PurchasePage>
             ),
           ),
         ),
-      ),
     );
   }
 
@@ -2999,105 +2962,87 @@ class _PurchasePageState extends State<PurchasePage>
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
       builder: (context) => StatefulBuilder(
-        builder: (context, setSheetState) => Container(
-          decoration: BoxDecoration(
-            color: AppColors.card(context),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(24),
-              topRight: Radius.circular(24),
+        builder: (context, setSheetState) => SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 8,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
             ),
-          ),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 16,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Drag handle
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const GlassSheetHandle(),
+                const SizedBox(height: 8),
+                // Header
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
-                        color: AppTheme.grey300,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Header
-                  Row(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppTheme.paletteFF7B68EE,
-                              AppTheme.paletteFF7B68EE.withValues(alpha: 0.8),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.business_rounded,
-                          color: AppTheme.white,
-                          size: 22,
-                        ),
-                      ),
-                      SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _localizations.addNewCompany,
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                fontFamily: 'Literata',
-                                color: AppColors.accent(context),
-                              ),
-                            ),
-                            Text(
-                              _localizations.createNewCompanyRecord,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppTheme.grey,
-                                fontFamily: 'Literata',
-                              ),
-                            ),
+                        gradient: LinearGradient(
+                          colors: [
+                            AppTheme.paletteFF7B68EE,
+                            AppTheme.paletteFF7B68EE.withValues(alpha: 0.8),
                           ],
                         ),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: Container(
-                          padding: EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: AppColors.chipFill(context),
-                            shape: BoxShape.circle,
+                      child: Icon(
+                        Icons.business_rounded,
+                        color: AppTheme.white,
+                        size: 22,
+                      ),
+                    ),
+                    SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _localizations.addNewCompany,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Literata',
+                              color: AppColors.accent(context),
+                            ),
                           ),
-                          child: Icon(
-                            Icons.close,
-                            size: 20,
-                            color: AppTheme.grey600,
+                          Text(
+                            _localizations.createNewCompanyRecord,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.grey,
+                              fontFamily: 'Literata',
+                            ),
                           ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Container(
+                        padding: EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppColors.chipFill(context),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.close,
+                          size: 20,
+                          color: AppTheme.grey600,
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  // Form fields
-                  _buildBottomSheetTextField(
-                    controller: _newCompanyNameController,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                // Form fields
+                _buildBottomSheetTextField(
+                  controller: _newCompanyNameController,
                     label: _localizations.companyName,
                     hint: _localizations.enterCompanyName,
                     icon: Icons.business_outlined,
@@ -3196,7 +3141,6 @@ class _PurchasePageState extends State<PurchasePage>
             ),
           ),
         ),
-      ),
     );
   }
 
