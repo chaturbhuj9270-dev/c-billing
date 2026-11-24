@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:c_billing/core/services/crashlytics_service.dart';
 
 class SessionManager {
   static final SessionManager _instance = SessionManager._internal();
@@ -26,6 +27,8 @@ class SessionManager {
     _currentUser = user;
     _onSessionExpired = onSessionExpired;
     _resetSessionTimer();
+    // Correlate Crashlytics reports with the signed-in user (no PII beyond uid).
+    unawaited(CrashlyticsService.instance.setUserId(user.uid));
   }
 
   // Reset the session timer (called on every user activity)
@@ -53,6 +56,7 @@ class SessionManager {
     debugPrint('[CRITICAL] Session timeout triggered');
     _currentUser = null;
     _sessionTimer?.cancel();
+    unawaited(CrashlyticsService.instance.setUserId(null));
     _onSessionExpired();
   }
 
@@ -61,6 +65,7 @@ class SessionManager {
     debugPrint('[DEBUG] Session ended for user: ${_currentUser?.uid}');
     _currentUser = null;
     _sessionTimer?.cancel();
+    unawaited(CrashlyticsService.instance.setUserId(null));
   }
 
   // Check if user is still authenticated

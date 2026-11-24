@@ -16,6 +16,7 @@ import 'core/services/bill_report_settings_service.dart';
 import 'core/services/stock_report_settings_service.dart';
 import 'core/services/local_database.dart';
 import 'core/services/error_logging_service.dart';
+import 'core/services/crashlytics_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/customer/data/services/customer_sync_service.dart';
 import 'features/customer/data/services/customer_transaction_sync_service.dart';
@@ -39,6 +40,8 @@ Future<void> main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     ).timeout(const Duration(seconds: 15));
+    // Crashlytics after Firebase core — no-ops on web/desktop unsupported targets.
+    await CrashlyticsService.instance.initialize();
   } catch (e) {
     debugPrint('Firebase init error: $e');
   }

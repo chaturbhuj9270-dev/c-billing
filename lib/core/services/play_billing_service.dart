@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
@@ -48,13 +49,20 @@ class PlayBillingService {
   String get displayPrice =>
       _yearlyProduct?.price ?? SubscriptionProducts.fallbackPriceLabel;
 
+  bool get hasProduct => _yearlyProduct != null;
+
   // Initialize store connection and load the yearly subscription product.
-  Future<void> initialize() async {
-    if (_initialized) return;
+  Future<void> initialize({bool forceReload = false}) async {
+    if (_initialized && !forceReload && _yearlyProduct != null) return;
 
     final available = await _iap.isAvailable();
     if (!available) {
-      throw StateError('Store billing is not available on this device');
+      _initialized = false;
+      throw StateError(
+        'Google Play Billing is not available. '
+        'Use a real Android device/emulator with Play Store, '
+        'and a license-tester account.',
+      );
     }
 
     _purchaseSub ??= _iap.purchaseStream.listen(
@@ -81,19 +89,52 @@ class PlayBillingService {
     });
 
     if (response.error != null) {
+      _yearlyProduct = null;
       throw StateError(
         'Failed to load products: ${response.error!.message}',
       );
     }
 
     if (response.productDetails.isEmpty) {
+      _yearlyProduct = null;
       throw StateError(
         'Product "${SubscriptionProducts.yearlyProductId}" not found. '
-        'Create it in Play Console and use a license tester account.',
+        'Create a Subscription with that ID in Play Console and use a '
+        'license tester account on a signed build.',
       );
     }
 
-    _yearlyProduct = response.productDetails.first;
+    _yearlyProduct = _pickBestSubscriptionOffer(response.productDetails);
+    debugPrint(
+      '[PlayBilling] Loaded product=${_yearlyProduct?.id} '
+      'price=${_yearlyProduct?.price} '
+      'offer=${_yearlyProduct is GooglePlayProductDetails ? (_yearlyProduct as GooglePlayProductDetails).offerToken != null : 'n/a'}',
+    );
+  }
+
+  /// Prefer the base plan (no offerId), otherwise first offer with a token.
+  ProductDetails _pickBestSubscriptionOffer(List<ProductDetails> details) {
+    GooglePlayProductDetails? basePlan;
+    GooglePlayProductDetails? anyWithToken;
+
+    for (final detail in details) {
+      if (detail is! GooglePlayProductDetails) continue;
+      final token = detail.offerToken;
+      if (token == null || token.isEmpty) continue;
+
+      anyWithToken ??= detail;
+      final index = detail.subscriptionIndex;
+      final offers = detail.productDetails.subscriptionOfferDetails;
+      if (index != null && offers != null && index < offers.length) {
+        final offerId = offers[index].offerId;
+        if (offerId == null || offerId.isEmpty) {
+          basePlan = detail;
+          break;
+        }
+      }
+    }
+
+    return basePlan ?? anyWithToken ?? details.first;
   }
 
   // Starts Google Play / App Store purchase for the yearly plan.
@@ -102,7 +143,15 @@ class PlayBillingService {
       throw StateError('A purchase is already in progress');
     }
 
-    await initialize();
+    try {
+      await initialize(forceReload: _yearlyProduct == null);
+    } catch (e) {
+      return PlayBillingResult(
+        success: false,
+        status: 'INIT_FAILED',
+        message: e.toString(),
+      );
+    }
 
     final product = _yearlyProduct;
     if (product == null) {
@@ -115,27 +164,71 @@ class PlayBillingService {
 
     _pendingPurchase = Completer<PlayBillingResult>();
 
-    final param = PurchaseParam(productDetails: product);
-    // Subscriptions use buyNonConsumable in the Flutter IAP plugin.
-    final started = await _iap.buyNonConsumable(purchaseParam: param);
+    final PurchaseParam param;
+    if (product is GooglePlayProductDetails) {
+      final offerToken = product.offerToken;
+      if (offerToken == null || offerToken.isEmpty) {
+        _pendingPurchase = null;
+        return const PlayBillingResult(
+          success: false,
+          status: 'OFFER_MISSING',
+          message:
+              'Google Play subscription offer is missing. '
+              'Activate a base plan for "cbilling_yearly" in Play Console.',
+        );
+      }
+      param = GooglePlayPurchaseParam(
+        productDetails: product,
+        offerToken: offerToken,
+        applicationUserName: FirebaseAuth.instance.currentUser?.uid,
+      );
+    } else {
+      param = PurchaseParam(
+        productDetails: product,
+        applicationUserName: FirebaseAuth.instance.currentUser?.uid,
+      );
+    }
+
+    debugPrint(
+      '[PlayBilling] Starting purchase for ${product.id} '
+      '(${product.runtimeType})',
+    );
+
+    bool started;
+    try {
+      started = await _iap.buyNonConsumable(purchaseParam: param);
+    } catch (e) {
+      _pendingPurchase = null;
+      return PlayBillingResult(
+        success: false,
+        status: 'START_EXCEPTION',
+        message: 'Could not open Google Play: $e',
+        productId: product.id,
+      );
+    }
 
     if (!started) {
       _completePending(
         const PlayBillingResult(
           success: false,
           status: 'START_FAILED',
-          message: 'Could not start Google Play purchase',
+          message:
+              'Could not start Google Play purchase. '
+              'Check Play Store login and that the product is active.',
         ),
       );
     }
 
     return _pendingPurchase!.future.timeout(
       const Duration(minutes: 15),
-      onTimeout: () => const PlayBillingResult(
-        success: false,
-        status: 'TIMEOUT',
-        message: 'Purchase timed out. If charged, tap Restore Purchase.',
-      ),
+      onTimeout: () {
+        _pendingPurchase = null;
+        return const PlayBillingResult(
+          success: false,
+          status: 'TIMEOUT',
+          message: 'Purchase timed out. If charged, tap Restore Purchases.',
+        );
+      },
     );
   }
 

@@ -207,27 +207,56 @@ class SubscriptionService {
 
   /// Resolves the access window for a user document.
   ///
-  /// Also backfills a trial for older accounts that still have
-  /// `subscriptionDate: null` but are within 30 days of `createdAt`.
+  /// Handles legacy / console-edited docs where `subscriptionDate` is null:
+  /// - `subscriptionStatus: active` → 365-day paid window (do not downgrade)
+  /// - otherwise → 30-day trial from `trialStartedAt` / `createdAt`
   Future<_AccessWindow?> _resolveAccessWindow(
     String userId,
     Map<String, dynamic> data,
   ) async {
     final status = (data['subscriptionStatus'] as String?)?.toLowerCase();
     var start = _parseDate(data['subscriptionDate']);
+    final trialStartedAt = _parseDate(data['trialStartedAt']);
+    final createdAt = _parseDate(data['createdAt']);
 
-    // Legacy / broken docs: no subscriptionDate → trial from createdAt (or now).
+    // Console / legacy: marked active but subscriptionDate never set.
+    // Previously this fell through to trial-from-createdAt and denied access
+    // once that 30-day window ended — even with status "active".
+    if (start == null && status == statusActive) {
+      start = trialStartedAt ?? createdAt ?? DateTime.now();
+      final expiry = start.add(subscriptionDuration);
+      try {
+        await _firestore.collection('users').doc(userId).set({
+          'subscriptionDate': Timestamp.fromDate(start),
+          'subscriptionStatus': statusActive,
+        }, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint(
+          '[SubscriptionService] Active subscriptionDate backfill failed: $e',
+        );
+      }
+      debugPrint(
+        '[SubscriptionService] Active with null subscriptionDate — '
+        'using start=$start expiry=$expiry',
+      );
+      return _AccessWindow(
+        start: start,
+        expiry: expiry,
+        status: statusActive,
+      );
+    }
+
+    // No subscriptionDate → trial from trialStartedAt (preferred) or createdAt.
     if (start == null) {
-      final createdAt = _parseDate(data['createdAt']) ?? DateTime.now();
-      start = createdAt;
+      start = trialStartedAt ?? createdAt ?? DateTime.now();
       final trialExpiry = start.add(trialDuration);
       if (DateTime.now().isBefore(trialExpiry)) {
-        // Persist trial so subsequent checks are consistent.
         try {
           await _firestore.collection('users').doc(userId).set({
             'subscriptionDate': Timestamp.fromDate(start),
-            'subscriptionStatus': statusTrial,
-            'trialStartedAt': Timestamp.fromDate(start),
+            // Never overwrite an explicit active flag here.
+            if (status != statusActive) 'subscriptionStatus': statusTrial,
+            'trialStartedAt': Timestamp.fromDate(trialStartedAt ?? start),
           }, SetOptions(merge: true));
         } catch (e) {
           debugPrint('[SubscriptionService] Trial backfill failed: $e');

@@ -136,22 +136,31 @@ class _PaymentScreenState extends State<PaymentScreen>
     setState(() {
       _isPaying = true;
       _statusMessage = _localizations.preparingSecurePayment;
+      _productError = null;
     });
 
     try {
+      // Retry product load if bootstrap failed earlier (button used to be dead).
+      if (!_playBilling.hasProduct || _productError != null) {
+        setState(() => _statusMessage = _localizations.preparingSecurePayment);
+        await _playBilling.initialize(forceReload: true);
+      }
+
       final result = await _playBilling.purchaseYearlySubscription();
       if (!mounted) return;
       await _handlePlayResult(result);
     } catch (e) {
       if (!mounted) return;
+      final message = e.toString().replaceFirst('StateError: ', '');
       GlassyToast.show(
         context,
-        '${_localizations.paymentFailedTryAgain}: $e',
+        message.isNotEmpty ? message : _localizations.paymentFailedTryAgain,
         isError: true,
       );
       setState(() {
         _statusMessage = null;
         _isPaying = false;
+        _productError = message;
       });
     }
   }
@@ -831,64 +840,74 @@ class _PaymentScreenState extends State<PaymentScreen>
     required String label,
     required VoidCallback? onTap,
     IconData icon = Icons.payment,
+    bool enabled = true,
   }) {
-    return SizedBox(
-      width: double.infinity,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.action(context).withValues(alpha: 0.95),
-                  AppTheme.green800.withValues(alpha: 0.88),
+    final isEnabled = enabled && onTap != null && !_isPaying;
+    return Opacity(
+      opacity: isEnabled || _isPaying ? 1 : 0.55,
+      child: SizedBox(
+        width: double.infinity,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.action(context).withValues(alpha: 0.95),
+                    AppTheme.green800.withValues(alpha: 0.88),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.accentSoft(context, 0.25),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
                 ],
               ),
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.accentSoft(context, 0.25),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Material(
-              color: AppTheme.transparent,
-              child: InkWell(
-                onTap: onTap,
-                borderRadius: BorderRadius.circular(14),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (_isPaying)
-                        const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppTheme.white,
+              child: Material(
+                color: AppTheme.transparent,
+                child: InkWell(
+                  onTap: _isPaying ? null : onTap,
+                  borderRadius: BorderRadius.circular(14),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (_isPaying)
+                          const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppTheme.white,
+                            ),
+                          )
+                        else
+                          Icon(icon, size: 22, color: AppTheme.white),
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: Text(
+                            _isPaying
+                                ? _localizations.processingPayment
+                                : label,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: AppTheme.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Literata',
+                            ),
                           ),
-                        )
-                      else
-                        Icon(icon, size: 22, color: AppTheme.white),
-                      const SizedBox(width: 10),
-                      Text(
-                        _isPaying ? _localizations.processingPayment : label,
-                        style: const TextStyle(
-                          color: AppTheme.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Literata',
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -991,13 +1010,28 @@ class _PaymentScreenState extends State<PaymentScreen>
       );
     }
 
-    final canPay = !_isPaying && !_loadingProduct && _productError == null;
+    // Keep Pay tappable even after a product load error so the user can retry.
+    final canPay = !_isPaying && !_loadingProduct;
     return Column(
       children: [
         _buildPrimaryButton(
           label: _localizations.payWithGooglePlay,
           onTap: canPay ? _startPlayPurchase : null,
+          enabled: canPay,
         ),
+        if (_productError != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _localizations.playProductNotReady,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppTheme.red700,
+              fontFamily: 'Literata',
+              height: 1.35,
+            ),
+          ),
+        ],
         const SizedBox(height: 12),
         _buildSecondaryButton(
           label: _localizations.restorePurchases,

@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/services/crashlytics_service.dart';
 
 // Service for logging and collecting UI/Flutter errors
 class ErrorLoggingService {
@@ -70,6 +71,14 @@ class ErrorLoggingService {
     if (kDebugMode) {
       debugPrint('[ErrorLogging] Flutter Error: ${details.exceptionAsString()}');
     }
+
+    // Forward to Crashlytics (no-op on unsupported platforms).
+    unawaited(
+      CrashlyticsService.instance.recordFlutterError(
+        details,
+        fatal: !kDebugMode,
+      ),
+    );
   }
 
   // Log a general error
@@ -85,6 +94,15 @@ class ErrorLoggingService {
     if (kDebugMode) {
       debugPrint('[ErrorLogging] $errorType: $error');
     }
+
+    unawaited(
+      CrashlyticsService.instance.recordError(
+        error,
+        stackTrace,
+        fatal: false,
+        reason: errorType,
+      ),
+    );
   }
 
   // Log a UI overflow or rendering error
@@ -100,6 +118,8 @@ class ErrorLoggingService {
     if (kDebugMode) {
       debugPrint('[ErrorLogging] UI Error: $message');
     }
+
+    unawaited(CrashlyticsService.instance.log('UIError: $message'));
   }
 
   void _addLog(ErrorLog log) {
