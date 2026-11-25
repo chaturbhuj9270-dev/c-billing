@@ -37,6 +37,11 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   late AppLocalizations _localizations;
   final SubscriptionService _subscriptionService = SubscriptionService();
   bool _showUnlockButton = false;
+  /// True while biometric sheet is open or app is opening after success.
+  bool _isUnlocking = false;
+  /// Prefetch subscription while user authenticates so landing is faster.
+  Future<bool>? _subscriptionPrefetch;
+  bool _didAutoPromptBiometric = false;
 
   late final AnimationController _introController;
   late final AnimationController _pulseController;
@@ -292,13 +297,13 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       debugPrint('[DEBUG] Biometric lock enabled: $isLockEnabled');
 
       if (isLockEnabled && mounted) {
-        // Show unlock button instead of auto-prompting
-        setState(() {
-          _showUnlockButton = true;
-        });
+        _startSubscriptionPrefetch();
+        setState(() => _showUnlockButton = true);
+        // Auto-prompt biometric so unlock is one gesture, not tap + scan.
+        _autoPromptBiometricOnce();
       } else {
         // Biometric lock is disabled, go directly to dashboard
-        _navigateToDashboard();
+        _navigateToDashboard(showLoader: false);
       }
     } catch (e) {
       debugPrint('[ERROR] Error checking biometric lock: $e');
@@ -306,14 +311,32 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       final canUse = await BiometricService.instance.canUseBiometrics();
       if (!mounted) return;
       if (canUse) {
+        _startSubscriptionPrefetch();
         setState(() => _showUnlockButton = true);
+        _autoPromptBiometricOnce();
       } else {
-        _navigateToDashboard();
+        _navigateToDashboard(showLoader: false);
       }
     }
   }
 
+  void _startSubscriptionPrefetch() {
+    _subscriptionPrefetch ??= _subscriptionService
+        .isSubscriptionValid()
+        .timeout(const Duration(seconds: 8), onTimeout: () => false);
+  }
+
+  void _autoPromptBiometricOnce() {
+    if (_didAutoPromptBiometric) return;
+    _didAutoPromptBiometric = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _isUnlocking) return;
+      _showUnlockBiometric();
+    });
+  }
+
   Future<void> _signInWithPasswordInstead() async {
+    if (_isUnlocking) return;
     try {
       await FirebaseAuth.instance.signOut();
     } catch (e) {
@@ -323,21 +346,26 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   }
 
   Future<void> _showFingerprintDialog(String userId) async {
+    if (_isUnlocking) return;
+    if (mounted) setState(() => _isUnlocking = true);
+
     try {
       final biometricService = BiometricService.instance;
 
       final isAuthenticated = await biometricService.authenticate(
         reason: 'Verify your identity to continue',
         useErrorDialogs: true,
+        stickyAuth: true,
       );
 
       if (isAuthenticated && mounted) {
         debugPrint('[DEBUG] Fingerprint authentication successful');
-        _navigateToDashboard();
+        // Keep loader visible until landing page replaces splash.
+        await _navigateToDashboard(showLoader: true);
       } else {
         debugPrint('[DEBUG] Fingerprint authentication cancelled/failed');
-        // Stay on splash screen - user can tap unlock again
         if (mounted) {
+          setState(() => _isUnlocking = false);
           GlassyToast.show(
             context,
             'Authentication cancelled. Tap "Unlock Now" to try again.',
@@ -346,8 +374,8 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       }
     } catch (e) {
       debugPrint('[ERROR] Error during fingerprint authentication: $e');
-      // Show error but stay on splash screen
       if (mounted) {
+        setState(() => _isUnlocking = false);
         GlassyToast.show(
           context,
           'Authentication error: ${e.toString()}',
@@ -357,14 +385,19 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _navigateToDashboard() async {
+  Future<void> _navigateToDashboard({bool showLoader = true}) async {
     if (!mounted) return;
+    if (showLoader && !_isUnlocking) {
+      setState(() => _isUnlocking = true);
+    }
 
     // Check subscription status before navigating to dashboard
     try {
       debugPrint('[DEBUG] Checking subscription status...');
-      final isSubscriptionValid = await _subscriptionService
-          .isSubscriptionValid()
+      final prefetch = _subscriptionPrefetch;
+      _subscriptionPrefetch = null;
+      final isSubscriptionValid = await (prefetch ??
+              _subscriptionService.isSubscriptionValid())
           .timeout(const Duration(seconds: 8), onTimeout: () => false);
 
       if (!isSubscriptionValid) {
@@ -397,6 +430,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   }
 
   void _showUnlockBiometric() {
+    if (_isUnlocking) return;
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
       debugPrint('[DEBUG] Unlock Now tapped, showing fingerprint dialog');
@@ -668,6 +702,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   }
 
   Widget _buildUnlockButton(Color themeColor) {
+    final unlocking = _isUnlocking;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Column(
@@ -679,42 +714,68 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
               color: themeColor,
               borderRadius: BorderRadius.circular(26),
               child: InkWell(
-                onTap: _showUnlockBiometric,
+                onTap: unlocking ? null : _showUnlockBiometric,
                 borderRadius: BorderRadius.circular(26),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.fingerprint,
-                      color: AppTheme.white,
-                      size: 22,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _localizations.unlockNow,
-                      style: const TextStyle(
-                        color: AppTheme.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'Literata',
+                    if (unlocking) ...[
+                      const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.4,
+                          color: AppTheme.white,
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 10),
+                      Text(
+                        _localizations.loadingData == 'Loading data...'
+                            ? 'Opening…'
+                            : _localizations.loadingData,
+                        style: const TextStyle(
+                          color: AppTheme.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Literata',
+                        ),
+                      ),
+                    ] else ...[
+                      const Icon(
+                        Icons.fingerprint,
+                        color: AppTheme.white,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _localizations.unlockNow,
+                        style: const TextStyle(
+                          color: AppTheme.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Literata',
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ),
           ),
-          TextButton(
-            onPressed: _signInWithPasswordInstead,
-            child: Text(
-              _localizations.signIn,
-              style: TextStyle(
-                fontFamily: 'Literata',
-                fontWeight: FontWeight.w700,
-                color: themeColor,
+          if (!unlocking)
+            TextButton(
+              onPressed: _signInWithPasswordInstead,
+              child: Text(
+                _localizations.signIn,
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w700,
+                  color: themeColor,
+                ),
               ),
-            ),
-          ),
+            )
+          else
+            const SizedBox(height: 48),
         ],
       ),
     );

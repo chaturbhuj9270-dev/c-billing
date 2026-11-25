@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-// Service for handling biometric authentication
+// Service for handling biometric authentication and the global app lock.
 class BiometricService {
   static final BiometricService _instance = BiometricService._internal();
 
@@ -16,15 +16,42 @@ class BiometricService {
   static BiometricService get instance => _instance;
 
   final LocalAuthentication _localAuth = LocalAuthentication();
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
-  // Check if device supports biometric authentication
+  // Match CredentialsManager options — bare FlutterSecureStorage() fails to
+  // persist on many Android devices (EncryptedSharedPreferences required).
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock_this_device,
+    ),
+    mOptions: MacOsOptions(
+      accessibility: KeychainAccessibility.unlocked,
+      useDataProtectionKeyChain: false,
+    ),
+    webOptions: WebOptions(
+      dbName: 'c_billing_secure',
+      publicKey: 'c_billing_biometric',
+    ),
+  );
+
+  // Check if device can use biometric authentication (hardware + enrollment).
   Future<bool> canUseBiometrics() async {
     try {
-      // Add timeout to prevent freeze
-      final isDeviceSupported = await _localAuth.canCheckBiometrics
-          .timeout(const Duration(seconds: 3), onTimeout: () => false);
-      return isDeviceSupported;
+      final canCheck = await _localAuth.canCheckBiometrics.timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => false,
+      );
+      if (canCheck) return true;
+
+      // Some OEMs report canCheck=false until isDeviceSupported is queried.
+      final supported = await _localAuth.isDeviceSupported().timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => false,
+      );
+      if (!supported) return false;
+
+      final available = await getAvailableBiometrics();
+      return available.isNotEmpty;
     } catch (e) {
       debugPrint('[BiometricService] Error checking biometrics support: $e');
       return false;
@@ -34,7 +61,6 @@ class BiometricService {
   // Get available biometric types on device
   Future<List<BiometricType>> getAvailableBiometrics() async {
     try {
-      // Add timeout to prevent freeze
       final availableBiometrics = await _localAuth.getAvailableBiometrics()
           .timeout(const Duration(seconds: 3), onTimeout: () => <BiometricType>[]);
       return availableBiometrics;
@@ -63,7 +89,6 @@ class BiometricService {
     bool stickyAuth = false,
   }) async {
     try {
-      // First check if biometrics are available
       final canAuth = await canUseBiometrics();
       if (!canAuth) {
         debugPrint('[BiometricService] Biometrics not available on device');
@@ -88,7 +113,7 @@ class BiometricService {
       return isAuthenticated;
     } catch (e) {
       debugPrint('[BiometricService] Error during authentication: $e');
-      rethrow; // Let the caller handle the exception
+      rethrow;
     }
   }
 
@@ -131,33 +156,48 @@ class BiometricService {
   // =========== Global App Lock Settings ===========
   static const String _biometricLockEnabledKey = 'biometric_lock_enabled';
 
-  // Enable global biometric app lock (shown on splash screen)
-  Future<void> enableBiometricLock() async {
+  // Enable global biometric app lock (shown on splash screen).
+  // Returns false if the preference could not be persisted.
+  Future<bool> enableBiometricLock() async {
     try {
       await _secureStorage.write(
         key: _biometricLockEnabledKey,
         value: 'true',
       );
-      debugPrint('[BiometricService] Biometric lock enabled');
+      // Verify write — some devices report success then drop the value.
+      final stored = await _secureStorage.read(key: _biometricLockEnabledKey);
+      final ok = stored == 'true';
+      debugPrint(
+        '[BiometricService] Biometric lock enable ${ok ? 'OK' : 'FAILED verify'}',
+      );
+      return ok;
     } catch (e) {
       debugPrint('[BiometricService] Error enabling biometric lock: $e');
+      return false;
     }
   }
 
-  // Disable global biometric app lock
-  Future<void> disableBiometricLock() async {
+  // Disable global biometric app lock.
+  Future<bool> disableBiometricLock() async {
     try {
       await _secureStorage.write(
         key: _biometricLockEnabledKey,
         value: 'false',
       );
-      debugPrint('[BiometricService] Biometric lock disabled');
+      final stored = await _secureStorage.read(key: _biometricLockEnabledKey);
+      final ok = stored != 'true';
+      debugPrint(
+        '[BiometricService] Biometric lock disable ${ok ? 'OK' : 'FAILED verify'}',
+      );
+      return ok;
     } catch (e) {
       debugPrint('[BiometricService] Error disabling biometric lock: $e');
+      return false;
     }
   }
 
-  // Check if global biometric lock is enabled. Throws when the setting cannot be read. Callers must not treat that as "lock off", or a storage error would open the app.
+  // Check if global biometric lock is enabled.
+  // Throws when the setting cannot be read so splash can fail closed.
   Future<bool> isBiometricLockEnabled() async {
     final value = await _secureStorage.read(
       key: _biometricLockEnabledKey,
@@ -165,13 +205,26 @@ class BiometricService {
     return value == 'true';
   }
 
-  // Set biometric lock status (convenience method)
-  Future<void> setBiometricLockEnabled(bool enabled) async {
+  /// Enable/disable lock. When enabling, requires a successful biometric
+  /// prompt first so we never persist a lock the device cannot unlock.
+  Future<bool> setBiometricLockEnabled(bool enabled) async {
     if (enabled) {
-      await enableBiometricLock();
-    } else {
-      await disableBiometricLock();
+      final canUse = await canUseBiometrics();
+      if (!canUse) {
+        debugPrint('[BiometricService] Cannot enable lock — biometrics unavailable');
+        return false;
+      }
+      final authenticated = await authenticate(
+        reason: 'Confirm biometrics to enable app lock',
+        stickyAuth: true,
+      );
+      if (!authenticated) {
+        debugPrint('[BiometricService] Enable cancelled — auth failed');
+        return false;
+      }
+      return enableBiometricLock();
     }
+    return disableBiometricLock();
   }
 
   // Get the type of biometric to use (face or fingerprint)

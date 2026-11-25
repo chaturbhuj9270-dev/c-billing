@@ -49,6 +49,8 @@
 		<false/>
 		<key>NSCameraUsageDescription</key>
 		<string>Camera access is required to scan barcodes for fast billing</string>
+		<key>NSFaceIDUsageDescription</key>
+		<string>Face ID is used to unlock C-Billing when Biometric Lock is enabled</string>
 		<key>LSApplicationQueriesSchemes</key>
 		<array>
 			<string>amazonpay</string>
