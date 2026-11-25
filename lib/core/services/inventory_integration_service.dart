@@ -7,6 +7,7 @@ import '../../features/product/offline/controllers/product_offline_controller.da
 import '../../features/billing/offline/controllers/bill_offline_controller.dart';
 import '../../features/billing/offline/entities/bill_entity.dart';
 import '../../features/billing/domain/entities/bill_item.dart';
+import '../../features/billing/domain/entities/bill_service_charge.dart';
 import '../../features/customer/offline/controllers/customer_transaction_offline_controller.dart';
 import '../services/dashboard_refresh_service.dart';
 
@@ -199,13 +200,17 @@ class InventoryIntegrationService {
     double sgstAmount = 0.0,
     double otherTaxAmount = 0.0,
     double totalTaxAmount = 0.0,
+    /// Other service charges (description + amount). Stored as bill lines;
+    /// never deducted from stock / FIFO.
+    List<BillServiceCharge> serviceCharges = const [],
   }) async {
     try {
       debugPrint(
-        '[Integration] Processing bill: ${items.length} items, total: $finalAmount',
+        '[Integration] Processing bill: ${items.length} items, '
+        '${serviceCharges.length} service charges, total: $finalAmount',
       );
 
-      // 1. Create BillEntity
+      // 1. Create BillEntity (product lines + service charge lines)
       final embeddedItems = items
           .map(
             (item) => BillItemEmbedded(
@@ -223,6 +228,22 @@ class InventoryIntegrationService {
             ),
           )
           .toList();
+
+      for (final charge in serviceCharges.where((c) => c.isValid)) {
+        embeddedItems.add(
+          BillItemEmbedded(
+            itemId: charge.id.isNotEmpty
+                ? charge.id
+                : 'svc_${DateTime.now().millisecondsSinceEpoch}',
+            productId: BillServiceCharge.sentinelProductId,
+            productName: charge.description.trim(),
+            purchasePrice: 0,
+            sellingPrice: charge.amount,
+            quantity: 1,
+            subtotal: charge.amount,
+          ),
+        );
+      }
 
       final billEntity = await _billController.addBill(
         customerId: customerId,
@@ -254,13 +275,16 @@ class InventoryIntegrationService {
       final billId = billEntity.serverId ?? 'local_${billEntity.id}';
       debugPrint('[Integration] BillEntity created: $billId');
 
-      // 2. Process FIFO sales for each item
+      // 2. Process FIFO sales for each product item (skip service charges)
       final allConsumedBatches = <ConsumedBatchInfo>[];
       double totalCOGS = 0.0;
       double totalRevenue = 0.0;
       double totalProfit = 0.0;
 
       for (final item in items) {
+        if (BillServiceCharge.isServiceItem(productId: item.productId)) {
+          continue;
+        }
         // 2a. FIFO deduction from batches + ledger entries (use rounded int for stock operations)
         final saleResult = await _fifoService.processFifoSale(
           productId: item.productId,
@@ -324,6 +348,12 @@ class InventoryIntegrationService {
 
       for (final returnItem in returnItems) {
         if (returnItem.returnQuantity <= 0) continue;
+        // Service charges are non-inventory — no stock restore.
+        if (BillServiceCharge.isServiceItem(productId: returnItem.productId)) {
+          totalRefundAmount +=
+              returnItem.sellingPrice * returnItem.returnQuantity;
+          continue;
+        }
 
         // 1. Process FIFO return (add stock back to batch + create ledger entry)
         final returned = await _fifoService.processSaleReturn(
