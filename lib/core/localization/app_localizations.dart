@@ -3377,6 +3377,17 @@ class AppLocalizations {
     }
   }
 
+  String justPerMonthAmount(String amount) {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.justPerMonthAmount(amount);
+      case 'Marathi':
+        return MarathiLocalization.justPerMonthAmount(amount);
+      default:
+        return EnglishLocalization.justPerMonthAmount(amount);
+    }
+  }
+
   String get whatsIncluded {
     switch (languageCode) {
       case 'Hindi':

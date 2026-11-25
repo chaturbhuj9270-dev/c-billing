@@ -29,6 +29,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
 
   static const String contactNumber = '9970662978';
 
+  final SubscriptionService _subscriptionService = SubscriptionService();
+  SubscriptionPricing _pricing = SubscriptionPricing.defaults;
+
   AppLocalizations get _localizations =>
       AppLocalizations.of(LanguageService.instance.currentLanguage);
 
@@ -63,6 +66,13 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
 
     _animController.forward();
     _pulseController.repeat(reverse: true);
+    _loadPricing();
+  }
+
+  Future<void> _loadPricing() async {
+    final pricing = await _subscriptionService.fetchPricing();
+    if (!mounted) return;
+    setState(() => _pricing = pricing);
   }
 
   @override
@@ -381,24 +391,26 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Text(
-                        '₹${SubscriptionService.subscriptionRegularPriceDisplay}',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.white.withValues(alpha: 0.45),
-                          fontFamily: 'Literata',
-                          decoration: TextDecoration.lineThrough,
-                          decorationColor:
-                              AppTheme.white.withValues(alpha: 0.45),
+                    if (_pricing.showOffer) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Text(
+                          _pricing.originalPriceLabel,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.white.withValues(alpha: 0.45),
+                            fontFamily: 'Literata',
+                            decoration: TextDecoration.lineThrough,
+                            decorationColor:
+                                AppTheme.white.withValues(alpha: 0.45),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
+                      const SizedBox(width: 10),
+                    ],
                     Text(
-                      '₹ ${SubscriptionService.subscriptionPriceDisplay}',
+                      '₹ ${_pricing.payableAmountDisplay}',
                       style: const TextStyle(
                         fontSize: 42,
                         fontWeight: FontWeight.w700,
@@ -424,7 +436,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  _localizations.justPerMonth,
+                  _localizations.justPerMonthAmount(_pricing.monthlyDisplay),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -439,28 +451,31 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     _buildRenewButton(desktopStyle: true),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFC9A227).withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: const Color(0xFFD4AF37).withValues(alpha: 0.45),
+                    if (_pricing.showOffer)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              const Color(0xFFC9A227).withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: const Color(0xFFD4AF37)
+                                .withValues(alpha: 0.45),
+                          ),
+                        ),
+                        child: Text(
+                          _localizations.offerFirst100Users,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFFE8C96A),
+                            fontFamily: 'Literata',
+                          ),
                         ),
                       ),
-                      child: Text(
-                        _localizations.offerFirst100Users,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFFE8C96A),
-                          fontFamily: 'Literata',
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ],

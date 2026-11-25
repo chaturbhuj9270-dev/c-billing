@@ -383,6 +383,8 @@ class EnglishLocalization {
   static const String offerFirst100Users =
       'Limited period offer — first 100 users only.';
   static const String justPerMonth = 'Just ₹333 per month.';
+  static String justPerMonthAmount(String amount) =>
+      'Just ₹$amount per month.';
   static const String whatsIncluded = 'What\'s included.';
   static const String everythingIncludedSubtitle =
       'Everything you use today, with no limits.';

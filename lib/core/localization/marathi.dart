@@ -385,6 +385,8 @@ class MarathiLocalization {
   static const String offerFirst100Users =
       'मर्यादित कालावधी ऑफर — फक्त पहिल्या 100 वापरकर्त्यांसाठी.';
   static const String justPerMonth = 'फक्त ₹333 प्रति महिना.';
+  static String justPerMonthAmount(String amount) =>
+      'फक्त ₹$amount प्रति महिना.';
   static const String whatsIncluded = 'काय समाविष्ट आहे.';
   static const String everythingIncludedSubtitle =
       'आज तुम्ही वापरता ते सर्व, कोणत्याही मर्यादेशिवाय.';

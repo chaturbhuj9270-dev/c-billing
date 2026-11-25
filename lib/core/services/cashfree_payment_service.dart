@@ -40,7 +40,7 @@ class CashfreePaymentService {
 
   Completer<CashfreePaymentResult>? _pendingCheckout;
 
-  // Starts Cashfree Web Checkout for ₹3999 subscription. Resolves after SDK callback + server-side verification.
+  // Starts Cashfree Web Checkout. Charge amount is set by Cloud Functions from app_config/subscription.
   Future<CashfreePaymentResult> payForSubscription() async {
     if (_pendingCheckout != null && !_pendingCheckout!.isCompleted) {
       throw StateError('A payment is already in progress');

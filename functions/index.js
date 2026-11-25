@@ -29,12 +29,121 @@ const GOOGLE_PLAY_SERVICE_ACCOUNT_JSON = defineSecret(
   "GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"
 );
 
-const SUBSCRIPTION_AMOUNT = 3999;
-const SUBSCRIPTION_CURRENCY = "INR";
-const SUBSCRIPTION_DAYS = 365;
+// Defaults used only until `app_config/subscription` is seeded / updated.
+// amount = original list price; offerAmount charged when offerEnabled is true.
+const DEFAULT_SUBSCRIPTION_PRICING = {
+  amount: 6999,
+  offerAmount: 3999,
+  offerEnabled: true,
+  currency: "INR",
+  durationDays: 365,
+};
 const API_VERSION = "2025-01-01";
 const PLAY_YEARLY_PRODUCT_ID = "cbilling_yearly";
 const PLAY_PACKAGE_NAME = "com.example.c_billing";
+
+function parsePositiveNumber(value, fallback) {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
+function parseOfferEnabled(value, fallback = true) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "1", "yes", "y"].includes(normalized)) return true;
+    if (["false", "0", "no", "n"].includes(normalized)) return false;
+  }
+  if (typeof value === "number") return value !== 0;
+  return fallback;
+}
+
+/**
+ * Source of truth for Cashfree charge + app display prices.
+ * Edit in Firestore: app_config/subscription
+ * ({ amount, offerAmount, offerEnabled, currency, durationDays })
+ *
+ * Legacy docs with { amount, regularAmount } are mapped automatically.
+ */
+function normalizeSubscriptionPricing(data = {}) {
+  const durationDays = parsePositiveNumber(
+    data.durationDays,
+    DEFAULT_SUBSCRIPTION_PRICING.durationDays
+  );
+  const currency =
+    typeof data.currency === "string" && data.currency.trim()
+      ? data.currency.trim().toUpperCase()
+      : DEFAULT_SUBSCRIPTION_PRICING.currency;
+
+  const hasOfferAmount = data.offerAmount != null && data.offerAmount !== "";
+  const hasLegacyRegular =
+    data.regularAmount != null && data.regularAmount !== "";
+
+  let amount;
+  let offerAmount;
+  let offerEnabled;
+
+  if (hasOfferAmount) {
+    // New schema: amount = original, offerAmount = offer price.
+    amount = parsePositiveNumber(data.amount, DEFAULT_SUBSCRIPTION_PRICING.amount);
+    offerAmount = parsePositiveNumber(
+      data.offerAmount,
+      DEFAULT_SUBSCRIPTION_PRICING.offerAmount
+    );
+    offerEnabled = parseOfferEnabled(
+      data.offerEnabled,
+      DEFAULT_SUBSCRIPTION_PRICING.offerEnabled
+    );
+  } else if (hasLegacyRegular) {
+    // Legacy: amount was charge price, regularAmount was list price.
+    amount = parsePositiveNumber(
+      data.regularAmount,
+      DEFAULT_SUBSCRIPTION_PRICING.amount
+    );
+    offerAmount = parsePositiveNumber(
+      data.amount,
+      DEFAULT_SUBSCRIPTION_PRICING.offerAmount
+    );
+    offerEnabled = parseOfferEnabled(data.offerEnabled, true);
+  } else {
+    amount = parsePositiveNumber(data.amount, DEFAULT_SUBSCRIPTION_PRICING.amount);
+    offerAmount = amount;
+    offerEnabled = parseOfferEnabled(data.offerEnabled, false);
+  }
+
+  const payableAmount =
+    offerEnabled && offerAmount > 0 ? offerAmount : amount;
+
+  return {
+    amount,
+    offerAmount,
+    offerEnabled,
+    payableAmount,
+    currency,
+    durationDays,
+    // Keep for older clients that still read regularAmount.
+    regularAmount: amount,
+  };
+}
+
+async function loadSubscriptionPricing() {
+  const ref = db.collection("app_config").doc("subscription");
+  const snap = await ref.get();
+
+  if (!snap.exists) {
+    await ref.set({
+      amount: DEFAULT_SUBSCRIPTION_PRICING.amount,
+      offerAmount: DEFAULT_SUBSCRIPTION_PRICING.offerAmount,
+      offerEnabled: DEFAULT_SUBSCRIPTION_PRICING.offerEnabled,
+      currency: DEFAULT_SUBSCRIPTION_PRICING.currency,
+      durationDays: DEFAULT_SUBSCRIPTION_PRICING.durationDays,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    return normalizeSubscriptionPricing(DEFAULT_SUBSCRIPTION_PRICING);
+  }
+
+  return normalizeSubscriptionPricing(snap.data() || {});
+}
 
 function cashfreeBaseUrl(envValue) {
   return String(envValue || "SANDBOX").toUpperCase() === "PRODUCTION"
@@ -70,6 +179,18 @@ async function activateSubscription(uid, orderId, orderData = {}) {
   const userRef = db.collection("users").doc(uid);
   const paymentRef = userRef.collection("subscription_payments").doc(orderId);
   const provider = orderData.provider || "cashfree";
+  const pricing = await loadSubscriptionPricing();
+  const amountFromOrder = Number(
+    orderData.amount ?? orderData.order_amount ?? NaN
+  );
+  const amount =
+    Number.isFinite(amountFromOrder) && amountFromOrder > 0
+      ? amountFromOrder
+      : pricing.payableAmount;
+  const currency =
+    (typeof orderData.currency === "string" && orderData.currency) ||
+    (typeof orderData.order_currency === "string" && orderData.order_currency) ||
+    pricing.currency;
 
   await db.runTransaction(async (tx) => {
     const paymentSnap = await tx.get(paymentRef);
@@ -81,8 +202,8 @@ async function activateSubscription(uid, orderId, orderData = {}) {
       paymentRef,
       {
         orderId,
-        amount: SUBSCRIPTION_AMOUNT,
-        currency: SUBSCRIPTION_CURRENCY,
+        amount,
+        currency,
         status: "PAID",
         provider,
         productId: orderData.productId || PLAY_YEARLY_PRODUCT_ID,
@@ -295,8 +416,35 @@ async function fetchCashfreeOrder(orderId) {
 }
 
 /**
- * Callable: create a Cashfree order for ₹3999 yearly subscription.
- * Returns { orderId, paymentSessionId, environment, amount }
+ * Callable: return current subscription pricing from Firestore.
+ * Seeds app_config/subscription with defaults on first call.
+ */
+exports.getSubscriptionPricing = onCall(
+  {
+    region: "asia-south1",
+  },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "Login required.");
+    }
+    const pricing = await loadSubscriptionPricing();
+    return {
+      amount: pricing.amount,
+      offerAmount: pricing.offerAmount,
+      offerEnabled: pricing.offerEnabled,
+      payableAmount: pricing.payableAmount,
+      // Legacy alias for older app builds.
+      regularAmount: pricing.amount,
+      currency: pricing.currency,
+      durationDays: pricing.durationDays,
+    };
+  }
+);
+
+/**
+ * Callable: create a Cashfree order for yearly subscription.
+ * Charge amount always comes from app_config/subscription (not the client).
+ * Uses offerAmount when offerEnabled, otherwise original amount.
  */
 exports.createSubscriptionOrder = onCall(
   {
@@ -309,6 +457,8 @@ exports.createSubscriptionOrder = onCall(
     }
 
     const uid = request.auth.uid;
+    const pricing = await loadSubscriptionPricing();
+    const chargeAmount = pricing.payableAmount;
     const userSnap = await db.collection("users").doc(uid).get();
     const user = userSnap.data() || {};
 
@@ -327,8 +477,8 @@ exports.createSubscriptionOrder = onCall(
 
     const payload = {
       order_id: orderId,
-      order_amount: SUBSCRIPTION_AMOUNT,
-      order_currency: SUBSCRIPTION_CURRENCY,
+      order_amount: chargeAmount,
+      order_currency: pricing.currency,
       customer_details: {
         customer_id: uid.slice(0, 50),
         customer_name: customerName.slice(0, 100),
@@ -342,6 +492,7 @@ exports.createSubscriptionOrder = onCall(
       order_tags: {
         uid,
         plan: "yearly",
+        offer_enabled: String(pricing.offerEnabled),
         checkout_context: "C-Billing Premium — 1 Year",
       },
     };
@@ -374,8 +525,11 @@ exports.createSubscriptionOrder = onCall(
       .doc(orderId)
       .set({
         orderId,
-        amount: SUBSCRIPTION_AMOUNT,
-        currency: SUBSCRIPTION_CURRENCY,
+        amount: chargeAmount,
+        listAmount: pricing.amount,
+        offerAmount: pricing.offerAmount,
+        offerEnabled: pricing.offerEnabled,
+        currency: pricing.currency,
         status: "CREATED",
         paymentSessionId,
         environment,
@@ -386,9 +540,13 @@ exports.createSubscriptionOrder = onCall(
       orderId,
       paymentSessionId,
       environment,
-      amount: SUBSCRIPTION_AMOUNT,
-      currency: SUBSCRIPTION_CURRENCY,
-      durationDays: SUBSCRIPTION_DAYS,
+      amount: pricing.amount,
+      offerAmount: pricing.offerAmount,
+      offerEnabled: pricing.offerEnabled,
+      payableAmount: chargeAmount,
+      regularAmount: pricing.amount,
+      currency: pricing.currency,
+      durationDays: pricing.durationDays,
     };
   }
 );

@@ -384,6 +384,8 @@ class HindiLocalization {
   static const String offerFirst100Users =
       'सीमित अवधि ऑफर — केवल पहले 100 उपयोगकर्ताओं के लिए।';
   static const String justPerMonth = 'केवल ₹333 प्रति माह।';
+  static String justPerMonthAmount(String amount) =>
+      'केवल ₹$amount प्रति माह।';
   static const String whatsIncluded = 'क्या शामिल है।';
   static const String everythingIncludedSubtitle =
       'आज आप जो भी उपयोग करते हैं, बिना किसी सीमा के।';

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../config/subscription_products.dart';
 import '../localization/app_localizations.dart';
 import '../services/cashfree_payment_service.dart';
 import '../services/language_service.dart';
@@ -41,6 +40,7 @@ class _PaymentScreenState extends State<PaymentScreen>
   bool _loadingProduct = true;
   String? _statusMessage;
   String? _productError;
+  SubscriptionPricing _pricing = SubscriptionPricing.defaults;
 
   final PlayBillingService _playBilling = PlayBillingService();
   final CashfreePaymentService _cashfree = CashfreePaymentService();
@@ -83,8 +83,11 @@ class _PaymentScreenState extends State<PaymentScreen>
   }
 
   Future<void> _bootstrapCheckout() async {
+    final pricing = await _subscriptionService.fetchPricing();
+    if (!mounted) return;
+    setState(() => _pricing = pricing);
+
     if (_isDesktopCheckout) {
-      if (!mounted) return;
       setState(() {
         _loadingProduct = false;
         _productError = null;
@@ -97,7 +100,7 @@ class _PaymentScreenState extends State<PaymentScreen>
       return;
     }
 
-    // Cashfree / other: no store product preload needed.
+    // Cashfree / other: amount comes from backend (already loaded above).
     if (!mounted) return;
     setState(() {
       _loadingProduct = false;
@@ -340,7 +343,7 @@ class _PaymentScreenState extends State<PaymentScreen>
 
   Future<void> _openWhatsApp() async {
     final uri = Uri.parse(
-      'https://wa.me/91$contactNumber?text=${Uri.encodeComponent('Hi, I want to activate C-Billing yearly subscription (₹3,999) on desktop.')}',
+      'https://wa.me/91$contactNumber?text=${Uri.encodeComponent('Hi, I want to activate C-Billing yearly subscription (${_pricing.priceLabel}) on desktop.')}',
     );
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -458,20 +461,24 @@ class _PaymentScreenState extends State<PaymentScreen>
                   ),
                 )
               else ...[
-                Text(
-                  '₹${SubscriptionService.subscriptionRegularPriceDisplay}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.accentSoft(context, 0.45),
-                    fontFamily: 'Literata',
-                    decoration: TextDecoration.lineThrough,
-                    decorationColor: AppColors.accentSoft(context, 0.45),
+                if (_pricing.showOffer && !_usePlayBilling) ...[
+                  Text(
+                    _pricing.originalPriceLabel,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.accentSoft(context, 0.45),
+                      fontFamily: 'Literata',
+                      decoration: TextDecoration.lineThrough,
+                      decorationColor: AppColors.accentSoft(context, 0.45),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
+                  const SizedBox(height: 4),
+                ],
                 Text(
-                  SubscriptionProducts.fallbackPriceLabel,
+                  _usePlayBilling
+                      ? _playBilling.displayPrice
+                      : _pricing.priceLabel,
                   style: TextStyle(
                     fontSize: 42,
                     fontWeight: FontWeight.w700,
@@ -763,7 +770,7 @@ class _PaymentScreenState extends State<PaymentScreen>
 
   Widget _buildInstructions() {
     final text = _isDesktopCheckout
-        ? 'Call or WhatsApp support to pay ₹3,999 for 1 year. Share your registered login after payment — access unlocks once support activates your account.'
+        ? 'Call or WhatsApp support to pay ${_pricing.priceLabel} for 1 year. Share your registered login after payment — access unlocks once support activates your account.'
         : _useCashfree
             ? _localizations.cashfreePaymentInstructions
             : _localizations.googlePlayPaymentInstructions;
