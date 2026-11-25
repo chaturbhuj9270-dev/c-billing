@@ -79,7 +79,8 @@ class Shop {
     );
   }
 
-  // Convert to JSON for Firebase
+  // Convert to JSON for Firebase.
+  // Omit null image fields so merge writes never wipe cloud logo/QR/signature.
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -91,9 +92,12 @@ class Shop {
       'email': email,
       'gst': gstNumber,
       'logoUrl': logoUrl,
-      'shopLogoBase64': shopLogoBase64,
-      'signatureBase64': signatureBase64,
-      'qrCodeBase64': qrCodeBase64,
+      if (shopLogoBase64 != null && shopLogoBase64!.isNotEmpty)
+        'shopLogoBase64': shopLogoBase64,
+      if (signatureBase64 != null && signatureBase64!.isNotEmpty)
+        'signatureBase64': signatureBase64,
+      if (qrCodeBase64 != null && qrCodeBase64!.isNotEmpty)
+        'qrCodeBase64': qrCodeBase64,
       'upiId': upiId,
       'bankName': bankName,
       'accountNumber': accountNumber,

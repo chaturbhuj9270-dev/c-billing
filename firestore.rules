@@ -27,12 +27,14 @@ service cloud.firestore {
           || request.resource.data.subscriptionStatus == 'inactive');
     }
 
-    // Shop data stays closed until Cloud Functions set a paid subscription.
-    // The user profile itself stays readable so the paywall can load.
+    // Shop/business data access window.
+    // - Explicit `active` status (incl. console grants before date backfill)
+    // - Or subscriptionDate within 365 days (trial + paid)
     function hasActiveSubscription(userId) {
       let data = get(/databases/$(database)/documents/users/$(userId)).data;
-      return data.subscriptionDate is timestamp
-        && request.time < data.subscriptionDate + duration.value(365, 'd');
+      return data.subscriptionStatus == 'active'
+        || (data.subscriptionDate is timestamp
+          && request.time < data.subscriptionDate + duration.value(365, 'd'));
     }
 
     // Public app config (pricing). Clients may read; only Admin SDK may write.
@@ -82,6 +84,13 @@ service cloud.firestore {
 
       match /invoices/{document=**} {
         allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      // Shop profile used by mobile + web (users/{uid}/shop_details/main).
+      // Owner can always read (page load / bills); writes need a valid window.
+      match /shop_details/{document=**} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId) && hasActiveSubscription(userId);
       }
 
       match /profile/{document=**} {

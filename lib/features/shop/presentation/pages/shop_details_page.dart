@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -14,6 +15,7 @@ import 'package:c_billing/core/ui/glassy_toast.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/language_service.dart';
 import '../../data/repositories/shop_repository.dart';
+import '../../data/shop_image_codec.dart';
 import '../../offline/controllers/shop_image_cache_controller.dart';
 
 class ShopDetailsPage extends StatefulWidget {
@@ -81,10 +83,11 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         throw Exception('User not authenticated');
       }
 
-      // Step 1: Load images from local cache FIRST (instant display)
+      // Step 1: Load images from local cache FIRST (instant display).
+      // Failures here must not block Firestore text/bank fields.
       await _loadImagesFromCache(currentUser.uid);
 
-      // Step 2: Fetch from Firebase and sync to cache (background)
+      // Step 2: Fetch from Firebase
       final doc = await _firestore
           .collection('users')
           .doc(currentUser.uid)
@@ -94,9 +97,9 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
 
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
-        final firebaseLogo = _stringField(data, 'shopLogoBase64');
-        final firebaseSignature = _stringField(data, 'signatureBase64');
-        final firebaseQrCode = _stringField(data, 'qrCodeBase64');
+        final firebaseLogo = _imageField(data, 'shopLogoBase64');
+        final firebaseSignature = _imageField(data, 'signatureBase64');
+        final firebaseQrCode = _imageField(data, 'qrCodeBase64');
 
         if (!mounted) return;
         setState(() {
@@ -122,20 +125,30 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           if (firebaseQrCode.isNotEmpty) _qrCodeBase64 = firebaseQrCode;
         });
 
-        await ShopImageCacheController.instance.syncFromFirebase(
-          userId: currentUser.uid,
-          shopLogoBase64: firebaseLogo.isEmpty ? null : firebaseLogo,
-          signatureBase64:
-              firebaseSignature.isEmpty ? null : firebaseSignature,
-          qrCodeBase64: firebaseQrCode.isEmpty ? null : firebaseQrCode,
-        );
+        // Local image cache sync is best-effort (web Drift can fail).
+        try {
+          await ShopImageCacheController.instance.syncFromFirebase(
+            userId: currentUser.uid,
+            shopLogoBase64: firebaseLogo.isEmpty ? null : firebaseLogo,
+            signatureBase64:
+                firebaseSignature.isEmpty ? null : firebaseSignature,
+            qrCodeBase64: firebaseQrCode.isEmpty ? null : firebaseQrCode,
+          );
+        } catch (cacheError) {
+          debugPrint(
+            '[CACHE] syncFromFirebase after shop load failed: $cacheError',
+          );
+        }
       }
     } catch (e) {
       debugPrint('[ERROR] Failed to load shop details: $e');
       if (mounted) {
+        final message = e is FirebaseException
+            ? (e.message ?? e.code)
+            : e.toString();
         GlassyToast.show(
           context,
-          'Failed to load shop details',
+          'Failed to load shop details: $message',
           isError: true,
         );
       }
@@ -150,25 +163,41 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
     return value.toString();
   }
 
+  /// Normalized base64 suitable for [Image.memory] / Firestore round-trips.
+  String _imageField(Map<String, dynamic> data, String key) {
+    final raw = _stringField(data, key);
+    if (raw.isEmpty) return '';
+    final normalized = ShopImageCodec.normalizeBase64(raw);
+    // Drop corrupt payloads so the UI shows upload placeholder, not a crash.
+    return ShopImageCodec.tryDecodeBase64(normalized) == null
+        ? ''
+        : normalized;
+  }
+
+  Uint8List? _decodeShopImage(String? base64) =>
+      ShopImageCodec.tryDecodeBase64(base64);
+
   // Load images from local cache for instant display
   Future<void> _loadImagesFromCache(String userId) async {
     try {
       final cachedImages = await ShopImageCacheController.instance
           .getCachedImages(userId);
       if (cachedImages != null && cachedImages.hasAnyImages) {
+        String? take(String? raw) {
+          if (raw == null || raw.trim().isEmpty) return null;
+          final normalized = ShopImageCodec.normalizeBase64(raw);
+          return ShopImageCodec.tryDecodeBase64(normalized) == null
+              ? null
+              : normalized;
+        }
+
         setState(() {
-          if (cachedImages.shopLogoBase64 != null &&
-              cachedImages.shopLogoBase64!.isNotEmpty) {
-            _shopLogoBase64 = cachedImages.shopLogoBase64;
-          }
-          if (cachedImages.signatureBase64 != null &&
-              cachedImages.signatureBase64!.isNotEmpty) {
-            _signatureBase64 = cachedImages.signatureBase64;
-          }
-          if (cachedImages.qrCodeBase64 != null &&
-              cachedImages.qrCodeBase64!.isNotEmpty) {
-            _qrCodeBase64 = cachedImages.qrCodeBase64;
-          }
+          final logo = take(cachedImages.shopLogoBase64);
+          final signature = take(cachedImages.signatureBase64);
+          final qr = take(cachedImages.qrCodeBase64);
+          if (logo != null) _shopLogoBase64 = logo;
+          if (signature != null) _signatureBase64 = signature;
+          if (qr != null) _qrCodeBase64 = qr;
         });
         debugPrint('[CACHE] Loaded shop images from local cache instantly');
       }
@@ -246,9 +275,9 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
     try {
       final XFile? pickedFile = await _imagePicker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 55,
-        maxWidth: 400,
-        maxHeight: 400,
+        imageQuality: 70,
+        maxWidth: 600,
+        maxHeight: 600,
       );
 
       if (pickedFile == null) return;
@@ -261,13 +290,27 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       }
 
       final bytes = await pickedFile.readAsBytes();
-      final base64Image = base64Encode(bytes);
-
-      // Cache first so bills can still show QR if Firestore rejects large docs.
-      await ShopImageCacheController.instance.updateQrCode(
-        currentUser.uid,
-        base64Image,
+      // Hard-compress so logo+QR+signature fit in one Firestore doc.
+      final base64Image = await ShopImageCodec.compressToBase64(
+        bytes,
+        maxSide: 320,
+        quality: 55,
       );
+
+      // Show on screen immediately — don't wait on cache / cloud.
+      if (!mounted) return;
+      setState(() {
+        _qrCodeBase64 = base64Image;
+      });
+
+      try {
+        await ShopImageCacheController.instance.updateQrCode(
+          currentUser.uid,
+          base64Image,
+        );
+      } catch (e) {
+        debugPrint('[WARN] QR local cache failed: $e');
+      }
 
       var cloudSaved = true;
       try {
@@ -285,10 +328,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       ShopRepository.clearSharedCache();
 
       if (!mounted) return;
-      setState(() {
-        _qrCodeBase64 = base64Image;
-        _isUploadingQr = false;
-      });
+      setState(() => _isUploadingQr = false);
 
       GlassyToast.show(
         context,
@@ -350,9 +390,9 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
     try {
       final XFile? pickedFile = await _imagePicker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 55,
-        maxWidth: 320,
-        maxHeight: 320,
+        imageQuality: 70,
+        maxWidth: 600,
+        maxHeight: 600,
       );
 
       if (pickedFile == null) return;
@@ -365,12 +405,26 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       }
 
       final bytes = await pickedFile.readAsBytes();
-      final base64Image = base64Encode(bytes);
-
-      await ShopImageCacheController.instance.updateLogo(
-        currentUser.uid,
-        base64Image,
+      final base64Image = await ShopImageCodec.compressToBase64(
+        bytes,
+        maxSide: 280,
+        quality: 55,
       );
+
+      // Show on screen immediately — don't wait on cache / cloud.
+      if (!mounted) return;
+      setState(() {
+        _shopLogoBase64 = base64Image;
+      });
+
+      try {
+        await ShopImageCacheController.instance.updateLogo(
+          currentUser.uid,
+          base64Image,
+        );
+      } catch (e) {
+        debugPrint('[WARN] Logo local cache failed: $e');
+      }
 
       var cloudSaved = true;
       try {
@@ -388,10 +442,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       ShopRepository.clearSharedCache();
 
       if (!mounted) return;
-      setState(() {
-        _shopLogoBase64 = base64Image;
-        _isUploadingLogo = false;
-      });
+      setState(() => _isUploadingLogo = false);
 
       GlassyToast.show(
         context,
@@ -822,7 +873,8 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       );
     }
 
-    if (_qrCodeBase64 != null && _qrCodeBase64!.isNotEmpty) {
+    final qrBytes = _decodeShopImage(_qrCodeBase64);
+    if (qrBytes != null && qrBytes.isNotEmpty) {
       return Column(
         children: [
           Container(
@@ -836,7 +888,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(11),
               child: Image.memory(
-                base64Decode(_qrCodeBase64!),
+                qrBytes,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) {
                   return Center(
@@ -963,7 +1015,8 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       );
     }
 
-    if (_shopLogoBase64 != null && _shopLogoBase64!.isNotEmpty) {
+    final logoBytes = _decodeShopImage(_shopLogoBase64);
+    if (logoBytes != null && logoBytes.isNotEmpty) {
       return Column(
         children: [
           Container(
@@ -977,7 +1030,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(11),
               child: Image.memory(
-                base64Decode(_shopLogoBase64!),
+                logoBytes,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) {
                   return Center(
