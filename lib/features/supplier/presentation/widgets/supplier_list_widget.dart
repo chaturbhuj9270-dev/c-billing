@@ -83,7 +83,13 @@ class SupplierListWidget extends StatelessWidget {
           result = aCode.compareTo(bCode);
           break;
       }
-      return sortAscending ? result : -result;
+      if (result != 0) return sortAscending ? result : -result;
+      // Stable tie-break by name so the order never jumps around
+      return '${a['firstName'] ?? ''} ${a['lastName'] ?? ''}'
+          .toLowerCase()
+          .compareTo(
+            '${b['firstName'] ?? ''} ${b['lastName'] ?? ''}'.toLowerCase(),
+          );
     });
 
     return filtered;

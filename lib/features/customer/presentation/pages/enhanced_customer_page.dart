@@ -65,8 +65,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   // Raw customer entities from the local database stream (used to recompute _customers)
   List<CustomerEntity> _customerEntities = [];
   String _searchQuery = '';
-  CustomerSortField _sortField = CustomerSortField.name;
-  bool _sortAscending = true;
+  // Newest customers first by default so a newly added customer is always on top
+  CustomerSortField _sortField = CustomerSortField.createdDate;
+  bool _sortAscending = false;
   bool _isNavigatingAway = false;
 
   // local stream for real-time updates
@@ -779,7 +780,12 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                             setState(() => _searchQuery = query);
                           },
                           onSortFieldChanged: (field) {
-                            setState(() => _sortField = field);
+                            setState(() {
+                              _sortField = field;
+                              // Date defaults to newest first, others to A-Z / low-high
+                              _sortAscending =
+                                  field != CustomerSortField.createdDate;
+                            });
                           },
                           onSortDirectionToggle: () {
                             setState(() => _sortAscending = !_sortAscending);

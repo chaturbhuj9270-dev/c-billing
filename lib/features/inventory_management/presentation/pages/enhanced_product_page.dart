@@ -53,8 +53,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
   bool _isLoading = true;
   List<ProductEntity> _products = [];
   String _searchQuery = '';
-  ProductSortField _sortField = ProductSortField.name;
-  bool _sortAscending = true;
+  // Newest products first by default so a newly added product is always on top
+  ProductSortField _sortField = ProductSortField.createdDate;
+  bool _sortAscending = false;
   String? _selectedCategory;
   bool _isNavigatingAway = false;
   int _unsyncedCount = 0;
@@ -387,7 +388,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       setState(() => _searchQuery = value);
                     },
                     onSortFieldChanged: (field) {
-                      setState(() => _sortField = field);
+                      setState(() {
+                        _sortField = field;
+                        // Date defaults to newest first, others to A-Z / low-high
+                        _sortAscending = field != ProductSortField.createdDate;
+                      });
                     },
                     onSortDirectionToggle: () {
                       setState(() => _sortAscending = !_sortAscending);
@@ -399,6 +404,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     sortByNameLabel: _localizations.name,
                     sortByStockLabel: _localizations.stock,
                     sortByPriceLabel: _localizations.price,
+                    sortByDateLabel: _localizations.sortByDate,
                   ),
                   const SizedBox(height: 16),
 
@@ -613,6 +619,18 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       }).toList();
     }
 
+    // Newest created date of any product with this name (used for the Date sort)
+    final createdByName = <String, DateTime>{};
+    for (final p in _products) {
+      final key = p.name.toLowerCase();
+      final existing = createdByName[key];
+      if (existing == null || p.createdAt.isAfter(existing)) {
+        createdByName[key] = p.createdAt;
+      }
+    }
+    DateTime newestCreated(String name) =>
+        createdByName[name.toLowerCase()] ?? DateTime(2000);
+
     // Apply sort
     filteredGroups.sort((a, b) {
       int result;
@@ -633,8 +651,14 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             b.productName.toLowerCase(),
           );
           break;
+        case ProductSortField.createdDate:
+          result = newestCreated(a.productName).compareTo(
+            newestCreated(b.productName),
+          );
+          break;
       }
-      return _sortAscending ? result : -result;
+      if (result != 0) return _sortAscending ? result : -result;
+      return a.productName.toLowerCase().compareTo(b.productName.toLowerCase());
     });
 
     if (filteredGroups.isEmpty) {

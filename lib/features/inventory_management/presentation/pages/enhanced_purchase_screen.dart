@@ -177,7 +177,10 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       if (mounted) {
         setState(() {
           _purchases = batches
-            ..sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate));
+            ..sort((a, b) {
+              final c = b.purchaseDate.compareTo(a.purchaseDate);
+              return c != 0 ? c : b.createdAt.compareTo(a.createdAt);
+            });
           _isLoading = false;
         });
       }
@@ -201,7 +204,10 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
         .map(
           (batches) =>
               batches.toList()
-                ..sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate)),
+                ..sort((a, b) {
+              final c = b.purchaseDate.compareTo(a.purchaseDate);
+              return c != 0 ? c : b.createdAt.compareTo(a.createdAt);
+            }),
         )
         .listen(
           (purchases) {

@@ -10,6 +10,8 @@ import 'package:c_billing/features/event_order/offline/controllers/event_order_o
 import 'package:c_billing/features/event_order/domain/entities/event_order.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
+import 'package:c_billing/features/customer/data/services/customer_sync_service.dart';
+import 'package:c_billing/features/customer/data/services/customer_transaction_sync_service.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
@@ -1020,19 +1022,10 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
     setState(() => _isProcessing = true);
 
     try {
-      final result = await widget.transactionService.receivePayment(
-        customerId: widget.customer.id,
-        amount: _enteredAmount,
-        paymentMode: _selectedPaymentMode,
-        notes: _notesController.text.trim().isNotEmpty
-            ? _notesController.text.trim()
-            : null,
-        referenceNumber: _referenceController.text.trim().isNotEmpty
-            ? _referenceController.text.trim()
-            : null,
-      );
-
-      // Also update local so dashboard refreshes
+      // Save to the local ledger (offline-first). The sync services push the
+      // payment and the new customer balance to Firestore; writing it to
+      // Firestore here as well duplicated the payment and double-counted the
+      // balance.
       await CustomerTransactionOfflineController.instance.addPaymentTransaction(
         customerId: widget.customer.id,
         customerName: widget.customer.fullName,
@@ -1044,22 +1037,22 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
         allocateToBills: true,
       );
 
+      // This page reads from Firestore, so push right away before refreshing.
+      try {
+        await CustomerTransactionSyncService.instance.syncNow();
+        await CustomerSyncService.instance.syncNow();
+      } catch (e) {
+        debugPrint('[CustomerDetails] Sync after payment failed: $e');
+      }
+
       if (!mounted) return;
 
-      if (result.success) {
-        Navigator.pop(context);
-        GlassyToast.show(
-          context,
-          'Payment of ₹${_enteredAmount.toStringAsFixed(2)} recorded',
-        );
-        widget.onPaymentReceived();
-      } else {
-        GlassyToast.show(
-          context,
-          result.errorMessage ?? 'Failed to process payment',
-          isError: true,
-        );
-      }
+      Navigator.pop(context);
+      GlassyToast.show(
+        context,
+        'Payment of ₹${_enteredAmount.toStringAsFixed(2)} recorded',
+      );
+      widget.onPaymentReceived();
     } finally {
       if (mounted) {
         setState(() => _isProcessing = false);

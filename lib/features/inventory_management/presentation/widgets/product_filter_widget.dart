@@ -3,7 +3,7 @@ import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 // Sort options for product list
-enum ProductSortField { name, stock, price, category }
+enum ProductSortField { name, stock, price, category, createdDate }
 
 // Filter widget for product list Features: Search bar, Sort options, Category filter
 class ProductFilterWidget extends StatefulWidget {
@@ -24,6 +24,7 @@ class ProductFilterWidget extends StatefulWidget {
   final String sortByNameLabel;
   final String sortByStockLabel;
   final String sortByPriceLabel;
+  final String sortByDateLabel;
 
   const ProductFilterWidget({
     super.key,
@@ -42,6 +43,7 @@ class ProductFilterWidget extends StatefulWidget {
     this.sortByNameLabel = 'Name',
     this.sortByStockLabel = 'Stock',
     this.sortByPriceLabel = 'Price',
+    this.sortByDateLabel = 'Date',
   });
 
   @override
@@ -129,6 +131,14 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                   onTap: () =>
                       widget.onSortFieldChanged(ProductSortField.price),
                   icon: Icons.currency_rupee_rounded,
+                ),
+                const SizedBox(width: 8),
+                _buildSortChip(
+                  label: widget.sortByDateLabel,
+                  isSelected: widget.sortField == ProductSortField.createdDate,
+                  onTap: () =>
+                      widget.onSortFieldChanged(ProductSortField.createdDate),
+                  icon: Icons.calendar_today_rounded,
                 ),
                 if (widget.categories.isNotEmpty) ...[
                   SizedBox(width: 8),

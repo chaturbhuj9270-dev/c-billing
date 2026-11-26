@@ -58,8 +58,9 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
   int? _editingCompanyLocalId;
   List<Map<String, dynamic>> _companies = [];
   String _searchQuery = '';
-  CompanySortField _sortField = CompanySortField.name;
-  bool _sortAscending = true;
+  // Newest companies first by default so a newly added company is always on top
+  CompanySortField _sortField = CompanySortField.createdDate;
+  bool _sortAscending = false;
   bool _isNavigatingAway = false;
 
   // local stream for real-time updates
@@ -780,7 +781,10 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
                   searchQuery: _searchQuery,
                   onSearchChanged: (q) => setState(() => _searchQuery = q),
                   sortField: _sortField,
-                  onSortFieldChanged: (f) => setState(() => _sortField = f),
+                  onSortFieldChanged: (f) => setState(() {
+                    _sortField = f;
+                    _sortAscending = f != CompanySortField.createdDate;
+                  }),
                   sortAscending: _sortAscending,
                   onSortDirectionToggle: () =>
                       setState(() => _sortAscending = !_sortAscending),

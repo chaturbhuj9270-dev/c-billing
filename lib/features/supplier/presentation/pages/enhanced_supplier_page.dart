@@ -59,8 +59,9 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
   int? _editingSupplierLocalId;
   List<Map<String, dynamic>> _suppliers = [];
   String _searchQuery = '';
-  SupplierSortField _sortField = SupplierSortField.name;
-  bool _sortAscending = true;
+  // Newest suppliers first by default so a newly added supplier is always on top
+  SupplierSortField _sortField = SupplierSortField.createdDate;
+  bool _sortAscending = false;
   bool _isNavigatingAway = false;
 
   // local stream for real-time updates
@@ -806,7 +807,10 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
                   searchQuery: _searchQuery,
                   onSearchChanged: (q) => setState(() => _searchQuery = q),
                   sortField: _sortField,
-                  onSortFieldChanged: (f) => setState(() => _sortField = f),
+                  onSortFieldChanged: (f) => setState(() {
+                    _sortField = f;
+                    _sortAscending = f != SupplierSortField.createdDate;
+                  }),
                   sortAscending: _sortAscending,
                   onSortDirectionToggle: () =>
                       setState(() => _sortAscending = !_sortAscending),

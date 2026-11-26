@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:c_billing/core/services/customer_transaction_service.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/features/billing/data/repositories/firebase_bill_repository.dart';
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
@@ -18,7 +17,6 @@ import 'package:c_billing/core/printing/printing.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
 import 'package:c_billing/features/shop/domain/entities/shop.dart';
 import 'package:c_billing/features/customer/data/repositories/customer_repository.dart';
-import 'package:c_billing/features/customer/data/repositories/customer_transaction_repository.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/features/billing/presentation/pages/bill_settings_page.dart';
@@ -26,6 +24,8 @@ import 'package:c_billing/features/billing/presentation/pages/bill_report_settin
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
 import 'package:c_billing/features/billing/data/services/bill_sync_service.dart';
+import 'package:c_billing/features/customer/data/services/customer_sync_service.dart';
+import 'package:c_billing/features/customer/data/services/customer_transaction_sync_service.dart';
 import 'package:c_billing/features/product/offline/controllers/product_offline_controller.dart';
 import 'package:c_billing/features/product/offline/entities/product_entity.dart';
 import 'package:c_billing/features/product/data/services/product_sync_service.dart';
@@ -55,7 +55,6 @@ import 'package:c_billing/features/dashboard/presentation/pages/web_shell.dart';
 import 'package:c_billing/features/billing/presentation/widgets/barcode_scanner_sheet.dart';
 import 'package:c_billing/features/billing/presentation/widgets/billing_add_items_widgets.dart';
 import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
-import 'package:c_billing/features/customer/domain/entities/customer_transaction.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
@@ -73,7 +72,6 @@ class BillingPage extends StatefulWidget {
 }
 
 class _BillingPageState extends State<BillingPage> {
-  late CustomerTransactionService _customerTransactionService;
   late FirebaseFirestore _firestore;
   late ShopRepository _shopRepository;
   late FirebaseCustomerRepository _customerRepository;
@@ -112,6 +110,8 @@ class _BillingPageState extends State<BillingPage> {
 
   // Payment state
   double _receivedAmount = 0.0;
+  // True while the typed received amount was above the bill total (it is capped)
+  bool _receivedExceedsTotal = false;
   bool _isFullPayment = true;
 
   Map<String, dynamic>? _selectedCustomer;
@@ -171,16 +171,8 @@ class _BillingPageState extends State<BillingPage> {
     // Listen for language changes
     LanguageService.instance.addListener(_onLanguageChanged);
 
-    // Initialize customer repository
+    // Initialize customer repository (used for contact lookup)
     _customerRepository = FirebaseCustomerRepository(firestore: _firestore);
-    final customerTransactionRepository = FirebaseCustomerTransactionRepository(
-      firestore: _firestore,
-    );
-    _customerTransactionService = CustomerTransactionService(
-      firestore: _firestore,
-      customerRepository: _customerRepository,
-      transactionRepository: customerTransactionRepository,
-    );
 
     // Listen for customer phone number changes
     _customerContactController.addListener(_onPhoneNumberChanged);
@@ -1135,7 +1127,11 @@ class _BillingPageState extends State<BillingPage> {
 
     try {
       // === INTEGRATED OFFLINE-FIRST APPROACH (FIFO) === 1. Calculate payment status
-      final actualPaidAmount = _isFullPayment ? _finalAmount : _receivedAmount;
+      // Never record more received than the bill total (the total can change
+      // after the amount was typed, e.g. items removed or discount added).
+      final actualPaidAmount = _isFullPayment
+          ? _finalAmount
+          : _receivedAmount.clamp(0.0, _finalAmount).toDouble();
       final calculatedPendingAmount = _finalAmount - actualPaidAmount;
       BillPaymentStatus paymentStatus;
       if (calculatedPendingAmount <= 0) {
@@ -1242,9 +1238,7 @@ class _BillingPageState extends State<BillingPage> {
                   customerId: customerId,
                   customerName: customerName,
                   amount: actualPaidAmount,
-                  paymentMethod: _isFullPayment
-                      ? 'Full Payment'
-                      : 'Partial Payment',
+                  paymentMethod: 'Cash',
                   description: 'Payment for Bill #$billId',
                 );
             debugPrint(
@@ -1252,48 +1246,12 @@ class _BillingPageState extends State<BillingPage> {
             );
           }
 
-          // 3c. Sync to Firebase - Record full bill amount first
-          final billRecordResult = await _customerTransactionService
-              .recordBillGenerated(
-                customerId: customerId,
-                billId: billId,
-                billNumber: billId,
-                billAmount: _finalAmount,
-              );
-
-          if (billRecordResult.success) {
-            debugPrint(
-              '[Billing] Firebase: Bill recorded with amount: $_finalAmount',
-            );
-
-            // 3d. Then record payment received to Firebase (if any)
-            if (actualPaidAmount > 0) {
-              final paymentResult = await _customerTransactionService
-                  .receivePayment(
-                    customerId: customerId,
-                    amount: actualPaidAmount,
-                    paymentMode: PaymentMode.cash, // Default to cash
-                    billId: billId,
-                    billNumber: billId,
-                    notes:
-                        'Payment during billing - ${_isFullPayment ? _localizations.full : _localizations.partial}',
-                  );
-
-              if (paymentResult.success) {
-                debugPrint(
-                  '[Billing] Firebase: Payment recorded: $actualPaidAmount',
-                );
-              } else {
-                debugPrint(
-                  '[Billing] Firebase: Payment failed: ${paymentResult.errorMessage}',
-                );
-              }
-            }
-          } else {
-            debugPrint(
-              '[Billing] Firebase: Bill record failed: ${billRecordResult.errorMessage}',
-            );
-          }
+          // The ledger entries above are the single source of truth. They (and
+          // the customer's updated balance) are pushed to Firestore by the sync
+          // services. Writing them to Firestore here as well duplicated every
+          // bill/payment and double-counted the customer's pending amount.
+          unawaited(CustomerTransactionSyncService.instance.syncNow());
+          unawaited(CustomerSyncService.instance.syncNow());
         } catch (e) {
           debugPrint('[Billing] Transaction entry error (non-blocking): $e');
         }
@@ -1367,6 +1325,7 @@ class _BillingPageState extends State<BillingPage> {
       _selectedCustomer = null;
       _autoFoundCustomerName = null;
       _receivedAmount = 0.0;
+      _receivedExceedsTotal = false;
       _isFullPayment = true;
       _showAddCustomerPrompt = false;
       _hasPhoneText = false;
@@ -5016,6 +4975,8 @@ class _BillingPageState extends State<BillingPage> {
                             setState(() {
                               _isFullPayment = false;
                               _receivedAmount = 0.0;
+                              _receivedExceedsTotal = false;
+      _receivedExceedsTotal = false;
                               _receivedAmountController.clear();
                             });
                             // Prompt user to select customer if not already selected
@@ -5082,6 +5043,9 @@ class _BillingPageState extends State<BillingPage> {
                                     fontFamily: 'Literata',
                                     color: AppTheme.grey400,
                                   ),
+                                  errorText: _receivedExceedsTotal
+                                      ? 'Cannot exceed ₹${_finalAmount.toStringAsFixed(0)}'
+                                      : null,
                                   border: InputBorder.none,
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 10,
@@ -5090,7 +5054,23 @@ class _BillingPageState extends State<BillingPage> {
                                 ),
                                 onChanged: (value) {
                                   final parsed = double.tryParse(value) ?? 0.0;
+                                  final exceeds = parsed > _finalAmount;
+                                  if (exceeds) {
+                                    // Received can never be more than the bill
+                                    // total: reset the field to the total.
+                                    final capped = _finalAmount.toStringAsFixed(
+                                      2,
+                                    );
+                                    _receivedAmountController.value =
+                                        TextEditingValue(
+                                          text: capped,
+                                          selection: TextSelection.collapsed(
+                                            offset: capped.length,
+                                          ),
+                                        );
+                                  }
                                   setState(() {
+                                    _receivedExceedsTotal = exceeds;
                                     // Cap received amount at final amount
                                     _receivedAmount = parsed.clamp(
                                       0.0,
@@ -5351,6 +5331,7 @@ class _BillingPageState extends State<BillingPage> {
       onTap: () {
         setState(() {
           _receivedAmount = amount;
+          _receivedExceedsTotal = false;
           _receivedAmountController.text = amount.toStringAsFixed(2);
           if (amount >= _finalAmount) {
             _isFullPayment = true;
