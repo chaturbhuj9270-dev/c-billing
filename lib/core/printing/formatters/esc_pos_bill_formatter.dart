@@ -268,7 +268,7 @@ class EscPosBillFormatter {
     final dateTimeFmt = DateFormat('dd/MM/yyyy hh:mm a');
     b.addAll(_kv('Date:', dateTimeFmt.format(d.dateTime)));
 
-    if (d.isQuotation && d.eventOrderDate != null) {
+    if (d.eventOrderDate != null) {
       final dateFmt = DateFormat('dd/MM/yyyy');
       b.addAll(_kv('Event Date:', dateFmt.format(d.eventOrderDate!)));
     }

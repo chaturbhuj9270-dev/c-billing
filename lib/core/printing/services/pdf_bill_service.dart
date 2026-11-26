@@ -26,6 +26,7 @@ class PdfBillService {
 
   // POS (`pos`) or normal/tabular (`normal`) — uses quotation_type for quotations.
   Future<String> resolvePdfFormat(PrintBillData billData) async {
+    if (billData.formatOverride != null) return billData.formatOverride!;
     final prefs = await SharedPreferences.getInstance();
     if (billData.isQuotation) {
       return prefs.getString(QuotationFormatSettings.keyQuotationType) ?? 'pos';
@@ -409,8 +410,7 @@ class PdfBillService {
                         ),
                         pw.SizedBox(height: 3),
                         _buildInfoLine('Time', _formatTime(billData.dateTime)),
-                        if (billData.isQuotation &&
-                            billData.eventOrderDate != null) ...[
+                        if (billData.eventOrderDate != null) ...[
                           pw.SizedBox(height: 3),
                           _buildInfoLine(
                             'Event Date',
@@ -1387,7 +1387,7 @@ class PdfBillService {
         _buildDashedDivider(),
         pw.SizedBox(height: 5),
 
-        if (billData.isQuotation) ...[
+        if (billData.isQuotation || billData.documentTitle != null) ...[
           pw.Text(
             billData.documentHeaderTitle,
             style: pw.TextStyle(
@@ -1423,8 +1423,7 @@ class PdfBillService {
                   ),
                 ],
               ),
-              if (billData.isQuotation &&
-                  billData.quotationTitle != null &&
+              if (billData.quotationTitle != null &&
                   billData.quotationTitle!.isNotEmpty) ...[
                 pw.SizedBox(height: 3),
                 pw.Row(
@@ -1458,7 +1457,7 @@ class PdfBillService {
                   ),
                 ],
               ),
-              if (billData.isQuotation && billData.eventOrderDate != null) ...[
+              if (billData.eventOrderDate != null) ...[
                 pw.SizedBox(height: 3),
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -2301,6 +2300,8 @@ class PdfBillService {
 
   /// True when we can render either a UPI amount QR or the uploaded shop QR.
   bool _hasBillPaymentQr(PrintBillData billData, Shop shopDetails) {
+    final qrOverride = billData.qrAmountOverride;
+    if (qrOverride != null && qrOverride <= 0) return false;
     return _upiAmountQrPayload(billData, shopDetails) != null ||
         (shopDetails.qrCodeBase64 != null &&
             shopDetails.qrCodeBase64!.isNotEmpty);
@@ -2313,10 +2314,11 @@ class PdfBillService {
     final upiId = shopDetails.upiId?.trim() ?? '';
     if (!looksLikeUpiId(upiId)) return null;
 
-    final amount = billPrintAmountToPay(
-      grandTotal: billData.grandTotal,
-      returnedAmount: billData.totalReturnedAmount,
-    );
+    final amount = billData.qrAmountOverride ??
+        billPrintAmountToPay(
+          grandTotal: billData.grandTotal,
+          returnedAmount: billData.totalReturnedAmount,
+        );
     if (amount <= 0) return null;
 
     return buildUpiPaymentUri(
@@ -2342,10 +2344,11 @@ class PdfBillService {
     double captionSize = 7,
   }) {
     final upiPayload = _upiAmountQrPayload(billData, shopDetails);
-    final amount = billPrintAmountToPay(
-      grandTotal: billData.grandTotal,
-      returnedAmount: billData.totalReturnedAmount,
-    );
+    final amount = billData.qrAmountOverride ??
+        billPrintAmountToPay(
+          grandTotal: billData.grandTotal,
+          returnedAmount: billData.totalReturnedAmount,
+        );
 
     final pw.Widget? qrChild;
     if (upiPayload != null) {

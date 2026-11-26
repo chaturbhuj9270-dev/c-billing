@@ -128,6 +128,16 @@ class PrintBillData {
   // Event/order date for quotations (replaces valid-until on print).
   final DateTime? eventOrderDate;
   final String? quotationTitle;
+  // Other document kinds (e.g. event / sales orders) reuse the billing layout.
+  // `pos` or `normal` – overrides the bill/quotation format preference.
+  final String? formatOverride;
+  // Header title shown instead of INVOICE (e.g. EVENT INVOICE).
+  final String? documentTitle;
+  // Label for the document number (default: Bill No / Quotation No).
+  final String? numberLabelText;
+  // Amount the payment QR should ask for (e.g. balance due). When set and not
+  // positive, no payment QR is printed.
+  final double? qrAmountOverride;
   final double? refundAmount;
 
   // Amount paid for this bill
@@ -188,6 +198,10 @@ class PrintBillData {
     this.validUntil,
     this.eventOrderDate,
     this.quotationTitle,
+    this.formatOverride,
+    this.documentTitle,
+    this.numberLabelText,
+    this.qrAmountOverride,
     this.refundAmount,
     this.paidAmount,
     this.pendingAmount,
@@ -204,9 +218,11 @@ class PrintBillData {
     this.totalTaxAmount = 0.0,
   });
 
-  String get numberLabel => isQuotation ? 'Quotation No' : 'Bill No';
+  String get numberLabel =>
+      numberLabelText ?? (isQuotation ? 'Quotation No' : 'Bill No');
 
-  String get documentHeaderTitle => isQuotation ? 'QUOTATION' : 'INVOICE';
+  String get documentHeaderTitle =>
+      documentTitle ?? (isQuotation ? 'QUOTATION' : 'INVOICE');
 
   // Create from Bill entity
   factory PrintBillData.fromBill(

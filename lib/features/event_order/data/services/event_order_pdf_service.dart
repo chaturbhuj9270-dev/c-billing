@@ -11,6 +11,9 @@ import 'package:intl/intl.dart';
 import '../../domain/entities/event_order.dart';
 import '../../domain/entities/order_item.dart';
 import '../../../shop/domain/entities/shop.dart';
+import '../../../../core/printing/models/print_bill_data.dart';
+import '../../../../core/printing/services/pdf_bill_service.dart';
+import 'event_order_format_settings.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
 // Service for generating PDF for Event Orders / Sales Orders
@@ -30,8 +33,126 @@ class EventOrderPdfService {
   // Check if PDF generation is in progress
   bool get isGenerating => _isGenerating;
 
-  // Generate PDF document for an Event Order
+  // Whether invoices are currently set to the POS (thermal) format.
+  Future<bool> isPosFormat() async => EventOrderFormatSettings.isPosFormat(
+    await EventOrderFormatSettings.getFormatType(),
+  );
+
+  // Paper hint for the system print dialog: 80mm roll for POS, A4 otherwise.
+  Future<PdfPageFormat> resolvePrintPageFormat() async =>
+      await isPosFormat() ? PdfPageFormat.roll80 : PdfPageFormat.a4;
+
+  // Maps an event / sales order onto the billing print model so the POS
+  // receipt and the billing "normal bill" layout can render it.
+  PrintBillData createPrintData(EventOrder order, {String format = 'pos'}) {
+    final isEvent = order.orderType == OrderType.event;
+    final items = <PrintBillItem>[];
+
+    if (order.eventCharges > 0) {
+      items.add(
+        PrintBillItem(
+          name: 'Event Charges',
+          quantity: 1,
+          rate: order.eventCharges,
+          amount: order.eventCharges,
+        ),
+      );
+    }
+    for (final sub in order.subEvents) {
+      if (sub.charges > 0) {
+        items.add(
+          PrintBillItem(
+            name: '${sub.name} (${DateFormat('dd MMM').format(sub.date)})',
+            quantity: 1,
+            rate: sub.charges,
+            amount: sub.charges,
+          ),
+        );
+      }
+    }
+    for (final item in order.items) {
+      items.add(PrintBillItem.fromOrderItem(item));
+    }
+
+    // Same totals as the A4 invoice.
+    final chargesTotal =
+        order.eventCharges +
+        order.subEvents.fold<double>(0.0, (t, e) => t + e.charges);
+    final itemsSubtotal = order.items.fold<double>(0.0, (t, i) => t + i.subtotal);
+    final itemsDiscount = order.items.fold<double>(
+      0.0,
+      (t, i) => t + i.discountAmount,
+    );
+    final cgst = order.items.fold<double>(0.0, (t, i) => t + i.cgstAmount);
+    final sgst = order.items.fold<double>(0.0, (t, i) => t + i.sgstAmount);
+    final itemsTotal = order.items.fold<double>(0.0, (t, i) => t + i.total);
+    final grandTotal = chargesTotal + itemsTotal;
+    final balanceDue = grandTotal - order.advanceAmount;
+
+    // Effective tax rate on the taxed part of the order (items can differ).
+    double rate(double amount, double Function(OrderItem) percentOf) {
+      final base = order.items
+          .where((i) => percentOf(i) > 0)
+          .fold<double>(0.0, (t, i) => t + (i.subtotal - i.discountAmount));
+      return base > 0 ? amount / base * 100 : 0.0;
+    }
+
+    return PrintBillData(
+      billNumber: order.orderName,
+      numberLabelText: isEvent ? 'Event' : 'Order',
+      documentTitle: isEvent ? 'EVENT INVOICE' : 'ORDER INVOICE',
+      formatOverride: format,
+      dateTime: order.createdAt,
+      eventOrderDate: order.eventDate,
+      customerName: order.customerName,
+      customerPhone: order.customerContact,
+      items: items,
+      subtotal: chargesTotal + itemsSubtotal,
+      discountAmount: itemsDiscount > 0 ? itemsDiscount : null,
+      grandTotal: grandTotal,
+      notes: order.notes,
+      paidAmount: order.advanceAmount,
+      pendingAmount: balanceDue > 0 ? balanceDue : 0,
+      qrAmountOverride: balanceDue > 0 ? balanceDue : 0,
+      isGstApplied: cgst + sgst > 0,
+      cgstPercent: rate(cgst, (i) => i.cgstPercent),
+      sgstPercent: rate(sgst, (i) => i.sgstPercent),
+      cgstAmount: cgst,
+      sgstAmount: sgst,
+      totalTaxAmount: cgst + sgst,
+    );
+  }
+
+  // Generate PDF document for an Event Order. Uses the format chosen in the
+  // Event/Order settings: POS receipt (billing layout) or the A4 invoice.
   Future<pw.Document> generateEventOrderPdf({
+    required EventOrder order,
+    required Shop shopDetails,
+  }) async {
+    if (await isPosFormat()) {
+      return PdfBillService().generateBillPdf(
+        billData: createPrintData(order, format: 'pos'),
+        shopDetails: shopDetails,
+      );
+    }
+    return generateA4EventOrderPdf(order: order, shopDetails: shopDetails);
+  }
+
+  // POS receipt bytes for a specific paper size (system print dialog).
+  Future<Uint8List> buildPosPdfBytes({
+    required EventOrder order,
+    required Shop shopDetails,
+    required PdfPageFormat pageFormat,
+  }) {
+    return PdfBillService().buildPdfBytesForPageFormat(
+      billData: createPrintData(order, format: 'pos'),
+      shopDetails: shopDetails,
+      pageFormat: pageFormat,
+    );
+  }
+
+  // The original A4 event/order invoice ("Normal Bill").
+  Future<pw.Document> generateA4EventOrderPdf({
     required EventOrder order,
     required Shop shopDetails,
   }) async {
@@ -1438,9 +1559,11 @@ class EventOrderPdfService {
       );
 
       final isEvent = order.orderType == OrderType.event;
+      final pos = await isPosFormat();
       await Printing.layoutPdf(
         onLayout: (format) => pdf.save(),
         name: '${isEvent ? "Event" : "Order"}_${order.orderName}',
+        format: pos ? PdfPageFormat.roll80 : PdfPageFormat.a4,
       );
     } finally {
       _isGenerating = false;

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart' show PdfPageFormat;
 
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/language_service.dart';
@@ -1546,6 +1547,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       }
 
       debugPrint('[EventOrderList] Generating PDF...');
+      final posFormat = await _pdfService.isPosFormat();
       debugPrint(
         '[EventOrderList] Order details - name: ${order.orderName}, type: ${order.orderType}, items: ${order.items.length}, subEvents: ${order.subEvents.length}',
       );
@@ -1587,6 +1589,14 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               fileType: FilePreviewType.pdf,
               subtitle: DateFormat('dd MMM yyyy').format(order.eventDate),
               customerPhone: order.customerContact,
+              printPageFormat: posFormat ? PdfPageFormat.roll80 : null,
+              rebuildPdfForPrint: posFormat
+                  ? (format) => _pdfService.buildPosPdfBytes(
+                      order: order,
+                      shopDetails: shop,
+                      pageFormat: format,
+                    )
+                  : null,
         );
         return;
       }
@@ -1626,6 +1636,14 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             fileType: FilePreviewType.pdf,
             subtitle: DateFormat('dd MMM yyyy').format(order.eventDate),
             customerPhone: order.customerContact,
+            printPageFormat: posFormat ? PdfPageFormat.roll80 : null,
+            rebuildPdfForPrint: posFormat
+                ? (format) => _pdfService.buildPosPdfBytes(
+                    order: order,
+                    shopDetails: shop,
+                    pageFormat: format,
+                  )
+                : null,
       );
       debugPrint('[EventOrderList] PDF preview closed');
     } catch (e, stack) {
