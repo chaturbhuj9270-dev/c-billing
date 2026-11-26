@@ -131,6 +131,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
     super.dispose();
   }
 
+  /// Bill-ledger pending only (does not include open event dues).
   Future<double> _ledgerPending() async {
     final controller = CustomerOfflineController.instance;
     if (widget.customerId.isNotEmpty) {
@@ -142,8 +143,12 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
       final byLocal = await controller.getCustomerById(localId);
       if (byLocal != null) return byLocal.currentPendingAmount;
     }
-    return widget.currentPendingAmount;
+    // widget.currentPendingAmount may already include event dues — do not
+    // use it as a bill-only fallback (avoids double-counting below).
+    return 0.0;
   }
+
+  bool get _canReceivePayment => !_isLoading && _currentPending > 0;
 
   Future<void> _loadTransactions({bool silent = false}) async {
     if (!silent) setState(() => _isLoading = true);
@@ -295,10 +300,10 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
                 order.status != OrderStatus.convertedToBill.index,
           )
           .fold<double>(0, (total, order) => total + order.remainingAmount);
-      _currentPending = ledgerPending + openEventPending;
+      final totalPending = ledgerPending + openEventPending;
 
       // Compute running balance for each item (bank-statement style) Walk from newest to oldest, undoing each item's effect
-      var balance = _currentPending;
+      var balance = totalPending;
       if (_selectedFilter != TransactionDateFilter.all &&
           transactions.isNotEmpty) {
         balance = transactions.first.balanceAfter + openEventPending;
@@ -338,14 +343,16 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
         }
       }
 
+      if (!mounted) return;
       setState(() {
         _combinedItems = combined;
         _totalReceived = totalReceived;
+        _currentPending = totalPending;
         _isLoading = false;
       });
     } catch (e) {
       debugPrint('Error loading transactions: $e');
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -364,6 +371,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
                 : Column(
                     children: [
                       _buildSummaryCards(),
+                      if (_canReceivePayment) _buildReceivePaymentButton(),
                       _buildFilterChips(),
                       Expanded(child: _buildTransactionsList()),
                     ],
@@ -371,7 +379,6 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
           ),
         ],
       ),
-      floatingActionButton: _buildReceivePaymentFAB(),
     );
   }
 
@@ -599,7 +606,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       itemCount: _combinedItems.length,
       itemBuilder: (context, index) {
         final item = _combinedItems[index];
@@ -668,31 +675,50 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
     );
   }
 
-  Widget _buildReceivePaymentFAB() {
-    return FloatingActionButton.extended(
-      onPressed: _showReceivePaymentSheet,
-      backgroundColor: AppColors.action(context),
-      elevation: 4,
-      icon: const Icon(Icons.add_rounded, color: AppTheme.white),
-      label: const Text(
-        'Receive Payment',
-        style: TextStyle(
-          color: AppTheme.white,
-          fontWeight: FontWeight.w600,
-          fontFamily: 'Literata',
+  Widget _buildReceivePaymentButton() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: SizedBox(
+        width: double.infinity,
+        height: 48,
+        child: FilledButton.icon(
+          onPressed: _showReceivePaymentSheet,
+          icon: const Icon(Icons.payments_rounded, size: 20),
+          label: const Text(
+            'Receive Payment',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Literata',
+            ),
+          ),
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.action(context),
+            foregroundColor: AppTheme.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
         ),
       ),
     );
   }
 
   Future<void> _showReceivePaymentSheet() async {
+    if (!_canReceivePayment) {
+      if (mounted) {
+        GlassyToast.show(context, 'No pending amount to collect');
+      }
+      return;
+    }
+
+    final pendingAtOpen = _currentPending;
     final result = await showAppBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
       builder: (context) => _ReceivePaymentSheet(
         customerName: widget.customerName,
-        pendingAmount: _currentPending,
+        pendingAmount: pendingAtOpen,
       ),
     );
 
@@ -700,6 +726,17 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
       final amount = result['amount'] as double;
       final description = result['description'] as String?;
       final paymentMethod = result['paymentMethod'] as String?;
+
+      // Never drive ledger below zero from collect/receive.
+      if (amount <= 0 || amount > _currentPending) {
+        GlassyToast.show(
+          context,
+          amount > _currentPending
+              ? 'Amount cannot exceed pending ₹${_currentPending.toStringAsFixed(2)}'
+              : 'Please enter a valid amount',
+        );
+        return;
+      }
 
       final customerId = widget.customerId.isNotEmpty
           ? widget.customerId
@@ -1281,6 +1318,9 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
                   if (amount == null || amount <= 0) {
                     return 'Please enter a valid amount';
                   }
+                  if (amount > widget.pendingAmount) {
+                    return 'Cannot exceed pending ₹${widget.pendingAmount.toStringAsFixed(2)}';
+                  }
                   return null;
                 },
               ),
@@ -1387,6 +1427,7 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
   void _savePayment() {
     if (_formKey.currentState!.validate()) {
       final amount = double.parse(_amountController.text);
+      if (amount <= 0 || amount > widget.pendingAmount) return;
       Navigator.pop(context, {
         'amount': amount,
         'description': _descriptionController.text.isEmpty

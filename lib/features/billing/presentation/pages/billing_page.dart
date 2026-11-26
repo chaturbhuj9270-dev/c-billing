@@ -1944,14 +1944,10 @@ class _BillingPageState extends State<BillingPage> {
     ];
   }
 
-  Future<void> _showAddServiceChargeSheet() async {
-    // Sheet owns its controllers (StatefulWidget) so they are disposed only
-    // after the route is fully removed — avoids "used after disposed" crashes.
-    final result = await showAppBottomSheet<_ServiceChargeDraft>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (ctx) => const _AddServiceChargeSheet(),
+  Future<void> _openAddServiceChargePage() async {
+    final result = await showAppPage<_ServiceChargeDraft>(
+      context,
+      const _AddServiceChargePage(),
     );
 
     if (result == null || !mounted) return;
@@ -2009,7 +2005,7 @@ class _BillingPageState extends State<BillingPage> {
                   ),
                 ),
                 TextButton.icon(
-                  onPressed: _showAddServiceChargeSheet,
+                  onPressed: _openAddServiceChargePage,
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Add'),
                   style: TextButton.styleFrom(
@@ -6688,16 +6684,14 @@ class _ServiceChargeDraft {
   });
 }
 
-/// Owns TextEditingControllers for the add-service sheet so dispose happens
-/// only after the bottom sheet route is removed from the tree.
-class _AddServiceChargeSheet extends StatefulWidget {
-  const _AddServiceChargeSheet();
+class _AddServiceChargePage extends StatefulWidget {
+  const _AddServiceChargePage();
 
   @override
-  State<_AddServiceChargeSheet> createState() => _AddServiceChargeSheetState();
+  State<_AddServiceChargePage> createState() => _AddServiceChargePageState();
 }
 
-class _AddServiceChargeSheetState extends State<_AddServiceChargeSheet> {
+class _AddServiceChargePageState extends State<_AddServiceChargePage> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _descController;
   late final TextEditingController _amountController;
@@ -6727,91 +6721,93 @@ class _AddServiceChargeSheetState extends State<_AddServiceChargeSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final viewInsets = MediaQuery.viewInsetsOf(context);
-    final maxHeight = MediaQuery.sizeOf(context).height * 0.85;
-    return AnimatedPadding(
-      duration: const Duration(milliseconds: 120),
-      curve: Curves.easeOut,
-      padding: EdgeInsets.only(bottom: viewInsets.bottom),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: maxHeight),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Other Service Charges',
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primaryText(context),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Add a service description and its charge. It will appear on the bill and customer ledger.',
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 13,
-                    color: AppColors.secondaryText(context),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _descController,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: InputDecoration(
-                    labelText: 'Service Description',
-                    hintText: 'e.g. Labour, Delivery, Installation',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+    return Scaffold(
+      backgroundColor: AppColors.scaffold(context),
+      body: Column(
+        children: [
+          AppTopBar(
+            title: 'Other Service Charges',
+            subtitle: 'Add to bill & ledger',
+            onBack: () => Navigator.of(context).pop(),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Add a service description and its charge. It will appear on the bill and customer ledger.',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 14,
+                        height: 1.4,
+                        color: AppColors.secondaryText(context),
+                      ),
                     ),
-                  ),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) {
-                      return 'Enter service description';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _amountController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: _descController,
+                      textCapitalization: TextCapitalization.sentences,
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        labelText: 'Service Description',
+                        hintText: 'e.g. Labour, Delivery, Installation',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) {
+                          return 'Enter service description';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _amountController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
+                      ],
+                      decoration: InputDecoration(
+                        labelText: 'Charges (₹)',
+                        prefixText: '₹ ',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      validator: (v) {
+                        final amount = double.tryParse(v?.trim() ?? '');
+                        if (amount == null || amount <= 0) {
+                          return 'Enter a valid amount';
+                        }
+                        return null;
+                      },
+                      onFieldSubmitted: (_) => _submit(),
+                    ),
+                    const SizedBox(height: 28),
+                    FilledButton(
+                      onPressed: _submit,
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Add Charge'),
+                    ),
                   ],
-                  decoration: InputDecoration(
-                    labelText: 'Charges (₹)',
-                    prefixText: '₹ ',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  validator: (v) {
-                    final amount = double.tryParse(v?.trim() ?? '');
-                    if (amount == null || amount <= 0) {
-                      return 'Enter a valid amount';
-                    }
-                    return null;
-                  },
                 ),
-                const SizedBox(height: 18),
-                FilledButton(
-                  onPressed: _submit,
-                  child: const Text('Add Charge'),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

@@ -914,6 +914,14 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
   /// Desktop/mobile Collect — opens ledger and receive-payment sheet.
   void _openCollectPayment(Map<String, dynamic> customer) {
+    final pending =
+        (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0;
+    if (pending <= 0) {
+      if (mounted) {
+        GlassyToast.show(context, 'No pending amount to collect');
+      }
+      return;
+    }
     _openCustomerTransactions(customer, autoOpenReceivePayment: true);
   }
 
@@ -1469,8 +1477,8 @@ class _CustomerDetailsSheet extends StatelessWidget {
                     const Divider(),
                     const SizedBox(height: 16),
 
-                    // Action buttons
-                    if (pendingAmount.round() != 0 && onCollect != null) ...[
+                    // Action buttons — Collect only when there is dues to receive.
+                    if (pendingAmount > 0 && onCollect != null) ...[
                       SizedBox(
                         width: double.infinity,
                         child: _buildActionButton(
@@ -1491,8 +1499,8 @@ class _CustomerDetailsSheet extends StatelessWidget {
                             icon: Icons.visibility_rounded,
                             label: localizations.viewBalance,
                             onTap: onViewDetails,
-                            isPrimary: pendingAmount.round() == 0 ||
-                                onCollect == null,
+                            isPrimary:
+                                pendingAmount <= 0 || onCollect == null,
                           ),
                         ),
                         const SizedBox(width: 12),

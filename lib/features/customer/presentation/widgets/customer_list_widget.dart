@@ -261,7 +261,7 @@ class CustomerListWidget extends StatelessWidget {
     final contact = (customer['contact'] ?? '').toString();
     final address = (customer['address'] ?? '').toString();
     final pending = (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0;
-    final hasPending = pending.round() != 0;
+    final hasPending = pending > 0;
     final synced = customer['isSynced'] == true;
     final cell = TextStyle(
       fontFamily: 'Literata',
@@ -739,7 +739,7 @@ class _CustomerCard extends StatelessWidget {
                       ],
                     ),
                   ],
-                  if (pendingAmount.round() != 0 && onCollectTap != null) ...[
+                  if (pendingAmount > 0 && onCollectTap != null) ...[
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
