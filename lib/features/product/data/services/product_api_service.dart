@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import '../../../../core/services/sync_query_helper.dart';
 
 // API Service for Product data operations with Firebase Handles all remote server communication for products
 class ProductApiService {
@@ -51,26 +52,11 @@ class ProductApiService {
     _ensureAuthenticated();
     
     try {
-      Query<Map<String, dynamic>> query = _productsRef!;
-
-      // Filter by updatedSince for incremental sync
-      if (updatedSince != null) {
-        query = query.where(
-          'updatedAt',
-          isGreaterThan: updatedSince.toIso8601String(),
-        );
-      }
-
-      // Order by updatedAt for consistent results
-      query = query.orderBy('updatedAt', descending: true);
-
-      final snapshot = await query.get();
-
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id; // Include document ID
-        return data;
-      }).toList();
+      // Dual-type (Timestamp + ISO string) incremental query with overlap.
+      return await SyncQueryHelper.fetchChanged(
+        _productsRef!,
+        since: updatedSince,
+      );
     } catch (e) {
       debugPrint('[ProductAPI] Error fetching products: $e');
       rethrow;

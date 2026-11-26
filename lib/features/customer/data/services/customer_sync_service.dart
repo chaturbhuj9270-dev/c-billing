@@ -84,6 +84,10 @@ class CustomerSyncService extends ChangeNotifier {
     debugPrint('[CustomerSync] Initializing...');
 
     // Listen for connectivity changes
+    // initialize() can run more than once (login, splash, pages): never stack
+    // duplicate listeners/timers.
+    _connectivitySubscription?.cancel();
+    _periodicSyncTimer?.cancel();
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen((
       result,
     ) {

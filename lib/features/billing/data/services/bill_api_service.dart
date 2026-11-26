@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import '../../../../core/services/sync_query_helper.dart';
 
 // API service for Bill Firebase operations Used by BillSyncService for server communication
 class BillApiService {
@@ -95,34 +96,15 @@ class BillApiService {
   // Get all bills from server
   Future<List<Map<String, dynamic>>> getBills({DateTime? updatedSince}) async {
     try {
-      Query<Map<String, dynamic>> query = _billsCollection;
-
-      if (updatedSince != null) {
-        query = query.where(
-          'updatedAt',
-          isGreaterThan: updatedSince.toIso8601String(),
-        );
-      }
-
-      final snapshot = await query.orderBy('createdAt', descending: true).get();
-
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        return data;
-      }).toList();
+      // Incremental pull used to combine `where(updatedAt)` with
+      // `orderBy(createdAt)` (invalid in Firestore) and an ISO-string bound
+      // that never matched Timestamp values, so changes made on another device
+      // were not pulled. See SyncQueryHelper for the dual-type query.
+      return await SyncQueryHelper.fetchChanged(
+        _billsCollection,
+        since: updatedSince,
+      );
     } catch (e) {
-      // If ordering fails, try without ordering
-      if (e.toString().contains('index') ||
-          e.toString().contains('FAILED_PRECONDITION')) {
-        debugPrint('[BillApi] Index not available, fetching without order');
-        final snapshot = await _billsCollection.get();
-        return snapshot.docs.map((doc) {
-          final data = doc.data();
-          data['id'] = doc.id;
-          return data;
-        }).toList();
-      }
       debugPrint('[BillApi] Failed to get bills: $e');
       rethrow;
     }
@@ -195,15 +177,10 @@ class BillApiService {
   // Get bills updated since a specific time (for delta sync)
   Future<List<Map<String, dynamic>>> getBillsSince(DateTime since) async {
     try {
-      final snapshot = await _billsCollection
-          .where('updatedAt', isGreaterThan: since.toIso8601String())
-          .get();
-
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        return data;
-      }).toList();
+      return await SyncQueryHelper.fetchChanged(
+        _billsCollection,
+        since: since,
+      );
     } catch (e) {
       debugPrint('[BillApi] Failed to get bills since $since: $e');
       rethrow;

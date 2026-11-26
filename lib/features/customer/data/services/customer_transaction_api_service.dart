@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import '../../../../core/services/sync_query_helper.dart';
 
 // API Service for Customer Transaction data operations with Firebase This handles all remote server communication for transactions
 class CustomerTransactionApiService {
@@ -56,27 +57,19 @@ class CustomerTransactionApiService {
     _ensureAuthenticated();
 
     try {
-      Query<Map<String, dynamic>> query = _transactionsRef!;
-
-      // Filter by updatedSince for incremental sync Note: When updatedSince is provided, we need a composite index
-      if (updatedSince != null) {
-        query = query
-            .where('createdAt', isGreaterThan: updatedSince.toIso8601String())
-            .orderBy('createdAt', descending: true);
-      }
-      // For initial sync (no updatedSince), don't order to avoid index requirements Just fetch all documents
-
-      final snapshot = await query.get();
-
-      debugPrint(
-        '[CustomerTransactionAPI] Fetched ${snapshot.docs.length} transactions from server',
+      // Transactions are append-only: createdAt is the change cursor. Query
+      // both Timestamp and ISO-string typed values (see SyncQueryHelper).
+      final docs = await SyncQueryHelper.fetchChanged(
+        _transactionsRef!,
+        since: updatedSince,
+        field: 'createdAt',
       );
 
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id; // Include document ID
-        return data;
-      }).toList();
+      debugPrint(
+        '[CustomerTransactionAPI] Fetched ${docs.length} transactions from server',
+      );
+
+      return docs;
     } catch (e) {
       debugPrint('[CustomerTransactionAPI] Error fetching transactions: $e');
       rethrow;

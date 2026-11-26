@@ -531,6 +531,13 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
         existing ??= _firstBatchByBusinessKey(all, entity);
 
         if (existing != null) {
+          // Never overwrite a batch with pending local changes (e.g. stock
+          // consumed by a bill on this device that is not pushed yet).
+          if (existing.serverId != null &&
+              existing.syncStatus != BatchSyncStatus.synced) {
+            skipped++;
+            continue;
+          }
           // Update existing if server version is newer
           if (entity.updatedAt.isAfter(existing.updatedAt) ||
               existing.serverId == null) {

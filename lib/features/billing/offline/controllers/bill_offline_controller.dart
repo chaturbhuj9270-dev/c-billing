@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import 'package:flutter/foundation.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/local_store.dart';
@@ -392,9 +393,11 @@ class BillOfflineController extends ChangeNotifier {
         if (existing != null) {
           // Only update if not locally modified AND server is newer
           if (existing.syncStatus == BillSyncStatus.synced) {
-            final serverUpdatedAt = DateTime.tryParse(
-              billData['updatedAt']?.toString() ?? '',
-            );
+            // updatedAt may be a Firestore Timestamp or an ISO string.
+            final rawUpdatedAt = billData['updatedAt'];
+            final serverUpdatedAt = rawUpdatedAt is Timestamp
+                ? rawUpdatedAt.toDate()
+                : DateTime.tryParse(rawUpdatedAt?.toString() ?? '');
             if (serverUpdatedAt != null &&
                 serverUpdatedAt.isAfter(existing.updatedAt)) {
               final updated = BillEntity.fromServer(billData);

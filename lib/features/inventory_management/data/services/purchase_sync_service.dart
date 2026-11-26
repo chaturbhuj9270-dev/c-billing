@@ -92,6 +92,10 @@ class PurchaseSyncService extends ChangeNotifier {
     debugPrint('[PurchaseSync] Initializing...');
 
     // Listen for connectivity changes with debouncing
+    // initialize() can run more than once (login, splash, pages): never stack
+    // duplicate listeners/timers.
+    _connectivitySubscription?.cancel();
+    _periodicSyncTimer?.cancel();
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen((
       results,
     ) {
@@ -175,6 +179,7 @@ class PurchaseSyncService extends ChangeNotifier {
     notifyListeners();
 
     final stopwatch = Stopwatch()..start();
+    final syncStartedAt = DateTime.now();
     int createdCount = 0;
     int updatedCount = 0;
     int deletedCount = 0;
@@ -251,13 +256,33 @@ class PurchaseSyncService extends ChangeNotifier {
         }
       }
 
+      // Pull purchases created/edited on other devices. Previously this
+      // service only pushed, so a purchase added on device A never reached
+      // device B until the app was restarted.
+      var downloadedCount = 0;
+      var pullOk = true;
+      try {
+        final changed = await _apiService.getPurchasesSince(_lastSyncTime);
+        if (changed.isNotEmpty) {
+          await _offlineController.importFromServer(changed);
+          downloadedCount = changed.length;
+        }
+      } catch (e) {
+        pullOk = false;
+        debugPrint('[PurchaseSync] Pull failed (will retry): $e');
+      }
+
       stopwatch.stop();
-      _lastSyncTime = DateTime.now();
+      // Only advance the cursor when the pull succeeded.
+      if (pullOk) _lastSyncTime = syncStartedAt;
       _status = PurchaseSyncServiceStatus.success;
       notifyListeners();
 
       // Notify dashboard to refresh if any data was synced
-      if (createdCount > 0 || updatedCount > 0 || deletedCount > 0) {
+      if (createdCount > 0 ||
+          updatedCount > 0 ||
+          deletedCount > 0 ||
+          downloadedCount > 0) {
         DashboardRefreshService.instance.notifyDataChanged(
           DataChangeType.purchase,
         );
@@ -268,6 +293,7 @@ class PurchaseSyncService extends ChangeNotifier {
         createdCount: createdCount,
         updatedCount: updatedCount,
         deletedCount: deletedCount,
+        downloadedCount: downloadedCount,
         failedCount: failedCount,
         duration: stopwatch.elapsed,
       );

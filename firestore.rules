@@ -86,6 +86,47 @@ service cloud.firestore {
         allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
       }
 
+      // Collections the app syncs between devices / web. They were missing
+      // here, so the catch-all deny below silently blocked their sync
+      // (permission-denied), leaving other devices with stale data.
+      match /customer_transactions/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /eventOrders/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /expenses/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /purchaseBatches/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /purchaseReturns/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /stockLedger/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      // Per-user app settings (bill / purchase / stock report columns, product
+      // and event-order custom columns).
+      match /settings/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /product_settings/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /event_order_settings/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
       // Shop profile used by mobile + web (users/{uid}/shop_details/main).
       // Owner can always read (page load / bills); writes need a valid window.
       match /shop_details/{document=**} {

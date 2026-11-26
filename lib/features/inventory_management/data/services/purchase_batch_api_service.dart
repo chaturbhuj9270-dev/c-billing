@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import '../../../../core/services/sync_query_helper.dart';
 
 // API service for Purchase Batch Firebase operations Handles all server-side CRUD for sync
 class PurchaseBatchApiService {
@@ -80,16 +81,9 @@ class PurchaseBatchApiService {
   }
 
   // Get batches updated since a specific time Used for delta sync
-  Future<List<Map<String, dynamic>>> getBatchesSince(DateTime since) async {
-    final snapshot = await _batchesRef
-        .where('updatedAt', isGreaterThan: Timestamp.fromDate(since))
-        .get();
-
-    return snapshot.docs.map((doc) => {
-      'id': doc.id,
-      'batchId': doc.id,
-      ...doc.data(),
-    }).toList();
+  Future<List<Map<String, dynamic>>> getBatchesSince(DateTime? since) async {
+    final docs = await SyncQueryHelper.fetchChanged(_batchesRef, since: since);
+    return docs.map((data) => {'batchId': data['id'], ...data}).toList();
   }
 
   // Get batches by product ID

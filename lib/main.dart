@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'core/di/injection.dart' as di;
 import 'core/ui/splash_page.dart';
@@ -27,6 +28,9 @@ import 'features/inventory_management/data/services/purchase_sync_service.dart';
 import 'features/inventory_management/data/services/purchase_batch_sync_service.dart';
 import 'features/billing/data/services/bill_sync_service.dart';
 import 'features/event_order/data/services/event_order_sync_service.dart';
+import 'features/expense/data/services/expense_sync_service.dart';
+import 'core/services/live_sync_service.dart';
+import 'core/services/sync_query_helper.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -114,6 +118,10 @@ Future<void> _safeInit(Future<void> Function() init, String name) async {
 
 // Initialize sync services. Call ONLY after user is authenticated.
 void initializeSyncServices() {
+  // Must come first: marks the start of this user's session so incremental
+  // pull cursors from a previous account/session are never reused.
+  SyncQueryHelper.beginSession(FirebaseAuth.instance.currentUser?.uid);
+
   CustomerSyncService.instance.initialize();
   CustomerTransactionSyncService.instance.initialize();
   ProductSyncService.instance.initialize();
@@ -123,6 +131,13 @@ void initializeSyncServices() {
   PurchaseBatchSyncService.instance.initialize();
   BillSyncService.instance.initialize();
   EventOrderSyncService.instance.initialize();
+  // Was only started when the Expenses page opened, so expenses never synced
+  // on their own.
+  ExpenseSyncService.instance.initialize();
+
+  // Real-time push/pull between devices and the web (free: Firestore
+  // listeners + local DB change events drive the services above).
+  LiveSyncService.instance.start();
 }
 
 class MyApp extends StatelessWidget {

@@ -96,6 +96,10 @@ class PurchaseBatchSyncService extends ChangeNotifier {
     debugPrint('[PurchaseBatchSync] Initializing...');
 
     // Listen for connectivity changes with debouncing
+    // initialize() can run more than once (login, splash, pages): never stack
+    // duplicate listeners/timers.
+    _connectivitySubscription?.cancel();
+    _periodicSyncTimer?.cancel();
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen((
       results,
     ) {
@@ -234,6 +238,7 @@ class PurchaseBatchSyncService extends ChangeNotifier {
     notifyListeners();
 
     final stopwatch = Stopwatch()..start();
+    final syncStartedAt = DateTime.now();
     int createdCount = 0;
     int updatedCount = 0;
     int deletedCount = 0;
@@ -309,13 +314,32 @@ class PurchaseBatchSyncService extends ChangeNotifier {
         }
       }
 
+      // Pull batches changed on other devices (FIFO stock lives here).
+      // Previously only pushed, so other devices saw stale stock until restart.
+      var downloadedCount = 0;
+      var pullOk = true;
+      try {
+        final changed = await _apiService.getBatchesSince(_lastSyncTime);
+        if (changed.isNotEmpty) {
+          await _offlineController.importFromServer(changed);
+          downloadedCount = changed.length;
+        }
+      } catch (e) {
+        pullOk = false;
+        debugPrint('[PurchaseBatchSync] Pull failed (will retry): $e');
+      }
+
       stopwatch.stop();
-      _lastSyncTime = DateTime.now();
+      // Only advance the cursor when the pull succeeded.
+      if (pullOk) _lastSyncTime = syncStartedAt;
       _status = PurchaseBatchSyncServiceStatus.success;
       notifyListeners();
 
       // Notify dashboard to refresh if any data was synced (affects low stock calculation)
-      if (createdCount > 0 || updatedCount > 0 || deletedCount > 0) {
+      if (createdCount > 0 ||
+          updatedCount > 0 ||
+          deletedCount > 0 ||
+          downloadedCount > 0) {
         DashboardRefreshService.instance.notifyDataChanged(
           DataChangeType.purchase,
         );
@@ -326,6 +350,7 @@ class PurchaseBatchSyncService extends ChangeNotifier {
         createdCount: createdCount,
         updatedCount: updatedCount,
         deletedCount: deletedCount,
+        downloadedCount: downloadedCount,
         failedCount: failedCount,
         duration: stopwatch.elapsed,
       );

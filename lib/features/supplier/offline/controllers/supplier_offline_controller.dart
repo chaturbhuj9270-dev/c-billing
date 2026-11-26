@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import 'package:flutter/foundation.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/local_store.dart';
@@ -345,9 +346,11 @@ class SupplierOfflineController extends ChangeNotifier {
         if (existing != null) {
           // Only update if not locally modified AND server is newer
           if (existing.syncStatus == SupplierSyncStatus.synced) {
-            final serverUpdatedAt = DateTime.tryParse(
-              supplierData['updatedAt']?.toString() ?? '',
-            );
+            // updatedAt may be a Firestore Timestamp or an ISO string.
+            final rawUpdatedAt = supplierData['updatedAt'];
+            final serverUpdatedAt = rawUpdatedAt is Timestamp
+                ? rawUpdatedAt.toDate()
+                : DateTime.tryParse(rawUpdatedAt?.toString() ?? '');
             if (serverUpdatedAt != null &&
                 serverUpdatedAt.isAfter(existing.updatedAt)) {
               final updated = SupplierEntity.fromServer(supplierData);
