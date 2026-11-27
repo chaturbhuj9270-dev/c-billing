@@ -216,6 +216,47 @@
       "tests": ["test/regression/event_order_print_test.dart"]
     },
     {
+      "id": "customer-pending-report",
+      "name": "Customer pending-amount report + send to the customer's WhatsApp chat",
+      "files": [
+        "lib/features/customer/data/services/customer_pending_report_service.dart",
+        "lib/core/services/whatsapp_share_service.dart",
+        "lib/common_widgets/file_preview_page.dart",
+        "lib/core/services/communication_service.dart",
+        "android/app/src/main/kotlin/com/example/c_billing/MainActivity.kt",
+        "android/app/src/main/AndroidManifest.xml",
+        "android/app/src/main/res/xml/billing_file_paths.xml"
+      ],
+      "invariants": [
+        "The report is READ-ONLY: it reads bills / event orders and takes the total from the customer card's ledger value. It never writes ledger entries or changes balances (no CustomerTransactionOfflineController in the report service).",
+        "The statement always adds up to the customer's pending total: open bills + open events + an 'Opening balance / adjustments' row for any difference.",
+        "The report icon only shows for customers with pending > 0; generating it must not change the existing Collect / Finance / Transactions / call / SMS / WhatsApp icons.",
+        "FilePreviewPage's existing WhatsApp/Share behaviour is unchanged unless whatsAppMessage is passed. With a message on Android: the first time for a number the customer's chat is opened with the message typed in (wa.me, always the right chat), then when the user returns a dialog sends the PDF to that chat (jid intent through the c_billing/whatsapp channel) and remembers the number; later sends open the chat with PDF + message in one step. Failures fall back to the share sheet; web/desktop save the PDF and open wa.me with the message.",
+        "The Android FileProvider (billing_fileprovider) and the WhatsApp <queries> entries must stay, otherwise the direct chat silently falls back to the share sheet.",
+        "User text lives in all three localization files (customerPendingReport, customerReportFailed, customerPendingWhatsAppMessage, ...)."
+      ],
+      "anchors": [
+        {"file": "lib/features/customer/data/services/customer_pending_report_service.dart", "contains": "otherAmount"},
+        {"file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart", "contains": "_openPendingReport"},
+        {"file": "lib/features/customer/presentation/widgets/customer_list_widget.dart", "contains": "onReportTap"},
+        {"file": "lib/common_widgets/file_preview_page.dart", "contains": "_sendToCustomerChat"},
+        {"file": "lib/common_widgets/file_preview_page.dart", "contains": "_promptSendPdf"},
+        {"file": "lib/core/services/whatsapp_share_service.dart", "contains": "isChatReady"},
+        {"file": "lib/core/services/whatsapp_share_service.dart", "contains": "c_billing/whatsapp"},
+        {"file": "android/app/src/main/kotlin/com/example/c_billing/MainActivity.kt", "contains": "@s.whatsapp.net"},
+        {"file": "android/app/src/main/AndroidManifest.xml", "contains": "billing_fileprovider"},
+        {"file": "android/app/src/main/AndroidManifest.xml", "contains": "com.whatsapp"},
+        {"file": "lib/core/localization/english.dart", "contains": "customerPendingWhatsAppMessage"},
+        {"file": "lib/core/localization/hindi.dart", "contains": "customerPendingWhatsAppMessage"},
+        {"file": "lib/core/localization/marathi.dart", "contains": "customerPendingWhatsAppMessage"}
+      ],
+      "forbidden": [
+        {"file": "lib/features/customer/data/services/customer_pending_report_service.dart", "contains": "CustomerTransactionOfflineController", "why": "report must never write the ledger"},
+        {"file": "lib/features/customer/data/services/customer_pending_report_service.dart", "contains": "CustomerOfflineController", "why": "report must never change customer balances"}
+      ],
+      "tests": ["test/regression/customer_pending_report_test.dart"]
+    },
+    {
       "id": "quotation",
       "name": "Quotations (create, list, print)",
       "files": ["lib/features/quotation/"],

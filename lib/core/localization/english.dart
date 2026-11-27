@@ -1151,4 +1151,25 @@ class EnglishLocalization {
   static const String subtotalColonLabel = 'Subtotal:';
   static const String finalAmountColonLabel = 'Final Amount:';
   static const String discountPercentLabel = 'Discount';
+
+  // ── Customer pending report / WhatsApp ──
+  static const String customerPendingReport = 'Pending report';
+  static const String customerReportFailed = 'Could not create the report';
+  static const String whatsAppNotInstalled = 'WhatsApp is not installed';
+  static const String customerReportAttachHint =
+      'Report saved. Attach it in the WhatsApp chat.';
+  static String customerPendingWhatsAppMessage(
+    String name,
+    String shop,
+    String amount,
+    String date,
+  ) =>
+      'Your pending amount of ₹$amount is remaining with $shop. '
+      'Please complete the transaction ASAP.\n'
+      'Ignore if already paid.\n\n'
+      'Thanks for connecting!';
+  static const String customerReportSendPdfTitle = 'Send the PDF report';
+  static const String customerReportSendPdfBody =
+      'Send the message in WhatsApp first, then come back and tap "Send PDF" to put the report in the same chat.';
+  static const String customerReportSendPdf = 'Send PDF';
 }

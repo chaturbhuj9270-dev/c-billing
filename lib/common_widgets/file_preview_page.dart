@@ -12,6 +12,10 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/web_pdf_view.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
+import 'package:c_billing/core/services/communication_service.dart';
+import 'package:c_billing/core/services/whatsapp_share_service.dart';
+import 'package:c_billing/core/services/language_service.dart';
+import 'package:c_billing/core/localization/app_localizations.dart';
 
 // Optional side-panel fields for the desktop report preview.
 class FilePreviewDetails {
@@ -49,6 +53,11 @@ class FilePreviewPage extends StatefulWidget {
   // Optional customer phone number for direct WhatsApp sharing
   final String? customerPhone;
 
+  // Optional message sent together with the document. When set (together with
+  // [customerPhone]) the WhatsApp button opens that customer's chat with the
+  // document and this message already attached, so only Send is left to tap.
+  final String? whatsAppMessage;
+
   // Optional payment QR action (UPI amount QR for bill collection).
   final VoidCallback? onViewPaymentQr;
 
@@ -77,6 +86,7 @@ class FilePreviewPage extends StatefulWidget {
     this.subtitle,
     this.onClose,
     this.customerPhone,
+    this.whatsAppMessage,
     this.onViewPaymentQr,
     this.presentedAsDialog = false,
     this.fitPage = false,
@@ -95,6 +105,7 @@ class FilePreviewPage extends StatefulWidget {
     String? subtitle,
     VoidCallback? onClose,
     String? customerPhone,
+    String? whatsAppMessage,
     VoidCallback? onViewPaymentQr,
     bool centered = true,
     FilePreviewDetails? details,
@@ -110,6 +121,7 @@ class FilePreviewPage extends StatefulWidget {
       subtitle: subtitle,
       onClose: onClose,
       customerPhone: customerPhone,
+      whatsAppMessage: whatsAppMessage,
       onViewPaymentQr: onViewPaymentQr,
       presentedAsDialog: desktop,
       fitPage: centered || desktop,
@@ -163,7 +175,8 @@ class FilePreviewPage extends StatefulWidget {
   State<FilePreviewPage> createState() => _FilePreviewPageState();
 }
 
-class _FilePreviewPageState extends State<FilePreviewPage> {
+class _FilePreviewPageState extends State<FilePreviewPage>
+    with WidgetsBindingObserver {
   bool _isLoading = true;
   bool _isSharing = false;
   bool _isSharingWhatsApp = false;
@@ -198,6 +211,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _pdfScrollController.addListener(_onPdfScroll);
     _loadFile();
   }
@@ -215,6 +229,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pdfScrollController.removeListener(_onPdfScroll);
     _transformationController.dispose();
     _pdfScrollController.dispose();
@@ -551,6 +566,14 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     final customerPhone = widget.customerPhone;
 
     try {
+      final message = widget.whatsAppMessage;
+      if (message != null &&
+          message.isNotEmpty &&
+          customerPhone != null &&
+          customerPhone.isNotEmpty) {
+        await _sendToCustomerChat(customerPhone, message);
+        return;
+      }
       if (widget.file == null) {
         await _shareBytes();
         return;
@@ -582,6 +605,125 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       if (mounted) {
         setState(() => _isSharingWhatsApp = false);
       }
+    }
+  }
+
+  // Phone number whose chat was just opened with the message; the PDF is sent
+  // to the same chat when the user comes back (see _promptSendPdf).
+  String? _awaitingPdfFor;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _awaitingPdfFor != null) {
+      final phone = _awaitingPdfFor!;
+      _awaitingPdfFor = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _promptSendPdf(phone);
+      });
+    }
+  }
+
+  // Opens the customer's own WhatsApp chat with [message] (and the PDF).
+  //
+  // Android: WhatsApp can only jump straight into a chat with a file attached
+  // when it already knows that chat. So the first time for a number the chat is
+  // opened with the message typed in (this always lands in the right chat), and
+  // when the user returns the PDF is sent to the same chat. Afterwards one tap
+  // opens the chat with the PDF and message together.
+  // iPhone: share sheet. Web / desktop: save the PDF and open the chat.
+  Future<void> _sendToCustomerChat(String phone, String message) async {
+    final file = widget.file;
+    if (file != null && await file.exists()) {
+      if (WhatsAppShareService.supportsDirectChat) {
+        if (await WhatsAppShareService.isChatReady(phone)) {
+          final opened = await WhatsAppShareService.sendFileToChat(
+            phone: phone,
+            filePath: file.path,
+            message: message,
+          );
+          if (opened) return;
+        }
+        final chatOpened = await CommunicationService.instance.openWhatsApp(
+          phone,
+          message: message,
+          context: mounted ? context : null,
+        );
+        if (chatOpened) {
+          _awaitingPdfFor = phone;
+          return;
+        }
+      }
+
+      final mobile =
+          !kIsWeb &&
+          (defaultTargetPlatform == TargetPlatform.android ||
+              defaultTargetPlatform == TargetPlatform.iOS);
+      if (mobile) {
+        await Share.shareXFiles(
+          [XFile(file.path)],
+          subject: widget.fileName,
+          text: message,
+        );
+        return;
+      }
+    }
+
+    // Web / desktop: save the PDF, then open the chat with the message text.
+    final data =
+        _pdfBytes ??
+        widget.bytes ??
+        (file != null && await file.exists() ? await file.readAsBytes() : null);
+    if (data != null) {
+      await Printing.sharePdf(bytes: data, filename: _downloadName('pdf'));
+    }
+    await CommunicationService.instance.openWhatsApp(
+      phone,
+      message: message,
+      context: mounted ? context : null,
+    );
+    if (mounted) {
+      GlassyToast.show(
+        context,
+        AppLocalizations.of(
+          LanguageService.instance.currentLanguage,
+        ).customerReportAttachHint,
+      );
+    }
+  }
+
+  // Shown when the user returns from WhatsApp after the message was opened.
+  Future<void> _promptSendPdf(String phone) async {
+    final file = widget.file;
+    if (file == null) return;
+    final l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
+    final send = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.customerReportSendPdfTitle),
+        content: Text(l10n.customerReportSendPdfBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.customerReportSendPdf),
+          ),
+        ],
+      ),
+    );
+    if (send != true || !mounted) return;
+
+    final opened = await WhatsAppShareService.sendFileToChat(
+      phone: phone,
+      filePath: file.path,
+      message: '',
+    );
+    if (opened) {
+      await WhatsAppShareService.markChatReady(phone);
+    } else {
+      await Share.shareXFiles([XFile(file.path)], subject: widget.fileName);
     }
   }
 

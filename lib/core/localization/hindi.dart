@@ -1156,4 +1156,25 @@ class HindiLocalization {
   static const String subtotalColonLabel = 'उप-योग:';
   static const String finalAmountColonLabel = 'अंतिम राशि:';
   static const String discountPercentLabel = 'छूट';
+
+  // ── Customer pending report / WhatsApp ──
+  static const String customerPendingReport = 'बकाया रिपोर्ट';
+  static const String customerReportFailed = 'रिपोर्ट नहीं बन सकी';
+  static const String whatsAppNotInstalled = 'WhatsApp इंस्टॉल नहीं है';
+  static const String customerReportAttachHint =
+      'रिपोर्ट सेव हो गई। इसे WhatsApp चैट में अटैच करें।';
+  static String customerPendingWhatsAppMessage(
+    String name,
+    String shop,
+    String amount,
+    String date,
+  ) =>
+      'आपकी ₹$amount बकाया राशि $shop के पास बाकी है। '
+      'कृपया जल्द से जल्द भुगतान करें।\n'
+      'यदि पहले ही भुगतान कर दिया है तो कृपया इसे अनदेखा करें।\n\n'
+      'जुड़े रहने के लिए धन्यवाद!';
+  static const String customerReportSendPdfTitle = 'PDF रिपोर्ट भेजें';
+  static const String customerReportSendPdfBody =
+      'पहले WhatsApp में संदेश भेजें, फिर वापस आकर "PDF भेजें" दबाएँ ताकि रिपोर्ट उसी चैट में जाए।';
+  static const String customerReportSendPdf = 'PDF भेजें';
 }

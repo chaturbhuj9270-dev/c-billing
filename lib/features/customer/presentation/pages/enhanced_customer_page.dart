@@ -1,6 +1,8 @@
 import '../../../../core/services/live_refresh_mixin.dart';
 import 'dart:async';
+import 'dart:io' show Directory, File;
 import 'dart:ui';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -11,6 +13,9 @@ import '../../data/datasources/customer_cache_datasource.dart';
 import '../../offline/controllers/customer_offline_controller.dart';
 import '../../offline/entities/customer_entity.dart';
 import '../../data/services/customer_sync_service.dart';
+import '../../data/services/customer_pending_report_service.dart';
+import '../../../shop/data/repositories/shop_repository.dart';
+import '../../../shop/domain/entities/shop.dart';
 import '../../../event_order/offline/controllers/event_order_offline_controller.dart';
 import '../../../event_order/offline/entities/event_order_entity.dart';
 import '../../../event_order/domain/entities/event_order.dart';
@@ -22,6 +27,7 @@ import 'customer_finance_page.dart';
 import 'customer_transactions_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/common_widgets/file_preview_page.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/common_widgets/app_pill_button.dart';
@@ -735,6 +741,8 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                             onFinanceTap: _openCustomerFinance,
                             onTransactionsTap: _openCustomerTransactions,
                             onCollectTap: _openCollectPayment,
+                            onReportTap: _openPendingReport,
+                            reportTooltip: _localizations.customerPendingReport,
                             emptyTitle: _localizations.noCustomersYet,
                             emptySubtitle: _localizations.createFirstCustomer,
                             noResultsTitle: _localizations.noResultsFound,
@@ -852,6 +860,99 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       return;
     }
     _openCustomerTransactions(customer, autoOpenReceivePayment: true);
+  }
+
+
+  bool _isGeneratingReport = false;
+
+  /// Builds the customer's pending-amount statement (PDF) and opens the
+  /// preview. Its WhatsApp button opens that customer's chat with the PDF and a
+  /// ready message attached. Read-only: never touches the ledger.
+  Future<void> _openPendingReport(Map<String, dynamic> customer) async {
+    if (_isGeneratingReport) return;
+    _isGeneratingReport = true;
+
+    final navigator = Navigator.of(context, rootNavigator: true);
+    var dialogOpen = true;
+    void closeDialog() {
+      if (dialogOpen) {
+        dialogOpen = false;
+        navigator.pop();
+      }
+    }
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final service = CustomerPendingReportService.instance;
+      final report = await service.load(customer);
+
+      Shop shop;
+      try {
+        shop = await ShopRepository().getShopDetails().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () => Shop.empty,
+        );
+      } catch (_) {
+        shop = Shop.empty;
+      }
+
+      final bytes = await service.buildPdf(report, shop);
+      final safeName = report.customerName
+          .replaceAll(RegExp(r'[^\w\s]'), '')
+          .trim()
+          .replaceAll(RegExp(r'\s+'), '_');
+      final fileName =
+          'Pending_Report_${safeName.isEmpty ? 'Customer' : safeName}.pdf';
+
+      File? file;
+      if (!kIsWeb) {
+        final dir = await Directory.systemTemp.createTemp('pending_report_');
+        file = File('${dir.path}/$fileName');
+        await file.writeAsBytes(bytes);
+      }
+
+      final shopName = shop.shopName.trim().isNotEmpty
+          ? shop.shopName.trim()
+          : (shop.ownerName ?? '').trim();
+      final message = _localizations.customerPendingWhatsAppMessage(
+        report.customerName,
+        shopName,
+        CustomerPendingReportService.formatAmount(report.totalPending),
+        CustomerPendingReportService.formatDate(report.generatedAt),
+      );
+
+      closeDialog();
+      if (!mounted) return;
+      await FilePreviewPage.open(
+        context,
+        file: file,
+        bytes: kIsWeb ? bytes : null,
+        fileName: 'Pending Report - ${report.customerName}',
+        fileType: FilePreviewType.pdf,
+        subtitle:
+            'Pending ₹${CustomerPendingReportService.formatAmount(report.totalPending)}',
+        customerPhone: report.phone.isEmpty ? null : report.phone,
+        whatsAppMessage: report.phone.isEmpty ? null : message,
+      );
+    } catch (e) {
+      debugPrint('[EnhancedCustomer] Pending report failed: $e');
+      closeDialog();
+      if (mounted) {
+        GlassyToast.show(
+          context,
+          _localizations.customerReportFailed,
+          isError: true,
+        );
+      }
+    } finally {
+      closeDialog();
+      _isGeneratingReport = false;
+    }
   }
 
   // ━━━ CUSTOMER DETAILS BOTTOM SHEET ━━━

@@ -10244,4 +10244,112 @@ class AppLocalizations {
         return EnglishLocalization.discountPercentLabel;
     }
   }
+
+  String get customerPendingReport {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerPendingReport;
+      case 'Marathi':
+        return MarathiLocalization.customerPendingReport;
+      default:
+        return EnglishLocalization.customerPendingReport;
+    }
+  }
+
+  String get customerReportFailed {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportFailed;
+      case 'Marathi':
+        return MarathiLocalization.customerReportFailed;
+      default:
+        return EnglishLocalization.customerReportFailed;
+    }
+  }
+
+  String get whatsAppNotInstalled {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.whatsAppNotInstalled;
+      case 'Marathi':
+        return MarathiLocalization.whatsAppNotInstalled;
+      default:
+        return EnglishLocalization.whatsAppNotInstalled;
+    }
+  }
+
+  String get customerReportAttachHint {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportAttachHint;
+      case 'Marathi':
+        return MarathiLocalization.customerReportAttachHint;
+      default:
+        return EnglishLocalization.customerReportAttachHint;
+    }
+  }
+
+  String customerPendingWhatsAppMessage(
+    String name,
+    String shop,
+    String amount,
+    String date,
+  ) {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerPendingWhatsAppMessage(
+          name,
+          shop,
+          amount,
+          date,
+        );
+      case 'Marathi':
+        return MarathiLocalization.customerPendingWhatsAppMessage(
+          name,
+          shop,
+          amount,
+          date,
+        );
+      default:
+        return EnglishLocalization.customerPendingWhatsAppMessage(
+          name,
+          shop,
+          amount,
+          date,
+        );
+    }
+  }
+
+  String get customerReportSendPdfTitle {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportSendPdfTitle;
+      case 'Marathi':
+        return MarathiLocalization.customerReportSendPdfTitle;
+      default:
+        return EnglishLocalization.customerReportSendPdfTitle;
+    }
+  }
+
+  String get customerReportSendPdfBody {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportSendPdfBody;
+      case 'Marathi':
+        return MarathiLocalization.customerReportSendPdfBody;
+      default:
+        return EnglishLocalization.customerReportSendPdfBody;
+    }
+  }
+
+  String get customerReportSendPdf {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportSendPdf;
+      case 'Marathi':
+        return MarathiLocalization.customerReportSendPdf;
+      default:
+        return EnglishLocalization.customerReportSendPdf;
+    }
+  }
 }

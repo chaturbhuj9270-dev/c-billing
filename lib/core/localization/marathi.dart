@@ -1156,4 +1156,25 @@ class MarathiLocalization {
   static const String subtotalColonLabel = 'उप-एकूण:';
   static const String finalAmountColonLabel = 'अंतिम रक्कम:';
   static const String discountPercentLabel = 'सूट';
+
+  // ── Customer pending report / WhatsApp ──
+  static const String customerPendingReport = 'थकबाकी अहवाल';
+  static const String customerReportFailed = 'अहवाल तयार करता आला नाही';
+  static const String whatsAppNotInstalled = 'WhatsApp इन्स्टॉल केलेले नाही';
+  static const String customerReportAttachHint =
+      'अहवाल सेव्ह झाला. तो WhatsApp चॅटमध्ये जोडा.';
+  static String customerPendingWhatsAppMessage(
+    String name,
+    String shop,
+    String amount,
+    String date,
+  ) =>
+      'तुमची ₹$amount थकबाकी $shop कडे बाकी आहे. '
+      'कृपया लवकरात लवकर रक्कम भरा.\n'
+      'आधीच भरले असल्यास कृपया दुर्लक्ष करा.\n\n'
+      'जोडलेले राहिल्याबद्दल धन्यवाद!';
+  static const String customerReportSendPdfTitle = 'PDF अहवाल पाठवा';
+  static const String customerReportSendPdfBody =
+      'आधी WhatsApp मध्ये संदेश पाठवा, मग परत येऊन "PDF पाठवा" दाबा म्हणजे अहवाल त्याच चॅटमध्ये जाईल.';
+  static const String customerReportSendPdf = 'PDF पाठवा';
 }

@@ -18,6 +18,10 @@ class CustomerListWidget extends StatelessWidget {
   final void Function(Map<String, dynamic>)? onTransactionsTap;
   final void Function(Map<String, dynamic>)? onCollectTap;
 
+  // Opens the pending-amount report (shown for customers with a pending amount).
+  final void Function(Map<String, dynamic>)? onReportTap;
+  final String reportTooltip;
+
   // Labels
   final String emptyTitle;
   final String emptySubtitle;
@@ -38,6 +42,8 @@ class CustomerListWidget extends StatelessWidget {
     this.onFinanceTap,
     this.onTransactionsTap,
     this.onCollectTap,
+    this.onReportTap,
+    this.reportTooltip = 'Pending report',
     this.emptyTitle = 'No customers yet',
     this.emptySubtitle = 'Add your first customer to get started',
     this.noResultsTitle = 'No results found',
@@ -177,6 +183,10 @@ class CustomerListWidget extends StatelessWidget {
                   : (onTransactionsTap != null
                       ? () => onTransactionsTap!(filtered[index])
                       : null),
+              onReportTap: onReportTap != null
+                  ? () => onReportTap!(filtered[index])
+                  : null,
+              reportTooltip: reportTooltip,
               pendingLabel: pendingLabel,
             ),
           );
@@ -409,6 +419,18 @@ class CustomerListWidget extends StatelessWidget {
                         containerSize: 30,
                         spacing: 6,
                       ),
+                    if (hasPending && onReportTap != null) ...[
+                      const SizedBox(width: 6),
+                      Tooltip(
+                        message: reportTooltip,
+                        child: _roundAction(
+                          context,
+                          icon: Icons.picture_as_pdf_rounded,
+                          color: AppTheme.toneRose,
+                          onTap: () => onReportTap!(customer),
+                        ),
+                      ),
+                    ],
                     if (onFinanceTap != null) ...[
                       const SizedBox(width: 6),
                       _roundAction(
@@ -565,6 +587,8 @@ class _CustomerCard extends StatelessWidget {
   final VoidCallback? onFinanceTap;
   final VoidCallback? onTransactionsTap;
   final VoidCallback? onCollectTap;
+  final VoidCallback? onReportTap;
+  final String reportTooltip;
   final String pendingLabel;
 
   const _CustomerCard({
@@ -574,6 +598,8 @@ class _CustomerCard extends StatelessWidget {
     this.onFinanceTap,
     this.onTransactionsTap,
     this.onCollectTap,
+    this.onReportTap,
+    this.reportTooltip = 'Pending report',
     this.pendingLabel = 'pending',
   });
 
@@ -837,11 +863,36 @@ class _CustomerCard extends StatelessWidget {
                   ],
                   if (contact.isNotEmpty ||
                       onFinanceTap != null ||
-                      onTransactionsTap != null) ...[
+                      onTransactionsTap != null ||
+                      (pendingAmount > 0 && onReportTap != null)) ...[
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
+                        if (pendingAmount > 0 && onReportTap != null) ...[
+                          Tooltip(
+                            message: reportTooltip,
+                            child: GestureDetector(
+                              onTap: onReportTap,
+                              child: Container(
+                                width: 34,
+                                height: 34,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.toneRose.withValues(
+                                    alpha: 0.12,
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.picture_as_pdf_rounded,
+                                  size: 16,
+                                  color: AppTheme.toneRose,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
                         if (onTransactionsTap != null)
                           GestureDetector(
                             onTap: onTransactionsTap,
