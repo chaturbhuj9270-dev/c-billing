@@ -44,12 +44,11 @@ class LiveSyncService with WidgetsBindingObserver {
 
   static const Duration _localDebounce = Duration(milliseconds: 500);
   static const Duration _screenRefreshEvery = Duration(seconds: 45);
-  static const Duration _slowRetry = Duration(minutes: 2);
+  static const Duration _slowRetry = Duration(seconds: 30);
   static const List<Duration> _retryBackoff = [
     Duration(seconds: 2),
     Duration(seconds: 5),
     Duration(seconds: 15),
-    Duration(seconds: 45),
   ];
 
   final List<_LiveEntity> _entities = [];
