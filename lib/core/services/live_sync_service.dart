@@ -184,6 +184,25 @@ class LiveSyncService with WidgetsBindingObserver {
     );
   }
 
+  /// Pulls [entityNames] right away, e.g. when the user switches tab. Each
+  /// entity is skipped if it was refreshed less than [minGap] ago, so quick tab
+  /// changes do not repeat the same queries.
+  Future<void> refreshNow(
+    Set<String> entityNames, {
+    Duration minGap = const Duration(seconds: 8),
+  }) async {
+    if (_uid == null || !_foreground || entityNames.isEmpty) return;
+    final now = DateTime.now();
+    final targets = [
+      for (final entity in _entities)
+        if (entityNames.contains(entity.name) &&
+            (entity.lastRefresh == null ||
+                now.difference(entity.lastRefresh!) >= minGap))
+          entity,
+    ];
+    await _refreshEntities(targets);
+  }
+
   Future<void> _refreshWatched({Duration? minGap}) async {
     if (_uid == null || !_foreground || _watched.isEmpty) return;
     final now = DateTime.now();
@@ -194,11 +213,17 @@ class LiveSyncService with WidgetsBindingObserver {
     }
     _lastScreenRefresh = now;
 
-    final targets = [
+    await _refreshEntities([
       for (final entity in _entities)
         if (_watched.containsKey(entity.name)) entity,
-    ];
+    ]);
+  }
+
+  Future<void> _refreshEntities(List<_LiveEntity> targets) async {
+    if (targets.isEmpty) return;
+    final stamp = DateTime.now();
     for (final entity in targets) {
+      entity.lastRefresh = stamp;
       unawaited(_runSync(entity));
       await Future<void>.delayed(const Duration(milliseconds: 150));
     }
@@ -613,6 +638,7 @@ class _LiveEntity {
   bool rerun = false;
   bool reconciling = false;
   DateTime? lastCountCheck;
+  DateTime? lastRefresh;
   DateTime? lastIdFetch;
   int idFetchBackoff = 1;
 

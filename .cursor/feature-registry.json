@@ -60,6 +60,7 @@
         "lib/core/services/live_sync_service.dart",
         "lib/core/services/live_refresh_mixin.dart",
         "lib/core/services/sync_query_helper.dart",
+        "lib/features/dashboard/presentation/pages/optimized_dashboard_page.dart",
         "lib/main.dart",
         "firestore.rules"
       ],
@@ -72,6 +73,7 @@
         "NO background polling and NO Firestore listeners (every read is billed): sync services have no Timer.periodic, LiveSyncService has no snapshots() listeners, list pages must not open full-collection .snapshots() streams.",
         "Push is immediate: a local Drift write triggers that entity's syncNow() after ~0.5s; failures retry after 2s, 5s, 15s and then every 30 seconds while anything is still pending.",
         "Pull while a screen is open: screens that show synced data use LiveRefreshMixin (liveRefreshEntities) so LiveSyncService.watchScreen refreshes those entities every ~45s (foreground only) and when the screen opens. A new synced screen must add the mixin.",
+        "Switching a dashboard / web-shell tab pulls the latest data for that tab's collections (OptimizedDashboard _refreshTabData -> LiveSyncService.refreshNow, rate limited per collection). A new tab must be added to _tabEntities.",
         "On resume / reconnect everything is re-synced and deletions made on other devices are reconciled (count() check)."
       ],
       "anchors": [
@@ -82,6 +84,9 @@
         {"file": "lib/core/services/live_sync_service.dart", "contains": "watchScreen"},
         {"file": "lib/core/services/live_sync_service.dart", "contains": "_attachLocalWatcher"},
         {"file": "lib/core/services/live_refresh_mixin.dart", "contains": "mixin LiveRefreshMixin"},
+        {"file": "lib/core/services/live_sync_service.dart", "contains": "refreshNow"},
+        {"file": "lib/features/dashboard/presentation/pages/optimized_dashboard_page.dart", "contains": "_refreshTabData"},
+        {"file": "lib/features/dashboard/presentation/pages/optimized_dashboard_page.dart", "contains": "_tabEntities"},
         {"file": "lib/core/services/sync_query_helper.dart", "contains": "fetchChanged"},
         {"file": "lib/features/customer/data/services/customer_api_service.dart", "contains": "SyncQueryHelper.fetchChanged"},
         {"file": "lib/features/billing/data/services/bill_api_service.dart", "contains": "SyncQueryHelper.fetchChanged"},

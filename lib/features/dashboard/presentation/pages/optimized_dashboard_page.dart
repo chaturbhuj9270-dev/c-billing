@@ -24,6 +24,7 @@ import '../../../availability/presentation/pages/availability_page.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/services/dashboard_refresh_service.dart';
+import '../../../../core/services/live_sync_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/repositories/dashboard_repository_interface.dart';
@@ -136,6 +137,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       WebShell.register((index) {
         if (!mounted) return;
         setState(() => _selectedIndex = index);
+        _refreshTabData(index);
       });
     }
 
@@ -3068,6 +3070,52 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     _resetSessionTimer();
     if (DesktopCanvas.isDesktopPlatform) WebShell.popToRoot();
     setState(() => _selectedIndex = index);
+    _refreshTabData(index);
+  }
+
+  // Which synced collections each tab shows. Switching to a tab pulls the
+  // latest changes (e.g. made on the web or another device) for just those.
+  static const Map<int, Set<String>> _tabEntities = {
+    WebShell.dashboard: {
+      'bills',
+      'customers',
+      'customer_transactions',
+      'products',
+      'purchases',
+      'purchaseBatches',
+      'eventOrders',
+      'expenses',
+    },
+    WebShell.customers: {'customers', 'customer_transactions', 'eventOrders'},
+    WebShell.billing: {'products', 'customers', 'purchaseBatches'},
+    WebShell.availability: {'products', 'purchaseBatches'},
+    WebShell.purchase: {
+      'purchases',
+      'purchaseBatches',
+      'products',
+      'suppliers',
+      'companies',
+    },
+    WebShell.invoices: {'bills', 'customers'},
+    WebShell.products: {'products', 'purchaseBatches'},
+    WebShell.suppliers: {'suppliers'},
+    WebShell.companies: {'companies'},
+    WebShell.purchaseReturn: {
+      'purchases',
+      'purchaseBatches',
+      'suppliers',
+      'products',
+    },
+    WebShell.events: {'eventOrders', 'customers'},
+    WebShell.quotations: {'customers', 'products'},
+    WebShell.barcode: {'products'},
+    WebShell.expenses: {'expenses'},
+  };
+
+  void _refreshTabData(int index) {
+    final entities = _tabEntities[index];
+    if (entities == null) return;
+    unawaited(LiveSyncService.instance.refreshNow(entities));
   }
 
   // ============ GLASSY QUICK STATS WIDGETS ============
