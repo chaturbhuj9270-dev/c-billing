@@ -1,3 +1,4 @@
+import 'package:c_billing/core/services/live_refresh_mixin.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -49,7 +50,10 @@ class CustomerTransactionsPage extends StatefulWidget {
 }
 
 class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, LiveRefreshMixin<CustomerTransactionsPage> {
+  @override
+  Set<String> get liveRefreshEntities => const {'customer_transactions', 'customers', 'bills'};
+
   late AnimationController _animController;
 
   List<_CombinedItem> _combinedItems = [];

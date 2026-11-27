@@ -1,3 +1,4 @@
+import '../../../../core/services/live_refresh_mixin.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -36,7 +37,10 @@ class EnhancedSupplierPage extends StatefulWidget {
 }
 
 class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, LiveRefreshMixin<EnhancedSupplierPage> {
+  @override
+  Set<String> get liveRefreshEntities => const {'suppliers'};
+
   // Animation
   late AnimationController _animController;
   late Animation<Offset> _offsetAnimation;
@@ -67,7 +71,6 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
   // local stream for real-time updates
   StreamSubscription<List<SupplierEntity>>? _supplierStreamSub;
   // Firestore stream for cross-device real-time sync
-  StreamSubscription<QuerySnapshot>? _firestoreStreamSub;
 
   // Services
   final _auth = FirebaseAuth.instance;
@@ -105,7 +108,6 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
     _setupLocalStream();
     _loadLocalSuppliers();
     _fetchFromFirebase();
-    _setupFirestoreStream();
 
     // Start animation after frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -119,7 +121,6 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
     _isNavigatingAway = true;
     _animController.dispose();
     _supplierStreamSub?.cancel();
-    _firestoreStreamSub?.cancel();
     _firstNameController.dispose();
     _middleNameController.dispose();
     _lastNameController.dispose();
@@ -239,35 +240,6 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
   }
 
   // ━━━ DATA: Firestore Stream (cross-device sync) ━━━
-
-  void _setupFirestoreStream() {
-    final currentUser = _auth.currentUser;
-    if (currentUser == null) return;
-
-    _firestoreStreamSub = _firestore
-        .collection('users')
-        .doc(currentUser.uid)
-        .collection('suppliers')
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .listen(
-          (snapshot) async {
-            if (!mounted || _isNavigatingAway) return;
-
-            final freshSuppliers = snapshot.docs
-                .map((doc) => {...doc.data(), 'id': doc.id})
-                .toList();
-
-            await SupplierOfflineController.instance.importFromServer(
-              freshSuppliers,
-            );
-            _cacheDataSource.saveSuppliers(freshSuppliers);
-          },
-          onError: (e) {
-            debugPrint('[EnhancedSupplier] Firestore stream error: $e');
-          },
-        );
-  }
 
   // ━━━ CRUD: Add/Edit/Delete ━━━
 

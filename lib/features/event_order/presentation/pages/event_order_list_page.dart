@@ -1,3 +1,4 @@
+import 'package:c_billing/core/services/live_refresh_mixin.dart';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -63,7 +64,10 @@ class EventOrderListPage extends StatefulWidget {
 }
 
 class _EventOrderListPageState extends State<EventOrderListPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, LiveRefreshMixin<EventOrderListPage> {
+  @override
+  Set<String> get liveRefreshEntities => const {'eventOrders'};
+
   final _searchController = TextEditingController();
   final _pdfService = EventOrderPdfService();
   String _searchQuery = '';

@@ -22,13 +22,16 @@ import 'local_database.dart';
 import 'sync_query_helper.dart';
 
 /// Keeps every device (and the web app) in step with Firestore without any
-/// paid service — it only uses Firestore listeners + the existing sync services.
+/// paid service and without background polling or listeners.
 ///
 ///  * PUSH: any local write (Drift table update) triggers that entity's
 ///    `syncNow()` after a short debounce, so edits reach Firestore (and so the
-///    web) within about a second instead of waiting for the 3-minute timer.
-///  * PULL: a cheap Firestore listener per collection watches for documents
-///    changed by *another* device and triggers a delta `syncNow()` right away.
+///    web) within about a second. Failed pushes are retried with back-off and
+///    then every [_slowRetry] while anything is still pending.
+///  * PULL (screens): a screen that shows synced data registers the entities it
+///    needs with [watchScreen] (see LiveRefreshMixin). While such a screen is
+///    open and the app is in the foreground those entities are pulled every
+///    [_screenRefreshEvery] (delta query) and checked for deletions.
 ///  * DELETES: a one-read `count()` check detects documents removed on another
 ///    device and removes the orphaned, already-synced local rows.
 ///  * RESUME: when the app returns to the foreground everything is re-synced.
@@ -40,8 +43,8 @@ class LiveSyncService with WidgetsBindingObserver {
   static final LiveSyncService instance = LiveSyncService._();
 
   static const Duration _localDebounce = Duration(milliseconds: 500);
-  static const Duration _remoteDebounce = Duration(milliseconds: 400);
-  static const Duration _maintenanceEvery = Duration(minutes: 5);
+  static const Duration _screenRefreshEvery = Duration(seconds: 45);
+  static const Duration _slowRetry = Duration(minutes: 2);
   static const List<Duration> _retryBackoff = [
     Duration(seconds: 2),
     Duration(seconds: 5),
@@ -51,8 +54,11 @@ class LiveSyncService with WidgetsBindingObserver {
 
   final List<_LiveEntity> _entities = [];
   StreamSubscription<User?>? _authSub;
-  Timer? _maintenanceTimer;
+  Timer? _screenTimer;
   Timer? _startRetryTimer;
+  bool _foreground = true;
+  DateTime? _lastScreenRefresh;
+  final Map<String, int> _watched = {};
   String? _uid;
   bool _observing = false;
   DateTime? _lastResume;
@@ -83,7 +89,6 @@ class LiveSyncService with WidgetsBindingObserver {
 
     _entities.addAll(_buildEntities());
     for (final entity in _entities) {
-      _attachRemote(entity, user.uid);
       _attachLocalWatcher(entity);
       _attachServiceListener(entity);
     }
@@ -95,9 +100,7 @@ class LiveSyncService with WidgetsBindingObserver {
       WidgetsBinding.instance.addObserver(this);
       _observing = true;
     }
-    _maintenanceTimer = Timer.periodic(_maintenanceEvery, (_) {
-      unawaited(_reconcileAll());
-    });
+    if (_watched.isNotEmpty) _ensureScreenTimer();
 
     // Let the initial full syncs finish first, then verify deletions.
     Timer(const Duration(seconds: 20), () => unawaited(_reconcileAll()));
@@ -106,8 +109,8 @@ class LiveSyncService with WidgetsBindingObserver {
 
   void stop() {
     _startRetryTimer?.cancel();
-    _maintenanceTimer?.cancel();
-    _maintenanceTimer = null;
+    _screenTimer?.cancel();
+    _screenTimer = null;
     for (final entity in _entities) {
       entity.dispose();
     }
@@ -119,6 +122,7 @@ class LiveSyncService with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    _foreground = state == AppLifecycleState.resumed;
     if (state != AppLifecycleState.resumed || _uid == null) return;
     final now = DateTime.now();
     if (_lastResume != null &&
@@ -134,73 +138,77 @@ class LiveSyncService with WidgetsBindingObserver {
     if (uid == null) return;
     debugPrint('[LiveSync] App resumed - refreshing all entities');
     for (final entity in _entities) {
-      entity.detachRemote();
-      _attachRemote(entity, uid);
-    }
-    for (final entity in _entities) {
       unawaited(_runSync(entity));
       await Future<void>.delayed(const Duration(milliseconds: 150));
     }
     await _reconcileAll(force: true);
   }
 
-  // ───────────────────────── remote → local ─────────────────────────
+  // ───────────────────────── remote → local (screens) ─────────────────────────
 
-  void _attachRemote(_LiveEntity entity, String uid) {
-    final col = FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection(entity.collection);
-
-    // Documents of the same collection may store the change cursor as a
-    // Timestamp or as an ISO string, and range queries are type-strict, so
-    // watch both. Window is small; only *later* changes stream in.
-    final from = DateTime.now().subtract(const Duration(minutes: 2));
-    final queries = <Query<Map<String, dynamic>>>[
-      col.where(entity.cursorField, isGreaterThan: Timestamp.fromDate(from)),
-      col.where(entity.cursorField, isGreaterThan: from.toIso8601String()),
-    ];
-
-    for (final query in queries) {
-      var first = true;
-      entity.remoteSubs.add(
-        query.snapshots().listen(
-          (snapshot) {
-            // The first event is the initial state, already covered by the
-            // regular initial / resume sync.
-            if (first) {
-              first = false;
-              return;
-            }
-            var remoteChange = false;
-            var removed = false;
-            for (final change in snapshot.docChanges) {
-              // Our own writes (latency-compensated) are not remote changes.
-              if (change.doc.metadata.hasPendingWrites) continue;
-              remoteChange = true;
-              if (change.type == DocumentChangeType.removed) removed = true;
-            }
-            if (remoteChange) _onRemoteChange(entity, removed: removed);
-          },
-          onError: (Object error) {
-            debugPrint(
-              '[LiveSync] ${entity.name} listener error (sync falls back to '
-              'timer): $error',
-            );
-          },
-        ),
-      );
+  /// Registers the entities (e.g. `customers`, `bills`) that the calling screen
+  /// shows. While at least one screen is registered and the app is in the
+  /// foreground they are refreshed every [_screenRefreshEvery]. Returns the
+  /// function that unregisters the screen (call it from `dispose`).
+  VoidCallback watchScreen(Set<String> entityNames) {
+    for (final name in entityNames) {
+      _watched[name] = (_watched[name] ?? 0) + 1;
     }
+    _ensureScreenTimer();
+    // Opening a screen shows fresh data right away (rate limited).
+    unawaited(_refreshWatched(minGap: const Duration(seconds: 10)));
+
+    var released = false;
+    return () {
+      if (released) return;
+      released = true;
+      for (final name in entityNames) {
+        final left = (_watched[name] ?? 1) - 1;
+        if (left <= 0) {
+          _watched.remove(name);
+        } else {
+          _watched[name] = left;
+        }
+      }
+      if (_watched.isEmpty) {
+        _screenTimer?.cancel();
+        _screenTimer = null;
+      }
+    };
   }
 
-  void _onRemoteChange(_LiveEntity entity, {required bool removed}) {
-    entity.remoteTimer?.cancel();
-    entity.remoteTimer = Timer(_remoteDebounce, () {
-      debugPrint('[LiveSync] ${entity.name}: change from another device');
+  void _ensureScreenTimer() {
+    if (_screenTimer != null || _watched.isEmpty) return;
+    _screenTimer = Timer.periodic(
+      _screenRefreshEvery,
+      (_) => unawaited(_refreshWatched()),
+    );
+  }
+
+  Future<void> _refreshWatched({Duration? minGap}) async {
+    if (_uid == null || !_foreground || _watched.isEmpty) return;
+    final now = DateTime.now();
+    if (minGap != null &&
+        _lastScreenRefresh != null &&
+        now.difference(_lastScreenRefresh!) < minGap) {
+      return;
+    }
+    _lastScreenRefresh = now;
+
+    final targets = [
+      for (final entity in _entities)
+        if (_watched.containsKey(entity.name)) entity,
+    ];
+    for (final entity in targets) {
       unawaited(_runSync(entity));
-      // A change on one device usually comes with a delete elsewhere too
-      // (e.g. bill removed): verify shortly after pulling.
-      Timer(const Duration(seconds: 3), () => unawaited(_reconcile(entity)));
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+    }
+    // Deletions made on another device (cheap count() check, rate limited).
+    Timer(const Duration(seconds: 3), () {
+      for (final entity in targets) {
+        if (_uid == null) return;
+        unawaited(_reconcile(entity));
+      }
     });
   }
 
@@ -285,11 +293,11 @@ class LiveSyncService with WidgetsBindingObserver {
       return;
     }
     // Local changes are still unsynced (offline, error, or edited mid-sync).
-    if (entity.retries < _retryBackoff.length) {
-      final delay = _retryBackoff[entity.retries++];
-      entity.retryTimer?.cancel();
-      entity.retryTimer = Timer(delay, () => unawaited(_pushIfPending(entity)));
-    }
+    final delay = entity.retries < _retryBackoff.length
+        ? _retryBackoff[entity.retries++]
+        : _slowRetry;
+    entity.retryTimer?.cancel();
+    entity.retryTimer = Timer(delay, () => unawaited(_pushIfPending(entity)));
   }
 
   // ───────────────────────── deletes made elsewhere ─────────────────────────
@@ -597,11 +605,9 @@ class _LiveEntity {
   }
 
   // Mutable runtime state.
-  final List<StreamSubscription<dynamic>> remoteSubs = [];
   StreamSubscription<dynamic>? tableSub;
   VoidCallback? detachService;
   Timer? localTimer;
-  Timer? remoteTimer;
   Timer? retryTimer;
   int retries = 0;
   bool wasSyncing = false;
@@ -611,21 +617,12 @@ class _LiveEntity {
   DateTime? lastIdFetch;
   int idFetchBackoff = 1;
 
-  void detachRemote() {
-    for (final sub in remoteSubs) {
-      sub.cancel();
-    }
-    remoteSubs.clear();
-  }
-
   void dispose() {
-    detachRemote();
     tableSub?.cancel();
     tableSub = null;
     detachService?.call();
     detachService = null;
     localTimer?.cancel();
-    remoteTimer?.cancel();
     retryTimer?.cancel();
   }
 }

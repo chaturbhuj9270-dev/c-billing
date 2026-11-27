@@ -1,3 +1,4 @@
+import '../../../../core/services/live_refresh_mixin.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -36,7 +37,10 @@ class EnhancedCompanyPage extends StatefulWidget {
 }
 
 class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, LiveRefreshMixin<EnhancedCompanyPage> {
+  @override
+  Set<String> get liveRefreshEntities => const {'companies'};
+
   // Animation
   late AnimationController _animController;
   late Animation<Offset> _offsetAnimation;
@@ -66,7 +70,6 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
   // local stream for real-time updates
   StreamSubscription<List<CompanyEntity>>? _companyStreamSub;
   // Firestore stream for cross-device real-time sync
-  StreamSubscription<QuerySnapshot>? _firestoreStreamSub;
 
   // Services
   final _auth = FirebaseAuth.instance;
@@ -104,7 +107,6 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
     _setupLocalStream();
     _loadLocalCompanies();
     _fetchFromFirebase();
-    _setupFirestoreStream();
 
     // Start animation after frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -118,7 +120,6 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
     _isNavigatingAway = true;
     _animController.dispose();
     _companyStreamSub?.cancel();
-    _firestoreStreamSub?.cancel();
     _companyNameController.dispose();
     _companyCodeController.dispose();
     _gstCodeController.dispose();
@@ -234,35 +235,6 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
   }
 
   // ━━━ DATA: Firestore Stream (cross-device sync) ━━━
-
-  void _setupFirestoreStream() {
-    final currentUser = _auth.currentUser;
-    if (currentUser == null) return;
-
-    _firestoreStreamSub = _firestore
-        .collection('users')
-        .doc(currentUser.uid)
-        .collection('companies')
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .listen(
-          (snapshot) async {
-            if (!mounted || _isNavigatingAway) return;
-
-            final freshCompanies = snapshot.docs
-                .map((doc) => {...doc.data(), 'id': doc.id})
-                .toList();
-
-            await CompanyOfflineController.instance.importFromServer(
-              freshCompanies,
-            );
-            _cacheDataSource.saveCompanies(freshCompanies);
-          },
-          onError: (e) {
-            debugPrint('[EnhancedCompany] Firestore stream error: $e');
-          },
-        );
-  }
 
   // ━━━ CRUD: Add/Edit/Delete ━━━
 

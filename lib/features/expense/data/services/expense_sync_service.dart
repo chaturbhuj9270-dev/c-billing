@@ -118,10 +118,8 @@ class ExpenseSyncService extends ChangeNotifier {
       }
     });
 
-    // Start periodic sync (every 5 minutes)
-    _periodicSyncTimer = Timer.periodic(const Duration(minutes: 5), (_) {
-      syncNow();
-    });
+    // No background polling: LiveSyncService pushes right after local saves and
+    // visible screens refresh on a short interval (see LiveRefreshMixin).
 
     // Initial sync
     syncNow();

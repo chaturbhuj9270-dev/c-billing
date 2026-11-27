@@ -1,9 +1,9 @@
+import 'package:c_billing/core/services/live_refresh_mixin.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
@@ -40,9 +40,11 @@ class BillsListPage extends StatefulWidget {
 }
 
 class _BillsListPageState extends State<BillsListPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, LiveRefreshMixin<BillsListPage> {
+  @override
+  Set<String> get liveRefreshEntities => const {'bills'};
+
   late FirebaseFirestore _firestore;
-  final _auth = FirebaseAuth.instance;
   late AnimationController _animController;
   late Animation<Offset> _offsetAnimation;
   late Animation<double> _opacityAnimation;
@@ -77,7 +79,6 @@ class _BillsListPageState extends State<BillsListPage>
   // Offline-first stream subscription
   StreamSubscription<List<BillEntity>>? _billsSubscription;
   // Firestore stream for cross-device real-time sync
-  StreamSubscription<QuerySnapshot>? _firestoreStreamSubscription;
 
   @override
   void initState() {
@@ -132,39 +133,6 @@ class _BillsListPageState extends State<BillsListPage>
     );
 
     _setupInitialData();
-    _setupFirestoreStream();
-  }
-
-  // Setup real-time Firestore stream for cross-device bill synchronization
-  void _setupFirestoreStream() {
-    final currentUser = _auth.currentUser;
-    if (currentUser == null) return;
-
-    _firestoreStreamSubscription = _firestore
-        .collection('users')
-        .doc(currentUser.uid)
-        .collection('bills')
-        .orderBy('billDate', descending: true)
-        .snapshots()
-        .listen(
-          (snapshot) async {
-            if (!mounted) return;
-
-            debugPrint(
-              '[Bills] Firestore stream: ${snapshot.docs.length} docs (${snapshot.docChanges.length} changes)',
-            );
-
-            final serverBills = snapshot.docs.map((doc) {
-              return <String, dynamic>{...doc.data(), 'id': doc.id};
-            }).toList();
-
-            // Import to the local database — the local stream listener auto-updates the UI
-            await BillOfflineController.instance.importFromServer(serverBills);
-          },
-          onError: (e) {
-            debugPrint('[ERROR] Firestore bills stream error: $e');
-          },
-        );
   }
 
   Future<void> _setupInitialData() async {
@@ -177,7 +145,6 @@ class _BillsListPageState extends State<BillsListPage>
   @override
   void dispose() {
     _billsSubscription?.cancel();
-    _firestoreStreamSubscription?.cancel();
     _animController.dispose();
     _searchController.dispose();
     _printerService.dispose();

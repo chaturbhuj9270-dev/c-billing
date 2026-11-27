@@ -1,0 +1,227 @@
+{
+  "version": 2,
+  "about": "Living map of what the app must keep doing. scripts/feature_guard.py verifies every anchor still exists and every forbidden pattern is still absent. Update this file in the same change that adds, moves or intentionally changes a feature.",
+  "features": [
+    {
+      "id": "customer-ledger",
+      "name": "Customer ledger, pending amount and receive payment",
+      "files": [
+        "lib/features/customer/",
+        "lib/core/services/customer_transaction_service.dart"
+      ],
+      "invariants": [
+        "Ledger rows and the customer's pending amount are written ONLY through CustomerTransactionOfflineController (addBillTransaction / addPaymentTransaction / addReturnTransaction). Never also write the same event straight to Firestore (CustomerTransactionService.receivePayment / recordBillGenerated): that duplicated rows and doubled the balance.",
+        "Receive Payment is hidden when pending <= 0 and the amount can never exceed pending (button gate, sheet validator, save guard).",
+        "Every 'Bill Created' ledger row shows Bill Total / Received / Pending taken from the bill itself.",
+        "The duplicate-entry repair only matches rows with the legacy wording AND a same-amount original within 3 minutes."
+      ],
+      "anchors": [
+        {"file": "lib/features/customer/offline/controllers/customer_transaction_offline_controller.dart", "contains": "findDuplicateBillingEntries"},
+        {"file": "lib/features/customer/presentation/pages/customer_transactions_page.dart", "contains": "_canReceivePayment"},
+        {"file": "lib/features/customer/presentation/pages/customer_transactions_page.dart", "contains": "_BillAmountsStrip"},
+        {"file": "lib/features/customer/presentation/pages/customer_transactions_page.dart", "contains": "_removeDuplicateEntries"},
+        {"file": "lib/features/customer/presentation/pages/customer_transactions_page.dart", "contains": "Cannot exceed pending"}
+      ],
+      "forbidden": [
+        {"file": "lib/features/customer/presentation/pages/customer_transactions_page.dart", "contains": ".receivePayment(", "why": "double-writes the ledger"},
+        {"file": "lib/features/customer/presentation/pages/customer_details_page.dart", "contains": "transactionService.receivePayment(", "why": "double-writes the ledger"}
+      ],
+      "tests": ["test/regression/ledger_duplicates_test.dart"]
+    },
+    {
+      "id": "billing-checkout",
+      "name": "Billing: create bill, received amount, service charges",
+      "files": [
+        "lib/features/billing/",
+        "lib/core/services/inventory_integration_service.dart"
+      ],
+      "invariants": [
+        "Received amount can never exceed the bill total (field resets to total with an error, and save clamps again).",
+        "A bill is saved locally first (InventoryIntegrationService.processBill does FIFO stock + ledger-safe bill) and then synced; the customer ledger is written once, locally.",
+        "Other service charges are added on a full screen whose widget owns and disposes its own TextEditingControllers (a popup closure disposing them crashed the app).",
+        "Returns reduce the bill's pending/paid and post a return ledger entry."
+      ],
+      "anchors": [
+        {"file": "lib/features/billing/presentation/pages/billing_page.dart", "contains": "_receivedExceedsTotal"},
+        {"file": "lib/features/billing/presentation/pages/billing_page.dart", "contains": "_AddServiceChargePage"},
+        {"file": "lib/features/billing/presentation/pages/billing_page.dart", "contains": "InventoryIntegrationService.instance"},
+        {"file": "lib/features/billing/presentation/pages/billing_page.dart", "contains": "addBillTransaction"},
+        {"file": "lib/core/services/inventory_integration_service.dart", "contains": "addReturnTransaction"}
+      ],
+      "forbidden": [
+        {"file": "lib/features/billing/presentation/pages/billing_page.dart", "contains": "recordBillGenerated(", "why": "double-writes the ledger"}
+      ],
+      "tests": []
+    },
+    {
+      "id": "realtime-sync",
+      "name": "Cross-device sync (Firestore <-> local database), low Firestore cost",
+      "files": [
+        "lib/core/services/live_sync_service.dart",
+        "lib/core/services/live_refresh_mixin.dart",
+        "lib/core/services/sync_query_helper.dart",
+        "lib/main.dart",
+        "firestore.rules"
+      ],
+      "invariants": [
+        "main.dart initializeSyncServices(): SyncQueryHelper.beginSession first, all sync services initialize, LiveSyncService.start last.",
+        "Every incremental pull goes through SyncQueryHelper.fetchChanged (queries both Timestamp and ISO-string typed fields).",
+        "A newly synced collection needs ALL of: a firestore.rules match block, a sync service, an entry in LiveSyncService, and a registry entry here.",
+        "importFromServer must never overwrite rows that have unsynced local changes.",
+        "Sync services' initialize() cancels its previous timer/connectivity subscription before creating new ones and runs one initial sync.",
+        "NO background polling and NO Firestore listeners (every read is billed): sync services have no Timer.periodic, LiveSyncService has no snapshots() listeners, list pages must not open full-collection .snapshots() streams.",
+        "Push is immediate: a local Drift write triggers that entity's syncNow() after ~0.5s; failures retry with back-off, then every 2 minutes while anything is still pending.",
+        "Pull while a screen is open: screens that show synced data use LiveRefreshMixin (liveRefreshEntities) so LiveSyncService.watchScreen refreshes those entities every ~45s (foreground only) and when the screen opens. A new synced screen must add the mixin.",
+        "On resume / reconnect everything is re-synced and deletions made on other devices are reconciled (count() check)."
+      ],
+      "anchors": [
+        {"file": "lib/main.dart", "contains": "SyncQueryHelper.beginSession"},
+        {"file": "lib/main.dart", "contains": "LiveSyncService.instance.start()"},
+        {"file": "lib/main.dart", "contains": "ExpenseSyncService.instance.initialize()"},
+        {"file": "lib/core/services/live_sync_service.dart", "contains": "class LiveSyncService"},
+        {"file": "lib/core/services/live_sync_service.dart", "contains": "watchScreen"},
+        {"file": "lib/core/services/live_sync_service.dart", "contains": "_attachLocalWatcher"},
+        {"file": "lib/core/services/live_refresh_mixin.dart", "contains": "mixin LiveRefreshMixin"},
+        {"file": "lib/core/services/sync_query_helper.dart", "contains": "fetchChanged"},
+        {"file": "lib/features/customer/data/services/customer_api_service.dart", "contains": "SyncQueryHelper.fetchChanged"},
+        {"file": "lib/features/billing/data/services/bill_api_service.dart", "contains": "SyncQueryHelper.fetchChanged"},
+        {"file": "lib/features/inventory_management/offline/controllers/purchase_batch_offline_controller.dart", "contains": "skipped++"},
+        {"file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart", "contains": "LiveRefreshMixin<EnhancedCustomerPage>"},
+        {"file": "lib/features/supplier/presentation/pages/enhanced_supplier_page.dart", "contains": "LiveRefreshMixin<EnhancedSupplierPage>"},
+        {"file": "lib/features/company/presentation/pages/enhanced_company_page.dart", "contains": "LiveRefreshMixin<EnhancedCompanyPage>"},
+        {"file": "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart", "contains": "LiveRefreshMixin<EnhancedProductPage>"},
+        {"file": "lib/features/billing/presentation/pages/bills_list_page.dart", "contains": "LiveRefreshMixin<BillsListPage>"},
+        {"file": "lib/features/customer/presentation/pages/customer_transactions_page.dart", "contains": "LiveRefreshMixin<CustomerTransactionsPage>"},
+        {"file": "lib/features/event_order/presentation/pages/event_order_list_page.dart", "contains": "LiveRefreshMixin<EventOrderListPage>"},
+        {"file": "lib/features/expense/presentation/pages/expenses_page.dart", "contains": "LiveRefreshMixin<ExpensesPage>"},
+        {"file": "lib/features/inventory_management/presentation/pages/enhanced_purchase_screen.dart", "contains": "LiveRefreshMixin<EnhancedPurchaseScreen>"}
+      ],
+      "forbidden": [
+        {"file": "lib/core/services/live_sync_service.dart", "contains": ".snapshots()", "why": "Firestore listeners cost reads; use watchScreen refresh"},
+        {"file": "lib/features/customer/data/services/customer_sync_service.dart", "contains": "Timer.periodic", "why": "no background polling"},
+        {"file": "lib/features/customer/data/services/customer_transaction_sync_service.dart", "contains": "Timer.periodic", "why": "no background polling"},
+        {"file": "lib/features/billing/data/services/bill_sync_service.dart", "contains": "Timer.periodic", "why": "no background polling"},
+        {"file": "lib/features/supplier/data/services/supplier_sync_service.dart", "contains": "Timer.periodic", "why": "no background polling"},
+        {"file": "lib/features/company/data/services/company_sync_service.dart", "contains": "Timer.periodic", "why": "no background polling"},
+        {"file": "lib/features/product/data/services/product_sync_service.dart", "contains": "Timer.periodic", "why": "no background polling"},
+        {"file": "lib/features/expense/data/services/expense_sync_service.dart", "contains": "Timer.periodic", "why": "no background polling"},
+        {"file": "lib/features/event_order/data/services/event_order_sync_service.dart", "contains": "Timer.periodic", "why": "no background polling"},
+        {"file": "lib/features/inventory_management/data/services/purchase_sync_service.dart", "contains": "Timer.periodic", "why": "no background polling"},
+        {"file": "lib/features/inventory_management/data/services/purchase_batch_sync_service.dart", "contains": "Timer.periodic", "why": "no background polling"},
+        {"file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart", "contains": ".snapshots()", "why": "full-collection listener re-reads every document"},
+        {"file": "lib/features/supplier/presentation/pages/enhanced_supplier_page.dart", "contains": ".snapshots()", "why": "full-collection listener re-reads every document"},
+        {"file": "lib/features/company/presentation/pages/enhanced_company_page.dart", "contains": ".snapshots()", "why": "full-collection listener re-reads every document"},
+        {"file": "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart", "contains": ".snapshots()", "why": "full-collection listener re-reads every document"},
+        {"file": "lib/features/billing/presentation/pages/bills_list_page.dart", "contains": ".snapshots()", "why": "full-collection listener re-reads every document"}
+      ],
+      "tests": ["test/regression/sync_query_helper_test.dart"]
+    },
+    {
+      "id": "firestore-rules",
+      "name": "Firestore security rules for every synced collection",
+      "files": ["firestore.rules"],
+      "invariants": [
+        "Each per-user collection the app reads or writes has a match block with owner + active-subscription access. Missing block = silent permission-denied and data that never syncs.",
+        "After editing rules the user must deploy them: firebase deploy --only firestore:rules."
+      ],
+      "anchors": [
+        {"file": "firestore.rules", "contains": "match /customers/"},
+        {"file": "firestore.rules", "contains": "match /customer_transactions/"},
+        {"file": "firestore.rules", "contains": "match /bills/"},
+        {"file": "firestore.rules", "contains": "match /eventOrders/"},
+        {"file": "firestore.rules", "contains": "match /expenses/"},
+        {"file": "firestore.rules", "contains": "match /purchaseBatches/"},
+        {"file": "firestore.rules", "contains": "match /purchaseReturns/"},
+        {"file": "firestore.rules", "contains": "match /stockLedger/"},
+        {"file": "firestore.rules", "contains": "match /event_order_settings/"}
+      ],
+      "forbidden": [],
+      "tests": []
+    },
+    {
+      "id": "list-ordering",
+      "name": "Newest-first default ordering of lists",
+      "files": [
+        "lib/features/customer/presentation/",
+        "lib/features/supplier/presentation/",
+        "lib/features/company/presentation/",
+        "lib/features/inventory_management/presentation/",
+        "lib/features/expense/offline/controllers/expense_offline_controller.dart"
+      ],
+      "invariants": [
+        "Customers, suppliers, companies and products default to Date (created) descending so a new record is on top; other sort chips still work and reset direction sensibly.",
+        "Equal sort keys fall back to name so the order is stable.",
+        "Expenses: newest expense date first, then most recently created."
+      ],
+      "anchors": [
+        {"file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart", "contains": "CustomerSortField _sortField = CustomerSortField.createdDate"},
+        {"file": "lib/features/supplier/presentation/pages/enhanced_supplier_page.dart", "contains": "SupplierSortField _sortField = SupplierSortField.createdDate"},
+        {"file": "lib/features/company/presentation/pages/enhanced_company_page.dart", "contains": "CompanySortField _sortField = CompanySortField.createdDate"},
+        {"file": "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart", "contains": "ProductSortField _sortField = ProductSortField.createdDate"},
+        {"file": "lib/features/expense/offline/controllers/expense_offline_controller.dart", "contains": "_newestFirst"}
+      ],
+      "forbidden": [],
+      "tests": []
+    },
+    {
+      "id": "print-formats",
+      "name": "Bill / quotation print formats (POS thermal vs Normal A4)",
+      "files": [
+        "lib/core/printing/",
+        "lib/features/billing/presentation/pages/bill_settings_page.dart",
+        "lib/features/quotation/"
+      ],
+      "invariants": [
+        "PdfBillService.resolvePdfFormat order: formatOverride, then quotation_type for quotations, then bill_type. Default 'pos'.",
+        "Plain bills and quotations must print exactly as before; new document kinds opt in through PrintBillData fields (formatOverride, documentTitle, numberLabelText, qrAmountOverride) instead of editing bill-only branches.",
+        "The payment QR amount for non-bill documents is qrAmountOverride (e.g. balance due)."
+      ],
+      "anchors": [
+        {"file": "lib/core/printing/services/pdf_bill_service.dart", "contains": "resolvePdfFormat"},
+        {"file": "lib/core/printing/services/pdf_bill_service.dart", "contains": "formatOverride"},
+        {"file": "lib/core/printing/models/print_bill_data.dart", "contains": "qrAmountOverride"},
+        {"file": "lib/features/billing/presentation/pages/bill_settings_page.dart", "contains": "_billType == 'normal'"},
+        {"file": "lib/features/quotation/data/services/quotation_format_settings.dart", "contains": "keyQuotationType"}
+      ],
+      "forbidden": [],
+      "tests": ["test/regression/print_bill_data_test.dart"]
+    },
+    {
+      "id": "event-order-invoice",
+      "name": "Event / sales order invoice with POS or Normal format",
+      "files": [
+        "lib/features/event_order/data/services/",
+        "lib/features/event_order/presentation/pages/event_order_settings_page.dart",
+        "lib/features/event_order/presentation/pages/event_order_list_page.dart"
+      ],
+      "invariants": [
+        "Default format is 'normal' (the original A4 invoice) so existing users see no change until they pick POS.",
+        "POS maps the order onto PrintBillData (event charges, sub-events, items, discount, GST, advance paid, balance due) and renders with the billing POS receipt.",
+        "Totals in POS must equal the A4 invoice: event charges + sub-event charges + sum(item.total); balance = total - advance.",
+        "All share / print / preview entry points go through EventOrderPdfService.generateEventOrderPdf so they honour the setting."
+      ],
+      "anchors": [
+        {"file": "lib/features/event_order/data/services/event_order_format_settings.dart", "contains": "event_order_type"},
+        {"file": "lib/features/event_order/data/services/event_order_pdf_service.dart", "contains": "createPrintData"},
+        {"file": "lib/features/event_order/data/services/event_order_pdf_service.dart", "contains": "generateA4EventOrderPdf"},
+        {"file": "lib/features/event_order/presentation/pages/event_order_settings_page.dart", "contains": "_buildInvoiceFormatSection"},
+        {"file": "lib/features/event_order/presentation/pages/event_order_list_page.dart", "contains": "buildPosPdfBytes"}
+      ],
+      "forbidden": [],
+      "tests": ["test/regression/event_order_print_test.dart"]
+    },
+    {
+      "id": "quotation",
+      "name": "Quotations (create, list, print)",
+      "files": ["lib/features/quotation/"],
+      "invariants": [
+        "Quotation printing keeps isQuotation labels and uses quotation_type for POS/Normal."
+      ],
+      "anchors": [
+        {"file": "lib/features/quotation/data/services/quotation_print_service.dart", "contains": "isQuotation: true"}
+      ],
+      "forbidden": [],
+      "tests": []
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import '../../../../core/services/live_refresh_mixin.dart';
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -42,7 +43,10 @@ class EnhancedCustomerPage extends StatefulWidget {
 }
 
 class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, LiveRefreshMixin<EnhancedCustomerPage> {
+  @override
+  Set<String> get liveRefreshEntities => const {'customers', 'customer_transactions'};
+
   // Animation
   late AnimationController _animController;
   late Animation<Offset> _offsetAnimation;
@@ -77,7 +81,6 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   // Cached event pending amounts per customer (customerId -> total remaining)
   Map<String, double> _eventPendingByCustomer = {};
   // Firestore stream for cross-device real-time sync
-  StreamSubscription<QuerySnapshot>? _firestoreStreamSub;
 
   // Services
   final _auth = FirebaseAuth.instance;
@@ -114,7 +117,6 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     _setupEventOrderStream();
     _loadLocalCustomers();
     _fetchFromFirebase();
-    _setupFirestoreStream();
 
     // Start animation after frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -129,7 +131,6 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     _animController.dispose();
     _customerStreamSub?.cancel();
     _eventOrderStreamSub?.cancel();
-    _firestoreStreamSub?.cancel();
     _firstNameController.dispose();
     _middleNameController.dispose();
     _lastNameController.dispose();
@@ -333,84 +334,6 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  // Setup real-time Firestore stream for cross-device synchronization
-  void _setupFirestoreStream() {
-    final currentUser = _auth.currentUser;
-    if (currentUser == null) return;
-
-    _firestoreStreamSub = _firestore
-        .collection('users')
-        .doc(currentUser.uid)
-        .collection('customers')
-        .snapshots()
-        .listen(
-          (snapshot) async {
-            if (!mounted || _isNavigatingAway) return;
-
-            debugPrint(
-              '[EnhancedCustomer] Firestore stream: ${snapshot.docs.length} docs (${snapshot.docChanges.length} changes)',
-            );
-
-            final serverList = snapshot.docs
-                .where((doc) {
-                  final data = doc.data();
-                  return data['isActive'] != false;
-                })
-                .map((doc) {
-                  final data = doc.data();
-                  final firstName = (data['firstName'] ?? '').toString();
-                  final middleName = (data['middleName'] ?? '').toString();
-                  final lastName = (data['lastName'] ?? '').toString();
-                  final fullName = [
-                    firstName,
-                    middleName,
-                    lastName,
-                  ].where((s) => s.isNotEmpty).join(' ');
-
-                  return <String, dynamic>{
-                    'id': doc.id,
-                    'name': fullName,
-                    'mobile': data['contact'] ?? '',
-                    'address': data['address'] ?? '',
-                    'email': data['email'] ?? '',
-                    'currentPendingAmount':
-                        data['currentPendingAmount'] ??
-                        data['pendingBalance'] ??
-                        0,
-                    'totalPurchases':
-                        data['totalPurchaseAmount'] ??
-                        data['totalPurchases'] ??
-                        0,
-                    'updatedAt': data['updatedAt'] is Timestamp
-                        ? (data['updatedAt'] as Timestamp)
-                              .toDate()
-                              .toIso8601String()
-                        : data['updatedAt']?.toString() ?? '',
-                    'createdAt': data['createdAt'] is Timestamp
-                        ? (data['createdAt'] as Timestamp)
-                              .toDate()
-                              .toIso8601String()
-                        : data['createdAt']?.toString() ?? '',
-                  };
-                })
-                .toList();
-
-            // Import into the local database — the stream listener auto-updates the UI
-            await CustomerOfflineController.instance.importFromServer(
-              serverList,
-            );
-
-            // Cache for next time
-            if (_customers.isNotEmpty && mounted) {
-              _cacheDataSource.saveCustomers(_customers);
-            }
-          },
-          onError: (e) {
-            debugPrint('[ERROR] Firestore customer stream error: $e');
-          },
-        );
   }
 
   // ━━━ FORM HELPERS ━━━

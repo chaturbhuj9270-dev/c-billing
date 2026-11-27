@@ -1,3 +1,4 @@
+import 'package:c_billing/core/services/live_refresh_mixin.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -59,7 +60,10 @@ class EnhancedPurchaseScreen extends StatefulWidget {
 }
 
 class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, LiveRefreshMixin<EnhancedPurchaseScreen> {
+  @override
+  Set<String> get liveRefreshEntities => const {'purchases', 'purchaseBatches'};
+
   late AppLocalizations _localizations;
   late AnimationController _animController;
   late Animation<Offset> _offsetAnimation;

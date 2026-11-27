@@ -103,27 +103,13 @@ class BillSyncService extends ChangeNotifier {
       }
     });
 
-    // Start periodic sync (every 3 minutes)
-    _periodicSyncTimer = Timer.periodic(const Duration(minutes: 3), (_) {
-      _checkAndSync();
-    });
+    // No background polling: LiveSyncService pushes right after local saves and
+    // visible screens refresh on a short interval (see LiveRefreshMixin).
 
     // Initial sync - download from server if local is empty
     _initialSync();
 
     debugPrint('[BillSync] Initialized');
-  }
-
-  // Check conditions and sync if appropriate
-  Future<void> _checkAndSync() async {
-    try {
-      final results = await _connectivity.checkConnectivity();
-      if (_isConnected(results) && _apiService.isAuthenticated) {
-        await syncNow();
-      }
-    } catch (e) {
-      debugPrint('[BillSync] Check and sync failed: $e');
-    }
   }
 
   // Initial sync logic - downloads all bills if local DB is empty

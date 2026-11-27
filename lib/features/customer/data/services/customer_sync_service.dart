@@ -102,10 +102,8 @@ class CustomerSyncService extends ChangeNotifier {
       }
     });
 
-    // Set up periodic sync (every 3 minutes when online)
-    _periodicSyncTimer = Timer.periodic(const Duration(minutes: 3), (_) {
-      _checkAndSync();
-    });
+    // No background polling: LiveSyncService pushes right after local saves and
+    // visible screens refresh on a short interval (see LiveRefreshMixin).
 
     // Initial sync
     _checkAndSync();

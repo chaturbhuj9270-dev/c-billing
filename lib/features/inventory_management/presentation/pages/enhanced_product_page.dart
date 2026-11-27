@@ -1,8 +1,8 @@
+import '../../../../core/services/live_refresh_mixin.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../../../core/services/product_settings_service.dart';
@@ -43,7 +43,10 @@ class EnhancedProductPage extends StatefulWidget {
 }
 
 class _EnhancedProductPageState extends State<EnhancedProductPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, LiveRefreshMixin<EnhancedProductPage> {
+  @override
+  Set<String> get liveRefreshEntities => const {'products', 'purchaseBatches'};
+
   // Animation
   late AnimationController _animController;
   late Animation<Offset> _offsetAnimation;
@@ -68,7 +71,6 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
   // local stream for real-time updates
   StreamSubscription<List<ProductEntity>>? _productStreamSub;
   // Firestore stream for cross-device real-time sync
-  StreamSubscription<QuerySnapshot>? _firestoreStreamSub;
   // Batch stream for grouped view
   StreamSubscription<List<PurchaseBatchEntity>>? _batchStreamSub;
   // Cross-page refresh subscriptions
@@ -77,13 +79,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
   // Services
   final _auth = FirebaseAuth.instance;
-  late final FirebaseFirestore _firestore;
   late AppLocalizations _localizations;
 
   @override
   void initState() {
     super.initState();
-    _firestore = FirebaseFirestore.instance;
     _localizations = AppLocalizations.of(
       LanguageService.instance.currentLanguage,
     );
@@ -108,7 +108,6 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     _setupLocalStream();
     _loadLocalProducts();
     _setupBatchStream();
-    _setupFirestoreStream();
     _setupCrossPageRefresh();
 
     // Start animation after frame
@@ -123,7 +122,6 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     _isNavigatingAway = true;
     _animController.dispose();
     _productStreamSub?.cancel();
-    _firestoreStreamSub?.cancel();
     _batchStreamSub?.cancel();
     _purchaseChangeSubscription?.cancel();
     _productChangeSubscription?.cancel();
@@ -268,42 +266,6 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
   }
 
   // ━━━ DATA: Firebase Stream for cross-device sync ━━━
-
-  void _setupFirestoreStream() {
-    final currentUser = _auth.currentUser;
-    if (currentUser == null) return;
-
-    _firestoreStreamSub = _firestore
-        .collection('users')
-        .doc(currentUser.uid)
-        .collection('products')
-        .snapshots()
-        .listen(
-          (snapshot) async {
-            if (!mounted || _isNavigatingAway) return;
-
-            debugPrint(
-              '[EnhancedProduct] Firestore stream: ${snapshot.docs.length} docs',
-            );
-
-            final serverProducts = snapshot.docs.map((doc) {
-              final data = doc.data();
-              return <String, dynamic>{...data, 'id': doc.id};
-            }).toList();
-
-            // Import to the local database — the local stream listener auto-updates the UI
-            await ProductOfflineController.instance.importFromServer(
-              serverProducts,
-            );
-
-            // Trigger sync for any local-only changes
-            ProductSyncService.instance.syncNow();
-          },
-          onError: (e) {
-            debugPrint('[EnhancedProduct] Firestore stream error: $e');
-          },
-        );
-  }
 
   // ━━━ CATEGORY HELPERS ━━━
 

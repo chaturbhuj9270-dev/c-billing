@@ -102,10 +102,8 @@ class SupplierSyncService extends ChangeNotifier {
       }
     });
 
-    // Set up periodic sync (every 3 minutes when online)
-    _periodicSyncTimer = Timer.periodic(const Duration(minutes: 3), (_) {
-      _checkAndSync();
-    });
+    // No background polling: LiveSyncService pushes right after local saves and
+    // visible screens refresh on a short interval (see LiveRefreshMixin).
 
     // Initial sync - download from server if local is empty
     _initialSync();
@@ -181,13 +179,6 @@ class SupplierSyncService extends ChangeNotifier {
 
   bool _isConnected(List<ConnectivityResult> results) {
     return results.any((r) => r != ConnectivityResult.none);
-  }
-
-  Future<void> _checkAndSync() async {
-    final results = await _connectivity.checkConnectivity();
-    if (_isConnected(results)) {
-      await syncNow();
-    }
   }
 
   // Check if device is online

@@ -1,0 +1,20 @@
+---
+description: Protect existing features while enhancing the app (impact check, registry, regression gate)
+alwaysApply: true
+---
+
+# Regression guard (applies to every change)
+
+Enhancements must never silently remove or change other features.
+
+1. **Before editing**, run `python3 scripts/feature_guard.py impact <files you will edit>` and read the "must still hold" invariants it prints. Respect them.
+2. **Extend, don't rewrite.** Add optional parameters / new fields / new files. Keep existing defaults and behaviour unless the user explicitly asks to change them. Do not delete or rename an existing public method, field, preference key, Firestore collection or route without searching for all usages first.
+3. **Never double-write the ledger.** Customer ledger and pending amount are written only via `CustomerTransactionOfflineController` (see registry `customer-ledger`).
+4. **Keep Firestore cost low.** No `Timer.periodic` polling in sync services and no `.snapshots()` listeners on collections. Screens that show synced data use `LiveRefreshMixin` (see registry `realtime-sync`).
+5. **New synced collection** needs a `firestore.rules` match, a sync service, a `LiveSyncService` entry and a registry entry.
+6. **User-facing text** goes in all three localization files (english, hindi, marathi).
+7. **Finish with the gate:** `scripts/regression_check.sh` must PASS. If the guard reports a removed anchor, restore it unless the removal was requested; if the change is intentional, update `.cursor/feature-registry.json` in the same change.
+8. **Leave guards behind:** for each new or changed behaviour, add or update the feature's entry in `.cursor/feature-registry.json` (invariants, anchors, forbidden patterns) and a pure-Dart test in `test/regression/` when logic can be tested without Firebase.
+9. Do not use paid services beyond Cloud Functions/Secret Manager already used for subscriptions.
+
+For larger enhancements or user stories use the `story-enhancement-agent` subagent.
