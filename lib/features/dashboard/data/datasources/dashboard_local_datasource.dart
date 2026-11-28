@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../../../../core/database/local_store.dart';
 import '../../../../core/services/local_database.dart';
 import '../../../billing/offline/controllers/bill_offline_controller.dart';
+import '../../../billing/domain/sale_return_math.dart';
 import '../../../customer/offline/controllers/customer_offline_controller.dart';
 import '../../../inventory_management/offline/controllers/purchase_offline_controller.dart';
 import '../../../inventory_management/offline/controllers/purchase_batch_offline_controller.dart';
@@ -234,6 +235,12 @@ class DashboardLocalDataSource {
           ? bill.discountAmount / billTotalAmount
           : 0.0;
 
+      // Same ratio the customer ledger refund uses (finalAmount / totalAmount).
+      final chargeRatio = SaleReturnMath.chargeRatio(
+        totalAmount: bill.totalAmount,
+        finalAmount: bill.finalAmount,
+      );
+
       for (final item in bill.items) {
         final qty = item.quantity;
         final returnedQty = item.returnedQuantity;
@@ -246,7 +253,11 @@ class DashboardLocalDataSource {
             .round(); // Round for dashboard display
 
         // Return amount = returnedQty × sellingPrice × (1 - discountRatio) This accounts for the proportional discount that was applied at sale
-        final returnAmount = returnedQty * sellingPrice * (1 - discountRatio);
+        final returnAmount = SaleReturnMath.returnedValue(
+          sellingPrice: sellingPrice,
+          returnedQuantity: returnedQty,
+          chargeRatio: chargeRatio,
+        );
         totalReturns += returnAmount;
 
         // Profit from this item = revenue from NET sold items - cost of NET sold items Revenue = netSoldQty × sellingPrice × (1 - discountRatio) Cost = netSoldQty × purchasePrice

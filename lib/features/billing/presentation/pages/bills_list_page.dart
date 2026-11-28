@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_item.dart';
+import 'package:c_billing/features/billing/domain/sale_return_math.dart';
 import 'package:c_billing/features/billing/presentation/pages/return_bill_page.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/printing/printing.dart';
@@ -617,10 +618,28 @@ class _BillsListPageState extends State<BillsListPage>
   }
 
   void _calculateFilteredStats() {
-    _filteredSales = _filteredBills.fold(
-      0.0,
-      (total, bill) => total + bill.finalAmount,
-    );
+    // Sales after returns: a return never changes the invoice amount itself.
+    _filteredSales = _filteredBills.fold(0.0, (total, bill) {
+      final ratio = SaleReturnMath.chargeRatio(
+        totalAmount: bill.totalAmount,
+        finalAmount: bill.finalAmount,
+      );
+      final returned = bill.items.fold<double>(
+        0.0,
+        (s, item) =>
+            s +
+            SaleReturnMath.returnedValue(
+              sellingPrice: item.sellingPrice,
+              returnedQuantity: item.returnedQuantity,
+              chargeRatio: ratio,
+            ),
+      );
+      return total +
+          SaleReturnMath.netSales(
+            finalAmount: bill.finalAmount,
+            returnedValue: returned,
+          );
+    });
     _filteredProfit = _filteredBills
         .where((b) => !b.returnStatus)
         .fold(

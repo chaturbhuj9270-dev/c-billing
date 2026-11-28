@@ -712,6 +712,60 @@
       "tests": [
         "test/regression/customer_date_filter_test.dart"
       ]
+    },
+    {
+      "id": "sales-after-returns",
+      "name": "Sales figures after returns (dashboard, chart, invoices header)",
+      "files": [
+        "lib/features/billing/domain/sale_return_math.dart",
+        "lib/features/dashboard/data/repositories/dashboard_offline_repository.dart",
+        "lib/features/dashboard/data/datasources/dashboard_local_datasource.dart",
+        "lib/features/dashboard/presentation/pages/optimized_dashboard_page.dart",
+        "lib/features/dashboard/presentation/widgets/sales_analysis_chart.dart",
+        "lib/features/billing/presentation/pages/bills_list_page.dart"
+      ],
+      "invariants": [
+        "A sale return never changes Bill.finalAmount; it raises returnedQuantity on the items. Every 'sales' figure (dashboard Total Sales card, Sales Analysis chart, Invoices header total) must therefore subtract the returned value, so Sales drops after a return.",
+        "The returned value uses SaleReturnMath (finalAmount / totalAmount ratio) - the SAME ratio InventoryIntegrationService.processReturn uses for the customer ledger refund - so dashboard, invoices and customer ledger agree, also for bills with exclusive tax / charges.",
+        "Dashboard Returns, Net Sales and profit cards keep their meaning; profit still uses the discount-only ratio.",
+        "Reporting only: these files never write the customer ledger or bills (ledger stays in CustomerTransactionOfflineController)."
+      ],
+      "anchors": [
+        {
+          "file": "lib/features/billing/domain/sale_return_math.dart",
+          "contains": "class SaleReturnMath"
+        },
+        {
+          "file": "lib/features/dashboard/data/repositories/dashboard_offline_repository.dart",
+          "contains": "SaleReturnMath.returnedValue"
+        },
+        {
+          "file": "lib/features/dashboard/data/datasources/dashboard_local_datasource.dart",
+          "contains": "SaleReturnMath.returnedValue"
+        },
+        {
+          "file": "lib/features/dashboard/presentation/pages/optimized_dashboard_page.dart",
+          "contains": "_formatAmount(data.netSales)"
+        },
+        {
+          "file": "lib/features/dashboard/presentation/widgets/sales_analysis_chart.dart",
+          "contains": "SaleReturnMath.netSales"
+        },
+        {
+          "file": "lib/features/billing/presentation/pages/bills_list_page.dart",
+          "contains": "SaleReturnMath.netSales"
+        }
+      ],
+      "forbidden": [
+        {
+          "file": "lib/features/dashboard/presentation/pages/optimized_dashboard_page.dart",
+          "contains": "_formatAmount(data.totalSales)",
+          "why": "gross sales ignore returns; the Sales card must show sales after returns"
+        }
+      ],
+      "tests": [
+        "test/regression/sale_return_math_test.dart"
+      ]
     }
   ]
 }

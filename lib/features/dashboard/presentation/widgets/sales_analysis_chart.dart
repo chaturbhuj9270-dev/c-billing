@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../billing/offline/controllers/bill_offline_controller.dart';
 import '../../../billing/offline/entities/bill_entity.dart';
+import '../../../billing/domain/sale_return_math.dart';
 
 /// Time window for the Sales Analysis chart.
 enum SalesChartPeriod { week, month, year }
@@ -73,8 +74,12 @@ class SalesChartAggregator {
   }
 
   static void _accumulateBill(_DayMetrics day, BillEntity bill) {
-    day.sales += bill.finalAmount;
     day.orders += 1;
+    final chargeRatio = SaleReturnMath.chargeRatio(
+      totalAmount: bill.totalAmount,
+      finalAmount: bill.finalAmount,
+    );
+    var returnedValue = 0.0;
 
     // Same discount handling as dashboard KPI profit (no itemChargeRatio on this branch).
     final billTotalAmount = bill.totalAmount;
@@ -87,11 +92,21 @@ class SalesChartAggregator {
       final net = qty - returned;
       day.quantity += qty;
       day.returnOrders += returned;
+      returnedValue += SaleReturnMath.returnedValue(
+        sellingPrice: item.sellingPrice,
+        returnedQuantity: returned,
+        chargeRatio: chargeRatio,
+      );
 
       final netRevenue = net * item.sellingPrice * (1 - discountRatio);
       final netCost = net * item.purchasePrice;
       day.profit += netRevenue - netCost;
     }
+    // Sales after returns, consistent with the dashboard cards.
+    day.sales += SaleReturnMath.netSales(
+      finalAmount: bill.finalAmount,
+      returnedValue: returnedValue,
+    );
   }
 
   static (DateTime, DateTime) _rangeFor(SalesChartPeriod period, DateTime now) {

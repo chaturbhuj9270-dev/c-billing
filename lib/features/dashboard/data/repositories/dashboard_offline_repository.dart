@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../models/dashboard_data.dart';
+import '../../../billing/domain/sale_return_math.dart';
 import '../../../customer/offline/controllers/customer_offline_controller.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
@@ -156,6 +157,12 @@ class DashboardOfflineRepository {
       final discountRatio = bill.totalAmount > 0
           ? bill.discountAmount / bill.totalAmount
           : 0.0;
+      // What the customer was actually charged per unit of selling price. Same
+      // ratio the customer ledger refund uses, so dashboard and ledger agree.
+      final chargeRatio = SaleReturnMath.chargeRatio(
+        totalAmount: bill.totalAmount,
+        finalAmount: bill.finalAmount,
+      );
 
       // Sum up quantities from all items, accounting for returns
       for (final item in bill.items) {
@@ -167,8 +174,11 @@ class DashboardOfflineRepository {
         returnedItems += returnedQty.round(); // Round for dashboard display
 
         // Return amount = returnedQty × sellingPrice × (1 - discountRatio)
-        final returnAmount =
-            returnedQty * item.sellingPrice * (1 - discountRatio);
+        final returnAmount = SaleReturnMath.returnedValue(
+          sellingPrice: item.sellingPrice,
+          returnedQuantity: returnedQty,
+          chargeRatio: chargeRatio,
+        );
         totalReturns += returnAmount;
 
         // Profit from net sold items only

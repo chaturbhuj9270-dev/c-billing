@@ -1764,7 +1764,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     final cards = [
       _buildWebMetricCard(
         title: _localizations.totalSales,
-        amount: _formatWebAmount(data.totalSales),
+        // Sales after returns (a return never changes the invoice itself).
+        amount: _formatWebAmount(data.netSales),
         subtitle:
             '${data.totalBillsCount} ${_localizations.bills.toLowerCase()} · ${data.totalItemsSold} ${_localizations.items.toLowerCase()}',
         icon: Icons.show_chart_rounded,
@@ -2483,7 +2484,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
     final salesCard = _buildGradientMetricCard(
       title: _localizations.totalSales,
-      amount: _formatAmount(data.totalSales),
+      // Sales after returns (a return never changes the invoice itself).
+      amount: _formatAmount(data.netSales),
       subtitle:
           '${_localizations.bills}: ${data.totalBillsCount} • ${_localizations.items}: ${data.totalItemsSold}',
       gradient: metricGradient(0, const [AppTheme.paletteFF667EEA, AppTheme.paletteFF764BA2]),
