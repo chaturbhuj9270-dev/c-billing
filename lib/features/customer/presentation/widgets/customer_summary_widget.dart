@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:c_billing/common_widgets/desktop_stat_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
+import 'customer_filter_widget.dart';
 
 // Summary widget for customer statistics Displays: Total customers, Pending amount, Synced status
 class CustomerSummaryWidget extends StatelessWidget {
   final List<Map<String, dynamic>> customers;
   final String searchQuery;
+  final DateTimeRange? dateRange;
 
   // Labels
   final String customersLabel;
@@ -18,6 +20,7 @@ class CustomerSummaryWidget extends StatelessWidget {
     super.key,
     required this.customers,
     this.searchQuery = '',
+    this.dateRange,
     this.customersLabel = 'Customers',
     this.pendingLabel = 'Pending',
     this.unsyncedLabel = 'Unsynced',
@@ -25,10 +28,13 @@ class CustomerSummaryWidget extends StatelessWidget {
   });
 
   List<Map<String, dynamic>> get _filteredCustomers {
-    if (searchQuery.isEmpty) return customers;
+    final base = dateRange == null
+        ? customers
+        : customers.where((c) => customerCreatedInRange(c, dateRange)).toList();
+    if (searchQuery.isEmpty) return base;
 
     final query = searchQuery.toLowerCase();
-    return customers.where((c) {
+    return base.where((c) {
       final firstName = (c['firstName'] ?? '').toString().toLowerCase();
       final lastName = (c['lastName'] ?? '').toString().toLowerCase();
       final contact = (c['contact'] ?? '').toString().toLowerCase();

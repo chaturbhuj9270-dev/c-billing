@@ -1,11 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
 // Sort options for customer list
 enum CustomerSortField { name, createdDate, pendingAmount }
 
-// Filter widget for customer list Features: Search bar, Sort options
+/// Customer creation date of a list row (DateTime or ISO string), or null.
+DateTime? customerCreatedAt(Map<String, dynamic> customer) {
+  final v = customer['createdAt'];
+  if (v is DateTime) return v;
+  if (v is String && v.isNotEmpty) return DateTime.tryParse(v);
+  return null;
+}
+
+/// True when [customer] was created inside [range] (whole days, inclusive).
+/// With no range every customer matches. A customer without a creation date
+/// cannot be placed in a period, so it is hidden while a range is applied.
+bool customerCreatedInRange(
+  Map<String, dynamic> customer,
+  DateTimeRange? range,
+) {
+  if (range == null) return true;
+  final created = customerCreatedAt(customer);
+  if (created == null) return false;
+  final local = created.toLocal();
+  final start = DateTime(range.start.year, range.start.month, range.start.day);
+  final endExclusive = DateTime(
+    range.end.year,
+    range.end.month,
+    range.end.day,
+  ).add(const Duration(days: 1));
+  return !local.isBefore(start) && local.isBefore(endExclusive);
+}
+
+// Filter widget for customer list Features: Search bar, Sort options, created-date range
 class CustomerFilterWidget extends StatefulWidget {
   final String searchQuery;
   final CustomerSortField sortField;
@@ -14,6 +43,13 @@ class CustomerFilterWidget extends StatefulWidget {
   final ValueChanged<CustomerSortField> onSortFieldChanged;
   final VoidCallback onSortDirectionToggle;
   final VoidCallback? onClearSearch;
+
+  /// Optional created-date range filter. The calendar button only shows when
+  /// [onDateRangeChanged] is given, so existing callers are unchanged.
+  final DateTimeRange? dateRange;
+  final ValueChanged<DateTimeRange?>? onDateRangeChanged;
+  final String dateFilterLabel;
+  final String dateFilterClearLabel;
 
   // Labels
   final String searchHint;
@@ -30,6 +66,10 @@ class CustomerFilterWidget extends StatefulWidget {
     required this.onSortFieldChanged,
     required this.onSortDirectionToggle,
     this.onClearSearch,
+    this.dateRange,
+    this.onDateRangeChanged,
+    this.dateFilterLabel = 'Select date range',
+    this.dateFilterClearLabel = 'Clear',
     this.searchHint = 'Search customers...',
     this.sortByNameLabel = 'Name',
     this.sortByDateLabel = 'Date',
@@ -64,13 +104,118 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
     super.dispose();
   }
 
+  Future<void> _pickDateRange() async {
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2015),
+      lastDate: DateTime(now.year + 1, 12, 31),
+      initialDateRange: widget.dateRange,
+      helpText: widget.dateFilterLabel,
+    );
+    if (picked != null) widget.onDateRangeChanged?.call(picked);
+  }
+
+  String _rangeText(DateTimeRange r) {
+    final f = DateFormat('dd MMM yyyy');
+    return '${f.format(r.start)} - ${f.format(r.end)}';
+  }
+
+  Widget _buildDateButton() {
+    final active = widget.dateRange != null;
+    return Tooltip(
+      message: widget.dateFilterLabel,
+      child: GestureDetector(
+        onTap: _pickDateRange,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: active
+                ? AppColors.selectedFill(context)
+                : AppColors.chipFill(context),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: active
+                  ? AppColors.selectedFill(context)
+                  : AppColors.border(context),
+            ),
+          ),
+          child: Icon(
+            Icons.date_range_rounded,
+            size: 20,
+            color: active
+                ? AppColors.selectedOnFill(context)
+                : AppColors.secondaryText(context),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActiveRangeChip() {
+    final range = widget.dateRange!;
+    return GestureDetector(
+      onTap: _pickDateRange,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.selectedFill(context),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.date_range_rounded,
+              size: 15,
+              color: AppColors.selectedOnFill(context),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              _rangeText(range),
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                color: AppColors.selectedOnFill(context),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Tooltip(
+              message: widget.dateFilterClearLabel,
+              child: GestureDetector(
+                onTap: () => widget.onDateRangeChanged?.call(null),
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 16,
+                  color: AppColors.selectedOnFill(context),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final hasDateFilter = widget.onDateRangeChanged != null;
     if (DesktopCanvas.wide(context)) {
       return Row(
         children: [
           Expanded(flex: 3, child: _buildSearchBar()),
           const SizedBox(width: 12),
+          if (hasDateFilter) ...[
+            if (widget.dateRange != null) ...[
+              _buildActiveRangeChip(),
+              const SizedBox(width: 8),
+            ],
+            _buildDateButton(),
+            const SizedBox(width: 12),
+          ],
           _sortChip(
             label: widget.sortByNameLabel,
             selected: widget.sortField == CustomerSortField.name,
@@ -117,9 +262,20 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
             children: [
               Expanded(child: _buildSearchBar()),
               const SizedBox(width: 10),
+              if (hasDateFilter) ...[
+                _buildDateButton(),
+                const SizedBox(width: 10),
+              ],
               _buildSortDirectionButton(),
             ],
           ),
+          if (hasDateFilter && widget.dateRange != null) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: _buildActiveRangeChip(),
+            ),
+          ],
           const SizedBox(height: 12),
           // Sort chips row
           SingleChildScrollView(
@@ -321,7 +477,9 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
-                color: isSelected ? onSelected : AppColors.secondaryText(context),
+                color: isSelected
+                    ? onSelected
+                    : AppColors.secondaryText(context),
               ),
             ),
           ],

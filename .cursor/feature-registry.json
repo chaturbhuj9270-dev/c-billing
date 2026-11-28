@@ -673,6 +673,45 @@
       ],
       "forbidden": [],
       "tests": []
+    },
+    {
+      "id": "customer-date-filter",
+      "name": "Customer created-date range filter",
+      "files": [
+        "lib/features/customer/presentation/widgets/customer_filter_widget.dart",
+        "lib/features/customer/presentation/widgets/customer_list_widget.dart",
+        "lib/features/customer/presentation/widgets/customer_summary_widget.dart",
+        "lib/features/customer/presentation/pages/enhanced_customer_page.dart"
+      ],
+      "invariants": [
+        "The date filter is optional: with no range selected the customer list, summary cards, search and sort chips behave exactly as before (newest first by default).",
+        "The range is on the customer's creation date (createdAt), whole days, inclusive of both ends. Customers without a creation date are hidden only while a range is applied.",
+        "The list and the summary cards use the same customerCreatedInRange helper so the counts always match the list.",
+        "The filter is local-only (no Firestore query or listener) and works together with search and the sort chips.",
+        "Labels reuse selectDateRange / clear from the localization files (all three languages)."
+      ],
+      "anchors": [
+        {
+          "file": "lib/features/customer/presentation/widgets/customer_filter_widget.dart",
+          "contains": "customerCreatedInRange"
+        },
+        {
+          "file": "lib/features/customer/presentation/widgets/customer_list_widget.dart",
+          "contains": "customerCreatedInRange"
+        },
+        {
+          "file": "lib/features/customer/presentation/widgets/customer_summary_widget.dart",
+          "contains": "customerCreatedInRange"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart",
+          "contains": "_createdRange"
+        }
+      ],
+      "forbidden": [],
+      "tests": [
+        "test/regression/customer_date_filter_test.dart"
+      ]
     }
   ]
 }

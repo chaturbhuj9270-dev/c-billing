@@ -11,6 +11,9 @@ class CustomerListWidget extends StatelessWidget {
   final String searchQuery;
   final CustomerSortField sortField;
   final bool sortAscending;
+
+  /// Optional created-date range (see [customerCreatedInRange]).
+  final DateTimeRange? dateRange;
   final Future<void> Function() onRefresh;
   final void Function(Map<String, dynamic>) onCustomerTap;
   final void Function(Map<String, dynamic>)? onCustomerLongPress;
@@ -36,6 +39,7 @@ class CustomerListWidget extends StatelessWidget {
     required this.searchQuery,
     required this.sortField,
     required this.sortAscending,
+    this.dateRange,
     required this.onRefresh,
     required this.onCustomerTap,
     this.onCustomerLongPress,
@@ -69,11 +73,17 @@ class CustomerListWidget extends StatelessWidget {
       }).toList();
     }
 
+    // Created-date range (only when the user applied one)
+    if (dateRange != null) {
+      filtered = filtered
+          .where((c) => customerCreatedInRange(c, dateRange))
+          .toList();
+    }
+
     // When pending amount filter is active, show only customers with pending balance
     if (sortField == CustomerSortField.pendingAmount) {
       filtered = filtered.where((c) {
-        final pending =
-            (c['currentPendingAmount'] as num?)?.toDouble() ?? 0.0;
+        final pending = (c['currentPendingAmount'] as num?)?.toDouble() ?? 0.0;
         return pending != 0.0;
       }).toList();
     }
@@ -181,8 +191,8 @@ class CustomerListWidget extends StatelessWidget {
               onCollectTap: onCollectTap != null
                   ? () => onCollectTap!(filtered[index])
                   : (onTransactionsTap != null
-                      ? () => onTransactionsTap!(filtered[index])
-                      : null),
+                        ? () => onTransactionsTap!(filtered[index])
+                        : null),
               onReportTap: onReportTap != null
                   ? () => onReportTap!(filtered[index])
                   : null,
@@ -345,7 +355,10 @@ class CustomerListWidget extends StatelessWidget {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: hasPending
                         ? AppTheme.toneRose.withValues(alpha: 0.12)
@@ -373,7 +386,10 @@ class CustomerListWidget extends StatelessWidget {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: synced
                         ? AppColors.accentSoft(context, 0.14)
@@ -403,12 +419,12 @@ class CustomerListWidget extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (hasPending &&
-                        (onCollectTap != null || onTransactionsTap != null)) ...[
+                        (onCollectTap != null ||
+                            onTransactionsTap != null)) ...[
                       _desktopCollectButton(
                         context,
-                        onTap: () => (onCollectTap ?? onTransactionsTap)!(
-                          customer,
-                        ),
+                        onTap: () =>
+                            (onCollectTap ?? onTransactionsTap)!(customer),
                       ),
                       const SizedBox(width: 6),
                     ],
@@ -496,7 +512,11 @@ class CustomerListWidget extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.currency_rupee_rounded, size: 14, color: AppTheme.white),
+              Icon(
+                Icons.currency_rupee_rounded,
+                size: 14,
+                color: AppTheme.white,
+              ),
               SizedBox(width: 2),
               Text(
                 'Collect',
@@ -900,7 +920,9 @@ class _CustomerCard extends StatelessWidget {
                               width: 34,
                               height: 34,
                               decoration: BoxDecoration(
-                                color: AppTheme.toneAmber.withValues(alpha: 0.16),
+                                color: AppTheme.toneAmber.withValues(
+                                  alpha: 0.16,
+                                ),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: const Icon(
@@ -1057,7 +1079,11 @@ class _ShimmerCardState extends State<_ShimmerCard>
           gradient: LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
-            colors: [AppColors.border(context), AppColors.chipFill(context), AppColors.border(context)],
+            colors: [
+              AppColors.border(context),
+              AppColors.chipFill(context),
+              AppColors.border(context),
+            ],
             stops: [
               (_animation.value - 0.3).clamp(0.0, 1.0),
               _animation.value.clamp(0.0, 1.0),

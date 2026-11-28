@@ -80,6 +80,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   // Raw customer entities from the local database stream (used to recompute _customers)
   List<CustomerEntity> _customerEntities = [];
   String _searchQuery = '';
+  DateTimeRange? _createdRange;
   // Newest customers first by default so a newly added customer is always on top
   CustomerSortField _sortField = CustomerSortField.createdDate;
   bool _sortAscending = false;
@@ -697,6 +698,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                         CustomerSummaryWidget(
                           customers: _customers,
                           searchQuery: _searchQuery,
+                          dateRange: _createdRange,
                           customersLabel: _localizations.customers,
                           pendingLabel: _localizations.pendingAmount,
                           unsyncedLabel: _localizations.unsynced,
@@ -728,6 +730,11 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                           sortByNameLabel: _localizations.sortByName,
                           sortByDateLabel: _localizations.sortByDate,
                           sortByPendingLabel: _localizations.pendingAmount,
+                          dateRange: _createdRange,
+                          onDateRangeChanged: (range) =>
+                              setState(() => _createdRange = range),
+                          dateFilterLabel: _localizations.selectDateRange,
+                          dateFilterClearLabel: _localizations.clear,
                         ),
 
                         const SizedBox(height: 16),
@@ -740,6 +747,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                             searchQuery: _searchQuery,
                             sortField: _sortField,
                             sortAscending: _sortAscending,
+                            dateRange: _createdRange,
                             onRefresh: _fetchFromFirebase,
                             onCustomerTap: _showCustomerDetails,
                             onCustomerLongPress: _showCustomerContextMenu,
