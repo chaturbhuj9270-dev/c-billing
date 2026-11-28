@@ -1,4 +1,7 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -204,8 +207,72 @@ class CustomerPendingReportService {
     );
   }
 
-  /// A4 statement PDF.
-  Future<Uint8List> buildPdf(CustomerPendingReport report, Shop shop) async {
+  /// Hindi / Marathi text cannot be shaped by the PDF library, so it is drawn
+  /// with Flutter's text engine and placed in the PDF as an image.
+  static bool _needsImageText(String text) =>
+      RegExp(r'[\u0900-\u097F]').hasMatch(text);
+
+  Future<Uint8List?> _renderTextPng(String text, double width) async {
+    try {
+      final painter = TextPainter(
+        text: TextSpan(
+          text: text,
+          style: const TextStyle(
+            color: Color(0xFF263238),
+            fontSize: 13,
+            height: 1.45,
+          ),
+        ),
+        textDirection: ui.TextDirection.ltr,
+      )..layout(maxWidth: width);
+      const scale = 3.0;
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder)..scale(scale);
+      painter.paint(canvas, Offset.zero);
+      final image = await recorder.endRecording().toImage(
+        (width * scale).ceil(),
+        (painter.height * scale).ceil().clamp(1, 4000),
+      );
+      final data = await image.toByteData(format: ui.ImageByteFormat.png);
+      return data?.buffer.asUint8List();
+    } catch (e) {
+      debugPrint('[PendingReport] message image failed: $e');
+      return null;
+    }
+  }
+
+  /// A4 statement PDF. [message] (the reminder text sent to the customer) is
+  /// printed in a box under the customer details so the single PDF attachment
+  /// carries the message too (WhatsApp drops the caption of a shared PDF).
+  Future<Uint8List> buildPdf(
+    CustomerPendingReport report,
+    Shop shop, {
+    String? message,
+  }) async {
+    final note = (message ?? '').trim();
+    pw.Widget? noteBox;
+    if (note.isNotEmpty) {
+      const boxWidth = 500.0;
+      final needsImage = _needsImageText(note);
+      final png = needsImage ? await _renderTextPng(note, boxWidth) : null;
+      if (png != null || !needsImage) {
+        noteBox = pw.Container(
+          width: double.infinity,
+          padding: const pw.EdgeInsets.all(10),
+          decoration: pw.BoxDecoration(
+            color: PdfColors.blue50,
+            border: pw.Border.all(color: PdfColors.blueGrey200, width: 0.5),
+            borderRadius: pw.BorderRadius.circular(4),
+          ),
+          child: png != null
+              ? pw.Image(pw.MemoryImage(png), width: boxWidth)
+              : pw.Text(
+                  note.replaceAll('\u20B9', 'Rs.'),
+                  style: const pw.TextStyle(fontSize: 10, lineSpacing: 2),
+                ),
+        );
+      }
+    }
     final doc = pw.Document();
     const accent = PdfColors.blueGrey800;
     const light = PdfColors.grey200;
@@ -373,6 +440,7 @@ class CustomerPendingReportService {
               ],
             ),
           ),
+          if (noteBox != null) ...[pw.SizedBox(height: 10), noteBox],
           if (report.bills.isNotEmpty) ...[
             sectionTitle('Pending bills'),
             table(

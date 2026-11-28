@@ -74,6 +74,23 @@ void main() {
     expect(String.fromCharCodes(bytes.take(4)), '%PDF');
   });
 
+  test('statement PDF carries the reminder message inside it', () async {
+    final report = _report(total: 800, bills: [bill], events: [event]);
+    final plain = await CustomerPendingReportService.instance.buildPdf(
+      report,
+      Shop.empty,
+    );
+    final withNote = await CustomerPendingReportService.instance.buildPdf(
+      report,
+      Shop.empty,
+      message:
+          'Dear Customer, your pending payment of ₹2,500 is outstanding.\n\n'
+          'Thank you!',
+    );
+    expect(String.fromCharCodes(withNote.take(4)), '%PDF');
+    expect(withNote.length, greaterThan(plain.length));
+  });
+
   test('WhatsApp number is normalised with country code', () {
     expect(WhatsAppShareService.normalizePhone('98765 43210'), '919876543210');
     expect(
@@ -108,5 +125,31 @@ void main() {
     expect(en, contains('If already paid, please ignore this message.'));
     expect(en, contains('Thank you for your support and business!'));
     expect(en, contains('₹200 with My Shop'));
+  });
+
+  test('second-step prompt text exists in all three languages', () {
+    final seen = <String>{};
+    for (final lang in ['English', 'Hindi', 'Marathi']) {
+      final l10n = AppLocalizations.of(lang);
+      expect(l10n.customerReportSendMessageTitle, isNotEmpty);
+      expect(l10n.customerReportSendMessageBody, isNotEmpty);
+      expect(l10n.customerReportSendMessage, isNotEmpty);
+      seen.add(l10n.customerReportSendMessageTitle);
+    }
+    expect(seen.length, 3);
+  });
+
+  test('return hint exists in all three languages and differs', () {
+    final hints = {
+      for (final lang in ['English', 'Hindi', 'Marathi'])
+        AppLocalizations.of(lang).customerReportSendPdfHint,
+    };
+    expect(hints.length, 3);
+    expect(hints.every((h) => h.isNotEmpty), isTrue);
+    final opening = {
+      for (final lang in ['English', 'Hindi', 'Marathi'])
+        AppLocalizations.of(lang).customerReportOpeningPdf,
+    };
+    expect(opening.length, 3);
   });
 }

@@ -906,8 +906,20 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
           .timeout(const Duration(seconds: 30));
       final shop = await shopFuture;
 
+      // The reminder text is also printed inside the PDF, so the single PDF
+      // attachment carries the message even if WhatsApp drops a caption.
+      final shopName = shop.shopName.trim().isNotEmpty
+          ? shop.shopName.trim()
+          : (shop.ownerName ?? '').trim();
+      final message = _localizations.customerPendingWhatsAppMessage(
+        report.customerName,
+        shopName,
+        CustomerPendingReportService.formatAmountGrouped(report.totalPending),
+        CustomerPendingReportService.formatDate(report.generatedAt),
+      );
+
       final bytes = await service
-          .buildPdf(report, shop)
+          .buildPdf(report, shop, message: message)
           .timeout(const Duration(seconds: 30));
       final safeName = report.customerName
           .replaceAll(RegExp(r'[^\w\s]'), '')
@@ -922,16 +934,6 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
         file = File('${dir.path}/$fileName');
         await file.writeAsBytes(bytes);
       }
-
-      final shopName = shop.shopName.trim().isNotEmpty
-          ? shop.shopName.trim()
-          : (shop.ownerName ?? '').trim();
-      final message = _localizations.customerPendingWhatsAppMessage(
-        report.customerName,
-        shopName,
-        CustomerPendingReportService.formatAmountGrouped(report.totalPending),
-        CustomerPendingReportService.formatDate(report.generatedAt),
-      );
 
       closeDialog();
       if (!mounted) return;

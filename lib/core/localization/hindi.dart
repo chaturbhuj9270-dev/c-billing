@@ -1179,4 +1179,14 @@ class HindiLocalization {
   static const String customerReportSendPdfBody =
       'पहले WhatsApp में संदेश भेजें, फिर वापस आकर "PDF भेजें" दबाएँ ताकि रिपोर्ट उसी चैट में जाए।';
   static const String customerReportSendPdf = 'PDF भेजें';
+  static const String customerReportSendMessageTitle = 'अब संदेश भेजें';
+  static const String customerReportSendMessageBody =
+      'PDF चैट में चला गया है। उसी चैट में रिमाइंडर संदेश जोड़ने के लिए "संदेश भेजें" दबाएँ।';
+  static const String customerReportSendMessage = 'संदेश भेजें';
+  static const String customerReportOpeningMessage =
+      'उसी चैट में संदेश खोल रहे हैं...';
+  static const String customerReportOpeningPdf =
+      'उसी चैट में PDF खोल रहे हैं...';
+  static const String customerReportSendPdfHint =
+      'संदेश भेज दिया? उसी चैट में PDF रिपोर्ट भेजने के लिए WhatsApp आइकन फिर से दबाएँ।';
 }

@@ -489,11 +489,13 @@
         "The report is READ-ONLY: it reads bills / event orders and takes the total from the customer card's ledger value. It never writes ledger entries or changes balances (no CustomerTransactionOfflineController in the report service).",
         "The statement always adds up to the customer's pending total: open bills + open events + an 'Opening balance / adjustments' row for any difference.",
         "The report icon only shows for customers with pending > 0; generating it must not change the existing Collect / Finance / Transactions / call / SMS / WhatsApp icons.",
-        "FilePreviewPage's existing WhatsApp/Share behaviour is unchanged unless whatsAppMessage is passed. With a message on Android the PDF and the message (as its caption) go in ONE share intent targeted at the customer's chat (jid + direct-share shortcut id through the c_billing/whatsapp channel), so the chat opens with both attached and only Send is left. Do not go back to opening wa.me with text only: that sends the message without the PDF. If the native share is unavailable the share sheet gets the PDF + message; web/desktop save the PDF and open wa.me with the message.",
+        "FilePreviewPage's existing WhatsApp/Share behaviour is unchanged unless whatsAppMessage is passed. WhatsApp (2.26) ignores the caption of a PDF shared from another app, so the reminder message is PRINTED INSIDE the PDF (buildPdf(message:)) and the single PDF attachment carries both. On Android: (1) tapping WhatsApp opens the customer's chat with the PDF attached (native share intent, jid + shortcut id, c_billing/whatsapp channel); (2) when the user returns to the preview within 15 minutes (or taps WhatsApp again) the chat opens via wa.me with the message typed in. Step 2 is optional because the PDF already contains the message. Do NOT launch the PDF share and the wa.me link together (startActivities): WhatsApp reorders them and shows its contact picker. Never block the user with a dialog on return. If WhatsApp cannot be opened the share sheet gets the PDF + message; web/desktop save the PDF and open wa.me with the message.",
         "The Android FileProvider (billing_fileprovider) and the WhatsApp <queries> entries must stay, otherwise the direct chat silently falls back to the share sheet.",
         "The report preview renders PDF pages at a low fixed dpi (renderDpi: 130). A 300 dpi A4 bitmap is ~35 MB and gets the app killed (black screen / restart) while the user is in WhatsApp. Other previews keep the adaptive default.",
         "User text lives in all three localization files (customerPendingReport, customerReportFailed, customerPendingWhatsAppMessage, ...).",
-        "The report reads only this customer's open bills / events with one SQL query each (loadOpenBillsForCustomers / loadOpenEventOrdersForCustomers). The local database runs on the UI isolate, so loading every bill with its items per customer id made generation slow and time out."
+        "The report reads only this customer's open bills / events with one SQL query each (loadOpenBillsForCustomers / loadOpenEventOrdersForCustomers). The local database runs on the UI isolate, so loading every bill with its items per customer id made generation slow and time out.",
+        "MainActivity.shareableUri copies files outside the FileProvider folders into cache first. Dart's temp folder is the app's code_cache, which the provider cannot share; without the copy the direct chat share silently failed and the generic share sheet (Gmail/WhatsApp/...) appeared.",
+        "Hindi/Marathi message text inside the PDF is drawn with Flutter's text engine and embedded as an image: the pdf library cannot shape Devanagari (letters would be garbled) and its built-in fonts have no Rupee sign (English uses 'Rs.')."
       ],
       "anchors": [
         {
@@ -563,6 +565,58 @@
         {
           "file": "android/app/src/main/kotlin/com/example/c_billing/MainActivity.kt",
           "contains": "EXTRA_STREAM"
+        },
+        {
+          "file": "lib/core/localization/hindi.dart",
+          "contains": "customerReportSendMessageTitle"
+        },
+        {
+          "file": "lib/core/localization/marathi.dart",
+          "contains": "customerReportSendMessageTitle"
+        },
+        {
+          "file": "lib/core/localization/english.dart",
+          "contains": "customerReportSendMessageTitle"
+        },
+        {
+          "file": "android/app/src/main/kotlin/com/example/c_billing/MainActivity.kt",
+          "contains": "ClipData.Item(message"
+        },
+        {
+          "file": "android/app/src/main/kotlin/com/example/c_billing/MainActivity.kt",
+          "contains": "shareableUri"
+        },
+        {
+          "file": "lib/core/localization/english.dart",
+          "contains": "customerReportSendPdfHint"
+        },
+        {
+          "file": "lib/core/localization/hindi.dart",
+          "contains": "customerReportSendPdfHint"
+        },
+        {
+          "file": "lib/core/localization/marathi.dart",
+          "contains": "customerReportSendPdfHint"
+        },
+        {
+          "file": "lib/core/localization/english.dart",
+          "contains": "customerReportOpeningPdf"
+        },
+        {
+          "file": "lib/common_widgets/file_preview_page.dart",
+          "contains": "_sendPendingMessage"
+        },
+        {
+          "file": "lib/features/customer/data/services/customer_pending_report_service.dart",
+          "contains": "_renderTextPng"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart",
+          "contains": "buildPdf(report, shop, message: message)"
+        },
+        {
+          "file": "lib/core/localization/english.dart",
+          "contains": "customerReportOpeningMessage"
         }
       ],
       "forbidden": [
@@ -585,6 +639,16 @@
           "file": "lib/features/customer/data/services/customer_pending_report_service.dart",
           "contains": "getEventOrdersByCustomerId(",
           "why": "full event table scan per id made the report slow / time out"
+        },
+        {
+          "file": "android/app/src/main/kotlin/com/example/c_billing/MainActivity.kt",
+          "contains": "ClipData.newRawUri",
+          "why": "ClipData without the text makes WhatsApp drop the PDF caption (message missing)"
+        },
+        {
+          "file": "lib/common_widgets/file_preview_page.dart",
+          "contains": "chatFirst: true",
+          "why": "launching the PDF share and the wa.me link together made WhatsApp show its contact picker"
         }
       ],
       "tests": [

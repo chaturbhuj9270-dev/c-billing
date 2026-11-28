@@ -99,7 +99,10 @@ class FilePreviewPage extends StatefulWidget {
     this.details,
     this.printPageFormat,
     this.rebuildPdfForPrint,
-  }) : assert(file != null || bytes != null, 'Provide a file or document bytes');
+  }) : assert(
+         file != null || bytes != null,
+         'Provide a file or document bytes',
+       );
 
   // Opens print/report preview. Web, Windows, and Mac always use a centered popup. Phone pushes a full page.
   static Future<void> open(
@@ -138,9 +141,9 @@ class FilePreviewPage extends StatefulWidget {
       rebuildPdfForPrint: rebuildPdfForPrint,
     );
     if (!desktop) {
-      return Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => page),
-      );
+      return Navigator.of(
+        context,
+      ).push(MaterialPageRoute<void>(builder: (_) => page));
     }
 
     return _showCenteredDialog(context, page);
@@ -183,7 +186,8 @@ class FilePreviewPage extends StatefulWidget {
   State<FilePreviewPage> createState() => _FilePreviewPageState();
 }
 
-class _FilePreviewPageState extends State<FilePreviewPage> {
+class _FilePreviewPageState extends State<FilePreviewPage>
+    with WidgetsBindingObserver {
   bool _isLoading = true;
   bool _isSharing = false;
   bool _isSharingWhatsApp = false;
@@ -218,6 +222,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _pdfScrollController.addListener(_onPdfScroll);
     _loadFile();
   }
@@ -235,6 +240,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pdfScrollController.removeListener(_onPdfScroll);
     _transformationController.dispose();
     _pdfScrollController.dispose();
@@ -520,8 +526,12 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   }
 
   String _downloadName(String extension) {
-    final base = widget.fileName.trim().isEmpty ? 'report' : widget.fileName.trim();
-    return base.toLowerCase().endsWith('.$extension') ? base : '$base.$extension';
+    final base = widget.fileName.trim().isEmpty
+        ? 'report'
+        : widget.fileName.trim();
+    return base.toLowerCase().endsWith('.$extension')
+        ? base
+        : '$base.$extension';
   }
 
   Future<void> _shareBytes() async {
@@ -530,10 +540,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       throw Exception('Document is not ready');
     }
     if (widget.fileType == FilePreviewType.pdf) {
-      await Printing.sharePdf(
-        bytes: data,
-        filename: _downloadName('pdf'),
-      );
+      await Printing.sharePdf(bytes: data, filename: _downloadName('pdf'));
       return;
     }
     downloadWebBytes(data, _downloadName('csv'), 'text/csv');
@@ -613,25 +620,79 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     }
   }
 
-  // Sends the PDF to the customer's own WhatsApp chat with [message] as its
-  // caption, in one step.
+  // Second step (optional): the typed message. The PDF already carries the
+  // message inside it, so nothing is lost if the user never comes back.
+  static const Duration _messageStepWindow = Duration(minutes: 15);
+  String? _messagePendingPhone;
+  String? _messagePendingText;
+  DateTime? _messagePendingAt;
+  bool _leftForWhatsApp = false;
+
+  bool _hasPendingMessage(String phone) =>
+      _messagePendingPhone == phone &&
+      _messagePendingText != null &&
+      _messagePendingAt != null &&
+      DateTime.now().difference(_messagePendingAt!) < _messageStepWindow;
+
+  // When the user is back from the PDF step, the chat is opened again with the
+  // message typed in (no dialog). Tapping the WhatsApp button does it by hand.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_messagePendingPhone == null) return;
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _leftForWhatsApp = true;
+    } else if (state == AppLifecycleState.resumed && _leftForWhatsApp) {
+      _leftForWhatsApp = false;
+      final phone = _messagePendingPhone!;
+      if (!_hasPendingMessage(phone)) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        // Only when this preview is the screen the user is looking at.
+        if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
+        GlassyToast.show(
+          context,
+          AppLocalizations.of(
+            LanguageService.instance.currentLanguage,
+          ).customerReportOpeningMessage,
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 700));
+        if (!mounted || !_hasPendingMessage(phone)) return;
+        await _sendPendingMessage(phone);
+      });
+      WidgetsBinding.instance.scheduleFrame();
+    }
+  }
+
+  // Sends the report to the customer's own WhatsApp chat.
   //
-  // Android: WhatsApp share intent targeted at the customer's number (`jid`),
-  // so the chat opens with the PDF and message attached and only Send is left.
-  // If WhatsApp does not know the number it shows its "Send to" list with the
-  // PDF and message still attached. iPhone: share sheet with both.
-  // Web / desktop: save the PDF and open the chat with the message.
+  // WhatsApp ignores the caption of a PDF shared from another app, so the
+  // message is printed inside the PDF as well. On Android:
+  //   1. tap WhatsApp: the customer's chat opens with the PDF attached (share
+  //      intent aimed at their number) - press Send;
+  //   2. when the user returns, the chat opens again with the message typed in
+  //      (also on tapping WhatsApp again) - press Send.
+  // iPhone: share sheet with the PDF and message. Web / desktop: save the PDF
+  // and open the chat with the message.
   Future<void> _sendToCustomerChat(String phone, String message) async {
     final file = widget.file;
     if (file != null && await file.exists()) {
       if (WhatsAppShareService.supportsDirectChat) {
+        if (_hasPendingMessage(phone)) {
+          await _sendPendingMessage(phone);
+          return;
+        }
         final opened = await WhatsAppShareService.sendFileToChat(
           phone: phone,
           filePath: file.path,
-          message: message,
+          message: '',
         );
         if (opened) {
           await WhatsAppShareService.markChatReady(phone);
+          _messagePendingPhone = phone;
+          _messagePendingText = message;
+          _messagePendingAt = DateTime.now();
+          _leftForWhatsApp = false;
           return;
         }
       }
@@ -671,6 +732,20 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         ).customerReportAttachHint,
       );
     }
+  }
+
+  // Opens the customer's chat with the reminder message typed in.
+  Future<void> _sendPendingMessage(String phone) async {
+    final text = _messagePendingText;
+    _messagePendingPhone = null;
+    _messagePendingText = null;
+    _messagePendingAt = null;
+    if (text == null || text.isEmpty) return;
+    await CommunicationService.instance.openWhatsApp(
+      phone,
+      message: text,
+      context: mounted ? context : null,
+    );
   }
 
   Future<void> _handlePrint() async {
@@ -735,12 +810,17 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               pw.SizedBox(height: 6),
               pw.Text(
                 widget.subtitle ?? DateTime.now().toString().split('.').first,
-                style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
+                style: const pw.TextStyle(
+                  fontSize: 12,
+                  color: PdfColors.grey700,
+                ),
               ),
               pw.SizedBox(height: 16),
               pw.TableHelper.fromTextArray(
                 headers: data.first,
-                data: data.length > 1 ? data.sublist(1) : const <List<String>>[],
+                data: data.length > 1
+                    ? data.sublist(1)
+                    : const <List<String>>[],
                 headerStyle: pw.TextStyle(
                   color: PdfColors.white,
                   fontWeight: pw.FontWeight.bold,
@@ -936,15 +1016,9 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          flex: _isPreviewExpanded ? 1 : 7,
-          child: _buildPreviewPane(),
-        ),
+        Expanded(flex: _isPreviewExpanded ? 1 : 7, child: _buildPreviewPane()),
         if (!_isPreviewExpanded)
-          SizedBox(
-            width: 304,
-            child: _buildDetailsPane(),
-          ),
+          SizedBox(width: 304, child: _buildDetailsPane()),
       ],
     );
   }
@@ -1029,7 +1103,8 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             _isPreviewExpanded
                 ? Icons.fullscreen_exit_rounded
                 : Icons.fullscreen_rounded,
-            onTap: () => setState(() => _isPreviewExpanded = !_isPreviewExpanded),
+            onTap: () =>
+                setState(() => _isPreviewExpanded = !_isPreviewExpanded),
           ),
         ],
       ),
@@ -1434,11 +1509,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                 color: AppTheme.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Icon(
-                Icons.error_outline,
-                color: AppTheme.red,
-                size: 48,
-              ),
+              child: Icon(Icons.error_outline, color: AppTheme.red, size: 48),
             ),
             SizedBox(height: 20),
             Text(
@@ -1603,7 +1674,10 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.accentSoft(context, 0.1),
                   borderRadius: BorderRadius.circular(16),
@@ -1755,11 +1829,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   }
 
   Widget _buildPdfPage(Uint8List pageBytes, int pageNumber) {
-    Widget paperImage({
-      required BoxFit fit,
-      double? width,
-      double? height,
-    }) {
+    Widget paperImage({required BoxFit fit, double? width, double? height}) {
       return DecoratedBox(
         decoration: BoxDecoration(
           color: _pdfPaperColor,
@@ -1985,10 +2055,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                   ),
                   // Sheet indicator
                   Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: AppColors.card(context),
                       borderRadius: BorderRadius.circular(4),
@@ -2360,10 +2427,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                   SizedBox(
                     width: 22,
                     height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: fg,
-                    ),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: fg),
                   )
                 else if (iconWidget != null)
                   IconTheme(
@@ -2391,7 +2455,6 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       ),
     );
   }
-
 }
 
 // File type for preview

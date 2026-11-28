@@ -1172,4 +1172,14 @@ class EnglishLocalization {
   static const String customerReportSendPdfBody =
       'Send the message in WhatsApp first, then come back and tap "Send PDF" to put the report in the same chat.';
   static const String customerReportSendPdf = 'Send PDF';
+  static const String customerReportSendMessageTitle = 'Now send the message';
+  static const String customerReportSendMessageBody =
+      'The PDF is in the chat. Tap "Send message" to add the reminder message to the same chat.';
+  static const String customerReportSendMessage = 'Send message';
+  static const String customerReportOpeningMessage =
+      'Opening the message in the same chat...';
+  static const String customerReportOpeningPdf =
+      'Opening the PDF in the same chat...';
+  static const String customerReportSendPdfHint =
+      'Message sent? Tap the WhatsApp icon again to send the PDF report to the same chat.';
 }

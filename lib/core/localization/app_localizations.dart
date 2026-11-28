@@ -10352,4 +10352,68 @@ class AppLocalizations {
         return EnglishLocalization.customerReportSendPdf;
     }
   }
+
+  String get customerReportSendMessageTitle {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportSendMessageTitle;
+      case 'Marathi':
+        return MarathiLocalization.customerReportSendMessageTitle;
+      default:
+        return EnglishLocalization.customerReportSendMessageTitle;
+    }
+  }
+  String get customerReportSendMessageBody {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportSendMessageBody;
+      case 'Marathi':
+        return MarathiLocalization.customerReportSendMessageBody;
+      default:
+        return EnglishLocalization.customerReportSendMessageBody;
+    }
+  }
+  String get customerReportSendMessage {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportSendMessage;
+      case 'Marathi':
+        return MarathiLocalization.customerReportSendMessage;
+      default:
+        return EnglishLocalization.customerReportSendMessage;
+    }
+  }
+
+  String get customerReportOpeningMessage {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportOpeningMessage;
+      case 'Marathi':
+        return MarathiLocalization.customerReportOpeningMessage;
+      default:
+        return EnglishLocalization.customerReportOpeningMessage;
+    }
+  }
+
+  String get customerReportOpeningPdf {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportOpeningPdf;
+      case 'Marathi':
+        return MarathiLocalization.customerReportOpeningPdf;
+      default:
+        return EnglishLocalization.customerReportOpeningPdf;
+    }
+  }
+
+  String get customerReportSendPdfHint {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportSendPdfHint;
+      case 'Marathi':
+        return MarathiLocalization.customerReportSendPdfHint;
+      default:
+        return EnglishLocalization.customerReportSendPdfHint;
+    }
+  }
 }

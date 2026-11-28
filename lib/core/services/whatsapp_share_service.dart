@@ -21,8 +21,9 @@ class WhatsAppShareService {
   static Future<bool> isChatReady(String phone) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      return (prefs.getStringList(_readyChatsKey) ?? const <String>[])
-          .contains(normalizePhone(phone));
+      return (prefs.getStringList(_readyChatsKey) ?? const <String>[]).contains(
+        normalizePhone(phone),
+      );
     } catch (_) {
       return false;
     }
@@ -59,6 +60,7 @@ class WhatsAppShareService {
     required String filePath,
     required String message,
     String mimeType = 'application/pdf',
+    bool chatFirst = false,
   }) async {
     if (!supportsDirectChat) return false;
     final number = normalizePhone(phone);
@@ -69,6 +71,7 @@ class WhatsAppShareService {
         'path': filePath,
         'message': message,
         'mime': mimeType,
+        'chatFirst': chatFirst,
       });
       return ok ?? false;
     } on PlatformException catch (e) {

@@ -1179,4 +1179,14 @@ class MarathiLocalization {
   static const String customerReportSendPdfBody =
       'आधी WhatsApp मध्ये संदेश पाठवा, मग परत येऊन "PDF पाठवा" दाबा म्हणजे अहवाल त्याच चॅटमध्ये जाईल.';
   static const String customerReportSendPdf = 'PDF पाठवा';
+  static const String customerReportSendMessageTitle = 'आता संदेश पाठवा';
+  static const String customerReportSendMessageBody =
+      'PDF चॅटमध्ये गेला आहे. त्याच चॅटमध्ये स्मरणसंदेश जोडण्यासाठी "संदेश पाठवा" दाबा.';
+  static const String customerReportSendMessage = 'संदेश पाठवा';
+  static const String customerReportOpeningMessage =
+      'त्याच चॅटमध्ये संदेश उघडत आहे...';
+  static const String customerReportOpeningPdf =
+      'त्याच चॅटमध्ये PDF उघडत आहे...';
+  static const String customerReportSendPdfHint =
+      'संदेश पाठवला? त्याच चॅटमध्ये PDF अहवाल पाठवण्यासाठी WhatsApp आयकॉन पुन्हा दाबा.';
 }

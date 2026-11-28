@@ -2,8 +2,10 @@ package com.example.c_billing
 
 import android.content.ActivityNotFoundException
 import android.content.ClipData
+import android.content.ClipDescription
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.util.Log
 import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterFragmentActivity
@@ -21,7 +23,10 @@ class MainActivity : FlutterFragmentActivity() {
                     val path = call.argument<String>("path") ?: ""
                     val message = call.argument<String>("message") ?: ""
                     val mime = call.argument<String>("mime") ?: "application/pdf"
-                    result.success(sendToWhatsAppChat(phone, path, message, mime))
+                    val chatFirst = call.argument<Boolean>("chatFirst") ?: false
+                    result.success(
+                        sendToWhatsAppChat(phone, path, message, mime, chatFirst)
+                    )
                 } else {
                     result.notImplemented()
                 }
@@ -35,16 +40,13 @@ class MainActivity : FlutterFragmentActivity() {
         phone: String,
         path: String,
         message: String,
-        mime: String
+        mime: String,
+        chatFirst: Boolean = false
     ): Boolean {
         if (phone.isEmpty()) return false
         val file = File(path)
         if (!file.exists()) return false
-        val uri = try {
-            FileProvider.getUriForFile(this, "$packageName.billing_fileprovider", file)
-        } catch (e: IllegalArgumentException) {
-            return false
-        }
+        val uri = shareableUri(file) ?: return false
 
         val jid = "$phone@s.whatsapp.net"
         for (pkg in listOf("com.whatsapp", "com.whatsapp.w4b")) {
@@ -57,12 +59,33 @@ class MainActivity : FlutterFragmentActivity() {
                 putExtra("jid", jid)
                 // WhatsApp's direct-share shortcut for a chat uses the jid as id.
                 putExtra(EXTRA_SHORTCUT_ID, jid)
-                clipData = ClipData.newRawUri("", uri)
+                // WhatsApp's document preview takes its caption from the ClipData
+                // item, so it must carry the text as well as the file.
+                clipData = ClipData(
+                    ClipDescription("report", arrayOf(mime)),
+                    ClipData.Item(message.ifEmpty { null }, null, null, uri)
+                )
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
             try {
-                startActivity(intent)
-                Log.d(TAG, "Shared $mime to $pkg chat $jid")
+                if (chatFirst && message.isNotEmpty()) {
+                    // WhatsApp drops the caption of a shared PDF, so the message
+                    // goes in as the chat's draft: the chat (with the message
+                    // typed in) is opened first and the PDF preview is stacked
+                    // on top. After the PDF is sent the user lands in the same
+                    // chat with the message waiting in the box.
+                    val chat = Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse("https://wa.me/$phone?text=${Uri.encode(message)}")
+                    ).apply { setPackage(pkg) }
+                    // Last intent ends up on top: the chat link is started last so
+                    // its message is typed in before the PDF preview opens.
+                    startActivities(arrayOf(intent, chat))
+                    Log.d(TAG, "Opened $pkg chat $jid with message + PDF")
+                } else {
+                    startActivity(intent)
+                    Log.d(TAG, "Shared $mime to $pkg chat $jid")
+                }
                 return true
             } catch (e: ActivityNotFoundException) {
                 Log.w(TAG, "$pkg cannot receive the share", e)
@@ -70,6 +93,28 @@ class MainActivity : FlutterFragmentActivity() {
         }
         Log.w(TAG, "WhatsApp not available for direct share")
         return false
+    }
+
+    // Content URI WhatsApp can read. Dart's temp folder is the app's code_cache,
+    // which FileProvider cannot share, so files outside the shared folders are
+    // copied into cache first (otherwise the direct chat share silently failed
+    // and the generic share sheet appeared instead).
+    private fun shareableUri(file: File): Uri? {
+        val authority = "$packageName.billing_fileprovider"
+        try {
+            return FileProvider.getUriForFile(this, authority, file)
+        } catch (e: IllegalArgumentException) {
+            Log.d(TAG, "${file.path} is outside the shared folders, copying")
+        }
+        return try {
+            val dir = File(cacheDir, "whatsapp_share").apply { mkdirs() }
+            val copy = File(dir, file.name)
+            file.copyTo(copy, overwrite = true)
+            FileProvider.getUriForFile(this, authority, copy)
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not prepare ${file.path} for sharing", e)
+            null
+        }
     }
 
     private fun isInstalled(pkg: String): Boolean {
