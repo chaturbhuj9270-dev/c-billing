@@ -81,8 +81,8 @@ class PdfBillService {
       format.height == double.infinity
           ? double.infinity
           : (format.height < PdfPageFormat.a4.height
-              ? double.infinity
-              : format.height),
+                ? double.infinity
+                : format.height),
       marginAll: 0,
     );
 
@@ -260,7 +260,9 @@ class PdfBillService {
                               'Ph: ${shopDetails.phone}',
                               style: pw.TextStyle(
                                 fontSize: 9,
-                                color: PdfColor.fromInt(AppTheme.white.toARGB32()),
+                                color: PdfColor.fromInt(
+                                  AppTheme.white.toARGB32(),
+                                ),
                               ),
                             ),
                           if (shopDetails.phone.isNotEmpty &&
@@ -270,7 +272,9 @@ class PdfBillService {
                               ' | ',
                               style: pw.TextStyle(
                                 fontSize: 9,
-                                color: PdfColor.fromInt(AppTheme.white.toARGB32()),
+                                color: PdfColor.fromInt(
+                                  AppTheme.white.toARGB32(),
+                                ),
                               ),
                             ),
                           if (shopDetails.email != null &&
@@ -279,7 +283,9 @@ class PdfBillService {
                               shopDetails.email!,
                               style: pw.TextStyle(
                                 fontSize: 9,
-                                color: PdfColor.fromInt(AppTheme.white.toARGB32()),
+                                color: PdfColor.fromInt(
+                                  AppTheme.white.toARGB32(),
+                                ),
                               ),
                             ),
                         ],
@@ -545,7 +551,9 @@ class PdfBillService {
                             style: pw.TextStyle(
                               fontSize: 8,
                               fontWeight: pw.FontWeight.bold,
-                              color: PdfColor.fromInt(AppTheme.orange800.toARGB32()),
+                              color: PdfColor.fromInt(
+                                AppTheme.orange800.toARGB32(),
+                              ),
                             ),
                           ),
                         ],
@@ -595,31 +603,41 @@ class PdfBillService {
                             _buildSummaryRow(
                               'CGST (${billData.cgstPercent.toStringAsFixed(1)}%)',
                               billData.cgstAmount,
-                              color: PdfColor.fromInt(AppTheme.orange800.toARGB32()),
+                              color: PdfColor.fromInt(
+                                AppTheme.orange800.toARGB32(),
+                              ),
                             ),
                           if (billData.sgstAmount > 0)
                             _buildSummaryRow(
                               'SGST (${billData.sgstPercent.toStringAsFixed(1)}%)',
                               billData.sgstAmount,
-                              color: PdfColor.fromInt(AppTheme.orange800.toARGB32()),
+                              color: PdfColor.fromInt(
+                                AppTheme.orange800.toARGB32(),
+                              ),
                             ),
                           if (billData.igstAmount > 0)
                             _buildSummaryRow(
                               'IGST (${billData.igstPercent.toStringAsFixed(1)}%)',
                               billData.igstAmount,
-                              color: PdfColor.fromInt(AppTheme.orange800.toARGB32()),
+                              color: PdfColor.fromInt(
+                                AppTheme.orange800.toARGB32(),
+                              ),
                             ),
                           if (billData.otherTaxAmount > 0)
                             _buildSummaryRow(
                               '${billData.otherTaxName.isNotEmpty ? billData.otherTaxName : "TAX"} (${billData.otherTaxPercent.toStringAsFixed(1)}%)',
                               billData.otherTaxAmount,
-                              color: PdfColor.fromInt(AppTheme.orange800.toARGB32()),
+                              color: PdfColor.fromInt(
+                                AppTheme.orange800.toARGB32(),
+                              ),
                             ),
                           _buildSummaryRow(
                             'Total Tax',
                             billData.totalTaxAmount,
                             bold: true,
-                            color: PdfColor.fromInt(AppTheme.orange900.toARGB32()),
+                            color: PdfColor.fromInt(
+                              AppTheme.orange900.toARGB32(),
+                            ),
                           ),
                         ],
                         if (billData.hasRoundOff)
@@ -643,7 +661,9 @@ class PdfBillService {
                                 style: pw.TextStyle(
                                   fontSize: 10,
                                   fontWeight: pw.FontWeight.bold,
-                                  color: PdfColor.fromInt(AppTheme.white.toARGB32()),
+                                  color: PdfColor.fromInt(
+                                    AppTheme.white.toARGB32(),
+                                  ),
                                 ),
                               ),
                               pw.Text(
@@ -651,7 +671,9 @@ class PdfBillService {
                                 style: pw.TextStyle(
                                   fontSize: 12,
                                   fontWeight: pw.FontWeight.bold,
-                                  color: PdfColor.fromInt(AppTheme.white.toARGB32()),
+                                  color: PdfColor.fromInt(
+                                    AppTheme.white.toARGB32(),
+                                  ),
                                 ),
                               ),
                             ],
@@ -662,14 +684,18 @@ class PdfBillService {
                           _buildSummaryRow(
                             'Paid Amount',
                             billData.paidAmount ?? 0,
-                            color: PdfColor.fromInt(AppTheme.green800.toARGB32()),
+                            color: PdfColor.fromInt(
+                              AppTheme.green800.toARGB32(),
+                            ),
                           ),
                           if (billData.hasPendingAmount)
                             _buildSummaryRow(
                               'Balance Due',
                               billData.pendingAmount!,
                               bold: true,
-                              color: PdfColor.fromInt(AppTheme.red700.toARGB32()),
+                              color: PdfColor.fromInt(
+                                AppTheme.red700.toARGB32(),
+                              ),
                             ),
                         ],
                       ],
@@ -699,14 +725,18 @@ class PdfBillService {
                           'PREVIOUS DUE',
                           style: pw.TextStyle(
                             fontSize: 9,
-                            color: PdfColor.fromInt(AppTheme.orange900.toARGB32()),
+                            color: PdfColor.fromInt(
+                              AppTheme.orange900.toARGB32(),
+                            ),
                           ),
                         ),
                         pw.Text(
                           'Rs. ${billData.previousDueAmount.toStringAsFixed(2)}',
                           style: pw.TextStyle(
                             fontSize: 9,
-                            color: PdfColor.fromInt(AppTheme.orange900.toARGB32()),
+                            color: PdfColor.fromInt(
+                              AppTheme.orange900.toARGB32(),
+                            ),
                           ),
                         ),
                       ],
@@ -721,7 +751,9 @@ class PdfBillService {
                         style: pw.TextStyle(
                           fontSize: 11,
                           fontWeight: pw.FontWeight.bold,
-                          color: PdfColor.fromInt(AppTheme.orange900.toARGB32()),
+                          color: PdfColor.fromInt(
+                            AppTheme.orange900.toARGB32(),
+                          ),
                         ),
                       ),
                       pw.Text(
@@ -729,7 +761,9 @@ class PdfBillService {
                         style: pw.TextStyle(
                           fontSize: 12,
                           fontWeight: pw.FontWeight.bold,
-                          color: PdfColor.fromInt(AppTheme.orange900.toARGB32()),
+                          color: PdfColor.fromInt(
+                            AppTheme.orange900.toARGB32(),
+                          ),
                         ),
                       ),
                     ],
@@ -841,7 +875,9 @@ class PdfBillService {
                             decoration: pw.BoxDecoration(
                               border: pw.Border(
                                 bottom: pw.BorderSide(
-                                  color: PdfColor.fromInt(AppTheme.grey.toARGB32()),
+                                  color: PdfColor.fromInt(
+                                    AppTheme.grey.toARGB32(),
+                                  ),
                                   width: 0.5,
                                 ),
                               ),
@@ -885,7 +921,9 @@ class PdfBillService {
                             decoration: pw.BoxDecoration(
                               border: pw.Border(
                                 bottom: pw.BorderSide(
-                                  color: PdfColor.fromInt(AppTheme.grey.toARGB32()),
+                                  color: PdfColor.fromInt(
+                                    AppTheme.grey.toARGB32(),
+                                  ),
                                   width: 0.5,
                                 ),
                               ),
@@ -915,7 +953,10 @@ class PdfBillService {
       children: [
         pw.Text(
           '$label: ',
-          style: pw.TextStyle(fontSize: 9, color: PdfColor.fromInt(AppTheme.grey700.toARGB32())),
+          style: pw.TextStyle(
+            fontSize: 9,
+            color: PdfColor.fromInt(AppTheme.grey700.toARGB32()),
+          ),
         ),
         pw.Text(
           value,
@@ -1332,7 +1373,9 @@ class PdfBillService {
       columnWidths: columnWidths,
       children: [
         pw.TableRow(
-          decoration: pw.BoxDecoration(color: PdfColor.fromInt(AppTheme.grey200.toARGB32())),
+          decoration: pw.BoxDecoration(
+            color: PdfColor.fromInt(AppTheme.grey200.toARGB32()),
+          ),
           children: headerCells,
         ),
         ...itemRows,
@@ -1366,12 +1409,13 @@ class PdfBillService {
     // 80mm thermal receipt — stretch so QR|bank Row gets a real width bound.
     final receiptWidth = contentWidth ?? double.infinity;
     final muted = PdfColor.fromInt(AppTheme.grey600.toARGB32());
-    final hasLogo = shopDetails.shopLogoBase64 != null &&
+    final hasLogo =
+        shopDetails.shopLogoBase64 != null &&
         shopDetails.shopLogoBase64!.isNotEmpty;
-    final hasProp = shopDetails.ownerName != null &&
-        shopDetails.ownerName!.isNotEmpty;
-    final qtyLabel = billData.totalQuantity ==
-            billData.totalQuantity.roundToDouble()
+    final hasProp =
+        shopDetails.ownerName != null && shopDetails.ownerName!.isNotEmpty;
+    final qtyLabel =
+        billData.totalQuantity == billData.totalQuantity.roundToDouble()
         ? billData.totalQuantity.toInt().toString()
         : billData.totalQuantity.toStringAsFixed(2);
 
@@ -2477,8 +2521,7 @@ class PdfBillService {
     final prefix = billData.isQuotation ? 'quotation' : 'bill';
     await Printing.sharePdf(
       bytes: await pdf.save(),
-      filename:
-          '${prefix}_${billData.billNumber.replaceAll('/', '_')}.pdf',
+      filename: '${prefix}_${billData.billNumber.replaceAll('/', '_')}.pdf',
     );
   }
 
@@ -2498,7 +2541,8 @@ class PdfBillService {
     final upiId = shopDetails.upiId?.trim() ?? '';
     if (!looksLikeUpiId(upiId)) return null;
 
-    final amount = billData.qrAmountOverride ??
+    final amount =
+        billData.qrAmountOverride ??
         billPrintAmountToPay(
           grandTotal: billData.grandTotal,
           returnedAmount: billData.totalReturnedAmount,
@@ -2528,7 +2572,8 @@ class PdfBillService {
     double captionSize = 7,
   }) {
     final upiPayload = _upiAmountQrPayload(billData, shopDetails);
-    final amount = billData.qrAmountOverride ??
+    final amount =
+        billData.qrAmountOverride ??
         billPrintAmountToPay(
           grandTotal: billData.grandTotal,
           returnedAmount: billData.totalReturnedAmount,

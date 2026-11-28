@@ -642,7 +642,11 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                 onPressed: () {
                   final name = nameController.text.trim();
                   if (name.isEmpty) {
-                    GlassyToast.show(context, 'Please enter a column name', isError: true);
+                    GlassyToast.show(
+                      context,
+                      'Please enter a column name',
+                      isError: true,
+                    );
                     return;
                   }
 
@@ -651,7 +655,11 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                   if (selectedType == CustomColumnType.dropdown) {
                     final optionsText = dropdownOptionsController.text.trim();
                     if (optionsText.isEmpty) {
-                      GlassyToast.show(context, 'Please enter dropdown options', isError: true);
+                      GlassyToast.show(
+                        context,
+                        'Please enter dropdown options',
+                        isError: true,
+                      );
                       return;
                     }
                     dropdownOptions = optionsText
@@ -688,9 +696,10 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                   }
 
                   Navigator.pop(context);
-                  GlassyToast.show(context, existingColumn != null
-                            ? 'Column updated'
-                            : 'Column added');
+                  GlassyToast.show(
+                    context,
+                    existingColumn != null ? 'Column updated' : 'Column added',
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.action(context),

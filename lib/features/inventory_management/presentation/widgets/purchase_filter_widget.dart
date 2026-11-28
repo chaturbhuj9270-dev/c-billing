@@ -87,9 +87,8 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                       label: widget.todayLabel,
                       isSelected:
                           widget.selectedDateFilter == PurchaseDateFilter.today,
-                      onTap: () => widget.onDateFilterChanged(
-                        PurchaseDateFilter.today,
-                      ),
+                      onTap: () =>
+                          widget.onDateFilterChanged(PurchaseDateFilter.today),
                     ),
                     const SizedBox(width: 8),
                     _buildFilterChip(
@@ -120,7 +119,8 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                           ? _formatCustomDateLabel()
                           : widget.customLabel,
                       isSelected:
-                          widget.selectedDateFilter == PurchaseDateFilter.custom,
+                          widget.selectedDateFilter ==
+                          PurchaseDateFilter.custom,
                       onTap: () => _showCustomDatePicker(context),
                     ),
                     const SizedBox(width: 8),
@@ -535,105 +535,104 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                           itemCount: filteredSuppliers.length,
                           itemBuilder: (context, index) {
-                                final supplier = filteredSuppliers[index];
-                                final isSelected =
-                                    supplier['id'] == widget.selectedSupplierId;
-                                final name =
-                                    supplier['fullName'] ??
-                                    '${supplier['firstName'] ?? ''} ${supplier['lastName'] ?? ''}'
-                                        .trim();
+                            final supplier = filteredSuppliers[index];
+                            final isSelected =
+                                supplier['id'] == widget.selectedSupplierId;
+                            final name =
+                                supplier['fullName'] ??
+                                '${supplier['firstName'] ?? ''} ${supplier['lastName'] ?? ''}'
+                                    .trim();
 
-                                return GestureDetector(
-                                  onTap: () {
-                                    widget.onSupplierChanged(supplier['id']);
-                                    Navigator.pop(context);
-                                  },
-                                  child: Container(
-                                    margin: EdgeInsets.only(bottom: 8),
-                                    padding: EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? AppColors.action(context).withValues(alpha: 0.1)
-                                          : AppColors.scaffold(context),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
+                            return GestureDetector(
+                              onTap: () {
+                                widget.onSupplierChanged(supplier['id']);
+                                Navigator.pop(context);
+                              },
+                              child: Container(
+                                margin: EdgeInsets.only(bottom: 8),
+                                padding: EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppColors.action(
+                                          context,
+                                        ).withValues(alpha: 0.1)
+                                      : AppColors.scaffold(context),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AppColors.action(context)
+                                        : AppColors.border(context),
+                                    width: isSelected ? 1.5 : 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
                                         color: isSelected
                                             ? AppColors.action(context)
                                             : AppColors.border(context),
-                                        width: isSelected ? 1.5 : 1,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Icon(
+                                        Icons.person_rounded,
+                                        color: isSelected
+                                            ? AppTheme.white
+                                            : AppTheme.grey600,
+                                        size: 20,
                                       ),
                                     ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 40,
-                                          height: 40,
-                                          decoration: BoxDecoration(
-                                            color: isSelected
-                                                ? AppColors.action(context)
-                                                : AppColors.border(context),
-                                            borderRadius: BorderRadius.circular(
-                                              10,
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            name.isNotEmpty
+                                                ? name
+                                                : _localizations
+                                                      .unknownSupplier,
+                                            style: TextStyle(
+                                              fontFamily: 'Literata',
+                                              fontWeight: isSelected
+                                                  ? FontWeight.w700
+                                                  : FontWeight.w600,
+                                              fontSize: 14,
+                                              color: isSelected
+                                                  ? AppColors.action(context)
+                                                  : AppTheme.grey800,
                                             ),
                                           ),
-                                          child: Icon(
-                                            Icons.person_rounded,
-                                            color: isSelected
-                                                ? AppTheme.white
-                                                : AppTheme.grey600,
-                                            size: 20,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                name.isNotEmpty
-                                                    ? name
-                                                    : _localizations
-                                                          .unknownSupplier,
-                                                style: TextStyle(
-                                                  fontFamily: 'Literata',
-                                                  fontWeight: isSelected
-                                                      ? FontWeight.w700
-                                                      : FontWeight.w600,
-                                                  fontSize: 14,
-                                                  color: isSelected
-                                                      ? AppColors.action(context)
-                                                      : AppTheme.grey800,
-                                                ),
+                                          if (supplier['contact'] != null) ...[
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              supplier['contact'],
+                                              style: TextStyle(
+                                                fontFamily: 'Literata',
+                                                fontWeight: FontWeight.w400,
+                                                fontSize: 12,
+                                                color: AppTheme.grey600,
                                               ),
-                                              if (supplier['contact'] !=
-                                                  null) ...[
-                                                const SizedBox(height: 2),
-                                                Text(
-                                                  supplier['contact'],
-                                                  style: TextStyle(
-                                                    fontFamily: 'Literata',
-                                                    fontWeight: FontWeight.w400,
-                                                    fontSize: 12,
-                                                    color: AppTheme.grey600,
-                                                  ),
-                                                ),
-                                              ],
-                                            ],
-                                          ),
-                                        ),
-                                        if (isSelected)
-                                          Icon(
-                                            Icons.check_circle_rounded,
-                                            color: AppColors.accent(context),
-                                            size: 22,
-                                          ),
-                                      ],
+                                            ),
+                                          ],
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                );
-                              },
-                            ),
+                                    if (isSelected)
+                                      Icon(
+                                        Icons.check_circle_rounded,
+                                        color: AppColors.accent(context),
+                                        size: 22,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                 ),
               ],
             );

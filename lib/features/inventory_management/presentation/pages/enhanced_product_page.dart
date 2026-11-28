@@ -238,9 +238,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         .instance
         .onPurchaseReturnChanged
         .listen(reloadIfMounted);
-    _billChangeSubscription = DashboardRefreshService
-        .instance
-        .onBillChanged
+    _billChangeSubscription = DashboardRefreshService.instance.onBillChanged
         .listen(reloadIfMounted);
   }
 
@@ -255,7 +253,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         _rebuildGroupedProducts();
       }
     } catch (e) {
-      debugPrint('[EnhancedProduct] Failed to reload from the local database: $e');
+      debugPrint(
+        '[EnhancedProduct] Failed to reload from the local database: $e',
+      );
     }
   }
 
@@ -344,84 +344,86 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             ),
           Expanded(
             child: SafeArea(
-        top: widget.isEmbedded,
-        child: SlideTransition(
-          position: _offsetAnimation,
-          child: FadeTransition(
-            opacity: _opacityAnimation,
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: isWide ? 24 : 16,
-                vertical: 8,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Summary widget
-                  ProductSummaryWidget(products: _products),
-                  const SizedBox(height: 16),
+              top: widget.isEmbedded,
+              child: SlideTransition(
+                position: _offsetAnimation,
+                child: FadeTransition(
+                  opacity: _opacityAnimation,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isWide ? 24 : 16,
+                      vertical: 8,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Summary widget
+                        ProductSummaryWidget(products: _products),
+                        const SizedBox(height: 16),
 
-                  // Filter widget
-                  ProductFilterWidget(
-                    searchQuery: _searchQuery,
-                    sortField: _sortField,
-                    sortAscending: _sortAscending,
-                    selectedCategory: _selectedCategory,
-                    categories: _allCategories,
-                    onSearchChanged: (value) {
-                      setState(() => _searchQuery = value);
-                    },
-                    onSortFieldChanged: (field) {
-                      setState(() {
-                        _sortField = field;
-                        // Date defaults to newest first, others to A-Z / low-high
-                        _sortAscending = field != ProductSortField.createdDate;
-                      });
-                    },
-                    onSortDirectionToggle: () {
-                      setState(() => _sortAscending = !_sortAscending);
-                    },
-                    onCategoryChanged: (category) {
-                      setState(() => _selectedCategory = category);
-                    },
-                    searchHint: _localizations.searchProducts,
-                    sortByNameLabel: _localizations.name,
-                    sortByStockLabel: _localizations.stock,
-                    sortByPriceLabel: _localizations.price,
-                    sortByDateLabel: _localizations.sortByDate,
+                        // Filter widget
+                        ProductFilterWidget(
+                          searchQuery: _searchQuery,
+                          sortField: _sortField,
+                          sortAscending: _sortAscending,
+                          selectedCategory: _selectedCategory,
+                          categories: _allCategories,
+                          onSearchChanged: (value) {
+                            setState(() => _searchQuery = value);
+                          },
+                          onSortFieldChanged: (field) {
+                            setState(() {
+                              _sortField = field;
+                              // Date defaults to newest first, others to A-Z / low-high
+                              _sortAscending =
+                                  field != ProductSortField.createdDate;
+                            });
+                          },
+                          onSortDirectionToggle: () {
+                            setState(() => _sortAscending = !_sortAscending);
+                          },
+                          onCategoryChanged: (category) {
+                            setState(() => _selectedCategory = category);
+                          },
+                          searchHint: _localizations.searchProducts,
+                          sortByNameLabel: _localizations.name,
+                          sortByStockLabel: _localizations.stock,
+                          sortByPriceLabel: _localizations.price,
+                          sortByDateLabel: _localizations.sortByDate,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // View mode toggle
+                        _buildViewModeToggle(),
+                        const SizedBox(height: 8),
+
+                        // Product list or grouped view
+                        Expanded(
+                          child: _isGroupedView
+                              ? _buildGroupedProductList()
+                              : ProductListWidget(
+                                  products: _products,
+                                  isLoading: _isLoading,
+                                  searchQuery: _searchQuery,
+                                  sortField: _sortField,
+                                  sortAscending: _sortAscending,
+                                  selectedCategory: _selectedCategory,
+                                  onRefresh: _onRefresh,
+                                  onProductTap: _showProductDetails,
+                                  onProductLongPress: _showProductContextMenu,
+                                  emptyTitle: _localizations.noProductsFound,
+                                  emptySubtitle:
+                                      'Add your first product to get started',
+                                  noResultsTitle: _localizations.noResultsFound,
+                                  noResultsSubtitle:
+                                      'Try a different search term',
+                                ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
-
-                  // View mode toggle
-                  _buildViewModeToggle(),
-                  const SizedBox(height: 8),
-
-                  // Product list or grouped view
-                  Expanded(
-                    child: _isGroupedView
-                        ? _buildGroupedProductList()
-                        : ProductListWidget(
-                            products: _products,
-                            isLoading: _isLoading,
-                            searchQuery: _searchQuery,
-                            sortField: _sortField,
-                            sortAscending: _sortAscending,
-                            selectedCategory: _selectedCategory,
-                            onRefresh: _onRefresh,
-                            onProductTap: _showProductDetails,
-                            onProductLongPress: _showProductContextMenu,
-                            emptyTitle: _localizations.noProductsFound,
-                            emptySubtitle:
-                                'Add your first product to get started',
-                            noResultsTitle: _localizations.noResultsFound,
-                            noResultsSubtitle: 'Try a different search term',
-                          ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
-        ),
             ),
           ),
         ],
@@ -429,18 +431,18 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       floatingActionButton: widget.isEmbedded && DesktopCanvas.isDesktopPlatform
           ? null
           : FloatingActionButton.extended(
-        backgroundColor: AppColors.action(context),
-        icon: const Icon(Icons.add_rounded, color: AppTheme.white),
-        label: Text(
-          _localizations.addProduct,
-          style: TextStyle(
-            fontFamily: 'Literata',
-            fontWeight: FontWeight.w600,
-            color: AppTheme.white,
-          ),
-        ),
-        onPressed: _showAddProductSheet,
-      ),
+              backgroundColor: AppColors.action(context),
+              icon: const Icon(Icons.add_rounded, color: AppTheme.white),
+              label: Text(
+                _localizations.addProduct,
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.white,
+                ),
+              ),
+              onPressed: _showAddProductSheet,
+            ),
     );
   }
 
@@ -522,7 +524,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       fontFamily: 'Literata',
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
-                      color: !_isGroupedView ? AppTheme.white : AppTheme.grey600,
+                      color: !_isGroupedView
+                          ? AppTheme.white
+                          : AppTheme.grey600,
                     ),
                   ),
                 ],
@@ -636,9 +640,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
           );
           break;
         case ProductSortField.createdDate:
-          result = newestCreated(a.productName).compareTo(
-            newestCreated(b.productName),
-          );
+          result = newestCreated(
+            a.productName,
+          ).compareTo(newestCreated(b.productName));
           break;
       }
       if (result != 0) return _sortAscending ? result : -result;
@@ -822,14 +826,16 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
               final isEven = i % 2 == 0;
 
               return Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isEven ? AppColors.card(context) : AppColors.scaffold(context),
+                  color: isEven
+                      ? AppColors.card(context)
+                      : AppColors.scaffold(context),
                   border: Border(
-                    bottom: BorderSide(color: AppColors.border(context), width: 0.5),
+                    bottom: BorderSide(
+                      color: AppColors.border(context),
+                      width: 0.5,
+                    ),
                   ),
                 ),
                 child: Row(
@@ -983,7 +989,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               ? [AppTheme.orange400, AppTheme.orange300]
                               : [
                                   AppColors.action(context),
-                                  AppColors.action(context).withValues(alpha: 0.7),
+                                  AppColors.action(
+                                    context,
+                                  ).withValues(alpha: 0.7),
                                 ],
                         ),
                       ),
@@ -1494,7 +1502,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       ProductSyncService.instance.syncNow();
 
       if (mounted) {
-        GlassyToast.show(context, _localizations.productDeletedSuccessfully, isError: true);
+        GlassyToast.show(
+          context,
+          _localizations.productDeletedSuccessfully,
+          isError: true,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -1522,7 +1534,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     final compositionController = TextEditingController();
     final drugScheduleController = TextEditingController();
     final settings = PurchaseSettingsService.instance;
-    final defaultBase = settings.isUnitAvailable(settings.defaultUnit) &&
+    final defaultBase =
+        settings.isUnitAvailable(settings.defaultUnit) &&
             !PackUnitConversion.isKnownPackUnit(settings.defaultUnit)
         ? settings.defaultUnit
         : (settings.availableUnits.firstWhere(
@@ -1640,330 +1653,331 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 padding: EdgeInsets.fromLTRB(16, desktop ? 20 : 16, 16, 16),
                 child: Row(
                   children: [
-                      Text(
-                        _localizations.addNewProduct,
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 18,
-                          color: AppColors.accent(context),
+                    Text(
+                      _localizations.addNewProduct,
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                        color: AppColors.accent(context),
+                      ),
+                    ),
+                    if (!desktop) ...[
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: AppTheme.grey600,
                         ),
                       ),
-                      if (!desktop) ...[
-                        const Spacer(),
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: Icon(
-                            Icons.close_rounded,
-                            color: AppTheme.grey600,
-                          ),
-                        ),
-                      ],
                     ],
-                  ),
+                  ],
                 ),
-                const Divider(height: 1),
-                // Content
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        FormSectionTitle(_localizations.sectionBasicDetails),
-                        _buildTextField(
-                          controller: nameController,
-                          label: _localizations.productName,
-                          icon: Icons.inventory_2_outlined,
-                        ),
-                        const SizedBox(height: 12),
-                        // Company selector (+ quick add)
-                        _buildSelectorWithAdd(
-                          addTooltip: _localizations.addNewCompany,
-                          onAdd: () async {
-                            final added = await QuickAddPartySheet.company(
-                              context,
+              ),
+              const Divider(height: 1),
+              // Content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FormSectionTitle(_localizations.sectionBasicDetails),
+                      _buildTextField(
+                        controller: nameController,
+                        label: _localizations.productName,
+                        icon: Icons.inventory_2_outlined,
+                      ),
+                      const SizedBox(height: 12),
+                      // Company selector (+ quick add)
+                      _buildSelectorWithAdd(
+                        addTooltip: _localizations.addNewCompany,
+                        onAdd: () async {
+                          final added = await QuickAddPartySheet.company(
+                            context,
+                          );
+                          if (added != null) {
+                            addPickerItemIfAbsent(
+                              dialogCompanies,
+                              added.pickerItem,
                             );
-                            if (added != null) {
-                              addPickerItemIfAbsent(
-                                dialogCompanies,
-                                added.pickerItem,
-                              );
+                            setDialogState(
+                              () => dialogSelectedCompany = added.pickerItem,
+                            );
+                          }
+                        },
+                        selector: _buildSelectorField(
+                          label: _localizations.selectCompany,
+                          value: dialogSelectedCompany?['companyName'],
+                          icon: Icons.business_rounded,
+                          onTap: () async {
+                            final company = await _showCompanyPickerDialog(
+                              context,
+                              dialogCompanies,
+                            );
+                            if (company != null) {
+                              addPickerItemIfAbsent(dialogCompanies, company);
                               setDialogState(
-                                () => dialogSelectedCompany = added.pickerItem,
+                                () => dialogSelectedCompany = company,
                               );
                             }
                           },
-                          selector: _buildSelectorField(
-                            label: _localizations.selectCompany,
-                            value: dialogSelectedCompany?['companyName'],
-                            icon: Icons.business_rounded,
-                            onTap: () async {
-                              final company = await _showCompanyPickerDialog(
-                                context,
-                                dialogCompanies,
-                              );
-                              if (company != null) {
-                                addPickerItemIfAbsent(dialogCompanies, company);
-                                setDialogState(
-                                  () => dialogSelectedCompany = company,
-                                );
-                              }
-                            },
-                          ),
                         ),
-                        const SizedBox(height: 12),
-                        // Supplier selector (+ quick add)
-                        _buildSelectorWithAdd(
-                          addTooltip: _localizations.addNewSupplier,
-                          onAdd: () async {
-                            final added = await QuickAddPartySheet.supplier(
-                              context,
+                      ),
+                      const SizedBox(height: 12),
+                      // Supplier selector (+ quick add)
+                      _buildSelectorWithAdd(
+                        addTooltip: _localizations.addNewSupplier,
+                        onAdd: () async {
+                          final added = await QuickAddPartySheet.supplier(
+                            context,
+                          );
+                          if (added != null) {
+                            addPickerItemIfAbsent(
+                              dialogSuppliers,
+                              added.pickerItem,
                             );
-                            if (added != null) {
-                              addPickerItemIfAbsent(
-                                dialogSuppliers,
-                                added.pickerItem,
-                              );
+                            setDialogState(
+                              () => dialogSelectedSupplier = added.pickerItem,
+                            );
+                          }
+                        },
+                        selector: _buildSelectorField(
+                          label: _localizations.selectSupplier,
+                          value: dialogSelectedSupplier?['fullName'],
+                          icon: Icons.person_rounded,
+                          onTap: () async {
+                            final supplier = await _showSupplierPickerDialog(
+                              context,
+                              dialogSuppliers,
+                            );
+                            if (supplier != null) {
+                              addPickerItemIfAbsent(dialogSuppliers, supplier);
                               setDialogState(
-                                () => dialogSelectedSupplier = added.pickerItem,
+                                () => dialogSelectedSupplier = supplier,
                               );
                             }
                           },
-                          selector: _buildSelectorField(
-                            label: _localizations.selectSupplier,
-                            value: dialogSelectedSupplier?['fullName'],
-                            icon: Icons.person_rounded,
-                            onTap: () async {
-                              final supplier = await _showSupplierPickerDialog(
-                                context,
-                                dialogSuppliers,
-                              );
-                              if (supplier != null) {
-                                addPickerItemIfAbsent(dialogSuppliers, supplier);
-                                setDialogState(
-                                  () => dialogSelectedSupplier = supplier,
-                                );
-                              }
-                            },
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildTextField(
+                        controller: categoryController,
+                        label: _localizations.category,
+                        icon: Icons.category_outlined,
+                      ),
+                      const SizedBox(height: 20),
+                      const FormSectionTitle('Garment / Medical details'),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTextField(
+                              controller: sizeController,
+                              label: 'Size',
+                              icon: Icons.straighten_rounded,
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildTextField(
+                              controller: colorController,
+                              label: 'Color',
+                              icon: Icons.palette_outlined,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      _buildTextField(
+                        controller: mrpController,
+                        label: 'MRP',
+                        icon: Icons.price_change_outlined,
+                        keyboardType: TextInputType.number,
+                        prefix: '₹ ',
+                      ),
+                      const SizedBox(height: 12),
+                      _buildTextField(
+                        controller: compositionController,
+                        label: 'Composition',
+                        icon: Icons.science_outlined,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildTextField(
+                        controller: drugScheduleController,
+                        label: 'Drug schedule (H / H1 / X)',
+                        icon: Icons.medication_outlined,
+                      ),
+                      const SizedBox(height: 20),
+                      FormSectionTitle(_localizations.pricing),
+                      _buildProductPackPricingSection(
+                        setDialogState: setDialogState,
+                        selectedBaseUnit: selectedBaseUnit,
+                        selectedPackUnit: selectedPackUnit,
+                        onBaseUnitChanged: (u) {
+                          selectedBaseUnit = u;
+                          unitController.text = u;
+                        },
+                        onPackUnitChanged: (pack) {
+                          selectedPackUnit = pack;
+                          packUnitController.text = pack ?? '';
+                          if (pack == null) {
+                            unitsPerPackController.text = '1';
+                            packSalesPriceController.clear();
+                          } else {
+                            final suggested =
+                                PackUnitConversion.suggestedBaseUnitForPack(
+                                  pack,
+                                );
+                            if (suggested != null &&
+                                settings.isUnitAvailable(suggested)) {
+                              selectedBaseUnit = suggested;
+                              unitController.text = suggested;
+                            }
+                            final current =
+                                int.tryParse(
+                                  unitsPerPackController.text.trim(),
+                                ) ??
+                                1;
+                            if (current <= 1) {
+                              unitsPerPackController.text = pack == 'Bag'
+                                  ? '50'
+                                  : '10';
+                            }
+                          }
+                        },
+                        unitsPerPackController: unitsPerPackController,
+                        purchasePriceController: purchasePriceController,
+                        salesPriceController: salesPriceController,
+                        packSalesPriceController: packSalesPriceController,
+                        initialStockController: initialStockController,
+                        showInitialStock: true,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildTextField(
+                        controller: minStockController,
+                        label: _localizations.minStockLevel,
+                        icon: Icons.notifications_active_outlined,
+                        keyboardType: TextInputType.number,
+                        helperText: _localizations.minStockLevelHint,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      FormSectionTitle(_localizations.sectionTaxDetails),
+                      _buildApplyGstToggle(
+                        applyGst: applyGst,
+                        onChanged: (value) =>
+                            setDialogState(() => applyGst = value),
+                      ),
+                      if (applyGst) ...[
                         const SizedBox(height: 12),
-                        _buildTextField(
-                          controller: categoryController,
-                          label: _localizations.category,
-                          icon: Icons.category_outlined,
-                        ),
-                        const SizedBox(height: 20),
-                        const FormSectionTitle('Garment / Medical details'),
                         Row(
                           children: [
                             Expanded(
                               child: _buildTextField(
-                                controller: sizeController,
-                                label: 'Size',
-                                icon: Icons.straighten_rounded,
+                                controller: cgstController,
+                                label: 'CGST %',
+                                keyboardType: TextInputType.number,
                               ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: _buildTextField(
-                                controller: colorController,
-                                label: 'Color',
-                                icon: Icons.palette_outlined,
+                                controller: sgstController,
+                                label: 'SGST %',
+                                keyboardType: TextInputType.number,
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 12),
                         _buildTextField(
-                          controller: mrpController,
-                          label: 'MRP',
-                          icon: Icons.price_change_outlined,
+                          controller: hsnController,
+                          label: 'HSN Code',
+                          icon: Icons.tag_rounded,
                           keyboardType: TextInputType.number,
-                          prefix: '₹ ',
+                          maxLength: 8,
                         ),
-                        const SizedBox(height: 12),
-                        _buildTextField(
-                          controller: compositionController,
-                          label: 'Composition',
-                          icon: Icons.science_outlined,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildTextField(
-                          controller: drugScheduleController,
-                          label: 'Drug schedule (H / H1 / X)',
-                          icon: Icons.medication_outlined,
-                        ),
-                        const SizedBox(height: 20),
-                        FormSectionTitle(_localizations.pricing),
-                        _buildProductPackPricingSection(
-                          setDialogState: setDialogState,
-                          selectedBaseUnit: selectedBaseUnit,
-                          selectedPackUnit: selectedPackUnit,
-                          onBaseUnitChanged: (u) {
-                            selectedBaseUnit = u;
-                            unitController.text = u;
-                          },
-                          onPackUnitChanged: (pack) {
-                            selectedPackUnit = pack;
-                            packUnitController.text = pack ?? '';
-                            if (pack == null) {
-                              unitsPerPackController.text = '1';
-                              packSalesPriceController.clear();
-                            } else {
-                              final suggested =
-                                  PackUnitConversion.suggestedBaseUnitForPack(
-                                    pack,
-                                  );
-                              if (suggested != null &&
-                                  settings.isUnitAvailable(suggested)) {
-                                selectedBaseUnit = suggested;
-                                unitController.text = suggested;
-                              }
-                              final current =
-                                  int.tryParse(
-                                    unitsPerPackController.text.trim(),
-                                  ) ??
-                                  1;
-                              if (current <= 1) {
-                                unitsPerPackController.text =
-                                    pack == 'Bag' ? '50' : '10';
-                              }
-                            }
-                          },
-                          unitsPerPackController: unitsPerPackController,
-                          purchasePriceController: purchasePriceController,
-                          salesPriceController: salesPriceController,
-                          packSalesPriceController: packSalesPriceController,
-                          initialStockController: initialStockController,
-                          showInitialStock: true,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildTextField(
-                          controller: minStockController,
-                          label: _localizations.minStockLevel,
-                          icon: Icons.notifications_active_outlined,
-                          keyboardType: TextInputType.number,
-                          helperText: _localizations.minStockLevelHint,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        FormSectionTitle(_localizations.sectionTaxDetails),
-                        _buildApplyGstToggle(
-                          applyGst: applyGst,
-                          onChanged: (value) =>
-                              setDialogState(() => applyGst = value),
-                        ),
-                        if (applyGst) ...[
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: cgstController,
-                                  label: 'CGST %',
-                                  keyboardType: TextInputType.number,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: sgstController,
-                                  label: 'SGST %',
-                                  keyboardType: TextInputType.number,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          _buildTextField(
-                            controller: hsnController,
-                            label: 'HSN Code',
-                            icon: Icons.tag_rounded,
-                            keyboardType: TextInputType.number,
-                            maxLength: 8,
-                          ),
-                        ],
-                        const SizedBox(height: 20),
-                        FormSectionTitle(_localizations.description),
-                        _buildTextField(
-                          controller: descriptionController,
-                          label:
-                              '${_localizations.description} (${_localizations.optional})',
-                          icon: Icons.notes_rounded,
-                          maxLines: 3,
-                        ),
-                        // Custom fields
-                        if (customColumns.isNotEmpty) ...[
-                          SizedBox(height: 16),
-                          Text(
-                            'Custom Fields',
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              color: AppColors.accent(context),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          ...customColumns.map(
-                            (column) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _buildCustomFieldWidget(
-                                column,
-                                customTextControllers[column.id],
-                                customFieldValues,
-                                setDialogState,
-                              ),
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 24),
                       ],
-                    ),
+                      const SizedBox(height: 20),
+                      FormSectionTitle(_localizations.description),
+                      _buildTextField(
+                        controller: descriptionController,
+                        label:
+                            '${_localizations.description} (${_localizations.optional})',
+                        icon: Icons.notes_rounded,
+                        maxLines: 3,
+                      ),
+                      // Custom fields
+                      if (customColumns.isNotEmpty) ...[
+                        SizedBox(height: 16),
+                        Text(
+                          'Custom Fields',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: AppColors.accent(context),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ...customColumns.map(
+                          (column) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _buildCustomFieldWidget(
+                              column,
+                              customTextControllers[column.id],
+                              customFieldValues,
+                              setDialogState,
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 24),
+                    ],
                   ),
                 ),
-                _sheetFooter(
-                  context,
-                  desktop: desktop,
-                  primary: AppPillButton(
-                    label: 'Save',
-                    icon: Icons.check_rounded,
-                    expanded: desktop,
-                    onPressed: () => _saveNewProduct(
-                      nameController: nameController,
-                      categoryController: categoryController,
-                      purchasePriceController: purchasePriceController,
-                      salesPriceController: salesPriceController,
-                      initialStockController: initialStockController,
-                      cgstController: cgstController,
-                      sgstController: sgstController,
-                      hsnController: hsnController,
-                      minStockController: minStockController,
-                      descriptionController: descriptionController,
-                      sizeController: sizeController,
-                      colorController: colorController,
-                      mrpController: mrpController,
-                      compositionController: compositionController,
-                      drugScheduleController: drugScheduleController,
-                      unitController: unitController,
-                      packUnitController: packUnitController,
-                      unitsPerPackController: unitsPerPackController,
-                      packSalesPriceController: packSalesPriceController,
-                      applyGst: applyGst,
-                      selectedCompany: dialogSelectedCompany,
-                      selectedSupplier: dialogSelectedSupplier,
-                      customColumns: customColumns,
-                      customTextControllers: customTextControllers,
-                      customFieldValues: customFieldValues,
-                    ),
+              ),
+              _sheetFooter(
+                context,
+                desktop: desktop,
+                primary: AppPillButton(
+                  label: 'Save',
+                  icon: Icons.check_rounded,
+                  expanded: desktop,
+                  onPressed: () => _saveNewProduct(
+                    nameController: nameController,
+                    categoryController: categoryController,
+                    purchasePriceController: purchasePriceController,
+                    salesPriceController: salesPriceController,
+                    initialStockController: initialStockController,
+                    cgstController: cgstController,
+                    sgstController: sgstController,
+                    hsnController: hsnController,
+                    minStockController: minStockController,
+                    descriptionController: descriptionController,
+                    sizeController: sizeController,
+                    colorController: colorController,
+                    mrpController: mrpController,
+                    compositionController: compositionController,
+                    drugScheduleController: drugScheduleController,
+                    unitController: unitController,
+                    packUnitController: packUnitController,
+                    unitsPerPackController: unitsPerPackController,
+                    packSalesPriceController: packSalesPriceController,
+                    applyGst: applyGst,
+                    selectedCompany: dialogSelectedCompany,
+                    selectedSupplier: dialogSelectedSupplier,
+                    customColumns: customColumns,
+                    customTextControllers: customTextControllers,
+                    customFieldValues: customFieldValues,
                   ),
                 ),
-              ],
-            );
+              ),
+            ],
+          );
           return desktop
               ? sheet
               : BackdropFilter(
@@ -2134,7 +2148,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
     // Validate HSN: required if CGST or SGST > 0
     if ((cgstVal > 0 || sgstVal > 0) && hsnVal.isEmpty) {
-      GlassyToast.show(context, 'HSN Code is required when GST is applied', isError: true);
+      GlassyToast.show(
+        context,
+        'HSN Code is required when GST is applied',
+        isError: true,
+      );
       return;
     }
 
@@ -2173,8 +2191,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       final unitsPerPackVal = PackUnitConversion.normalizeUnitsPerPack(
         int.tryParse(unitsPerPackController.text.trim()),
       );
-      final packSalesParsed =
-          double.tryParse(packSalesPriceController.text.trim());
+      final packSalesParsed = double.tryParse(
+        packSalesPriceController.text.trim(),
+      );
       // Same contract as purchase: inventory/ledger always store base units.
       final sellingAsPack = PackUnitConversion.hasPack(
         packUnit: packUnitVal,
@@ -2217,9 +2236,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         unit: unitVal.isNotEmpty ? unitVal : null,
         packUnit: sellingAsPack ? packUnitVal : null,
         unitsPerPack: sellingAsPack ? unitsPerPackVal : 1,
-        packSalesPrice: sellingAsPack &&
-                packSalesParsed != null &&
-                packSalesParsed > 0
+        packSalesPrice:
+            sellingAsPack && packSalesParsed != null && packSalesParsed > 0
             ? packSalesParsed
             : null,
       );
@@ -2277,7 +2295,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       text: product.drugSchedule ?? '',
     );
     final settings = PurchaseSettingsService.instance;
-    final initialBase = (product.unit != null && product.unit!.trim().isNotEmpty)
+    final initialBase =
+        (product.unit != null && product.unit!.trim().isNotEmpty)
         ? product.unit!.trim()
         : (settings.isUnitAvailable(settings.defaultUnit) &&
                   !PackUnitConversion.isKnownPackUnit(settings.defaultUnit)
@@ -2300,9 +2319,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
           : '',
     );
     String selectedBaseUnit = initialBase;
-    String? selectedPackUnit =
-        hasExistingPack ? product.packUnit?.trim() : null;
-    var applyGst = product.cgstPercent > 0 ||
+    String? selectedPackUnit = hasExistingPack
+        ? product.packUnit?.trim()
+        : null;
+    var applyGst =
+        product.cgstPercent > 0 ||
         product.sgstPercent > 0 ||
         (product.hsnCode != null && product.hsnCode!.isNotEmpty);
 
@@ -2388,305 +2409,306 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 padding: EdgeInsets.fromLTRB(16, desktop ? 20 : 16, 16, 16),
                 child: Row(
                   children: [
-                      Text(
-                        _localizations.editProduct,
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 18,
-                          color: AppColors.accent(context),
+                    Text(
+                      _localizations.editProduct,
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                        color: AppColors.accent(context),
+                      ),
+                    ),
+                    if (!desktop) ...[
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: AppTheme.grey600,
                         ),
                       ),
-                      if (!desktop) ...[
-                        const Spacer(),
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: Icon(
-                            Icons.close_rounded,
-                            color: AppTheme.grey600,
-                          ),
-                        ),
-                      ],
                     ],
-                  ),
+                  ],
                 ),
-                const Divider(height: 1),
-                // Content
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        FormSectionTitle(_localizations.sectionBasicDetails),
-                        _buildTextField(
-                          controller: nameController,
-                          label: _localizations.productName,
-                          icon: Icons.inventory_2_outlined,
-                        ),
+              ),
+              const Divider(height: 1),
+              // Content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FormSectionTitle(_localizations.sectionBasicDetails),
+                      _buildTextField(
+                        controller: nameController,
+                        label: _localizations.productName,
+                        icon: Icons.inventory_2_outlined,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildTextField(
+                        controller: companyController,
+                        label: _localizations.companyName,
+                        icon: Icons.business_rounded,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildTextField(
+                        controller: categoryController,
+                        label: _localizations.category,
+                        icon: Icons.category_outlined,
+                      ),
+                      const SizedBox(height: 20),
+                      const FormSectionTitle('Garment / Medical details'),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTextField(
+                              controller: sizeController,
+                              label: 'Size',
+                              icon: Icons.straighten_rounded,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildTextField(
+                              controller: colorController,
+                              label: 'Color',
+                              icon: Icons.palette_outlined,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      _buildTextField(
+                        controller: mrpController,
+                        label: 'MRP',
+                        icon: Icons.price_change_outlined,
+                        keyboardType: TextInputType.number,
+                        prefix: '₹ ',
+                      ),
+                      const SizedBox(height: 12),
+                      _buildTextField(
+                        controller: compositionController,
+                        label: 'Composition',
+                        icon: Icons.science_outlined,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildTextField(
+                        controller: drugScheduleController,
+                        label: 'Drug schedule (H / H1 / X)',
+                        icon: Icons.medication_outlined,
+                      ),
+                      const SizedBox(height: 20),
+                      FormSectionTitle(_localizations.pricing),
+                      _buildProductPackPricingSection(
+                        setDialogState: setDialogState,
+                        selectedBaseUnit: selectedBaseUnit,
+                        selectedPackUnit: selectedPackUnit,
+                        onBaseUnitChanged: (u) {
+                          selectedBaseUnit = u;
+                          unitController.text = u;
+                        },
+                        onPackUnitChanged: (pack) {
+                          selectedPackUnit = pack;
+                          packUnitController.text = pack ?? '';
+                          if (pack == null) {
+                            unitsPerPackController.text = '1';
+                            packSalesPriceController.clear();
+                          } else {
+                            final suggested =
+                                PackUnitConversion.suggestedBaseUnitForPack(
+                                  pack,
+                                );
+                            if (suggested != null &&
+                                settings.isUnitAvailable(suggested)) {
+                              selectedBaseUnit = suggested;
+                              unitController.text = suggested;
+                            }
+                            final current =
+                                int.tryParse(
+                                  unitsPerPackController.text.trim(),
+                                ) ??
+                                1;
+                            if (current <= 1) {
+                              unitsPerPackController.text = pack == 'Bag'
+                                  ? '50'
+                                  : '10';
+                            }
+                          }
+                        },
+                        unitsPerPackController: unitsPerPackController,
+                        purchasePriceController: purchasePriceController,
+                        salesPriceController: salesPriceController,
+                        packSalesPriceController: packSalesPriceController,
+                        showInitialStock: false,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildTextField(
+                        controller: minStockController,
+                        label: _localizations.minStockLevel,
+                        icon: Icons.notifications_active_outlined,
+                        keyboardType: TextInputType.number,
+                        helperText: _localizations.minStockLevelHint,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      FormSectionTitle(_localizations.sectionTaxDetails),
+                      _buildApplyGstToggle(
+                        applyGst: applyGst,
+                        onChanged: (value) =>
+                            setDialogState(() => applyGst = value),
+                      ),
+                      if (applyGst) ...[
                         const SizedBox(height: 12),
-                        _buildTextField(
-                          controller: companyController,
-                          label: _localizations.companyName,
-                          icon: Icons.business_rounded,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildTextField(
-                          controller: categoryController,
-                          label: _localizations.category,
-                          icon: Icons.category_outlined,
-                        ),
-                        const SizedBox(height: 20),
-                        const FormSectionTitle('Garment / Medical details'),
                         Row(
                           children: [
                             Expanded(
                               child: _buildTextField(
-                                controller: sizeController,
-                                label: 'Size',
-                                icon: Icons.straighten_rounded,
+                                controller: cgstController,
+                                label: 'CGST %',
+                                keyboardType: TextInputType.number,
                               ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: _buildTextField(
-                                controller: colorController,
-                                label: 'Color',
-                                icon: Icons.palette_outlined,
+                                controller: sgstController,
+                                label: 'SGST %',
+                                keyboardType: TextInputType.number,
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 12),
                         _buildTextField(
-                          controller: mrpController,
-                          label: 'MRP',
-                          icon: Icons.price_change_outlined,
+                          controller: hsnController,
+                          label: 'HSN Code',
+                          icon: Icons.tag_rounded,
                           keyboardType: TextInputType.number,
-                          prefix: '₹ ',
+                          maxLength: 8,
                         ),
-                        const SizedBox(height: 12),
-                        _buildTextField(
-                          controller: compositionController,
-                          label: 'Composition',
-                          icon: Icons.science_outlined,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildTextField(
-                          controller: drugScheduleController,
-                          label: 'Drug schedule (H / H1 / X)',
-                          icon: Icons.medication_outlined,
-                        ),
-                        const SizedBox(height: 20),
-                        FormSectionTitle(_localizations.pricing),
-                        _buildProductPackPricingSection(
-                          setDialogState: setDialogState,
-                          selectedBaseUnit: selectedBaseUnit,
-                          selectedPackUnit: selectedPackUnit,
-                          onBaseUnitChanged: (u) {
-                            selectedBaseUnit = u;
-                            unitController.text = u;
-                          },
-                          onPackUnitChanged: (pack) {
-                            selectedPackUnit = pack;
-                            packUnitController.text = pack ?? '';
-                            if (pack == null) {
-                              unitsPerPackController.text = '1';
-                              packSalesPriceController.clear();
-                            } else {
-                              final suggested =
-                                  PackUnitConversion.suggestedBaseUnitForPack(
-                                    pack,
-                                  );
-                              if (suggested != null &&
-                                  settings.isUnitAvailable(suggested)) {
-                                selectedBaseUnit = suggested;
-                                unitController.text = suggested;
-                              }
-                              final current =
-                                  int.tryParse(
-                                    unitsPerPackController.text.trim(),
-                                  ) ??
-                                  1;
-                              if (current <= 1) {
-                                unitsPerPackController.text =
-                                    pack == 'Bag' ? '50' : '10';
-                              }
-                            }
-                          },
-                          unitsPerPackController: unitsPerPackController,
-                          purchasePriceController: purchasePriceController,
-                          salesPriceController: salesPriceController,
-                          packSalesPriceController: packSalesPriceController,
-                          showInitialStock: false,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildTextField(
-                          controller: minStockController,
-                          label: _localizations.minStockLevel,
-                          icon: Icons.notifications_active_outlined,
-                          keyboardType: TextInputType.number,
-                          helperText: _localizations.minStockLevelHint,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        FormSectionTitle(_localizations.sectionTaxDetails),
-                        _buildApplyGstToggle(
-                          applyGst: applyGst,
-                          onChanged: (value) =>
-                              setDialogState(() => applyGst = value),
-                        ),
-                        if (applyGst) ...[
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: cgstController,
-                                  label: 'CGST %',
-                                  keyboardType: TextInputType.number,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: sgstController,
-                                  label: 'SGST %',
-                                  keyboardType: TextInputType.number,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          _buildTextField(
-                            controller: hsnController,
-                            label: 'HSN Code',
-                            icon: Icons.tag_rounded,
-                            keyboardType: TextInputType.number,
-                            maxLength: 8,
-                          ),
-                        ],
-                        const SizedBox(height: 12),
-                        // Current stock (read-only) — always base units for ledger
-                        Container(
-                          padding: EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: AppColors.chipFill(context),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppTheme.grey300),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.inventory_rounded,
-                                color: AppTheme.grey600,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      _localizations.currentStock,
-                                      style: TextStyle(
-                                        fontFamily: 'Literata',
-                                        fontSize: 12,
-                                        color: AppTheme.grey600,
-                                      ),
-                                    ),
-                                    Text(
-                                      '${PackUnitConversion.formatStockLabel(baseStock: product.currentStock, baseUnit: selectedBaseUnit, packUnit: selectedPackUnit, unitsPerPack: int.tryParse(unitsPerPackController.text.trim()) ?? product.unitsPerPack)} (Read Only)',
-                                      style: TextStyle(
-                                        fontFamily: 'Literata',
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        FormSectionTitle(_localizations.description),
-                        _buildTextField(
-                          controller: descriptionController,
-                          label:
-                              '${_localizations.description} (${_localizations.optional})',
-                          icon: Icons.notes_rounded,
-                          maxLines: 3,
-                        ),
-                        // Custom fields
-                        if (customColumns.isNotEmpty) ...[
-                          SizedBox(height: 16),
-                          Text(
-                            'Custom Fields',
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              color: AppColors.accent(context),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          ...customColumns.map(
-                            (column) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _buildCustomFieldWidget(
-                                column,
-                                customTextControllers[column.id],
-                                customFieldValues,
-                                setDialogState,
-                              ),
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 24),
                       ],
-                    ),
+                      const SizedBox(height: 12),
+                      // Current stock (read-only) — always base units for ledger
+                      Container(
+                        padding: EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.chipFill(context),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppTheme.grey300),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.inventory_rounded,
+                              color: AppTheme.grey600,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _localizations.currentStock,
+                                    style: TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontSize: 12,
+                                      color: AppTheme.grey600,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${PackUnitConversion.formatStockLabel(baseStock: product.currentStock, baseUnit: selectedBaseUnit, packUnit: selectedPackUnit, unitsPerPack: int.tryParse(unitsPerPackController.text.trim()) ?? product.unitsPerPack)} (Read Only)',
+                                    style: TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      FormSectionTitle(_localizations.description),
+                      _buildTextField(
+                        controller: descriptionController,
+                        label:
+                            '${_localizations.description} (${_localizations.optional})',
+                        icon: Icons.notes_rounded,
+                        maxLines: 3,
+                      ),
+                      // Custom fields
+                      if (customColumns.isNotEmpty) ...[
+                        SizedBox(height: 16),
+                        Text(
+                          'Custom Fields',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: AppColors.accent(context),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ...customColumns.map(
+                          (column) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _buildCustomFieldWidget(
+                              column,
+                              customTextControllers[column.id],
+                              customFieldValues,
+                              setDialogState,
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 24),
+                    ],
                   ),
                 ),
-                _sheetFooter(
-                  context,
-                  desktop: desktop,
-                  primary: AppPillButton(
-                    label: _localizations.update,
-                    icon: Icons.check_rounded,
-                    expanded: desktop,
-                    onPressed: () => _updateProduct(
-                      product: product,
-                      nameController: nameController,
-                      companyController: companyController,
-                      categoryController: categoryController,
-                      purchasePriceController: purchasePriceController,
-                      salesPriceController: salesPriceController,
-                      cgstController: cgstController,
-                      sgstController: sgstController,
-                      hsnController: hsnController,
-                      minStockController: minStockController,
-                      descriptionController: descriptionController,
-                      sizeController: sizeController,
-                      colorController: colorController,
-                      mrpController: mrpController,
-                      compositionController: compositionController,
-                      drugScheduleController: drugScheduleController,
-                      unitController: unitController,
-                      packUnitController: packUnitController,
-                      unitsPerPackController: unitsPerPackController,
-                      packSalesPriceController: packSalesPriceController,
-                      applyGst: applyGst,
-                      customColumns: customColumns,
-                      customTextControllers: customTextControllers,
-                      customFieldValues: customFieldValues,
-                    ),
+              ),
+              _sheetFooter(
+                context,
+                desktop: desktop,
+                primary: AppPillButton(
+                  label: _localizations.update,
+                  icon: Icons.check_rounded,
+                  expanded: desktop,
+                  onPressed: () => _updateProduct(
+                    product: product,
+                    nameController: nameController,
+                    companyController: companyController,
+                    categoryController: categoryController,
+                    purchasePriceController: purchasePriceController,
+                    salesPriceController: salesPriceController,
+                    cgstController: cgstController,
+                    sgstController: sgstController,
+                    hsnController: hsnController,
+                    minStockController: minStockController,
+                    descriptionController: descriptionController,
+                    sizeController: sizeController,
+                    colorController: colorController,
+                    mrpController: mrpController,
+                    compositionController: compositionController,
+                    drugScheduleController: drugScheduleController,
+                    unitController: unitController,
+                    packUnitController: packUnitController,
+                    unitsPerPackController: unitsPerPackController,
+                    packSalesPriceController: packSalesPriceController,
+                    applyGst: applyGst,
+                    customColumns: customColumns,
+                    customTextControllers: customTextControllers,
+                    customFieldValues: customFieldValues,
                   ),
                 ),
-              ],
-            );
+              ),
+            ],
+          );
           return desktop
               ? sheet
               : BackdropFilter(
@@ -2752,7 +2774,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
     // Validate HSN
     if ((cgstVal > 0 || sgstVal > 0) && hsnVal.isEmpty) {
-      GlassyToast.show(context, 'HSN Code is required when GST is applied', isError: true);
+      GlassyToast.show(
+        context,
+        'HSN Code is required when GST is applied',
+        isError: true,
+      );
       return;
     }
 
@@ -2791,8 +2817,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       final unitsPerPackVal = PackUnitConversion.normalizeUnitsPerPack(
         int.tryParse(unitsPerPackController.text.trim()),
       );
-      final packSalesParsed =
-          double.tryParse(packSalesPriceController.text.trim());
+      final packSalesParsed = double.tryParse(
+        packSalesPriceController.text.trim(),
+      );
       final sellingAsPack = PackUnitConversion.hasPack(
         packUnit: packUnitVal,
         unitsPerPack: unitsPerPackVal,
@@ -2826,9 +2853,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         unit: unitVal.isNotEmpty ? unitVal : null,
         packUnit: sellingAsPack ? packUnitVal : null,
         unitsPerPack: sellingAsPack ? unitsPerPackVal : 1,
-        packSalesPrice: sellingAsPack &&
-                packSalesParsed != null &&
-                packSalesParsed > 0
+        packSalesPrice:
+            sellingAsPack && packSalesParsed != null && packSalesParsed > 0
             ? packSalesParsed
             : null,
         updateVariantFields: true,
@@ -2910,8 +2936,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         selectedPackUnit.trim().isNotEmpty &&
         unitsPerPack > 1;
     final packLabel = selectedPackUnit ?? 'pack';
-    final unitLabel =
-        selectedBaseUnit.trim().isNotEmpty ? selectedBaseUnit : 'unit';
+    final unitLabel = selectedBaseUnit.trim().isNotEmpty
+        ? selectedBaseUnit
+        : 'unit';
     final enteredPrice = double.tryParse(purchasePriceController.text) ?? 0;
     final packCost = buyAsPack ? enteredPrice * unitsPerPack : enteredPrice;
 
@@ -3302,7 +3329,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.accent(context), width: 2),
+              borderSide: BorderSide(
+                color: AppColors.accent(context),
+                width: 2,
+              ),
             ),
           ),
           style: TextStyle(fontFamily: 'Literata'),
@@ -3317,7 +3347,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.accent(context), width: 2),
+              borderSide: BorderSide(
+                color: AppColors.accent(context),
+                width: 2,
+              ),
             ),
           ),
           style: TextStyle(fontFamily: 'Literata'),
@@ -3332,7 +3365,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.accent(context), width: 2),
+              borderSide: BorderSide(
+                color: AppColors.accent(context),
+                width: 2,
+              ),
             ),
           ),
           style: const TextStyle(fontFamily: 'Literata'),
@@ -3368,7 +3404,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.accent(context), width: 2),
+              borderSide: BorderSide(
+                color: AppColors.accent(context),
+                width: 2,
+              ),
             ),
           ),
           items: (column.dropdownOptions ?? []).map((option) {

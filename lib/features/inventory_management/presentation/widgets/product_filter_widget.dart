@@ -325,7 +325,9 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
             Icon(
               Icons.category_rounded,
               size: 16,
-              color: hasSelection ? AppColors.action(context) : AppTheme.grey600,
+              color: hasSelection
+                  ? AppColors.action(context)
+                  : AppTheme.grey600,
             ),
             const SizedBox(width: 6),
             ConstrainedBox(
@@ -348,7 +350,9 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
             Icon(
               Icons.arrow_drop_down_rounded,
               size: 18,
-              color: hasSelection ? AppColors.action(context) : AppTheme.grey600,
+              color: hasSelection
+                  ? AppColors.action(context)
+                  : AppTheme.grey600,
             ),
           ],
         ),

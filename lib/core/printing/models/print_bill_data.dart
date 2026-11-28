@@ -253,50 +253,50 @@ class PrintBillData {
 
   /// Copy with a different customer total-due (null clears it).
   PrintBillData withTotalDue(double? totalDue) => PrintBillData(
-        billNumber: billNumber,
-        dateTime: dateTime,
-        customerName: customerName,
-        customerPhone: customerPhone,
-        items: items,
-        subtotal: subtotal,
-        discountAmount: discountAmount,
-        discountPercent: discountPercent,
-        taxAmount: taxAmount,
-        taxPercent: taxPercent,
-        grandTotal: grandTotal,
-        paymentMethod: paymentMethod,
-        notes: notes,
-        isReturnBill: isReturnBill,
-        isQuotation: isQuotation,
-        validUntil: validUntil,
-        eventOrderDate: eventOrderDate,
-        quotationTitle: quotationTitle,
-        formatOverride: formatOverride,
-        documentTitle: documentTitle,
-        numberLabelText: numberLabelText,
-        qrAmountOverride: qrAmountOverride,
-        refundAmount: refundAmount,
-        paidAmount: paidAmount,
-        pendingAmount: pendingAmount,
-        totalDueAmount: totalDue,
-        employeeToken: employeeToken,
-        isGstApplied: isGstApplied,
-        isTaxInclusive: isTaxInclusive,
-        cgstPercent: cgstPercent,
-        sgstPercent: sgstPercent,
-        igstPercent: igstPercent,
-        otherTaxPercent: otherTaxPercent,
-        otherTaxName: otherTaxName,
-        cgstAmount: cgstAmount,
-        sgstAmount: sgstAmount,
-        igstAmount: igstAmount,
-        otherTaxAmount: otherTaxAmount,
-        totalTaxAmount: totalTaxAmount,
-        customerGstin: customerGstin,
-        extraCharges: extraCharges,
-        customerId: customerId,
-        roundOff: roundOff,
-      );
+    billNumber: billNumber,
+    dateTime: dateTime,
+    customerName: customerName,
+    customerPhone: customerPhone,
+    items: items,
+    subtotal: subtotal,
+    discountAmount: discountAmount,
+    discountPercent: discountPercent,
+    taxAmount: taxAmount,
+    taxPercent: taxPercent,
+    grandTotal: grandTotal,
+    paymentMethod: paymentMethod,
+    notes: notes,
+    isReturnBill: isReturnBill,
+    isQuotation: isQuotation,
+    validUntil: validUntil,
+    eventOrderDate: eventOrderDate,
+    quotationTitle: quotationTitle,
+    formatOverride: formatOverride,
+    documentTitle: documentTitle,
+    numberLabelText: numberLabelText,
+    qrAmountOverride: qrAmountOverride,
+    refundAmount: refundAmount,
+    paidAmount: paidAmount,
+    pendingAmount: pendingAmount,
+    totalDueAmount: totalDue,
+    employeeToken: employeeToken,
+    isGstApplied: isGstApplied,
+    isTaxInclusive: isTaxInclusive,
+    cgstPercent: cgstPercent,
+    sgstPercent: sgstPercent,
+    igstPercent: igstPercent,
+    otherTaxPercent: otherTaxPercent,
+    otherTaxName: otherTaxName,
+    cgstAmount: cgstAmount,
+    sgstAmount: sgstAmount,
+    igstAmount: igstAmount,
+    otherTaxAmount: otherTaxAmount,
+    totalTaxAmount: totalTaxAmount,
+    customerGstin: customerGstin,
+    extraCharges: extraCharges,
+    customerId: customerId,
+    roundOff: roundOff,
+  );
 
   /// Whether a "Round off" row should be printed.
   bool get hasRoundOff => roundOff.abs() >= 0.005;
@@ -344,7 +344,8 @@ class PrintBillData {
         }
       }
     } catch (_) {}
-    final exclusiveTax = ((bill.isGstApplied as bool?) ?? false) &&
+    final exclusiveTax =
+        ((bill.isGstApplied as bool?) ?? false) &&
         !((bill.isTaxInclusive as bool?) ?? false);
     final totals = computeBillPrintTotals(
       productsTotal: (bill.totalAmount as num).toDouble(),
@@ -414,9 +415,9 @@ class PrintBillData {
     try {
       final raw = bill.extraCharges;
       if (raw is List<BillExtraCharge>) {
-        return List<BillExtraCharge>.from(raw)
-            .where((c) => c.label.trim().isNotEmpty && c.amount > 0)
-            .toList();
+        return List<BillExtraCharge>.from(
+          raw,
+        ).where((c) => c.label.trim().isNotEmpty && c.amount > 0).toList();
       }
       if (raw is List) {
         final out = <BillExtraCharge>[];

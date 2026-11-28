@@ -1731,6 +1731,534 @@ class AppLocalizations {
     }
   }
 
+  String get barcodeSettings {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.barcodeSettings;
+      case 'Marathi':
+        return MarathiLocalization.barcodeSettings;
+      default:
+        return EnglishLocalization.barcodeSettings;
+    }
+  }
+
+  String get barcodeSettingsSubtitle {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.barcodeSettingsSubtitle;
+      case 'Marathi':
+        return MarathiLocalization.barcodeSettingsSubtitle;
+      default:
+        return EnglishLocalization.barcodeSettingsSubtitle;
+    }
+  }
+
+  String get printerTypeTitle {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.printerTypeTitle;
+      case 'Marathi':
+        return MarathiLocalization.printerTypeTitle;
+      default:
+        return EnglishLocalization.printerTypeTitle;
+    }
+  }
+
+  String get normalPrinterTitle {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.normalPrinterTitle;
+      case 'Marathi':
+        return MarathiLocalization.normalPrinterTitle;
+      default:
+        return EnglishLocalization.normalPrinterTitle;
+    }
+  }
+
+  String get normalPrinterSub {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.normalPrinterSub;
+      case 'Marathi':
+        return MarathiLocalization.normalPrinterSub;
+      default:
+        return EnglishLocalization.normalPrinterSub;
+    }
+  }
+
+  String get barcodePrinterTitle {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.barcodePrinterTitle;
+      case 'Marathi':
+        return MarathiLocalization.barcodePrinterTitle;
+      default:
+        return EnglishLocalization.barcodePrinterTitle;
+    }
+  }
+
+  String get barcodePrinterSub {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.barcodePrinterSub;
+      case 'Marathi':
+        return MarathiLocalization.barcodePrinterSub;
+      default:
+        return EnglishLocalization.barcodePrinterSub;
+    }
+  }
+
+  String get posPrinterSub {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.posPrinterSub;
+      case 'Marathi':
+        return MarathiLocalization.posPrinterSub;
+      default:
+        return EnglishLocalization.posPrinterSub;
+    }
+  }
+
+  String get labelSizeTitle {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.labelSizeTitle;
+      case 'Marathi':
+        return MarathiLocalization.labelSizeTitle;
+      default:
+        return EnglishLocalization.labelSizeTitle;
+    }
+  }
+
+  String get sizeTabletStrip {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.sizeTabletStrip;
+      case 'Marathi':
+        return MarathiLocalization.sizeTabletStrip;
+      default:
+        return EnglishLocalization.sizeTabletStrip;
+    }
+  }
+
+  String get sizeSmallLabel {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.sizeSmallLabel;
+      case 'Marathi':
+        return MarathiLocalization.sizeSmallLabel;
+      default:
+        return EnglishLocalization.sizeSmallLabel;
+    }
+  }
+
+  String get sizeStandardLabel {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.sizeStandardLabel;
+      case 'Marathi':
+        return MarathiLocalization.sizeStandardLabel;
+      default:
+        return EnglishLocalization.sizeStandardLabel;
+    }
+  }
+
+  String get sizeClothTag {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.sizeClothTag;
+      case 'Marathi':
+        return MarathiLocalization.sizeClothTag;
+      default:
+        return EnglishLocalization.sizeClothTag;
+    }
+  }
+
+  String get sizeLargeLabel {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.sizeLargeLabel;
+      case 'Marathi':
+        return MarathiLocalization.sizeLargeLabel;
+      default:
+        return EnglishLocalization.sizeLargeLabel;
+    }
+  }
+
+  String get sizeCustomLabel {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.sizeCustomLabel;
+      case 'Marathi':
+        return MarathiLocalization.sizeCustomLabel;
+      default:
+        return EnglishLocalization.sizeCustomLabel;
+    }
+  }
+
+  String get useTabletStrip {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.useTabletStrip;
+      case 'Marathi':
+        return MarathiLocalization.useTabletStrip;
+      default:
+        return EnglishLocalization.useTabletStrip;
+    }
+  }
+
+  String get useSmallLabel {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.useSmallLabel;
+      case 'Marathi':
+        return MarathiLocalization.useSmallLabel;
+      default:
+        return EnglishLocalization.useSmallLabel;
+    }
+  }
+
+  String get useStandardLabel {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.useStandardLabel;
+      case 'Marathi':
+        return MarathiLocalization.useStandardLabel;
+      default:
+        return EnglishLocalization.useStandardLabel;
+    }
+  }
+
+  String get useClothTag {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.useClothTag;
+      case 'Marathi':
+        return MarathiLocalization.useClothTag;
+      default:
+        return EnglishLocalization.useClothTag;
+    }
+  }
+
+  String get useLargeLabel {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.useLargeLabel;
+      case 'Marathi':
+        return MarathiLocalization.useLargeLabel;
+      default:
+        return EnglishLocalization.useLargeLabel;
+    }
+  }
+
+  String get useCustomLabel {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.useCustomLabel;
+      case 'Marathi':
+        return MarathiLocalization.useCustomLabel;
+      default:
+        return EnglishLocalization.useCustomLabel;
+    }
+  }
+
+  String get widthMmLabel {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.widthMmLabel;
+      case 'Marathi':
+        return MarathiLocalization.widthMmLabel;
+      default:
+        return EnglishLocalization.widthMmLabel;
+    }
+  }
+
+  String get heightMmLabel {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.heightMmLabel;
+      case 'Marathi':
+        return MarathiLocalization.heightMmLabel;
+      default:
+        return EnglishLocalization.heightMmLabel;
+    }
+  }
+
+  String get printerConnection {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.printerConnection;
+      case 'Marathi':
+        return MarathiLocalization.printerConnection;
+      default:
+        return EnglishLocalization.printerConnection;
+    }
+  }
+
+  String get connViaDriver {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.connViaDriver;
+      case 'Marathi':
+        return MarathiLocalization.connViaDriver;
+      default:
+        return EnglishLocalization.connViaDriver;
+    }
+  }
+
+  String get connViaBluetooth {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.connViaBluetooth;
+      case 'Marathi':
+        return MarathiLocalization.connViaBluetooth;
+      default:
+        return EnglishLocalization.connViaBluetooth;
+    }
+  }
+
+  String get labelsPerSheetSuffix {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.labelsPerSheetSuffix;
+      case 'Marathi':
+        return MarathiLocalization.labelsPerSheetSuffix;
+      default:
+        return EnglishLocalization.labelsPerSheetSuffix;
+    }
+  }
+
+  String get cutGuideBorder {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.cutGuideBorder;
+      case 'Marathi':
+        return MarathiLocalization.cutGuideBorder;
+      default:
+        return EnglishLocalization.cutGuideBorder;
+    }
+  }
+
+  String get cutGuideBorderSub {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.cutGuideBorderSub;
+      case 'Marathi':
+        return MarathiLocalization.cutGuideBorderSub;
+      default:
+        return EnglishLocalization.cutGuideBorderSub;
+    }
+  }
+
+  String get posPaperNote {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.posPaperNote;
+      case 'Marathi':
+        return MarathiLocalization.posPaperNote;
+      default:
+        return EnglishLocalization.posPaperNote;
+    }
+  }
+
+  String get labelContentTitle {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.labelContentTitle;
+      case 'Marathi':
+        return MarathiLocalization.labelContentTitle;
+      default:
+        return EnglishLocalization.labelContentTitle;
+    }
+  }
+
+  String get labelShowPrice {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.labelShowPrice;
+      case 'Marathi':
+        return MarathiLocalization.labelShowPrice;
+      default:
+        return EnglishLocalization.labelShowPrice;
+    }
+  }
+
+  String get labelShowCompany {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.labelShowCompany;
+      case 'Marathi':
+        return MarathiLocalization.labelShowCompany;
+      default:
+        return EnglishLocalization.labelShowCompany;
+    }
+  }
+
+  String get labelShowSizeColor {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.labelShowSizeColor;
+      case 'Marathi':
+        return MarathiLocalization.labelShowSizeColor;
+      default:
+        return EnglishLocalization.labelShowSizeColor;
+    }
+  }
+
+  String get labelShowSizeColorSub {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.labelShowSizeColorSub;
+      case 'Marathi':
+        return MarathiLocalization.labelShowSizeColorSub;
+      default:
+        return EnglishLocalization.labelShowSizeColorSub;
+    }
+  }
+
+  String get labelShowBatchExpiry {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.labelShowBatchExpiry;
+      case 'Marathi':
+        return MarathiLocalization.labelShowBatchExpiry;
+      default:
+        return EnglishLocalization.labelShowBatchExpiry;
+    }
+  }
+
+  String get labelShowBatchExpirySub {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.labelShowBatchExpirySub;
+      case 'Marathi':
+        return MarathiLocalization.labelShowBatchExpirySub;
+      default:
+        return EnglishLocalization.labelShowBatchExpirySub;
+    }
+  }
+
+  String get printingOn {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.printingOn;
+      case 'Marathi':
+        return MarathiLocalization.printingOn;
+      default:
+        return EnglishLocalization.printingOn;
+    }
+  }
+
+  String get changeLabelSettings {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.changeLabelSettings;
+      case 'Marathi':
+        return MarathiLocalization.changeLabelSettings;
+      default:
+        return EnglishLocalization.changeLabelSettings;
+    }
+  }
+
+  String get defaultBadge {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.defaultBadge;
+      case 'Marathi':
+        return MarathiLocalization.defaultBadge;
+      default:
+        return EnglishLocalization.defaultBadge;
+    }
+  }
+
+  String get printOnNormalPrinter {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.printOnNormalPrinter;
+      case 'Marathi':
+        return MarathiLocalization.printOnNormalPrinter;
+      default:
+        return EnglishLocalization.printOnNormalPrinter;
+    }
+  }
+
+  String get printOnBarcodePrinter {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.printOnBarcodePrinter;
+      case 'Marathi':
+        return MarathiLocalization.printOnBarcodePrinter;
+      default:
+        return EnglishLocalization.printOnBarcodePrinter;
+    }
+  }
+
+  String get printOnPosPrinter {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.printOnPosPrinter;
+      case 'Marathi':
+        return MarathiLocalization.printOnPosPrinter;
+      default:
+        return EnglishLocalization.printOnPosPrinter;
+    }
+  }
+
+  String get shareLabelsPdf {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.shareLabelsPdf;
+      case 'Marathi':
+        return MarathiLocalization.shareLabelsPdf;
+      default:
+        return EnglishLocalization.shareLabelsPdf;
+    }
+  }
+
+  String get labelPreviewTitle {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.labelPreviewTitle;
+      case 'Marathi':
+        return MarathiLocalization.labelPreviewTitle;
+      default:
+        return EnglishLocalization.labelPreviewTitle;
+    }
+  }
+
+  String get labelTooNarrowWarning {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.labelTooNarrowWarning;
+      case 'Marathi':
+        return MarathiLocalization.labelTooNarrowWarning;
+      default:
+        return EnglishLocalization.labelTooNarrowWarning;
+    }
+  }
+
+  String get posBarcodeTooLong {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.posBarcodeTooLong;
+      case 'Marathi':
+        return MarathiLocalization.posBarcodeTooLong;
+      default:
+        return EnglishLocalization.posBarcodeTooLong;
+    }
+  }
+
+  String get labelsSentToPrinter {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.labelsSentToPrinter;
+      case 'Marathi':
+        return MarathiLocalization.labelsSentToPrinter;
+      default:
+        return EnglishLocalization.labelsSentToPrinter;
+    }
+  }
+
   String get addCompany {
     switch (languageCode) {
       case 'Hindi':

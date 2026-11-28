@@ -1334,6 +1334,90 @@
       "tests": [
         "test/regression/quick_add_party_test.dart"
       ]
+    },
+    {
+      "id": "barcode-labels",
+      "name": "Barcode labels: printer type (normal / barcode / POS) and label sizes",
+      "files": [
+        "lib/features/inventory_management/presentation/pages/barcode_generator_page.dart",
+        "lib/core/printing/barcode_label/barcode_label_models.dart",
+        "lib/core/printing/barcode_label/barcode_label_layout.dart",
+        "lib/core/printing/barcode_label/barcode_label_settings_service.dart",
+        "lib/core/printing/barcode_label/barcode_label_pdf.dart",
+        "lib/core/printing/barcode_label/barcode_label_escpos.dart",
+        "lib/core/printing/barcode_label/barcode_label_tspl.dart",
+        "lib/features/inventory_management/presentation/pages/barcode_settings_page.dart",
+        "lib/features/inventory_management/presentation/widgets/barcode_print_setup_panel.dart",
+        "lib/features/inventory_management/presentation/widgets/barcode_label_preview.dart",
+        "lib/features/inventory_management/presentation/widgets/barcode_label_ui_helpers.dart"
+      ],
+      "invariants": [
+        "Barcode labels can be printed in different sizes (presets: tablet strip 38x15, small 50x25, standard 60x40, cloth tag 40x60, large 100x50, plus a custom width x height in mm).",
+        "The printer type (normal / barcode printer / POS) and label size are chosen in Barcode Settings and saved locally in SharedPreferences (barcode_* keys) - no Firestore, no synced collection.",
+        "Normal printer prints a grid of labels on A4 sheets; barcode printer prints one label per page at the exact label size via the printer driver, or TSPL over Bluetooth; POS prints ESC/POS on the connected thermal printer using its paper width.",
+        "The preview, PDF, ESC/POS and TSPL outputs all come from one LabelLayout (computeLabelLayout) so every printer type prints the same label for the chosen size.",
+        "The barcode generator page keeps its three print actions (share PDF, normal printer, POS) plus the barcode printer action; the generated barcode value / format / batch selection logic is unchanged.",
+        "Printing never writes the ledger, stock or any Firestore document.",
+        "Barcode label text for each language lives in english.dart, hindi.dart and marathi.dart."
+      ],
+      "anchors": [
+        {
+          "file": "lib/features/inventory_management/presentation/pages/barcode_generator_page.dart",
+          "contains": "BarcodeLabelPdf.build"
+        },
+        {
+          "file": "lib/features/inventory_management/presentation/pages/barcode_generator_page.dart",
+          "contains": "BarcodeLabelEscPos.build"
+        },
+        {
+          "file": "lib/features/inventory_management/presentation/pages/barcode_generator_page.dart",
+          "contains": "BarcodeLabelTspl.build"
+        },
+        {
+          "file": "lib/features/inventory_management/presentation/pages/barcode_generator_page.dart",
+          "contains": "_printBarcodePos"
+        },
+        {
+          "file": "lib/features/inventory_management/presentation/pages/barcode_generator_page.dart",
+          "contains": "BarcodeSettingsPage"
+        },
+        {
+          "file": "lib/core/printing/barcode_label/barcode_label_layout.dart",
+          "contains": "computeLabelLayout"
+        },
+        {
+          "file": "lib/core/printing/barcode_label/barcode_label_layout.dart",
+          "contains": "computeSheetGrid"
+        },
+        {
+          "file": "lib/core/printing/barcode_label/barcode_label_models.dart",
+          "contains": "class LabelPresets"
+        },
+        {
+          "file": "lib/core/printing/barcode_label/barcode_label_settings_service.dart",
+          "contains": "barcode_printer_type"
+        },
+        {
+          "file": "lib/features/inventory_management/presentation/pages/barcode_settings_page.dart",
+          "contains": "BarcodePrintSetupPanel"
+        }
+      ],
+      "forbidden": [
+        {
+          "file": "lib/core/printing/barcode_label/barcode_label_settings_service.dart",
+          "contains": "FirebaseFirestore",
+          "why": "barcode label settings are local-only"
+        },
+        {
+          "file": "lib/features/inventory_management/presentation/pages/barcode_generator_page.dart",
+          "contains": "Timer.periodic",
+          "why": "no polling"
+        }
+      ],
+      "tests": [
+        "test/regression/barcode_label_test.dart",
+        "test/regression/barcode_label_ui_test.dart"
+      ]
     }
   ]
 }

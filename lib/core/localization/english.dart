@@ -1235,4 +1235,100 @@ class EnglishLocalization {
       'Message sent? Tap the WhatsApp icon again to send the PDF report to the same chat.';
   static const String partyAlreadyExistsSelected =
       'Already exists - selected the existing record';
+  static const String barcodeSettings =
+      'Barcode Settings';
+  static const String barcodeSettingsSubtitle =
+      'Printer type and label size';
+  static const String printerTypeTitle =
+      'Printer type';
+  static const String normalPrinterTitle =
+      'Normal printer';
+  static const String normalPrinterSub =
+      'A4 sheet, office printer';
+  static const String barcodePrinterTitle =
+      'Barcode printer';
+  static const String barcodePrinterSub =
+      'Label roll printer';
+  static const String posPrinterSub =
+      'Thermal receipt printer';
+  static const String labelSizeTitle =
+      'Label size';
+  static const String sizeTabletStrip =
+      'Tablet strip';
+  static const String sizeSmallLabel =
+      'Small';
+  static const String sizeStandardLabel =
+      'Standard';
+  static const String sizeClothTag =
+      'Cloth tag';
+  static const String sizeLargeLabel =
+      'Large';
+  static const String sizeCustomLabel =
+      'Custom';
+  static const String useTabletStrip =
+      'Tablet strips, small packs';
+  static const String useSmallLabel =
+      'Small products, cosmetics';
+  static const String useStandardLabel =
+      'General products';
+  static const String useClothTag =
+      'Clothes and garment tags';
+  static const String useLargeLabel =
+      'Cartons, big boxes';
+  static const String useCustomLabel =
+      'Enter your own size';
+  static const String widthMmLabel =
+      'Width (mm)';
+  static const String heightMmLabel =
+      'Height (mm)';
+  static const String printerConnection =
+      'Connection';
+  static const String connViaDriver =
+      'Printer driver / system print';
+  static const String connViaBluetooth =
+      'Bluetooth (TSPL)';
+  static const String labelsPerSheetSuffix =
+      'labels per A4 sheet';
+  static const String cutGuideBorder =
+      'Cut guide border';
+  static const String cutGuideBorderSub =
+      'Thin outline around each label on A4 sheets';
+  static const String posPaperNote =
+      'Paper width (58 / 80 mm) is taken from the connected POS printer';
+  static const String labelContentTitle =
+      'Label content';
+  static const String labelShowPrice =
+      'Price (and MRP)';
+  static const String labelShowCompany =
+      'Company name';
+  static const String labelShowSizeColor =
+      'Size and colour';
+  static const String labelShowSizeColorSub =
+      'Useful for clothes';
+  static const String labelShowBatchExpiry =
+      'Batch and expiry';
+  static const String labelShowBatchExpirySub =
+      'Useful for medicines and tablet strips';
+  static const String printingOn =
+      'Printing on';
+  static const String changeLabelSettings =
+      'Change';
+  static const String defaultBadge =
+      'Default';
+  static const String printOnNormalPrinter =
+      'Print on normal printer';
+  static const String printOnBarcodePrinter =
+      'Print on barcode printer';
+  static const String printOnPosPrinter =
+      'Print on POS printer';
+  static const String shareLabelsPdf =
+      'Share labels as PDF';
+  static const String labelPreviewTitle =
+      'Label preview';
+  static const String labelTooNarrowWarning =
+      'This label is too narrow for the barcode. Use a shorter format (Code 128 / EAN-8) or a bigger label size.';
+  static const String posBarcodeTooLong =
+      'Barcode is too long for this paper width. Use a shorter barcode or a QR code.';
+  static const String labelsSentToPrinter =
+      'Labels sent to printer';
 }

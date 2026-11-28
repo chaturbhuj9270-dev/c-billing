@@ -22,8 +22,9 @@ class CustomerDueResolver {
     final key = data.customerId;
     if (key == null || key.isEmpty) return data;
     try {
-      final pending = await (debugLookup?.call(key) ?? _lookup(key))
-          .timeout(const Duration(seconds: 3));
+      final pending = await (debugLookup?.call(key) ?? _lookup(key)).timeout(
+        const Duration(seconds: 3),
+      );
       final due = resolveTotalDue(
         customerPending: pending,
         billPending: data.pendingAmount ?? 0,

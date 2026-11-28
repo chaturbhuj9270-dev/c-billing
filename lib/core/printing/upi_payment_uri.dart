@@ -41,10 +41,7 @@ double billPrintAmountToPay({
   return (grandTotal - returnedAmount).clamp(0.0, double.infinity);
 }
 
-String upiPayeeName({
-  String? accountHolderName,
-  String? shopName,
-}) {
+String upiPayeeName({String? accountHolderName, String? shopName}) {
   final holder = accountHolderName?.trim() ?? '';
   if (holder.isNotEmpty) return holder;
   final shop = shopName?.trim() ?? '';

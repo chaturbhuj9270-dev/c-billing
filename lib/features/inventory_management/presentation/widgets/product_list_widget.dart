@@ -373,9 +373,14 @@ class _ProductCard extends StatelessWidget {
                             width: 14,
                             height: 14,
                             decoration: BoxDecoration(
-                              color: isOutOfStock ? AppTheme.red : AppTheme.orange,
+                              color: isOutOfStock
+                                  ? AppTheme.red
+                                  : AppTheme.orange,
                               shape: BoxShape.circle,
-                              border: Border.all(color: AppTheme.white, width: 2),
+                              border: Border.all(
+                                color: AppTheme.white,
+                                width: 2,
+                              ),
                             ),
                             child: Center(
                               child: Icon(
@@ -482,7 +487,9 @@ class _ProductCard extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.action(context).withValues(alpha: 0.1),
+                              color: AppColors.action(
+                                context,
+                              ).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -551,12 +558,12 @@ class _ProductCard extends StatelessWidget {
                       value: '${product.currentStock}',
                       color: isOutOfStock
                           ? (AppColors.isDark(context)
-                              ? AppTheme.white70
-                              : AppTheme.red700)
+                                ? AppTheme.white70
+                                : AppTheme.red700)
                           : isLowStock
                           ? (AppColors.isDark(context)
-                              ? AppTheme.white60
-                              : AppTheme.orange700)
+                                ? AppTheme.white60
+                                : AppTheme.orange700)
                           : AppColors.accent(context),
                     ),
                   ],
@@ -769,7 +776,11 @@ class _ShimmerCardState extends State<_ShimmerCard>
         gradient: LinearGradient(
           begin: Alignment(_animation.value - 1, 0),
           end: Alignment(_animation.value, 0),
-          colors: [AppColors.border(context), AppColors.chipFill(context), AppColors.border(context)],
+          colors: [
+            AppColors.border(context),
+            AppColors.chipFill(context),
+            AppColors.border(context),
+          ],
         ),
       ),
     );
@@ -784,7 +795,11 @@ class _ShimmerCardState extends State<_ShimmerCard>
         gradient: LinearGradient(
           begin: Alignment(_animation.value - 1, 0),
           end: Alignment(_animation.value, 0),
-          colors: [AppColors.border(context), AppColors.chipFill(context), AppColors.border(context)],
+          colors: [
+            AppColors.border(context),
+            AppColors.chipFill(context),
+            AppColors.border(context),
+          ],
         ),
       ),
     );

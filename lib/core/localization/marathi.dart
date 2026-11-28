@@ -1242,4 +1242,100 @@ class MarathiLocalization {
       'संदेश पाठवला? त्याच चॅटमध्ये PDF अहवाल पाठवण्यासाठी WhatsApp आयकॉन पुन्हा दाबा.';
   static const String partyAlreadyExistsSelected =
       'आधीच अस्तित्वात आहे - विद्यमान नोंद निवडली';
+  static const String barcodeSettings =
+      'बारकोड सेटिंग्ज';
+  static const String barcodeSettingsSubtitle =
+      'प्रिंटर प्रकार आणि लेबल आकार';
+  static const String printerTypeTitle =
+      'प्रिंटर प्रकार';
+  static const String normalPrinterTitle =
+      'सामान्य प्रिंटर';
+  static const String normalPrinterSub =
+      'A4 शीट, ऑफिस प्रिंटर';
+  static const String barcodePrinterTitle =
+      'बारकोड प्रिंटर';
+  static const String barcodePrinterSub =
+      'लेबल रोल प्रिंटर';
+  static const String posPrinterSub =
+      'थर्मल पावती प्रिंटर';
+  static const String labelSizeTitle =
+      'लेबल आकार';
+  static const String sizeTabletStrip =
+      'टॅब्लेट स्ट्रिप';
+  static const String sizeSmallLabel =
+      'लहान';
+  static const String sizeStandardLabel =
+      'मानक';
+  static const String sizeClothTag =
+      'कपड्यांचा टॅग';
+  static const String sizeLargeLabel =
+      'मोठा';
+  static const String sizeCustomLabel =
+      'सानुकूल';
+  static const String useTabletStrip =
+      'टॅब्लेट स्ट्रिप, लहान पॅक';
+  static const String useSmallLabel =
+      'लहान उत्पादने, सौंदर्यप्रसाधने';
+  static const String useStandardLabel =
+      'सामान्य उत्पादने';
+  static const String useClothTag =
+      'कपडे आणि गारमेंट टॅग';
+  static const String useLargeLabel =
+      'कार्टन, मोठे बॉक्स';
+  static const String useCustomLabel =
+      'स्वतःचा आकार टाका';
+  static const String widthMmLabel =
+      'रुंदी (मिमी)';
+  static const String heightMmLabel =
+      'उंची (मिमी)';
+  static const String printerConnection =
+      'कनेक्शन';
+  static const String connViaDriver =
+      'प्रिंटर ड्रायव्हर / सिस्टम प्रिंट';
+  static const String connViaBluetooth =
+      'ब्लूटूथ (TSPL)';
+  static const String labelsPerSheetSuffix =
+      'लेबल प्रति A4 शीट';
+  static const String cutGuideBorder =
+      'कटिंग गाइड बॉर्डर';
+  static const String cutGuideBorderSub =
+      'A4 शीटवर प्रत्येक लेबलभोवती पातळ रेषा';
+  static const String posPaperNote =
+      'पेपर रुंदी (58 / 80 मिमी) कनेक्टेड POS प्रिंटरवरून घेतली जाते';
+  static const String labelContentTitle =
+      'लेबल मजकूर';
+  static const String labelShowPrice =
+      'किंमत (आणि MRP)';
+  static const String labelShowCompany =
+      'कंपनीचे नाव';
+  static const String labelShowSizeColor =
+      'साइज आणि रंग';
+  static const String labelShowSizeColorSub =
+      'कपड्यांसाठी उपयुक्त';
+  static const String labelShowBatchExpiry =
+      'बॅच आणि एक्सपायरी';
+  static const String labelShowBatchExpirySub =
+      'औषधे आणि टॅब्लेट स्ट्रिपसाठी उपयुक्त';
+  static const String printingOn =
+      'यावर प्रिंट';
+  static const String changeLabelSettings =
+      'बदला';
+  static const String defaultBadge =
+      'डिफॉल्ट';
+  static const String printOnNormalPrinter =
+      'सामान्य प्रिंटरवर प्रिंट करा';
+  static const String printOnBarcodePrinter =
+      'बारकोड प्रिंटरवर प्रिंट करा';
+  static const String printOnPosPrinter =
+      'POS प्रिंटरवर प्रिंट करा';
+  static const String shareLabelsPdf =
+      'लेबल PDF म्हणून शेअर करा';
+  static const String labelPreviewTitle =
+      'लेबल पूर्वावलोकन';
+  static const String labelTooNarrowWarning =
+      'हा लेबल बारकोडसाठी खूप अरुंद आहे. लहान फॉर्मेट (Code 128 / EAN-8) किंवा मोठा लेबल आकार निवडा.';
+  static const String posBarcodeTooLong =
+      'या पेपर रुंदीसाठी बारकोड खूप लांब आहे. लहान बारकोड किंवा QR कोड निवडा.';
+  static const String labelsSentToPrinter =
+      'लेबल प्रिंटरला पाठवले';
 }

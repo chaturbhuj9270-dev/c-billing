@@ -61,7 +61,9 @@ class EnhancedPurchaseScreen extends StatefulWidget {
 }
 
 class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
-    with SingleTickerProviderStateMixin, LiveRefreshMixin<EnhancedPurchaseScreen> {
+    with
+        SingleTickerProviderStateMixin,
+        LiveRefreshMixin<EnhancedPurchaseScreen> {
   @override
   Set<String> get liveRefreshEntities => const {'purchases', 'purchaseBatches'};
 
@@ -156,7 +158,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       final controller = PurchaseBatchOfflineController.instance;
 
       var batches = await controller.getAllBatches(includeConsumed: true);
-      debugPrint('[EnhancedPurchase] Local cache found ${batches.length} batches');
+      debugPrint(
+        '[EnhancedPurchase] Local cache found ${batches.length} batches',
+      );
 
       if (batches.isEmpty) {
         debugPrint(
@@ -194,7 +198,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
       _setupPurchaseStream();
     } catch (e, stack) {
-      debugPrint('[EnhancedPurchase] Error loading from the local database: $e');
+      debugPrint(
+        '[EnhancedPurchase] Error loading from the local database: $e',
+      );
       debugPrint('[EnhancedPurchase] Stack: $stack');
       if (mounted) {
         setState(() => _isLoading = false);
@@ -209,9 +215,8 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     _purchaseStreamSubscription = PurchaseBatchOfflineController.instance
         .watchAllBatches(includeConsumed: true)
         .map(
-          (batches) =>
-              batches.toList()
-                ..sort((a, b) {
+          (batches) => batches.toList()
+            ..sort((a, b) {
               final c = b.purchaseDate.compareTo(a.purchaseDate);
               return c != 0 ? c : b.createdAt.compareTo(a.createdAt);
             }),
@@ -282,10 +287,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
   // Navigate to add purchase page
   void _navigateToAddPurchase() async {
-    await showAppPage(
-      context,
-      const PurchasePage(isEmbedded: false),
-    );
+    await showAppPage(context, const PurchasePage(isEmbedded: false));
     // Reload purchases after returning from add page
     _loadPurchasesFromLocal();
   }
@@ -599,10 +601,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                               ),
                             ),
                           if (selectedSupplierName == null)
-                            Icon(
-                              Icons.arrow_drop_down,
-                              color: AppTheme.grey,
-                            ),
+                            Icon(Icons.arrow_drop_down, color: AppTheme.grey),
                         ],
                       ),
                     ),
@@ -1211,7 +1210,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                 decoration: BoxDecoration(
                   color: AppTheme.red.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.red.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: AppTheme.red.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1327,13 +1328,12 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton:
-          widget.isEmbedded && DesktopCanvas.isDesktopPlatform
+      floatingActionButton: widget.isEmbedded && DesktopCanvas.isDesktopPlatform
           ? null
           : GlassIconFab(
-        tooltip: _localizations.addPurchase,
-        onPressed: _navigateToAddPurchase,
-      ),
+              tooltip: _localizations.addPurchase,
+              onPressed: _navigateToAddPurchase,
+            ),
       body: SafeArea(
         top: false,
         child: Column(
@@ -1631,10 +1631,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
             AppTopBar.action(
               icon: Icons.document_scanner_rounded,
               onTap: () async {
-                final result = await showAppPage(
-                  context,
-                  InvoiceScannerPage(),
-                );
+                final result = await showAppPage(context, InvoiceScannerPage());
                 if (result == true && mounted) {
                   setState(() {});
                 }
@@ -1665,10 +1662,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
               ),
               onSelected: (value) async {
                 if (value == 'purchase_settings') {
-                  await showAppPage(
-                    context,
-                    const PurchaseSettingsPage(),
-                  );
+                  await showAppPage(context, const PurchaseSettingsPage());
                   setState(() {});
                 } else if (value == 'report_settings') {
                   await showAppPage(
@@ -1682,7 +1676,11 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   value: 'purchase_settings',
                   child: Row(
                     children: [
-                      Icon(Icons.tune_rounded, color: AppTheme.grey700, size: 20),
+                      Icon(
+                        Icons.tune_rounded,
+                        color: AppTheme.grey700,
+                        size: 20,
+                      ),
                       const SizedBox(width: 12),
                       const Text(
                         'Purchase Settings',
@@ -1769,245 +1767,237 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
     final customColumns = ProductSettingsService.instance.activeCustomColumns;
 
     return SingleChildScrollView(
-              controller: widget.scrollController,
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const GlassSheetHandle(),
-                  SizedBox(height: 12),
+      controller: widget.scrollController,
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const GlassSheetHandle(),
+          SizedBox(height: 12),
 
-                  // Header
-                  Row(
-                    children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: AppColors.accentSoft(context, 0.1),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Icon(
-                          Icons.inventory_2_rounded,
-                          color: AppColors.accent(context),
-                          size: 28,
-                        ),
-                      ),
-                      SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.purchase.productName,
-                              style: TextStyle(
-                                fontFamily: 'Literata',
-                                fontWeight: FontWeight.w800,
-                                fontSize: 18,
-                                color: AppColors.accent(context),
-                              ),
-                            ),
-                            if (widget.purchase.companyName.isNotEmpty)
-                              Text(
-                                widget.purchase.companyName,
-                                style: TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 14,
-                                  color: AppTheme.grey600,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Details grid
-                  _buildDetailRow(
-                    'Quantity',
-                    '${widget.purchase.quantityPurchased} ${widget.purchase.unit}',
-                  ),
-                  _buildDetailRow(
-                    'Purchase Price',
-                    '₹${widget.purchase.purchasePrice.toStringAsFixed(2)}/unit',
-                  ),
-                  _buildDetailRow(
-                    'Sales Price',
-                    '₹${widget.purchase.sellingPrice.toStringAsFixed(2)}/unit',
-                  ),
-                  _buildDetailRow(
-                    'Total Amount',
-                    '₹${totalAmount.toStringAsFixed(2)}',
-                    highlight: true,
-                  ),
-
-                  if (widget.purchase.supplierName != null &&
-                      widget.purchase.supplierName!.isNotEmpty)
-                    _buildDetailRow('Supplier', widget.purchase.supplierName!),
-
-                  _buildDetailRow(
-                    'Date',
-                    dateFormat.format(widget.purchase.purchaseDate),
-                  ),
-                  _buildDetailRow(
-                    'Time',
-                    timeFormat.format(widget.purchase.purchaseDate),
-                  ),
-
-                  if (widget.purchase.productionDate != null)
-                    _buildDetailRow(
-                      'Production Date',
-                      dateFormat.format(widget.purchase.productionDate!),
-                    ),
-
-                  if (widget.purchase.expiryDate != null)
-                    _buildDetailRow(
-                      'Expiry Date',
-                      dateFormat.format(widget.purchase.expiryDate!),
-                    ),
-
-                  if (widget.purchase.warrantyMonths != null &&
-                      widget.purchase.warrantyMonths! > 0)
-                    _buildDetailRow(
-                      'Warranty',
-                      '${widget.purchase.warrantyMonths} months',
-                    ),
-
-                  if (widget.purchase.notes != null &&
-                      widget.purchase.notes!.isNotEmpty) ...[
-                    SizedBox(height: 16),
+          // Header
+          Row(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppColors.accentSoft(context, 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  Icons.inventory_2_rounded,
+                  color: AppColors.accent(context),
+                  size: 28,
+                ),
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      'Notes',
+                      widget.purchase.productName,
                       style: TextStyle(
                         fontFamily: 'Literata',
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
                         color: AppColors.accent(context),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.chipFill(context),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        widget.purchase.notes!,
+                    if (widget.purchase.companyName.isNotEmpty)
+                      Text(
+                        widget.purchase.companyName,
                         style: TextStyle(
                           fontFamily: 'Literata',
-                          fontWeight: FontWeight.w400,
-                          fontSize: 13,
-                          color: AppTheme.grey700,
-                        ),
-                      ),
-                    ),
-                  ],
-
-                  // Custom Fields Section
-                  if (customColumns.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.tune_rounded,
-                          size: 16,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
                           color: AppTheme.grey600,
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Custom Fields',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.grey600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    FutureBuilder<Map<String, dynamic>>(
-                      future: _loadProductCustomFields(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Center(
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: AppColors.accent(context),
-                                ),
-                              ),
-                            ),
-                          );
-                        }
-                        final fieldValues = snapshot.data ?? {};
-                        return Column(
-                          children: customColumns.map((column) {
-                            final value = fieldValues[column.id];
-                            String displayValue = _formatCustomFieldValue(
-                              column,
-                              value,
-                            );
-                            return _buildDetailRow(column.name, displayValue);
-                          }).toList(),
-                        );
-                      },
-                    ),
+                      ),
                   ],
-
-                  SizedBox(height: 24),
-
-                  // Action buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: widget.onEdit,
-                          icon: Icon(Icons.edit_rounded, size: 18),
-                          label: Text('Edit'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.action(context),
-                            side: BorderSide(color: AppColors.accent(context)),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: widget.onDelete,
-                          icon: const Icon(
-                            Icons.delete_outline_rounded,
-                            size: 18,
-                          ),
-                          label: const Text('Delete'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppTheme.red,
-                            side: const BorderSide(color: AppTheme.red),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // Details grid
+          _buildDetailRow(
+            'Quantity',
+            '${widget.purchase.quantityPurchased} ${widget.purchase.unit}',
+          ),
+          _buildDetailRow(
+            'Purchase Price',
+            '₹${widget.purchase.purchasePrice.toStringAsFixed(2)}/unit',
+          ),
+          _buildDetailRow(
+            'Sales Price',
+            '₹${widget.purchase.sellingPrice.toStringAsFixed(2)}/unit',
+          ),
+          _buildDetailRow(
+            'Total Amount',
+            '₹${totalAmount.toStringAsFixed(2)}',
+            highlight: true,
+          ),
+
+          if (widget.purchase.supplierName != null &&
+              widget.purchase.supplierName!.isNotEmpty)
+            _buildDetailRow('Supplier', widget.purchase.supplierName!),
+
+          _buildDetailRow(
+            'Date',
+            dateFormat.format(widget.purchase.purchaseDate),
+          ),
+          _buildDetailRow(
+            'Time',
+            timeFormat.format(widget.purchase.purchaseDate),
+          ),
+
+          if (widget.purchase.productionDate != null)
+            _buildDetailRow(
+              'Production Date',
+              dateFormat.format(widget.purchase.productionDate!),
+            ),
+
+          if (widget.purchase.expiryDate != null)
+            _buildDetailRow(
+              'Expiry Date',
+              dateFormat.format(widget.purchase.expiryDate!),
+            ),
+
+          if (widget.purchase.warrantyMonths != null &&
+              widget.purchase.warrantyMonths! > 0)
+            _buildDetailRow(
+              'Warranty',
+              '${widget.purchase.warrantyMonths} months',
+            ),
+
+          if (widget.purchase.notes != null &&
+              widget.purchase.notes!.isNotEmpty) ...[
+            SizedBox(height: 16),
+            Text(
+              'Notes',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: AppColors.accent(context),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.chipFill(context),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                widget.purchase.notes!,
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w400,
+                  fontSize: 13,
+                  color: AppTheme.grey700,
+                ),
+              ),
+            ),
+          ],
+
+          // Custom Fields Section
+          if (customColumns.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Icon(Icons.tune_rounded, size: 16, color: AppTheme.grey600),
+                const SizedBox(width: 8),
+                Text(
+                  'Custom Fields',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.grey600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            FutureBuilder<Map<String, dynamic>>(
+              future: _loadProductCustomFields(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.accent(context),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                final fieldValues = snapshot.data ?? {};
+                return Column(
+                  children: customColumns.map((column) {
+                    final value = fieldValues[column.id];
+                    String displayValue = _formatCustomFieldValue(
+                      column,
+                      value,
+                    );
+                    return _buildDetailRow(column.name, displayValue);
+                  }).toList(),
+                );
+              },
+            ),
+          ],
+
+          SizedBox(height: 24),
+
+          // Action buttons
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: widget.onEdit,
+                  icon: Icon(Icons.edit_rounded, size: 18),
+                  label: Text('Edit'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.action(context),
+                    side: BorderSide(color: AppColors.accent(context)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: widget.onDelete,
+                  icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                  label: const Text('Delete'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.red,
+                    side: const BorderSide(color: AppTheme.red),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

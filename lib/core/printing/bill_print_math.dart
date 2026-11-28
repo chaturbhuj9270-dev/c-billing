@@ -25,9 +25,7 @@ BillPrintTotals computeBillPrintTotals({
   required double finalAmount,
 }) {
   final subtotal = productsTotal + serviceChargesTotal + extraChargesTotal;
-  final expected = subtotal -
-      discountAmount +
-      (exclusiveTax ? taxAmount : 0.0);
+  final expected = subtotal - discountAmount + (exclusiveTax ? taxAmount : 0.0);
   final diff = finalAmount - expected;
   // Only a genuine rounding difference (< 1 rupee) is shown as "Round off".
   // Anything larger is unexplained data and is never papered over.
@@ -56,6 +54,7 @@ double? resolveTotalDue({
 /// Part of [totalDue] that comes from earlier bills (0 when none).
 double previousDueOf({required double? totalDue, double? billPending}) {
   if (totalDue == null) return 0;
-  final prev = totalDue - (billPending != null && billPending > 0 ? billPending : 0);
+  final prev =
+      totalDue - (billPending != null && billPending > 0 ? billPending : 0);
   return prev >= 0.005 ? prev : 0;
 }

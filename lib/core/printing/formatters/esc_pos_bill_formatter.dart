@@ -568,10 +568,7 @@ class EscPosBillFormatter {
     b.addAll(_center('Rs.${_fmt(amount)}'));
     b.addAll(EscPosCommands.alignCenter);
     b.addAll(
-      EscPosCommands.printQRCode(
-        payload,
-        moduleSize: _cols >= 42 ? 5 : 4,
-      ),
+      EscPosCommands.printQRCode(payload, moduleSize: _cols >= 42 ? 5 : 4),
     );
     b.addAll(EscPosCommands.alignLeft);
     b.addAll(_lf());

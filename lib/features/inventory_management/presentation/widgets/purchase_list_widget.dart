@@ -219,10 +219,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
         : '${group.items.length} purchases';
     final amount = total
         .toStringAsFixed(0)
-        .replaceAllMapped(
-          RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-          (m) => '${m[1]},',
-        );
+        .replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(2, 10, 2, 8),
@@ -400,7 +397,9 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w500,
                             fontSize: 13,
-                            color: AppColors.action(context).withValues(alpha: 0.8),
+                            color: AppColors.action(
+                              context,
+                            ).withValues(alpha: 0.8),
                           ),
                         ),
                       ],

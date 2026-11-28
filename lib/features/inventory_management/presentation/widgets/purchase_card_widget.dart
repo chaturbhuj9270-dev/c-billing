@@ -106,10 +106,9 @@ class PurchaseCardWidget extends StatelessWidget {
                               fontSize: 9,
                               letterSpacing: 0.3,
                               height: 1.1,
-                              color: (isDark
-                                      ? AppTheme.white
-                                      : AppTheme.indigo400)
-                                  .withValues(alpha: 0.85),
+                              color:
+                                  (isDark ? AppTheme.white : AppTheme.indigo400)
+                                      .withValues(alpha: 0.85),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

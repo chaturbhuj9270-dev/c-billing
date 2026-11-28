@@ -65,11 +65,14 @@ class _PurchasePageState extends State<PurchasePage>
   DateTime? _expiryDate;
   String? _selectedUnit;
   int? _selectedWarranty;
+
   /// When buying packs (Strip/Bag/Box), convert qty×unitsPerPack into base stock.
   bool _buyAsPack = false;
+
   /// Purchase-time pack label (Strip / Bag / Box). Null = buy in base unit.
   String? _purchasePackUnit;
   final _unitsPerPackController = TextEditingController(text: '10');
+
   /// Per-unit (tablet) sale price when buying packs — independent of pack sale price.
   final _unitSalesPriceController = TextEditingController();
 
@@ -287,7 +290,9 @@ class _PurchasePageState extends State<PurchasePage>
             _filteredSuppliers = suppliers;
           });
           _cacheDataSource.saveSuppliers(suppliers);
-          debugPrint('[Purchase] Supplier stream: ${suppliers.length} suppliers');
+          debugPrint(
+            '[Purchase] Supplier stream: ${suppliers.length} suppliers',
+          );
         }, onError: (e) => debugPrint('[ERROR] Supplier stream error: $e'));
   }
 
@@ -310,7 +315,9 @@ class _PurchasePageState extends State<PurchasePage>
             _filteredCompanies = companies;
           });
           _cacheDataSource.saveCompanies(companies);
-          debugPrint('[Purchase] Company stream: ${companies.length} companies');
+          debugPrint(
+            '[Purchase] Company stream: ${companies.length} companies',
+          );
         }, onError: (e) => debugPrint('[ERROR] Company stream error: $e'));
   }
 
@@ -382,8 +389,9 @@ class _PurchasePageState extends State<PurchasePage>
             final headerGreen = isDark
                 ? AppTheme.headerDarkStart
                 : AppColors.action(sheetContext);
-            final cardBg =
-                isDark ? AppColors.card(sheetContext) : AppTheme.white;
+            final cardBg = isDark
+                ? AppColors.card(sheetContext)
+                : AppTheme.white;
 
             return Column(
               children: [
@@ -485,8 +493,9 @@ class _PurchasePageState extends State<PurchasePage>
                               placeholder: _localizations.selectCompany,
                               icon: Icons.apartment_outlined,
                               onSelect: () async {
-                                final company =
-                                    await _showInlineCompanyPicker(sheetContext);
+                                final company = await _showInlineCompanyPicker(
+                                  sheetContext,
+                                );
                                 if (company != null) {
                                   setSheetState(
                                     () => sheetSelectedCompany = company,
@@ -508,8 +517,8 @@ class _PurchasePageState extends State<PurchasePage>
                               onSelect: () async {
                                 final supplier =
                                     await _showInlineSupplierPicker(
-                                  sheetContext,
-                                );
+                                      sheetContext,
+                                    );
                                 if (supplier != null) {
                                   setSheetState(
                                     () => sheetSelectedSupplier = supplier,
@@ -690,8 +699,9 @@ class _PurchasePageState extends State<PurchasePage>
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColors.action(sheetContext),
                               side: BorderSide(
-                                color: AppColors.action(sheetContext)
-                                    .withValues(alpha: 0.45),
+                                color: AppColors.action(
+                                  sheetContext,
+                                ).withValues(alpha: 0.45),
                               ),
                               backgroundColor: cardBg,
                               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -715,20 +725,20 @@ class _PurchasePageState extends State<PurchasePage>
                             onPressed: nameController.text.trim().isEmpty
                                 ? null
                                 : () => _saveNewProduct(
-                                      sheetContext,
-                                      nameController,
-                                      purchasePriceController,
-                                      salesPriceController,
-                                      cgstController,
-                                      sgstController,
-                                      hsnController,
-                                      applyGst,
-                                      sheetSelectedCompany,
-                                      sheetSelectedSupplier,
-                                      customColumns,
-                                      customTextControllers,
-                                      customFieldValues,
-                                    ),
+                                    sheetContext,
+                                    nameController,
+                                    purchasePriceController,
+                                    salesPriceController,
+                                    cgstController,
+                                    sgstController,
+                                    hsnController,
+                                    applyGst,
+                                    sheetSelectedCompany,
+                                    sheetSelectedSupplier,
+                                    customColumns,
+                                    customTextControllers,
+                                    customFieldValues,
+                                  ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: isDark
                                   ? AppColors.action(sheetContext)
@@ -1862,7 +1872,9 @@ class _PurchasePageState extends State<PurchasePage>
                                 padding: EdgeInsets.all(14),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? AppColors.action(context).withValues(alpha: 0.08)
+                                      ? AppColors.action(
+                                          context,
+                                        ).withValues(alpha: 0.08)
                                       : AppColors.scaffold(context),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
@@ -1878,7 +1890,9 @@ class _PurchasePageState extends State<PurchasePage>
                                       width: 48,
                                       height: 48,
                                       decoration: BoxDecoration(
-                                        color: AppColors.action(context).withValues(alpha: 0.1),
+                                        color: AppColors.action(
+                                          context,
+                                        ).withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Icon(
@@ -1944,9 +1958,10 @@ class _PurchasePageState extends State<PurchasePage>
                                                 decoration: BoxDecoration(
                                                   color:
                                                       product.currentStock > 0
-                                                      ? AppTheme.green.withValues(
-                                                          alpha: 0.1,
-                                                        )
+                                                      ? AppTheme.green
+                                                            .withValues(
+                                                              alpha: 0.1,
+                                                            )
                                                       : AppTheme.red.withValues(
                                                           alpha: 0.1,
                                                         ),
@@ -2186,7 +2201,9 @@ class _PurchasePageState extends State<PurchasePage>
                                 padding: EdgeInsets.all(14),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? AppColors.action(context).withValues(alpha: 0.08)
+                                      ? AppColors.action(
+                                          context,
+                                        ).withValues(alpha: 0.08)
                                       : AppColors.scaffold(context),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
@@ -2202,7 +2219,9 @@ class _PurchasePageState extends State<PurchasePage>
                                       width: 48,
                                       height: 48,
                                       decoration: BoxDecoration(
-                                        color: AppColors.action(context).withValues(alpha: 0.1),
+                                        color: AppColors.action(
+                                          context,
+                                        ).withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Center(
@@ -2430,7 +2449,9 @@ class _PurchasePageState extends State<PurchasePage>
                                 padding: EdgeInsets.all(14),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? AppTheme.paletteFF7B68EE.withValues(alpha: 0.08)
+                                      ? AppTheme.paletteFF7B68EE.withValues(
+                                          alpha: 0.08,
+                                        )
                                       : AppColors.scaffold(context),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
@@ -2446,7 +2467,8 @@ class _PurchasePageState extends State<PurchasePage>
                                       width: 48,
                                       height: 48,
                                       decoration: BoxDecoration(
-                                        color: AppTheme.paletteFF7B68EE.withValues(alpha: 0.1),
+                                        color: AppTheme.paletteFF7B68EE
+                                            .withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Center(
@@ -2540,7 +2562,8 @@ class _PurchasePageState extends State<PurchasePage>
 
   void _applyProductPackDefaults(Product product) {
     final packUnit = product.packUnit?.trim();
-    final packEnabled = product.hasPackSell &&
+    final packEnabled =
+        product.hasPackSell &&
         packUnit != null &&
         packUnit.isNotEmpty &&
         PurchaseSettingsService.instance.isUnitAvailable(packUnit);
@@ -2551,9 +2574,8 @@ class _PurchasePageState extends State<PurchasePage>
       if (product.unit != null && product.unit!.trim().isNotEmpty) {
         _selectedUnit = product.unit!.trim();
       } else {
-        _selectedUnit = PackUnitConversion.suggestedBaseUnitForPack(
-              _purchasePackUnit,
-            ) ??
+        _selectedUnit =
+            PackUnitConversion.suggestedBaseUnitForPack(_purchasePackUnit) ??
             PurchaseSettingsService.instance.defaultUnit;
       }
     } else {
@@ -2572,8 +2594,8 @@ class _PurchasePageState extends State<PurchasePage>
     _priceController.text = product.purchasePrice.toStringAsFixed(2);
     _unitSalesPriceController.text = product.salesPrice.toStringAsFixed(2);
     if (_buyAsPack) {
-      _salesPriceController.text =
-          product.effectivePackSalesPrice.toStringAsFixed(2);
+      _salesPriceController.text = product.effectivePackSalesPrice
+          .toStringAsFixed(2);
     } else {
       _salesPriceController.text = product.salesPrice.toStringAsFixed(2);
     }
@@ -2605,10 +2627,10 @@ class _PurchasePageState extends State<PurchasePage>
         }
         // Align stock unit with pack type (Bag→Kg, Strip→Tablet) when empty
         // or still on an unrelated default.
-        final suggested =
-            PackUnitConversion.suggestedBaseUnitForPack(packUnit);
+        final suggested = PackUnitConversion.suggestedBaseUnitForPack(packUnit);
         final current = _selectedUnit?.trim();
-        final needsSuggest = current == null ||
+        final needsSuggest =
+            current == null ||
             current.isEmpty ||
             PackUnitConversion.isKnownPackUnit(current) ||
             (packUnit == 'Bag' &&
@@ -2631,15 +2653,17 @@ class _PurchasePageState extends State<PurchasePage>
       if (product != null) {
         if (_buyAsPack) {
           if (_salesPriceController.text.trim().isEmpty || !previousBuyAsPack) {
-            _salesPriceController.text =
-                product.effectivePackSalesPrice.toStringAsFixed(2);
+            _salesPriceController.text = product.effectivePackSalesPrice
+                .toStringAsFixed(2);
           }
           if (_unitSalesPriceController.text.trim().isEmpty) {
-            _unitSalesPriceController.text =
-                product.salesPrice.toStringAsFixed(2);
+            _unitSalesPriceController.text = product.salesPrice.toStringAsFixed(
+              2,
+            );
           }
         } else if (previousBuyAsPack) {
-          final unitSale = double.tryParse(_unitSalesPriceController.text) ??
+          final unitSale =
+              double.tryParse(_unitSalesPriceController.text) ??
               product.salesPrice;
           _salesPriceController.text = unitSale.toStringAsFixed(2);
         }
@@ -2692,9 +2716,11 @@ class _PurchasePageState extends State<PurchasePage>
     // e.g. 2 Bag × 50 Kg × ₹40 = ₹4000 → stock 100 Kg @ ₹40/Kg.
     final product = _selectedProduct!;
     final purchasePackUnit = _purchasePackUnit?.trim();
-    final unitsPerPack =
-        PackUnitConversion.normalizeUnitsPerPack(_parseUnitsPerPack());
-    final buyingAsPack = _buyAsPack &&
+    final unitsPerPack = PackUnitConversion.normalizeUnitsPerPack(
+      _parseUnitsPerPack(),
+    );
+    final buyingAsPack =
+        _buyAsPack &&
         purchasePackUnit != null &&
         purchasePackUnit.isNotEmpty &&
         unitsPerPack > 1;
@@ -2724,11 +2750,11 @@ class _PurchasePageState extends State<PurchasePage>
               : PurchaseSettingsService.instance.defaultUnit);
     final packNote = buyingAsPack
         ? 'Bought $enteredQty $purchasePackUnit × $unitsPerPack $stockUnit'
-            ' = ${quantity.toStringAsFixed(quantity == quantity.roundToDouble() ? 0 : 2)} $stockUnit'
-            ' @ ₹${price.toStringAsFixed(2)}/$stockUnit'
-            ' (total ₹${(quantity * price).toStringAsFixed(2)};'
-            ' pack sale ₹${enteredPackOrUnitSales.toStringAsFixed(2)},'
-            ' loose sale ₹${salesPrice.toStringAsFixed(2)}/$stockUnit)'
+              ' = ${quantity.toStringAsFixed(quantity == quantity.roundToDouble() ? 0 : 2)} $stockUnit'
+              ' @ ₹${price.toStringAsFixed(2)}/$stockUnit'
+              ' (total ₹${(quantity * price).toStringAsFixed(2)};'
+              ' pack sale ₹${enteredPackOrUnitSales.toStringAsFixed(2)},'
+              ' loose sale ₹${salesPrice.toStringAsFixed(2)}/$stockUnit)'
         : null;
 
     setState(() => _isLoading = true);
@@ -2747,7 +2773,8 @@ class _PurchasePageState extends State<PurchasePage>
             unit: stockUnit,
             purchasePrice: price,
             salesPrice: salesPrice,
-            batchNumber: PurchaseSettingsService.instance.showBatchNumber &&
+            batchNumber:
+                PurchaseSettingsService.instance.showBatchNumber &&
                     _batchNumberController.text.trim().isNotEmpty
                 ? _batchNumberController.text.trim()
                 : null,
@@ -2785,14 +2812,13 @@ class _PurchasePageState extends State<PurchasePage>
       if (buyingAsPack) {
         try {
           final localId = int.tryParse(
-            product.id.startsWith('local_')
-                ? product.id.substring(6)
-                : '',
+            product.id.startsWith('local_') ? product.id.substring(6) : '',
           );
           final existing = localId != null
               ? await ProductOfflineController.instance.getProductById(localId)
-              : await ProductOfflineController.instance
-                  .getProductByServerId(product.id);
+              : await ProductOfflineController.instance.getProductByServerId(
+                  product.id,
+                );
           if (existing != null) {
             await ProductOfflineController.instance.updateProduct(
               id: existing.id,
@@ -2845,7 +2871,9 @@ class _PurchasePageState extends State<PurchasePage>
               .timeout(const Duration(seconds: 1));
           debugPrint('[DEBUG] Updated product in Firestore');
         } catch (e) {
-          debugPrint('[DEBUG] Failed to update Firestore (will sync later): $e');
+          debugPrint(
+            '[DEBUG] Failed to update Firestore (will sync later): $e',
+          );
         }
       }
 
@@ -2977,156 +3005,156 @@ class _PurchasePageState extends State<PurchasePage>
                         size: 22,
                       ),
                     ),
-                      SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _localizations.addNewSupplier,
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                fontFamily: 'Literata',
-                                color: AppColors.accent(context),
-                              ),
+                    SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _localizations.addNewSupplier,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Literata',
+                              color: AppColors.accent(context),
                             ),
+                          ),
+                          Text(
+                            _localizations.createNewSupplierRecord,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.grey,
+                              fontFamily: 'Literata',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Container(
+                        padding: EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppColors.chipFill(context),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.close,
+                          size: 20,
+                          color: AppTheme.grey600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                // Form fields
+                _buildBottomSheetTextField(
+                  controller: _newSupplierFirstNameController,
+                  label: _localizations.firstName,
+                  hint: _localizations.enterFirstName,
+                  icon: Icons.person_outline,
+                  isRequired: true,
+                  onChanged: (_) => setSheetState(() {}),
+                ),
+                const SizedBox(height: 16),
+                _buildBottomSheetTextField(
+                  controller: _newSupplierLastNameController,
+                  label: _localizations.lastName,
+                  hint: _localizations.enterLastName,
+                  icon: Icons.person_outline,
+                  isRequired: true,
+                  onChanged: (_) => setSheetState(() {}),
+                ),
+                const SizedBox(height: 16),
+                _buildBottomSheetTextField(
+                  controller: _newSupplierContactController,
+                  label: _localizations.contactNumber,
+                  hint: _localizations.enterTenDigitNumber,
+                  icon: Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                  maxLength: 10,
+                  onChanged: (_) => setSheetState(() {}),
+                ),
+                const SizedBox(height: 16),
+                _buildBottomSheetTextField(
+                  controller: _newSupplierAddressController,
+                  label: _localizations.address,
+                  hint: _localizations.enterAddress,
+                  icon: Icons.location_on_outlined,
+                  maxLines: 3,
+                  onChanged: (_) => setSheetState(() {}),
+                ),
+                const SizedBox(height: 24),
+                // Action buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.grey700,
+                          side: BorderSide(color: AppTheme.grey300),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          _localizations.cancel,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Literata',
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed:
+                            (_newSupplierFirstNameController.text
+                                    .trim()
+                                    .isEmpty ||
+                                _newSupplierLastNameController.text
+                                    .trim()
+                                    .isEmpty)
+                            ? null
+                            : () => _saveNewSupplier(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.action(context),
+                          foregroundColor: AppTheme.white,
+                          disabledBackgroundColor: AppTheme.grey300,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.add_rounded, size: 20),
+                            const SizedBox(width: 8),
                             Text(
-                              _localizations.createNewSupplierRecord,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppTheme.grey,
+                              _localizations.addSupplier,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
                                 fontFamily: 'Literata',
                               ),
                             ),
                           ],
                         ),
                       ),
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: Container(
-                          padding: EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: AppColors.chipFill(context),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.close,
-                            size: 20,
-                            color: AppTheme.grey600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  // Form fields
-                  _buildBottomSheetTextField(
-                    controller: _newSupplierFirstNameController,
-                    label: _localizations.firstName,
-                    hint: _localizations.enterFirstName,
-                    icon: Icons.person_outline,
-                    isRequired: true,
-                    onChanged: (_) => setSheetState(() {}),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildBottomSheetTextField(
-                    controller: _newSupplierLastNameController,
-                    label: _localizations.lastName,
-                    hint: _localizations.enterLastName,
-                    icon: Icons.person_outline,
-                    isRequired: true,
-                    onChanged: (_) => setSheetState(() {}),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildBottomSheetTextField(
-                    controller: _newSupplierContactController,
-                    label: _localizations.contactNumber,
-                    hint: _localizations.enterTenDigitNumber,
-                    icon: Icons.phone_outlined,
-                    keyboardType: TextInputType.phone,
-                    maxLength: 10,
-                    onChanged: (_) => setSheetState(() {}),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildBottomSheetTextField(
-                    controller: _newSupplierAddressController,
-                    label: _localizations.address,
-                    hint: _localizations.enterAddress,
-                    icon: Icons.location_on_outlined,
-                    maxLines: 3,
-                    onChanged: (_) => setSheetState(() {}),
-                  ),
-                  const SizedBox(height: 24),
-                  // Action buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppTheme.grey700,
-                            side: BorderSide(color: AppTheme.grey300),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: Text(
-                            _localizations.cancel,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'Literata',
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 2,
-                        child: ElevatedButton(
-                          onPressed:
-                              (_newSupplierFirstNameController.text
-                                      .trim()
-                                      .isEmpty ||
-                                  _newSupplierLastNameController.text
-                                      .trim()
-                                      .isEmpty)
-                              ? null
-                              : () => _saveNewSupplier(context),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.action(context),
-                            foregroundColor: AppTheme.white,
-                            disabledBackgroundColor: AppTheme.grey300,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.add_rounded, size: 20),
-                              const SizedBox(width: 8),
-                              Text(
-                                _localizations.addSupplier,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontFamily: 'Literata',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),
+      ),
     );
   }
 
@@ -3186,12 +3214,12 @@ class _PurchasePageState extends State<PurchasePage>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.accent(context), width: 2),
+              borderSide: BorderSide(
+                color: AppColors.accent(context),
+                width: 2,
+              ),
             ),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
-            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             filled: true,
             fillColor: AppColors.scaffold(context),
           ),
@@ -3346,104 +3374,103 @@ class _PurchasePageState extends State<PurchasePage>
                 // Form fields
                 _buildBottomSheetTextField(
                   controller: _newCompanyNameController,
-                    label: _localizations.companyName,
-                    hint: _localizations.enterCompanyName,
-                    icon: Icons.business_outlined,
-                    isRequired: true,
-                    onChanged: (_) => setSheetState(() {}),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildBottomSheetTextField(
-                    controller: _newCompanyContactController,
-                    label: _localizations.contactNumber,
-                    hint: _localizations.enterTenDigitNumber,
-                    icon: Icons.phone_outlined,
-                    keyboardType: TextInputType.phone,
-                    maxLength: 10,
-                    onChanged: (_) => setSheetState(() {}),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildBottomSheetTextField(
-                    controller: _newCompanyGstCodeController,
-                    label: 'GST Code',
-                    hint: 'Enter GST code',
-                    icon: Icons.receipt_long_outlined,
-                    onChanged: (_) => setSheetState(() {}),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildBottomSheetTextField(
-                    controller: _newCompanyAddressController,
-                    label: _localizations.address,
-                    hint: _localizations.enterAddress,
-                    icon: Icons.location_on_outlined,
-                    maxLines: 3,
-                    onChanged: (_) => setSheetState(() {}),
-                  ),
-                  const SizedBox(height: 24),
-                  // Action buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppTheme.grey700,
-                            side: BorderSide(color: AppTheme.grey300),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                  label: _localizations.companyName,
+                  hint: _localizations.enterCompanyName,
+                  icon: Icons.business_outlined,
+                  isRequired: true,
+                  onChanged: (_) => setSheetState(() {}),
+                ),
+                const SizedBox(height: 16),
+                _buildBottomSheetTextField(
+                  controller: _newCompanyContactController,
+                  label: _localizations.contactNumber,
+                  hint: _localizations.enterTenDigitNumber,
+                  icon: Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                  maxLength: 10,
+                  onChanged: (_) => setSheetState(() {}),
+                ),
+                const SizedBox(height: 16),
+                _buildBottomSheetTextField(
+                  controller: _newCompanyGstCodeController,
+                  label: 'GST Code',
+                  hint: 'Enter GST code',
+                  icon: Icons.receipt_long_outlined,
+                  onChanged: (_) => setSheetState(() {}),
+                ),
+                const SizedBox(height: 16),
+                _buildBottomSheetTextField(
+                  controller: _newCompanyAddressController,
+                  label: _localizations.address,
+                  hint: _localizations.enterAddress,
+                  icon: Icons.location_on_outlined,
+                  maxLines: 3,
+                  onChanged: (_) => setSheetState(() {}),
+                ),
+                const SizedBox(height: 24),
+                // Action buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.grey700,
+                          side: BorderSide(color: AppTheme.grey300),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Text(
-                            _localizations.cancel,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'Literata',
-                            ),
+                        ),
+                        child: Text(
+                          _localizations.cancel,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Literata',
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 2,
-                        child: ElevatedButton(
-                          onPressed:
-                              _newCompanyNameController.text.trim().isEmpty
-                              ? null
-                              : () => _saveNewCompany(context),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.action(context),
-                            foregroundColor: AppTheme.white,
-                            disabledBackgroundColor: AppTheme.grey300,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 0,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: _newCompanyNameController.text.trim().isEmpty
+                            ? null
+                            : () => _saveNewCompany(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.action(context),
+                          foregroundColor: AppTheme.white,
+                          disabledBackgroundColor: AppTheme.grey300,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.add_rounded, size: 20),
-                              const SizedBox(width: 8),
-                              Text(
-                                _localizations.addCompany,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontFamily: 'Literata',
-                                ),
+                          elevation: 0,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.add_rounded, size: 20),
+                            const SizedBox(width: 8),
+                            Text(
+                              _localizations.addCompany,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'Literata',
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),
+      ),
     );
   }
 
@@ -3620,9 +3647,7 @@ class _PurchasePageState extends State<PurchasePage>
     return Container(
       decoration: BoxDecoration(
         color: AppColors.scaffold(context),
-        border: Border(
-          top: BorderSide(color: AppColors.border(context)),
-        ),
+        border: Border(top: BorderSide(color: AppColors.border(context))),
         boxShadow: [
           BoxShadow(
             color: AppTheme.black.withValues(alpha: isDark ? 0.35 : 0.06),
@@ -3707,10 +3732,7 @@ class _PurchasePageState extends State<PurchasePage>
         ),
         AppTopBar.action(
           icon: Icons.settings_rounded,
-          onTap: () => showAppPage(
-            context,
-            const PurchaseSettingsPage(),
-          ),
+          onTap: () => showAppPage(context, const PurchaseSettingsPage()),
         ),
       ],
     );
@@ -3736,7 +3758,9 @@ class _PurchasePageState extends State<PurchasePage>
           height: 32,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: AppColors.action(context).withValues(alpha: isDark ? 0.22 : 0.1),
+            color: AppColors.action(
+              context,
+            ).withValues(alpha: isDark ? 0.22 : 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: AppColors.action(context), size: 18),
@@ -3781,7 +3805,9 @@ class _PurchasePageState extends State<PurchasePage>
           const SizedBox(height: 14),
           Material(
             color: selected
-                ? AppColors.action(context).withValues(alpha: isDark ? 0.18 : 0.08)
+                ? AppColors.action(
+                    context,
+                  ).withValues(alpha: isDark ? 0.18 : 0.08)
                 : (isDark ? AppColors.inputFill(context) : AppTheme.grey100),
             borderRadius: BorderRadius.circular(18),
             child: InkWell(
@@ -3795,9 +3821,9 @@ class _PurchasePageState extends State<PurchasePage>
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: AppColors.action(context).withValues(
-                          alpha: isDark ? 0.28 : 0.12,
-                        ),
+                        color: AppColors.action(
+                          context,
+                        ).withValues(alpha: isDark ? 0.28 : 0.12),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Icon(
@@ -3879,10 +3905,7 @@ class _PurchasePageState extends State<PurchasePage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionHeading(
-            Icons.shopping_bag_rounded,
-            _localizations.purchase,
-          ),
+          _sectionHeading(Icons.shopping_bag_rounded, _localizations.purchase),
           const SizedBox(height: 14),
           if (PurchaseSettingsService.instance.showBatchNumber) ...[
             _buildTextField(
@@ -3955,7 +3978,9 @@ class _PurchasePageState extends State<PurchasePage>
               hint:
                   'How many ${_selectedUnit ?? 'units'} in one ${_purchasePackUnit ?? 'pack'}',
               icon: Icons.grid_view_rounded,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               onChanged: (_) => _calculateTotal(),
             ),
             const SizedBox(height: 12),
@@ -4022,19 +4047,15 @@ class _PurchasePageState extends State<PurchasePage>
       child: Column(
         children: [
           InkWell(
-            onTap: () => setState(
-              () => _moreDetailsExpanded = !_moreDetailsExpanded,
-            ),
+            onTap: () =>
+                setState(() => _moreDetailsExpanded = !_moreDetailsExpanded),
             borderRadius: BorderRadius.circular(24),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
               child: Row(
                 children: [
                   Expanded(
-                    child: _sectionHeading(
-                      Icons.tune_rounded,
-                      'More details',
-                    ),
+                    child: _sectionHeading(Icons.tune_rounded, 'More details'),
                   ),
                   Text(
                     '(${_localizations.optional})',
@@ -4074,7 +4095,8 @@ class _PurchasePageState extends State<PurchasePage>
                     Row(
                       children: [
                         if (PurchaseSettingsService
-                            .instance.showManufacturingDate)
+                            .instance
+                            .showManufacturingDate)
                           Expanded(
                             child: _buildDateField(
                               label: _localizations.mfgDate,
@@ -4083,7 +4105,8 @@ class _PurchasePageState extends State<PurchasePage>
                             ),
                           ),
                         if (PurchaseSettingsService
-                                .instance.showManufacturingDate &&
+                                .instance
+                                .showManufacturingDate &&
                             PurchaseSettingsService.instance.showExpiryDate)
                           const SizedBox(width: 12),
                         if (PurchaseSettingsService.instance.showExpiryDate)
@@ -4205,7 +4228,11 @@ class _PurchasePageState extends State<PurchasePage>
                     ),
                     child: Row(
                       children: [
-                        Icon(icon, size: 18, color: AppColors.mutedText(context)),
+                        Icon(
+                          icon,
+                          size: 18,
+                          color: AppColors.mutedText(context),
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(
@@ -4264,7 +4291,11 @@ class _PurchasePageState extends State<PurchasePage>
                 child: SizedBox(
                   width: 48,
                   height: 48,
-                  child: Icon(Icons.add, color: AppColors.action(context), size: 22),
+                  child: Icon(
+                    Icons.add,
+                    color: AppColors.action(context),
+                    size: 22,
+                  ),
                 ),
               ),
             ),
@@ -4273,7 +4304,6 @@ class _PurchasePageState extends State<PurchasePage>
       ],
     );
   }
-
 
   // Date field widget
   Widget _buildDateField({
@@ -4418,7 +4448,11 @@ class _PurchasePageState extends State<PurchasePage>
               fontFamily: 'Literata',
               fontWeight: FontWeight.w500,
             ),
-            prefixIcon: Icon(icon, color: AppColors.mutedText(context), size: 18),
+            prefixIcon: Icon(
+              icon,
+              color: AppColors.mutedText(context),
+              size: 18,
+            ),
             filled: true,
             fillColor: isDark ? AppTheme.darkScaffold : AppTheme.grey100,
             border: OutlineInputBorder(
@@ -4431,7 +4465,10 @@ class _PurchasePageState extends State<PurchasePage>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: AppColors.action(context), width: 1.4),
+              borderSide: BorderSide(
+                color: AppColors.action(context),
+                width: 1.4,
+              ),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
@@ -4480,10 +4517,7 @@ class _PurchasePageState extends State<PurchasePage>
                   onTap: () => onSelected(option),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? AppColors.action(context)
@@ -4530,9 +4564,11 @@ class _PurchasePageState extends State<PurchasePage>
   Widget _buildPricingSection() {
     final enteredQty = double.tryParse(_quantityController.text.trim()) ?? 0;
     final enteredPrice = double.tryParse(_priceController.text) ?? 0;
-    final unitsPerPack =
-        PackUnitConversion.normalizeUnitsPerPack(_parseUnitsPerPack());
-    final buyingAsPack = _buyAsPack &&
+    final unitsPerPack = PackUnitConversion.normalizeUnitsPerPack(
+      _parseUnitsPerPack(),
+    );
+    final buyingAsPack =
+        _buyAsPack &&
         _purchasePackUnit != null &&
         _purchasePackUnit!.isNotEmpty &&
         unitsPerPack > 1;
@@ -4574,9 +4610,7 @@ class _PurchasePageState extends State<PurchasePage>
               Expanded(
                 child: _buildPriceField(
                   controller: _salesPriceController,
-                  label: _buyAsPack
-                      ? 'Sale / $packLabel'
-                      : 'Sale / $unitLabel',
+                  label: _buyAsPack ? 'Sale / $packLabel' : 'Sale / $unitLabel',
                   hint: '0.00',
                 ),
               ),
@@ -4617,8 +4651,8 @@ class _PurchasePageState extends State<PurchasePage>
                 _isInterstate
                     ? 'IGST ${(_purchaseCgstPercent + _purchaseSgstPercent).toStringAsFixed(0)}%'
                     : 'CGST ${_purchaseCgstPercent.toStringAsFixed(0)}% + '
-                        'SGST ${_purchaseSgstPercent.toStringAsFixed(0)}%'
-                    '${_purchaseHsnCode != null && _purchaseHsnCode!.isNotEmpty ? ' · HSN $_purchaseHsnCode' : ''}',
+                          'SGST ${_purchaseSgstPercent.toStringAsFixed(0)}%'
+                          '${_purchaseHsnCode != null && _purchaseHsnCode!.isNotEmpty ? ' · HSN $_purchaseHsnCode' : ''}',
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 12,
@@ -4664,9 +4698,7 @@ class _PurchasePageState extends State<PurchasePage>
                 ],
               ),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: AppColors.accentSoft(context, 0.2),
-              ),
+              border: Border.all(color: AppColors.accentSoft(context, 0.2)),
             ),
             child: Column(
               children: [
@@ -4692,10 +4724,7 @@ class _PurchasePageState extends State<PurchasePage>
                         tax.sgstAmount,
                       ),
                   ],
-                  _purchaseTaxRow(
-                    _localizations.totalTax,
-                    tax.totalTaxAmount,
-                  ),
+                  _purchaseTaxRow(_localizations.totalTax, tax.totalTaxAmount),
                   const SizedBox(height: 8),
                   Divider(color: AppColors.border(context)),
                   const SizedBox(height: 8),
@@ -4735,7 +4764,7 @@ class _PurchasePageState extends State<PurchasePage>
                             Text(
                               buyingAsPack
                                   ? '${_formatQty(enteredQty)} $packLabel × $unitsPerPack $unitLabel × ₹${enteredPrice.toStringAsFixed(2)}/$unitLabel'
-                                      '\n= ${_formatQty(baseQty)} $unitLabel stock'
+                                        '\n= ${_formatQty(baseQty)} $unitLabel stock'
                                   : '${_formatQty(enteredQty)} $unitLabel × ₹${enteredPrice.toStringAsFixed(2)}/$unitLabel',
                               style: TextStyle(
                                 fontSize: 11,
@@ -4864,7 +4893,6 @@ class _PurchasePageState extends State<PurchasePage>
       ],
     );
   }
-
 }
 
 // Sticky header delegate for pinned sections
@@ -4880,11 +4908,7 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return SizedBox(
-      height: height,
-      width: double.infinity,
-      child: child,
-    );
+    return SizedBox(height: height, width: double.infinity, child: child);
   }
 
   @override

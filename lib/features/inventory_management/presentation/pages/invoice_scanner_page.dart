@@ -297,7 +297,8 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
                 item.salesPrice ??
                 matchedProduct?.salesPrice ??
                 item.purchasePrice * 1.2,
-            batchNumber: PurchaseSettingsService.instance.showBatchNumber &&
+            batchNumber:
+                PurchaseSettingsService.instance.showBatchNumber &&
                     item.batchNumber?.trim().isNotEmpty == true
                 ? item.batchNumber!.trim()
                 : null,
@@ -394,8 +395,8 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
           ),
           Expanded(
             child: _showApiKeyInput && !_scannerService.isConfigured
-          ? _buildApiKeySetup(theme, colorScheme)
-          : _buildMainContent(theme, colorScheme),
+                ? _buildApiKeySetup(theme, colorScheme)
+                : _buildMainContent(theme, colorScheme),
           ),
         ],
       ),
@@ -1437,7 +1438,8 @@ class _EditItemDialogState extends State<_EditItemDialog> {
                   ? _unitController.text
                   : null,
               companyName: _selectedCompanyName,
-              batchNumber: PurchaseSettingsService.instance.showBatchNumber &&
+              batchNumber:
+                  PurchaseSettingsService.instance.showBatchNumber &&
                       _batchController.text.isNotEmpty
                   ? _batchController.text
                   : null,

@@ -3,14 +3,22 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:barcode_widget/barcode_widget.dart' as bw;
 import '../../../../core/services/barcode_service.dart';
+import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/printing/barcode_label/barcode_label_escpos.dart';
+import '../../../../core/printing/barcode_label/barcode_label_layout.dart';
+import '../../../../core/printing/barcode_label/barcode_label_models.dart';
+import '../../../../core/printing/barcode_label/barcode_label_pdf.dart';
+import '../../../../core/printing/barcode_label/barcode_label_settings_service.dart';
+import '../../../../core/printing/barcode_label/barcode_label_tspl.dart';
+import '../widgets/barcode_label_preview.dart';
+import '../widgets/barcode_label_ui_helpers.dart';
+import 'barcode_settings_page.dart';
 import '../../../../core/printing/services/pos_printer_service.dart';
-import '../../../../core/printing/formatters/esc_pos_bill_formatter.dart';
 import '../../../../common_widgets/printer_selection_widget.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../product/offline/entities/product_entity.dart';
@@ -54,8 +62,10 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
   String _searchQuery = '';
   BarcodeFormat _selectedFormat = BarcodeFormat.ean13;
   String _generatedBarcode = '';
-  bool _includePrice = true;
-  bool _includeCompany = true;
+  final _labelSvc = BarcodeLabelSettingsService.instance;
+  bool get _includePrice => _labelSvc.settings.includePrice;
+  bool get _includeCompany => _labelSvc.settings.includeCompany;
+  AppLocalizations get _l => barcodeL10n();
   bool _autoGenerate = true;
 
   // Controllers
@@ -110,11 +120,18 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
       CurvedAnimation(parent: _scaleController, curve: Curves.easeOutBack),
     );
 
+    _labelSvc.ensureLoaded();
+    _labelSvc.addListener(_onLabelSettingsChanged);
     _loadProducts();
+  }
+
+  void _onLabelSettingsChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    _labelSvc.removeListener(_onLabelSettingsChanged);
     _fadeController.dispose();
     _slideController.dispose();
     _scaleController.dispose();
@@ -301,9 +318,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             : AppColors.chipFill(context),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isError
-              ? AppTheme.red.withValues(alpha: 0.35)
-              : _borderColor,
+          color: isError ? AppTheme.red.withValues(alpha: 0.35) : _borderColor,
           style: BorderStyle.solid,
         ),
       ),
@@ -426,46 +441,134 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     }
   }
 
+  // ---------------------------------------------------------------------
+  // Label printing (feature: barcode-labels). Layout, PDF, ESC/POS and TSPL
+  // output come from core/printing/barcode_label so every printer type prints
+  // the same label for the chosen size.
+  // ---------------------------------------------------------------------
+
+  BarcodeLabelSettings get _labelSettings => _labelSvc.settings;
+
+  int get _copies => (int.tryParse(_quantityController.text) ?? 1).clamp(
+    1,
+    BarcodeLabelPdf.maxCopies,
+  );
+
+  LabelContent _currentLabelContent() {
+    final p = _selectedProduct;
+    final b = _selectedBatch;
+    String? batchLabel;
+    if (b != null) {
+      final n = b.batchNumber?.trim();
+      batchLabel = (n != null && n.isNotEmpty) ? n : 'B#${b.id}';
+    }
+    return LabelContent.build(
+      name: p?.name ?? '',
+      code: _generatedBarcode,
+      format: _selectedFormat,
+      settings: _labelSettings,
+      company: p?.companyName,
+      size: p?.size,
+      color: p?.color,
+      price: b?.sellingPrice ?? p?.salesPrice,
+      mrp: p?.mrp,
+      batchLabel: batchLabel,
+      expiry: b?.expiryDate,
+    );
+  }
+
+  LabelLayout _currentLabelLayout([LabelContent? content]) {
+    final s = _labelSettings;
+    return computeLabelLayout(
+      widthMm: s.widthMm,
+      heightMm: s.heightMm,
+      content: content ?? _currentLabelContent(),
+    );
+  }
+
+  String get _jobName => 'Barcode_${_selectedProduct?.name ?? 'Label'}';
+
+  /// Normal printer: labels in a grid on A4 sheets.
   Future<void> _printBarcode() async {
     if (_generatedBarcode.isEmpty) return;
-
-    final quantity = int.tryParse(_quantityController.text) ?? 1;
-
     try {
+      final settings = _labelSettings.copyWith(
+        printerType: BarcodePrinterType.normal,
+      );
+      final content = _currentLabelContent();
+      final copies = _copies;
       await Printing.layoutPdf(
-        onLayout: (format) => _generateBarcodePdf(quantity),
-        name: 'Barcode_${_selectedProduct?.name ?? 'Label'}',
+        onLayout: (format) => BarcodeLabelPdf.build(
+          settings: settings,
+          content: content,
+          copies: copies,
+        ),
+        name: _jobName,
+        format: PdfPageFormat.a4,
       );
     } catch (e) {
       _showSnackBar('Error printing barcode: $e', isError: true);
     }
   }
 
-  // Print barcode using POS thermal printer
-  Future<void> _printBarcodePos() async {
+  /// Barcode (label roll) printer: one label per page at the exact size, via
+  /// the printer driver, or TSPL over Bluetooth.
+  Future<void> _printBarcodeLabel() async {
     if (_generatedBarcode.isEmpty) return;
-
-    // Check if printer is connected
-    if (!_printerService.isConnected) {
-      // Show printer selection dialog
-      final selectedPrinter = await PrinterSelectionWidget.show(context);
-      if (selectedPrinter == null) {
-        _showSnackBar('No printer selected', isError: true);
-        return;
-      }
+    final s = _labelSettings;
+    if (s.connection == LabelConnection.bluetooth) {
+      return _printBarcodeTspl();
     }
-
-    final quantity = int.tryParse(_quantityController.text) ?? 1;
-
     try {
-      // Generate barcode label bytes
-      final bytes = _generateBarcodeLabelBytes(quantity);
+      final settings = s.copyWith(printerType: BarcodePrinterType.label);
+      final content = _currentLabelContent();
+      final copies = _copies;
+      await Printing.layoutPdf(
+        onLayout: (format) => BarcodeLabelPdf.build(
+          settings: settings,
+          content: content,
+          copies: copies,
+        ),
+        name: _jobName,
+        format: PdfPageFormat(
+          s.widthMm * PdfPageFormat.mm,
+          s.heightMm * PdfPageFormat.mm,
+        ),
+        usePrinterSettings: false,
+      );
+    } catch (e) {
+      _showSnackBar('Error printing barcode: $e', isError: true);
+    }
+  }
 
-      // Print using POS printer
+  Future<bool> _ensurePosConnected() async {
+    if (_printerService.isConnected) return true;
+    final selectedPrinter = await PrinterSelectionWidget.show(context);
+    if (selectedPrinter == null) {
+      _showSnackBar('No printer selected', isError: true);
+      return false;
+    }
+    return true;
+  }
+
+  /// Bluetooth barcode printer that understands TSPL.
+  Future<void> _printBarcodeTspl() async {
+    if (_generatedBarcode.isEmpty) return;
+    if (!await _ensurePosConnected()) return;
+    try {
+      final s = _labelSettings;
+      final content = _currentLabelContent();
+      final bytes = BarcodeLabelTspl.build(
+        widthMm: s.widthMm,
+        heightMm: s.heightMm,
+        gapMm: s.gapMm,
+        content: content,
+        layout: _currentLabelLayout(content),
+        copies: _copies,
+      );
       final result = await _printerService.printRaw(bytes);
-
       if (result.success) {
-        _showSnackBar('Barcode printed successfully!', isError: false);
+        _showSnackBar(_l.labelsSentToPrinter, isError: false);
       } else {
         _showSnackBar(result.message ?? 'Print failed', isError: true);
       }
@@ -474,192 +577,55 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     }
   }
 
-  // Generate ESC/POS bytes for barcode label
-  List<int> _generateBarcodeLabelBytes(int quantity) {
-    final bytes = <int>[];
-
-    // Initialize printer
-    bytes.addAll(EscPosCommands.init);
-    bytes.addAll(EscPosCommands.setLineSpacing(26)); // Tighter line spacing
-
-    for (int i = 0; i < quantity; i++) {
-      // Center align
-      bytes.addAll(EscPosCommands.alignCenter);
-
-      // TOP LINE: Product Name | Rs.Price | Batch (all in one line, normal size)
-      bytes.addAll(EscPosCommands.textNormal);
-      bytes.addAll(EscPosCommands.boldOn);
-      final topLine = _buildTopLine();
-      bytes.addAll(topLine.codeUnits);
-      bytes.addAll(EscPosCommands.boldOff);
-      bytes.addAll(EscPosCommands.lineFeed);
-
-      // Barcode settings
-      bytes.addAll(EscPosCommands.setBarcodeHeight(50)); // Slightly smaller
-      bytes.addAll(
-        EscPosCommands.setBarcodeWidth(2),
-      ); // Narrower for more chars
-      bytes.addAll(EscPosCommands.setHRIPosition(2)); // Print below barcode
-      bytes.addAll(EscPosCommands.setHRIFont(1)); // Font B (smaller)
-
-      // Print barcode based on format
-      switch (_selectedFormat) {
-        case BarcodeFormat.code128:
-          bytes.addAll(EscPosCommands.printCode128(_generatedBarcode));
-          break;
-        case BarcodeFormat.code39:
-          bytes.addAll(EscPosCommands.printCode39(_generatedBarcode));
-          break;
-        case BarcodeFormat.ean13:
-          bytes.addAll(EscPosCommands.printEAN13(_generatedBarcode));
-          break;
-        case BarcodeFormat.ean8:
-          bytes.addAll(EscPosCommands.printEAN8(_generatedBarcode));
-          break;
-        case BarcodeFormat.upcA:
-          bytes.addAll(EscPosCommands.printUPCA(_generatedBarcode));
-          break;
-        case BarcodeFormat.qrCode:
-          bytes.addAll(
-            EscPosCommands.printQRCode(_generatedBarcode, moduleSize: 5),
-          );
-          break;
+  /// POS (thermal receipt) printer over ESC/POS.
+  Future<void> _printBarcodePos() async {
+    if (_generatedBarcode.isEmpty) return;
+    if (!await _ensurePosConnected()) return;
+    try {
+      final content = _currentLabelContent();
+      final paper = _printerService.config.paperSize;
+      if (!BarcodeLabelEscPos.fitsPaper(paper: paper, content: content)) {
+        _showSnackBar(_l.posBarcodeTooLong, isError: true);
+        return;
       }
-
-      bytes.addAll(EscPosCommands.lineFeed);
-
-      // Add spacing between labels
-      bytes.addAll(EscPosCommands.feedLines(2));
-
-      // Separator line between multiple labels
-      if (i < quantity - 1) {
-        bytes.addAll('--------------------------------'.codeUnits);
-        bytes.addAll(EscPosCommands.lineFeed);
-        bytes.addAll(EscPosCommands.feedLines(1));
-      }
-    }
-
-    // Final feed
-    bytes.addAll(EscPosCommands.feedLines(3));
-
-    return bytes;
-  }
-
-  // Build top line: Product Name | Rs.Price | Batch (single line)
-  String _buildTopLine() {
-    final parts = <String>[];
-
-    // Product name (truncate to fit in line)
-    final productName = _selectedProduct?.name ?? '';
-    parts.add(
-      productName.length > 16 ? productName.substring(0, 16) : productName,
-    );
-
-    // Price
-    if (_includePrice) {
-      final price =
-          _selectedBatch?.sellingPrice ?? _selectedProduct?.salesPrice ?? 0;
-      parts.add('Rs.${price.toStringAsFixed(0)}');
-    }
-
-    // Batch
-    if (_selectedBatch != null) {
-      parts.add('B#${_selectedBatch!.id}');
-    }
-
-    return parts.join('|');
-  }
-
-  Future<Uint8List> _generateBarcodePdf(int quantity) async {
-    final pdf = pw.Document();
-    final barcode = BarcodeService.instance.getBarcodeRenderer(_selectedFormat);
-
-    // Create barcode widgets
-    final barcodeWidgets = <pw.Widget>[];
-
-    for (int i = 0; i < quantity; i++) {
-      barcodeWidgets.add(
-        pw.Container(
-          width: 60 * PdfPageFormat.mm,
-          height: 35 * PdfPageFormat.mm, // Slightly smaller height
-          padding: const pw.EdgeInsets.all(3),
-          child: pw.Column(
-            mainAxisAlignment: pw.MainAxisAlignment.center,
-            children: [
-              // TOP LINE: Product Name | Rs.Price | Batch (single line, smaller font)
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.center,
-                children: [
-                  pw.Flexible(
-                    child: pw.Text(
-                      (_selectedProduct?.name ?? '').length > 18
-                          ? (_selectedProduct?.name ?? '').substring(0, 18)
-                          : (_selectedProduct?.name ?? ''),
-                      style: pw.TextStyle(
-                        fontSize: 7,
-                        fontWeight: pw.FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                    ),
-                  ),
-                  if (_includePrice) ...[
-                    pw.Text('|', style: const pw.TextStyle(fontSize: 6)),
-                    pw.Text(
-                      'Rs.${(_selectedBatch?.sellingPrice ?? _selectedProduct?.salesPrice ?? 0).toStringAsFixed(0)}',
-                      style: pw.TextStyle(
-                        fontSize: 7,
-                        fontWeight: pw.FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                  if (_selectedBatch != null) ...[
-                    pw.Text('|', style: const pw.TextStyle(fontSize: 6)),
-                    pw.Text(
-                      'B#${_selectedBatch!.id}',
-                      style: const pw.TextStyle(fontSize: 6),
-                    ),
-                  ],
-                ],
-              ),
-              pw.SizedBox(height: 2),
-              // BARCODE
-              pw.BarcodeWidget(
-                barcode: barcode,
-                data: _generatedBarcode,
-                width: 50 * PdfPageFormat.mm,
-                height: 14 * PdfPageFormat.mm,
-                drawText: true,
-                textStyle: const pw.TextStyle(fontSize: 7),
-              ),
-            ],
-          ),
-        ),
+      final bytes = BarcodeLabelEscPos.build(
+        paper: paper,
+        content: content,
+        layout: _currentLabelLayout(content),
+        copies: _copies,
       );
-    }
-
-    // Layout barcodes in a grid (3 columns)
-    final rows = <pw.TableRow>[];
-    for (int i = 0; i < barcodeWidgets.length; i += 3) {
-      final rowWidgets = <pw.Widget>[];
-      for (int j = 0; j < 3 && (i + j) < barcodeWidgets.length; j++) {
-        rowWidgets.add(barcodeWidgets[i + j]);
+      final result = await _printerService.printRaw(bytes);
+      if (result.success) {
+        _showSnackBar(_l.labelsSentToPrinter, isError: false);
+      } else {
+        _showSnackBar(result.message ?? 'Print failed', isError: true);
       }
-      // Fill empty cells
-      while (rowWidgets.length < 3) {
-        rowWidgets.add(pw.SizedBox(width: 60 * PdfPageFormat.mm));
-      }
-      rows.add(pw.TableRow(children: rowWidgets));
+    } catch (e) {
+      _showSnackBar('Error printing barcode: $e', isError: true);
     }
+  }
 
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(10 * PdfPageFormat.mm),
-        build: (context) => [pw.Table(children: rows)],
-      ),
+  /// PDF used for sharing: label-sized pages for a barcode printer, otherwise
+  /// A4 sheets.
+  Future<Uint8List> _generateBarcodePdf(int quantity) {
+    final s = _labelSettings;
+    return BarcodeLabelPdf.build(
+      settings: s.printerType == BarcodePrinterType.label
+          ? s
+          : s.copyWith(printerType: BarcodePrinterType.normal),
+      content: _currentLabelContent(),
+      copies: quantity.clamp(1, BarcodeLabelPdf.maxCopies),
     );
+  }
 
-    return pdf.save();
+  void _setIncludePrice(bool v) =>
+      _labelSvc.update(_labelSettings.copyWith(includePrice: v));
+
+  void _setIncludeCompany(bool v) =>
+      _labelSvc.update(_labelSettings.copyWith(includeCompany: v));
+
+  void _openBarcodeSettings() {
+    showAppPage(context, const BarcodeSettingsPage());
   }
 
   void _copyBarcodeToClipboard() {
@@ -670,7 +636,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
   }
 
   void _showSnackBar(String message, {required bool isError}) {
-    GlassyToast.show(context, message, isError: true);
+    GlassyToast.show(context, message, isError: isError);
   }
 
   @override
@@ -730,26 +696,26 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     return AppTabBar(
       controller: _tabController,
       tabs: [
-          Tab(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.inventory_2_rounded, size: 18),
-                const SizedBox(width: 8),
-                Text('Products (${_products.length})'),
-              ],
-            ),
+        Tab(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.inventory_2_rounded, size: 18),
+              const SizedBox(width: 8),
+              Text('Products (${_products.length})'),
+            ],
           ),
-          Tab(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.barcode_reader, size: 18),
-                const SizedBox(width: 8),
-                const Text('Barcode'),
-              ],
-            ),
+        ),
+        Tab(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.barcode_reader, size: 18),
+              const SizedBox(width: 8),
+              const Text('Barcode'),
+            ],
           ),
+        ),
       ],
     );
   }
@@ -784,18 +750,10 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                   color: _mutedText,
                   fontSize: 13,
                 ),
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: _mutedText,
-                  size: 20,
-                ),
+                prefixIcon: Icon(Icons.search, color: _mutedText, size: 20),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
-                        icon: Icon(
-                          Icons.clear,
-                          color: _mutedText,
-                          size: 20,
-                        ),
+                        icon: Icon(Icons.clear, color: _mutedText, size: 20),
                         onPressed: () {
                           _searchController.clear();
                           _filterProducts('');
@@ -814,10 +772,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: _primaryColor,
-                    width: 1.5,
-                  ),
+                  borderSide: BorderSide(color: _primaryColor, width: 1.5),
                 ),
               ),
             ),
@@ -1059,16 +1014,13 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                   }
                 },
                 child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: isSelected ? _primaryColor : AppColors.chipFill(context),
+                    color: isSelected
+                        ? _primaryColor
+                        : AppColors.chipFill(context),
                     borderRadius: BorderRadius.circular(8),
-                    border: isSelected
-                        ? null
-                        : Border.all(color: _borderColor),
+                    border: isSelected ? null : Border.all(color: _borderColor),
                   ),
                   child: Text(
                     format.code,
@@ -1135,6 +1087,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             const SizedBox(height: 16),
           ],
 
+          _buildPrintSetupSummary(),
           // Toggle Options
           _buildToggleOption(
             'Auto-generate barcode',
@@ -1149,13 +1102,13 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             'Include price',
             'Show price on label',
             _includePrice,
-            (value) => setState(() => _includePrice = value),
+            _setIncludePrice,
           ),
           _buildToggleOption(
             'Include company',
             'Show company name',
             _includeCompany,
-            (value) => setState(() => _includeCompany = value),
+            _setIncludeCompany,
           ),
 
           const SizedBox(height: 16),
@@ -1365,6 +1318,8 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
       title: 'Barcode Generator',
       subtitle: 'Generate & print barcodes for products and batches',
       actions: [
+        AppTopBar.action(icon: Icons.tune_rounded, onTap: _openBarcodeSettings),
+        if (!isMobile) const SizedBox(width: 8),
         if (!isMobile)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1457,11 +1412,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                       color: _mutedText,
                       fontSize: 13,
                     ),
-                    prefixIcon: Icon(
-                      Icons.search,
-                      color: _mutedText,
-                      size: 20,
-                    ),
+                    prefixIcon: Icon(Icons.search, color: _mutedText, size: 20),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
                             icon: Icon(
@@ -1491,10 +1442,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: _primaryColor,
-                        width: 1.5,
-                      ),
+                      borderSide: BorderSide(color: _primaryColor, width: 1.5),
                     ),
                   ),
                 ),
@@ -1873,235 +1821,265 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
 
   Widget _buildSelectProductPrompt() {
     return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(28),
-            decoration: BoxDecoration(
-              color: _primaryColor.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Icon(
-              Icons.touch_app_rounded,
-              size: 56,
-              color: _primaryColor.withValues(alpha: 0.5),
-            ),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: _primaryColor.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(24),
           ),
-          const SizedBox(height: 20),
-          Text(
-            'Select a Product',
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w700,
-              fontSize: 18,
-              color: _primaryColor,
-            ),
+          child: Icon(
+            Icons.touch_app_rounded,
+            size: 56,
+            color: _primaryColor.withValues(alpha: 0.5),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Choose a product from the list to generate barcode',
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontSize: 14,
-              color: _mutedText,
-            ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          'Select a Product',
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            color: _primaryColor,
           ),
-        ],
-      );
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Choose a product from the list to generate barcode',
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 14,
+            color: _mutedText,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildGenerateBarcodePrompt() {
     return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: _accentColor.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Icon(
+            Icons.barcode_reader,
+            size: 56,
+            color: _accentColor.withValues(alpha: 0.6),
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          'Ready to Generate',
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            color: _primaryColor,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Configure options and click generate',
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 14,
+            color: _mutedText,
+          ),
+        ),
+        const SizedBox(height: 20),
+        ElevatedButton.icon(
+          onPressed: _generateBarcode,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _primaryColor,
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            elevation: 0,
+          ),
+          icon: const Icon(
+            Icons.auto_fix_high_rounded,
+            color: AppTheme.white,
+            size: 20,
+          ),
+          label: const Text(
+            'Generate Barcode',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              color: AppTheme.white,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// WYSIWYG label preview at the selected label size.
+  Widget _buildLabelPreview({
+    required double maxWidth,
+    required double maxHeight,
+  }) {
+    final content = _currentLabelContent();
+    final layout = _currentLabelLayout(content);
+    return BarcodeLabelPreview(
+      layout: layout,
+      content: content,
+      maxWidth: maxWidth,
+      maxHeight: maxHeight,
+      barcodeBuilder: (w, h) => _buildSafeBarcodeWidget(
+        data: content.code,
+        format: content.format,
+        width: w,
+        height: h,
+      ),
+    );
+  }
+
+  Widget _infoChip(IconData icon, String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(28),
-            decoration: BoxDecoration(
-              color: _accentColor.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Icon(
-              Icons.barcode_reader,
-              size: 56,
-              color: _accentColor.withValues(alpha: 0.6),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Ready to Generate',
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w700,
-              fontSize: 18,
-              color: _primaryColor,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Configure options and click generate',
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontSize: 14,
-              color: _mutedText,
-            ),
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton.icon(
-            onPressed: _generateBarcode,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _primaryColor,
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-              elevation: 0,
-            ),
-            icon: const Icon(
-              Icons.auto_fix_high_rounded,
-              color: AppTheme.white,
-              size: 20,
-            ),
-            label: const Text(
-              'Generate Barcode',
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontFamily: 'Literata',
+                fontSize: 11,
                 fontWeight: FontWeight.w600,
-                fontSize: 14,
-                color: AppTheme.white,
+                color: color,
               ),
             ),
           ),
         ],
-      );
+      ),
+    );
+  }
+
+  /// Format, label size and printer chips shown under the preview.
+  Widget _buildLabelInfoChips() {
+    final s = _labelSettings;
+    final l = _l;
+    final layout = _currentLabelLayout();
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      runSpacing: 6,
+      children: [
+        _infoChip(
+          Icons.qr_code_2_rounded,
+          _selectedFormat.displayName,
+          _accentColor,
+        ),
+        _infoChip(
+          Icons.straighten_rounded,
+          formatSizeMm(s.widthMm, s.heightMm),
+          _primaryColor,
+        ),
+        _infoChip(
+          printerTypeIcon(s.printerType),
+          printerTypeName(l, s.printerType),
+          _primaryColor,
+        ),
+        if (layout.barcodeTooNarrow)
+          _infoChip(
+            Icons.warning_amber_rounded,
+            l.labelTooNarrowWarning,
+            _warningColor,
+          ),
+      ],
+    );
   }
 
   Widget _buildBarcodeDisplay() {
-    // Build top line info: Product Name | Rs.Price | Batch
-    final topLineInfo = _buildPreviewTopLine();
-
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Barcode Label Card
-            Container(
-              key: _barcodeKey,
-              padding: EdgeInsets.all(16),
-              constraints: const BoxConstraints(maxWidth: 280),
-              decoration: BoxDecoration(
-                color: AppTheme.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _borderColor),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.black.withValues(alpha: 0.05),
-                    blurRadius: 15,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // TOP LINE: Product Name | Rs.Price | Batch (single line)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _primaryColor.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      topLineInfo,
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 11,
-                        color: _primaryColor,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Barcode SVG
-                  SizedBox(
-                    width: 200,
-                    height: 70,
-                    child: _buildSafeBarcodeWidget(
-                      data: _generatedBarcode,
-                      format: _selectedFormat,
-                      width: 200,
-                      height: 70,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Barcode text
-                  Text(
-                    _generatedBarcode,
-                    style: const TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 1.5,
-                      color: AppTheme.black,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Format badge
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: _accentColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                _selectedFormat.displayName,
-                style: const TextStyle(
-                  fontFamily: 'Literata',
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: _accentColor,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            key: _barcodeKey,
+            child: _buildLabelPreview(maxWidth: 300, maxHeight: 220),
+          ),
+          const SizedBox(height: 14),
+          _buildLabelInfoChips(),
+        ],
+      ),
+    );
   }
 
-  // Build preview top line: Product Name | Rs.Price | Batch
-  String _buildPreviewTopLine() {
-    final parts = <String>[];
-
-    // Product name (truncate to fit)
-    final productName = _selectedProduct?.name ?? '';
-    final truncatedName = productName.length > 18
-        ? productName.substring(0, 18)
-        : productName;
-    parts.add(truncatedName);
-
-    // Price
-    if (_includePrice) {
-      final price =
-          _selectedBatch?.sellingPrice ?? _selectedProduct?.salesPrice ?? 0;
-      parts.add('Rs.${price.toStringAsFixed(0)}');
-    }
-
-    // Batch
-    if (_selectedBatch != null) {
-      parts.add('B#${_selectedBatch!.id}');
-    }
-
-    return parts.join(' | ');
+  /// Card in the options panel: current printer + label size with a shortcut
+  /// to Barcode Settings.
+  Widget _buildPrintSetupSummary() {
+    final s = _labelSettings;
+    final l = _l;
+    final sizeLabel = s.isCustom
+        ? l.sizeCustomLabel
+        : presetName(l, s.presetId);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+      decoration: BoxDecoration(
+        color: _primaryColor.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _primaryColor.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          Icon(printerTypeIcon(s.printerType), color: _primaryColor),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l.printingOn,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 11,
+                    color: _secondaryText,
+                  ),
+                ),
+                Text(
+                  '${printerTypeName(l, s.printerType)} · $sizeLabel '
+                  '${formatSizeMm(s.widthMm, s.heightMm)}',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: _primaryText,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: _openBarcodeSettings,
+            child: Text(l.changeLabelSettings),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildOptionsCard() {
@@ -2194,7 +2172,9 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: isSelected ? _primaryColor : AppColors.chipFill(context),
+                          color: isSelected
+                              ? _primaryColor
+                              : AppColors.chipFill(context),
                           borderRadius: BorderRadius.circular(10),
                           border: isSelected
                               ? null
@@ -2267,6 +2247,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
               const SizedBox(height: 16),
             ],
 
+            _buildPrintSetupSummary(),
             // Toggle Options
             _buildToggleOption(
               'Auto-generate barcode',
@@ -2281,13 +2262,13 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
               'Include price',
               'Show price on the barcode label',
               _includePrice,
-              (value) => setState(() => _includePrice = value),
+              _setIncludePrice,
             ),
             _buildToggleOption(
               'Include company',
               'Show company name on the label',
               _includeCompany,
-              (value) => setState(() => _includeCompany = value),
+              _setIncludeCompany,
             ),
 
             const SizedBox(height: 16),
@@ -2585,7 +2566,11 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.visibility_rounded, size: 20, color: AppTheme.white),
+            const Icon(
+              Icons.visibility_rounded,
+              size: 20,
+              color: AppTheme.white,
+            ),
             const SizedBox(width: 8),
             Flexible(
               child: Text(
@@ -2610,8 +2595,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
   void _showBarcodePreviewSheet() {
     if (_generatedBarcode.isEmpty || _selectedProduct == null) return;
 
-    final quantity = int.tryParse(_quantityController.text) ?? 1;
-    final topLineInfo = _buildPreviewTopLine();
+    final quantity = _copies;
 
     showAppBottomSheet(
       context: context,
@@ -2683,91 +2667,20 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                 controller: controller,
                 child: Column(
                   children: [
-                    // Barcode Preview Card
+                    // Label preview at the selected size
                     Container(
-                      margin: EdgeInsets.symmetric(horizontal: 20),
-                      padding: EdgeInsets.all(20),
+                      margin: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
-                        color: AppTheme.white,
+                        color: AppColors.chipFill(context),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: _borderColor),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.black.withValues(alpha: 0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
                       ),
                       child: Column(
                         children: [
-                          // Top line info
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _primaryColor.withValues(alpha: 0.05),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              topLineInfo,
-                              style: TextStyle(
-                                fontFamily: 'Literata',
-                                fontWeight: FontWeight.w700,
-                                fontSize: 12,
-                                color: _primaryColor,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          // Barcode
-                          SizedBox(
-                            width: 240,
-                            height: 80,
-                            child: _buildSafeBarcodeWidget(
-                              data: _generatedBarcode,
-                              format: _selectedFormat,
-                              width: 240,
-                              height: 80,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          // Barcode number
-                          Text(
-                            _generatedBarcode,
-                            style: const TextStyle(
-                              fontFamily: 'Literata',
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: 2,
-                              color: AppTheme.black,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          // Format badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _accentColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              _selectedFormat.displayName,
-                              style: const TextStyle(
-                                fontFamily: 'Literata',
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: _accentColor,
-                              ),
-                            ),
-                          ),
+                          _buildLabelPreview(maxWidth: 300, maxHeight: 240),
+                          const SizedBox(height: 14),
+                          _buildLabelInfoChips(),
                         ],
                       ),
                     ),
@@ -2776,45 +2689,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Column(
-                        children: [
-                          // Share Button
-                          _buildPreviewActionButton(
-                            icon: Icons.share_rounded,
-                            label: 'Share Barcode',
-                            subtitle: 'Share as PDF image',
-                            color: AppTheme.indigo400,
-                            onTap: () {
-                              Navigator.pop(context);
-                              _shareBarcode();
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          // Print PDF Button
-                          _buildPreviewActionButton(
-                            icon: Icons.picture_as_pdf_rounded,
-                            label: 'Print as PDF',
-                            subtitle: 'Standard paper printer',
-                            color: _primaryColor,
-                            onTap: () {
-                              Navigator.pop(context);
-                              _printBarcode();
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          // Print POS Button
-                          _buildPreviewActionButton(
-                            icon: Icons.receipt_long_rounded,
-                            label: 'Print on POS',
-                            subtitle: _printerService.isConnected
-                                ? 'Connected: ${_printerService.connectedPrinter?.name ?? "Printer"}'
-                                : 'Tap to connect thermal printer',
-                            color: _accentColor,
-                            onTap: () {
-                              Navigator.pop(context);
-                              _printBarcodePos();
-                            },
-                          ),
-                        ],
+                        children: [..._buildPrintActionButtons(context)],
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -2828,12 +2703,83 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     );
   }
 
+  /// Three print actions (default printer first, with a badge) + share.
+  List<Widget> _buildPrintActionButtons(BuildContext sheetContext) {
+    final s = _labelSettings;
+    final l = _l;
+    final grid = computeSheetGrid(
+      labelWidthMm: s.widthMm,
+      labelHeightMm: s.heightMm,
+    );
+    final size = formatSizeMm(s.widthMm, s.heightMm);
+
+    Widget action(BarcodePrinterType t) {
+      late final String label;
+      late final String subtitle;
+      late final Color color;
+      late final VoidCallback run;
+      switch (t) {
+        case BarcodePrinterType.normal:
+          label = l.printOnNormalPrinter;
+          subtitle = '$size · ${grid.perPage} ${l.labelsPerSheetSuffix}';
+          color = _primaryColor;
+          run = _printBarcode;
+        case BarcodePrinterType.label:
+          label = l.printOnBarcodePrinter;
+          subtitle =
+              '$size · ${s.connection == LabelConnection.bluetooth ? l.connViaBluetooth : l.connViaDriver}';
+          color = AppTheme.indigo400;
+          run = _printBarcodeLabel;
+        case BarcodePrinterType.pos:
+          label = l.printOnPosPrinter;
+          subtitle = _printerService.isConnected
+              ? 'Connected: ${_printerService.connectedPrinter?.name ?? "Printer"}'
+              : 'Tap to connect thermal printer';
+          color = _accentColor;
+          run = _printBarcodePos;
+      }
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: _buildPreviewActionButton(
+          icon: printerTypeIcon(t),
+          label: label,
+          subtitle: subtitle,
+          color: color,
+          badge: s.printerType == t ? l.defaultBadge : null,
+          onTap: () {
+            Navigator.pop(sheetContext);
+            run();
+          },
+        ),
+      );
+    }
+
+    final order = <BarcodePrinterType>[
+      s.printerType,
+      ...BarcodePrinterType.values.where((t) => t != s.printerType),
+    ];
+    return [
+      for (final t in order) action(t),
+      _buildPreviewActionButton(
+        icon: Icons.share_rounded,
+        label: l.shareLabelsPdf,
+        subtitle: 'PDF',
+        color: AppTheme.orange400,
+        onTap: () {
+          Navigator.pop(sheetContext);
+          _shareBarcode();
+        },
+      ),
+    ];
+  }
+
   Widget _buildPreviewActionButton({
     required IconData icon,
     required String label,
     required String subtitle,
     required Color color,
     required VoidCallback onTap,
+    String? badge,
   }) {
     return Material(
       color: AppTheme.transparent,
@@ -2862,14 +2808,42 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                        color: color,
-                      ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                              color: color,
+                            ),
+                          ),
+                        ),
+                        if (badge != null) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: color,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              badge,
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     Text(
                       subtitle,
@@ -2895,8 +2869,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     if (_generatedBarcode.isEmpty) return;
 
     try {
-      final quantity = int.tryParse(_quantityController.text) ?? 1;
-      final pdfBytes = await _generateBarcodePdf(quantity);
+      final pdfBytes = await _generateBarcodePdf(_copies);
 
       // Save to temp file
       final tempDir = await getTemporaryDirectory();

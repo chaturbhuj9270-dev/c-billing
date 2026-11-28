@@ -72,270 +72,283 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
           ),
           Expanded(
             child: CustomScrollView(
-        slivers: [
-          // Main Content
-          SliverToBoxAdapter(
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Date Fields Section
-                    _buildSectionCard(
-                      icon: Icons.calendar_month_rounded,
-                      iconColor: AppColors.action(context),
-                      title: 'Date Fields',
-                      subtitle:
-                          'Control date field visibility on purchase form',
-                      children: [
-                        _buildModernToggle(
-                          icon: Icons.factory_rounded,
-                          iconColor: AppTheme.green,
-                          title: 'Manufacturing Date',
-                          subtitle: 'Show production date field',
-                          value: _showManufacturingDate,
-                          onChanged: (value) async {
-                            setState(() => _showManufacturingDate = value);
-                            await PurchaseSettingsService.instance
-                                .setShowManufacturingDate(value);
-                          },
-                        ),
-                        Container(
-                          margin: const EdgeInsets.symmetric(vertical: 8),
-                          height: 1,
-                          color: AppTheme.grey.withValues(alpha: 0.1),
-                        ),
-                        _buildModernToggle(
-                          icon: Icons.event_busy_rounded,
-                          iconColor: AppTheme.coral,
-                          title: 'Expiry Date',
-                          subtitle: 'Show expiration date field',
-                          value: _showExpiryDate,
-                          onChanged: (value) async {
-                            setState(() => _showExpiryDate = value);
-                            await PurchaseSettingsService.instance
-                                .setShowExpiryDate(value);
-                          },
-                        ),
-                        Container(
-                          margin: const EdgeInsets.symmetric(vertical: 8),
-                          height: 1,
-                          color: AppTheme.grey.withValues(alpha: 0.1),
-                        ),
-                        _buildModernToggle(
-                          icon: Icons.qr_code_2_rounded,
-                          iconColor: AppTheme.toneBlue,
-                          title: 'Enable Batch / Lot Number',
-                          subtitle:
-                              'Allow entering manufacturer batch on purchase (medical)',
-                          value: _showBatchNumber,
-                          onChanged: (value) async {
-                            setState(() => _showBatchNumber = value);
-                            await PurchaseSettingsService.instance
-                                .setShowBatchNumber(value);
-                          },
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    _buildSectionCard(
-                      icon: Icons.inventory_2_rounded,
-                      iconColor: AppTheme.toneCyan,
-                      title: 'Stock Issue Order',
-                      subtitle: 'How stock is consumed when selling',
-                      children: [
-                        _buildModernToggle(
-                          icon: Icons.hourglass_bottom_rounded,
-                          iconColor: AppTheme.coral,
-                          title: 'FEFO (Expiry first)',
-                          subtitle:
-                              'Sell nearest-expiry batches first. Off = FIFO by purchase date',
-                          value: _useFefo,
-                          onChanged: (value) async {
-                            setState(() => _useFefo = value);
-                            await PurchaseSettingsService.instance
-                                .setUseFefo(value);
-                          },
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Measurement Units Section
-                    _buildSectionCard(
-                      icon: Icons.straighten_rounded,
-                      iconColor: AppTheme.paletteFF7B68EE,
-                      title: 'Measurement Units',
-                      subtitle:
-                          'Units shown on purchase and sale for this store',
-                      children: [
-                        // Available Units
-                        _buildSubSectionHeader(
-                          icon: Icons.check_circle_outline,
-                          title: 'Available Units',
-                          color: AppColors.accent(context),
-                        ),
-                        SizedBox(height: 12),
-                        _buildUnitsChipSelector(),
-                        SizedBox(height: 16),
-                        _buildAddCustomButton(
-                          label: 'Add Custom Unit',
-                          color: AppColors.accent(context),
-                          onPressed: _showAddCustomUnitDialog,
-                        ),
-                        const SizedBox(height: 20),
-                        Container(
-                          height: 1,
-                          color: AppTheme.grey.withValues(alpha: 0.1),
-                        ),
-                        const SizedBox(height: 20),
-                        // Default Unit
-                        _buildSubSectionHeader(
-                          icon: Icons.star_rounded,
-                          title: 'Default Unit',
-                          color: AppTheme.amber900,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Pre-selected unit on new purchases',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.grey,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        _buildDefaultUnitSelector(),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Warranty Section
-                    _buildSectionCard(
-                      icon: Icons.verified_user_rounded,
-                      iconColor: AppTheme.purple,
-                      title: 'Warranty Settings',
-                      subtitle: 'Configure product warranty options',
-                      children: [
-                        _buildModernToggle(
-                          icon: Icons.shield_rounded,
-                          iconColor: AppTheme.purple,
-                          title: 'Enable Warranty Field',
-                          subtitle: 'Show warranty selection on purchase form',
-                          value: _showWarranty,
-                          onChanged: (value) async {
-                            setState(() => _showWarranty = value);
-                            await PurchaseSettingsService.instance
-                                .setShowWarranty(value);
-                          },
-                        ),
-                        if (_showWarranty) ...[
-                          const SizedBox(height: 20),
-                          Container(
-                            height: 1,
-                            color: AppTheme.grey.withValues(alpha: 0.1),
-                          ),
-                          const SizedBox(height: 20),
-                          // Warranty Options
-                          _buildSubSectionHeader(
-                            icon: Icons.schedule_rounded,
-                            title: 'Warranty Periods',
-                            color: AppTheme.purple,
-                          ),
-                          const SizedBox(height: 12),
-                          _buildWarrantyChipSelector(),
-                          const SizedBox(height: 16),
-                          _buildAddCustomButton(
-                            label: 'Add Custom Warranty',
-                            color: AppTheme.purple,
-                            onPressed: _showAddCustomWarrantyDialog,
-                          ),
-                          const SizedBox(height: 20),
-                          Container(
-                            height: 1,
-                            color: AppTheme.grey.withValues(alpha: 0.1),
-                          ),
-                          const SizedBox(height: 20),
-                          // Default Warranty
-                          _buildSubSectionHeader(
-                            icon: Icons.star_rounded,
-                            title: 'Default Warranty',
-                            color: AppTheme.pink,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Pre-selected warranty on new purchases',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.grey,
-                              fontFamily: 'Literata',
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          _buildDefaultWarrantySelector(),
-                        ],
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Info Card
-                    Container(
-                      padding: EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.action(context).withValues(alpha: 0.05),
-                            AppColors.action(context).withValues(alpha: 0.02),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppColors.accentSoft(context, 0.1),
-                        ),
-                      ),
-                      child: Row(
+              slivers: [
+                // Main Content
+                SliverToBoxAdapter(
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            padding: EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: AppColors.action(context).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.lightbulb_outline_rounded,
-                              color: AppColors.accent(context),
-                              size: 22,
-                            ),
+                          // Date Fields Section
+                          _buildSectionCard(
+                            icon: Icons.calendar_month_rounded,
+                            iconColor: AppColors.action(context),
+                            title: 'Date Fields',
+                            subtitle:
+                                'Control date field visibility on purchase form',
+                            children: [
+                              _buildModernToggle(
+                                icon: Icons.factory_rounded,
+                                iconColor: AppTheme.green,
+                                title: 'Manufacturing Date',
+                                subtitle: 'Show production date field',
+                                value: _showManufacturingDate,
+                                onChanged: (value) async {
+                                  setState(
+                                    () => _showManufacturingDate = value,
+                                  );
+                                  await PurchaseSettingsService.instance
+                                      .setShowManufacturingDate(value);
+                                },
+                              ),
+                              Container(
+                                margin: const EdgeInsets.symmetric(vertical: 8),
+                                height: 1,
+                                color: AppTheme.grey.withValues(alpha: 0.1),
+                              ),
+                              _buildModernToggle(
+                                icon: Icons.event_busy_rounded,
+                                iconColor: AppTheme.coral,
+                                title: 'Expiry Date',
+                                subtitle: 'Show expiration date field',
+                                value: _showExpiryDate,
+                                onChanged: (value) async {
+                                  setState(() => _showExpiryDate = value);
+                                  await PurchaseSettingsService.instance
+                                      .setShowExpiryDate(value);
+                                },
+                              ),
+                              Container(
+                                margin: const EdgeInsets.symmetric(vertical: 8),
+                                height: 1,
+                                color: AppTheme.grey.withValues(alpha: 0.1),
+                              ),
+                              _buildModernToggle(
+                                icon: Icons.qr_code_2_rounded,
+                                iconColor: AppTheme.toneBlue,
+                                title: 'Enable Batch / Lot Number',
+                                subtitle:
+                                    'Allow entering manufacturer batch on purchase (medical)',
+                                value: _showBatchNumber,
+                                onChanged: (value) async {
+                                  setState(() => _showBatchNumber = value);
+                                  await PurchaseSettingsService.instance
+                                      .setShowBatchNumber(value);
+                                },
+                              ),
+                            ],
                           ),
-                          SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Pro Tip',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    fontFamily: 'Literata',
-                                    color: AppColors.accent(context),
-                                  ),
+
+                          const SizedBox(height: 20),
+
+                          _buildSectionCard(
+                            icon: Icons.inventory_2_rounded,
+                            iconColor: AppTheme.toneCyan,
+                            title: 'Stock Issue Order',
+                            subtitle: 'How stock is consumed when selling',
+                            children: [
+                              _buildModernToggle(
+                                icon: Icons.hourglass_bottom_rounded,
+                                iconColor: AppTheme.coral,
+                                title: 'FEFO (Expiry first)',
+                                subtitle:
+                                    'Sell nearest-expiry batches first. Off = FIFO by purchase date',
+                                value: _useFefo,
+                                onChanged: (value) async {
+                                  setState(() => _useFefo = value);
+                                  await PurchaseSettingsService.instance
+                                      .setUseFefo(value);
+                                },
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          // Measurement Units Section
+                          _buildSectionCard(
+                            icon: Icons.straighten_rounded,
+                            iconColor: AppTheme.paletteFF7B68EE,
+                            title: 'Measurement Units',
+                            subtitle:
+                                'Units shown on purchase and sale for this store',
+                            children: [
+                              // Available Units
+                              _buildSubSectionHeader(
+                                icon: Icons.check_circle_outline,
+                                title: 'Available Units',
+                                color: AppColors.accent(context),
+                              ),
+                              SizedBox(height: 12),
+                              _buildUnitsChipSelector(),
+                              SizedBox(height: 16),
+                              _buildAddCustomButton(
+                                label: 'Add Custom Unit',
+                                color: AppColors.accent(context),
+                                onPressed: _showAddCustomUnitDialog,
+                              ),
+                              const SizedBox(height: 20),
+                              Container(
+                                height: 1,
+                                color: AppTheme.grey.withValues(alpha: 0.1),
+                              ),
+                              const SizedBox(height: 20),
+                              // Default Unit
+                              _buildSubSectionHeader(
+                                icon: Icons.star_rounded,
+                                title: 'Default Unit',
+                                color: AppTheme.amber900,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Pre-selected unit on new purchases',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.grey,
+                                  fontFamily: 'Literata',
                                 ),
-                                const SizedBox(height: 4),
+                              ),
+                              const SizedBox(height: 12),
+                              _buildDefaultUnitSelector(),
+                            ],
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          // Warranty Section
+                          _buildSectionCard(
+                            icon: Icons.verified_user_rounded,
+                            iconColor: AppTheme.purple,
+                            title: 'Warranty Settings',
+                            subtitle: 'Configure product warranty options',
+                            children: [
+                              _buildModernToggle(
+                                icon: Icons.shield_rounded,
+                                iconColor: AppTheme.purple,
+                                title: 'Enable Warranty Field',
+                                subtitle:
+                                    'Show warranty selection on purchase form',
+                                value: _showWarranty,
+                                onChanged: (value) async {
+                                  setState(() => _showWarranty = value);
+                                  await PurchaseSettingsService.instance
+                                      .setShowWarranty(value);
+                                },
+                              ),
+                              if (_showWarranty) ...[
+                                const SizedBox(height: 20),
+                                Container(
+                                  height: 1,
+                                  color: AppTheme.grey.withValues(alpha: 0.1),
+                                ),
+                                const SizedBox(height: 20),
+                                // Warranty Options
+                                _buildSubSectionHeader(
+                                  icon: Icons.schedule_rounded,
+                                  title: 'Warranty Periods',
+                                  color: AppTheme.purple,
+                                ),
+                                const SizedBox(height: 12),
+                                _buildWarrantyChipSelector(),
+                                const SizedBox(height: 16),
+                                _buildAddCustomButton(
+                                  label: 'Add Custom Warranty',
+                                  color: AppTheme.purple,
+                                  onPressed: _showAddCustomWarrantyDialog,
+                                ),
+                                const SizedBox(height: 20),
+                                Container(
+                                  height: 1,
+                                  color: AppTheme.grey.withValues(alpha: 0.1),
+                                ),
+                                const SizedBox(height: 20),
+                                // Default Warranty
+                                _buildSubSectionHeader(
+                                  icon: Icons.star_rounded,
+                                  title: 'Default Warranty',
+                                  color: AppTheme.pink,
+                                ),
+                                const SizedBox(height: 8),
                                 Text(
-                                  'Settings are saved automatically. Changes will apply to new purchases immediately.',
+                                  'Pre-selected warranty on new purchases',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: AppTheme.grey600,
+                                    color: AppTheme.grey,
                                     fontFamily: 'Literata',
-                                    height: 1.4,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                _buildDefaultWarrantySelector(),
+                              ],
+                            ],
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // Info Card
+                          Container(
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppColors.action(
+                                    context,
+                                  ).withValues(alpha: 0.05),
+                                  AppColors.action(
+                                    context,
+                                  ).withValues(alpha: 0.02),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: AppColors.accentSoft(context, 0.1),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.action(
+                                      context,
+                                    ).withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    Icons.lightbulb_outline_rounded,
+                                    color: AppColors.accent(context),
+                                    size: 22,
+                                  ),
+                                ),
+                                SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Pro Tip',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                          fontFamily: 'Literata',
+                                          color: AppColors.accent(context),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Settings are saved automatically. Changes will apply to new purchases immediately.',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppTheme.grey600,
+                                          fontFamily: 'Literata',
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
@@ -344,16 +357,13 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                         ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ],
       ),
-            ),
-          ],
-        ),
     );
   }
 
@@ -907,11 +917,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                Icons.add_rounded,
-                color: AppTheme.white,
-                size: 20,
-              ),
+              child: Icon(Icons.add_rounded, color: AppTheme.white, size: 20),
             ),
             const SizedBox(width: 12),
             const Text(
@@ -943,7 +949,10 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.accent(context), width: 2),
+              borderSide: BorderSide(
+                color: AppColors.accent(context),
+                width: 2,
+              ),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,

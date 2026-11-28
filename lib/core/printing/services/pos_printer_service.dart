@@ -15,33 +15,35 @@ class PosPrinterService {
 
   BluetoothDevice? _connectedDevice;
   BluetoothCharacteristic? _writeCharacteristic;
-  
+
   PosPrinterDevice? _connectedPrinter;
   PrinterStatus _status = PrinterStatus.disconnected;
   PrinterConfig _config = const PrinterConfig();
-  
+
   final _statusController = StreamController<PrinterStatus>.broadcast();
-  final _devicesController = StreamController<List<PosPrinterDevice>>.broadcast();
-  
+  final _devicesController =
+      StreamController<List<PosPrinterDevice>>.broadcast();
+
   StreamSubscription<List<ScanResult>>? _scanSubscription;
 
   // Stream of printer status changes
   Stream<PrinterStatus> get statusStream => _statusController.stream;
-  
+
   // Stream of discovered devices
   Stream<List<PosPrinterDevice>> get devicesStream => _devicesController.stream;
-  
+
   // Current printer status
   PrinterStatus get status => _status;
-  
+
   // Currently connected printer
   PosPrinterDevice? get connectedPrinter => _connectedPrinter;
-  
+
   // Current printer configuration
   PrinterConfig get config => _config;
 
   // Check if printer is connected
-  bool get isConnected => _status == PrinterStatus.connected && _connectedDevice != null;
+  bool get isConnected =>
+      _status == PrinterStatus.connected && _connectedDevice != null;
 
   // Update printer configuration
   void updateConfig(PrinterConfig config) {
@@ -56,8 +58,8 @@ class PosPrinterService {
         final bluetoothConnect = await Permission.bluetoothConnect.request();
         final location = await Permission.locationWhenInUse.request();
 
-        if (bluetoothScan.isDenied || 
-            bluetoothConnect.isDenied || 
+        if (bluetoothScan.isDenied ||
+            bluetoothConnect.isDenied ||
             location.isDenied) {
           return PrinterResult.failure(
             'Bluetooth and location permissions are required for printer discovery',
@@ -81,7 +83,7 @@ class PosPrinterService {
       if (await FlutterBluePlus.isSupported == false) {
         return false;
       }
-      
+
       final state = await FlutterBluePlus.adapterState.first;
       return state == BluetoothAdapterState.on;
     } catch (e) {
@@ -90,10 +92,12 @@ class PosPrinterService {
   }
 
   // Start scanning for Bluetooth printers
-  Future<PrinterResult> startScan({Duration timeout = const Duration(seconds: 10)}) async {
+  Future<PrinterResult> startScan({
+    Duration timeout = const Duration(seconds: 10),
+  }) async {
     try {
       _updateStatus(PrinterStatus.connecting);
-      
+
       final permissionResult = await requestPermissions();
       if (!permissionResult.success) {
         _updateStatus(PrinterStatus.error);
@@ -119,13 +123,16 @@ class PosPrinterService {
           // Filter for devices that might be printers Many Bluetooth printers have names containing 'print', 'pos', 'thermal', etc.
           final name = result.device.platformName;
           if (name.isNotEmpty) {
-            discoveredDevices.add(PosPrinterDevice(
-              id: result.device.remoteId.str,
-              name: name,
-              address: result.device.remoteId.str,
-              connectionType: PrinterConnectionType.bluetooth,
-              isConnected: _connectedPrinter?.id == result.device.remoteId.str,
-            ));
+            discoveredDevices.add(
+              PosPrinterDevice(
+                id: result.device.remoteId.str,
+                name: name,
+                address: result.device.remoteId.str,
+                connectionType: PrinterConnectionType.bluetooth,
+                isConnected:
+                    _connectedPrinter?.id == result.device.remoteId.str,
+              ),
+            );
           }
         }
         _devicesController.add(discoveredDevices);
@@ -135,10 +142,12 @@ class PosPrinterService {
 
       // Wait for scan to complete
       await Future.delayed(timeout);
-      
-      _updateStatus(_connectedPrinter != null 
-          ? PrinterStatus.connected 
-          : PrinterStatus.disconnected);
+
+      _updateStatus(
+        _connectedPrinter != null
+            ? PrinterStatus.connected
+            : PrinterStatus.disconnected,
+      );
 
       return PrinterResult.success(
         'Found ${discoveredDevices.length} device(s)',
@@ -171,16 +180,16 @@ class PosPrinterService {
 
       // Connect to the device
       await targetDevice.connect(timeout: const Duration(seconds: 10));
-      
+
       _connectedDevice = targetDevice;
 
       // Discover services and find the write characteristic
       final services = await targetDevice.discoverServices();
-      
+
       for (final service in services) {
         for (final characteristic in service.characteristics) {
           // Look for a writable characteristic
-          if (characteristic.properties.write || 
+          if (characteristic.properties.write ||
               characteristic.properties.writeWithoutResponse) {
             _writeCharacteristic = characteristic;
             break;
@@ -238,9 +247,9 @@ class PosPrinterService {
 
     try {
       _updateStatus(PrinterStatus.printing);
-      
+
       final printerConfig = config ?? _config;
-      
+
       // Generate bill bytes using formatter
       final formatter = EscPosBillFormatter(paperSize: printerConfig.paperSize);
       final bytes = await formatter.generateBillBytes(
@@ -251,7 +260,7 @@ class PosPrinterService {
 
       // Send bytes to printer in chunks (BLE has MTU limits)
       await _sendBytes(bytes);
-      
+
       _updateStatus(PrinterStatus.connected);
       return PrinterResult.success('Bill printed successfully');
     } catch (e) {
@@ -268,9 +277,9 @@ class PosPrinterService {
 
     try {
       _updateStatus(PrinterStatus.printing);
-      
+
       await _sendBytes(bytes);
-      
+
       _updateStatus(PrinterStatus.connected);
       return PrinterResult.success('Printed successfully');
     } catch (e) {
@@ -287,17 +296,17 @@ class PosPrinterService {
 
     // BLE typically has MTU of around 512 bytes, but safe to use smaller chunks
     const chunkSize = 200;
-    
+
     for (var i = 0; i < bytes.length; i += chunkSize) {
       final end = (i + chunkSize < bytes.length) ? i + chunkSize : bytes.length;
       final chunk = bytes.sublist(i, end);
-      
+
       if (_writeCharacteristic!.properties.writeWithoutResponse) {
         await _writeCharacteristic!.write(chunk, withoutResponse: true);
       } else {
         await _writeCharacteristic!.write(chunk, withoutResponse: false);
       }
-      
+
       // Small delay between chunks to prevent buffer overflow
       await Future.delayed(const Duration(milliseconds: 50));
     }
@@ -313,14 +322,24 @@ class PosPrinterService {
       _updateStatus(PrinterStatus.printing);
 
       final formatter = EscPosBillFormatter(paperSize: _config.paperSize);
-      
+
       // Create test bill data
       final testBill = PrintBillData(
         billNumber: 'TEST-001',
         dateTime: DateTime.now(),
         items: const [
-          PrintBillItem(name: 'Test Item 1', quantity: 2, rate: 100.00, amount: 200.00),
-          PrintBillItem(name: 'Test Item 2', quantity: 1, rate: 50.00, amount: 50.00),
+          PrintBillItem(
+            name: 'Test Item 1',
+            quantity: 2,
+            rate: 100.00,
+            amount: 200.00,
+          ),
+          PrintBillItem(
+            name: 'Test Item 2',
+            quantity: 1,
+            rate: 50.00,
+            amount: 50.00,
+          ),
         ],
         subtotal: 250.00,
         grandTotal: 250.00,
@@ -341,7 +360,7 @@ class PosPrinterService {
       );
 
       await _sendBytes(bytes);
-      
+
       _updateStatus(PrinterStatus.connected);
       return PrinterResult.success('Test page printed successfully');
     } catch (e) {
