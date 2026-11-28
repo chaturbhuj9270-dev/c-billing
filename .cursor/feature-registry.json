@@ -779,18 +779,15 @@
         "web/index.html",
         "lib/core/localization/english.dart",
         "lib/core/localization/hindi.dart",
-        "lib/core/localization/marathi.dart"
+        "lib/core/localization/marathi.dart",
+        "lib/common_widgets/twinkling_slogan.dart"
       ],
       "invariants": [
-        "The splash tagline is 'Power your Business' (all three languages) in flat solid pink #DD95D5 (_buildPinkTagline) with no shadow or 3D effect. It is display-only and must not change layout of the logo, title or footer.",
+        "The splash tagline uses the same style as the login screen: TwinklingSlogan (magenta-pink fill, gold outline, twinkle) in Literata italic w400 with the backboneOfBusiness text ('Power your Business' in all three languages), via _buildSplashTagline. It is display-only and must not change layout of the logo, title or footer.",
         "The splash footer shows 'PREMIUM BUSINESS SOLUTIONS' and only the phone number (no location text).",
         "The splash animations (logo, name, tagline fade) and the auto-navigation after startup are unchanged."
       ],
       "anchors": [
-        {
-          "file": "lib/core/ui/splash_page.dart",
-          "contains": "_buildPinkTagline"
-        },
         {
           "file": "lib/core/ui/splash_page.dart",
           "contains": "PREMIUM BUSINESS SOLUTIONS"
@@ -801,7 +798,19 @@
         },
         {
           "file": "lib/core/ui/splash_page.dart",
-          "contains": "Color(0xFFDD95D5)"
+          "contains": "_buildSplashTagline"
+        },
+        {
+          "file": "lib/core/ui/splash_page.dart",
+          "contains": "return TwinklingSlogan("
+        },
+        {
+          "file": "lib/core/ui/splash_page.dart",
+          "contains": "_localizations.backboneOfBusiness"
+        },
+        {
+          "file": "lib/features/authentication/presentation/pages/login.dart",
+          "contains": "text: _localizations.backboneOfBusiness"
         }
       ],
       "forbidden": [
@@ -812,11 +821,13 @@
         },
         {
           "file": "lib/core/ui/splash_page.dart",
-          "contains": "Transform.translate",
-          "why": "the tagline is flat; the 3D extrusion was removed by request"
+          "contains": "_buildPinkTagline",
+          "why": "the splash tagline must match the login screen slogan style"
         }
       ],
-      "tests": []
+      "tests": [
+        "test/regression/splash_tagline_test.dart"
+      ]
     },
     {
       "id": "subscription-access",

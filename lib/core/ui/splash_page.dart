@@ -22,6 +22,7 @@ import '../localization/app_localizations.dart';
 import 'subscription_screen.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_logo_mark.dart';
+import 'package:c_billing/common_widgets/twinkling_slogan.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/access/access_control_service.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
@@ -669,10 +670,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     return name == 'C-BILLING' ? 'C-Billing' : name;
   }
 
-  String get _tagline {
-    return _localizations.tagline.replaceAll('\n', ' ');
-  }
-
   @override
   Widget build(BuildContext context) {
     if (DesktopCanvas.isDesktopPlatform) return _buildDesktopSplash(context);
@@ -742,7 +739,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                             fit: BoxFit.scaleDown,
                             child: _DesktopBrandLockup(
                               title: _appTitle,
-                              tagline: _tagline.toUpperCase(),
+                              tagline: _localizations.backboneOfBusiness,
                               titleColor: titleColor,
                               muted: muted,
                               accent: accent,
@@ -816,7 +813,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     final titleColor = isDark ? AppTheme.white : AppTheme.headerDarkEnd;
     final muted = isDark ? AppTheme.paletteFF8E9892 : AppTheme.paletteFF5E6B64;
     final themeColor = AppColors.action(context);
-    final tagline = _localizations.tagline;
+    final tagline = _localizations.backboneOfBusiness;
 
     return Scaffold(
       backgroundColor: isDark
@@ -906,7 +903,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                     opacity: _taglineFade,
                     child: SizedBox(
                       width: double.infinity,
-                      child: _buildPinkTagline(tagline),
+                      child: _buildSplashTagline(tagline),
                     ),
                   ),
                   const Spacer(flex: 2),
@@ -1212,11 +1209,10 @@ class _DesktopBrandLockup extends StatelessWidget {
             const SizedBox(height: 8),
             FadeTransition(
               opacity: taglineFade,
-              child: _buildPinkTagline(
+              child: _buildSplashTagline(
                 tagline,
                 textAlign: TextAlign.start,
-                fontSize: 12,
-                height: 1,
+                fontSize: 16,
               ),
             ),
             const SizedBox(height: 14),
@@ -1272,23 +1268,20 @@ class _CompactSplashRingsPainter extends CustomPainter {
       oldDelegate.color != color || oldDelegate.progress != progress;
 }
 
-// Tagline in solid pink (#DD95D5), flat with no shadow or 3D effect.
-Widget _buildPinkTagline(
+// Same slogan treatment as the login screen (TwinklingSlogan, Literata italic).
+Widget _buildSplashTagline(
   String text, {
   TextAlign textAlign = TextAlign.center,
   double fontSize = 14,
-  double height = 1.45,
 }) {
-  return Text(
-    text,
+  return TwinklingSlogan(
+    text: text,
     textAlign: textAlign,
     style: TextStyle(
-      color: const Color(0xFFDD95D5),
-      fontSize: fontSize,
-      fontWeight: FontWeight.w800,
       fontFamily: 'Literata',
-      letterSpacing: 1.8,
-      height: height,
+      fontSize: fontSize,
+      fontWeight: FontWeight.w400,
+      fontStyle: FontStyle.italic,
     ),
   );
 }
