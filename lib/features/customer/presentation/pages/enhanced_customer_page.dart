@@ -4,6 +4,7 @@ import 'dart:io' show Directory, File;
 import 'dart:ui';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/services/language_service.dart';
@@ -65,10 +66,13 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
   // Form controllers
   final _firstNameController = TextEditingController();
-  final _middleNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _contactController = TextEditingController();
+  final _emailController = TextEditingController();
   final _addressController = TextEditingController();
+  // Optional birth date (date only). A notifier so the sheet field updates
+  // without rebuilding the whole page.
+  final ValueNotifier<DateTime?> _birthDate = ValueNotifier<DateTime?>(null);
   final _formKey = GlobalKey<FormState>();
 
   // State
@@ -144,9 +148,10 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     _customerStreamSub?.cancel();
     _eventOrderStreamSub?.cancel();
     _firstNameController.dispose();
-    _middleNameController.dispose();
     _lastNameController.dispose();
     _contactController.dispose();
+    _emailController.dispose();
+    _birthDate.dispose();
     _addressController.dispose();
     LanguageService.instance.removeListener(_onLanguageChanged);
     super.dispose();
@@ -258,6 +263,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       'contact': entity.mobile,
       'address': entity.address ?? '',
       'email': entity.email ?? '',
+      'birthDate': entity.birthDate,
       'isActive': true,
       'isSynced': entity.isSynced,
       'currentPendingAmount':
@@ -310,6 +316,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
               'mobile': data['contact'] ?? '',
               'address': data['address'] ?? '',
               'email': data['email'] ?? '',
+              'birthDate': data['birthDate'],
               'currentPendingAmount':
                   data['currentPendingAmount'] ?? data['pendingBalance'] ?? 0,
               'totalPurchases':
@@ -352,9 +359,10 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
   void _clearForm() {
     _firstNameController.clear();
-    _middleNameController.clear();
     _lastNameController.clear();
     _contactController.clear();
+    _emailController.clear();
+    _birthDate.value = null;
     _addressController.clear();
     _editingCustomerId = null;
     _isEditing = false;
@@ -362,9 +370,10 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
   void _editCustomer(Map<String, dynamic> customer) {
     _firstNameController.text = customer['firstName'] ?? '';
-    _middleNameController.text = customer['middleName'] ?? '';
     _lastNameController.text = customer['lastName'] ?? '';
     _contactController.text = customer['contact'] ?? '';
+    _emailController.text = (customer['email'] ?? '').toString();
+    _birthDate.value = birthDateFromValue(customer['birthDate']);
     _addressController.text = customer['address'] ?? '';
     _editingCustomerId = customer['id'];
     _isEditing = true;
@@ -378,14 +387,14 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
     try {
       final firstName = _firstNameController.text.trim();
-      final middleName = _middleNameController.text.trim();
       final lastName = _lastNameController.text.trim();
       final fullName = [
         firstName,
-        middleName,
         lastName,
       ].where((s) => s.isNotEmpty).join(' ');
       final contact = _contactController.text.trim();
+      final email = _emailController.text.trim();
+      final birthDate = _birthDate.value;
       final address = _addressController.text.trim();
       final offlineCtrl = CustomerOfflineController.instance;
 
@@ -400,6 +409,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
             name: fullName,
             mobile: contact,
             address: address,
+            email: email,
+            birthDate: birthDate,
+            clearBirthDate: birthDate == null,
           );
         } else {
           // Fallback: Firebase direct update
@@ -412,10 +424,11 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                 .doc(_editingCustomerId)
                 .update({
                   'firstName': firstName,
-                  'middleName': middleName,
                   'lastName': lastName,
                   'contact': contact,
                   'address': address,
+                  'email': email,
+                  'birthDate': birthDateToText(birthDate),
                   'updatedAt': FieldValue.serverTimestamp(),
                 });
             _fetchFromFirebase();
@@ -439,6 +452,8 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
           name: fullName,
           mobile: contact,
           address: address,
+          email: email.isEmpty ? null : email,
+          birthDate: birthDate,
         );
         DashboardRefreshService.instance.notifyDataChanged(
           DataChangeType.customer,
@@ -763,6 +778,8 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                                 _localizations.tryDifferentSearch,
                             pendingLabel: _localizations.syncPending
                                 .toLowerCase(),
+                            birthdayTodayLabel:
+                                _localizations.customerBirthdayToday,
                           ),
                         ),
                       ],
@@ -1142,6 +1159,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
   Widget _buildFormSheet() {
     final action = DrawerBottomBar(
+      plain: true,
       action: AppPillButton(
         label: _isEditing ? _localizations.update : _localizations.addCustomer,
         icon: Icons.check_rounded,
@@ -1187,24 +1205,26 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
               ],
             ),
             const SizedBox(height: 20),
-            _buildField(
-              label: _localizations.firstName,
-              controller: _firstNameController,
-              icon: Icons.person_outline,
-              isRequired: true,
-            ),
-            const SizedBox(height: 14),
-            _buildField(
-              label: _localizations.middleName,
-              controller: _middleNameController,
-              icon: Icons.person_outline,
-            ),
-            const SizedBox(height: 14),
-            _buildField(
-              label: _localizations.lastName,
-              controller: _lastNameController,
-              icon: Icons.person_outline,
-              isRequired: true,
+            _buildFormSectionTitle(_localizations.customerBasicDetails),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _buildField(
+                    label: _localizations.firstName,
+                    controller: _firstNameController,
+                    isRequired: true,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildField(
+                    label: _localizations.lastName,
+                    controller: _lastNameController,
+                    isRequired: true,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 14),
             _buildField(
@@ -1215,13 +1235,37 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
               isRequired: true,
               maxLength: 10,
             ),
+            const SizedBox(height: 20),
+            _buildFormSectionTitle(_localizations.customerContactDetails),
+            _buildField(
+              label: _localizations.emailAddress,
+              controller: _emailController,
+              icon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
+              isOptional: true,
+              extraValidator: (text) =>
+                  text.isEmpty ||
+                      RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(text)
+                  ? null
+                  : _localizations.customerInvalidEmail,
+            ),
             const SizedBox(height: 14),
+            _BirthDateField(
+              value: _birthDate,
+              pickerHelp: _localizations.customerBirthDate,
+              decoration: _fieldDecoration(
+                '${_localizations.customerBirthDate} (${_localizations.optional})',
+                Icons.cake_outlined,
+              ),
+            ),
+            const SizedBox(height: 20),
+            _buildFormSectionTitle(_localizations.address),
             _buildField(
               label: _localizations.address,
               controller: _addressController,
               icon: Icons.location_on_outlined,
-              maxLines: 3,
-              isRequired: true,
+              maxLines: 2,
+              isOptional: true,
             ),
           ],
         ),
@@ -1229,55 +1273,135 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     );
   }
 
+  Widget _buildFormSectionTitle(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Text(
+        text.toUpperCase(),
+        style: TextStyle(
+          fontFamily: 'Literata',
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+          color: AppColors.mutedText(context),
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _fieldDecoration(String labelText, IconData? icon) {
+    return InputDecoration(
+      labelText: labelText,
+      labelStyle: TextStyle(color: AppTheme.grey600, fontFamily: 'Literata'),
+      prefixIcon: icon == null ? null : Icon(icon, color: AppTheme.grey600),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppTheme.grey300),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppTheme.grey300),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppColors.accent(context), width: 2),
+      ),
+      filled: true,
+      fillColor: AppColors.scaffold(context),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+    );
+  }
+
   Widget _buildField({
     required String label,
     required TextEditingController controller,
-    required IconData icon,
+    IconData? icon,
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
     int? maxLength,
     bool isRequired = false,
+    bool isOptional = false,
+    String? Function(String text)? extraValidator,
   }) {
+    final labelText = isRequired
+        ? '$label *'
+        : (isOptional ? '$label (${_localizations.optional})' : label);
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
       maxLength: maxLength,
       style: TextStyle(fontFamily: 'Literata', fontSize: 14),
-      decoration: InputDecoration(
-        labelText: isRequired ? '$label *' : label,
-        labelStyle: TextStyle(color: AppTheme.grey600, fontFamily: 'Literata'),
-        prefixIcon: Icon(icon, color: AppTheme.grey600),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppTheme.grey300),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppTheme.grey300),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.accent(context), width: 2),
-        ),
-        filled: true,
-        fillColor: AppColors.scaffold(context),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 12,
-        ),
-      ),
-      validator: isRequired
-          ? (value) {
-              if (value == null || value.trim().isEmpty) {
-                return '$label ${_localizations.isRequired}';
-              }
-              if (label == _localizations.contactNumber && value.length != 10) {
-                return _localizations.contactMustBe10Digits;
-              }
-              return null;
-            }
-          : null,
+      decoration: _fieldDecoration(labelText, icon),
+      validator: (value) {
+        final text = value?.trim() ?? '';
+        if (isRequired) {
+          if (text.isEmpty) {
+            return '$label ${_localizations.isRequired}';
+          }
+          if (label == _localizations.contactNumber && value!.length != 10) {
+            return _localizations.contactMustBe10Digits;
+          }
+        }
+        return extraValidator?.call(text);
+      },
+    );
+  }
+}
+
+/// Read-only birth date field that opens a date picker; tap the clear icon to
+/// remove the date. Optional: an empty value is saved as "no birth date".
+class _BirthDateField extends StatelessWidget {
+  final ValueNotifier<DateTime?> value;
+  final String pickerHelp;
+  final InputDecoration decoration;
+
+  const _BirthDateField({
+    required this.value,
+    required this.pickerHelp,
+    required this.decoration,
+  });
+
+  Future<void> _pick(BuildContext context) async {
+    final now = DateTime.now();
+    final current = value.value;
+    final initial = (current != null && !current.isAfter(now))
+        ? current
+        : DateTime(now.year - 25, now.month, now.day);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(1900),
+      lastDate: now,
+      helpText: pickerHelp,
+    );
+    if (picked != null) {
+      value.value = DateTime(picked.year, picked.month, picked.day);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<DateTime?>(
+      valueListenable: value,
+      builder: (context, date, _) {
+        final text = date == null ? '' : DateFormat('dd MMM yyyy').format(date);
+        return TextFormField(
+          key: ValueKey(text),
+          initialValue: text,
+          readOnly: true,
+          onTap: () => _pick(context),
+          style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+          decoration: decoration.copyWith(
+            suffixIcon: date == null
+                ? const Icon(Icons.calendar_today_outlined, size: 18)
+                : IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 18),
+                    onPressed: () => value.value = null,
+                  ),
+          ),
+        );
+      },
     );
   }
 }
@@ -1310,6 +1434,8 @@ class _CustomerDetailsSheet extends StatelessWidget {
     final firstName = (customer['firstName'] ?? '').toString();
     final contact = (customer['contact'] ?? '').toString();
     final address = (customer['address'] ?? '').toString();
+    final email = (customer['email'] ?? '').toString().trim();
+    final birthDate = birthDateFromValue(customer['birthDate']);
     final pendingAmount =
         (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0.0;
     final isSynced = customer['isSynced'] as bool? ?? true;
@@ -1509,6 +1635,28 @@ class _CustomerDetailsSheet extends StatelessWidget {
                           ],
                         ),
                       ),
+
+                    // Email
+                    if (email.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      _buildDetailRow(
+                        context: context,
+                        icon: Icons.email_outlined,
+                        label: localizations.emailAddress,
+                        value: email,
+                      ),
+                    ],
+
+                    // Birth date
+                    if (birthDate != null) ...[
+                      const SizedBox(height: 16),
+                      _buildDetailRow(
+                        context: context,
+                        icon: Icons.cake_outlined,
+                        label: localizations.customerBirthDate,
+                        value: DateFormat('dd MMM yyyy').format(birthDate),
+                      ),
+                    ],
 
                     // Address
                     if (address.isNotEmpty && address != 'N/A') ...[

@@ -10384,6 +10384,61 @@ class AppLocalizations {
     }
   }
 
+  String get customerBirthDate {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerBirthDate;
+      case 'Marathi':
+        return MarathiLocalization.customerBirthDate;
+      default:
+        return EnglishLocalization.customerBirthDate;
+    }
+  }
+
+  String get customerInvalidEmail {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerInvalidEmail;
+      case 'Marathi':
+        return MarathiLocalization.customerInvalidEmail;
+      default:
+        return EnglishLocalization.customerInvalidEmail;
+    }
+  }
+
+  String get customerBasicDetails {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerBasicDetails;
+      case 'Marathi':
+        return MarathiLocalization.customerBasicDetails;
+      default:
+        return EnglishLocalization.customerBasicDetails;
+    }
+  }
+
+  String get customerContactDetails {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerContactDetails;
+      case 'Marathi':
+        return MarathiLocalization.customerContactDetails;
+      default:
+        return EnglishLocalization.customerContactDetails;
+    }
+  }
+
+  String get customerBirthdayToday {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerBirthdayToday;
+      case 'Marathi':
+        return MarathiLocalization.customerBirthdayToday;
+      default:
+        return EnglishLocalization.customerBirthdayToday;
+    }
+  }
+
   String get customerReportOpeningMessage {
     switch (languageCode) {
       case 'Hindi':

@@ -1183,6 +1183,11 @@ class MarathiLocalization {
   static const String customerReportSendMessageBody =
       'PDF चॅटमध्ये गेला आहे. त्याच चॅटमध्ये स्मरणसंदेश जोडण्यासाठी "संदेश पाठवा" दाबा.';
   static const String customerReportSendMessage = 'संदेश पाठवा';
+  static const String customerBirthDate = 'जन्मतारीख';
+  static const String customerInvalidEmail = 'वैध ईमेल पत्ता प्रविष्ट करा';
+  static const String customerBasicDetails = 'मूलभूत माहिती';
+  static const String customerContactDetails = 'संपर्क माहिती';
+  static const String customerBirthdayToday = 'आज वाढदिवस आहे';
   static const String customerReportOpeningMessage =
       'त्याच चॅटमध्ये संदेश उघडत आहे...';
   static const String customerReportOpeningPdf =

@@ -723,6 +723,17 @@ class $CustomerRecordsTable extends CustomerRecords
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _birthDateMeta = const VerificationMeta(
+    'birthDate',
+  );
+  @override
+  late final GeneratedColumn<String> birthDate = GeneratedColumn<String>(
+    'birth_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _currentPendingAmountMeta =
       const VerificationMeta('currentPendingAmount');
   @override
@@ -807,6 +818,7 @@ class $CustomerRecordsTable extends CustomerRecords
     mobile,
     address,
     email,
+    birthDate,
     currentPendingAmount,
     totalPurchases,
     isSynced,
@@ -861,6 +873,12 @@ class $CustomerRecordsTable extends CustomerRecords
       context.handle(
         _emailMeta,
         email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
+    }
+    if (data.containsKey('birth_date')) {
+      context.handle(
+        _birthDateMeta,
+        birthDate.isAcceptableOrUnknown(data['birth_date']!, _birthDateMeta),
       );
     }
     if (data.containsKey('current_pending_amount')) {
@@ -942,6 +960,10 @@ class $CustomerRecordsTable extends CustomerRecords
         DriftSqlType.string,
         data['${effectivePrefix}email'],
       ),
+      birthDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}birth_date'],
+      ),
       currentPendingAmount: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}current_pending_amount'],
@@ -982,6 +1004,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
   final String mobile;
   final String? address;
   final String? email;
+  final String? birthDate;
   final double currentPendingAmount;
   final double totalPurchases;
   final bool isSynced;
@@ -995,6 +1018,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
     required this.mobile,
     this.address,
     this.email,
+    this.birthDate,
     required this.currentPendingAmount,
     required this.totalPurchases,
     required this.isSynced,
@@ -1016,6 +1040,9 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
     }
     if (!nullToAbsent || email != null) {
       map['email'] = Variable<String>(email);
+    }
+    if (!nullToAbsent || birthDate != null) {
+      map['birth_date'] = Variable<String>(birthDate);
     }
     map['current_pending_amount'] = Variable<double>(currentPendingAmount);
     map['total_purchases'] = Variable<double>(totalPurchases);
@@ -1040,6 +1067,9 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
       email: email == null && nullToAbsent
           ? const Value.absent()
           : Value(email),
+      birthDate: birthDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(birthDate),
       currentPendingAmount: Value(currentPendingAmount),
       totalPurchases: Value(totalPurchases),
       isSynced: Value(isSynced),
@@ -1061,6 +1091,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
       mobile: serializer.fromJson<String>(json['mobile']),
       address: serializer.fromJson<String?>(json['address']),
       email: serializer.fromJson<String?>(json['email']),
+      birthDate: serializer.fromJson<String?>(json['birthDate']),
       currentPendingAmount: serializer.fromJson<double>(
         json['currentPendingAmount'],
       ),
@@ -1081,6 +1112,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
       'mobile': serializer.toJson<String>(mobile),
       'address': serializer.toJson<String?>(address),
       'email': serializer.toJson<String?>(email),
+      'birthDate': serializer.toJson<String?>(birthDate),
       'currentPendingAmount': serializer.toJson<double>(currentPendingAmount),
       'totalPurchases': serializer.toJson<double>(totalPurchases),
       'isSynced': serializer.toJson<bool>(isSynced),
@@ -1097,6 +1129,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
     String? mobile,
     Value<String?> address = const Value.absent(),
     Value<String?> email = const Value.absent(),
+    Value<String?> birthDate = const Value.absent(),
     double? currentPendingAmount,
     double? totalPurchases,
     bool? isSynced,
@@ -1110,6 +1143,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
     mobile: mobile ?? this.mobile,
     address: address.present ? address.value : this.address,
     email: email.present ? email.value : this.email,
+    birthDate: birthDate.present ? birthDate.value : this.birthDate,
     currentPendingAmount: currentPendingAmount ?? this.currentPendingAmount,
     totalPurchases: totalPurchases ?? this.totalPurchases,
     isSynced: isSynced ?? this.isSynced,
@@ -1125,6 +1159,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
       mobile: data.mobile.present ? data.mobile.value : this.mobile,
       address: data.address.present ? data.address.value : this.address,
       email: data.email.present ? data.email.value : this.email,
+      birthDate: data.birthDate.present ? data.birthDate.value : this.birthDate,
       currentPendingAmount: data.currentPendingAmount.present
           ? data.currentPendingAmount.value
           : this.currentPendingAmount,
@@ -1147,6 +1182,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
           ..write('mobile: $mobile, ')
           ..write('address: $address, ')
           ..write('email: $email, ')
+          ..write('birthDate: $birthDate, ')
           ..write('currentPendingAmount: $currentPendingAmount, ')
           ..write('totalPurchases: $totalPurchases, ')
           ..write('isSynced: $isSynced, ')
@@ -1165,6 +1201,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
     mobile,
     address,
     email,
+    birthDate,
     currentPendingAmount,
     totalPurchases,
     isSynced,
@@ -1182,6 +1219,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
           other.mobile == this.mobile &&
           other.address == this.address &&
           other.email == this.email &&
+          other.birthDate == this.birthDate &&
           other.currentPendingAmount == this.currentPendingAmount &&
           other.totalPurchases == this.totalPurchases &&
           other.isSynced == this.isSynced &&
@@ -1197,6 +1235,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
   final Value<String> mobile;
   final Value<String?> address;
   final Value<String?> email;
+  final Value<String?> birthDate;
   final Value<double> currentPendingAmount;
   final Value<double> totalPurchases;
   final Value<bool> isSynced;
@@ -1210,6 +1249,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
     this.mobile = const Value.absent(),
     this.address = const Value.absent(),
     this.email = const Value.absent(),
+    this.birthDate = const Value.absent(),
     this.currentPendingAmount = const Value.absent(),
     this.totalPurchases = const Value.absent(),
     this.isSynced = const Value.absent(),
@@ -1224,6 +1264,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
     required String mobile,
     this.address = const Value.absent(),
     this.email = const Value.absent(),
+    this.birthDate = const Value.absent(),
     this.currentPendingAmount = const Value.absent(),
     this.totalPurchases = const Value.absent(),
     this.isSynced = const Value.absent(),
@@ -1241,6 +1282,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
     Expression<String>? mobile,
     Expression<String>? address,
     Expression<String>? email,
+    Expression<String>? birthDate,
     Expression<double>? currentPendingAmount,
     Expression<double>? totalPurchases,
     Expression<bool>? isSynced,
@@ -1255,6 +1297,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
       if (mobile != null) 'mobile': mobile,
       if (address != null) 'address': address,
       if (email != null) 'email': email,
+      if (birthDate != null) 'birth_date': birthDate,
       if (currentPendingAmount != null)
         'current_pending_amount': currentPendingAmount,
       if (totalPurchases != null) 'total_purchases': totalPurchases,
@@ -1272,6 +1315,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
     Value<String>? mobile,
     Value<String?>? address,
     Value<String?>? email,
+    Value<String?>? birthDate,
     Value<double>? currentPendingAmount,
     Value<double>? totalPurchases,
     Value<bool>? isSynced,
@@ -1286,6 +1330,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
       mobile: mobile ?? this.mobile,
       address: address ?? this.address,
       email: email ?? this.email,
+      birthDate: birthDate ?? this.birthDate,
       currentPendingAmount: currentPendingAmount ?? this.currentPendingAmount,
       totalPurchases: totalPurchases ?? this.totalPurchases,
       isSynced: isSynced ?? this.isSynced,
@@ -1315,6 +1360,9 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
     }
     if (email.present) {
       map['email'] = Variable<String>(email.value);
+    }
+    if (birthDate.present) {
+      map['birth_date'] = Variable<String>(birthDate.value);
     }
     if (currentPendingAmount.present) {
       map['current_pending_amount'] = Variable<double>(
@@ -1348,6 +1396,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
           ..write('mobile: $mobile, ')
           ..write('address: $address, ')
           ..write('email: $email, ')
+          ..write('birthDate: $birthDate, ')
           ..write('currentPendingAmount: $currentPendingAmount, ')
           ..write('totalPurchases: $totalPurchases, ')
           ..write('isSynced: $isSynced, ')
@@ -14259,6 +14308,7 @@ typedef $$CustomerRecordsTableCreateCompanionBuilder =
       required String mobile,
       Value<String?> address,
       Value<String?> email,
+      Value<String?> birthDate,
       Value<double> currentPendingAmount,
       Value<double> totalPurchases,
       Value<bool> isSynced,
@@ -14274,6 +14324,7 @@ typedef $$CustomerRecordsTableUpdateCompanionBuilder =
       Value<String> mobile,
       Value<String?> address,
       Value<String?> email,
+      Value<String?> birthDate,
       Value<double> currentPendingAmount,
       Value<double> totalPurchases,
       Value<bool> isSynced,
@@ -14318,6 +14369,11 @@ class $$CustomerRecordsTableFilterComposer
 
   ColumnFilters<String> get email => $composableBuilder(
     column: $table.email,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get birthDate => $composableBuilder(
+    column: $table.birthDate,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -14391,6 +14447,11 @@ class $$CustomerRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get birthDate => $composableBuilder(
+    column: $table.birthDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get currentPendingAmount => $composableBuilder(
     column: $table.currentPendingAmount,
     builder: (column) => ColumnOrderings(column),
@@ -14448,6 +14509,9 @@ class $$CustomerRecordsTableAnnotationComposer
 
   GeneratedColumn<String> get email =>
       $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<String> get birthDate =>
+      $composableBuilder(column: $table.birthDate, builder: (column) => column);
 
   GeneratedColumn<double> get currentPendingAmount => $composableBuilder(
     column: $table.currentPendingAmount,
@@ -14515,6 +14579,7 @@ class $$CustomerRecordsTableTableManager
                 Value<String> mobile = const Value.absent(),
                 Value<String?> address = const Value.absent(),
                 Value<String?> email = const Value.absent(),
+                Value<String?> birthDate = const Value.absent(),
                 Value<double> currentPendingAmount = const Value.absent(),
                 Value<double> totalPurchases = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
@@ -14528,6 +14593,7 @@ class $$CustomerRecordsTableTableManager
                 mobile: mobile,
                 address: address,
                 email: email,
+                birthDate: birthDate,
                 currentPendingAmount: currentPendingAmount,
                 totalPurchases: totalPurchases,
                 isSynced: isSynced,
@@ -14543,6 +14609,7 @@ class $$CustomerRecordsTableTableManager
                 required String mobile,
                 Value<String?> address = const Value.absent(),
                 Value<String?> email = const Value.absent(),
+                Value<String?> birthDate = const Value.absent(),
                 Value<double> currentPendingAmount = const Value.absent(),
                 Value<double> totalPurchases = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
@@ -14556,6 +14623,7 @@ class $$CustomerRecordsTableTableManager
                 mobile: mobile,
                 address: address,
                 email: email,
+                birthDate: birthDate,
                 currentPendingAmount: currentPendingAmount,
                 totalPurchases: totalPurchases,
                 isSynced: isSynced,

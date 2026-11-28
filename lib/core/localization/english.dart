@@ -1176,6 +1176,11 @@ class EnglishLocalization {
   static const String customerReportSendMessageBody =
       'The PDF is in the chat. Tap "Send message" to add the reminder message to the same chat.';
   static const String customerReportSendMessage = 'Send message';
+  static const String customerBirthDate = 'Birth date';
+  static const String customerInvalidEmail = 'Enter a valid email address';
+  static const String customerBasicDetails = 'Basic details';
+  static const String customerContactDetails = 'Contact details';
+  static const String customerBirthdayToday = 'Birthday today';
   static const String customerReportOpeningMessage =
       'Opening the message in the same chat...';
   static const String customerReportOpeningPdf =

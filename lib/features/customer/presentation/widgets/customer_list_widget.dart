@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/services/communication_service.dart';
 import 'customer_filter_widget.dart';
+import '../../domain/customer_birthday.dart';
+import '../../offline/entities/customer_entity.dart' show birthDateFromValue;
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
 
@@ -31,6 +33,7 @@ class CustomerListWidget extends StatelessWidget {
   final String noResultsTitle;
   final String noResultsSubtitle;
   final String pendingLabel;
+  final String birthdayTodayLabel;
 
   const CustomerListWidget({
     super.key,
@@ -53,6 +56,7 @@ class CustomerListWidget extends StatelessWidget {
     this.noResultsTitle = 'No results found',
     this.noResultsSubtitle = 'Try a different search term',
     this.pendingLabel = 'pending',
+    this.birthdayTodayLabel = 'Birthday today',
   });
 
   List<Map<String, dynamic>> get _filteredAndSortedCustomers {
@@ -198,6 +202,7 @@ class CustomerListWidget extends StatelessWidget {
                   : null,
               reportTooltip: reportTooltip,
               pendingLabel: pendingLabel,
+              birthdayTodayLabel: birthdayTodayLabel,
             ),
           );
         },
@@ -610,6 +615,7 @@ class _CustomerCard extends StatelessWidget {
   final VoidCallback? onReportTap;
   final String reportTooltip;
   final String pendingLabel;
+  final String birthdayTodayLabel;
 
   const _CustomerCard({
     required this.customer,
@@ -621,6 +627,7 @@ class _CustomerCard extends StatelessWidget {
     this.onReportTap,
     this.reportTooltip = 'Pending report',
     this.pendingLabel = 'pending',
+    this.birthdayTodayLabel = 'Birthday today',
   });
 
   String _formatPending(double amount) {
@@ -636,9 +643,18 @@ class _CustomerCard extends StatelessWidget {
         '${customer['firstName'] ?? ''} ${customer['lastName'] ?? ''}'.trim();
     final contact = (customer['contact'] ?? '').toString();
     final address = (customer['address'] ?? '').toString();
+    final email = (customer['email'] ?? '').toString().trim();
+    final birthdayToday = isBirthdayOn(
+      birthDateFromValue(customer['birthDate']),
+      DateTime.now(),
+    );
     final pendingAmount =
         (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0.0;
     final isSynced = customer['isSynced'] as bool? ?? true;
+    // The pending panel below already shows the amount prominently, so the
+    // header does not repeat it.
+    final showsPendingPanel = pendingAmount > 0 && onCollectTap != null;
+    final initial = fullName.isNotEmpty ? fullName[0].toUpperCase() : '?';
 
     final accent = Theme.of(context).primaryColor;
     final isDark = AppColors.isDark(context);
@@ -681,10 +697,16 @@ class _CustomerCard extends StatelessWidget {
                           color: accent.withValues(alpha: isDark ? 0.18 : 0.12),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(
-                          Icons.person_outline_rounded,
-                          color: accent,
-                          size: 20,
+                        child: Center(
+                          child: Text(
+                            initial,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontWeight: FontWeight.w800,
+                              fontSize: 18,
+                              color: accent,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -732,7 +754,7 @@ class _CustomerCard extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          if (pendingAmount.round() != 0)
+                          if (pendingAmount.round() != 0 && !showsPendingPanel)
                             Text(
                               '₹${pendingAmount.toStringAsFixed(0)}',
                               style: TextStyle(
@@ -766,6 +788,64 @@ class _CustomerCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  if (email.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.email_outlined,
+                          size: 14,
+                          color: AppColors.mutedText(context),
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            email,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 12,
+                              color: AppColors.mutedText(context),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (birthdayToday) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.toneAmber.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.cake_outlined,
+                            size: 14,
+                            color: AppTheme.toneAmber,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            birthdayTodayLabel,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.toneAmber,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   if (address.isNotEmpty && address != 'N/A') ...[
                     const SizedBox(height: 12),
                     Row(

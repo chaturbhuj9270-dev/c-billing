@@ -36,6 +36,7 @@ class CustomerOfflineController extends ChangeNotifier {
     required String mobile,
     String? address,
     String? email,
+    DateTime? birthDate,
     double currentPendingAmount = 0.0,
     double totalPurchases = 0.0,
   }) async {
@@ -46,6 +47,7 @@ class CustomerOfflineController extends ChangeNotifier {
       mobile: mobile,
       address: address,
       email: email,
+      birthDate: birthDate,
       currentPendingAmount: currentPendingAmount,
       totalPurchases: totalPurchases,
       isSynced: false, // Needs to be synced
@@ -139,7 +141,8 @@ class CustomerOfflineController extends ChangeNotifier {
   Future<List<CustomerEntity>> getDeletedCustomers() async {
     return (await _db.loadCustomers())
         .where(
-          (customer) => customer.isDeleted == true && customer.isSynced == false,
+          (customer) =>
+              customer.isDeleted == true && customer.isSynced == false,
         )
         .toList();
   }
@@ -153,6 +156,8 @@ class CustomerOfflineController extends ChangeNotifier {
     String? mobile,
     String? address,
     String? email,
+    DateTime? birthDate,
+    bool clearBirthDate = false,
     double? currentPendingAmount,
     double? totalPurchases,
   }) async {
@@ -164,6 +169,8 @@ class CustomerOfflineController extends ChangeNotifier {
       mobile: mobile,
       address: address,
       email: email,
+      birthDate: birthDate,
+      clearBirthDate: clearBirthDate,
       currentPendingAmount: currentPendingAmount,
       totalPurchases: totalPurchases,
       isSynced: false, // Mark as needing sync

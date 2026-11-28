@@ -1183,6 +1183,11 @@ class HindiLocalization {
   static const String customerReportSendMessageBody =
       'PDF चैट में चला गया है। उसी चैट में रिमाइंडर संदेश जोड़ने के लिए "संदेश भेजें" दबाएँ।';
   static const String customerReportSendMessage = 'संदेश भेजें';
+  static const String customerBirthDate = 'जन्म तिथि';
+  static const String customerInvalidEmail = 'मान्य ईमेल पता दर्ज करें';
+  static const String customerBasicDetails = 'बुनियादी जानकारी';
+  static const String customerContactDetails = 'संपर्क जानकारी';
+  static const String customerBirthdayToday = 'आज जन्मदिन है';
   static const String customerReportOpeningMessage =
       'उसी चैट में संदेश खोल रहे हैं...';
   static const String customerReportOpeningPdf =

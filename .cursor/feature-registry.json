@@ -869,6 +869,64 @@
       ],
       "forbidden": [],
       "tests": []
+    },
+    {
+      "id": "customer-profile-fields",
+      "name": "Customer profile form (email, birth date) and card layout",
+      "files": [
+        "lib/features/customer/presentation/pages/enhanced_customer_page.dart",
+        "lib/features/customer/presentation/widgets/customer_list_widget.dart",
+        "lib/features/customer/offline/entities/customer_entity.dart",
+        "lib/features/customer/offline/controllers/customer_offline_controller.dart",
+        "lib/features/customer/domain/customer_birthday.dart",
+        "lib/core/database/app_database.dart",
+        "lib/core/database/entity_mappers.dart"
+      ],
+      "invariants": [
+        "Email and birth date are OPTIONAL. Only first name, last name and a 10-digit mobile are required; address is optional.",
+        "The form never writes currentPendingAmount / totalPurchases: add and edit go through CustomerOfflineController.addCustomer/updateCustomer and ledger changes stay in CustomerTransactionOfflineController.",
+        "Birth date is stored as date-only text 'yyyy-MM-dd' (customers.birth_date, DB v16) and synced as 'birthDate'; no timezone conversion.",
+        "The v16 migration is a guarded plain ADD COLUMN (_addColumnIfMissing). Never alterTable / recreate the customers table.",
+        "copyWith keeps existing values; a birth date can only be removed with clearBirthDate: true.",
+        "Existing middle names are kept (name string); the form no longer has a middle name field.",
+        "The card hides the header pending amount when the pending panel is shown, so the amount appears once."
+      ],
+      "anchors": [
+        {
+          "file": "lib/core/database/app_database.dart",
+          "contains": "_addColumnIfMissing('customers', 'birth_date', 'TEXT')"
+        },
+        {
+          "file": "lib/features/customer/offline/entities/customer_entity.dart",
+          "contains": "birthDateToText"
+        },
+        {
+          "file": "lib/features/customer/offline/entities/customer_entity.dart",
+          "contains": "clearBirthDate"
+        },
+        {
+          "file": "lib/core/database/entity_mappers.dart",
+          "contains": "birthDateFromValue(row.birthDate)"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart",
+          "contains": "_BirthDateField"
+        },
+        {
+          "file": "lib/features/customer/presentation/widgets/customer_list_widget.dart",
+          "contains": "isBirthdayOn"
+        }
+      ],
+      "forbidden": [
+        {
+          "file": "lib/core/database/app_database.dart",
+          "contains": "alterTable(customerRecords",
+          "why": "Recreating the customers table risks wiping customer balances; use a guarded ADD COLUMN."
+        }
+      ],
+      "tests": [
+        "test/regression/customer_profile_fields_test.dart"
+      ]
     }
   ]
 }

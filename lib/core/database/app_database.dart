@@ -33,6 +33,8 @@ class CustomerRecords extends Table {
   TextColumn get mobile => text()();
   TextColumn get address => text().nullable()();
   TextColumn get email => text().nullable()();
+  // Date only, stored as 'yyyy-MM-dd' (no timezone shifts).
+  TextColumn get birthDate => text().nullable()();
   RealColumn get currentPendingAmount =>
       real().withDefault(const Constant(0))();
   RealColumn get totalPurchases => real().withDefault(const Constant(0))();
@@ -367,8 +369,22 @@ class AppDatabase extends _$AppDatabase {
   // v15: REAL qty affinity + derived-balance repair. Never alterTable bills /
   // purchases here — those tables carry extra GST/payment columns not in this
   // schema; alterTable would drop shop data.
+  // v16: customers.birth_date (nullable TEXT) added with a plain ADD COLUMN.
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 16;
+
+  /// Adds [column] to [table] only when it is missing (idempotent, keeps data).
+  Future<void> _addColumnIfMissing(
+    String table,
+    String column,
+    String type,
+  ) async {
+    final cols = await customSelect('PRAGMA table_info($table)').get();
+    final exists = cols.any((row) => row.read<String>('name') == column);
+    if (!exists) {
+      await customStatement('ALTER TABLE $table ADD COLUMN $column $type');
+    }
+  }
 
   Future<bool> _hasTable(String table) async {
     final rows = await customSelect(
@@ -396,6 +412,18 @@ class AppDatabase extends _$AppDatabase {
         // Idempotent: create any tables missing on this branch without
         // wiping existing shop data when switching branches / versions.
         await _ensureTables(m);
+        if (from < 16) {
+          try {
+            await _addColumnIfMissing('customers', 'birth_date', 'TEXT');
+          } catch (e, st) {
+            // Never abort opening the DB — the column is optional data.
+            assert(() {
+              // ignore: avoid_print
+              print('[AppDatabase] birth_date column failed: $e\n$st');
+              return true;
+            }());
+          }
+        }
         if (from < 15) {
           try {
             await repairDerivedBalances();
