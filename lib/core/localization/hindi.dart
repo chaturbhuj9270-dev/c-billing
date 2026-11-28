@@ -1188,6 +1188,15 @@ class HindiLocalization {
   static const String customerBasicDetails = 'बुनियादी जानकारी';
   static const String customerContactDetails = 'संपर्क जानकारी';
   static const String customerBirthdayToday = 'आज जन्मदिन है';
+  static const String contactPerson = 'संपर्क व्यक्ति';
+  static const String invalidEmailAddress = 'मान्य ईमेल पता दर्ज करें';
+  static const String invalidGstNumber = 'मान्य 15 अक्षरों का जीएसटी नंबर दर्ज करें';
+  static const String sectionBasicDetails = 'बुनियादी जानकारी';
+  static const String sectionContactDetails = 'संपर्क जानकारी';
+  static const String sectionBusinessDetails = 'व्यवसाय जानकारी';
+  static const String sectionStockAndUnit = 'स्टॉक और इकाई';
+  static const String sectionTaxDetails = 'कर (जीएसटी)';
+  static const String minStockLevelHint = 'स्टॉक इस स्तर पर पहुँचने पर लो-स्टॉक अलर्ट';
   static const String customerReportOpeningMessage =
       'उसी चैट में संदेश खोल रहे हैं...';
   static const String customerReportOpeningPdf =

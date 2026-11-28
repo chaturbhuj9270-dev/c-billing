@@ -18,6 +18,7 @@ import '../widgets/supplier_list_widget.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/app_pill_button.dart';
+import 'package:c_billing/common_widgets/master_data_form.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
@@ -48,11 +49,12 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
 
   // Form controllers
   final _firstNameController = TextEditingController();
-  final _middleNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _supplierCodeController = TextEditingController();
   final _contactController = TextEditingController();
   final _addressController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _gstNumberController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   // State
@@ -122,11 +124,12 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
     _animController.dispose();
     _supplierStreamSub?.cancel();
     _firstNameController.dispose();
-    _middleNameController.dispose();
     _lastNameController.dispose();
     _supplierCodeController.dispose();
     _contactController.dispose();
     _addressController.dispose();
+    _emailController.dispose();
+    _gstNumberController.dispose();
     LanguageService.instance.removeListener(_onLanguageChanged);
     super.dispose();
   }
@@ -198,6 +201,8 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
       'supplierCode': e.supplierCode,
       'contact': e.contact,
       'address': e.address,
+      'email': e.email,
+      'gstNumber': e.gstNumber,
       'isActive': e.isActive,
       'isSynced': e.syncStatus == SupplierSyncStatus.synced,
       'syncStatus': e.syncStatus.name,
@@ -245,11 +250,12 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
 
   void _clearForm() {
     _firstNameController.clear();
-    _middleNameController.clear();
     _lastNameController.clear();
     _supplierCodeController.clear();
     _contactController.clear();
     _addressController.clear();
+    _emailController.clear();
+    _gstNumberController.clear();
     _editingSupplierId = null;
     _editingSupplierLocalId = null;
     _isEditing = false;
@@ -292,11 +298,12 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
 
   void _showEditSupplierSheet(Map<String, dynamic> supplier) {
     _firstNameController.text = supplier['firstName'] ?? '';
-    _middleNameController.text = supplier['middleName'] ?? '';
     _lastNameController.text = supplier['lastName'] ?? '';
     _supplierCodeController.text = supplier['supplierCode'] ?? '';
     _contactController.text = supplier['contact'] ?? '';
     _addressController.text = supplier['address'] ?? '';
+    _emailController.text = (supplier['email'] ?? '').toString();
+    _gstNumberController.text = (supplier['gstNumber'] ?? '').toString();
     _editingSupplierId = supplier['id'];
     _editingSupplierLocalId = supplier['localId'] as int?;
     _isEditing = true;
@@ -315,6 +322,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
         return dockDrawerAction(
           context: context,
           action: DrawerBottomBar(
+            plain: true,
             leading: _isEditing
                 ? TextButton(
                     onPressed: _isSaving
@@ -379,36 +387,39 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
                     ),
                     const SizedBox(height: 20),
                     // Form fields
-                    _buildInputField(
-                      label: _localizations.firstName,
-                      controller: _firstNameController,
-                      icon: Icons.person_outline_rounded,
-                      isRequired: true,
+                    FormSectionTitle(_localizations.sectionBasicDetails),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: _buildInputField(
+                            label: _localizations.firstName,
+                            controller: _firstNameController,
+                            isRequired: true,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildInputField(
+                            label: _localizations.lastName,
+                            controller: _lastNameController,
+                            isRequired: true,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    _buildInputField(
-                      label: _localizations.middleName,
-                      controller: _middleNameController,
-                      icon: Icons.person_outline_rounded,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildInputField(
-                      label: _localizations.lastName,
-                      controller: _lastNameController,
-                      icon: Icons.person_outline_rounded,
-                      isRequired: true,
-                    ),
-                    const SizedBox(height: 16),
                     // Only show code field when editing
                     if (_isEditing) ...[
+                      const SizedBox(height: 14),
                       _buildInputField(
                         label: _localizations.supplierCode,
                         controller: _supplierCodeController,
                         icon: Icons.qr_code_rounded,
                         isRequired: true,
                       ),
-                      const SizedBox(height: 16),
                     ],
+                    const SizedBox(height: 20),
+                    FormSectionTitle(_localizations.sectionContactDetails),
                     _buildInputField(
                       label: _localizations.contactNumber,
                       controller: _contactController,
@@ -417,13 +428,40 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
                       isRequired: true,
                       maxLength: 10,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
+                    _buildInputField(
+                      label: _localizations.emailAddress,
+                      controller: _emailController,
+                      icon: Icons.email_outlined,
+                      keyboardType: TextInputType.emailAddress,
+                      isOptional: true,
+                      extraValidator: (text) =>
+                          text.isEmpty || isValidEmailAddress(text)
+                          ? null
+                          : _localizations.invalidEmailAddress,
+                    ),
+                    const SizedBox(height: 20),
+                    FormSectionTitle(_localizations.sectionBusinessDetails),
+                    _buildInputField(
+                      label: _localizations.gstNumber,
+                      controller: _gstNumberController,
+                      icon: Icons.receipt_long_outlined,
+                      textCapitalization: TextCapitalization.characters,
+                      maxLength: 15,
+                      isOptional: true,
+                      extraValidator: (text) =>
+                          text.isEmpty || isValidGstin(text)
+                          ? null
+                          : _localizations.invalidGstNumber,
+                    ),
+                    const SizedBox(height: 20),
+                    FormSectionTitle(_localizations.address),
                     _buildInputField(
                       label: _localizations.address,
                       controller: _addressController,
                       icon: Icons.location_on_outlined,
-                      maxLines: 3,
-                      isRequired: true,
+                      maxLines: 2,
+                      isOptional: true,
                     ),
                   ],
                 ),
@@ -436,89 +474,61 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
   Widget _buildInputField({
     required String label,
     required TextEditingController controller,
-    required IconData icon,
+    IconData? icon,
     bool isRequired = false,
+    bool isOptional = false,
     TextInputType keyboardType = TextInputType.text,
+    TextCapitalization textCapitalization = TextCapitalization.none,
     int maxLines = 1,
     bool isReadOnly = false,
     int? maxLength,
+    String? Function(String text)? extraValidator,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.accent(context),
-                fontFamily: 'Literata',
-              ),
-            ),
-            if (isRequired)
-              const Text(' *', style: TextStyle(color: AppTheme.red)),
-          ],
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          maxLines: maxLines,
-          minLines: maxLines,
-          maxLength: maxLength,
-          readOnly: isReadOnly,
-          style: TextStyle(
-            color: isReadOnly ? AppTheme.grey600 : null,
-            fontFamily: 'Literata',
-          ),
-          decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: AppTheme.grey600),
-            suffixIcon: isReadOnly
-                ? Tooltip(
-                    message: 'Auto-generated',
-                    child: Icon(
-                      Icons.lock_outline,
-                      size: 18,
-                      color: AppTheme.grey,
-                    ),
-                  )
-                : null,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppTheme.grey300),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppTheme.grey300),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.accent(context), width: 2),
-            ),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
-            ),
-            filled: true,
-            fillColor: isReadOnly ? AppColors.chipFill(context) : AppColors.scaffold(context),
-            counterText: '',
-          ),
-          validator: (value) {
-            if (isRequired && (value == null || value.isEmpty)) {
-              return '$label ${_localizations.isRequired}';
-            }
-            if (label == _localizations.contactNumber &&
-                value != null &&
-                value.isNotEmpty &&
-                value.length != 10) {
-              return 'Contact number must be exactly 10 digits';
-            }
-            return null;
-          },
-        ),
-      ],
+    final labelText = isRequired
+        ? '$label *'
+        : (isOptional ? '$label (${_localizations.optional})' : label);
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      textCapitalization: textCapitalization,
+      maxLines: maxLines,
+      minLines: maxLines,
+      maxLength: maxLength,
+      readOnly: isReadOnly,
+      style: TextStyle(
+        color: isReadOnly ? AppTheme.grey600 : null,
+        fontFamily: 'Literata',
+      ),
+      decoration: masterFieldDecoration(
+        context,
+        labelText,
+        icon,
+        readOnly: isReadOnly,
+      ).copyWith(
+        suffixIcon: isReadOnly
+            ? Tooltip(
+                message: 'Auto-generated',
+                child: Icon(
+                  Icons.lock_outline,
+                  size: 18,
+                  color: AppTheme.grey,
+                ),
+              )
+            : null,
+      ),
+      validator: (value) {
+        final text = value?.trim() ?? '';
+        if (isRequired && text.isEmpty) {
+          return '$label ${_localizations.isRequired}';
+        }
+        if (label == _localizations.contactNumber &&
+            value != null &&
+            value.isNotEmpty &&
+            value.length != 10) {
+          return 'Contact number must be exactly 10 digits';
+        }
+        return extraValidator?.call(text);
+      },
     );
   }
 
@@ -546,11 +556,12 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
           await offlineCtrl.updateSupplier(
             id: localId,
             firstName: _firstNameController.text,
-            middleName: _middleNameController.text,
             lastName: _lastNameController.text,
             supplierCode: _supplierCodeController.text.trim(),
             contact: _contactController.text,
-            address: _addressController.text,
+            address: _addressController.text.trim(),
+            email: _emailController.text.trim(),
+            gstNumber: _gstNumberController.text.trim().toUpperCase(),
           );
         } else {
           throw Exception('Supplier not found');
@@ -561,11 +572,12 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
       } else {
         await offlineCtrl.addSupplier(
           firstName: _firstNameController.text,
-          middleName: _middleNameController.text,
           lastName: _lastNameController.text,
           supplierCode: _supplierCodeController.text.trim(),
           contact: _contactController.text,
-          address: _addressController.text,
+          address: _addressController.text.trim(),
+          email: _emailController.text.trim(),
+          gstNumber: _gstNumberController.text.trim().toUpperCase(),
         );
         DashboardRefreshService.instance.notifyDataChanged(
           DataChangeType.supplier,

@@ -249,6 +249,9 @@ class ProductOfflineController extends ChangeNotifier {
     double? sgstPercent,
     String? hsnCode,
     String? customFieldsJson,
+    bool clearUnit = false,
+    bool clearDescription = false,
+    bool clearMinStockLevel = false,
   }) async {
     final existing = await _findById(id);
     if (existing == null) {
@@ -284,6 +287,9 @@ class ProductOfflineController extends ChangeNotifier {
       description: description,
       imageUrl: imageUrl,
       minStockLevel: minStockLevel,
+      clearUnit: clearUnit,
+      clearDescription: clearDescription,
+      clearMinStockLevel: clearMinStockLevel,
       cgstPercent: cgstPercent,
       sgstPercent: sgstPercent,
       hsnCode: hsnCode,

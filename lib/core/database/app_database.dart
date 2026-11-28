@@ -16,6 +16,8 @@ class CompanyRecords extends Table {
   TextColumn get gstCode => text().withDefault(const Constant(''))();
   TextColumn get contact => text().withDefault(const Constant(''))();
   TextColumn get address => text().withDefault(const Constant(''))();
+  TextColumn get email => text().withDefault(const Constant(''))();
+  TextColumn get contactPerson => text().withDefault(const Constant(''))();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
   IntColumn get syncStatus => integer()();
   DateTimeColumn get updatedAt => dateTime()();
@@ -57,6 +59,8 @@ class SupplierRecords extends Table {
   TextColumn get supplierCode => text().withDefault(const Constant(''))();
   TextColumn get contact => text()();
   TextColumn get address => text().withDefault(const Constant(''))();
+  TextColumn get email => text().withDefault(const Constant(''))();
+  TextColumn get gstNumber => text().withDefault(const Constant(''))();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
   IntColumn get syncStatus => integer()();
   DateTimeColumn get updatedAt => dateTime()();
@@ -370,8 +374,10 @@ class AppDatabase extends _$AppDatabase {
   // purchases here — those tables carry extra GST/payment columns not in this
   // schema; alterTable would drop shop data.
   // v16: customers.birth_date (nullable TEXT) added with a plain ADD COLUMN.
+  // v17: suppliers.email / gst_number and companies.email / contact_person
+  // (plain guarded ADD COLUMN, default '').
   @override
-  int get schemaVersion => 16;
+  int get schemaVersion => 17;
 
   /// Adds [column] to [table] only when it is missing (idempotent, keeps data).
   Future<void> _addColumnIfMissing(
@@ -412,6 +418,29 @@ class AppDatabase extends _$AppDatabase {
         // Idempotent: create any tables missing on this branch without
         // wiping existing shop data when switching branches / versions.
         await _ensureTables(m);
+        if (from < 17) {
+          for (final spec in const [
+            ['suppliers', 'email'],
+            ['suppliers', 'gst_number'],
+            ['companies', 'email'],
+            ['companies', 'contact_person'],
+          ]) {
+            try {
+              await _addColumnIfMissing(
+                spec[0],
+                spec[1],
+                "TEXT NOT NULL DEFAULT ''",
+              );
+            } catch (e, st) {
+              // Never abort opening the DB — these columns are optional data.
+              assert(() {
+                // ignore: avoid_print
+                print('[AppDatabase] ${spec[0]}.${spec[1]} failed: $e\n$st');
+                return true;
+              }());
+            }
+          }
+        }
         if (from < 16) {
           try {
             await _addColumnIfMissing('customers', 'birth_date', 'TEXT');

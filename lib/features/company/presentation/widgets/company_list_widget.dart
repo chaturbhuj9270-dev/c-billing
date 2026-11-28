@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:c_billing/common_widgets/master_data_form.dart';
 import 'company_filter_widget.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
@@ -46,10 +47,16 @@ class CompanyListWidget extends StatelessWidget {
         final contact = (c['contact'] ?? '').toString().toLowerCase();
         final companyCode = (c['companyCode'] ?? '').toString().toLowerCase();
         final address = (c['address'] ?? '').toString().toLowerCase();
+        final email = (c['email'] ?? '').toString().toLowerCase();
+        final contactPerson = (c['contactPerson'] ?? '')
+            .toString()
+            .toLowerCase();
         return name.contains(query) ||
             contact.contains(query) ||
             companyCode.contains(query) ||
-            address.contains(query);
+            address.contains(query) ||
+            email.contains(query) ||
+            contactPerson.contains(query);
       }).toList();
     }
 
@@ -218,6 +225,8 @@ class _CompanyCard extends StatelessWidget {
     final companyName = (company['companyName'] ?? '').toString();
     final contact = (company['contact'] ?? '').toString();
     final address = (company['address'] ?? '').toString();
+    final email = (company['email'] ?? '').toString().trim();
+    final contactPerson = (company['contactPerson'] ?? '').toString().trim();
     final companyCode = (company['companyCode'] ?? '').toString();
     final isActive = company['isActive'] as bool? ?? true;
     final isSynced = company['isSynced'] as bool? ?? true;
@@ -426,6 +435,18 @@ class _CompanyCard extends StatelessWidget {
                     ),
                 ],
               ),
+              if (contactPerson.isNotEmpty || email.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                if (contactPerson.isNotEmpty)
+                  CardInfoLine(
+                    icon: Icons.person_outline_rounded,
+                    text: contactPerson,
+                  ),
+                if (contactPerson.isNotEmpty && email.isNotEmpty)
+                  const SizedBox(height: 4),
+                if (email.isNotEmpty)
+                  CardInfoLine(icon: Icons.email_outlined, text: email),
+              ],
               // Address row (if exists)
               if (address.isNotEmpty) ...[
                 const SizedBox(height: 10),

@@ -2,6 +2,7 @@ import '../../../../core/services/live_refresh_mixin.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/services/dashboard_refresh_service.dart';
@@ -24,6 +25,7 @@ import 'barcode_generator_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/app_pill_button.dart';
+import 'package:c_billing/common_widgets/master_data_form.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
@@ -1496,6 +1498,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     final cgstController = TextEditingController();
     final sgstController = TextEditingController();
     final hsnController = TextEditingController();
+    final unitController = TextEditingController();
+    final minStockController = TextEditingController();
+    final descriptionController = TextEditingController();
     bool applyGst = false;
 
     // Sync CGST and SGST values
@@ -1628,6 +1633,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        FormSectionTitle(_localizations.sectionBasicDetails),
                         _buildTextField(
                           controller: nameController,
                           label: _localizations.productName,
@@ -1645,9 +1651,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               dialogCompanies,
                             );
                             if (company != null) {
-                              setDialogState(
-                                () => dialogSelectedCompany = company,
-                              );
+                              setDialogState(() => dialogSelectedCompany = company);
                             }
                           },
                         ),
@@ -1663,9 +1667,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               dialogSuppliers,
                             );
                             if (supplier != null) {
-                              setDialogState(
-                                () => dialogSelectedSupplier = supplier,
-                              );
+                              setDialogState(() => dialogSelectedSupplier = supplier);
                             }
                           },
                         ),
@@ -1675,7 +1677,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           label: _localizations.category,
                           icon: Icons.category_outlined,
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 20),
+                        FormSectionTitle(_localizations.pricing),
                         Row(
                           children: [
                             Expanded(
@@ -1699,7 +1702,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 20),
+                        FormSectionTitle(_localizations.sectionStockAndUnit),
                         _buildTextField(
                           controller: initialStockController,
                           label: _localizations.initialStock,
@@ -1707,10 +1711,27 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           keyboardType: TextInputType.number,
                         ),
                         const SizedBox(height: 12),
+                        _buildTextField(
+                          controller: unitController,
+                          label: _localizations.unit,
+                          icon: Icons.straighten_rounded,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildUnitChips(unitController, setDialogState),
+                        const SizedBox(height: 12),
+                        _buildTextField(
+                          controller: minStockController,
+                          label: _localizations.minStockLevel,
+                          icon: Icons.notifications_active_outlined,
+                          keyboardType: TextInputType.number,
+                          helperText: _localizations.minStockLevelHint,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        ),
+                        const SizedBox(height: 20),
+                        FormSectionTitle(_localizations.sectionTaxDetails),
                         _buildApplyGstToggle(
                           applyGst: applyGst,
-                          onChanged: (value) =>
-                              setDialogState(() => applyGst = value),
+                          onChanged: (value) => setDialogState(() => applyGst = value),
                         ),
                         if (applyGst) ...[
                           const SizedBox(height: 12),
@@ -1742,6 +1763,14 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                             maxLength: 8,
                           ),
                         ],
+                        const SizedBox(height: 20),
+                        FormSectionTitle(_localizations.description),
+                        _buildTextField(
+                          controller: descriptionController,
+                          label: '${_localizations.description} (${_localizations.optional})',
+                          icon: Icons.notes_rounded,
+                          maxLines: 3,
+                        ),
                         // Custom fields
                         if (customColumns.isNotEmpty) ...[
                           SizedBox(height: 16),
@@ -1788,6 +1817,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       cgstController: cgstController,
                       sgstController: sgstController,
                       hsnController: hsnController,
+                      unitController: unitController,
+                      minStockController: minStockController,
+                      descriptionController: descriptionController,
                       applyGst: applyGst,
                       selectedCompany: dialogSelectedCompany,
                       selectedSupplier: dialogSelectedSupplier,
@@ -1856,6 +1888,33 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     );
   }
 
+  // Quick-pick units; the text field still accepts any custom unit.
+  Widget _buildUnitChips(
+    TextEditingController controller,
+    StateSetter setDialogState,
+  ) {
+    const units = ['pcs', 'kg', 'g', 'ltr', 'ml', 'box', 'dozen'];
+    final current = controller.text.trim().toLowerCase();
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      children: [
+        for (final unit in units)
+          ChoiceChip(
+            label: Text(
+              unit,
+              style: const TextStyle(fontFamily: 'Literata', fontSize: 12),
+            ),
+            selected: current == unit,
+            visualDensity: VisualDensity.compact,
+            onSelected: (_) => setDialogState(
+              () => controller.text = current == unit ? '' : unit,
+            ),
+          ),
+      ],
+    );
+  }
+
   Widget _buildApplyGstToggle({
     required bool applyGst,
     required ValueChanged<bool> onChanged,
@@ -1912,6 +1971,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     required TextEditingController cgstController,
     required TextEditingController sgstController,
     required TextEditingController hsnController,
+    required TextEditingController unitController,
+    required TextEditingController minStockController,
+    required TextEditingController descriptionController,
     required bool applyGst,
     Map<String, dynamic>? selectedCompany,
     Map<String, dynamic>? selectedSupplier,
@@ -1967,6 +2029,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       customFieldsJson = jsonEncode(finalCustomFields);
     }
 
+    final unitVal = unitController.text.trim();
+    final descriptionVal = descriptionController.text.trim();
+    final minStockVal = int.tryParse(minStockController.text.trim());
+
     try {
       final newProduct = await ProductOfflineController.instance.addProduct(
         name: name,
@@ -1975,6 +2041,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         purchasePrice: purchasePrice,
         salesPrice: salesPrice,
         currentStock: initialStock,
+        unit: unitVal.isEmpty ? null : unitVal,
+        description: descriptionVal.isEmpty ? null : descriptionVal,
+        minStockLevel: minStockVal,
         cgstPercent: cgstVal,
         sgstPercent: sgstVal,
         hsnCode: hsnVal.isNotEmpty ? hsnVal : null,
@@ -2018,6 +2087,13 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       text: product.sgstPercent.toString(),
     );
     final hsnController = TextEditingController(text: product.hsnCode ?? '');
+    final unitController = TextEditingController(text: product.unit ?? '');
+    final minStockController = TextEditingController(
+      text: product.minStockLevel?.toString() ?? '',
+    );
+    final descriptionController = TextEditingController(
+      text: product.description ?? '',
+    );
     var applyGst = product.cgstPercent > 0 ||
         product.sgstPercent > 0 ||
         (product.hsnCode != null && product.hsnCode!.isNotEmpty);
@@ -2131,6 +2207,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        FormSectionTitle(_localizations.sectionBasicDetails),
                         _buildTextField(
                           controller: nameController,
                           label: _localizations.productName,
@@ -2148,7 +2225,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           label: _localizations.category,
                           icon: Icons.category_outlined,
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 20),
+                        FormSectionTitle(_localizations.pricing),
                         Row(
                           children: [
                             Expanded(
@@ -2172,11 +2250,69 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                             ),
                           ],
                         ),
+                        const SizedBox(height: 20),
+                        FormSectionTitle(_localizations.sectionStockAndUnit),
+                        // Current stock (read-only: stock changes only through purchases,
+                        // sales, returns and adjustments)
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: AppColors.chipFill(context),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppTheme.grey300),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.inventory_rounded, color: AppTheme.grey600, size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _localizations.currentStock,
+                                      style: TextStyle(
+                                        fontFamily: 'Literata',
+                                        fontSize: 12,
+                                        color: AppTheme.grey600,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${product.currentStock} (Read Only)',
+                                      style: const TextStyle(
+                                        fontFamily: 'Literata',
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                         const SizedBox(height: 12),
+                        _buildTextField(
+                          controller: unitController,
+                          label: _localizations.unit,
+                          icon: Icons.straighten_rounded,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildUnitChips(unitController, setDialogState),
+                        const SizedBox(height: 12),
+                        _buildTextField(
+                          controller: minStockController,
+                          label: _localizations.minStockLevel,
+                          icon: Icons.notifications_active_outlined,
+                          keyboardType: TextInputType.number,
+                          helperText: _localizations.minStockLevelHint,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        ),
+                        const SizedBox(height: 20),
+                        FormSectionTitle(_localizations.sectionTaxDetails),
                         _buildApplyGstToggle(
                           applyGst: applyGst,
-                          onChanged: (value) =>
-                              setDialogState(() => applyGst = value),
+                          onChanged: (value) => setDialogState(() => applyGst = value),
                         ),
                         if (applyGst) ...[
                           const SizedBox(height: 12),
@@ -2208,48 +2344,13 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                             maxLength: 8,
                           ),
                         ],
-                        const SizedBox(height: 12),
-                        // Current stock (read-only)
-                        Container(
-                          padding: EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: AppColors.chipFill(context),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppTheme.grey300),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.inventory_rounded,
-                                color: AppTheme.grey600,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      _localizations.currentStock,
-                                      style: TextStyle(
-                                        fontFamily: 'Literata',
-                                        fontSize: 12,
-                                        color: AppTheme.grey600,
-                                      ),
-                                    ),
-                                    Text(
-                                      '${product.currentStock} (Read Only)',
-                                      style: TextStyle(
-                                        fontFamily: 'Literata',
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
+                        const SizedBox(height: 20),
+                        FormSectionTitle(_localizations.description),
+                        _buildTextField(
+                          controller: descriptionController,
+                          label: '${_localizations.description} (${_localizations.optional})',
+                          icon: Icons.notes_rounded,
+                          maxLines: 3,
                         ),
                         // Custom fields
                         if (customColumns.isNotEmpty) ...[
@@ -2298,6 +2399,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       cgstController: cgstController,
                       sgstController: sgstController,
                       hsnController: hsnController,
+                      unitController: unitController,
+                      minStockController: minStockController,
+                      descriptionController: descriptionController,
                       applyGst: applyGst,
                       customColumns: customColumns,
                       customTextControllers: customTextControllers,
@@ -2323,6 +2427,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     required TextEditingController cgstController,
     required TextEditingController sgstController,
     required TextEditingController hsnController,
+    required TextEditingController unitController,
+    required TextEditingController minStockController,
+    required TextEditingController descriptionController,
     required bool applyGst,
     required List<CustomColumn> customColumns,
     required Map<String, TextEditingController> customTextControllers,
@@ -2375,6 +2482,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       customFieldsJson = jsonEncode(finalCustomFields);
     }
 
+    final unitVal = unitController.text.trim();
+    final descriptionVal = descriptionController.text.trim();
+    final minStockVal = int.tryParse(minStockController.text.trim());
+
     try {
       await ProductOfflineController.instance.updateProduct(
         id: product.id,
@@ -2383,6 +2494,12 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         category: categoryController.text.trim(),
         purchasePrice: purchasePrice,
         salesPrice: salesPrice,
+        unit: unitVal.isEmpty ? null : unitVal,
+        clearUnit: unitVal.isEmpty,
+        description: descriptionVal.isEmpty ? null : descriptionVal,
+        clearDescription: descriptionVal.isEmpty,
+        minStockLevel: minStockVal,
+        clearMinStockLevel: minStockVal == null,
         cgstPercent: cgstVal,
         sgstPercent: sgstVal,
         hsnCode: hsnVal.isNotEmpty ? hsnVal : null,
@@ -2414,13 +2531,20 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     TextInputType? keyboardType,
     String? prefix,
     int? maxLength,
+    int maxLines = 1,
+    String? helperText,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
       maxLength: maxLength,
+      maxLines: maxLines,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: label,
+        helperText: helperText,
+        helperMaxLines: 2,
         prefixText: prefix,
         prefixIcon: icon != null
             ? Icon(icon, color: AppColors.accent(context), size: 20)

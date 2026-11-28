@@ -10439,6 +10439,105 @@ class AppLocalizations {
     }
   }
 
+  String get contactPerson {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.contactPerson;
+      case 'Marathi':
+        return MarathiLocalization.contactPerson;
+      default:
+        return EnglishLocalization.contactPerson;
+    }
+  }
+
+  String get invalidEmailAddress {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.invalidEmailAddress;
+      case 'Marathi':
+        return MarathiLocalization.invalidEmailAddress;
+      default:
+        return EnglishLocalization.invalidEmailAddress;
+    }
+  }
+
+  String get invalidGstNumber {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.invalidGstNumber;
+      case 'Marathi':
+        return MarathiLocalization.invalidGstNumber;
+      default:
+        return EnglishLocalization.invalidGstNumber;
+    }
+  }
+
+  String get sectionBasicDetails {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.sectionBasicDetails;
+      case 'Marathi':
+        return MarathiLocalization.sectionBasicDetails;
+      default:
+        return EnglishLocalization.sectionBasicDetails;
+    }
+  }
+
+  String get sectionContactDetails {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.sectionContactDetails;
+      case 'Marathi':
+        return MarathiLocalization.sectionContactDetails;
+      default:
+        return EnglishLocalization.sectionContactDetails;
+    }
+  }
+
+  String get sectionBusinessDetails {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.sectionBusinessDetails;
+      case 'Marathi':
+        return MarathiLocalization.sectionBusinessDetails;
+      default:
+        return EnglishLocalization.sectionBusinessDetails;
+    }
+  }
+
+  String get sectionStockAndUnit {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.sectionStockAndUnit;
+      case 'Marathi':
+        return MarathiLocalization.sectionStockAndUnit;
+      default:
+        return EnglishLocalization.sectionStockAndUnit;
+    }
+  }
+
+  String get sectionTaxDetails {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.sectionTaxDetails;
+      case 'Marathi':
+        return MarathiLocalization.sectionTaxDetails;
+      default:
+        return EnglishLocalization.sectionTaxDetails;
+    }
+  }
+
+  String get minStockLevelHint {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.minStockLevelHint;
+      case 'Marathi':
+        return MarathiLocalization.minStockLevelHint;
+      default:
+        return EnglishLocalization.minStockLevelHint;
+    }
+  }
+
   String get customerReportOpeningMessage {
     switch (languageCode) {
       case 'Hindi':

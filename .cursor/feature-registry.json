@@ -927,6 +927,82 @@
       "tests": [
         "test/regression/customer_profile_fields_test.dart"
       ]
+    },
+    {
+      "id": "master-data-profiles",
+      "name": "Supplier / company / product forms (email, GST, contact person, unit, min stock)",
+      "files": [
+        "lib/features/supplier/presentation/pages/enhanced_supplier_page.dart",
+        "lib/features/company/presentation/pages/enhanced_company_page.dart",
+        "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart",
+        "lib/features/supplier/offline/entities/supplier_entity.dart",
+        "lib/features/company/offline/entities/company_entity.dart",
+        "lib/features/product/offline/entities/product_entity.dart",
+        "lib/common_widgets/master_data_form.dart",
+        "lib/core/database/app_database.dart"
+      ],
+      "invariants": [
+        "Supplier email / GST number and company email / contact person are OPTIONAL; required fields are unchanged (supplier: first name, last name, 10-digit mobile, code when editing; company: name; product: name).",
+        "Existing middle names are kept: the supplier form has no middle name field and never overwrites it.",
+        "DB v17 only adds guarded plain columns (suppliers.email/gst_number, companies.email/contact_person, default ''). Never alterTable these tables.",
+        "The product form never writes currentStock on edit; stock changes only via purchases, sales, returns and adjustments. Prices, GST and HSN rules are unchanged.",
+        "Product unit / description / minStockLevel are cleared only with clearUnit / clearDescription / clearMinStockLevel; a null argument keeps the stored value.",
+        "Supplier/company/product codes, duplicate checks and sync status transitions are untouched; new fields travel in toSyncPayload / fromServer."
+      ],
+      "anchors": [
+        {
+          "file": "lib/core/database/app_database.dart",
+          "contains": "'gst_number'"
+        },
+        {
+          "file": "lib/core/database/app_database.dart",
+          "contains": "'contact_person'"
+        },
+        {
+          "file": "lib/features/supplier/offline/entities/supplier_entity.dart",
+          "contains": "gstNumber"
+        },
+        {
+          "file": "lib/features/company/offline/entities/company_entity.dart",
+          "contains": "contactPerson"
+        },
+        {
+          "file": "lib/features/product/offline/entities/product_entity.dart",
+          "contains": "clearMinStockLevel"
+        },
+        {
+          "file": "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart",
+          "contains": "clearMinStockLevel"
+        },
+        {
+          "file": "lib/features/supplier/presentation/pages/enhanced_supplier_page.dart",
+          "contains": "isValidGstin"
+        },
+        {
+          "file": "lib/features/company/presentation/pages/enhanced_company_page.dart",
+          "contains": "_contactPersonController"
+        }
+      ],
+      "forbidden": [
+        {
+          "file": "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart",
+          "contains": "currentStock: int.tryParse(",
+          "why": "the edit form must not write stock; it comes from purchases/sales/adjustments"
+        },
+        {
+          "file": "lib/core/database/app_database.dart",
+          "contains": "alterTable(supplierRecords",
+          "why": "recreating suppliers risks data loss; use a guarded ADD COLUMN"
+        },
+        {
+          "file": "lib/core/database/app_database.dart",
+          "contains": "alterTable(companyRecords",
+          "why": "recreating companies risks data loss; use a guarded ADD COLUMN"
+        }
+      ],
+      "tests": [
+        "test/regression/master_data_profile_test.dart"
+      ]
     }
   ]
 }

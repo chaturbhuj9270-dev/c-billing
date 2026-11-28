@@ -45,6 +45,8 @@ class SupplierOfflineController extends ChangeNotifier {
     required String supplierCode,
     required String contact,
     String address = '',
+    String email = '',
+    String gstNumber = '',
     bool isActive = true,
   }) async {
     debugPrint(
@@ -64,6 +66,8 @@ class SupplierOfflineController extends ChangeNotifier {
       supplierCode: supplierCode,
       contact: contact,
       address: address,
+      email: email,
+      gstNumber: gstNumber,
       isActive: isActive,
       syncStatus: SupplierSyncStatus.newRecord, // Mark as NEW for sync
     );
@@ -150,6 +154,8 @@ class SupplierOfflineController extends ChangeNotifier {
     String? supplierCode,
     String? contact,
     String? address,
+    String? email,
+    String? gstNumber,
     bool? isActive,
   }) async {
     final existing = await getSupplierById(id);
@@ -190,6 +196,8 @@ class SupplierOfflineController extends ChangeNotifier {
       supplierCode: supplierCode,
       contact: contact,
       address: address,
+      email: email,
+      gstNumber: gstNumber,
       isActive: isActive,
       syncStatus: newSyncStatus,
       updatedAt: DateTime.now(),

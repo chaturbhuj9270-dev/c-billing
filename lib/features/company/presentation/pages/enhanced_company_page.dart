@@ -18,6 +18,7 @@ import '../widgets/company_list_widget.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/app_pill_button.dart';
+import 'package:c_billing/common_widgets/master_data_form.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
@@ -52,6 +53,8 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
   final _gstCodeController = TextEditingController();
   final _contactController = TextEditingController();
   final _addressController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _contactPersonController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   // State
@@ -125,6 +128,8 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
     _gstCodeController.dispose();
     _contactController.dispose();
     _addressController.dispose();
+    _emailController.dispose();
+    _contactPersonController.dispose();
     LanguageService.instance.removeListener(_onLanguageChanged);
     super.dispose();
   }
@@ -193,6 +198,8 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
       'gstCode': e.gstCode,
       'contact': e.contact,
       'address': e.address,
+      'email': e.email,
+      'contactPerson': e.contactPerson,
       'isActive': e.isActive,
       'isSynced': e.syncStatus == CompanySyncStatus.synced,
       'syncStatus': e.syncStatus.name,
@@ -244,6 +251,8 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
     _gstCodeController.clear();
     _contactController.clear();
     _addressController.clear();
+    _emailController.clear();
+    _contactPersonController.clear();
     _editingCompanyId = null;
     _editingCompanyLocalId = null;
     _isEditing = false;
@@ -290,6 +299,8 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
     _gstCodeController.text = company['gstCode'] ?? '';
     _contactController.text = company['contact'] ?? '';
     _addressController.text = company['address'] ?? '';
+    _emailController.text = (company['email'] ?? '').toString();
+    _contactPersonController.text = (company['contactPerson'] ?? '').toString();
     _editingCompanyId = company['id'];
     _editingCompanyLocalId = company['localId'] as int?;
     _isEditing = true;
@@ -308,6 +319,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
         return dockDrawerAction(
           context: context,
           action: DrawerBottomBar(
+            plain: true,
             leading: _isEditing
                 ? TextButton(
                     onPressed: _isSaving
@@ -372,43 +384,67 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
                     ),
                     const SizedBox(height: 20),
                     // Form fields
+                    FormSectionTitle(_localizations.sectionBasicDetails),
                     _buildInputField(
                       label: _localizations.companyName,
                       controller: _companyNameController,
                       icon: Icons.business_outlined,
                       isRequired: true,
                     ),
-                    const SizedBox(height: 16),
                     // Only show code field when adding (hide when editing)
                     if (!_isEditing) ...[
+                      const SizedBox(height: 14),
                       _buildInputField(
                         label: _localizations.companyCode,
                         controller: _companyCodeController,
                         icon: Icons.qr_code_rounded,
-                        isRequired: false,
+                        isOptional: true,
                       ),
-                      const SizedBox(height: 16),
                     ],
-                    // GST Code field
+                    const SizedBox(height: 20),
+                    FormSectionTitle(_localizations.sectionContactDetails),
                     _buildInputField(
-                      label: 'GST Code',
-                      controller: _gstCodeController,
-                      icon: Icons.receipt_long_outlined,
-                      isRequired: false,
+                      label: _localizations.contactPerson,
+                      controller: _contactPersonController,
+                      icon: Icons.person_outline_rounded,
+                      isOptional: true,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                     _buildInputField(
                       label: _localizations.contactNumber,
                       controller: _contactController,
                       icon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
+                      isOptional: true,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
+                    _buildInputField(
+                      label: _localizations.emailAddress,
+                      controller: _emailController,
+                      icon: Icons.email_outlined,
+                      keyboardType: TextInputType.emailAddress,
+                      isOptional: true,
+                      extraValidator: (text) =>
+                          text.isEmpty || isValidEmailAddress(text)
+                          ? null
+                          : _localizations.invalidEmailAddress,
+                    ),
+                    const SizedBox(height: 20),
+                    FormSectionTitle(_localizations.sectionBusinessDetails),
+                    _buildInputField(
+                      label: _localizations.gstNumber,
+                      controller: _gstCodeController,
+                      icon: Icons.receipt_long_outlined,
+                      isOptional: true,
+                    ),
+                    const SizedBox(height: 20),
+                    FormSectionTitle(_localizations.address),
                     _buildInputField(
                       label: _localizations.address,
                       controller: _addressController,
                       icon: Icons.location_on_outlined,
-                      maxLines: 3,
+                      maxLines: 2,
+                      isOptional: true,
                     ),
                   ],
                 ),
@@ -421,80 +457,56 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
   Widget _buildInputField({
     required String label,
     required TextEditingController controller,
-    required IconData icon,
+    IconData? icon,
     bool isRequired = false,
+    bool isOptional = false,
     TextInputType keyboardType = TextInputType.text,
+    TextCapitalization textCapitalization = TextCapitalization.none,
     int maxLines = 1,
     bool isReadOnly = false,
+    int? maxLength,
+    String? Function(String text)? extraValidator,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.accent(context),
-                fontFamily: 'Literata',
-              ),
-            ),
-            if (isRequired)
-              const Text(' *', style: TextStyle(color: AppTheme.red)),
-          ],
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          maxLines: maxLines,
-          minLines: maxLines,
-          readOnly: isReadOnly,
-          style: TextStyle(
-            color: isReadOnly ? AppTheme.grey600 : null,
-            fontFamily: 'Literata',
-          ),
-          decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: AppTheme.grey600),
-            suffixIcon: isReadOnly
-                ? Tooltip(
-                    message: 'Auto-generated',
-                    child: Icon(
-                      Icons.lock_outline,
-                      size: 18,
-                      color: AppTheme.grey,
-                    ),
-                  )
-                : null,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppTheme.grey300),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppTheme.grey300),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.accent(context), width: 2),
-            ),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
-            ),
-            filled: true,
-            fillColor: isReadOnly ? AppColors.chipFill(context) : AppColors.scaffold(context),
-          ),
-          validator: (value) {
-            if (isRequired && (value == null || value.isEmpty)) {
-              return '$label ${_localizations.isRequired}';
-            }
-            return null;
-          },
-        ),
-      ],
+    final labelText = isRequired
+        ? '$label *'
+        : (isOptional ? '$label (${_localizations.optional})' : label);
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      textCapitalization: textCapitalization,
+      maxLines: maxLines,
+      minLines: maxLines,
+      maxLength: maxLength,
+      readOnly: isReadOnly,
+      style: TextStyle(
+        color: isReadOnly ? AppTheme.grey600 : null,
+        fontFamily: 'Literata',
+      ),
+      decoration: masterFieldDecoration(
+        context,
+        labelText,
+        icon,
+        readOnly: isReadOnly,
+      ).copyWith(
+        suffixIcon: isReadOnly
+            ? Tooltip(
+                message: 'Auto-generated',
+                child: Icon(
+                  Icons.lock_outline,
+                  size: 18,
+                  color: AppTheme.grey,
+                ),
+              )
+            : null,
+      ),
+      validator: (value) {
+        final text = value?.trim() ?? '';
+        if (isRequired && text.isEmpty) {
+          return '$label ${_localizations.isRequired}';
+        }
+        
+        return extraValidator?.call(text);
+      },
     );
   }
 
@@ -526,6 +538,8 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
             gstCode: _gstCodeController.text.trim(),
             contact: _contactController.text.trim(),
             address: _addressController.text.trim(),
+            email: _emailController.text.trim(),
+            contactPerson: _contactPersonController.text.trim(),
           );
         } else {
           throw Exception('Company not found');
@@ -540,6 +554,8 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
           gstCode: _gstCodeController.text.trim(),
           contact: _contactController.text.trim(),
           address: _addressController.text.trim(),
+          email: _emailController.text.trim(),
+          contactPerson: _contactPersonController.text.trim(),
         );
         DashboardRefreshService.instance.notifyDataChanged(
           DataChangeType.company,

@@ -50,6 +50,12 @@ class SupplierEntity {
   // Address
   String address;
 
+  // email (optional)
+  String email;
+
+  // gstNumber (optional)
+  String gstNumber;
+
   // Whether supplier is active
   bool isActive;
 
@@ -70,6 +76,8 @@ class SupplierEntity {
     this.supplierCode = '',
     required this.contact,
     this.address = '',
+    this.email = '',
+    this.gstNumber = '',
     this.isActive = true,
     this.syncStatus = SupplierSyncStatus.newRecord,
     required this.updatedAt,
@@ -95,6 +103,8 @@ class SupplierEntity {
     String supplierCode = '',
     required String contact,
     String address = '',
+    String email = '',
+    String gstNumber = '',
     bool isActive = true,
     SupplierSyncStatus syncStatus = SupplierSyncStatus.newRecord,
   }) {
@@ -107,6 +117,8 @@ class SupplierEntity {
       supplierCode: supplierCode,
       contact: contact,
       address: address,
+      email: email,
+      gstNumber: gstNumber,
       isActive: isActive,
       syncStatus: syncStatus,
       updatedAt: now,
@@ -125,6 +137,8 @@ class SupplierEntity {
       supplierCode: data['supplierCode'] as String? ?? '',
       contact: data['contact'] as String? ?? '',
       address: data['address'] as String? ?? '',
+      email: data['email'] as String? ?? '',
+      gstNumber: data['gstNumber'] as String? ?? '',
       isActive: data['isActive'] as bool? ?? true,
       syncStatus: SupplierSyncStatus.synced,
       updatedAt: _parseDateTime(data['updatedAt']) ?? now,
@@ -142,6 +156,8 @@ class SupplierEntity {
       'supplierCode': supplierCode,
       'contact': contact,
       'address': address,
+      'email': email,
+      'gstNumber': gstNumber,
       'isActive': isActive,
       'updatedAt': updatedAt.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
@@ -159,6 +175,8 @@ class SupplierEntity {
       'supplierCode': supplierCode,
       'contact': contact,
       'address': address,
+      'email': email,
+      'gstNumber': gstNumber,
       'isActive': isActive,
       'syncStatus': syncStatus.name,
       'isSynced': syncStatus == SupplierSyncStatus.synced,
@@ -177,6 +195,8 @@ class SupplierEntity {
     String? supplierCode,
     String? contact,
     String? address,
+    String? email,
+    String? gstNumber,
     bool? isActive,
     SupplierSyncStatus? syncStatus,
     DateTime? updatedAt,
@@ -190,6 +210,8 @@ class SupplierEntity {
       supplierCode: supplierCode ?? this.supplierCode,
       contact: contact ?? this.contact,
       address: address ?? this.address,
+      email: email ?? this.email,
+      gstNumber: gstNumber ?? this.gstNumber,
       isActive: isActive ?? this.isActive,
       syncStatus: syncStatus ?? this.syncStatus,
       updatedAt: updatedAt ?? DateTime.now(),

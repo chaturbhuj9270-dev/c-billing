@@ -1188,6 +1188,15 @@ class MarathiLocalization {
   static const String customerBasicDetails = 'मूलभूत माहिती';
   static const String customerContactDetails = 'संपर्क माहिती';
   static const String customerBirthdayToday = 'आज वाढदिवस आहे';
+  static const String contactPerson = 'संपर्क व्यक्ती';
+  static const String invalidEmailAddress = 'वैध ईमेल पत्ता प्रविष्ट करा';
+  static const String invalidGstNumber = 'वैध 15 अक्षरी जीएसटी क्रमांक प्रविष्ट करा';
+  static const String sectionBasicDetails = 'मूलभूत माहिती';
+  static const String sectionContactDetails = 'संपर्क माहिती';
+  static const String sectionBusinessDetails = 'व्यवसाय माहिती';
+  static const String sectionStockAndUnit = 'स्टॉक आणि एकक';
+  static const String sectionTaxDetails = 'कर (जीएसटी)';
+  static const String minStockLevelHint = 'स्टॉक या पातळीवर आल्यावर कमी-स्टॉक सूचना';
   static const String customerReportOpeningMessage =
       'त्याच चॅटमध्ये संदेश उघडत आहे...';
   static const String customerReportOpeningPdf =

@@ -1181,6 +1181,15 @@ class EnglishLocalization {
   static const String customerBasicDetails = 'Basic details';
   static const String customerContactDetails = 'Contact details';
   static const String customerBirthdayToday = 'Birthday today';
+  static const String contactPerson = 'Contact Person';
+  static const String invalidEmailAddress = 'Enter a valid email address';
+  static const String invalidGstNumber = 'Enter a valid 15-character GST number';
+  static const String sectionBasicDetails = 'Basic details';
+  static const String sectionContactDetails = 'Contact details';
+  static const String sectionBusinessDetails = 'Business details';
+  static const String sectionStockAndUnit = 'Stock & unit';
+  static const String sectionTaxDetails = 'Tax (GST)';
+  static const String minStockLevelHint = 'Low-stock alert when stock reaches this level';
   static const String customerReportOpeningMessage =
       'Opening the message in the same chat...';
   static const String customerReportOpeningPdf =
