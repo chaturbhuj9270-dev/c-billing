@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../features/billing/data/services/bill_sync_service.dart';
@@ -11,7 +12,9 @@ import '../../features/inventory_management/data/services/purchase_sync_service.
 import '../../features/product/data/services/product_sync_service.dart';
 import '../../features/supplier/data/services/supplier_sync_service.dart';
 import 'dashboard_refresh_service.dart';
+import 'live_sync_service.dart';
 import 'local_user_data_guard.dart';
+import 'sync_query_helper.dart';
 
 // Boots sync services after auth and forces a full server pull so desktop/mobile
 // start with complete local data. Also clears in-memory sync cursors on logout
@@ -68,8 +71,14 @@ class SyncBootstrap {
       // (Wipe already clears sync cursors via LocalUserDataGuard.)
       await LocalUserDataGuard.ensureBoundToCurrentUser();
 
+      // Same order as main.dart initializeSyncServices(): session first,
+      // services next, LiveSyncService last. LiveSync is what pushes local
+      // edits right away and refreshes open screens; without it changes only
+      // reach Firestore on the next full sync.
+      SyncQueryHelper.beginSession(FirebaseAuth.instance.currentUser?.uid);
       // Wire listeners only — no competing initialize syncs.
       initializeServices(runInitialSync: false);
+      LiveSyncService.instance.start();
 
       // If services were already wired at app boot, wait for any in-flight
       // sync to finish. Never resetSyncCursors mid-flight (that cleared

@@ -1,16 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:c_billing/core/services/billing_service.dart';
 import 'package:c_billing/core/printing/printing.dart';
 import 'package:printing/printing.dart' as printing_pkg;
 import 'package:pdf/widgets.dart' as pw;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:c_billing/features/billing/data/repositories/firebase_bill_repository.dart';
+import 'package:c_billing/features/billing/data/services/bill_sync_service.dart';
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_item.dart';
-import 'package:c_billing/features/inventory_management/data/repositories/firebase_product_repository.dart';
-import 'package:c_billing/features/inventory_management/data/repositories/firebase_stock_repository.dart';
+import 'package:c_billing/features/customer/data/services/customer_transaction_sync_service.dart';
+import 'package:c_billing/features/product/data/services/product_sync_service.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
 import 'package:c_billing/features/shop/domain/entities/shop.dart';
 import 'package:c_billing/common_widgets/printer_selection_widget.dart';
@@ -36,8 +36,6 @@ class ReturnBillPage extends StatefulWidget {
 
 class _ReturnBillPageState extends State<ReturnBillPage>
     with SingleTickerProviderStateMixin {
-  late BillingService _billingService;
-  late FirebaseFirestore _firestore;
   late AnimationController _animController;
   late Animation<double> _opacityAnimation;
 
@@ -66,14 +64,6 @@ class _ReturnBillPageState extends State<ReturnBillPage>
   void initState() {
     super.initState();
     _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
-    _firestore = FirebaseFirestore.instance;
-
-    _billingService = BillingService(
-      billRepository: FirebaseBillRepository(firestore: _firestore),
-      productRepository: FirebaseProductRepository(firestore: _firestore),
-      stockRepository: FirebaseStockRepository(firestore: _firestore),
-    );
-
     // Initialize animations
     _animController = AnimationController(
       vsync: this,
@@ -361,25 +351,13 @@ class _ReturnBillPageState extends State<ReturnBillPage>
         return;
       }
 
-      // Best-effort cloud sync only when the bill already has a server id.
-      final serverId = localBill.serverId;
-      if (serverId != null && serverId.isNotEmpty) {
-        try {
-          final firebaseItems = <String, double>{};
-          for (final item in _currentBill!.items) {
-            final qty = _returnQuantities[item.id] ?? 0.0;
-            if (qty > 0.001) {
-              firebaseItems[item.id.isNotEmpty ? item.id : item.productId] = qty;
-            }
-          }
-          await _billingService.processReturn(
-            billId: serverId,
-            returnItems: firebaseItems,
-          );
-        } catch (e) {
-          debugPrint('[ReturnBill] Firebase sync skipped/failed: $e');
-        }
-      }
+      // The updated bill, product stock and ledger rows are pushed by their
+      // sync services. Do not also apply the return to Firestore directly:
+      // the pushed bill already carries the new returnedQuantity, so a second
+      // server-side return counted the quantity and stock twice.
+      unawaited(BillSyncService.instance.syncNow());
+      unawaited(ProductSyncService.instance.syncNow());
+      unawaited(CustomerTransactionSyncService.instance.syncNow());
 
       if (!mounted) return;
 

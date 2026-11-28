@@ -464,18 +464,8 @@ class InventoryIntegrationService {
           if (matchIndex < 0) return item;
 
           final returnItem = remainingReturns.removeAt(matchIndex);
-          return BillItemEmbedded(
-            itemId: item.itemId,
-            productId: item.productId,
-            productName: item.productName,
-            purchasePrice: item.purchasePrice,
-            sellingPrice: item.sellingPrice,
-            quantity: item.quantity,
-            subtotal: item.subtotal,
+          return item.copyWith(
             returnedQuantity: item.returnedQuantity + returnItem.returnQuantity,
-            hsnCode: item.hsnCode,
-            unit: item.unit,
-            sellUnit: item.sellUnit,
           );
         }).toList();
 

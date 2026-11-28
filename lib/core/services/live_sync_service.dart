@@ -16,6 +16,7 @@ import '../../features/inventory_management/data/services/purchase_batch_sync_se
 import '../../features/inventory_management/data/services/purchase_sync_service.dart';
 import '../../features/product/data/services/product_sync_service.dart';
 import '../../features/supplier/data/services/supplier_sync_service.dart';
+import '../access/tenant_context.dart';
 import '../database/app_database.dart';
 import 'dashboard_refresh_service.dart';
 import 'local_database.dart';
@@ -348,9 +349,12 @@ class LiveSyncService with WidgetsBindingObserver {
     entity.reconciling = true;
     entity.lastCountCheck = now;
     try {
+      // Employees sync the owner's data (same path as the sync API services);
+      // counting their own empty folder would delete local rows.
+      final ownerId = TenantContext.dataOwnerIdOrNull ?? uid;
       final col = FirebaseFirestore.instance
           .collection('users')
-          .doc(uid)
+          .doc(ownerId)
           .collection(entity.collection);
       final aggregate = await col.count().get();
       final serverCount = aggregate.count;

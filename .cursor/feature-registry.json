@@ -58,13 +58,17 @@
       "name": "Billing: create bill, received amount, service charges",
       "files": [
         "lib/features/billing/",
-        "lib/core/services/inventory_integration_service.dart"
+        "lib/core/services/inventory_integration_service.dart",
+        "lib/features/billing/presentation/pages/return_bill_page.dart",
+        "lib/features/billing/offline/entities/bill_entity.dart"
       ],
       "invariants": [
         "Received amount can never exceed the bill total (field resets to total with an error, and save clamps again).",
         "A bill is saved locally first (InventoryIntegrationService.processBill does FIFO stock + ledger-safe bill) and then synced; the customer ledger is written once, locally.",
         "Other service charges are added on a full screen whose widget owns and disposes its own TextEditingControllers (a popup closure disposing them crashed the app).",
-        "Returns reduce the bill's pending/paid and post a return ledger entry."
+        "Returns reduce the bill's pending/paid and post a return ledger entry.",
+        "A sale return is applied ONCE, locally (InventoryIntegrationService.processReturn); the bill, product stock and ledger rows reach Firestore through their sync services. The return page must not also call BillingService.processReturn: the pushed bill already holds the new returnedQuantity, so the server-side return counted quantity and stock twice.",
+        "A return copies each bill line with BillItemEmbedded.copyWith(returnedQuantity:), keeping GST %, HSN, units, unitsPerPack and employeeToken."
       ],
       "anchors": [
         {
@@ -86,6 +90,14 @@
         {
           "file": "lib/core/services/inventory_integration_service.dart",
           "contains": "addReturnTransaction"
+        },
+        {
+          "file": "lib/core/services/inventory_integration_service.dart",
+          "contains": "return item.copyWith("
+        },
+        {
+          "file": "lib/features/billing/offline/entities/bill_entity.dart",
+          "contains": "BillItemEmbedded copyWith({double? returnedQuantity})"
         }
       ],
       "forbidden": [
@@ -93,9 +105,16 @@
           "file": "lib/features/billing/presentation/pages/billing_page.dart",
           "contains": "recordBillGenerated(",
           "why": "double-writes the ledger"
+        },
+        {
+          "file": "lib/features/billing/presentation/pages/return_bill_page.dart",
+          "contains": "_billingService.processReturn(",
+          "why": "applies the return a second time on the server"
         }
       ],
-      "tests": []
+      "tests": [
+        "test/regression/bill_item_return_copy_test.dart"
+      ]
     },
     {
       "id": "realtime-sync",
@@ -106,10 +125,11 @@
         "lib/core/services/sync_query_helper.dart",
         "lib/features/dashboard/presentation/pages/optimized_dashboard_page.dart",
         "lib/main.dart",
-        "firestore.rules"
+        "firestore.rules",
+        "lib/core/services/sync_bootstrap.dart"
       ],
       "invariants": [
-        "main.dart initializeSyncServices(): SyncQueryHelper.beginSession first, all sync services initialize, LiveSyncService.start last.",
+        "Sync start order is: SyncQueryHelper.beginSession first, all sync services initialize, LiveSyncService.start last. main.dart initializeSyncServices() does this, and SyncBootstrap.startAfterLogin() (used by splash, login, OTP and email verification) does it too, after LocalUserDataGuard wipes a previous account's data. Without LiveSyncService.start local edits are never pushed until the next full sync.",
         "Every incremental pull goes through SyncQueryHelper.fetchChanged (queries both Timestamp and ISO-string typed fields).",
         "A newly synced collection needs ALL of: a firestore.rules match block, a sync service, an entry in LiveSyncService, and a registry entry here.",
         "importFromServer must never overwrite rows that have unsynced local changes.",
@@ -118,7 +138,8 @@
         "Push is immediate: a local Drift write triggers that entity's syncNow() after ~0.5s; failures retry after 2s, 5s, 15s and then every 30 seconds while anything is still pending.",
         "Pull while a screen is open: screens that show synced data use LiveRefreshMixin (liveRefreshEntities) so LiveSyncService.watchScreen refreshes those entities every ~45s (foreground only) and when the screen opens. A new synced screen must add the mixin.",
         "Switching a dashboard / web-shell tab pulls the latest data for that tab's collections (OptimizedDashboard _refreshTabData -> LiveSyncService.refreshNow, rate limited per collection). A new tab must be added to _tabEntities.",
-        "On resume / reconnect everything is re-synced and deletions made on other devices are reconciled (count() check)."
+        "On resume / reconnect everything is re-synced and deletions made on other devices are reconciled (count() check).",
+        "LiveSyncService reconcile counts and lists users/{TenantContext.dataOwnerIdOrNull}/..., the same owner path the sync API services write. Using the employee's own auth uid counted an empty folder and could delete the employee's local rows."
       ],
       "anchors": [
         {
@@ -212,6 +233,18 @@
         {
           "file": "lib/features/inventory_management/presentation/pages/enhanced_purchase_screen.dart",
           "contains": "LiveRefreshMixin<EnhancedPurchaseScreen>"
+        },
+        {
+          "file": "lib/core/services/sync_bootstrap.dart",
+          "contains": "LiveSyncService.instance.start();"
+        },
+        {
+          "file": "lib/core/services/sync_bootstrap.dart",
+          "contains": "SyncQueryHelper.beginSession("
+        },
+        {
+          "file": "lib/core/services/live_sync_service.dart",
+          "contains": "final ownerId = TenantContext.dataOwnerIdOrNull ?? uid;"
         }
       ],
       "forbidden": [

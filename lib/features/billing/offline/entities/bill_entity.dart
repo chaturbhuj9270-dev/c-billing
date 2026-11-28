@@ -121,6 +121,29 @@ class BillItemEmbedded {
       employeeToken: (token != null && token > 0) ? token : null,
     );
   }
+
+  /// Copy of this line with every field kept (returns only change
+  /// returnedQuantity; dropping GST / pack / token fields broke reprints).
+  BillItemEmbedded copyWith({double? returnedQuantity}) {
+    return BillItemEmbedded(
+      itemId: itemId,
+      productId: productId,
+      productName: productName,
+      purchasePrice: purchasePrice,
+      sellingPrice: sellingPrice,
+      quantity: quantity,
+      subtotal: subtotal,
+      returnedQuantity: returnedQuantity ?? this.returnedQuantity,
+      hsnCode: hsnCode,
+      cgstPercent: cgstPercent,
+      sgstPercent: sgstPercent,
+      igstPercent: igstPercent,
+      unit: unit,
+      sellUnit: sellUnit,
+      unitsPerPack: unitsPerPack,
+      employeeToken: employeeToken,
+    );
+  }
 }
 
 // Local record for Bill with offline-first support
