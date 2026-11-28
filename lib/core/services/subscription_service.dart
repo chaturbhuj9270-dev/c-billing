@@ -224,9 +224,10 @@ class SubscriptionService {
     }
   }
 
-  DateTime? _parseDate(dynamic value) {
+  static DateTime? _parseDate(dynamic value) {
     if (value == null) return null;
     if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
     if (value is String) return DateTime.tryParse(value);
     return null;
   }
@@ -283,7 +284,8 @@ class SubscriptionService {
     if (await hasOfflineEntitlement()) return true;
     final uid = userId ?? _cacheUid;
     if (uid == null) return false;
-    return lastKnownWindowOpen(uid);
+    if (await lastKnownWindowOpen(uid)) return true;
+    return _allowFromUserDoc(await _accessFromUserDoc(cacheOnly: true));
   }
 
   /// Static so it can run without building the service (no Firebase needed).
@@ -305,10 +307,87 @@ class SubscriptionService {
     }
   }
 
+  /// Access expiry from a `users/{uid}` document. Must match
+  /// `resolveSubscriptionAccess` in functions/index.js: paid wins, then trial.
+  /// `subscriptionDate` counts as a paid year only when status is `active`
+  /// (older trial builds also wrote it as the trial start).
+  static DateTime? accessExpiryFromUserData(
+    Map<String, dynamic> data, {
+    DateTime? authCreatedAt,
+    DateTime? now,
+  }) {
+    final status = data['subscriptionStatus']?.toString().toLowerCase();
+    final subDate = _parseDate(data['subscriptionDate']);
+    final trialStartedAt = _parseDate(data['trialStartedAt']);
+    final createdAt = _parseDate(data['createdAt']);
+
+    final paidExpires = _parseDate(data['subscriptionExpiresAt']);
+    if (paidExpires != null) return paidExpires;
+
+    if (status == statusActive) {
+      final start = subDate ?? trialStartedAt ?? createdAt ?? now ?? DateTime.now();
+      return start.add(subscriptionDuration);
+    }
+
+    final trialExpires = _parseDate(data['trialExpiresAt']);
+    if (trialExpires != null) return trialExpires;
+
+    final trialStart = trialStartedAt ?? subDate ?? createdAt ?? authCreatedAt;
+    return trialStart?.add(freeTrialDuration);
+  }
+
+  /// Reads the data owner's user document (server first, then the Firestore
+  /// offline cache) and caches the resulting expiry. Returns null when the
+  /// document cannot be read at all, so callers fall back to local caches.
+  Future<({DateTime? expiry})?> _accessFromUserDoc({bool cacheOnly = false}) async {
+    final uid = _userId ?? _authUid;
+    if (uid == null) return null;
+    final ref = _firestore.collection('users').doc(uid);
+
+    DocumentSnapshot<Map<String, dynamic>>? snap;
+    if (!cacheOnly) {
+      try {
+        snap = await ref
+            .get(const GetOptions(source: Source.server))
+            .timeout(const Duration(seconds: 6));
+      } catch (e) {
+        debugPrint('[SubscriptionService] User doc server read failed: $e');
+      }
+    }
+    if (snap == null) {
+      try {
+        snap = await ref
+            .get(const GetOptions(source: Source.cache))
+            .timeout(const Duration(seconds: 2));
+      } catch (_) {
+        return null;
+      }
+    }
+
+    final data = snap.data();
+    if (data == null) {
+      // No profile yet: same as the server, a new account is on its trial.
+      return (expiry: _authCreationTrialExpiry());
+    }
+    final expiry = accessExpiryFromUserData(
+      data,
+      authCreatedAt: FirebaseAuth.instance.currentUser?.metadata.creationTime,
+    );
+    debugPrint('[SubscriptionService] User doc access expiry: $expiry');
+    return (expiry: expiry);
+  }
+
+  Future<bool> _allowFromUserDoc(({DateTime? expiry})? doc) async {
+    final expiry = doc?.expiry;
+    if (!_isActiveExpiry(expiry)) return false;
+    await _cacheAccessExpiry(expiry!, source: 'user-doc');
+    return true;
+  }
+
   /// Splash / session restore gate: trust local entitlement immediately when
   /// present, and only block on a short network budget when offline says no.
   Future<bool> isSubscriptionValidQuick({
-    Duration networkBudget = const Duration(seconds: 4),
+    Duration networkBudget = const Duration(seconds: 7),
   }) async {
     if (await hasOfflineEntitlement()) {
       // Refresh server cache in the background; do not hold the splash.
@@ -392,8 +471,12 @@ class SubscriptionService {
         return false;
       }
 
+      // Read the user doc alongside the API so a missing or slow function
+      // does not add its own delay before the fallback answer.
+      final docFuture = _accessFromUserDoc();
       final api = await fetchAccessFromApi();
       if (api != null) {
+        unawaited(docFuture.then((_) {}, onError: (Object _, StackTrace _) {}));
         final allowed = api['allowed'] == true;
         final expiresRaw = api['expiresAt']?.toString();
         final expiresAt =
@@ -409,6 +492,9 @@ class SubscriptionService {
         );
         return allowed;
       }
+
+      // API down or not deployed — decide from the user document.
+      if (await _allowFromUserDoc(await docFuture)) return true;
 
       // Offline / API down — use last server-issued expiry only.
       if (await _allowFromLocalFallbacks(reason: 'api-unavailable')) {
@@ -440,6 +526,8 @@ class SubscriptionService {
           return expiresAt;
         }
       }
+      final doc = await _accessFromUserDoc();
+      if (doc?.expiry != null) return doc!.expiry;
       return await _cachedAccessExpiry() ?? _authCreationTrialExpiry();
     } catch (e) {
       debugPrint('[SubscriptionService] Error getting expiry date: $e');

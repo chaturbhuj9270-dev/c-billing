@@ -824,13 +824,16 @@
       "files": [
         "lib/core/services/subscription_service.dart",
         "lib/core/ui/splash_page.dart",
-        "lib/features/authentication/presentation/pages/login.dart"
+        "lib/features/authentication/presentation/pages/login.dart",
+        "functions/index.js"
       ],
       "invariants": [
         "A user with a paid or trial window that has not ended must NOT see the 'Subscription expired' screen because of a slow, failed or timed-out Firestore read.",
-        "isSubscriptionValid asks the getSubscriptionAccess Cloud Function first (server time, works for employees via the owner); if it cannot be reached it uses the last server-issued expiry cached on this device, then isWithinLastKnownWindow. Only a definitive server answer (allowed: false) locks the user out.",
+        "isSubscriptionValid asks the getSubscriptionAccess Cloud Function first (server time, works for employees via the owner). If it cannot be reached (offline, slow or not deployed) it decides from the owner's users/{uid} document (server read, then Firestore offline cache) using accessExpiryFromUserData, then the last expiry cached on this device, then isWithinLastKnownWindow. Only a definitive server answer (allowed: false) locks the user out.",
         "The splash/login timeouts never deny access on their own: they use isWithinLastKnownWindow.",
-        "A missing signed-in user is only treated as logged out after Firebase Auth has restored its state (_resolveUserId)."
+        "A missing signed-in user is only treated as logged out after Firebase Auth has restored its state (_resolveUserId).",
+        "accessExpiryFromUserData (client) and resolveSubscriptionAccess (functions/index.js) apply the same rules: subscriptionExpiresAt wins; status 'active' = subscriptionDate (or trialStartedAt/createdAt) + 365 days; otherwise trialExpiresAt, else trialStartedAt/subscriptionDate/createdAt + 30 days. subscriptionDate alone is NOT a paid year unless status is 'active'.",
+        "isWithinLastKnownWindow also checks the Firestore-cached user document, so timeouts on a device that has synced once never show the subscription screen before expiry."
       ],
       "anchors": [
         {
@@ -848,6 +851,26 @@
         {
           "file": "lib/core/services/subscription_service.dart",
           "contains": "return isWithinLastKnownWindow();"
+        },
+        {
+          "file": "lib/core/services/subscription_service.dart",
+          "contains": "static DateTime? accessExpiryFromUserData("
+        },
+        {
+          "file": "lib/core/services/subscription_service.dart",
+          "contains": "if (await _allowFromUserDoc(await docFuture)) return true;"
+        },
+        {
+          "file": "lib/core/services/subscription_service.dart",
+          "contains": "return _allowFromUserDoc(await _accessFromUserDoc(cacheOnly: true));"
+        },
+        {
+          "file": "lib/features/authentication/presentation/pages/login.dart",
+          "contains": "onTimeout: () => subscriptionService.isWithinLastKnownWindow()"
+        },
+        {
+          "file": "functions/index.js",
+          "contains": "if (subDate && !paidExpires && data.subscriptionStatus === \"active\")"
         }
       ],
       "forbidden": [
@@ -855,9 +878,17 @@
           "file": "lib/core/ui/splash_page.dart",
           "contains": "onTimeout: () => false",
           "why": "a timeout must not show the subscription screen to a valid user"
+        },
+        {
+          "file": "lib/features/authentication/presentation/pages/login.dart",
+          "contains": "onTimeout: () => subscriptionService.hasOfflineEntitlement()",
+          "why": "ignores the cached user document and can show the subscription screen to a valid user"
         }
       ],
-      "tests": []
+      "tests": [
+        "test/regression/subscription_offline_window_test.dart",
+        "test/regression/subscription_user_doc_access_test.dart"
+      ]
     },
     {
       "id": "dashboard-quick-insights",

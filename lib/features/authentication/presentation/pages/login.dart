@@ -341,7 +341,7 @@ class _LoginPageV2State extends State<LoginPageV2>
       // Firestore rules allow reads before post-login sync pulls data.
       final isValid = await subscriptionService.isSubscriptionValid().timeout(
         const Duration(seconds: 14),
-        onTimeout: () => subscriptionService.hasOfflineEntitlement(),
+        onTimeout: () => subscriptionService.isWithinLastKnownWindow(),
       );
 
       // Full server → local sync in background; do not block navigation.
@@ -376,7 +376,7 @@ class _LoginPageV2State extends State<LoginPageV2>
       // Network/access glitches must not interrupt an active free month.
       final stillValid = await subscriptionService.isSubscriptionValid().timeout(
         const Duration(seconds: 8),
-        onTimeout: () => subscriptionService.hasOfflineEntitlement(),
+        onTimeout: () => subscriptionService.isWithinLastKnownWindow(),
       );
       if (!mounted) return;
       Navigator.of(context).pushReplacement(

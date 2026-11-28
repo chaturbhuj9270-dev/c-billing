@@ -80,7 +80,9 @@ async function resolveSubscriptionAccess(uid, userRef, data) {
       toDate(data.trialStartedAt) || toDate(data.createdAt) || serverNow;
     patch.subscriptionDate = admin.firestore.Timestamp.fromDate(subDate);
   }
-  if (subDate && !paidExpires) {
+  // Older trial builds also wrote subscriptionDate as the trial start, so it
+  // only means a paid year when the status says "active".
+  if (subDate && !paidExpires && data.subscriptionStatus === "active") {
     paidExpires = new Date(subDate.getTime() + SUBSCRIPTION_DAYS * 86400000);
     patch.subscriptionExpiresAt = admin.firestore.Timestamp.fromDate(paidExpires);
   }
@@ -104,7 +106,10 @@ async function resolveSubscriptionAccess(uid, userRef, data) {
 
   // Free trial — server writes trialExpiresAt once so clients cannot extend it.
   let trialStart =
-    toDate(data.trialStartedAt) || toDate(data.createdAt) || null;
+    toDate(data.trialStartedAt) ||
+    subDate ||
+    toDate(data.createdAt) ||
+    null;
   let trialExpires = toDate(data.trialExpiresAt);
 
   if (!trialStart && !trialExpires) {
