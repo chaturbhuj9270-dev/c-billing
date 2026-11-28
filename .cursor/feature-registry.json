@@ -469,7 +469,10 @@
       "invariants": [
         "PdfBillService.resolvePdfFormat order: formatOverride, then quotation_type for quotations, then bill_type. Default 'pos'.",
         "Plain bills and quotations must print exactly as before; new document kinds opt in through PrintBillData fields (formatOverride, documentTitle, numberLabelText, qrAmountOverride) instead of editing bill-only branches.",
-        "The payment QR amount for non-bill documents is qrAmountOverride (e.g. balance due)."
+        "The payment QR amount for non-bill documents is qrAmountOverride (e.g. balance due).",
+        "Printed Subtotal = products + service-charge lines + extra-charge lines (computeBillPrintTotals), so Subtotal - Discount + exclusive tax + Round off == Grand Total. Never print bill.totalAmount alone as Subtotal.",
+        "Customer 'TOTAL DUE (till date)' comes from CustomerDueResolver (local customer.currentPendingAmount, read-only, no Firestore reads, no ledger writes). Walk-ins / lookup failures fall back to the bill's own pending.",
+        "A long shop name must always print in full: POS PDF shrinks the font (posShopNameFontSize) with no maxLines cap; thermal falls back from double-size to full-width normal text (layoutThermalShopName)."
       ],
       "anchors": [
         {
@@ -491,11 +494,38 @@
         {
           "file": "lib/features/quotation/data/services/quotation_format_settings.dart",
           "contains": "keyQuotationType"
+        },
+        {
+          "file": "lib/core/printing/services/pdf_bill_service.dart",
+          "contains": "CustomerDueResolver.apply"
+        },
+        {
+          "file": "lib/core/printing/formatters/esc_pos_bill_formatter.dart",
+          "contains": "CustomerDueResolver.apply"
+        },
+        {
+          "file": "lib/core/printing/formatters/esc_pos_bill_formatter.dart",
+          "contains": "layoutThermalShopName"
+        },
+        {
+          "file": "lib/core/printing/services/pdf_bill_service.dart",
+          "contains": "posShopNameFontSize"
+        },
+        {
+          "file": "lib/core/printing/models/print_bill_data.dart",
+          "contains": "computeBillPrintTotals"
         }
       ],
-      "forbidden": [],
+      "forbidden": [
+        {
+          "file": "lib/core/printing/models/print_bill_data.dart",
+          "contains": "subtotal: bill.totalAmount as double",
+          "why": "printed Subtotal would omit service/extra charge lines"
+        }
+      ],
       "tests": [
-        "test/regression/print_bill_data_test.dart"
+        "test/regression/print_bill_data_test.dart",
+        "test/regression/bill_print_totals_test.dart"
       ]
     },
     {

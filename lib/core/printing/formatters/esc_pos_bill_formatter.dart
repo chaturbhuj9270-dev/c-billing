@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/print_bill_data.dart';
+import '../receipt_text_layout.dart';
+import '../services/customer_due_resolver.dart';
 import '../models/printer_models.dart';
 import '../upi_payment_uri.dart';
 import '../../../features/shop/domain/entities/shop.dart';
@@ -175,6 +177,8 @@ class EscPosBillFormatter {
     PrinterConfig config = const PrinterConfig(),
   }) async {
     final b = <int>[];
+    // Customer's total pending till date (local read; no-op for walk-ins).
+    billData = await CustomerDueResolver.apply(billData);
 
     // 1 - Initialise & set tight line spacing for readability
     b.addAll(EscPosCommands.init);
@@ -212,10 +216,15 @@ class EscPosBillFormatter {
   List<int> _buildHeader(Shop shop) {
     final b = <int>[];
 
-    // Shop name - bold, large (double-size uses 2x width, so wrap at cols/2)
-    final nameLines = _wrap(shop.shopName.toUpperCase(), maxWidth: _cols ~/ 2);
-    for (final line in nameLines) {
-      b.addAll(_center(line, bold: true, large: true));
+    // Shop name - big double-size when it fits in <= 3 lines (double-size uses
+    // 2x width, so wrap at cols/2). Longer names drop to normal-size bold over
+    // the full paper width so the whole name always prints.
+    final nameLayout = layoutThermalShopName(
+      shop.shopName.toUpperCase(),
+      _cols,
+    );
+    for (final line in nameLayout.lines) {
+      b.addAll(_center(line, bold: true, large: nameLayout.large));
     }
     b.addAll(_lf());
 
@@ -469,6 +478,12 @@ class EscPosBillFormatter {
       b.addAll(_kv(lbl, 'Rs.${_fmt(d.taxAmount!)}'));
     }
 
+    // Round off (only when the bill was rounded to reach the grand total)
+    if (d.hasRoundOff) {
+      final sign = d.roundOff < 0 ? '-' : '';
+      b.addAll(_kv('Round off', '${sign}Rs.${_fmt(d.roundOff.abs())}'));
+    }
+
     // Grand Total - bold + double height
     b.addAll(_thickDiv());
     b.addAll(EscPosCommands.boldOn);
@@ -498,12 +513,18 @@ class EscPosBillFormatter {
         b.addAll(_kv('BALANCE DUE', 'Rs.${_fmt(d.pendingAmount!)}'));
         b.addAll(EscPosCommands.boldOff);
       }
-      if (d.totalDueAmount != null && d.totalDueAmount! > 0) {
-        b.addAll(_thinDiv());
-        b.addAll(EscPosCommands.boldOn);
-        b.addAll(_kv('TOTAL DUE', 'Rs.${_fmt(d.totalDueAmount!)}'));
-        b.addAll(EscPosCommands.boldOff);
+    }
+
+    // Customer's total pending till date (also when this bill is fully paid).
+    if (!d.isQuotation && d.hasTotalDue) {
+      b.addAll(_thinDiv());
+      if (d.previousDueAmount > 0) {
+        b.addAll(_kv('PREVIOUS DUE', 'Rs.${_fmt(d.previousDueAmount)}'));
       }
+      b.addAll(EscPosCommands.boldOn);
+      b.addAll(_kv('TOTAL DUE', 'Rs.${_fmt(d.totalDueAmount!)}'));
+      b.addAll(EscPosCommands.boldOff);
+      b.addAll(_center('(pending till date)'));
     }
 
     // Payment method
@@ -658,22 +679,6 @@ class EscPosBillFormatter {
   bool _notEmpty(String? s) => s != null && s.isNotEmpty;
 
   // Word-wrap text to fit within column width. [maxWidth] overrides the default line width (useful for double-size text).
-  List<String> _wrap(String text, {int? maxWidth}) {
-    final width = maxWidth ?? _cols;
-    final lines = <String>[];
-    final words = text.split(' ');
-    var cur = '';
-    for (final w in words) {
-      if (cur.isEmpty) {
-        cur = w;
-      } else if (cur.length + w.length + 1 <= width) {
-        cur += ' $w';
-      } else {
-        lines.add(cur);
-        cur = w;
-      }
-    }
-    if (cur.isNotEmpty) lines.add(cur);
-    return lines;
-  }
+  List<String> _wrap(String text, {int? maxWidth}) =>
+      wrapReceiptText(text, maxWidth ?? _cols);
 }

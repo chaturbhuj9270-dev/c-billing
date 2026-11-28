@@ -1,4 +1,6 @@
+import 'package:c_billing/core/printing/bill_print_math.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_extra_charge.dart';
+import 'package:c_billing/features/billing/domain/entities/bill_service_charge.dart';
 
 // Model representing a single item for printing on POS bill
 class PrintBillItem {
@@ -195,6 +197,14 @@ class PrintBillData {
   // Employee counter token printed on the bill (1, 2, 3…).
   final int? employeeToken;
 
+  // Customer key (serverId / local id) used at print time to look up the
+  // customer's total pending till date. Null for walk-in bills / other docs.
+  final String? customerId;
+
+  // Rounding applied to reach the grand total (shown as "Round off" when
+  // non-zero). 0 for documents that do not round.
+  final double roundOff;
+
   const PrintBillData({
     required this.billNumber,
     required this.dateTime,
@@ -237,7 +247,66 @@ class PrintBillData {
     this.totalTaxAmount = 0.0,
     this.customerGstin,
     this.extraCharges = const [],
+    this.customerId,
+    this.roundOff = 0.0,
   });
+
+  /// Copy with a different customer total-due (null clears it).
+  PrintBillData withTotalDue(double? totalDue) => PrintBillData(
+        billNumber: billNumber,
+        dateTime: dateTime,
+        customerName: customerName,
+        customerPhone: customerPhone,
+        items: items,
+        subtotal: subtotal,
+        discountAmount: discountAmount,
+        discountPercent: discountPercent,
+        taxAmount: taxAmount,
+        taxPercent: taxPercent,
+        grandTotal: grandTotal,
+        paymentMethod: paymentMethod,
+        notes: notes,
+        isReturnBill: isReturnBill,
+        isQuotation: isQuotation,
+        validUntil: validUntil,
+        eventOrderDate: eventOrderDate,
+        quotationTitle: quotationTitle,
+        formatOverride: formatOverride,
+        documentTitle: documentTitle,
+        numberLabelText: numberLabelText,
+        qrAmountOverride: qrAmountOverride,
+        refundAmount: refundAmount,
+        paidAmount: paidAmount,
+        pendingAmount: pendingAmount,
+        totalDueAmount: totalDue,
+        employeeToken: employeeToken,
+        isGstApplied: isGstApplied,
+        isTaxInclusive: isTaxInclusive,
+        cgstPercent: cgstPercent,
+        sgstPercent: sgstPercent,
+        igstPercent: igstPercent,
+        otherTaxPercent: otherTaxPercent,
+        otherTaxName: otherTaxName,
+        cgstAmount: cgstAmount,
+        sgstAmount: sgstAmount,
+        igstAmount: igstAmount,
+        otherTaxAmount: otherTaxAmount,
+        totalTaxAmount: totalTaxAmount,
+        customerGstin: customerGstin,
+        extraCharges: extraCharges,
+        customerId: customerId,
+        roundOff: roundOff,
+      );
+
+  /// Whether a "Round off" row should be printed.
+  bool get hasRoundOff => roundOff.abs() >= 0.005;
+
+  /// Portion of [totalDueAmount] owed from earlier bills (0 when none).
+  double get previousDueAmount =>
+      previousDueOf(totalDue: totalDueAmount, billPending: pendingAmount);
+
+  /// Customer has a running balance to print ("TOTAL DUE till date").
+  bool get hasTotalDue => totalDueAmount != null && totalDueAmount! > 0;
 
   double get extraChargesTotal =>
       extraCharges.fold(0.0, (sum, c) => sum + c.amount);
@@ -262,6 +331,36 @@ class PrintBillData {
     final double? paidAmount = bill.paidAmount as double?;
     final double? pendingAmount = bill.pendingAmount as double?;
 
+    final extras = _extraChargesFrom(bill);
+    final extrasTotal = extras.fold<double>(0.0, (t, c) => t + c.amount);
+    // Service charges are stored as bill items but are NOT in bill.totalAmount.
+    var serviceTotal = 0.0;
+    try {
+      for (final item in (bill.items as List)) {
+        if (BillServiceCharge.isServiceItem(
+          productId: item.productId as String?,
+        )) {
+          serviceTotal += (item.subtotal as num).toDouble();
+        }
+      }
+    } catch (_) {}
+    final exclusiveTax = ((bill.isGstApplied as bool?) ?? false) &&
+        !((bill.isTaxInclusive as bool?) ?? false);
+    final totals = computeBillPrintTotals(
+      productsTotal: (bill.totalAmount as num).toDouble(),
+      serviceChargesTotal: serviceTotal,
+      extraChargesTotal: extrasTotal,
+      discountAmount: ((bill.discountAmount as num?) ?? 0).toDouble(),
+      exclusiveTax: exclusiveTax,
+      taxAmount: ((bill.totalTaxAmount as num?) ?? 0).toDouble(),
+      finalAmount: (bill.finalAmount as num).toDouble(),
+    );
+    String? customerKey;
+    try {
+      final raw = (bill.customerId as String?)?.trim();
+      if (raw != null && raw.isNotEmpty) customerKey = raw;
+    } catch (_) {}
+
     return PrintBillData(
       billNumber: bill.billNumber as String,
       dateTime: bill.billDate as DateTime,
@@ -270,7 +369,7 @@ class PrintBillData {
       items: (bill.items as List)
           .map((item) => PrintBillItem.fromBillItem(item))
           .toList(),
-      subtotal: bill.totalAmount as double,
+      subtotal: totals.subtotal,
       discountAmount: bill.discountAmount as double?,
       discountPercent: bill.discountPercent as double?,
       taxAmount: ((bill.totalTaxAmount as num?)?.toDouble() ?? 0) > 0
@@ -305,7 +404,9 @@ class PrintBillData {
       otherTaxAmount: (bill.otherTaxAmount as double?) ?? 0.0,
       totalTaxAmount: (bill.totalTaxAmount as double?) ?? 0.0,
       customerGstin: bill.customerGstin as String?,
-      extraCharges: _extraChargesFrom(bill),
+      extraCharges: extras,
+      customerId: customerKey,
+      roundOff: totals.roundOff,
     );
   }
 

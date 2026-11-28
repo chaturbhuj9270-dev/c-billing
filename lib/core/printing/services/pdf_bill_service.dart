@@ -10,6 +10,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:printing/printing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/print_bill_data.dart';
+import '../receipt_text_layout.dart';
+import 'customer_due_resolver.dart';
 import '../upi_payment_uri.dart';
 import '../../../features/quotation/data/services/quotation_format_settings.dart';
 import '../../../features/shop/domain/entities/shop.dart';
@@ -63,6 +65,8 @@ class PdfBillService {
     PdfPageFormat? pageFormat,
   }) async {
     final pdf = pw.Document();
+    // Customer's total pending till date (local read; no-op for walk-ins).
+    billData = await CustomerDueResolver.apply(billData);
 
     // Check if customer details should be shown
     final prefs = await SharedPreferences.getInstance();
@@ -147,6 +151,8 @@ class PdfBillService {
     required Shop shopDetails,
   }) async {
     final pdf = pw.Document();
+    // Customer's total pending till date (local read; no-op for walk-ins).
+    billData = await CustomerDueResolver.apply(billData);
 
     // Check if customer details should be shown
     final prefs = await SharedPreferences.getInstance();
@@ -573,6 +579,9 @@ class PdfBillService {
                     padding: const pw.EdgeInsets.all(8),
                     child: pw.Column(
                       children: [
+                        // Subtotal = every printed line (products + service +
+                        // extra charges), shown first so the rows below add up.
+                        _buildSummaryRow('Sub Total', billData.subtotal),
                         if (billData.hasDiscount)
                           _buildSummaryRow(
                             'Discount',
@@ -613,15 +622,8 @@ class PdfBillService {
                             color: PdfColor.fromInt(AppTheme.orange900.toARGB32()),
                           ),
                         ],
-                        _buildSummaryRow('Sub Total', billData.subtotal),
-                        if (billData.hasExtraCharges) ...[
-                          for (final charge in billData.extraCharges)
-                            if (charge.amount > 0)
-                              _buildSummaryRow(
-                                charge.label,
-                                charge.amount,
-                              ),
-                        ],
+                        if (billData.hasRoundOff)
+                          _buildSummaryRow('Round off', billData.roundOff),
                         pw.Container(
                           margin: const pw.EdgeInsets.only(top: 4),
                           padding: const pw.EdgeInsets.symmetric(
@@ -679,7 +681,7 @@ class PdfBillService {
           ),
 
           // ═══════════════════════════════════════════ TOTAL DUE (if customer has running balance) ═══════════════════════════════════════════
-          if (billData.totalDueAmount != null && billData.totalDueAmount! > 0)
+          if (billData.hasTotalDue)
             pw.Container(
               width: double.infinity,
               padding: const pw.EdgeInsets.symmetric(
@@ -687,24 +689,50 @@ class PdfBillService {
                 vertical: 8,
               ),
               color: PdfColor.fromInt(AppTheme.orange50.toARGB32()),
-              child: pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              child: pw.Column(
                 children: [
-                  pw.Text(
-                    'TOTAL DUE AMOUNT',
-                    style: pw.TextStyle(
-                      fontSize: 11,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColor.fromInt(AppTheme.orange900.toARGB32()),
+                  if (billData.previousDueAmount > 0) ...[
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text(
+                          'PREVIOUS DUE',
+                          style: pw.TextStyle(
+                            fontSize: 9,
+                            color: PdfColor.fromInt(AppTheme.orange900.toARGB32()),
+                          ),
+                        ),
+                        pw.Text(
+                          'Rs. ${billData.previousDueAmount.toStringAsFixed(2)}',
+                          style: pw.TextStyle(
+                            fontSize: 9,
+                            color: PdfColor.fromInt(AppTheme.orange900.toARGB32()),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  pw.Text(
-                    'Rs. ${billData.totalDueAmount!.toStringAsFixed(2)}',
-                    style: pw.TextStyle(
-                      fontSize: 12,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColor.fromInt(AppTheme.orange900.toARGB32()),
-                    ),
+                    pw.SizedBox(height: 3),
+                  ],
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text(
+                        'TOTAL DUE AMOUNT (TILL DATE)',
+                        style: pw.TextStyle(
+                          fontSize: 11,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColor.fromInt(AppTheme.orange900.toARGB32()),
+                        ),
+                      ),
+                      pw.Text(
+                        'Rs. ${billData.totalDueAmount!.toStringAsFixed(2)}',
+                        style: pw.TextStyle(
+                          fontSize: 12,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColor.fromInt(AppTheme.orange900.toARGB32()),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -1371,15 +1399,16 @@ class PdfBillService {
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.center,
                   children: [
+                    // Long shop names shrink (never truncate) so the full name
+                    // always prints; the PDF engine also splits overlong words.
                     pw.Text(
                       shopDetails.shopName.isNotEmpty
                           ? shopDetails.shopName.toUpperCase()
                           : 'STORE',
                       textAlign: pw.TextAlign.center,
-                      maxLines: 3,
                       softWrap: true,
                       style: pw.TextStyle(
-                        fontSize: 11,
+                        fontSize: posShopNameFontSize(shopDetails.shopName),
                         fontWeight: pw.FontWeight.bold,
                         letterSpacing: 0.2,
                         height: 1.15,
@@ -1845,6 +1874,10 @@ class PdfBillService {
                   ),
                 ],
               ],
+              if (billData.hasRoundOff) ...[
+                pw.SizedBox(height: 2),
+                _buildPOSTotalRow('Round off', billData.roundOff),
+              ],
             ],
           ),
         ),
@@ -1956,8 +1989,7 @@ class PdfBillService {
           ),
         ],
 
-        if (billData.totalDueAmount != null &&
-            billData.totalDueAmount! > 0) ...[
+        if (billData.hasTotalDue) ...[
           pw.SizedBox(height: 4),
           pw.Container(
             width: receiptWidth,
@@ -1969,23 +2001,43 @@ class PdfBillService {
                 width: 0.5,
               ),
             ),
-            child: pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            child: pw.Column(
               children: [
-                pw.Text(
-                  'TOTAL DUE',
-                  style: pw.TextStyle(
-                    fontSize: 9,
-                    fontWeight: pw.FontWeight.bold,
+                if (billData.previousDueAmount > 0) ...[
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text(
+                        'PREVIOUS DUE',
+                        style: const pw.TextStyle(fontSize: 8),
+                      ),
+                      pw.Text(
+                        'Rs.${billData.previousDueAmount.toStringAsFixed(2)}',
+                        style: const pw.TextStyle(fontSize: 8),
+                      ),
+                    ],
                   ),
-                ),
-                pw.Text(
-                  'Rs.${billData.totalDueAmount!.toStringAsFixed(2)}',
-                  style: pw.TextStyle(
-                    fontSize: 9,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColor.fromInt(AppTheme.orange800.toARGB32()),
-                  ),
+                  pw.SizedBox(height: 3),
+                ],
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text(
+                      'TOTAL DUE (TILL DATE)',
+                      style: pw.TextStyle(
+                        fontSize: 9,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.Text(
+                      'Rs.${billData.totalDueAmount!.toStringAsFixed(2)}',
+                      style: pw.TextStyle(
+                        fontSize: 9,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColor.fromInt(AppTheme.orange800.toARGB32()),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
