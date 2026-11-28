@@ -24,6 +24,8 @@ import '../../offline/entities/purchase_batch_entity.dart';
 import '../widgets/product_summary_widget.dart';
 import '../widgets/product_filter_widget.dart';
 import '../widgets/product_list_widget.dart';
+import '../widgets/quick_add_party_sheet.dart';
+import '../../domain/utils/quick_add_party_logic.dart';
 import 'product_settings_page.dart';
 import 'barcode_generator_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
@@ -1675,40 +1677,76 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           icon: Icons.inventory_2_outlined,
                         ),
                         const SizedBox(height: 12),
-                        // Company selector
-                        _buildSelectorField(
-                          label: _localizations.selectCompany,
-                          value: dialogSelectedCompany?['companyName'],
-                          icon: Icons.business_rounded,
-                          onTap: () async {
-                            final company = await _showCompanyPickerDialog(
+                        // Company selector (+ quick add)
+                        _buildSelectorWithAdd(
+                          addTooltip: _localizations.addNewCompany,
+                          onAdd: () async {
+                            final added = await QuickAddPartySheet.company(
                               context,
-                              dialogCompanies,
                             );
-                            if (company != null) {
+                            if (added != null) {
+                              addPickerItemIfAbsent(
+                                dialogCompanies,
+                                added.pickerItem,
+                              );
                               setDialogState(
-                                () => dialogSelectedCompany = company,
+                                () => dialogSelectedCompany = added.pickerItem,
                               );
                             }
                           },
+                          selector: _buildSelectorField(
+                            label: _localizations.selectCompany,
+                            value: dialogSelectedCompany?['companyName'],
+                            icon: Icons.business_rounded,
+                            onTap: () async {
+                              final company = await _showCompanyPickerDialog(
+                                context,
+                                dialogCompanies,
+                              );
+                              if (company != null) {
+                                addPickerItemIfAbsent(dialogCompanies, company);
+                                setDialogState(
+                                  () => dialogSelectedCompany = company,
+                                );
+                              }
+                            },
+                          ),
                         ),
                         const SizedBox(height: 12),
-                        // Supplier selector
-                        _buildSelectorField(
-                          label: _localizations.selectSupplier,
-                          value: dialogSelectedSupplier?['fullName'],
-                          icon: Icons.person_rounded,
-                          onTap: () async {
-                            final supplier = await _showSupplierPickerDialog(
+                        // Supplier selector (+ quick add)
+                        _buildSelectorWithAdd(
+                          addTooltip: _localizations.addNewSupplier,
+                          onAdd: () async {
+                            final added = await QuickAddPartySheet.supplier(
                               context,
-                              dialogSuppliers,
                             );
-                            if (supplier != null) {
+                            if (added != null) {
+                              addPickerItemIfAbsent(
+                                dialogSuppliers,
+                                added.pickerItem,
+                              );
                               setDialogState(
-                                () => dialogSelectedSupplier = supplier,
+                                () => dialogSelectedSupplier = added.pickerItem,
                               );
                             }
                           },
+                          selector: _buildSelectorField(
+                            label: _localizations.selectSupplier,
+                            value: dialogSelectedSupplier?['fullName'],
+                            icon: Icons.person_rounded,
+                            onTap: () async {
+                              final supplier = await _showSupplierPickerDialog(
+                                context,
+                                dialogSuppliers,
+                              );
+                              if (supplier != null) {
+                                addPickerItemIfAbsent(dialogSuppliers, supplier);
+                                setDialogState(
+                                  () => dialogSelectedSupplier = supplier,
+                                );
+                              }
+                            },
+                          ),
                         ),
                         const SizedBox(height: 12),
                         _buildTextField(
@@ -3180,6 +3218,75 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     );
   }
 
+  // Selector field with a "+" button beside it to add a new company/supplier
+  // without leaving the add product form.
+  Widget _buildSelectorWithAdd({
+    required Widget selector,
+    required VoidCallback onAdd,
+    required String addTooltip,
+  }) {
+    return Row(
+      children: [
+        Expanded(child: selector),
+        const SizedBox(width: 10),
+        Tooltip(
+          message: addTooltip,
+          child: Material(
+            color: AppColors.accentSoft(context),
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: onAdd,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: 52,
+                height: 52,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.action(context).withValues(alpha: 0.45),
+                  ),
+                ),
+                child: Icon(
+                  Icons.add_rounded,
+                  color: AppColors.action(context),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // "Add new" row shown at the top of the company / supplier pickers.
+  Widget _buildPickerAddTile({
+    required BuildContext context,
+    required String label,
+    required Future<QuickAddPartyResult?> Function() onAdd,
+  }) {
+    return ListTile(
+      leading: Icon(
+        Icons.add_circle_outline_rounded,
+        color: AppColors.action(context),
+      ),
+      title: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'Literata',
+          fontWeight: FontWeight.w700,
+          color: AppColors.action(context),
+        ),
+      ),
+      onTap: () async {
+        final added = await onAdd();
+        if (added != null && context.mounted) {
+          Navigator.pop(context, added.pickerItem);
+        }
+      },
+    );
+  }
+
   Widget _buildCustomFieldWidget(
     CustomColumn column,
     TextEditingController? textController,
@@ -3351,6 +3458,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 ),
               ),
               const Divider(height: 1),
+              _buildPickerAddTile(
+                context: context,
+                label: _localizations.addNewCompany,
+                onAdd: () => QuickAddPartySheet.company(context),
+              ),
               Flexible(
                 child: companies.isEmpty
                     ? Center(
@@ -3430,6 +3542,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 ),
               ),
               const Divider(height: 1),
+              _buildPickerAddTile(
+                context: context,
+                label: _localizations.addNewSupplier,
+                onAdd: () => QuickAddPartySheet.supplier(context),
+              ),
               Flexible(
                 child: suppliers.isEmpty
                     ? Center(

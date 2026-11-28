@@ -1240,4 +1240,6 @@ class HindiLocalization {
       'उसी चैट में PDF खोल रहे हैं...';
   static const String customerReportSendPdfHint =
       'संदेश भेज दिया? उसी चैट में PDF रिपोर्ट भेजने के लिए WhatsApp आइकन फिर से दबाएँ।';
+  static const String partyAlreadyExistsSelected =
+      'पहले से मौजूद है - मौजूदा रिकॉर्ड चुना गया';
 }

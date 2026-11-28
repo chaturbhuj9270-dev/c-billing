@@ -1240,4 +1240,6 @@ class MarathiLocalization {
       'त्याच चॅटमध्ये PDF उघडत आहे...';
   static const String customerReportSendPdfHint =
       'संदेश पाठवला? त्याच चॅटमध्ये PDF अहवाल पाठवण्यासाठी WhatsApp आयकॉन पुन्हा दाबा.';
+  static const String partyAlreadyExistsSelected =
+      'आधीच अस्तित्वात आहे - विद्यमान नोंद निवडली';
 }

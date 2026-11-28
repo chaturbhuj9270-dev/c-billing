@@ -1720,6 +1720,17 @@ class AppLocalizations {
     }
   }
 
+  String get partyAlreadyExistsSelected {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.partyAlreadyExistsSelected;
+      case 'Marathi':
+        return MarathiLocalization.partyAlreadyExistsSelected;
+      default:
+        return EnglishLocalization.partyAlreadyExistsSelected;
+    }
+  }
+
   String get addCompany {
     switch (languageCode) {
       case 'Hindi':

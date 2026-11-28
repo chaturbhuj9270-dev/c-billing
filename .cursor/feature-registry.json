@@ -1282,6 +1282,58 @@
       ],
       "forbidden": [],
       "tests": []
+    },
+    {
+      "id": "product-quick-add-party",
+      "name": "Add product: quick add company and supplier",
+      "files": [
+        "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart",
+        "lib/features/inventory_management/presentation/widgets/quick_add_party_sheet.dart",
+        "lib/features/inventory_management/domain/utils/quick_add_party_logic.dart"
+      ],
+      "invariants": [
+        "The add product sheet lets the user pick OR quickly add a company and a supplier (+ button beside each selector and an 'Add new' row in each picker); the new record is auto-selected.",
+        "Quick add creates records only through CompanyOfflineController.addCompany / SupplierOfflineController.addSupplier followed by the existing sync service syncNow() and DashboardRefreshService notify - no new collection, no direct Firestore writes.",
+        "An existing company / supplier with the same name (case/space-insensitive) is reused, never duplicated.",
+        "The selected company / supplier maps keep the shape saved by _saveNewProduct: companyName, and id + fullName for defaultSupplierId / defaultSupplierName. Product save rules are unchanged.",
+        "The full supplier / company forms keep their own required fields; quick add only requires company name, or supplier first + last name (mobile optional, 10 digits when given)."
+      ],
+      "anchors": [
+        {
+          "file": "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart",
+          "contains": "QuickAddPartySheet.company"
+        },
+        {
+          "file": "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart",
+          "contains": "QuickAddPartySheet.supplier"
+        },
+        {
+          "file": "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart",
+          "contains": "defaultSupplierId: selectedSupplier?['id']"
+        },
+        {
+          "file": "lib/features/inventory_management/presentation/widgets/quick_add_party_sheet.dart",
+          "contains": "findPartyByName"
+        },
+        {
+          "file": "lib/features/inventory_management/presentation/widgets/quick_add_party_sheet.dart",
+          "contains": "CompanySyncService.instance.syncNow"
+        },
+        {
+          "file": "lib/features/inventory_management/presentation/widgets/quick_add_party_sheet.dart",
+          "contains": "SupplierSyncService.instance.syncNow"
+        }
+      ],
+      "forbidden": [
+        {
+          "file": "lib/features/inventory_management/presentation/widgets/quick_add_party_sheet.dart",
+          "contains": "FirebaseFirestore",
+          "why": "quick add must go through the offline controllers + sync services"
+        }
+      ],
+      "tests": [
+        "test/regression/quick_add_party_test.dart"
+      ]
     }
   ]
 }

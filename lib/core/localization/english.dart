@@ -1233,4 +1233,6 @@ class EnglishLocalization {
       'Opening the PDF in the same chat...';
   static const String customerReportSendPdfHint =
       'Message sent? Tap the WhatsApp icon again to send the PDF report to the same chat.';
+  static const String partyAlreadyExistsSelected =
+      'Already exists - selected the existing record';
 }
