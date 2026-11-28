@@ -139,6 +139,10 @@ class BillOfflineController extends ChangeNotifier {
     return bills;
   }
 
+  // Bills with a balance due for any of these customer ids (one SQL query).
+  Future<List<BillEntity>> getOpenBillsByCustomerIds(Set<String> customerIds) =>
+      _db.loadOpenBillsForCustomers(customerIds);
+
   // Get bills by date range
   Future<List<BillEntity>> getBillsByDateRange(
     DateTime start,

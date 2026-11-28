@@ -16,17 +16,42 @@
         "The duplicate-entry repair only matches rows with the legacy wording AND a same-amount original within 3 minutes."
       ],
       "anchors": [
-        {"file": "lib/features/customer/offline/controllers/customer_transaction_offline_controller.dart", "contains": "findDuplicateBillingEntries"},
-        {"file": "lib/features/customer/presentation/pages/customer_transactions_page.dart", "contains": "_canReceivePayment"},
-        {"file": "lib/features/customer/presentation/pages/customer_transactions_page.dart", "contains": "_BillAmountsStrip"},
-        {"file": "lib/features/customer/presentation/pages/customer_transactions_page.dart", "contains": "_removeDuplicateEntries"},
-        {"file": "lib/features/customer/presentation/pages/customer_transactions_page.dart", "contains": "Cannot exceed pending"}
+        {
+          "file": "lib/features/customer/offline/controllers/customer_transaction_offline_controller.dart",
+          "contains": "findDuplicateBillingEntries"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/customer_transactions_page.dart",
+          "contains": "_canReceivePayment"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/customer_transactions_page.dart",
+          "contains": "_BillAmountsStrip"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/customer_transactions_page.dart",
+          "contains": "_removeDuplicateEntries"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/customer_transactions_page.dart",
+          "contains": "Cannot exceed pending"
+        }
       ],
       "forbidden": [
-        {"file": "lib/features/customer/presentation/pages/customer_transactions_page.dart", "contains": ".receivePayment(", "why": "double-writes the ledger"},
-        {"file": "lib/features/customer/presentation/pages/customer_details_page.dart", "contains": "transactionService.receivePayment(", "why": "double-writes the ledger"}
+        {
+          "file": "lib/features/customer/presentation/pages/customer_transactions_page.dart",
+          "contains": ".receivePayment(",
+          "why": "double-writes the ledger"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/customer_details_page.dart",
+          "contains": "transactionService.receivePayment(",
+          "why": "double-writes the ledger"
+        }
       ],
-      "tests": ["test/regression/ledger_duplicates_test.dart"]
+      "tests": [
+        "test/regression/ledger_duplicates_test.dart"
+      ]
     },
     {
       "id": "billing-checkout",
@@ -42,14 +67,33 @@
         "Returns reduce the bill's pending/paid and post a return ledger entry."
       ],
       "anchors": [
-        {"file": "lib/features/billing/presentation/pages/billing_page.dart", "contains": "_receivedExceedsTotal"},
-        {"file": "lib/features/billing/presentation/pages/billing_page.dart", "contains": "_AddServiceChargePage"},
-        {"file": "lib/features/billing/presentation/pages/billing_page.dart", "contains": "InventoryIntegrationService.instance"},
-        {"file": "lib/features/billing/presentation/pages/billing_page.dart", "contains": "addBillTransaction"},
-        {"file": "lib/core/services/inventory_integration_service.dart", "contains": "addReturnTransaction"}
+        {
+          "file": "lib/features/billing/presentation/pages/billing_page.dart",
+          "contains": "_receivedExceedsTotal"
+        },
+        {
+          "file": "lib/features/billing/presentation/pages/billing_page.dart",
+          "contains": "_AddServiceChargePage"
+        },
+        {
+          "file": "lib/features/billing/presentation/pages/billing_page.dart",
+          "contains": "InventoryIntegrationService.instance"
+        },
+        {
+          "file": "lib/features/billing/presentation/pages/billing_page.dart",
+          "contains": "addBillTransaction"
+        },
+        {
+          "file": "lib/core/services/inventory_integration_service.dart",
+          "contains": "addReturnTransaction"
+        }
       ],
       "forbidden": [
-        {"file": "lib/features/billing/presentation/pages/billing_page.dart", "contains": "recordBillGenerated(", "why": "double-writes the ledger"}
+        {
+          "file": "lib/features/billing/presentation/pages/billing_page.dart",
+          "contains": "recordBillGenerated(",
+          "why": "double-writes the ledger"
+        }
       ],
       "tests": []
     },
@@ -77,68 +121,232 @@
         "On resume / reconnect everything is re-synced and deletions made on other devices are reconciled (count() check)."
       ],
       "anchors": [
-        {"file": "lib/main.dart", "contains": "SyncQueryHelper.beginSession"},
-        {"file": "lib/main.dart", "contains": "LiveSyncService.instance.start()"},
-        {"file": "lib/main.dart", "contains": "ExpenseSyncService.instance.initialize()"},
-        {"file": "lib/core/services/live_sync_service.dart", "contains": "class LiveSyncService"},
-        {"file": "lib/core/services/live_sync_service.dart", "contains": "watchScreen"},
-        {"file": "lib/core/services/live_sync_service.dart", "contains": "_attachLocalWatcher"},
-        {"file": "lib/core/services/live_refresh_mixin.dart", "contains": "mixin LiveRefreshMixin"},
-        {"file": "lib/core/services/live_sync_service.dart", "contains": "refreshNow"},
-        {"file": "lib/features/dashboard/presentation/pages/optimized_dashboard_page.dart", "contains": "_refreshTabData"},
-        {"file": "lib/features/dashboard/presentation/pages/optimized_dashboard_page.dart", "contains": "_tabEntities"},
-        {"file": "lib/core/services/sync_query_helper.dart", "contains": "fetchChanged"},
-        {"file": "lib/features/customer/data/services/customer_api_service.dart", "contains": "SyncQueryHelper.fetchChanged"},
-        {"file": "lib/features/billing/data/services/bill_api_service.dart", "contains": "SyncQueryHelper.fetchChanged"},
-        {"file": "lib/features/inventory_management/offline/controllers/purchase_batch_offline_controller.dart", "contains": "skipped++"},
-        {"file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart", "contains": "LiveRefreshMixin<EnhancedCustomerPage>"},
-        {"file": "lib/features/supplier/presentation/pages/enhanced_supplier_page.dart", "contains": "LiveRefreshMixin<EnhancedSupplierPage>"},
-        {"file": "lib/features/company/presentation/pages/enhanced_company_page.dart", "contains": "LiveRefreshMixin<EnhancedCompanyPage>"},
-        {"file": "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart", "contains": "LiveRefreshMixin<EnhancedProductPage>"},
-        {"file": "lib/features/billing/presentation/pages/bills_list_page.dart", "contains": "LiveRefreshMixin<BillsListPage>"},
-        {"file": "lib/features/customer/presentation/pages/customer_transactions_page.dart", "contains": "LiveRefreshMixin<CustomerTransactionsPage>"},
-        {"file": "lib/features/event_order/presentation/pages/event_order_list_page.dart", "contains": "LiveRefreshMixin<EventOrderListPage>"},
-        {"file": "lib/features/expense/presentation/pages/expenses_page.dart", "contains": "LiveRefreshMixin<ExpensesPage>"},
-        {"file": "lib/features/inventory_management/presentation/pages/enhanced_purchase_screen.dart", "contains": "LiveRefreshMixin<EnhancedPurchaseScreen>"}
+        {
+          "file": "lib/main.dart",
+          "contains": "SyncQueryHelper.beginSession"
+        },
+        {
+          "file": "lib/main.dart",
+          "contains": "LiveSyncService.instance.start()"
+        },
+        {
+          "file": "lib/main.dart",
+          "contains": "ExpenseSyncService.instance.initialize()"
+        },
+        {
+          "file": "lib/core/services/live_sync_service.dart",
+          "contains": "class LiveSyncService"
+        },
+        {
+          "file": "lib/core/services/live_sync_service.dart",
+          "contains": "watchScreen"
+        },
+        {
+          "file": "lib/core/services/live_sync_service.dart",
+          "contains": "_attachLocalWatcher"
+        },
+        {
+          "file": "lib/core/services/live_refresh_mixin.dart",
+          "contains": "mixin LiveRefreshMixin"
+        },
+        {
+          "file": "lib/core/services/live_sync_service.dart",
+          "contains": "refreshNow"
+        },
+        {
+          "file": "lib/features/dashboard/presentation/pages/optimized_dashboard_page.dart",
+          "contains": "_refreshTabData"
+        },
+        {
+          "file": "lib/features/dashboard/presentation/pages/optimized_dashboard_page.dart",
+          "contains": "_tabEntities"
+        },
+        {
+          "file": "lib/core/services/sync_query_helper.dart",
+          "contains": "fetchChanged"
+        },
+        {
+          "file": "lib/features/customer/data/services/customer_api_service.dart",
+          "contains": "SyncQueryHelper.fetchChanged"
+        },
+        {
+          "file": "lib/features/billing/data/services/bill_api_service.dart",
+          "contains": "SyncQueryHelper.fetchChanged"
+        },
+        {
+          "file": "lib/features/inventory_management/offline/controllers/purchase_batch_offline_controller.dart",
+          "contains": "skipped++"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart",
+          "contains": "LiveRefreshMixin<EnhancedCustomerPage>"
+        },
+        {
+          "file": "lib/features/supplier/presentation/pages/enhanced_supplier_page.dart",
+          "contains": "LiveRefreshMixin<EnhancedSupplierPage>"
+        },
+        {
+          "file": "lib/features/company/presentation/pages/enhanced_company_page.dart",
+          "contains": "LiveRefreshMixin<EnhancedCompanyPage>"
+        },
+        {
+          "file": "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart",
+          "contains": "LiveRefreshMixin<EnhancedProductPage>"
+        },
+        {
+          "file": "lib/features/billing/presentation/pages/bills_list_page.dart",
+          "contains": "LiveRefreshMixin<BillsListPage>"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/customer_transactions_page.dart",
+          "contains": "LiveRefreshMixin<CustomerTransactionsPage>"
+        },
+        {
+          "file": "lib/features/event_order/presentation/pages/event_order_list_page.dart",
+          "contains": "LiveRefreshMixin<EventOrderListPage>"
+        },
+        {
+          "file": "lib/features/expense/presentation/pages/expenses_page.dart",
+          "contains": "LiveRefreshMixin<ExpensesPage>"
+        },
+        {
+          "file": "lib/features/inventory_management/presentation/pages/enhanced_purchase_screen.dart",
+          "contains": "LiveRefreshMixin<EnhancedPurchaseScreen>"
+        }
       ],
       "forbidden": [
-        {"file": "lib/core/services/live_sync_service.dart", "contains": ".snapshots()", "why": "Firestore listeners cost reads; use watchScreen refresh"},
-        {"file": "lib/features/customer/data/services/customer_sync_service.dart", "contains": "Timer.periodic", "why": "no background polling"},
-        {"file": "lib/features/customer/data/services/customer_transaction_sync_service.dart", "contains": "Timer.periodic", "why": "no background polling"},
-        {"file": "lib/features/billing/data/services/bill_sync_service.dart", "contains": "Timer.periodic", "why": "no background polling"},
-        {"file": "lib/features/supplier/data/services/supplier_sync_service.dart", "contains": "Timer.periodic", "why": "no background polling"},
-        {"file": "lib/features/company/data/services/company_sync_service.dart", "contains": "Timer.periodic", "why": "no background polling"},
-        {"file": "lib/features/product/data/services/product_sync_service.dart", "contains": "Timer.periodic", "why": "no background polling"},
-        {"file": "lib/features/expense/data/services/expense_sync_service.dart", "contains": "Timer.periodic", "why": "no background polling"},
-        {"file": "lib/features/event_order/data/services/event_order_sync_service.dart", "contains": "Timer.periodic", "why": "no background polling"},
-        {"file": "lib/features/inventory_management/data/services/purchase_sync_service.dart", "contains": "Timer.periodic", "why": "no background polling"},
-        {"file": "lib/features/inventory_management/data/services/purchase_batch_sync_service.dart", "contains": "Timer.periodic", "why": "no background polling"},
-        {"file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart", "contains": ".snapshots()", "why": "full-collection listener re-reads every document"},
-        {"file": "lib/features/supplier/presentation/pages/enhanced_supplier_page.dart", "contains": ".snapshots()", "why": "full-collection listener re-reads every document"},
-        {"file": "lib/features/company/presentation/pages/enhanced_company_page.dart", "contains": ".snapshots()", "why": "full-collection listener re-reads every document"},
-        {"file": "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart", "contains": ".snapshots()", "why": "full-collection listener re-reads every document"},
-        {"file": "lib/features/billing/presentation/pages/bills_list_page.dart", "contains": ".snapshots()", "why": "full-collection listener re-reads every document"}
+        {
+          "file": "lib/core/services/live_sync_service.dart",
+          "contains": ".snapshots()",
+          "why": "Firestore listeners cost reads; use watchScreen refresh"
+        },
+        {
+          "file": "lib/features/customer/data/services/customer_sync_service.dart",
+          "contains": "Timer.periodic",
+          "why": "no background polling"
+        },
+        {
+          "file": "lib/features/customer/data/services/customer_transaction_sync_service.dart",
+          "contains": "Timer.periodic",
+          "why": "no background polling"
+        },
+        {
+          "file": "lib/features/billing/data/services/bill_sync_service.dart",
+          "contains": "Timer.periodic",
+          "why": "no background polling"
+        },
+        {
+          "file": "lib/features/supplier/data/services/supplier_sync_service.dart",
+          "contains": "Timer.periodic",
+          "why": "no background polling"
+        },
+        {
+          "file": "lib/features/company/data/services/company_sync_service.dart",
+          "contains": "Timer.periodic",
+          "why": "no background polling"
+        },
+        {
+          "file": "lib/features/product/data/services/product_sync_service.dart",
+          "contains": "Timer.periodic",
+          "why": "no background polling"
+        },
+        {
+          "file": "lib/features/expense/data/services/expense_sync_service.dart",
+          "contains": "Timer.periodic",
+          "why": "no background polling"
+        },
+        {
+          "file": "lib/features/event_order/data/services/event_order_sync_service.dart",
+          "contains": "Timer.periodic",
+          "why": "no background polling"
+        },
+        {
+          "file": "lib/features/inventory_management/data/services/purchase_sync_service.dart",
+          "contains": "Timer.periodic",
+          "why": "no background polling"
+        },
+        {
+          "file": "lib/features/inventory_management/data/services/purchase_batch_sync_service.dart",
+          "contains": "Timer.periodic",
+          "why": "no background polling"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart",
+          "contains": ".snapshots()",
+          "why": "full-collection listener re-reads every document"
+        },
+        {
+          "file": "lib/features/supplier/presentation/pages/enhanced_supplier_page.dart",
+          "contains": ".snapshots()",
+          "why": "full-collection listener re-reads every document"
+        },
+        {
+          "file": "lib/features/company/presentation/pages/enhanced_company_page.dart",
+          "contains": ".snapshots()",
+          "why": "full-collection listener re-reads every document"
+        },
+        {
+          "file": "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart",
+          "contains": ".snapshots()",
+          "why": "full-collection listener re-reads every document"
+        },
+        {
+          "file": "lib/features/billing/presentation/pages/bills_list_page.dart",
+          "contains": ".snapshots()",
+          "why": "full-collection listener re-reads every document"
+        }
       ],
-      "tests": ["test/regression/sync_query_helper_test.dart"]
+      "tests": [
+        "test/regression/sync_query_helper_test.dart"
+      ]
     },
     {
       "id": "firestore-rules",
       "name": "Firestore security rules for every synced collection",
-      "files": ["firestore.rules"],
+      "files": [
+        "firestore.rules"
+      ],
       "invariants": [
         "Each per-user collection the app reads or writes has a match block with owner + active-subscription access. Missing block = silent permission-denied and data that never syncs.",
         "After editing rules the user must deploy them: firebase deploy --only firestore:rules."
       ],
       "anchors": [
-        {"file": "firestore.rules", "contains": "match /customers/"},
-        {"file": "firestore.rules", "contains": "match /customer_transactions/"},
-        {"file": "firestore.rules", "contains": "match /bills/"},
-        {"file": "firestore.rules", "contains": "match /eventOrders/"},
-        {"file": "firestore.rules", "contains": "match /expenses/"},
-        {"file": "firestore.rules", "contains": "match /purchaseBatches/"},
-        {"file": "firestore.rules", "contains": "match /purchaseReturns/"},
-        {"file": "firestore.rules", "contains": "match /stockLedger/"},
-        {"file": "firestore.rules", "contains": "match /event_order_settings/"}
+        {
+          "file": "firestore.rules",
+          "contains": "match /customers/"
+        },
+        {
+          "file": "firestore.rules",
+          "contains": "match /customer_transactions/"
+        },
+        {
+          "file": "firestore.rules",
+          "contains": "match /bills/"
+        },
+        {
+          "file": "firestore.rules",
+          "contains": "match /eventOrders/"
+        },
+        {
+          "file": "firestore.rules",
+          "contains": "match /expenses/"
+        },
+        {
+          "file": "firestore.rules",
+          "contains": "match /purchaseBatches/"
+        },
+        {
+          "file": "firestore.rules",
+          "contains": "match /purchaseReturns/"
+        },
+        {
+          "file": "firestore.rules",
+          "contains": "match /stockLedger/"
+        },
+        {
+          "file": "firestore.rules",
+          "contains": "match /event_order_settings/"
+        }
       ],
       "forbidden": [],
       "tests": []
@@ -159,11 +367,26 @@
         "Expenses: newest expense date first, then most recently created."
       ],
       "anchors": [
-        {"file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart", "contains": "CustomerSortField _sortField = CustomerSortField.createdDate"},
-        {"file": "lib/features/supplier/presentation/pages/enhanced_supplier_page.dart", "contains": "SupplierSortField _sortField = SupplierSortField.createdDate"},
-        {"file": "lib/features/company/presentation/pages/enhanced_company_page.dart", "contains": "CompanySortField _sortField = CompanySortField.createdDate"},
-        {"file": "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart", "contains": "ProductSortField _sortField = ProductSortField.createdDate"},
-        {"file": "lib/features/expense/offline/controllers/expense_offline_controller.dart", "contains": "_newestFirst"}
+        {
+          "file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart",
+          "contains": "CustomerSortField _sortField = CustomerSortField.createdDate"
+        },
+        {
+          "file": "lib/features/supplier/presentation/pages/enhanced_supplier_page.dart",
+          "contains": "SupplierSortField _sortField = SupplierSortField.createdDate"
+        },
+        {
+          "file": "lib/features/company/presentation/pages/enhanced_company_page.dart",
+          "contains": "CompanySortField _sortField = CompanySortField.createdDate"
+        },
+        {
+          "file": "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart",
+          "contains": "ProductSortField _sortField = ProductSortField.createdDate"
+        },
+        {
+          "file": "lib/features/expense/offline/controllers/expense_offline_controller.dart",
+          "contains": "_newestFirst"
+        }
       ],
       "forbidden": [],
       "tests": []
@@ -182,14 +405,31 @@
         "The payment QR amount for non-bill documents is qrAmountOverride (e.g. balance due)."
       ],
       "anchors": [
-        {"file": "lib/core/printing/services/pdf_bill_service.dart", "contains": "resolvePdfFormat"},
-        {"file": "lib/core/printing/services/pdf_bill_service.dart", "contains": "formatOverride"},
-        {"file": "lib/core/printing/models/print_bill_data.dart", "contains": "qrAmountOverride"},
-        {"file": "lib/features/billing/presentation/pages/bill_settings_page.dart", "contains": "_billType == 'normal'"},
-        {"file": "lib/features/quotation/data/services/quotation_format_settings.dart", "contains": "keyQuotationType"}
+        {
+          "file": "lib/core/printing/services/pdf_bill_service.dart",
+          "contains": "resolvePdfFormat"
+        },
+        {
+          "file": "lib/core/printing/services/pdf_bill_service.dart",
+          "contains": "formatOverride"
+        },
+        {
+          "file": "lib/core/printing/models/print_bill_data.dart",
+          "contains": "qrAmountOverride"
+        },
+        {
+          "file": "lib/features/billing/presentation/pages/bill_settings_page.dart",
+          "contains": "_billType == 'normal'"
+        },
+        {
+          "file": "lib/features/quotation/data/services/quotation_format_settings.dart",
+          "contains": "keyQuotationType"
+        }
       ],
       "forbidden": [],
-      "tests": ["test/regression/print_bill_data_test.dart"]
+      "tests": [
+        "test/regression/print_bill_data_test.dart"
+      ]
     },
     {
       "id": "event-order-invoice",
@@ -206,14 +446,31 @@
         "All share / print / preview entry points go through EventOrderPdfService.generateEventOrderPdf so they honour the setting."
       ],
       "anchors": [
-        {"file": "lib/features/event_order/data/services/event_order_format_settings.dart", "contains": "event_order_type"},
-        {"file": "lib/features/event_order/data/services/event_order_pdf_service.dart", "contains": "createPrintData"},
-        {"file": "lib/features/event_order/data/services/event_order_pdf_service.dart", "contains": "generateA4EventOrderPdf"},
-        {"file": "lib/features/event_order/presentation/pages/event_order_settings_page.dart", "contains": "_buildInvoiceFormatSection"},
-        {"file": "lib/features/event_order/presentation/pages/event_order_list_page.dart", "contains": "buildPosPdfBytes"}
+        {
+          "file": "lib/features/event_order/data/services/event_order_format_settings.dart",
+          "contains": "event_order_type"
+        },
+        {
+          "file": "lib/features/event_order/data/services/event_order_pdf_service.dart",
+          "contains": "createPrintData"
+        },
+        {
+          "file": "lib/features/event_order/data/services/event_order_pdf_service.dart",
+          "contains": "generateA4EventOrderPdf"
+        },
+        {
+          "file": "lib/features/event_order/presentation/pages/event_order_settings_page.dart",
+          "contains": "_buildInvoiceFormatSection"
+        },
+        {
+          "file": "lib/features/event_order/presentation/pages/event_order_list_page.dart",
+          "contains": "buildPosPdfBytes"
+        }
       ],
       "forbidden": [],
-      "tests": ["test/regression/event_order_print_test.dart"]
+      "tests": [
+        "test/regression/event_order_print_test.dart"
+      ]
     },
     {
       "id": "customer-pending-report",
@@ -225,7 +482,8 @@
         "lib/core/services/communication_service.dart",
         "android/app/src/main/kotlin/com/example/c_billing/MainActivity.kt",
         "android/app/src/main/AndroidManifest.xml",
-        "android/app/src/main/res/xml/billing_file_paths.xml"
+        "android/app/src/main/res/xml/billing_file_paths.xml",
+        "lib/core/database/local_store.dart"
       ],
       "invariants": [
         "The report is READ-ONLY: it reads bills / event orders and takes the total from the customer card's ledger value. It never writes ledger entries or changes balances (no CustomerTransactionOfflineController in the report service).",
@@ -233,38 +491,117 @@
         "The report icon only shows for customers with pending > 0; generating it must not change the existing Collect / Finance / Transactions / call / SMS / WhatsApp icons.",
         "FilePreviewPage's existing WhatsApp/Share behaviour is unchanged unless whatsAppMessage is passed. With a message on Android: the first time for a number the customer's chat is opened with the message typed in (wa.me, always the right chat), then when the user returns a dialog sends the PDF to that chat (jid intent through the c_billing/whatsapp channel) and remembers the number; later sends open the chat with PDF + message in one step. Failures fall back to the share sheet; web/desktop save the PDF and open wa.me with the message.",
         "The Android FileProvider (billing_fileprovider) and the WhatsApp <queries> entries must stay, otherwise the direct chat silently falls back to the share sheet.",
-        "User text lives in all three localization files (customerPendingReport, customerReportFailed, customerPendingWhatsAppMessage, ...)."
+        "The report preview renders PDF pages at a low fixed dpi (renderDpi: 130). A 300 dpi A4 bitmap is ~35 MB and gets the app killed (black screen / restart) while the user is in WhatsApp. Other previews keep the adaptive default.",
+        "User text lives in all three localization files (customerPendingReport, customerReportFailed, customerPendingWhatsAppMessage, ...).",
+        "The report reads only this customer's open bills / events with one SQL query each (loadOpenBillsForCustomers / loadOpenEventOrdersForCustomers). The local database runs on the UI isolate, so loading every bill with its items per customer id made generation slow and time out."
       ],
       "anchors": [
-        {"file": "lib/features/customer/data/services/customer_pending_report_service.dart", "contains": "otherAmount"},
-        {"file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart", "contains": "_openPendingReport"},
-        {"file": "lib/features/customer/presentation/widgets/customer_list_widget.dart", "contains": "onReportTap"},
-        {"file": "lib/common_widgets/file_preview_page.dart", "contains": "_sendToCustomerChat"},
-        {"file": "lib/common_widgets/file_preview_page.dart", "contains": "_promptSendPdf"},
-        {"file": "lib/core/services/whatsapp_share_service.dart", "contains": "isChatReady"},
-        {"file": "lib/core/services/whatsapp_share_service.dart", "contains": "c_billing/whatsapp"},
-        {"file": "android/app/src/main/kotlin/com/example/c_billing/MainActivity.kt", "contains": "@s.whatsapp.net"},
-        {"file": "android/app/src/main/AndroidManifest.xml", "contains": "billing_fileprovider"},
-        {"file": "android/app/src/main/AndroidManifest.xml", "contains": "com.whatsapp"},
-        {"file": "lib/core/localization/english.dart", "contains": "customerPendingWhatsAppMessage"},
-        {"file": "lib/core/localization/hindi.dart", "contains": "customerPendingWhatsAppMessage"},
-        {"file": "lib/core/localization/marathi.dart", "contains": "customerPendingWhatsAppMessage"}
+        {
+          "file": "lib/features/customer/data/services/customer_pending_report_service.dart",
+          "contains": "otherAmount"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart",
+          "contains": "_openPendingReport"
+        },
+        {
+          "file": "lib/features/customer/presentation/widgets/customer_list_widget.dart",
+          "contains": "onReportTap"
+        },
+        {
+          "file": "lib/common_widgets/file_preview_page.dart",
+          "contains": "_sendToCustomerChat"
+        },
+        {
+          "file": "lib/common_widgets/file_preview_page.dart",
+          "contains": "_promptSendPdf"
+        },
+        {
+          "file": "lib/core/services/whatsapp_share_service.dart",
+          "contains": "isChatReady"
+        },
+        {
+          "file": "lib/core/services/whatsapp_share_service.dart",
+          "contains": "c_billing/whatsapp"
+        },
+        {
+          "file": "android/app/src/main/kotlin/com/example/c_billing/MainActivity.kt",
+          "contains": "@s.whatsapp.net"
+        },
+        {
+          "file": "android/app/src/main/AndroidManifest.xml",
+          "contains": "billing_fileprovider"
+        },
+        {
+          "file": "android/app/src/main/AndroidManifest.xml",
+          "contains": "com.whatsapp"
+        },
+        {
+          "file": "lib/core/localization/english.dart",
+          "contains": "customerPendingWhatsAppMessage"
+        },
+        {
+          "file": "lib/core/localization/hindi.dart",
+          "contains": "customerPendingWhatsAppMessage"
+        },
+        {
+          "file": "lib/core/localization/marathi.dart",
+          "contains": "customerPendingWhatsAppMessage"
+        },
+        {
+          "file": "lib/core/database/local_store.dart",
+          "contains": "loadOpenBillsForCustomers"
+        },
+        {
+          "file": "lib/core/database/local_store.dart",
+          "contains": "loadOpenEventOrdersForCustomers"
+        },
+        {
+          "file": "lib/features/customer/data/services/customer_pending_report_service.dart",
+          "contains": "getOpenBillsByCustomerIds"
+        }
       ],
       "forbidden": [
-        {"file": "lib/features/customer/data/services/customer_pending_report_service.dart", "contains": "CustomerTransactionOfflineController", "why": "report must never write the ledger"},
-        {"file": "lib/features/customer/data/services/customer_pending_report_service.dart", "contains": "CustomerOfflineController", "why": "report must never change customer balances"}
+        {
+          "file": "lib/features/customer/data/services/customer_pending_report_service.dart",
+          "contains": "CustomerTransactionOfflineController",
+          "why": "report must never write the ledger"
+        },
+        {
+          "file": "lib/features/customer/data/services/customer_pending_report_service.dart",
+          "contains": "CustomerOfflineController",
+          "why": "report must never change customer balances"
+        },
+        {
+          "file": "lib/features/customer/data/services/customer_pending_report_service.dart",
+          "contains": "getBillsByCustomerId(",
+          "why": "full bills table scan per id made the report slow / time out"
+        },
+        {
+          "file": "lib/features/customer/data/services/customer_pending_report_service.dart",
+          "contains": "getEventOrdersByCustomerId(",
+          "why": "full event table scan per id made the report slow / time out"
+        }
       ],
-      "tests": ["test/regression/customer_pending_report_test.dart"]
+      "tests": [
+        "test/regression/customer_pending_report_test.dart",
+        "test/regression/pending_report_queries_test.dart"
+      ]
     },
     {
       "id": "quotation",
       "name": "Quotations (create, list, print)",
-      "files": ["lib/features/quotation/"],
+      "files": [
+        "lib/features/quotation/"
+      ],
       "invariants": [
         "Quotation printing keeps isQuotation labels and uses quotation_type for POS/Normal."
       ],
       "anchors": [
-        {"file": "lib/features/quotation/data/services/quotation_print_service.dart", "contains": "isQuotation: true"}
+        {
+          "file": "lib/features/quotation/data/services/quotation_print_service.dart",
+          "contains": "isQuotation: true"
+        }
       ],
       "forbidden": [],
       "tests": []

@@ -49,9 +49,14 @@ class EnhancedCustomerPage extends StatefulWidget {
 }
 
 class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
-    with SingleTickerProviderStateMixin, LiveRefreshMixin<EnhancedCustomerPage> {
+    with
+        SingleTickerProviderStateMixin,
+        LiveRefreshMixin<EnhancedCustomerPage> {
   @override
-  Set<String> get liveRefreshEntities => const {'customers', 'customer_transactions'};
+  Set<String> get liveRefreshEntities => const {
+    'customers',
+    'customer_transactions',
+  };
 
   // Animation
   late AnimationController _animController;
@@ -493,7 +498,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                 decoration: BoxDecoration(
                   color: AppTheme.red.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.red.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: AppTheme.red.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -639,10 +646,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
   void _navigateToCustomerDetails(Map<String, dynamic> customer) {
     _isNavigatingAway = true;
-    showAppPage(
-      context,
-      CustomerDetailsPage(customerId: customer['id']),
-    ).then((_) {
+    showAppPage(context, CustomerDetailsPage(customerId: customer['id'])).then((
+      _,
+    ) {
       _isNavigatingAway = false;
       _fetchFromFirebase();
     });
@@ -661,8 +667,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton:
-          widget.isEmbedded && DesktopCanvas.isDesktopPlatform
+      floatingActionButton: widget.isEmbedded && DesktopCanvas.isDesktopPlatform
           ? null
           : GlassIconFab(
               tooltip: _localizations.addCustomer,
@@ -769,7 +774,8 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   Widget _buildHeader() {
     return AppTopBar(
       title: _localizations.manageCustomers,
-      subtitle: '${_customers.length} ${_localizations.customers.toLowerCase()}',
+      subtitle:
+          '${_customers.length} ${_localizations.customers.toLowerCase()}',
     );
   }
 
@@ -851,8 +857,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
   /// Desktop/mobile Collect — opens ledger and receive-payment sheet.
   void _openCollectPayment(Map<String, dynamic> customer) {
-    final pending =
-        (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0;
+    final pending = (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0;
     if (pending <= 0) {
       if (mounted) {
         GlassyToast.show(context, 'No pending amount to collect');
@@ -861,7 +866,6 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     }
     _openCustomerTransactions(customer, autoOpenReceivePayment: true);
   }
-
 
   bool _isGeneratingReport = false;
 
@@ -872,36 +876,39 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     if (_isGeneratingReport) return;
     _isGeneratingReport = true;
 
-    final navigator = Navigator.of(context, rootNavigator: true);
+    BuildContext? dialogContext;
     var dialogOpen = true;
     void closeDialog() {
       if (dialogOpen) {
         dialogOpen = false;
-        navigator.pop();
+        final ctx = dialogContext;
+        if (ctx != null && ctx.mounted) Navigator.of(ctx).pop();
       }
     }
 
     showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
+      builder: (ctx) {
+        dialogContext = ctx;
+        return const Center(child: CircularProgressIndicator());
+      },
     );
 
     try {
       final service = CustomerPendingReportService.instance;
-      final report = await service.load(customer);
+      final shopFuture = ShopRepository()
+          .getShopDetails()
+          .timeout(const Duration(seconds: 5), onTimeout: () => Shop.empty)
+          .catchError((Object _) => Shop.empty);
+      final report = await service
+          .load(customer)
+          .timeout(const Duration(seconds: 30));
+      final shop = await shopFuture;
 
-      Shop shop;
-      try {
-        shop = await ShopRepository().getShopDetails().timeout(
-          const Duration(seconds: 5),
-          onTimeout: () => Shop.empty,
-        );
-      } catch (_) {
-        shop = Shop.empty;
-      }
-
-      final bytes = await service.buildPdf(report, shop);
+      final bytes = await service
+          .buildPdf(report, shop)
+          .timeout(const Duration(seconds: 30));
       final safeName = report.customerName
           .replaceAll(RegExp(r'[^\w\s]'), '')
           .trim()
@@ -938,6 +945,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
             'Pending ₹${CustomerPendingReportService.formatAmount(report.totalPending)}',
         customerPhone: report.phone.isEmpty ? null : report.phone,
         whatsAppMessage: report.phone.isEmpty ? null : message,
+        // Light render: a 300 dpi A4 bitmap is ~35 MB and gets the app killed
+        // while WhatsApp is open (black screen / restart on return).
+        renderDpi: 130,
       );
     } catch (e) {
       debugPrint('[EnhancedCustomer] Pending report failed: $e');
@@ -1123,9 +1133,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   Widget _buildFormSheet() {
     final action = DrawerBottomBar(
       action: AppPillButton(
-        label: _isEditing
-            ? _localizations.update
-            : _localizations.addCustomer,
+        label: _isEditing ? _localizations.update : _localizations.addCustomer,
         icon: Icons.check_rounded,
         loading: _isSaving,
         expanded: !_isEditing,
@@ -1136,78 +1144,78 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       context: context,
       action: action,
       body: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!DesktopCanvas.isDesktopPlatform) const GlassSheetHandle(),
+            if (!DesktopCanvas.isDesktopPlatform) const SizedBox(height: 8),
+            // Title
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                if (!DesktopCanvas.isDesktopPlatform) const GlassSheetHandle(),
-                if (!DesktopCanvas.isDesktopPlatform) const SizedBox(height: 8),
-                // Title
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _isEditing
-                          ? _localizations.editCustomer
-                          : _localizations.addNewCustomer,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.accent(context),
-                        fontFamily: 'Literata',
-                      ),
-                    ),
-                    if (!DesktopCanvas.isDesktopPlatform)
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () {
-                          _clearForm();
-                          Navigator.pop(context);
-                        },
-                      ),
-                  ],
+                Text(
+                  _isEditing
+                      ? _localizations.editCustomer
+                      : _localizations.addNewCustomer,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.accent(context),
+                    fontFamily: 'Literata',
+                  ),
                 ),
-                const SizedBox(height: 20),
-                _buildField(
-                  label: _localizations.firstName,
-                  controller: _firstNameController,
-                  icon: Icons.person_outline,
-                  isRequired: true,
-                ),
-                const SizedBox(height: 14),
-                _buildField(
-                  label: _localizations.middleName,
-                  controller: _middleNameController,
-                  icon: Icons.person_outline,
-                ),
-                const SizedBox(height: 14),
-                _buildField(
-                  label: _localizations.lastName,
-                  controller: _lastNameController,
-                  icon: Icons.person_outline,
-                  isRequired: true,
-                ),
-                const SizedBox(height: 14),
-                _buildField(
-                  label: _localizations.contactNumber,
-                  controller: _contactController,
-                  icon: Icons.phone_outlined,
-                  keyboardType: TextInputType.phone,
-                  isRequired: true,
-                  maxLength: 10,
-                ),
-                const SizedBox(height: 14),
-                _buildField(
-                  label: _localizations.address,
-                  controller: _addressController,
-                  icon: Icons.location_on_outlined,
-                  maxLines: 3,
-                  isRequired: true,
-                ),
+                if (!DesktopCanvas.isDesktopPlatform)
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () {
+                      _clearForm();
+                      Navigator.pop(context);
+                    },
+                  ),
               ],
             ),
-          ),
+            const SizedBox(height: 20),
+            _buildField(
+              label: _localizations.firstName,
+              controller: _firstNameController,
+              icon: Icons.person_outline,
+              isRequired: true,
+            ),
+            const SizedBox(height: 14),
+            _buildField(
+              label: _localizations.middleName,
+              controller: _middleNameController,
+              icon: Icons.person_outline,
+            ),
+            const SizedBox(height: 14),
+            _buildField(
+              label: _localizations.lastName,
+              controller: _lastNameController,
+              icon: Icons.person_outline,
+              isRequired: true,
+            ),
+            const SizedBox(height: 14),
+            _buildField(
+              label: _localizations.contactNumber,
+              controller: _contactController,
+              icon: Icons.phone_outlined,
+              keyboardType: TextInputType.phone,
+              isRequired: true,
+              maxLength: 10,
+            ),
+            const SizedBox(height: 14),
+            _buildField(
+              label: _localizations.address,
+              controller: _addressController,
+              icon: Icons.location_on_outlined,
+              maxLines: 3,
+              isRequired: true,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1529,8 +1537,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
                             icon: Icons.visibility_rounded,
                             label: localizations.viewBalance,
                             onTap: onViewDetails,
-                            isPrimary:
-                                pendingAmount <= 0 || onCollect == null,
+                            isPrimary: pendingAmount <= 0 || onCollect == null,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -1551,13 +1558,13 @@ class _CustomerDetailsSheet extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    ],
-                  ),
+                  ],
                 ),
               ),
             ),
           ),
-        ],
+        ),
+      ],
     );
   }
 

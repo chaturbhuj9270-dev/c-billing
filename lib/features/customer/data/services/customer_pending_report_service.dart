@@ -4,8 +4,10 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../../../billing/offline/controllers/bill_offline_controller.dart';
+import '../../../billing/offline/entities/bill_entity.dart';
 import '../../../event_order/domain/entities/event_order.dart';
 import '../../../event_order/offline/controllers/event_order_offline_controller.dart';
+import '../../../event_order/offline/entities/event_order_entity.dart';
 import '../../../shop/domain/entities/shop.dart';
 import '../../../../core/printing/upi_payment_uri.dart';
 
@@ -85,6 +87,10 @@ class CustomerPendingReportService {
 
   static final DateFormat _dateFmt = DateFormat('dd MMM yyyy');
 
+  /// A slow / blocked local query must never keep the report loader spinning;
+  /// the statement then still adds up to the ledger through the "Other" row.
+  static const Duration _queryTimeout = Duration(seconds: 8);
+
   /// Rupee amount for messages: no decimals when whole.
   static String formatAmount(double amount) {
     return amount == amount.roundToDouble()
@@ -96,8 +102,8 @@ class CustomerPendingReportService {
 
   /// Builds the report for a customer map from the customer list.
   Future<CustomerPendingReport> load(Map<String, dynamic> customer) async {
-    final name =
-        '${customer['firstName'] ?? ''} ${customer['lastName'] ?? ''}'.trim();
+    final name = '${customer['firstName'] ?? ''} ${customer['lastName'] ?? ''}'
+        .trim();
     final serverId = (customer['serverId'] ?? '').toString();
     final localId = (customer['localId'] ?? '').toString();
     final listId = (customer['id'] ?? '').toString();
@@ -110,51 +116,56 @@ class CustomerPendingReportService {
       if (int.tryParse(localId) != null) 'local_$localId',
     }..removeWhere((id) => id.isEmpty);
 
-    final bills = <int, PendingBillRow>{};
-    for (final id in billIds) {
-      try {
-        for (final bill in await BillOfflineController.instance
-            .getBillsByCustomerId(id)) {
-          if (bill.pendingAmount <= 0.009) continue;
-          bills[bill.id] = PendingBillRow(
-            billNo: '#${bill.id}',
-            date: bill.billDate,
-            total: bill.finalAmount,
-            paid: bill.paidAmount,
-            pending: bill.pendingAmount,
-          );
-        }
-      } catch (e) {
-        debugPrint('[PendingReport] bills for $id failed: $e');
-      }
-    }
-
     final eventIds = <String>{
       serverId,
       if (int.tryParse(localId) != null) 'local_$localId',
     }..removeWhere((id) => id.isEmpty);
 
+    // One SQL query each, filtered to this customer's open rows. Loading every
+    // bill / event (with items) per id made the report slow and time out.
+    final results = await Future.wait([
+      BillOfflineController.instance
+          .getOpenBillsByCustomerIds(billIds)
+          .timeout(_queryTimeout)
+          .catchError((Object e) {
+            debugPrint('[PendingReport] bills failed: $e');
+            return <BillEntity>[];
+          }),
+      EventOrderOfflineController.instance
+          .getOpenEventOrdersByCustomerIds(eventIds)
+          .timeout(_queryTimeout)
+          .catchError((Object e) {
+            debugPrint('[PendingReport] events failed: $e');
+            return <EventOrderEntity>[];
+          }),
+    ]);
+
+    final bills = <int, PendingBillRow>{};
+    for (final bill in results[0] as List<BillEntity>) {
+      if (bill.pendingAmount <= 0.009) continue;
+      bills[bill.id] = PendingBillRow(
+        billNo: '#${bill.id}',
+        date: bill.billDate,
+        total: bill.finalAmount,
+        paid: bill.paidAmount,
+        pending: bill.pendingAmount,
+      );
+    }
+
     final events = <int, PendingEventRow>{};
-    for (final id in eventIds) {
-      try {
-        for (final order in await EventOrderOfflineController.instance
-            .getEventOrdersByCustomerId(id)) {
-          if (order.status == OrderStatus.cancelled.index ||
-              order.status == OrderStatus.convertedToBill.index) {
-            continue;
-          }
-          if (order.remainingAmount <= 0.009) continue;
-          events[order.id] = PendingEventRow(
-            name: order.orderName,
-            date: order.eventDate,
-            total: order.totalAmount,
-            paid: order.advanceAmount,
-            pending: order.remainingAmount,
-          );
-        }
-      } catch (e) {
-        debugPrint('[PendingReport] events for $id failed: $e');
+    for (final order in results[1] as List<EventOrderEntity>) {
+      if (order.status == OrderStatus.cancelled.index ||
+          order.status == OrderStatus.convertedToBill.index) {
+        continue;
       }
+      if (order.remainingAmount <= 0.009) continue;
+      events[order.id] = PendingEventRow(
+        name: order.orderName,
+        date: order.eventDate,
+        total: order.totalAmount,
+        paid: order.advanceAmount,
+        pending: order.remainingAmount,
+      );
     }
 
     final billRows = bills.values.toList()

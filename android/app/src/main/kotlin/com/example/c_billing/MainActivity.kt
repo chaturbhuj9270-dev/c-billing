@@ -50,7 +50,7 @@ class MainActivity : FlutterFragmentActivity() {
                 type = mime
                 setPackage(pkg)
                 putExtra(Intent.EXTRA_STREAM, uri)
-                putExtra(Intent.EXTRA_TEXT, message)
+                if (message.isNotEmpty()) putExtra(Intent.EXTRA_TEXT, message)
                 putExtra("jid", "$phone@s.whatsapp.net")
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }

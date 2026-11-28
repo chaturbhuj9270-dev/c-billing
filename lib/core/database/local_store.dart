@@ -236,6 +236,23 @@ extension LocalStore on AppDatabase {
     return rows.map(billFromRecord).toList();
   }
 
+  /// Bills with a balance due for any of [customerIds], filtered in SQL so only
+  /// those rows are read and decoded (the database runs on the UI isolate).
+  Future<List<BillEntity>> loadOpenBillsForCustomers(
+    Set<String> customerIds,
+  ) async {
+    if (customerIds.isEmpty) return const [];
+    final query = select(billRecords)
+      ..where(
+        (t) =>
+            t.customerId.isIn(customerIds) &
+            t.pendingAmount.isBiggerThanValue(0.009) &
+            t.syncStatus.equals(BillSyncStatus.deleted.index).not(),
+      );
+    final rows = await query.get();
+    return rows.map(billFromRecord).toList();
+  }
+
   Stream<List<BillEntity>> watchBills() {
     return select(billRecords).watch().map(
       (rows) => rows.map(billFromRecord).toList(),
@@ -264,6 +281,22 @@ extension LocalStore on AppDatabase {
 
   Future<List<EventOrderEntity>> loadEventOrders() async {
     final rows = await select(eventOrderRecords).get();
+    return rows.map(eventOrderFromRecord).toList();
+  }
+
+  /// Event orders with a balance due for any of [customerIds], filtered in SQL.
+  Future<List<EventOrderEntity>> loadOpenEventOrdersForCustomers(
+    Set<String> customerIds,
+  ) async {
+    if (customerIds.isEmpty) return const [];
+    final query = select(eventOrderRecords)
+      ..where(
+        (t) =>
+            t.customerId.isIn(customerIds) &
+            t.remainingAmount.isBiggerThanValue(0.009) &
+            t.syncStatus.equals(EventOrderSyncStatus.deleted.index).not(),
+      );
+    final rows = await query.get();
     return rows.map(eventOrderFromRecord).toList();
   }
 

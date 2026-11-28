@@ -58,6 +58,11 @@ class FilePreviewPage extends StatefulWidget {
   // document and this message already attached, so only Send is left to tap.
   final String? whatsAppMessage;
 
+  /// Optional fixed render resolution for PDF pages. Null keeps the adaptive
+  /// default (up to 300 dpi). Lower values use far less memory, which keeps the
+  /// app alive while the user is away in WhatsApp.
+  final double? renderDpi;
+
   // Optional payment QR action (UPI amount QR for bill collection).
   final VoidCallback? onViewPaymentQr;
 
@@ -87,6 +92,7 @@ class FilePreviewPage extends StatefulWidget {
     this.onClose,
     this.customerPhone,
     this.whatsAppMessage,
+    this.renderDpi,
     this.onViewPaymentQr,
     this.presentedAsDialog = false,
     this.fitPage = false,
@@ -106,6 +112,7 @@ class FilePreviewPage extends StatefulWidget {
     VoidCallback? onClose,
     String? customerPhone,
     String? whatsAppMessage,
+    double? renderDpi,
     VoidCallback? onViewPaymentQr,
     bool centered = true,
     FilePreviewDetails? details,
@@ -122,6 +129,7 @@ class FilePreviewPage extends StatefulWidget {
       onClose: onClose,
       customerPhone: customerPhone,
       whatsAppMessage: whatsAppMessage,
+      renderDpi: renderDpi,
       onViewPaymentQr: onViewPaymentQr,
       presentedAsDialog: desktop,
       fitPage: centered || desktop,
@@ -409,9 +417,9 @@ class _FilePreviewPageState extends State<FilePreviewPage>
 
       // Get screen width for optimal DPI calculation
       final screenWidth = MediaQuery.of(context).size.width;
-      final dpi = (screenWidth * 1.5)
-          .clamp(150, 300)
-          .toDouble(); // Adaptive DPI
+      final dpi =
+          widget.renderDpi ??
+          (screenWidth * 1.5).clamp(150, 300).toDouble(); // Adaptive DPI
 
       // Collect all pages first to know total count
       final pages = <Uint8List>[];
@@ -609,17 +617,32 @@ class _FilePreviewPageState extends State<FilePreviewPage>
   }
 
   // Phone number whose chat was just opened with the message; the PDF is sent
-  // to the same chat when the user comes back (see _promptSendPdf).
-  String? _awaitingPdfFor;
+  // to the same chat when the user comes back (see _promptSendPdf) or taps the
+  // WhatsApp button again within [_pdfStepWindow].
+  static const Duration _pdfStepWindow = Duration(minutes: 15);
+  String? _pdfPendingPhone;
+  DateTime? _pdfPendingAt;
+  bool _leftForWhatsApp = false;
+
+  bool _hasPendingPdf(String phone) =>
+      _pdfPendingPhone == phone &&
+      _pdfPendingAt != null &&
+      DateTime.now().difference(_pdfPendingAt!) < _pdfStepWindow;
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && _awaitingPdfFor != null) {
-      final phone = _awaitingPdfFor!;
-      _awaitingPdfFor = null;
+    if (_pdfPendingPhone == null) return;
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _leftForWhatsApp = true;
+    } else if (state == AppLifecycleState.resumed && _leftForWhatsApp) {
+      _leftForWhatsApp = false;
+      final phone = _pdfPendingPhone!;
+      if (!_hasPendingPdf(phone)) return;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _promptSendPdf(phone);
       });
+      WidgetsBinding.instance.scheduleFrame();
     }
   }
 
@@ -635,6 +658,11 @@ class _FilePreviewPageState extends State<FilePreviewPage>
     final file = widget.file;
     if (file != null && await file.exists()) {
       if (WhatsAppShareService.supportsDirectChat) {
+        // The message is already in the chat: this tap sends the PDF.
+        if (_hasPendingPdf(phone)) {
+          await _sendPendingPdf(phone, file.path);
+          return;
+        }
         if (await WhatsAppShareService.isChatReady(phone)) {
           final opened = await WhatsAppShareService.sendFileToChat(
             phone: phone,
@@ -649,7 +677,9 @@ class _FilePreviewPageState extends State<FilePreviewPage>
           context: mounted ? context : null,
         );
         if (chatOpened) {
-          _awaitingPdfFor = phone;
+          _pdfPendingPhone = phone;
+          _pdfPendingAt = DateTime.now();
+          _leftForWhatsApp = false;
           return;
         }
       }
@@ -714,16 +744,22 @@ class _FilePreviewPageState extends State<FilePreviewPage>
       ),
     );
     if (send != true || !mounted) return;
+    await _sendPendingPdf(phone, file.path);
+  }
 
+  // Sends the PDF to the chat that already has the message.
+  Future<void> _sendPendingPdf(String phone, String path) async {
     final opened = await WhatsAppShareService.sendFileToChat(
       phone: phone,
-      filePath: file.path,
+      filePath: path,
       message: '',
     );
+    _pdfPendingPhone = null;
+    _pdfPendingAt = null;
     if (opened) {
       await WhatsAppShareService.markChatReady(phone);
     } else {
-      await Share.shareXFiles([XFile(file.path)], subject: widget.fileName);
+      await Share.shareXFiles([XFile(path)], subject: widget.fileName);
     }
   }
 
