@@ -19,6 +19,7 @@ import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/features/billing/offline/controllers/bill_offline_controller.dart';
 import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
+import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
 import 'package:c_billing/features/billing/data/services/bill_sync_service.dart';
 import 'package:c_billing/features/billing/data/services/bill_report_pdf_generator.dart';
 import 'package:c_billing/common_widgets/file_preview_page.dart';
@@ -1780,6 +1781,8 @@ class _BillDetailsDialog extends StatefulWidget {
 class _BillDetailsDialogState extends State<_BillDetailsDialog>
     with SingleTickerProviderStateMixin {
   late Bill _bill;
+  // Paid money already handed back for returns on this bill (from the ledger).
+  double _cashRefund = 0;
   bool _includeReturnsInPrint = true;
   bool _isGeneratingPdf = false;
   late AppLocalizations _localizations;
@@ -1809,6 +1812,26 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
     _animController.forward();
+    if (_bill.hasAnyReturns) _loadCashRefund();
+  }
+
+  Future<void> _loadCashRefund() async {
+    try {
+      final controller = BillOfflineController.instance;
+      var entity = await controller.getBillByServerId(_bill.id);
+      final localId = int.tryParse(_bill.id);
+      if (entity == null && localId != null) {
+        entity = await controller.getBillById(localId);
+      }
+      if (entity == null) return;
+      final cash = await CustomerTransactionOfflineController.instance
+          .cashRefundForBill(entity);
+      if (mounted && (cash - _cashRefund).abs() > 0.009) {
+        setState(() => _cashRefund = cash);
+      }
+    } catch (e) {
+      debugPrint('[BillDetailsDialog] Refund lookup failed: $e');
+    }
   }
 
   @override
@@ -2584,11 +2607,21 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                   SizedBox(height: 12),
                   Container(height: 1, color: AppColors.border(context)),
                   const SizedBox(height: 12),
+                  // After a return the stored paid amount excludes the money
+                  // handed back, so show what the customer paid and the refund.
                   _buildSummaryRow(
                     _localizations.paidAmount,
-                    '₹${_bill.paidAmount.toStringAsFixed(2)}',
+                    '₹${(_bill.paidAmount + _cashRefund).toStringAsFixed(2)}',
                     valueColor: AppTheme.green,
                   ),
+                  if (_cashRefund > 0.009) ...[
+                    const SizedBox(height: 10),
+                    _buildSummaryRow(
+                      _localizations.returnRefundedToCustomer,
+                      '-₹${_cashRefund.toStringAsFixed(2)}',
+                      valueColor: AppTheme.orange,
+                    ),
+                  ],
                   const SizedBox(height: 10),
                   _buildSummaryRow(
                     _localizations.pendingAmount,

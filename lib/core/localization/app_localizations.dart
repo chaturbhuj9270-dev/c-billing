@@ -5002,6 +5002,39 @@ class AppLocalizations {
     }
   }
 
+  String get refundPaidToCustomer {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.refundPaidToCustomer;
+      case 'Marathi':
+        return MarathiLocalization.refundPaidToCustomer;
+      default:
+        return EnglishLocalization.refundPaidToCustomer;
+    }
+  }
+
+  String get returnClearedFromPending {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.returnClearedFromPending;
+      case 'Marathi':
+        return MarathiLocalization.returnClearedFromPending;
+      default:
+        return EnglishLocalization.returnClearedFromPending;
+    }
+  }
+
+  String get returnRefundedToCustomer {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.returnRefundedToCustomer;
+      case 'Marathi':
+        return MarathiLocalization.returnRefundedToCustomer;
+      default:
+        return EnglishLocalization.returnRefundedToCustomer;
+    }
+  }
+
   String get refundAmount {
     switch (languageCode) {
       case 'Hindi':

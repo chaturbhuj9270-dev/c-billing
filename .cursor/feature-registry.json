@@ -7,13 +7,15 @@
       "name": "Customer ledger, pending amount and receive payment",
       "files": [
         "lib/features/customer/",
-        "lib/core/services/customer_transaction_service.dart"
+        "lib/core/services/customer_transaction_service.dart",
+        "lib/features/billing/domain/utils/return_settlement.dart"
       ],
       "invariants": [
         "Ledger rows and the customer's pending amount are written ONLY through CustomerTransactionOfflineController (addBillTransaction / addPaymentTransaction / addReturnTransaction). Never also write the same event straight to Firestore (CustomerTransactionService.receivePayment / recordBillGenerated): that duplicated rows and doubled the balance.",
         "Receive Payment is hidden when pending <= 0 and the amount can never exceed pending (button gate, sheet validator, save guard).",
         "Every 'Bill Created' ledger row shows Bill Total / Received / Pending taken from the bill itself.",
-        "The duplicate-entry repair only matches rows with the legacy wording AND a same-amount original within 3 minutes."
+        "The duplicate-entry repair only matches rows with the legacy wording AND a same-amount original within 3 minutes.",
+        "A Bill Return ledger row reduces pending only by the part of the refund that was still owed on the bill (ReturnSettlement.clearedPending); it can be 0 for a fully paid bill. reconcileBillBalancesFromLedger takes the returned value from the bill lines (_returnedValueOf), not only from return row amounts."
       ],
       "anchors": [
         {
@@ -35,6 +37,10 @@
         {
           "file": "lib/features/customer/presentation/pages/customer_transactions_page.dart",
           "contains": "Cannot exceed pending"
+        },
+        {
+          "file": "lib/features/customer/offline/controllers/customer_transaction_offline_controller.dart",
+          "contains": "double _returnedValueOf(BillEntity bill)"
         }
       ],
       "forbidden": [
@@ -50,7 +56,8 @@
         }
       ],
       "tests": [
-        "test/regression/ledger_duplicates_test.dart"
+        "test/regression/ledger_duplicates_test.dart",
+        "test/regression/return_settlement_test.dart"
       ]
     },
     {
@@ -60,7 +67,10 @@
         "lib/features/billing/",
         "lib/core/services/inventory_integration_service.dart",
         "lib/features/billing/presentation/pages/return_bill_page.dart",
-        "lib/features/billing/offline/entities/bill_entity.dart"
+        "lib/features/billing/offline/entities/bill_entity.dart",
+        "lib/features/billing/domain/utils/return_settlement.dart",
+        "lib/features/billing/domain/utils/bill_ledger_description.dart",
+        "lib/features/billing/presentation/pages/bills_list_page.dart"
       ],
       "invariants": [
         "Received amount can never exceed the bill total (field resets to total with an error, and save clamps again).",
@@ -68,7 +78,9 @@
         "Other service charges are added on a full screen whose widget owns and disposes its own TextEditingControllers (a popup closure disposing them crashed the app).",
         "Returns reduce the bill's pending/paid and post a return ledger entry.",
         "A sale return is applied ONCE, locally (InventoryIntegrationService.processReturn); the bill, product stock and ledger rows reach Firestore through their sync services. The return page must not also call BillingService.processReturn: the pushed bill already holds the new returnedQuantity, so the server-side return counted quantity and stock twice.",
-        "A return copies each bill line with BillItemEmbedded.copyWith(returnedQuantity:), keeping GST %, HSN, units, unitsPerPack and employeeToken."
+        "A return copies each bill line with BillItemEmbedded.copyWith(returnedQuantity:), keeping GST %, HSN, units, unitsPerPack and employeeToken.",
+        "A return is settled by ReturnSettlement: the bill's pending is cleared first and only paid money is handed back. Example: customer pending 1000, bill 1200, paid 1000 (bill pending 200) -> return clears 200 from the ledger (balance 1000) and refunds 1000 in cash. The return ledger row amount is the CLEARED part only; paid money handed back never reduces an older pending balance. The Return page, confirmation dialog, success message and printed slip show the cash refund (paid amount) plus 'Cleared from pending'.",
+        "The invoice details dialog shows Paid (stored paid + cash refunded), 'Refunded to customer' and Pending for returned bills; cash refunded = returned value minus the cleared amount in the bill's return ledger rows (CustomerTransactionOfflineController.cashRefundForBill)."
       ],
       "anchors": [
         {
@@ -98,6 +110,22 @@
         {
           "file": "lib/features/billing/offline/entities/bill_entity.dart",
           "contains": "BillItemEmbedded copyWith({double? returnedQuantity})"
+        },
+        {
+          "file": "lib/core/services/inventory_integration_service.dart",
+          "contains": "ReturnSettlement.forBill("
+        },
+        {
+          "file": "lib/core/services/inventory_integration_service.dart",
+          "contains": "amount: settlement.clearedPending,"
+        },
+        {
+          "file": "lib/features/billing/presentation/pages/return_bill_page.dart",
+          "contains": "_localizations.refundPaidToCustomer"
+        },
+        {
+          "file": "lib/features/billing/presentation/pages/bills_list_page.dart",
+          "contains": "cashRefundForBill(entity)"
         }
       ],
       "forbidden": [
@@ -110,10 +138,16 @@
           "file": "lib/features/billing/presentation/pages/return_bill_page.dart",
           "contains": "_billingService.processReturn(",
           "why": "applies the return a second time on the server"
+        },
+        {
+          "file": "lib/core/services/inventory_integration_service.dart",
+          "contains": "amount: customerRefund,",
+          "why": "posting the full refund to the ledger also cancelled the customer's older pending amount and showed 0 instead of 1000"
         }
       ],
       "tests": [
-        "test/regression/bill_item_return_copy_test.dart"
+        "test/regression/bill_item_return_copy_test.dart",
+        "test/regression/return_settlement_test.dart"
       ]
     },
     {

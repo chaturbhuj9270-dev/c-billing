@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:c_billing/features/billing/data/services/bill_sync_service.dart';
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_item.dart';
+import 'package:c_billing/features/billing/domain/utils/return_settlement.dart';
 import 'package:c_billing/features/customer/data/services/customer_transaction_sync_service.dart';
 import 'package:c_billing/features/product/data/services/product_sync_service.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
@@ -55,6 +56,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
   String? _successMessage;
   bool _hasReturnProcessed =
       false; // Track if any return was successfully processed
+  double? _lastCashRefund; // paid money handed back by the last return
 
   // Track return quantities for each item (itemId -> quantity to return) Changed to double to support fractional quantities (e.g., 0.5 kg)
   Map<String, double> _returnQuantities = {};
@@ -116,6 +118,20 @@ class _ReturnBillPageState extends State<ReturnBillPage>
       listTotal += item.sellingPrice * returnQty;
     }
     return _currentBill!.chargedRefundFor(listTotal);
+  }
+
+  // How the refund splits: pending cleared first, only paid money is paid back.
+  ReturnSettlement get _settlement {
+    final bill = _currentBill;
+    if (bill == null) return ReturnSettlement.none;
+    return ReturnSettlement.forBill(
+      refund: _totalRefundAmount,
+      paid: bill.paidAmount,
+      pending: bill.pendingAmount,
+      finalAmount: bill.finalAmount,
+      priorReturned: bill.totalReturnedAmount,
+      markedPaid: bill.paymentStatus == PaymentStatus.paid,
+    );
   }
 
   // Check if any items are selected for return
@@ -361,8 +377,10 @@ class _ReturnBillPageState extends State<ReturnBillPage>
 
       if (!mounted) return;
 
+      // Paid money handed back to the customer (pending cleared is separate).
+      _lastCashRefund = localResult.cashRefund;
       final refundAmount = localResult.refundAmount > 0
-          ? localResult.refundAmount
+          ? localResult.cashRefund
           : _totalRefundAmount;
 
       // Reload from local DB so UI matches ledger / FIFO updates exactly.
@@ -418,7 +436,8 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     return PrintBillData.fromBill(
       bill,
       isReturn: hasReturns,
-      refund: hasReturns ? bill.totalReturnedAmount : null,
+      // Slip shows the paid money handed back (set after a return in this session).
+      refund: hasReturns ? (_lastCashRefund ?? bill.totalReturnedAmount) : null,
     );
   }
 
@@ -729,10 +748,15 @@ class _ReturnBillPageState extends State<ReturnBillPage>
           ),
           const SizedBox(height: 6),
           line(
-            'Refund',
-            '₹${_totalRefundAmount.toStringAsFixed(2)}',
+            _localizations.refundPaidToCustomer,
+            '₹${_settlement.cashRefund.toStringAsFixed(2)}',
             valueColor: action,
           ),
+          if (_settlement.clearedPending > 0.009)
+            line(
+              _localizations.returnClearedFromPending,
+              '₹${_settlement.clearedPending.toStringAsFixed(2)}',
+            ),
           const SizedBox(height: 16),
           if (bill != null && bill.hasReturnableItems) ...[
             Row(
@@ -1228,17 +1252,19 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        '${_localizations.refundAmount}:',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.orange800,
+                      Flexible(
+                        child: Text(
+                          '${_localizations.refundPaidToCustomer}:',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.orange800,
+                          ),
                         ),
                       ),
                       Text(
-                        '₹${_totalRefundAmount.toStringAsFixed(2)}',
+                        '₹${_settlement.cashRefund.toStringAsFixed(2)}',
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 18,
@@ -1248,6 +1274,33 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                       ),
                     ],
                   ),
+                  if (_settlement.clearedPending > 0.009) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            '${_localizations.returnClearedFromPending}:',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 13,
+                              color: AppTheme.orange800,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '₹${_settlement.clearedPending.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.orange800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -1831,6 +1884,15 @@ class _ReturnConfirmationDialog extends StatelessWidget {
   AppLocalizations get _localizations =>
       AppLocalizations(LanguageService.instance.currentLanguage);
 
+  ReturnSettlement get _settlement => ReturnSettlement.forBill(
+    refund: totalRefundAmount,
+    paid: bill.paidAmount,
+    pending: bill.pendingAmount,
+    finalAmount: bill.finalAmount,
+    priorReturned: bill.totalReturnedAmount,
+    markedPaid: bill.paymentStatus == PaymentStatus.paid,
+  );
+
   double get _totalReturnQuantity {
     return returnQuantities.values.fold(0.0, (total, qty) => total + qty);
   }
@@ -2011,7 +2073,7 @@ class _ReturnConfirmationDialog extends StatelessWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            '${_localizations.refundAmount}:',
+                            '${_localizations.refundPaidToCustomer}:',
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 14,
@@ -2022,7 +2084,7 @@ class _ReturnConfirmationDialog extends StatelessWidget {
                         ),
                         Flexible(
                           child: Text(
-                            '₹${totalRefundAmount.toStringAsFixed(2)}',
+                            '₹${_settlement.cashRefund.toStringAsFixed(2)}',
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 16,
@@ -2034,6 +2096,35 @@ class _ReturnConfirmationDialog extends StatelessWidget {
                         ),
                       ],
                     ),
+                    if (_settlement.clearedPending > 0.009) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              '${_localizations.returnClearedFromPending}:',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 12,
+                                color: AppTheme.grey600,
+                              ),
+                            ),
+                          ),
+                          Flexible(
+                            child: Text(
+                              '₹${_settlement.clearedPending.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),

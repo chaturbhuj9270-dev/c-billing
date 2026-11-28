@@ -36,9 +36,18 @@ String buildReturnLedgerDescription({
   required double refundAmount,
   List<BillExtraCharge> extraCharges = const [],
   bool fullReturn = false,
+  double? cashRefund,
+  double? clearedPending,
 }) {
   final parts = <String>['Return for bill #$billId'];
   parts.add('Refund ₹${_money(refundAmount)}');
+  // Split of the refund: money handed back vs. taken off the pending amount.
+  if (cashRefund != null && cashRefund > 0.009) {
+    parts.add('₹${_money(cashRefund)} paid back to customer');
+  }
+  if (clearedPending != null && clearedPending > 0.009) {
+    parts.add('₹${_money(clearedPending)} cleared from pending');
+  }
   final validCharges = extraCharges
       .where((c) => c.label.trim().isNotEmpty && c.amount > 0)
       .toList();

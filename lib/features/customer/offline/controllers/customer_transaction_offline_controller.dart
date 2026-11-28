@@ -6,6 +6,7 @@ import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../../../core/utils/date_time_parser.dart';
 import '../../../billing/offline/controllers/bill_offline_controller.dart';
 import '../../../billing/offline/entities/bill_entity.dart';
+import '../../../billing/domain/utils/return_settlement.dart';
 import '../entities/customer_transaction_entity.dart';
 import '../entities/customer_entity.dart';
 
@@ -211,6 +212,41 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     return null;
   }
 
+  /// Value of the goods returned on a bill (list price x returned quantity x
+  /// the item charge ratio), the same amount a return refunds.
+  double _returnedValueOf(BillEntity bill) {
+    var value = 0.0;
+    for (final item in bill.items) {
+      value += item.sellingPrice * item.returnedQuantity;
+    }
+    return value * bill.itemChargeRatio;
+  }
+
+  /// Paid money already handed back to the customer for [bill]: returned value
+  /// minus what the return ledger rows took off the pending amount. 0 when the
+  /// bill has no return row (walk-in bill or a return from before this split).
+  Future<double> cashRefundForBill(BillEntity bill) async {
+    final keys = <String>{
+      if (bill.serverId != null && bill.serverId!.isNotEmpty) bill.serverId!,
+      'local_${bill.id}',
+      '${bill.id}',
+    };
+    var cleared = 0.0;
+    var rows = 0;
+    for (final tx in await _db.loadTransactions()) {
+      if (tx.syncStatus == TransactionSyncStatus.deleted) continue;
+      if (tx.transactionType != TransactionType.billReturn) continue;
+      if (!keys.contains(tx.referenceId)) continue;
+      cleared += tx.amount;
+      rows++;
+    }
+    if (rows == 0) return 0;
+    return ReturnSettlement.cashRefundFromLedger(
+      returnedValue: _returnedValueOf(bill),
+      clearedPending: cleared,
+    );
+  }
+
   /// Rebuild each bill's paid/pending from ledger payments/returns for a customer.
   Future<void> reconcileBillBalancesFromLedger(String customerId) async {
     final customer = await _getCustomerByIdOrServerId(customerId);
@@ -258,7 +294,13 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     final rebuildFromLedger = <int, bool>{};
 
     for (final bill in ordered) {
-      final returned = linkedReturned[bill.id] ?? 0.0;
+      // A return ledger row holds only the part taken off the pending amount;
+      // the paid money handed back is not in it. The returned value therefore
+      // comes from the bill lines (older rows hold the same full value).
+      final ledgerReturned = linkedReturned[bill.id] ?? 0.0;
+      final returned = ledgerReturned > _returnedValueOf(bill)
+          ? ledgerReturned
+          : _returnedValueOf(bill);
       final linked = linkedPaid[bill.id] ?? 0.0;
       final fromLedger =
           (bill.finalAmount - returned).clamp(0.0, double.infinity);

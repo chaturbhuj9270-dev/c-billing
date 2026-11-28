@@ -557,6 +557,9 @@ class EnglishLocalization {
   static const String originalQuantity = 'Original Quantity';
   static const String returnQty = 'Return Qty';
   static const String refundAmount = 'Refund Amount';
+  static const String refundPaidToCustomer = 'Refund to customer (paid amount)';
+  static const String returnClearedFromPending = 'Cleared from pending';
+  static const String returnRefundedToCustomer = 'Refunded to customer';
   static const String selectItemsToReturn = 'Select Items to Return';
   static const String itemsToReturn = 'Items to return';
   static const String selectAll = 'Select All';

@@ -564,6 +564,9 @@ class MarathiLocalization {
   static const String originalQuantity = 'मूळ प्रमाण';
   static const String returnQty = 'परतावा प्रमाण';
   static const String refundAmount = 'परतावा रक्कम';
+  static const String refundPaidToCustomer = 'ग्राहकाला परतावा (भरलेली रक्कम)';
+  static const String returnClearedFromPending = 'बाकीमधून कमी केले';
+  static const String returnRefundedToCustomer = 'ग्राहकाला परत केले';
   static const String selectItemsToReturn = 'परत करण्यासाठी वस्तू निवडा';
   static const String itemsToReturn = 'परत करायच्या वस्तू';
   static const String selectAll = 'सर्व निवडा';

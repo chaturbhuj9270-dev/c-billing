@@ -11,6 +11,8 @@ import '../../features/billing/domain/entities/bill_item.dart';
 import '../../features/billing/domain/entities/bill_extra_charge.dart';
 import '../../features/billing/domain/entities/bill_tax_settings.dart';
 import '../../features/billing/domain/entities/bill_service_charge.dart';
+import '../../features/billing/domain/utils/bill_ledger_description.dart';
+import '../../features/billing/domain/utils/return_settlement.dart';
 import '../../features/customer/offline/controllers/customer_transaction_offline_controller.dart';
 import '../services/dashboard_refresh_service.dart';
 
@@ -448,6 +450,8 @@ class InventoryIntegrationService {
       // 3. Update BillEntity with return info
       final bill = await _billController.getBillById(billLocalId);
       var customerRefund = totalRefundAmount;
+      var cashRefund = totalRefundAmount;
+      var clearedPending = 0.0;
       if (bill != null) {
         // Update return quantities on bill items (match line id first, then product).
         final remainingReturns = List<ReturnItemDetail>.from(returnItems);
@@ -483,20 +487,45 @@ class InventoryIntegrationService {
               returnItem.sellingPrice *
               bill.itemChargeRatio;
         }
-        final appliedToDue = customerRefund > bill.pendingAmount
-            ? bill.pendingAmount
-            : customerRefund;
-        final pendingAfterReturn = bill.pendingAmount - appliedToDue;
-        final paymentStatus = pendingAfterReturn <= 0.009
-            ? BillPaymentStatus.paid
-            : (bill.paidAmount > 0
-                  ? BillPaymentStatus.partiallyPaid
-                  : BillPaymentStatus.pending);
+        // Settle the refund: pending is cleared first and only what the bill
+        // really received is paid back in cash. Only the cleared part changes
+        // the customer's ledger (a paid-back amount never reduces an older
+        // pending balance).
+        var priorReturned = 0.0;
+        for (final item in bill.items) {
+          priorReturned +=
+              item.sellingPrice * item.returnedQuantity * bill.itemChargeRatio;
+        }
+        final settlement = ReturnSettlement.forBill(
+          refund: customerRefund,
+          paid: bill.paidAmount,
+          pending: bill.pendingAmount,
+          finalAmount: bill.finalAmount,
+          priorReturned: priorReturned,
+          markedPaid: bill.paymentStatus == BillPaymentStatus.paid,
+        );
+        cashRefund = settlement.cashRefund;
+        clearedPending = settlement.clearedPending;
 
-        final refundFromPaid = customerRefund - appliedToDue;
-        final paidAfterReturn = (bill.paidAmount - refundFromPaid)
+        final storedPaid = bill.paidAmount + bill.pendingAmount <= 0.009 &&
+                bill.paymentStatus == BillPaymentStatus.paid
+            ? (bill.finalAmount - priorReturned).clamp(0.0, double.infinity)
+            : bill.paidAmount;
+        final storedPending = bill.paidAmount + bill.pendingAmount <= 0.009 &&
+                bill.paymentStatus != BillPaymentStatus.paid
+            ? (bill.finalAmount - priorReturned).clamp(0.0, double.infinity)
+            : bill.pendingAmount;
+        final pendingAfterReturn = (storedPending - settlement.clearedPending)
             .clamp(0.0, double.infinity)
             .toDouble();
+        final paidAfterReturn = (storedPaid - settlement.cashRefund)
+            .clamp(0.0, double.infinity)
+            .toDouble();
+        final paymentStatus = pendingAfterReturn <= 0.009
+            ? BillPaymentStatus.paid
+            : (paidAfterReturn > 0
+                  ? BillPaymentStatus.partiallyPaid
+                  : BillPaymentStatus.pending);
 
         await _billController.updateBill(
           id: billLocalId,
@@ -508,19 +537,26 @@ class InventoryIntegrationService {
           paymentStatus: paymentStatus,
         );
 
-        // Always post the full customer refund to the ledger (creates a credit
-        // when the bill was already paid). Pending-only posts understated returns.
+        // Ledger: reduce pending by the cleared part only. The row is still
+        // written when that part is 0 (fully paid bill) so the history shows
+        // the return and the cash that was handed back.
         final customerId = bill.customerId;
         if (customerId != null &&
             customerId.isNotEmpty &&
             customerRefund > 0.009) {
+          final billKey = bill.serverId ?? 'local_${bill.id}';
           await CustomerTransactionOfflineController.instance
               .addReturnTransaction(
                 customerId: customerId,
                 customerName: bill.customerName ?? '',
-                amount: customerRefund,
-                billId: bill.serverId ?? 'local_${bill.id}',
-                description: 'Return for bill ${bill.serverId ?? bill.id}',
+                amount: settlement.clearedPending,
+                billId: billKey,
+                description: buildReturnLedgerDescription(
+                  billId: '${bill.serverId ?? bill.id}',
+                  refundAmount: customerRefund,
+                  cashRefund: settlement.cashRefund,
+                  clearedPending: settlement.clearedPending,
+                ),
               );
         }
       }
@@ -531,7 +567,11 @@ class InventoryIntegrationService {
         includeCustomer: true,
       );
 
-      return IntegratedReturnResult.success(refundAmount: customerRefund);
+      return IntegratedReturnResult.success(
+        refundAmount: customerRefund,
+        cashRefund: cashRefund,
+        clearedPending: clearedPending,
+      );
     } catch (e) {
       debugPrint('[Integration] Return failed: $e');
       return IntegratedReturnResult.failure('Failed to process return: $e');
@@ -837,16 +877,34 @@ class IntegratedBillResult {
 class IntegratedReturnResult {
   final bool success;
   final String? errorMessage;
+  /// Value of the returned goods charged to the customer.
   final double refundAmount;
+
+  /// Paid money handed back to the customer.
+  final double cashRefund;
+
+  /// Part of the refund taken off the customer's pending amount.
+  final double clearedPending;
 
   IntegratedReturnResult({
     required this.success,
     this.errorMessage,
     this.refundAmount = 0.0,
+    this.cashRefund = 0.0,
+    this.clearedPending = 0.0,
   });
 
-  factory IntegratedReturnResult.success({required double refundAmount}) {
-    return IntegratedReturnResult(success: true, refundAmount: refundAmount);
+  factory IntegratedReturnResult.success({
+    required double refundAmount,
+    double? cashRefund,
+    double clearedPending = 0.0,
+  }) {
+    return IntegratedReturnResult(
+      success: true,
+      refundAmount: refundAmount,
+      cashRefund: cashRefund ?? refundAmount,
+      clearedPending: clearedPending,
+    );
   }
 
   factory IntegratedReturnResult.failure(String message) {

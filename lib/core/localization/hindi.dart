@@ -561,6 +561,9 @@ class HindiLocalization {
   static const String originalQuantity = 'मूल मात्रा';
   static const String returnQty = 'वापसी मात्रा';
   static const String refundAmount = 'रिफंड राशि';
+  static const String refundPaidToCustomer = 'ग्राहक को रिफंड (चुकाई गई राशि)';
+  static const String returnClearedFromPending = 'बकाया से कम किया गया';
+  static const String returnRefundedToCustomer = 'ग्राहक को लौटाया गया';
   static const String selectItemsToReturn = 'वापस करने के लिए आइटम चुनें';
   static const String itemsToReturn = 'वापसी के लिए आइटम';
   static const String selectAll = 'सभी चुनें';
