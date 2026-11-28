@@ -384,8 +384,7 @@ class HindiLocalization {
   static const String offerFirst100Users =
       'सीमित अवधि ऑफर — केवल पहले 100 उपयोगकर्ताओं के लिए।';
   static const String justPerMonth = 'केवल ₹333 प्रति माह।';
-  static String justPerMonthAmount(String amount) =>
-      'केवल ₹$amount प्रति माह।';
+  static String justPerMonthAmount(String amount) => 'केवल ₹$amount प्रति माह।';
   static const String whatsIncluded = 'क्या शामिल है।';
   static const String everythingIncludedSubtitle =
       'आज आप जो भी उपयोग करते हैं, बिना किसी सीमा के।';
@@ -403,7 +402,8 @@ class HindiLocalization {
       'क्लाउड बैकअप और प्राथमिकता समर्थन';
   static const String subscribeNow = 'अभी सदस्यता लें';
   static const String renewNow = 'अभी नवीनीकरण करें';
-  static const String needHelpContactUs = 'सहायता चाहिए? सपोर्ट से संपर्क करें।';
+  static const String needHelpContactUs =
+      'सहायता चाहिए? सपोर्ट से संपर्क करें।';
   static const String poweredBy = 'द्वारा संचालित ';
   static const String chaturbhujSolutions = 'चतुर्भुज सॉल्यूशंस';
 
@@ -430,7 +430,8 @@ class HindiLocalization {
       'कैशफ्री चेकआउट खोलने के लिए सुरक्षित भुगतान पर टैप करें। सफल भुगतान के बाद आपकी सदस्यता अपने आप सक्रिय हो जाएगी।';
   static const String paySecurely = 'सुरक्षित भुगतान करें';
   static const String processingPayment = 'प्रक्रिया जारी...';
-  static const String preparingSecurePayment = 'सुरक्षित भुगतान तैयार हो रहा है...';
+  static const String preparingSecurePayment =
+      'सुरक्षित भुगतान तैयार हो रहा है...';
   static const String activatingSubscription = 'सदस्यता सक्रिय हो रही है...';
   static const String subscriptionActivatedSuccess =
       'सदस्यता सक्रिय! C-Billing में आपका स्वागत है।';
@@ -648,7 +649,8 @@ class HindiLocalization {
       'दुकान का QR स्कैन करें और ऊपर दिखी राशि का भुगतान करें';
   static const String addUpiIdInShopDetails =
       'राशि वाला QR बनाने के लिए दुकान विवरण (बैंक विवरण) में अपना UPI ID जोड़ें';
-  static const String noAmountToCollect = 'इस बिल के लिए कोई राशि वसूल नहीं करनी है';
+  static const String noAmountToCollect =
+      'इस बिल के लिए कोई राशि वसूल नहीं करनी है';
   static const String failedToGenerateQr = 'QR बनाने में विफल';
   static const String upiIdCopied = 'UPI ID कॉपी हो गई';
   static const String paymentReceived = 'भुगतान प्राप्त';
@@ -1169,10 +1171,10 @@ class HindiLocalization {
     String amount,
     String date,
   ) =>
-      'आपकी ₹$amount बकाया राशि $shop के पास बाकी है। '
-      'कृपया जल्द से जल्द भुगतान करें।\n'
-      'यदि पहले ही भुगतान कर दिया है तो कृपया इसे अनदेखा करें।\n\n'
-      'जुड़े रहने के लिए धन्यवाद!';
+      'प्रिय ग्राहक, $shop के साथ आपकी ₹$amount की बकाया राशि अभी बाकी है। '
+      'कृपया इसे जल्द से जल्द चुकता करें।\n\n'
+      'यदि पहले ही भुगतान कर दिया है तो कृपया इस संदेश को अनदेखा करें।\n\n'
+      'आपके सहयोग और व्यापार के लिए धन्यवाद!';
   static const String customerReportSendPdfTitle = 'PDF रिपोर्ट भेजें';
   static const String customerReportSendPdfBody =
       'पहले WhatsApp में संदेश भेजें, फिर वापस आकर "PDF भेजें" दबाएँ ताकि रिपोर्ट उसी चैट में जाए।';

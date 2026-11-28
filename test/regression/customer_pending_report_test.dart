@@ -54,6 +54,16 @@ void main() {
   test('amount formatting', () {
     expect(CustomerPendingReportService.formatAmount(200), '200');
     expect(CustomerPendingReportService.formatAmount(200.5), '200.50');
+    expect(CustomerPendingReportService.formatAmountGrouped(2500), '2,500');
+    expect(CustomerPendingReportService.formatAmountGrouped(200), '200');
+    expect(
+      CustomerPendingReportService.formatAmountGrouped(125000),
+      '1,25,000',
+    );
+    expect(
+      CustomerPendingReportService.formatAmountGrouped(1234567.5),
+      '12,34,567.50',
+    );
   });
 
   test('statement PDF is generated', () async {
@@ -66,8 +76,14 @@ void main() {
 
   test('WhatsApp number is normalised with country code', () {
     expect(WhatsAppShareService.normalizePhone('98765 43210'), '919876543210');
-    expect(WhatsAppShareService.normalizePhone('+91 98765-43210'), '919876543210');
-    expect(WhatsAppShareService.normalizePhone('00919876543210'), '919876543210');
+    expect(
+      WhatsAppShareService.normalizePhone('+91 98765-43210'),
+      '919876543210',
+    );
+    expect(
+      WhatsAppShareService.normalizePhone('00919876543210'),
+      '919876543210',
+    );
   });
 
   test('message is localised in all three languages with amount and shop', () {
@@ -81,14 +97,16 @@ void main() {
       expect(msg, contains('My Shop'));
       expect(msg, contains('₹200'));
     }
-    final en = AppLocalizations.of('English').customerPendingWhatsAppMessage(
-      'Vasant',
-      'My Shop',
-      '200',
-      '27 Nov 2026',
+    final en = AppLocalizations.of(
+      'English',
+    ).customerPendingWhatsAppMessage('Vasant', 'My Shop', '200', '27 Nov 2026');
+    expect(en, contains('Dear Customer'));
+    expect(
+      en,
+      contains('Kindly clear the amount at your earliest convenience'),
     );
-    expect(en, contains('complete the transaction ASAP'));
-    expect(en, contains('Ignore if already paid'));
-    expect(en, contains('Thanks for connecting'));
+    expect(en, contains('If already paid, please ignore this message.'));
+    expect(en, contains('Thank you for your support and business!'));
+    expect(en, contains('₹200 with My Shop'));
   });
 }

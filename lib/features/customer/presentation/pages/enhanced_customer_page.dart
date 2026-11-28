@@ -929,7 +929,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       final message = _localizations.customerPendingWhatsAppMessage(
         report.customerName,
         shopName,
-        CustomerPendingReportService.formatAmount(report.totalPending),
+        CustomerPendingReportService.formatAmountGrouped(report.totalPending),
         CustomerPendingReportService.formatDate(report.generatedAt),
       );
 

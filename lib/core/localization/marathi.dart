@@ -431,7 +431,8 @@ class MarathiLocalization {
       'कॅशफ्री चेकआउट उघडण्यासाठी सुरक्षित पेमेंट वर टॅप करा. यशस्वी पेमेंटनंतर तुमची सदस्यता आपोआप सक्रिय होईल.';
   static const String paySecurely = 'सुरक्षित पेमेंट करा';
   static const String processingPayment = 'प्रक्रिया सुरू...';
-  static const String preparingSecurePayment = 'सुरक्षित पेमेंट तयार होत आहे...';
+  static const String preparingSecurePayment =
+      'सुरक्षित पेमेंट तयार होत आहे...';
   static const String activatingSubscription = 'सदस्यता सक्रिय होत आहे...';
   static const String subscriptionActivatedSuccess =
       'सदस्यता सक्रिय! C-Billing मध्ये स्वागत आहे.';
@@ -651,7 +652,8 @@ class MarathiLocalization {
       'दुकानाचा QR स्कॅन करा आणि वर दिसलेली रक्कम भरा';
   static const String addUpiIdInShopDetails =
       'रक्कम असलेला QR तयार करण्यासाठी दुकान तपशील (बँक तपशील) मध्ये तुमचा UPI ID जोडा';
-  static const String noAmountToCollect = 'या बिलासाठी वसूल करण्याची रक्कम नाही';
+  static const String noAmountToCollect =
+      'या बिलासाठी वसूल करण्याची रक्कम नाही';
   static const String failedToGenerateQr = 'QR तयार करण्यात अयशस्वी';
   static const String upiIdCopied = 'UPI ID कॉपी झाली';
   static const String paymentReceived = 'पेमेंट प्राप्त';
@@ -1169,10 +1171,10 @@ class MarathiLocalization {
     String amount,
     String date,
   ) =>
-      'तुमची ₹$amount थकबाकी $shop कडे बाकी आहे. '
-      'कृपया लवकरात लवकर रक्कम भरा.\n'
-      'आधीच भरले असल्यास कृपया दुर्लक्ष करा.\n\n'
-      'जोडलेले राहिल्याबद्दल धन्यवाद!';
+      'प्रिय ग्राहक, $shop कडे असलेली आपली ₹$amount ची थकबाकी अजूनही बाकी आहे. '
+      'कृपया ती लवकरात लवकर भरावी.\n\n'
+      'आधीच भरली असल्यास कृपया हा संदेश दुर्लक्षित करावा.\n\n'
+      'आपल्या सहकार्याबद्दल आणि व्यवसायाबद्दल धन्यवाद!';
   static const String customerReportSendPdfTitle = 'PDF अहवाल पाठवा';
   static const String customerReportSendPdfBody =
       'आधी WhatsApp मध्ये संदेश पाठवा, मग परत येऊन "PDF पाठवा" दाबा म्हणजे अहवाल त्याच चॅटमध्ये जाईल.';

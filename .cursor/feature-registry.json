@@ -489,7 +489,7 @@
         "The report is READ-ONLY: it reads bills / event orders and takes the total from the customer card's ledger value. It never writes ledger entries or changes balances (no CustomerTransactionOfflineController in the report service).",
         "The statement always adds up to the customer's pending total: open bills + open events + an 'Opening balance / adjustments' row for any difference.",
         "The report icon only shows for customers with pending > 0; generating it must not change the existing Collect / Finance / Transactions / call / SMS / WhatsApp icons.",
-        "FilePreviewPage's existing WhatsApp/Share behaviour is unchanged unless whatsAppMessage is passed. With a message on Android: the first time for a number the customer's chat is opened with the message typed in (wa.me, always the right chat), then when the user returns a dialog sends the PDF to that chat (jid intent through the c_billing/whatsapp channel) and remembers the number; later sends open the chat with PDF + message in one step. Failures fall back to the share sheet; web/desktop save the PDF and open wa.me with the message.",
+        "FilePreviewPage's existing WhatsApp/Share behaviour is unchanged unless whatsAppMessage is passed. With a message on Android the PDF and the message (as its caption) go in ONE share intent targeted at the customer's chat (jid + direct-share shortcut id through the c_billing/whatsapp channel), so the chat opens with both attached and only Send is left. Do not go back to opening wa.me with text only: that sends the message without the PDF. If the native share is unavailable the share sheet gets the PDF + message; web/desktop save the PDF and open wa.me with the message.",
         "The Android FileProvider (billing_fileprovider) and the WhatsApp <queries> entries must stay, otherwise the direct chat silently falls back to the share sheet.",
         "The report preview renders PDF pages at a low fixed dpi (renderDpi: 130). A 300 dpi A4 bitmap is ~35 MB and gets the app killed (black screen / restart) while the user is in WhatsApp. Other previews keep the adaptive default.",
         "User text lives in all three localization files (customerPendingReport, customerReportFailed, customerPendingWhatsAppMessage, ...).",
@@ -511,10 +511,6 @@
         {
           "file": "lib/common_widgets/file_preview_page.dart",
           "contains": "_sendToCustomerChat"
-        },
-        {
-          "file": "lib/common_widgets/file_preview_page.dart",
-          "contains": "_promptSendPdf"
         },
         {
           "file": "lib/core/services/whatsapp_share_service.dart",
@@ -559,6 +555,14 @@
         {
           "file": "lib/features/customer/data/services/customer_pending_report_service.dart",
           "contains": "getOpenBillsByCustomerIds"
+        },
+        {
+          "file": "android/app/src/main/kotlin/com/example/c_billing/MainActivity.kt",
+          "contains": "EXTRA_SHORTCUT_ID"
+        },
+        {
+          "file": "android/app/src/main/kotlin/com/example/c_billing/MainActivity.kt",
+          "contains": "EXTRA_STREAM"
         }
       ],
       "forbidden": [

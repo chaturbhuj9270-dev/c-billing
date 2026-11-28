@@ -100,6 +100,27 @@ class CustomerPendingReportService {
 
   static String formatDate(DateTime date) => _dateFmt.format(date);
 
+  /// Amount for the WhatsApp text with thousands separators (2,500 / 1,25,000).
+  static String formatAmountGrouped(double amount) {
+    final whole = formatAmount(amount.abs());
+    final parts = whole.split('.');
+    var digits = parts[0];
+    final sign = amount < 0 ? '-' : '';
+    if (digits.length <= 3) {
+      return '$sign$whole';
+    }
+    final last3 = digits.substring(digits.length - 3);
+    var rest = digits.substring(0, digits.length - 3);
+    final groups = <String>[];
+    while (rest.length > 2) {
+      groups.insert(0, rest.substring(rest.length - 2));
+      rest = rest.substring(0, rest.length - 2);
+    }
+    if (rest.isNotEmpty) groups.insert(0, rest);
+    final grouped = '${groups.join(',')},$last3';
+    return parts.length > 1 ? '$sign$grouped.${parts[1]}' : '$sign$grouped';
+  }
+
   /// Builds the report for a customer map from the customer list.
   Future<CustomerPendingReport> load(Map<String, dynamic> customer) async {
     final name = '${customer['firstName'] ?? ''} ${customer['lastName'] ?? ''}'

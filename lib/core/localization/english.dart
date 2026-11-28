@@ -383,8 +383,7 @@ class EnglishLocalization {
   static const String offerFirst100Users =
       'Limited period offer — first 100 users only.';
   static const String justPerMonth = 'Just ₹333 per month.';
-  static String justPerMonthAmount(String amount) =>
-      'Just ₹$amount per month.';
+  static String justPerMonthAmount(String amount) => 'Just ₹$amount per month.';
   static const String whatsIncluded = 'What\'s included.';
   static const String everythingIncludedSubtitle =
       'Everything you use today, with no limits.';
@@ -1164,10 +1163,11 @@ class EnglishLocalization {
     String amount,
     String date,
   ) =>
-      'Your pending amount of ₹$amount is remaining with $shop. '
-      'Please complete the transaction ASAP.\n'
-      'Ignore if already paid.\n\n'
-      'Thanks for connecting!';
+      'Dear Customer, a gentle reminder that your pending payment of ₹$amount '
+      'with $shop is still outstanding. '
+      'Kindly clear the amount at your earliest convenience.\n\n'
+      'If already paid, please ignore this message.\n\n'
+      'Thank you for your support and business!';
   static const String customerReportSendPdfTitle = 'Send the PDF report';
   static const String customerReportSendPdfBody =
       'Send the message in WhatsApp first, then come back and tap "Send PDF" to put the report in the same chat.';
