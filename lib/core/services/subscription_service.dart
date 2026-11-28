@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Pricing from backend (`app_config/subscription`).
 ///
@@ -210,10 +211,88 @@ class SubscriptionService {
     return null;
   }
 
-  // Check if user's subscription/trial is still valid.
-  Future<bool> isSubscriptionValid() async {
+  // Key prefix for the last access expiry this device confirmed from Firestore.
+  static const String _lastExpiryKeyPrefix = 'subscription_last_expiry_';
+
+  /// Waits for Firebase Auth to restore the signed-in user (cold start on a
+  /// slow device / simulator can report `currentUser` as null for a moment).
+  Future<String?> _resolveUserId() async {
+    final current = _userId;
+    if (current != null) return current;
     try {
-      final userId = _userId;
+      final user = await _auth.authStateChanges().first.timeout(
+        const Duration(seconds: 5),
+      );
+      return user?.uid;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // Reads the user document from the server, falling back to the local cache
+  // when the server cannot be reached. Returns null when the doc is missing.
+  Future<Map<String, dynamic>?> _readUserData(String userId) async {
+    final ref = _firestore.collection('users').doc(userId);
+    DocumentSnapshot<Map<String, dynamic>> snap;
+    try {
+      snap = await ref.get().timeout(const Duration(seconds: 15));
+    } catch (e) {
+      debugPrint('[SubscriptionService] Server read failed, using cache: $e');
+      snap = await ref
+          .get(const GetOptions(source: Source.cache))
+          .timeout(const Duration(seconds: 5));
+    }
+    if (!snap.exists) return null;
+    return snap.data();
+  }
+
+  /// True when this device last confirmed a paid/trial window that has not
+  /// yet ended. Used only when Firestore cannot be reached at all, so a
+  /// slow or offline start does not lock out a customer who is still valid.
+  Future<bool> isWithinLastKnownWindow([String? userId]) async {
+    final uid = userId ?? await _resolveUserId();
+    if (uid == null) return false;
+    return lastKnownWindowOpen(uid);
+  }
+
+  /// Static so it can run without building the service (no Firebase needed).
+  static Future<bool> lastKnownWindowOpen(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final millis = prefs.getInt('$_lastExpiryKeyPrefix$userId');
+      if (millis == null) return false;
+      return DateTime.now().isBefore(
+        DateTime.fromMillisecondsSinceEpoch(millis),
+      );
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> _rememberExpiry(String userId, DateTime expiry) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(
+        '$_lastExpiryKeyPrefix$userId',
+        expiry.millisecondsSinceEpoch,
+      );
+    } catch (e) {
+      debugPrint('[SubscriptionService] Could not cache expiry: $e');
+    }
+  }
+
+  // Check if user's subscription/trial is still valid.
+  //
+  // Decision rules:
+  // - Firestore answers "no user doc" or "no trial/subscription" -> locked.
+  // - Firestore answers with a window that has not ended -> open (and cached).
+  // - Firestore cannot be reached (timeout, offline, simulator network) ->
+  //   open only if this device last confirmed a window that is still running.
+  //   Never locks a paying user out because of a transient network error.
+  Future<bool> isSubscriptionValid() async {
+    String? userId;
+    try {
+      userId = await _resolveUserId();
       if (userId == null) {
         debugPrint(
           '[SubscriptionService] No user logged in - subscription required',
@@ -221,23 +300,10 @@ class SubscriptionService {
         return false;
       }
 
-      final userDoc = await _firestore
-          .collection('users')
-          .doc(userId)
-          .get()
-          .timeout(const Duration(seconds: 8));
-
-      if (!userDoc.exists) {
-        debugPrint(
-          '[SubscriptionService] User document not found - subscription required',
-        );
-        return false;
-      }
-
-      final data = userDoc.data();
+      final data = await _readUserData(userId);
       if (data == null) {
         debugPrint(
-          '[SubscriptionService] User data is null - subscription required',
+          '[SubscriptionService] User document not found - subscription required',
         );
         return false;
       }
@@ -251,6 +317,7 @@ class SubscriptionService {
       }
 
       final isValid = DateTime.now().isBefore(resolved.expiry);
+      if (isValid) await _rememberExpiry(userId, resolved.expiry);
       debugPrint(
         '[SubscriptionService] Access valid: $isValid '
         '(status: ${resolved.status}, expires: ${resolved.expiry})',
@@ -258,8 +325,7 @@ class SubscriptionService {
       return isValid;
     } catch (e) {
       debugPrint('[SubscriptionService] Error checking subscription: $e');
-      // Fail closed — do not unlock the app on network/read errors.
-      return false;
+      return await isWithinLastKnownWindow(userId);
     }
   }
 
@@ -348,15 +414,16 @@ class SubscriptionService {
 
       final now = DateTime.now();
       final isActive = now.isBefore(resolved.expiry);
-      final remainingDays =
-          isActive ? resolved.expiry.difference(now).inDays : 0;
+      final remainingDays = isActive
+          ? resolved.expiry.difference(now).inDays
+          : 0;
 
       return {
         'isActive': isActive,
         'message': isActive
             ? (resolved.status == statusTrial
-                ? 'Free trial active'
-                : 'Subscription active')
+                  ? 'Free trial active'
+                  : 'Subscription active')
             : 'Subscription expired',
         'subscriptionDate': resolved.start,
         'expiryDate': resolved.expiry,
@@ -403,11 +470,7 @@ class SubscriptionService {
         '[SubscriptionService] Active with null subscriptionDate — '
         'using start=$start expiry=$expiry',
       );
-      return _AccessWindow(
-        start: start,
-        expiry: expiry,
-        status: statusActive,
-      );
+      return _AccessWindow(start: start, expiry: expiry, status: statusActive);
     }
 
     // No subscriptionDate → trial from trialStartedAt (preferred) or createdAt.
@@ -436,8 +499,8 @@ class SubscriptionService {
 
     final effectiveStatus =
         (status == null || status.isEmpty || status == statusInactive)
-            ? statusTrial
-            : status;
+        ? statusTrial
+        : status;
 
     // Paid active subscriptions use 1 year; trial uses 30 days.
     final duration = effectiveStatus == statusActive

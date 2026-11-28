@@ -766,6 +766,109 @@
       "tests": [
         "test/regression/sale_return_math_test.dart"
       ]
+    },
+    {
+      "id": "splash-branding",
+      "name": "Splash screen branding (tagline, business badge, contact line)",
+      "files": [
+        "lib/core/ui/splash_page.dart",
+        "web/index.html",
+        "lib/core/localization/english.dart",
+        "lib/core/localization/hindi.dart",
+        "lib/core/localization/marathi.dart"
+      ],
+      "invariants": [
+        "The splash tagline is 'Power your Business' (all three languages) in flat solid pink #DD95D5 (_buildPinkTagline) with no shadow or 3D effect. It is display-only and must not change layout of the logo, title or footer.",
+        "The splash footer shows 'PREMIUM BUSINESS SOLUTIONS' and only the phone number (no location text).",
+        "The splash animations (logo, name, tagline fade) and the auto-navigation after startup are unchanged."
+      ],
+      "anchors": [
+        {
+          "file": "lib/core/ui/splash_page.dart",
+          "contains": "_buildPinkTagline"
+        },
+        {
+          "file": "lib/core/ui/splash_page.dart",
+          "contains": "PREMIUM BUSINESS SOLUTIONS"
+        },
+        {
+          "file": "lib/core/localization/english.dart",
+          "contains": "POWER YOUR BUSINESS"
+        },
+        {
+          "file": "lib/core/ui/splash_page.dart",
+          "contains": "Color(0xFFDD95D5)"
+        }
+      ],
+      "forbidden": [
+        {
+          "file": "lib/core/ui/splash_page.dart",
+          "contains": "'Newasa'",
+          "why": "location text was removed from the splash by request"
+        },
+        {
+          "file": "lib/core/ui/splash_page.dart",
+          "contains": "Transform.translate",
+          "why": "the tagline is flat; the 3D extrusion was removed by request"
+        }
+      ],
+      "tests": []
+    },
+    {
+      "id": "subscription-access",
+      "name": "Subscription / trial access gate (splash, login, dashboard entry)",
+      "files": [
+        "lib/core/services/subscription_service.dart",
+        "lib/core/ui/splash_page.dart",
+        "lib/features/authentication/presentation/pages/login.dart"
+      ],
+      "invariants": [
+        "A user with a paid or trial window that has not ended must NOT see the 'Subscription expired' screen because of a slow, failed or timed-out Firestore read.",
+        "isSubscriptionValid reads the server first, then the local cache; if neither answers it falls back to isWithinLastKnownWindow (the expiry this device last confirmed). Only a definitive answer (no user doc, or no valid trial/subscription, or window ended) locks the app.",
+        "The splash/login timeouts never deny access on their own: they use isWithinLastKnownWindow.",
+        "A missing signed-in user is only treated as logged out after Firebase Auth has restored its state (_resolveUserId)."
+      ],
+      "anchors": [
+        {
+          "file": "lib/core/services/subscription_service.dart",
+          "contains": "isWithinLastKnownWindow"
+        },
+        {
+          "file": "lib/core/services/subscription_service.dart",
+          "contains": "Source.cache"
+        },
+        {
+          "file": "lib/core/ui/splash_page.dart",
+          "contains": "onTimeout: () => _subscriptionService.isWithinLastKnownWindow()"
+        }
+      ],
+      "forbidden": [
+        {
+          "file": "lib/core/ui/splash_page.dart",
+          "contains": "onTimeout: () => false",
+          "why": "a timeout must not show the subscription screen to a valid user"
+        }
+      ],
+      "tests": []
+    },
+    {
+      "id": "dashboard-quick-insights",
+      "name": "Dashboard Quick Insights rows use the view-card style",
+      "files": [
+        "lib/features/dashboard/presentation/pages/optimized_dashboard_page.dart"
+      ],
+      "invariants": [
+        "Quick Insights rows (Top Products, Pending Payments, Low Stock Items, Upcoming Events) use the same raised white card as the view cards (_raisedGlass, like Stock & Payments). Only the icon tile and count badge carry colour.",
+        "Each row keeps its count, subtitle, chevron and tap action (_showQuickInsightDetail) on desktop (2x2) and mobile (stacked)."
+      ],
+      "anchors": [
+        {
+          "file": "lib/features/dashboard/presentation/pages/optimized_dashboard_page.dart",
+          "contains": "Quick Insight row: same raised white card"
+        }
+      ],
+      "forbidden": [],
+      "tests": []
     }
   ]
 }

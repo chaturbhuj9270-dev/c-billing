@@ -987,9 +987,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     final tools = <Widget>[];
 
     void add(IconData icon, String label, VoidCallback onTap) {
-      tools.add(
-        _buildSideNavItem(-1, icon, label, isExpanded, onTap: onTap),
-      );
+      tools.add(_buildSideNavItem(-1, icon, label, isExpanded, onTap: onTap));
     }
 
     if (_selectedIndex == WebShell.billing ||
@@ -1036,10 +1034,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
     if (tools.isEmpty) return const [];
     if (!showDivider) return tools;
-    return [
-      Divider(height: 16, color: AppColors.border(context)),
-      ...tools,
-    ];
+    return [Divider(height: 16, color: AppColors.border(context)), ...tools];
   }
 
   Widget _buildWebBrand(bool isExpanded) {
@@ -1115,10 +1110,26 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     }
 
     return [
-      item(WebShell.invoices, Icons.receipt_long_outlined, _localizations.invoices),
-      item(WebShell.products, Icons.inventory_2_rounded, _localizations.products),
-      item(WebShell.suppliers, Icons.local_shipping_rounded, _localizations.suppliers),
-      item(WebShell.companies, Icons.business_rounded, _localizations.companies),
+      item(
+        WebShell.invoices,
+        Icons.receipt_long_outlined,
+        _localizations.invoices,
+      ),
+      item(
+        WebShell.products,
+        Icons.inventory_2_rounded,
+        _localizations.products,
+      ),
+      item(
+        WebShell.suppliers,
+        Icons.local_shipping_rounded,
+        _localizations.suppliers,
+      ),
+      item(
+        WebShell.companies,
+        Icons.business_rounded,
+        _localizations.companies,
+      ),
       item(
         WebShell.purchaseReturn,
         Icons.keyboard_return_rounded,
@@ -1152,9 +1163,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           decoration: BoxDecoration(
             color: AppTheme.white.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppTheme.white.withValues(alpha: 0.2),
-            ),
+            border: Border.all(color: AppTheme.white.withValues(alpha: 0.2)),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(10),
@@ -1163,11 +1172,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               width: 28,
               height: 28,
               fit: BoxFit.contain,
-              errorBuilder: (_, _, _) => const Icon(
-                Icons.business,
-                color: AppTheme.white,
-                size: 20,
-              ),
+              errorBuilder: (_, _, _) =>
+                  const Icon(Icons.business, color: AppTheme.white, size: 20),
             ),
           ),
         ),
@@ -1186,9 +1192,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     return ActionMenu(
       outlined: outlined,
       iconColor: AppTheme.white,
-      onExpandTap: (_selectedIndex == 2 ||
-              _selectedIndex == 3 ||
-              _selectedIndex == 4)
+      onExpandTap:
+          (_selectedIndex == 2 || _selectedIndex == 3 || _selectedIndex == 4)
           ? () {
               final Widget page = _selectedIndex == 2
                   ? const BillingPage()
@@ -1198,9 +1203,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               showAppPage(context, page);
             }
           : null,
-      onDownloadTap: (_selectedIndex == 2 ||
-              _selectedIndex == 3 ||
-              _selectedIndex == 4)
+      onDownloadTap:
+          (_selectedIndex == 2 || _selectedIndex == 3 || _selectedIndex == 4)
           ? () {
               if (_selectedIndex == 2) {
                 showAppPage(context, const BillsListPage());
@@ -1220,10 +1224,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 );
                 if (result == true && mounted) setState(() {});
               } else {
-                await showAppPage(
-                  context,
-                  const PurchaseSettingsPage(),
-                );
+                await showAppPage(context, const PurchaseSettingsPage());
                 if (mounted) setState(() {});
               }
             }
@@ -1232,20 +1233,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           (_selectedIndex == 2 || _selectedIndex == 3 || _selectedIndex == 4)
           ? () async {
               if (_selectedIndex == 2) {
-                await showAppPage(
-                  context,
-                  const BillReportSettingsPage(),
-                );
+                await showAppPage(context, const BillReportSettingsPage());
               } else if (_selectedIndex == 3) {
-                await showAppPage(
-                  context,
-                  const StockReportSettingsPage(),
-                );
+                await showAppPage(context, const StockReportSettingsPage());
               } else {
-                await showAppPage(
-                  context,
-                  const PurchaseReportSettingsPage(),
-                );
+                await showAppPage(context, const PurchaseReportSettingsPage());
               }
             }
           : null,
@@ -1350,9 +1342,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                           ? FontWeight.w600
                           : FontWeight.w500,
                       fontFamily: 'Literata',
-                      color: isSelected
-                          ? AppTheme.amber900
-                          : AppTheme.black87,
+                      color: isSelected ? AppTheme.amber900 : AppTheme.black87,
                     ),
                   ),
                   Text(
@@ -1480,10 +1470,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                         subtitle: _localizations.awaitingPayment,
                         count: _pendingPayments.length,
                         icon: Icons.pending_actions_rounded,
-                        gradientColors: const [
-                          AppTheme.error,
-                          AppTheme.red600,
-                        ],
+                        gradientColors: const [AppTheme.error, AppTheme.red600],
                         onTap: () => _showQuickInsightDetail(
                           _localizations.pendingPayments,
                           _pendingPayments,
@@ -1520,10 +1507,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                         subtitle: _localizations.comingUp,
                         count: _upcomingEvents.length,
                         icon: Icons.event_rounded,
-                        gradientColors: const [
-                          AppTheme.cyan,
-                          AppTheme.cyan700,
-                        ],
+                        gradientColors: const [AppTheme.cyan, AppTheme.cyan700],
                         onTap: () => _showQuickInsightDetail(
                           _localizations.upcomingEvents,
                           _upcomingEvents,
@@ -1625,7 +1609,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 ),
               ),
               const SizedBox(height: 16),
-              _buildWebMetrics(data, isRefreshing, wide || constraints.maxWidth >= 760),
+              _buildWebMetrics(
+                data,
+                isRefreshing,
+                wide || constraints.maxWidth >= 760,
+              ),
               const SizedBox(height: 16),
               SalesAnalysisChart(
                 reloadToken: _salesChartReloadToken,
@@ -1636,15 +1624,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      flex: 5,
-                      child: _buildWebProfitCard(data),
-                    ),
+                    Expanded(flex: 5, child: _buildWebProfitCard(data)),
                     const SizedBox(width: 16),
-                    Expanded(
-                      flex: 6,
-                      child: _buildWebStockCard(data),
-                    ),
+                    Expanded(flex: 6, child: _buildWebStockCard(data)),
                   ],
                 )
               else ...[
@@ -1756,11 +1738,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     return amount < 0 ? '-₹${formatted.replaceFirst('-', '')}' : '₹$formatted';
   }
 
-  Widget _buildWebMetrics(
-    DashboardSummary data,
-    bool isRefreshing,
-    bool wide,
-  ) {
+  Widget _buildWebMetrics(DashboardSummary data, bool isRefreshing, bool wide) {
     final cards = [
       _buildWebMetricCard(
         title: _localizations.totalSales,
@@ -1788,8 +1766,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       _buildWebMetricCard(
         title: _localizations.returns,
         amount: _formatWebAmount(data.totalReturns + data.totalPurchaseReturns),
-        subtitle:
-            '${data.totalReturnedItems} ${_localizations.itemsReturned}',
+        subtitle: '${data.totalReturnedItems} ${_localizations.itemsReturned}',
         icon: Icons.undo_rounded,
         iconColor: AppTheme.toneRose,
         iconFill: AppTheme.red100,
@@ -2375,27 +2352,27 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? AppTheme.white : unselectedFg,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 16,
                 color: isSelected ? AppTheme.white : unselectedFg,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Literata',
               ),
-            ),
-          ],
-        ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? AppTheme.white : unselectedFg,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Literata',
+                ),
+              ),
+            ],
           ),
         ),
+      ),
     );
   }
 
@@ -2435,11 +2412,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           child: SizedBox(
             width: 44,
             height: 44,
-            child: Icon(
-              icon,
-              color: AppTheme.white,
-              size: 22,
-            ),
+            child: Icon(icon, color: AppTheme.white, size: 22),
           ),
         ),
         const SizedBox(width: 14),
@@ -2488,7 +2461,10 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       amount: _formatAmount(data.netSales),
       subtitle:
           '${_localizations.bills}: ${data.totalBillsCount} • ${_localizations.items}: ${data.totalItemsSold}',
-      gradient: metricGradient(0, const [AppTheme.paletteFF667EEA, AppTheme.paletteFF764BA2]),
+      gradient: metricGradient(0, const [
+        AppTheme.paletteFF667EEA,
+        AppTheme.paletteFF764BA2,
+      ]),
       icon: Icons.trending_up_rounded,
       isLoading: isLoading,
     );
@@ -2597,18 +2573,19 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: color,
-                gradient: fill ??
+                gradient:
+                    fill ??
                     (color == null
                         ? LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              AppColors.card(context).withValues(
-                                alpha: isDark ? 0.72 : 0.96,
-                              ),
-                              AppColors.card(context).withValues(
-                                alpha: isDark ? 0.92 : 0.82,
-                              ),
+                              AppColors.card(
+                                context,
+                              ).withValues(alpha: isDark ? 0.72 : 0.96),
+                              AppColors.card(
+                                context,
+                              ).withValues(alpha: isDark ? 0.92 : 0.82),
                             ],
                           )
                         : null),
@@ -2646,57 +2623,57 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: AppColors.onAccentMuted(context),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Literata',
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: AppTheme.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(icon, color: AppTheme.white, size: 16),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: Text(
-                  amount,
-                  key: ValueKey(amount),
-                  style: const TextStyle(
-                    color: AppTheme.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: AppColors.onAccentMuted(context),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
                     fontFamily: 'Literata',
-                    letterSpacing: -0.5,
                   ),
                 ),
-              ),
-              SizedBox(height: 6),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  color: AppColors.onAccentMuted(context),
-                  fontSize: 10,
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppTheme.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, color: AppTheme.white, size: 16),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Text(
+                amount,
+                key: ValueKey(amount),
+                style: const TextStyle(
+                  color: AppTheme.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
                   fontFamily: 'Literata',
+                  letterSpacing: -0.5,
                 ),
               ),
-            ],
-          ),
+            ),
+            SizedBox(height: 6),
+            Text(
+              subtitle,
+              style: TextStyle(
+                color: AppColors.onAccentMuted(context),
+                fontSize: 10,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ],
         ),
+      ),
     );
   }
 
@@ -2718,92 +2695,92 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            isProfitable
-                                ? Icons.trending_up_rounded
-                                : Icons.trending_down_rounded,
-                            color: AppTheme.white,
-                            size: 14,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            isProfitable
-                                ? _localizations.netProfit
-                                : _localizations.loss,
-                            style: const TextStyle(
-                              color: AppTheme.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'Literata',
-                            ),
-                          ),
-                        ],
-                      ),
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
                     ),
-                    const SizedBox(height: 16),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      child: Text(
-                        _formatAmount(data.profit.abs()),
-                        key: ValueKey(data.profit),
-                        style: const TextStyle(
+                    decoration: BoxDecoration(
+                      color: AppTheme.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isProfitable
+                              ? Icons.trending_up_rounded
+                              : Icons.trending_down_rounded,
                           color: AppTheme.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          fontFamily: 'Literata',
-                          letterSpacing: -0.5,
+                          size: 14,
                         ),
-                      ),
+                        const SizedBox(width: 4),
+                        Text(
+                          isProfitable
+                              ? _localizations.netProfit
+                              : _localizations.loss,
+                          style: const TextStyle(
+                            color: AppTheme.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Literata',
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 4),
-                    Text(
-                      '${data.profitPercentage.toStringAsFixed(1)}% ${_localizations.profitMargin}',
-                      style: TextStyle(
-                        color: AppColors.onAccentMuted(context),
-                        fontSize: 12,
-                        fontFamily: 'Literata',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: AppTheme.white.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Icon(
-                    isProfitable
-                        ? Icons.thumb_up_rounded
-                        : Icons.thumb_down_rounded,
-                    color: AppTheme.white,
-                    size: 36,
                   ),
+                  const SizedBox(height: 16),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: Text(
+                      _formatAmount(data.profit.abs()),
+                      key: ValueKey(data.profit),
+                      style: const TextStyle(
+                        color: AppTheme.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        fontFamily: 'Literata',
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    '${data.profitPercentage.toStringAsFixed(1)}% ${_localizations.profitMargin}',
+                    style: TextStyle(
+                      color: AppColors.onAccentMuted(context),
+                      fontSize: 12,
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AppTheme.white.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Icon(
+                  isProfitable
+                      ? Icons.thumb_up_rounded
+                      : Icons.thumb_down_rounded,
+                  color: AppTheme.white,
+                  size: 36,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
     );
   }
 
@@ -2819,77 +2796,72 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         end: Alignment.bottomRight,
         colors: isDark
             ? const [AppTheme.darkCard, AppTheme.darkSurface]
-            : [
-                color.withValues(alpha: 0.22),
-                color.withValues(alpha: 0.06),
-              ],
+            : [color.withValues(alpha: 0.22), color.withValues(alpha: 0.06)],
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppTheme.white.withValues(alpha: 0.1)
+                    : color.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
                   color: isDark
-                      ? AppTheme.white.withValues(alpha: 0.1)
-                      : color.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isDark
-                        ? AppTheme.white.withValues(alpha: 0.2)
-                        : color.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
+                      ? AppTheme.white.withValues(alpha: 0.2)
+                      : color.withValues(alpha: 0.3),
+                  width: 1,
                 ),
-                child: Icon(Icons.trending_up_rounded, color: color, size: 22),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _localizations.margin,
+              child: Icon(Icons.trending_up_rounded, color: color, size: 22),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _localizations.margin,
+                    style: TextStyle(
+                      color: isDark ? AppColors.secondaryText(context) : color,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: Text(
+                      _formatCompactAmount(data.profit),
+                      key: ValueKey(data.profit),
                       style: TextStyle(
-                        color: isDark
-                            ? AppColors.secondaryText(context)
-                            : color,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                        color: AppColors.primaryText(context),
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
                         fontFamily: 'Literata',
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      child: Text(
-                        _formatCompactAmount(data.profit),
-                        key: ValueKey(data.profit),
-                        style: TextStyle(
-                          color: AppColors.primaryText(context),
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          fontFamily: 'Literata',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              Text(
-                '${data.profitPercentage.toStringAsFixed(1)}%',
-                style: TextStyle(
-                  color: AppColors.primaryText(context),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Literata',
-                ),
+            ),
+            Text(
+              '${data.profitPercentage.toStringAsFixed(1)}%',
+              style: TextStyle(
+                color: AppColors.primaryText(context),
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Literata',
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
     );
   }
 
@@ -2899,142 +2871,142 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                _localizations.stockAndPayments,
-                style: TextStyle(
-                  color: AppColors.primaryText(context),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Literata',
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _localizations.stockAndPayments,
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Literata',
+                  ),
                 ),
-              ),
-              if (data.lowStockCount > 0)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.isDark(context)
-                        ? AppTheme.white.withValues(alpha: 0.1)
-                        : AppTheme.orange.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.warning_amber_rounded,
-                        color: AppColors.isDark(context)
-                            ? AppTheme.white
-                            : AppTheme.orange,
-                        size: 14,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${data.lowStockCount} ${_localizations.lowStock}',
-                        style: TextStyle(
+                if (data.lowStockCount > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.isDark(context)
+                          ? AppTheme.white.withValues(alpha: 0.1)
+                          : AppTheme.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.warning_amber_rounded,
                           color: AppColors.isDark(context)
                               ? AppTheme.white
                               : AppTheme.orange,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Literata',
+                          size: 14,
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-          SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.accentSoft(context, 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border(context)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _localizations.stockValue,
-                        style: TextStyle(
-                          color: AppColors.secondaryText(context),
-                          fontSize: 11,
-                          fontFamily: 'Literata',
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        child: Text(
-                          _formatAmount(data.stockValue),
-                          key: ValueKey(data.stockValue),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${data.lowStockCount} ${_localizations.lowStock}',
                           style: TextStyle(
-                            color: AppColors.primaryText(context),
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
+                            color: AppColors.isDark(context)
+                                ? AppTheme.white
+                                : AppTheme.orange,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
                             fontFamily: 'Literata',
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.chipFill(context),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border(context)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _localizations.pendingAmount,
-                        style: TextStyle(
-                          color: AppColors.secondaryText(context),
-                          fontSize: 11,
-                          fontFamily: 'Literata',
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        child: Text(
-                          _formatAmount(data.totalPendingAmount),
-                          key: ValueKey(data.totalPendingAmount),
+              ],
+            ),
+            SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.accentSoft(context, 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.border(context)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _localizations.stockValue,
                           style: TextStyle(
-                            color: AppColors.primaryText(context),
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
+                            color: AppColors.secondaryText(context),
+                            fontSize: 11,
                             fontFamily: 'Literata',
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          child: Text(
+                            _formatAmount(data.stockValue),
+                            key: ValueKey(data.stockValue),
+                            style: TextStyle(
+                              color: AppColors.primaryText(context),
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Literata',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.chipFill(context),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.border(context)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _localizations.pendingAmount,
+                          style: TextStyle(
+                            color: AppColors.secondaryText(context),
+                            fontSize: 11,
+                            fontFamily: 'Literata',
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          child: Text(
+                            _formatAmount(data.totalPendingAmount),
+                            key: ValueKey(data.totalPendingAmount),
+                            style: TextStyle(
+                              color: AppColors.primaryText(context),
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Literata',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
+      ),
     );
   }
 
@@ -3122,6 +3094,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
   // ============ GLASSY QUICK STATS WIDGETS ============
 
+  // Quick Insight row: same raised white card as the view cards (Stock &
+  // Payments). Colour is kept only on the icon tile and the count badge.
   Widget _buildGlassyStatRow({
     required String title,
     required String subtitle,
@@ -3134,152 +3108,104 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     final tones = isDark
         ? AppColors.darkMetricGradient(gradientColors.hashCode)
         : gradientColors;
-    final accent = tones.first;
-    final accentSoft = tones.length > 1 ? tones[1] : tones.first;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: isDark
-                  ? [
-                      accent.withValues(alpha: 0.28),
-                      AppColors.card(context).withValues(alpha: 0.92),
-                      accentSoft.withValues(alpha: 0.18),
-                    ]
-                  : [
-                      accent.withValues(alpha: 0.18),
-                      AppTheme.white.withValues(alpha: 0.94),
-                      accentSoft.withValues(alpha: 0.12),
+    return _raisedGlass(
+      radius: 22,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(22),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: tones,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: AppTheme.white, size: 22),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryText(context),
+                          fontFamily: 'Literata',
+                          height: 1.15,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.mutedText(context),
+                          fontFamily: 'Literata',
+                        ),
+                      ),
                     ],
-            ),
-            border: Border.all(
-              color: isDark
-                  ? accent.withValues(alpha: 0.28)
-                  : accent.withValues(alpha: 0.16),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: accent.withValues(alpha: isDark ? 0.28 : 0.18),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-              BoxShadow(
-                color: AppTheme.black.withValues(alpha: isDark ? 0.28 : 0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: tones,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: accent.withValues(alpha: 0.35),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Icon(icon, color: AppTheme.white, size: 22),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primaryText(context),
-                        fontFamily: 'Literata',
-                        height: 1.15,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.mutedText(context),
-                        fontFamily: 'Literata',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                width: 34,
-                height: 34,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: tones,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: accent.withValues(alpha: 0.3),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  count.toString(),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.white,
-                    fontFamily: 'Literata',
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isDark
-                      ? AppTheme.white.withValues(alpha: 0.08)
-                      : AppTheme.white.withValues(alpha: 0.85),
-                  border: Border.all(
+                Container(
+                  width: 34,
+                  height: 34,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: tones,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: Text(
+                    count.toString(),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.white,
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
                     color: isDark
-                        ? AppTheme.white.withValues(alpha: 0.16)
-                        : AppColors.border(context),
+                        ? AppTheme.white.withValues(alpha: 0.08)
+                        : AppTheme.white.withValues(alpha: 0.85),
+                    border: Border.all(
+                      color: isDark
+                          ? AppTheme.white.withValues(alpha: 0.16)
+                          : AppColors.border(context),
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.secondaryText(context),
+                    size: 20,
                   ),
                 ),
-                child: Icon(
-                  Icons.chevron_right_rounded,
-                  color: AppColors.secondaryText(context),
-                  size: 20,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -3668,9 +3594,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             height: 40,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: isOverdue
-                    ? [AppTheme.error, AppTheme.red600]
-                    : colors,
+                colors: isOverdue ? [AppTheme.error, AppTheme.red600] : colors,
               ),
               borderRadius: BorderRadius.circular(10),
             ),
@@ -3720,9 +3644,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: isOverdue
-                    ? [AppTheme.error, AppTheme.red600]
-                    : colors,
+                colors: isOverdue ? [AppTheme.error, AppTheme.red600] : colors,
               ),
               borderRadius: BorderRadius.circular(8),
             ),
@@ -4124,9 +4046,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             height: 40,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: isToday
-                    ? [AppTheme.cyan400, AppTheme.cyan600]
-                    : colors,
+                colors: isToday ? [AppTheme.cyan400, AppTheme.cyan600] : colors,
               ),
               borderRadius: BorderRadius.circular(10),
             ),

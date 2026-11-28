@@ -37,8 +37,10 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   late AppLocalizations _localizations;
   final SubscriptionService _subscriptionService = SubscriptionService();
   bool _showUnlockButton = false;
+
   /// True while biometric sheet is open or app is opening after success.
   bool _isUnlocking = false;
+
   /// Prefetch subscription while user authenticates so landing is faster.
   Future<bool>? _subscriptionPrefetch;
   bool _didAutoPromptBiometric = false;
@@ -203,10 +205,9 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     final existing = FirebaseAuth.instance.currentUser;
     if (existing != null) return existing;
     try {
-      return await FirebaseAuth.instance
-          .authStateChanges()
-          .first
-          .timeout(const Duration(seconds: 5));
+      return await FirebaseAuth.instance.authStateChanges().first.timeout(
+        const Duration(seconds: 5),
+      );
     } on TimeoutException {
       return FirebaseAuth.instance.currentUser;
     }
@@ -233,7 +234,9 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
           .timeout(const Duration(seconds: 8));
 
       if (userCredential.user != null) {
-        debugPrint('[DEBUG] Auto-login successful for: ${userCredential.user!.uid}');
+        debugPrint(
+          '[DEBUG] Auto-login successful for: ${userCredential.user!.uid}',
+        );
         try {
           initializeSyncServices();
         } catch (e) {
@@ -276,7 +279,9 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         await BillReportSettingsService.instance.reload();
         await StockReportSettingsService.instance.reload();
       } catch (e) {
-        debugPrint('[DEBUG] Background settings reload error (non-critical): $e');
+        debugPrint(
+          '[DEBUG] Background settings reload error (non-critical): $e',
+        );
       }
     });
   }
@@ -323,7 +328,10 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   void _startSubscriptionPrefetch() {
     _subscriptionPrefetch ??= _subscriptionService
         .isSubscriptionValid()
-        .timeout(const Duration(seconds: 8), onTimeout: () => false);
+        .timeout(
+          const Duration(seconds: 25),
+          onTimeout: () => _subscriptionService.isWithinLastKnownWindow(),
+        );
   }
 
   void _autoPromptBiometricOnce() {
@@ -396,9 +404,12 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       debugPrint('[DEBUG] Checking subscription status...');
       final prefetch = _subscriptionPrefetch;
       _subscriptionPrefetch = null;
-      final isSubscriptionValid = await (prefetch ??
-              _subscriptionService.isSubscriptionValid())
-          .timeout(const Duration(seconds: 8), onTimeout: () => false);
+      final isSubscriptionValid =
+          await (prefetch ?? _subscriptionService.isSubscriptionValid())
+              .timeout(
+                const Duration(seconds: 25),
+                onTimeout: () => _subscriptionService.isWithinLastKnownWindow(),
+              );
 
       if (!isSubscriptionValid) {
         debugPrint(
@@ -459,9 +470,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     final appTitle = _localizations.appName == 'C-BILLING'
         ? 'C-Billing'
         : _localizations.appName;
-    final tagline = _localizations.tagline == 'THE BACKBONE FOR YOUR\nBUSINESS'
-        ? 'THE BACKBONE FOR\nYOUR BUSINESS'
-        : _localizations.tagline;
+    final tagline = _localizations.tagline;
 
     return Scaffold(
       backgroundColor: isDark
@@ -539,18 +548,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                 const SizedBox(height: 16),
                 FadeTransition(
                   opacity: _taglineFade,
-                  child: Text(
-                    tagline,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: muted,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Literata',
-                      letterSpacing: 1.6,
-                      height: 1.45,
-                    ),
-                  ),
+                  child: _buildPinkTagline(tagline),
                 ),
                 const Spacer(flex: 2),
                 FadeTransition(
@@ -580,7 +578,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                             ),
                           ),
                           child: Text(
-                            'PREMIUM FINANCIAL SOLUTIONS',
+                            'PREMIUM BUSINESS SOLUTIONS',
                             style: TextStyle(
                               color: muted,
                               fontSize: 10,
@@ -607,22 +605,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                Icons.location_on_outlined,
-                                size: 14,
-                                color: themeColor,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Newasa',
-                                style: TextStyle(
-                                  color: themeColor,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Literata',
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Icon(
                                 Icons.phone_outlined,
                                 size: 14,
                                 color: themeColor,
@@ -648,6 +630,22 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // Tagline in solid pink (#DD95D5), flat with no shadow or 3D effect.
+  Widget _buildPinkTagline(String text) {
+    return Text(
+      text,
+      textAlign: TextAlign.center,
+      style: const TextStyle(
+        color: Color(0xFFDD95D5),
+        fontSize: 14,
+        fontWeight: FontWeight.w800,
+        fontFamily: 'Literata',
+        letterSpacing: 1.8,
+        height: 1.45,
       ),
     );
   }
