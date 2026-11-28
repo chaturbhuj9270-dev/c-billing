@@ -4,8 +4,124 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:c_billing/core/access/tenant_context.dart';
+
+/// Pricing from backend (`app_config/subscription`).
+///
+/// - [amount] original / list price
+/// - [offerAmount] discounted price when [offerEnabled] is true
+/// - Charge / primary display uses [payableAmount]
+class SubscriptionPricing {
+  final double amount;
+  final double offerAmount;
+  final bool offerEnabled;
+  final String currency;
+  final int durationDays;
+
+  const SubscriptionPricing({
+    required this.amount,
+    required this.offerAmount,
+    required this.offerEnabled,
+    required this.currency,
+    required this.durationDays,
+  });
+
+  /// Offline / pre-fetch defaults (must match Cloud Function defaults).
+  static const SubscriptionPricing defaults = SubscriptionPricing(
+    amount: 6999,
+    offerAmount: 3999,
+    offerEnabled: true,
+    currency: 'INR',
+    durationDays: 365,
+  );
+
+  static final NumberFormat _inr = NumberFormat.decimalPattern('en_IN');
+
+  /// Amount the user actually pays.
+  double get payableAmount =>
+      offerEnabled && offerAmount > 0 ? offerAmount : amount;
+
+  /// Show struck-through original + offer price.
+  bool get showOffer => offerEnabled && offerAmount > 0;
+
+  String get amountDisplay => _inr.format(amount.round());
+  String get offerAmountDisplay => _inr.format(offerAmount.round());
+  String get payableAmountDisplay => _inr.format(payableAmount.round());
+  String get priceLabel => '₹$payableAmountDisplay';
+  String get originalPriceLabel => '₹$amountDisplay';
+  String get monthlyDisplay =>
+      _inr.format((payableAmount / 12).round().clamp(1, payableAmount.round()));
+
+  static bool _parseBool(dynamic value, {required bool fallback}) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      if (const ['true', '1', 'yes', 'y'].contains(normalized)) return true;
+      if (const ['false', '0', 'no', 'n'].contains(normalized)) return false;
+    }
+    return fallback;
+  }
+
+  factory SubscriptionPricing.fromMap(Map<String, dynamic> data) {
+    final durationDays = (data['durationDays'] as num?)?.toInt();
+    final currency = data['currency'] as String?;
+    final hasOfferAmount = data['offerAmount'] != null;
+    final hasLegacyRegular = data['regularAmount'] != null;
+
+    late final double amount;
+    late final double offerAmount;
+    late final bool offerEnabled;
+
+    if (hasOfferAmount) {
+      // New schema: amount = original, offerAmount = offer.
+      final parsedAmount = (data['amount'] as num?)?.toDouble();
+      final parsedOffer = (data['offerAmount'] as num?)?.toDouble();
+      amount = (parsedAmount != null && parsedAmount > 0)
+          ? parsedAmount
+          : SubscriptionPricing.defaults.amount;
+      offerAmount = (parsedOffer != null && parsedOffer > 0)
+          ? parsedOffer
+          : SubscriptionPricing.defaults.offerAmount;
+      offerEnabled = _parseBool(
+        data['offerEnabled'],
+        fallback: SubscriptionPricing.defaults.offerEnabled,
+      );
+    } else if (hasLegacyRegular) {
+      // Legacy: amount was charge, regularAmount was list price.
+      final parsedCharge = (data['amount'] as num?)?.toDouble();
+      final parsedList = (data['regularAmount'] as num?)?.toDouble();
+      amount = (parsedList != null && parsedList > 0)
+          ? parsedList
+          : SubscriptionPricing.defaults.amount;
+      offerAmount = (parsedCharge != null && parsedCharge > 0)
+          ? parsedCharge
+          : SubscriptionPricing.defaults.offerAmount;
+      offerEnabled = _parseBool(data['offerEnabled'], fallback: true);
+    } else {
+      final parsedAmount = (data['amount'] as num?)?.toDouble();
+      amount = (parsedAmount != null && parsedAmount > 0)
+          ? parsedAmount
+          : SubscriptionPricing.defaults.amount;
+      offerAmount = amount;
+      offerEnabled = _parseBool(data['offerEnabled'], fallback: false);
+    }
+
+    return SubscriptionPricing(
+      amount: amount,
+      offerAmount: offerAmount,
+      offerEnabled: offerEnabled,
+      currency: (currency != null && currency.trim().isNotEmpty)
+          ? currency.trim().toUpperCase()
+          : SubscriptionPricing.defaults.currency,
+      durationDays: (durationDays != null && durationDays > 0)
+          ? durationDays
+          : SubscriptionPricing.defaults.durationDays,
+    );
+  }
+}
 
 // Service to manage user subscription status.
 //
@@ -37,6 +153,17 @@ class SubscriptionService {
 
   // Free trial after registration
   static const Duration freeTrialDuration = Duration(days: 30);
+  static const Duration trialDuration = freeTrialDuration;
+
+  static const String statusTrial = 'trial';
+  static const String statusActive = 'active';
+  static const String statusInactive = 'inactive';
+
+  SubscriptionPricing _pricing = SubscriptionPricing.defaults;
+  bool _pricingLoaded = false;
+
+  /// Latest known pricing (defaults until [fetchPricing] succeeds).
+  SubscriptionPricing get pricing => _pricing;
 
   static const String _prefsExpiryKeyPrefix = 'sub_access_expiry_';
   static const String _prefsSourceKeyPrefix = 'sub_access_source_';
@@ -49,6 +176,53 @@ class SubscriptionService {
   /// Prefer auth uid for caching trial — employees share dataOwner but trial
   /// is on the shop owner's user doc; cache key still uses owner when known.
   String? get _cacheUid => _userId ?? _authUid;
+
+  /// Loads offer price from Firestore / Cloud Function.
+  /// Safe to call repeatedly; caches until [force] is true.
+  Future<SubscriptionPricing> fetchPricing({bool force = false}) async {
+    if (_pricingLoaded && !force) return _pricing;
+
+    try {
+      final doc = await _firestore
+          .collection('app_config')
+          .doc('subscription')
+          .get()
+          .timeout(const Duration(seconds: 8));
+
+      if (doc.exists && doc.data() != null) {
+        _pricing = SubscriptionPricing.fromMap(doc.data()!);
+        _pricingLoaded = true;
+        debugPrint(
+          '[SubscriptionService] Pricing from Firestore: '
+          'payable=${_pricing.priceLabel} original=${_pricing.originalPriceLabel} '
+          'offerEnabled=${_pricing.offerEnabled}',
+        );
+        return _pricing;
+      }
+    } catch (e) {
+      debugPrint('[SubscriptionService] Firestore pricing read failed: $e');
+    }
+
+    // Fallback: callable seeds app_config if missing.
+    try {
+      final callable = _functions.httpsCallable('getSubscriptionPricing');
+      final result = await callable.call().timeout(const Duration(seconds: 12));
+      final data = Map<String, dynamic>.from(result.data as Map);
+      _pricing = SubscriptionPricing.fromMap(data);
+      _pricingLoaded = true;
+      debugPrint(
+        '[SubscriptionService] Pricing from Cloud Function: '
+        '${_pricing.priceLabel}',
+      );
+      return _pricing;
+    } catch (e) {
+      debugPrint(
+        '[SubscriptionService] Pricing fetch failed, using defaults: $e',
+      );
+      _pricing = SubscriptionPricing.defaults;
+      return _pricing;
+    }
+  }
 
   DateTime? _parseDate(dynamic value) {
     if (value == null) return null;
@@ -99,6 +273,38 @@ class SubscriptionService {
   Future<bool> hasOfflineEntitlement() =>
       _allowFromLocalFallbacks(reason: 'offline-only');
 
+  // Last access expiry confirmed from Firestore by the ledger-line builds.
+  static const String _lastExpiryKeyPrefix = 'subscription_last_expiry_';
+
+  /// True when this device last confirmed a paid/trial window that has not
+  /// yet ended. Used only when the server cannot be reached at all, so a
+  /// slow or offline start does not lock out a customer who is still valid.
+  Future<bool> isWithinLastKnownWindow([String? userId]) async {
+    if (await hasOfflineEntitlement()) return true;
+    final uid = userId ?? _cacheUid;
+    if (uid == null) return false;
+    return lastKnownWindowOpen(uid);
+  }
+
+  /// Static so it can run without building the service (no Firebase needed).
+  static Future<bool> lastKnownWindowOpen(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final millis = prefs.getInt('$_lastExpiryKeyPrefix$userId');
+      if (millis != null &&
+          DateTime.now().isBefore(
+            DateTime.fromMillisecondsSinceEpoch(millis),
+          )) {
+        return true;
+      }
+      final raw = prefs.getString('$_prefsExpiryKeyPrefix$userId');
+      final cached = raw == null ? null : DateTime.tryParse(raw);
+      return cached != null && DateTime.now().isBefore(cached);
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Splash / session restore gate: trust local entitlement immediately when
   /// present, and only block on a short network budget when offline says no.
   Future<bool> isSubscriptionValidQuick({
@@ -123,14 +329,14 @@ class SubscriptionService {
         onTimeout: () {
           debugPrint(
             '[SubscriptionService] Quick check timed out after '
-            '${networkBudget.inSeconds}s — denying without local entitlement',
+            '${networkBudget.inSeconds}s — using last known window',
           );
-          return false;
+          return isWithinLastKnownWindow();
         },
       );
     } catch (e) {
       debugPrint('[SubscriptionService] Quick check failed: $e');
-      return false;
+      return isWithinLastKnownWindow();
     }
   }
 
@@ -205,10 +411,16 @@ class SubscriptionService {
       }
 
       // Offline / API down — use last server-issued expiry only.
-      return _allowFromLocalFallbacks(reason: 'api-unavailable');
+      if (await _allowFromLocalFallbacks(reason: 'api-unavailable')) {
+        return true;
+      }
+      return isWithinLastKnownWindow();
     } catch (e) {
       debugPrint('[SubscriptionService] Error checking subscription: $e');
-      return _allowFromLocalFallbacks(reason: 'unexpected-error');
+      if (await _allowFromLocalFallbacks(reason: 'unexpected-error')) {
+        return true;
+      }
+      return isWithinLastKnownWindow();
     }
   }
 

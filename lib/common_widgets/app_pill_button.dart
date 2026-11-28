@@ -127,20 +127,31 @@ class DrawerBottomBar extends StatelessWidget {
   final Widget? leading;
   final Widget action;
 
-  const DrawerBottomBar({super.key, this.leading, required this.action});
+  /// When true the bar has no background panel or top border; only the
+  /// action itself is drawn. Default false keeps the original look.
+  final bool plain;
+
+  const DrawerBottomBar({
+    super.key,
+    this.leading,
+    required this.action,
+    this.plain = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      decoration: BoxDecoration(
-        color: AppTheme.transparent,
-        border: Border(
-          top: BorderSide(
-            color: AppColors.action(context).withValues(alpha: 0.18),
-          ),
-        ),
-      ),
+      decoration: plain
+          ? null
+          : BoxDecoration(
+              color: AppTheme.transparent,
+              border: Border(
+                top: BorderSide(
+                  color: AppColors.action(context).withValues(alpha: 0.18),
+                ),
+              ),
+            ),
       child: leading == null
           ? action
           : Row(

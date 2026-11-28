@@ -862,6 +862,68 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     }
   }
 
+  // Earlier versions recorded every bill (and the payment taken while billing)
+  // twice: once locally and once directly in Firestore. The Firestore copy came
+  // back through sync as a second ledger row and inflated the customer's
+  // pending amount. This finds those second copies: they carry the old fixed
+  // wording and always have a matching local entry of the same amount created
+  // within minutes. Entries without such a partner are never touched.
+  static List<CustomerTransactionEntity> findDuplicateBillingEntries(
+    List<CustomerTransactionEntity> transactions,
+  ) {
+    const window = Duration(minutes: 3);
+    final live = transactions
+        .where((t) => t.syncStatus != TransactionSyncStatus.deleted)
+        .toList();
+    final used = <int>{};
+    final duplicates = <CustomerTransactionEntity>[];
+
+    bool isCopy(CustomerTransactionEntity t) {
+      final d = t.description ?? '';
+      if (t.transactionType == TransactionType.billCreated) {
+        return d == 'Bill generated';
+      }
+      if (t.transactionType == TransactionType.payment) {
+        return d.startsWith('Payment during billing');
+      }
+      return false;
+    }
+
+    bool isOriginal(CustomerTransactionEntity t, CustomerTransactionEntity c) {
+      if (t.transactionType != c.transactionType) return false;
+      final d = t.description ?? '';
+      final prefix = c.transactionType == TransactionType.billCreated
+          ? 'Bill #'
+          : 'Payment for Bill #';
+      return d.startsWith(prefix);
+    }
+
+    for (final copy in live.where(isCopy)) {
+      for (final original in live) {
+        if (identical(original, copy) || used.contains(original.id)) continue;
+        if (!isOriginal(original, copy)) continue;
+        if ((original.amount - copy.amount).abs() > 0.009) continue;
+        if (original.createdAt.difference(copy.createdAt).abs() > window) {
+          continue;
+        }
+        used.add(original.id);
+        duplicates.add(copy);
+        break;
+      }
+    }
+    return duplicates;
+  }
+
+  // Delete the given duplicate entries, reversing their effect on the
+  // customer's pending amount (same as deleting them one by one).
+  Future<void> removeTransactions(
+    List<CustomerTransactionEntity> entries,
+  ) async {
+    for (final entry in entries) {
+      await deleteTransaction(entry.id);
+    }
+  }
+
   // ==================== HELPERS ====================
 
   /// All ID forms that may appear on ledger rows for one customer.

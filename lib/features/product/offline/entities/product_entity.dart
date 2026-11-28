@@ -379,6 +379,9 @@ class ProductEntity {
     String? packUnit,
     int? unitsPerPack,
     double? packSalesPrice,
+    bool clearUnit = false,
+    bool clearDescription = false,
+    bool clearMinStockLevel = false,
   }) {
     final entity = ProductEntity(
       serverId: serverId ?? this.serverId,
@@ -390,14 +393,16 @@ class ProductEntity {
       purchasePrice: purchasePrice ?? this.purchasePrice,
       salesPrice: salesPrice ?? this.salesPrice,
       currentStock: currentStock ?? this.currentStock,
-      unit: unit ?? this.unit,
+      unit: clearUnit ? null : (unit ?? this.unit),
       isActive: isActive ?? this.isActive,
       syncStatus: syncStatus ?? this.syncStatus,
       updatedAt: updatedAt ?? DateTime.now(),
       createdAt: createdAt ?? this.createdAt,
-      description: description ?? this.description,
+      description: clearDescription ? null : (description ?? this.description),
       imageUrl: imageUrl ?? this.imageUrl,
-      minStockLevel: minStockLevel ?? this.minStockLevel,
+      minStockLevel: clearMinStockLevel
+          ? null
+          : (minStockLevel ?? this.minStockLevel),
       defaultSupplierId: defaultSupplierId ?? this.defaultSupplierId,
       defaultSupplierName: defaultSupplierName ?? this.defaultSupplierName,
       cgstPercent: cgstPercent ?? this.cgstPercent,

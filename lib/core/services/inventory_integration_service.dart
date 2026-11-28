@@ -10,6 +10,7 @@ import '../../features/billing/offline/entities/bill_entity.dart';
 import '../../features/billing/domain/entities/bill_item.dart';
 import '../../features/billing/domain/entities/bill_extra_charge.dart';
 import '../../features/billing/domain/entities/bill_tax_settings.dart';
+import '../../features/billing/domain/entities/bill_service_charge.dart';
 import '../../features/customer/offline/controllers/customer_transaction_offline_controller.dart';
 import '../services/dashboard_refresh_service.dart';
 
@@ -232,10 +233,14 @@ class InventoryIntegrationService {
     bool isInterstate = false,
     List<BillExtraCharge> extraCharges = const [],
     String paymentMode = 'CASH',
+    /// Other service charges (description + amount). Stored as bill lines;
+    /// never deducted from stock / FIFO.
+    List<BillServiceCharge> serviceCharges = const [],
   }) async {
     try {
       debugPrint(
-        '[Integration] Processing bill: ${items.length} items, total: $finalAmount',
+        '[Integration] Processing bill: ${items.length} items, '
+        '${serviceCharges.length} service charges, total: $finalAmount',
       );
 
       // Block oversell before creating a bill — stock must never go negative.
@@ -246,7 +251,7 @@ class InventoryIntegrationService {
         return IntegratedBillResult.failure(message);
       }
 
-      // 1. Create BillEntity
+      // 1. Create BillEntity (product lines + service charge lines)
       final embeddedItems = items
           .map(
             (item) => BillItemEmbedded(
@@ -273,6 +278,22 @@ class InventoryIntegrationService {
             ),
           )
           .toList();
+
+      for (final charge in serviceCharges.where((c) => c.isValid)) {
+        embeddedItems.add(
+          BillItemEmbedded(
+            itemId: charge.id.isNotEmpty
+                ? charge.id
+                : 'svc_${DateTime.now().millisecondsSinceEpoch}',
+            productId: BillServiceCharge.sentinelProductId,
+            productName: charge.description.trim(),
+            purchasePrice: 0,
+            sellingPrice: charge.amount,
+            quantity: 1,
+            subtotal: charge.amount,
+          ),
+        );
+      }
 
       final billEntity = await _billController.addBill(
         customerId: customerId,
@@ -311,13 +332,16 @@ class InventoryIntegrationService {
       final billId = billEntity.serverId ?? 'local_${billEntity.id}';
       debugPrint('[Integration] BillEntity created: $billId');
 
-      // 2. Process FIFO sales for each item
+      // 2. Process FIFO sales for each product item (skip service charges)
       final allConsumedBatches = <ConsumedBatchInfo>[];
       double totalCOGS = 0.0;
       double totalRevenue = 0.0;
       double totalProfit = 0.0;
 
       for (final item in items) {
+        if (BillServiceCharge.isServiceItem(productId: item.productId)) {
+          continue;
+        }
         // 2a. FIFO deduction from batches + ledger entries (exact fractional qty)
         final saleResult = await _fifoService.processFifoSale(
           productId: item.productId,
@@ -381,6 +405,12 @@ class InventoryIntegrationService {
 
       for (final returnItem in returnItems) {
         if (returnItem.returnQuantity <= 0) continue;
+        // Service charges are non-inventory — no stock restore.
+        if (BillServiceCharge.isServiceItem(productId: returnItem.productId)) {
+          totalRefundAmount +=
+              returnItem.sellingPrice * returnItem.returnQuantity;
+          continue;
+        }
 
         // 1. Process FIFO return (add stock back to batch + create ledger entry)
         final stockQty = returnItem.returnQuantity;
@@ -422,19 +452,18 @@ class InventoryIntegrationService {
         // Update return quantities on bill items (match line id first, then product).
         final remainingReturns = List<ReturnItemDetail>.from(returnItems);
         final updatedItems = bill.items.map((item) {
-          final byLine = remainingReturns.indexWhere(
-            (ri) =>
-                ri.billItemId != null &&
-                ri.billItemId!.isNotEmpty &&
-                ri.billItemId == item.itemId,
-          );
-          final byProduct = byLine >= 0
-              ? byLine
-              : remainingReturns.indexWhere(
-                  (ri) => ri.productId == item.productId && ri.returnQuantity > 0,
-                );
-          if (byProduct < 0) return item;
-          final returnItem = remainingReturns.removeAt(byProduct);
+          final matchIndex = remainingReturns.indexWhere((ri) {
+            if (ri.returnQuantity <= 0) return false;
+            final itemKey = item.itemId ?? '';
+            final lineId = ri.billItemId ?? ri.itemId;
+            if (lineId != null && lineId.isNotEmpty && itemKey.isNotEmpty) {
+              return lineId == itemKey;
+            }
+            return ri.productId == item.productId;
+          });
+          if (matchIndex < 0) return item;
+
+          final returnItem = remainingReturns.removeAt(matchIndex);
           return BillItemEmbedded(
             itemId: item.itemId,
             productId: item.productId,
@@ -443,8 +472,10 @@ class InventoryIntegrationService {
             sellingPrice: item.sellingPrice,
             quantity: item.quantity,
             subtotal: item.subtotal,
-            returnedQuantity:
-                item.returnedQuantity + returnItem.returnQuantity,
+            returnedQuantity: item.returnedQuantity + returnItem.returnQuantity,
+            hsnCode: item.hsnCode,
+            unit: item.unit,
+            sellUnit: item.sellUnit,
           );
         }).toList();
 
@@ -472,24 +503,32 @@ class InventoryIntegrationService {
                   ? BillPaymentStatus.partiallyPaid
                   : BillPaymentStatus.pending);
 
+        final refundFromPaid = customerRefund - appliedToDue;
+        final paidAfterReturn = (bill.paidAmount - refundFromPaid)
+            .clamp(0.0, double.infinity)
+            .toDouble();
+
         await _billController.updateBill(
           id: billLocalId,
           items: updatedItems,
           returnStatus: allReturned,
           returnDate: DateTime.now(),
           pendingAmount: pendingAfterReturn,
+          paidAmount: paidAfterReturn,
           paymentStatus: paymentStatus,
         );
 
+        // Always post the full customer refund to the ledger (creates a credit
+        // when the bill was already paid). Pending-only posts understated returns.
         final customerId = bill.customerId;
         if (customerId != null &&
             customerId.isNotEmpty &&
-            appliedToDue > 0) {
+            customerRefund > 0.009) {
           await CustomerTransactionOfflineController.instance
               .addReturnTransaction(
                 customerId: customerId,
                 customerName: bill.customerName ?? '',
-                amount: appliedToDue,
+                amount: customerRefund,
                 billId: bill.serverId ?? 'local_${bill.id}',
                 description: 'Return for bill ${bill.serverId ?? bill.id}',
               );
@@ -839,6 +878,8 @@ class ReturnItemDetail {
   final int? localBatchId;
   /// Bill line id — prefer this when matching so duplicate products don't collide.
   final String? billItemId;
+  /// Stable line id from the bill item (avoids wrong row when product repeats).
+  final String? itemId;
 
   ReturnItemDetail({
     required this.productId,
@@ -851,6 +892,7 @@ class ReturnItemDetail {
     required this.batchId,
     this.localBatchId,
     this.billItemId,
+    this.itemId,
   });
 
   @Deprecated('FIFO now accepts double; use returnQuantity directly')

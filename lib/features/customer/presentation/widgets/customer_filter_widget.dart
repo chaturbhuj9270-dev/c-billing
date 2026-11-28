@@ -10,12 +10,69 @@ enum CustomerSortField { name, createdDate, pendingAmount }
 /// Filters customers by creation date.
 enum CustomerDateFilter { all, thisMonth, thisYear, lastYear, custom }
 
-/// Parse customer `createdAt` from map (DateTime or ISO string).
-DateTime? parseCustomerCreatedAt(Map<String, dynamic> customer) {
-  final raw = customer['createdAt'];
-  if (raw is DateTime) return raw;
-  if (raw is String && raw.isNotEmpty) return DateTime.tryParse(raw);
+/// Customer creation date of a list row (DateTime or ISO string), or null.
+DateTime? customerCreatedAt(Map<String, dynamic> customer) {
+  final v = customer['createdAt'];
+  if (v is DateTime) return v;
+  if (v is String && v.isNotEmpty) return DateTime.tryParse(v);
   return null;
+}
+
+/// Parse customer `createdAt` from map (DateTime or ISO string).
+DateTime? parseCustomerCreatedAt(Map<String, dynamic> customer) =>
+    customerCreatedAt(customer);
+
+/// True when [customer] was created inside [range] (whole days, inclusive).
+/// With no range every customer matches. A customer without a creation date
+/// cannot be placed in a period, so it is hidden while a range is applied.
+bool customerCreatedInRange(
+  Map<String, dynamic> customer,
+  DateTimeRange? range,
+) {
+  if (range == null) return true;
+  final created = customerCreatedAt(customer);
+  if (created == null) return false;
+  final local = created.toLocal();
+  final start = DateTime(range.start.year, range.start.month, range.start.day);
+  final endExclusive = DateTime(
+    range.end.year,
+    range.end.month,
+    range.end.day,
+  ).add(const Duration(days: 1));
+  return !local.isBefore(start) && local.isBefore(endExclusive);
+}
+
+/// Date range for a preset [filter]; null means no date filter.
+/// [CustomerDateFilter.custom] without both dates is treated as no filter.
+DateTimeRange? customerDateFilterRange(
+  CustomerDateFilter filter, {
+  DateTime? customStart,
+  DateTime? customEnd,
+  DateTime? now,
+}) {
+  final today = now ?? DateTime.now();
+  switch (filter) {
+    case CustomerDateFilter.all:
+      return null;
+    case CustomerDateFilter.thisMonth:
+      return DateTimeRange(
+        start: DateTime(today.year, today.month, 1),
+        end: DateTime(today.year, today.month + 1, 0),
+      );
+    case CustomerDateFilter.thisYear:
+      return DateTimeRange(
+        start: DateTime(today.year, 1, 1),
+        end: DateTime(today.year, 12, 31),
+      );
+    case CustomerDateFilter.lastYear:
+      return DateTimeRange(
+        start: DateTime(today.year - 1, 1, 1),
+        end: DateTime(today.year - 1, 12, 31),
+      );
+    case CustomerDateFilter.custom:
+      if (customStart == null || customEnd == null) return null;
+      return DateTimeRange(start: customStart, end: customEnd);
+  }
 }
 
 /// Whether [createdAt] falls inside the selected creation-date filter.
@@ -25,36 +82,14 @@ bool customerMatchesDateFilter({
   DateTime? customStart,
   DateTime? customEnd,
 }) {
-  if (filter == CustomerDateFilter.all) return true;
-  if (createdAt == null) return false;
-
-  final now = DateTime.now();
-  switch (filter) {
-    case CustomerDateFilter.all:
-      return true;
-    case CustomerDateFilter.thisMonth:
-      return createdAt.year == now.year && createdAt.month == now.month;
-    case CustomerDateFilter.thisYear:
-      return createdAt.year == now.year;
-    case CustomerDateFilter.lastYear:
-      return createdAt.year == now.year - 1;
-    case CustomerDateFilter.custom:
-      if (customStart == null || customEnd == null) return true;
-      final start = DateTime(
-        customStart.year,
-        customStart.month,
-        customStart.day,
-      );
-      final end = DateTime(
-        customEnd.year,
-        customEnd.month,
-        customEnd.day,
-        23,
-        59,
-        59,
-      );
-      return !createdAt.isBefore(start) && !createdAt.isAfter(end);
-  }
+  return customerCreatedInRange(
+    {'createdAt': createdAt},
+    customerDateFilterRange(
+      filter,
+      customStart: customStart,
+      customEnd: customEnd,
+    ),
+  );
 }
 
 // Filter widget for customer list: search, sort, creation-date filter
@@ -77,6 +112,11 @@ class CustomerFilterWidget extends StatefulWidget {
   final String sortByNameLabel;
   final String sortByDateLabel;
   final String sortByPendingLabel;
+  final String dateAllLabel;
+  final String dateThisMonthLabel;
+  final String dateThisYearLabel;
+  final String dateLastYearLabel;
+  final String dateCustomLabel;
 
   const CustomerFilterWidget({
     super.key,
@@ -96,6 +136,11 @@ class CustomerFilterWidget extends StatefulWidget {
     this.sortByNameLabel = 'Name',
     this.sortByDateLabel = 'Date',
     this.sortByPendingLabel = 'Pending',
+    this.dateAllLabel = 'All',
+    this.dateThisMonthLabel = 'This Month',
+    this.dateThisYearLabel = 'This Year',
+    this.dateLastYearLabel = 'Last Year',
+    this.dateCustomLabel = 'Custom',
   });
 
   @override
@@ -145,7 +190,7 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
 
   String get _customChipLabel {
     if (widget.customStartDate == null || widget.customEndDate == null) {
-      return 'Custom';
+      return widget.dateCustomLabel;
     }
     final fmt = DateFormat('dd MMM');
     return '${fmt.format(widget.customStartDate!)} – ${fmt.format(widget.customEndDate!)}';
@@ -248,27 +293,27 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
           ),
           const SizedBox(width: 8),
           _buildDateChip(
-            label: 'All',
+            label: widget.dateAllLabel,
             selected: widget.dateFilter == CustomerDateFilter.all,
             onTap: () => widget.onDateFilterChanged(CustomerDateFilter.all),
           ),
           const SizedBox(width: 8),
           _buildDateChip(
-            label: 'This Month',
+            label: widget.dateThisMonthLabel,
             selected: widget.dateFilter == CustomerDateFilter.thisMonth,
             onTap: () =>
                 widget.onDateFilterChanged(CustomerDateFilter.thisMonth),
           ),
           const SizedBox(width: 8),
           _buildDateChip(
-            label: 'This Year',
+            label: widget.dateThisYearLabel,
             selected: widget.dateFilter == CustomerDateFilter.thisYear,
             onTap: () =>
                 widget.onDateFilterChanged(CustomerDateFilter.thisYear),
           ),
           const SizedBox(width: 8),
           _buildDateChip(
-            label: 'Last Year',
+            label: widget.dateLastYearLabel,
             selected: widget.dateFilter == CustomerDateFilter.lastYear,
             onTap: () =>
                 widget.onDateFilterChanged(CustomerDateFilter.lastYear),

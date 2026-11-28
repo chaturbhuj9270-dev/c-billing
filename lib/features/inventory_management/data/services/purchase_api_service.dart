@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:c_billing/core/access/tenant_context.dart';
+import '../../../../core/services/sync_query_helper.dart';
 
 // API service for Purchase Firebase operations Handles all server-side CRUD for sync
 class PurchaseApiService {
@@ -69,15 +70,8 @@ class PurchaseApiService {
   }
 
   // Get purchases updated since a specific time Used for delta sync
-  Future<List<Map<String, dynamic>>> getPurchasesSince(DateTime since) async {
-    final snapshot = await _purchasesRef
-        .where('updatedAt', isGreaterThan: Timestamp.fromDate(since))
-        .get();
-
-    return snapshot.docs.map((doc) => {
-      'id': doc.id,
-      ...doc.data(),
-    }).toList();
+  Future<List<Map<String, dynamic>>> getPurchasesSince(DateTime? since) {
+    return SyncQueryHelper.fetchChanged(_purchasesRef, since: since);
   }
 
   // Get purchases by product ID

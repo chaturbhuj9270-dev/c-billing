@@ -18,6 +18,12 @@ class ExpenseOfflineController extends ChangeNotifier {
     return _instance!;
   }
 
+  // Newest expense date first; for the same date, the most recently added first
+  static int _newestFirst(ExpenseEntity a, ExpenseEntity b) {
+    final byDate = b.expenseDate.compareTo(a.expenseDate);
+    return byDate != 0 ? byDate : b.createdAt.compareTo(a.createdAt);
+  }
+
   // Reset instance (for testing)
   @visibleForTesting
   static void resetInstance() {
@@ -83,7 +89,7 @@ class ExpenseOfflineController extends ChangeNotifier {
     final expenses = (await _db.loadExpenses())
         .where((expense) => expense.syncStatus != ExpenseSyncStatus.deleted)
         .toList();
-    expenses.sort((a, b) => b.expenseDate.compareTo(a.expenseDate));
+    expenses.sort(_newestFirst);
     return expenses;
   }
 
@@ -111,7 +117,7 @@ class ExpenseOfflineController extends ChangeNotifier {
       return expense.category == category &&
           expense.syncStatus != ExpenseSyncStatus.deleted;
     }).toList();
-    expenses.sort((a, b) => b.expenseDate.compareTo(a.expenseDate));
+    expenses.sort(_newestFirst);
     return expenses;
   }
 
@@ -162,7 +168,7 @@ class ExpenseOfflineController extends ChangeNotifier {
       return !expense.expenseDate.isBefore(startDate) &&
           !expense.expenseDate.isAfter(endDate);
     }).toList();
-    expenses.sort((a, b) => b.expenseDate.compareTo(a.expenseDate));
+    expenses.sort(_newestFirst);
     return expenses;
   }
 
@@ -171,7 +177,7 @@ class ExpenseOfflineController extends ChangeNotifier {
     final expenses = (await _db.loadExpenses())
         .where((expense) => expense.syncStatus != ExpenseSyncStatus.deleted)
         .toList();
-    expenses.sort((a, b) => b.expenseDate.compareTo(a.expenseDate));
+    expenses.sort(_newestFirst);
     return expenses.take(limit).toList();
   }
 
@@ -181,7 +187,7 @@ class ExpenseOfflineController extends ChangeNotifier {
       final expenses = rows
           .where((expense) => expense.syncStatus != ExpenseSyncStatus.deleted)
           .toList();
-      expenses.sort((a, b) => b.expenseDate.compareTo(a.expenseDate));
+      expenses.sort(_newestFirst);
       return expenses;
     });
   }
@@ -372,7 +378,7 @@ class ExpenseOfflineController extends ChangeNotifier {
       return !expense.expenseDate.isBefore(startDate) &&
           !expense.expenseDate.isAfter(endDate);
     }).toList();
-    expenses.sort((a, b) => b.expenseDate.compareTo(a.expenseDate));
+    expenses.sort(_newestFirst);
     return expenses;
   }
 }

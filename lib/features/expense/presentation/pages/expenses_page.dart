@@ -1,3 +1,4 @@
+import 'package:c_billing/core/services/live_refresh_mixin.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -35,7 +36,10 @@ class ExpensesPage extends StatefulWidget {
 }
 
 class _ExpensesPageState extends State<ExpensesPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, LiveRefreshMixin<ExpensesPage> {
+  @override
+  Set<String> get liveRefreshEntities => const {'expenses'};
+
   late AnimationController _animController;
   late Animation<Offset> _offsetAnimation;
   late Animation<double> _opacityAnimation;
@@ -864,7 +868,13 @@ class _ExpensesPageState extends State<ExpensesPage>
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => const _AddExpenseSheet(),
+      builder: (context) => GlassDraggableSheet(
+        initialChildSize: 0.75,
+        minChildSize: 0.4,
+        maxChildSize: 0.92,
+        builder: (_, controller) =>
+            _AddExpenseSheet(scrollController: controller),
+      ),
     );
 
     if (result != null && mounted) {
@@ -897,7 +907,15 @@ class _ExpensesPageState extends State<ExpensesPage>
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => _AddExpenseSheet(expense: expense),
+      builder: (context) => GlassDraggableSheet(
+        initialChildSize: 0.75,
+        minChildSize: 0.4,
+        maxChildSize: 0.92,
+        builder: (_, controller) => _AddExpenseSheet(
+          expense: expense,
+          scrollController: controller,
+        ),
+      ),
     );
 
     if (result != null && mounted) {
@@ -1246,8 +1264,9 @@ class _ExpenseCard extends StatelessWidget {
 // Add/Edit Expense Bottom Sheet
 class _AddExpenseSheet extends StatefulWidget {
   final ExpenseEntity? expense;
+  final ScrollController scrollController;
 
-  const _AddExpenseSheet({this.expense});
+  const _AddExpenseSheet({this.expense, required this.scrollController});
 
   @override
   State<_AddExpenseSheet> createState() => _AddExpenseSheetState();
@@ -1307,64 +1326,46 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.expense != null;
+    final desktop = DesktopCanvas.isDesktopPlatform;
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.9,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (!DesktopCanvas.isDesktopPlatform)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.grey300,
-                  borderRadius: BorderRadius.circular(2),
+    return Column(
+      children: [
+        if (!desktop) const GlassSheetHandle() else const SizedBox(height: 4),
+        // Header
+        Padding(
+          padding: EdgeInsets.fromLTRB(20, desktop ? 16 : 8, 20, 0),
+          child: Row(
+            children: [
+              Text(
+                isEditing ? 'Edit Expense' : 'Add Expense',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.accent(context),
+                  fontFamily: 'Literata',
                 ),
               ),
-            ),
-          // Header
-          Padding(
-            padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
-            child: Row(
-              children: [
-                Text(
-                  isEditing ? 'Edit Expense' : 'Add Expense',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.accent(context),
-                    fontFamily: 'Literata',
-                  ),
+              if (!desktop) ...[
+                const Spacer(),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded),
                 ),
-                if (!DesktopCanvas.isDesktopPlatform) ...[
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ],
               ],
-            ),
+            ],
           ),
-          // Form
-          Flexible(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
-                20,
-                16,
-                20,
-                MediaQuery.of(context).viewInsets.bottom + 20,
-              ),
-              child: Form(
+        ),
+        // Form
+        Expanded(
+          child: SingleChildScrollView(
+            controller: widget.scrollController,
+            padding: EdgeInsets.fromLTRB(
+              20,
+              16,
+              20,
+              MediaQuery.of(context).viewInsets.bottom + 20,
+            ),
+            child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1602,7 +1603,6 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
             ),
           ),
         ],
-      ),
     );
   }
 
@@ -1703,29 +1703,14 @@ class _ExpenseDetailsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Padding(
+    return Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Handle
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.grey300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            SizedBox(height: 20),
+            const GlassSheetHandle(),
+            SizedBox(height: 12),
             // Header
             Row(
               children: [
@@ -1795,7 +1780,6 @@ class _ExpenseDetailsSheet extends StatelessWidget {
             const SizedBox(height: 20),
           ],
         ),
-      ),
     );
   }
 

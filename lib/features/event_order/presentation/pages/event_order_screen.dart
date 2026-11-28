@@ -23,6 +23,7 @@ import 'package:c_billing/common_widgets/app_tab_bar.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
 
 // Event Management + Sales Order Screen Supports two modes: Event Mode (with sub-events) and Sales Order Mode (with products)
 class EventOrderScreen extends StatefulWidget {
@@ -443,54 +444,124 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           child: Column(
             children: [
               _buildHeader(),
-              _buildModeToggle(),
-              // Form content
+              // Lock mode when editing so type cannot flip mid-order.
+              if (!_isEditing) _buildModeToggle(),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildCustomerSection(),
-                      const SizedBox(height: 16),
-                      _buildOrderDetailsSection(),
-                      const SizedBox(height: 16),
-                      // Mode-specific content
-                      if (_orderType == OrderType.event) ...[
-                        _buildSubEventsSection(),
-                        const SizedBox(height: 16),
-                        _buildEventProductsSection(),
-                      ] else
-                        _buildSalesOrderSection(),
-                      const SizedBox(height: 16),
-                      // Show grand total breakdown for events with both items
-                      if (_orderType == OrderType.event &&
-                          (_subEvents.isNotEmpty || _orderItems.isNotEmpty))
-                        _buildGrandTotalSection(),
-                      if (_orderType == OrderType.event &&
-                          (_subEvents.isNotEmpty || _orderItems.isNotEmpty))
-                        const SizedBox(height: 16),
-                      // Event charges field for event orders only
-                      if (_orderType == OrderType.event) ...[
-                        _buildEventChargesSection(),
-                        const SizedBox(height: 16),
-                      ],
-                      _buildAdvanceSection(),
-                      const SizedBox(height: 16),
-                      _buildNotesSection(),
-                      const SizedBox(height: 16),
-                      // Custom fields section for events only
-                      if (_orderType == OrderType.event)
-                        _buildCustomFieldsSection(),
-                      const SizedBox(height: 100), // Space for bottom bar
-                    ],
+                  padding: EdgeInsets.fromLTRB(
+                    DesktopCanvas.wide(context) ? 24 : 16,
+                    12,
+                    DesktopCanvas.wide(context) ? 24 : 16,
+                    16,
                   ),
+                  child: _buildFormBody(),
                 ),
               ),
             ],
           ),
         ),
         bottomNavigationBar: _buildSummaryBar(),
+      ),
+    );
+  }
+
+  Widget _buildFormBody() {
+    final identity = <Widget>[
+      _buildZoneLabel('1. Customer & details'),
+      const SizedBox(height: 8),
+      _buildCustomerSection(),
+      const SizedBox(height: 16),
+      _buildOrderDetailsSection(),
+      if (_orderType == OrderType.event) ...[
+        const SizedBox(height: 16),
+        _buildCustomFieldsSection(),
+      ],
+    ];
+
+    final composition = <Widget>[
+      _buildZoneLabel(
+        _orderType == OrderType.event
+            ? '2. Sub-events & products'
+            : '2. Products',
+      ),
+      const SizedBox(height: 8),
+      if (_orderType == OrderType.event) ...[
+        _buildSubEventsSection(),
+        const SizedBox(height: 16),
+        _buildEventProductsSection(),
+        if (_subEvents.isNotEmpty || _orderItems.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _buildGrandTotalSection(),
+        ],
+      ] else
+        _buildSalesOrderSection(),
+    ];
+
+    final money = <Widget>[
+      _buildZoneLabel('3. Payment & notes'),
+      const SizedBox(height: 8),
+      if (_orderType == OrderType.event) ...[
+        _buildEventChargesSection(),
+        const SizedBox(height: 16),
+      ],
+      _buildAdvanceSection(),
+      const SizedBox(height: 16),
+      _buildNotesSection(),
+    ];
+
+    if (DesktopCanvas.wide(context)) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: identity,
+                ),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ...composition,
+                    const SizedBox(height: 20),
+                    ...money,
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 100),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ...identity,
+        const SizedBox(height: 20),
+        ...composition,
+        const SizedBox(height: 20),
+        ...money,
+        const SizedBox(height: 100),
+      ],
+    );
+  }
+
+  Widget _buildZoneLabel(String label) {
+    return Text(
+      label.toUpperCase(),
+      style: TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        fontFamily: 'Literata',
+        letterSpacing: 0.8,
+        color: AppColors.mutedText(context),
       ),
     );
   }
@@ -559,8 +630,12 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     return AppTopBar(
       title: titleText,
       subtitle: _isEditing
-          ? 'Modify your order details'
-          : 'Fill in the details below',
+          ? (_orderType == OrderType.event
+              ? 'Update event, products & advance'
+              : 'Update products & advance')
+          : (_orderType == OrderType.event
+              ? 'Customer → schedule → payment'
+              : 'Customer → products → payment'),
       actions: [
         if (_isEditing && widget.existingOrder != null) ...[
           AppTopBar.action(
@@ -2095,13 +2170,26 @@ class _EventOrderScreenState extends State<EventOrderScreen>
 
   Widget _buildSummaryBar() {
     final isDark = AppColors.isDark(context);
-    final dueColor = _remainingAmount > 0 ? AppTheme.toneAmber : AppColors.action(context);
+    final dueColor =
+        _remainingAmount > 0 ? AppTheme.toneAmber : AppColors.action(context);
     return Container(
-      color: AppColors.scaffold(context),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        border: Border(
+          top: BorderSide(color: AppColors.border(context)),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: isDark ? 0.35 : 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -3601,9 +3689,9 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
   @override
   Widget build(BuildContext context) {
     return GlassDraggableSheet(
-      initialChildSize: 0.55,
+      initialChildSize: 0.68,
+      minChildSize: 0.4,
       maxChildSize: 0.9,
-      minChildSize: 0.38,
       builder: (_, controller) => Column(
           children: [
             const GlassSheetHandle(),
@@ -3956,15 +4044,16 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
               )
               .toList();
 
-    return glassFixedSheet(
-      context: context,
-      heightFactor: 0.65,
-      child: Column(
+    return GlassDraggableSheet(
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (_, controller) => Column(
         children: [
           const GlassSheetHandle(),
           // Header
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: Row(
               children: [
                 Container(
@@ -4182,6 +4271,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                     ),
                   )
                 : ListView.builder(
+                    controller: controller,
                     padding: EdgeInsets.symmetric(horizontal: 16),
                     itemCount: filteredProducts.length,
                     itemBuilder: (context, index) {

@@ -1,4 +1,36 @@
 import 'package:c_billing/core/utils/date_time_parser.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
+
+/// Birth date as stored locally and synced: date-only text 'yyyy-MM-dd'.
+String? birthDateToText(DateTime? date) {
+  if (date == null) return null;
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${date.year.toString().padLeft(4, '0')}-${two(date.month)}-${two(date.day)}';
+}
+
+/// Reads a birth date from text / DateTime / Timestamp as a date-only value.
+/// 'yyyy-MM-dd...' text is taken literally so no timezone can shift the day.
+DateTime? birthDateFromValue(dynamic value) {
+  if (value == null) return null;
+  if (value is String) {
+    final text = value.trim();
+    final match = RegExp(r'^(\d{4})-(\d{2})-(\d{2})').firstMatch(text);
+    if (match != null) {
+      return DateTime(
+        int.parse(match.group(1)!),
+        int.parse(match.group(2)!),
+        int.parse(match.group(3)!),
+      );
+    }
+    return null;
+  }
+  DateTime? date;
+  if (value is Timestamp) date = value.toDate();
+  if (value is DateTime) date = value;
+  if (date == null) return null;
+  final local = date.toLocal();
+  return DateTime(local.year, local.month, local.day);
+}
 
 // Local record for Customer with offline-first support Designed for high-performance CRUD operations with proper indexing
 class CustomerEntity {
@@ -22,6 +54,8 @@ class CustomerEntity {
 
   /// Customer GSTIN (B2B). Used for IGST/place-of-supply and GSTR-1.
   String? gstin;
+  // Birth date (optional, date only)
+  DateTime? birthDate;
 
   // Current pending amount for this customer
   double currentPendingAmount;
@@ -48,6 +82,7 @@ class CustomerEntity {
     this.address,
     this.email,
     this.gstin,
+    this.birthDate,
     this.currentPendingAmount = 0.0,
     this.totalPurchases = 0.0,
     this.isSynced = false,
@@ -64,6 +99,7 @@ class CustomerEntity {
     String? address,
     String? email,
     String? gstin,
+    DateTime? birthDate,
     double currentPendingAmount = 0.0,
     double totalPurchases = 0.0,
     bool isSynced = false,
@@ -78,6 +114,7 @@ class CustomerEntity {
       address: address,
       email: email,
       gstin: gstin,
+      birthDate: birthDate,
       currentPendingAmount: currentPendingAmount,
       totalPurchases: totalPurchases,
       isSynced: isSynced,
@@ -129,6 +166,7 @@ class CustomerEntity {
       email: customer['email'] as String?,
       gstin: (customer['gstin'] ?? customer['gstNumber'] ?? customer['gst'])
           as String?,
+      birthDate: birthDateFromValue(customer['birthDate']),
       currentPendingAmount: pendingAmount,
       totalPurchases: totalPurchases,
       isSynced: true, // From server, so it's synced
@@ -157,6 +195,7 @@ class CustomerEntity {
       'address': address,
       'email': email,
       'gstin': gstin,
+      'birthDate': birthDateToText(birthDate),
       'currentPendingAmount': currentPendingAmount,
       'totalPurchaseAmount': totalPurchases,
       'isActive': !isDeleted,
@@ -175,6 +214,7 @@ class CustomerEntity {
       'address': address,
       'email': email,
       'gstin': gstin,
+      'birthDate': birthDate,
       'currentPendingAmount': currentPendingAmount,
       'totalPurchases': totalPurchases,
       'isSynced': isSynced,
@@ -193,6 +233,8 @@ class CustomerEntity {
     String? address,
     String? email,
     String? gstin,
+    DateTime? birthDate,
+    bool clearBirthDate = false,
     double? currentPendingAmount,
     double? totalPurchases,
     bool? isSynced,
@@ -207,6 +249,7 @@ class CustomerEntity {
       address: address ?? this.address,
       email: email ?? this.email,
       gstin: gstin ?? this.gstin,
+      birthDate: clearBirthDate ? null : (birthDate ?? this.birthDate),
       currentPendingAmount: currentPendingAmount ?? this.currentPendingAmount,
       totalPurchases: totalPurchases ?? this.totalPurchases,
       isSynced: isSynced ?? this.isSynced,

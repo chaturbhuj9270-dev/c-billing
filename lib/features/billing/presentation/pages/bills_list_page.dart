@@ -1,13 +1,14 @@
+import 'package:c_billing/core/services/live_refresh_mixin.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_item.dart';
+import 'package:c_billing/features/billing/domain/sale_return_math.dart';
 import 'package:c_billing/features/billing/presentation/pages/return_bill_page.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/printing/printing.dart';
@@ -44,9 +45,11 @@ class BillsListPage extends StatefulWidget {
 }
 
 class _BillsListPageState extends State<BillsListPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, LiveRefreshMixin<BillsListPage> {
+  @override
+  Set<String> get liveRefreshEntities => const {'bills'};
+
   late FirebaseFirestore _firestore;
-  final _auth = FirebaseAuth.instance;
   late AnimationController _animController;
   late Animation<Offset> _offsetAnimation;
   late Animation<double> _opacityAnimation;
@@ -81,7 +84,6 @@ class _BillsListPageState extends State<BillsListPage>
   // Offline-first stream subscription
   StreamSubscription<List<BillEntity>>? _billsSubscription;
   // Firestore stream for cross-device real-time sync
-  StreamSubscription<QuerySnapshot>? _firestoreStreamSubscription;
 
   @override
   void initState() {
@@ -136,39 +138,6 @@ class _BillsListPageState extends State<BillsListPage>
     );
 
     _setupInitialData();
-    _setupFirestoreStream();
-  }
-
-  // Setup real-time Firestore stream for cross-device bill synchronization
-  void _setupFirestoreStream() {
-    final currentUser = _auth.currentUser;
-    if (currentUser == null) return;
-
-    _firestoreStreamSubscription = _firestore
-        .collection('users')
-        .doc(currentUser.uid)
-        .collection('bills')
-        .orderBy('billDate', descending: true)
-        .snapshots()
-        .listen(
-          (snapshot) async {
-            if (!mounted) return;
-
-            debugPrint(
-              '[Bills] Firestore stream: ${snapshot.docs.length} docs (${snapshot.docChanges.length} changes)',
-            );
-
-            final serverBills = snapshot.docs.map((doc) {
-              return <String, dynamic>{...doc.data(), 'id': doc.id};
-            }).toList();
-
-            // Import to the local database - the local stream listener auto-updates the UI
-            await BillOfflineController.instance.importFromServer(serverBills);
-          },
-          onError: (e) {
-            debugPrint('[ERROR] Firestore bills stream error: $e');
-          },
-        );
   }
 
   Future<void> _setupInitialData() async {
@@ -181,7 +150,6 @@ class _BillsListPageState extends State<BillsListPage>
   @override
   void dispose() {
     _billsSubscription?.cancel();
-    _firestoreStreamSubscription?.cancel();
     _animController.dispose();
     _searchController.dispose();
     _printerService.dispose();
@@ -232,16 +200,25 @@ class _BillsListPageState extends State<BillsListPage>
       final printData = _createPrintBillData(bill);
 
       debugPrint('[BillsListPage] Fetching shop details...');
-      final shop = await _shopRepository.getShopDetails().timeout(
+      // Force refresh so shop QR / UPI from Shop Details are never stale.
+      final shop = await _shopRepository
+          .getShopDetails(forceRefresh: true)
+          .timeout(
         const Duration(seconds: 5),
         onTimeout: () {
           debugPrint('[BillsListPage] Shop details timeout, using empty shop');
           return Shop.empty;
         },
       );
-      debugPrint('[BillsListPage] Got shop: ${shop.shopName}');
+      debugPrint(
+        '[BillsListPage] Got shop: ${shop.shopName}, '
+        'qr=${shop.qrCodeBase64?.isNotEmpty == true}, '
+        'upi=${shop.upiId?.isNotEmpty == true}',
+      );
 
       debugPrint('[BillsListPage] Generating PDF file...');
+      final printPageFormat =
+          await _pdfService.resolvePrintPageFormat(printData);
       if (kIsWeb) {
         final bytes = await _pdfService
             .buildPdfBytes(billData: printData, shopDetails: shop)
@@ -265,6 +242,12 @@ class _BillsListPageState extends State<BillsListPage>
             context: context,
             bill: bill,
             shopRepository: _shopRepository,
+          ),
+          printPageFormat: printPageFormat,
+          rebuildPdfForPrint: (format) => _pdfService.buildPdfBytesForPageFormat(
+            billData: printData,
+            shopDetails: shop,
+            pageFormat: format,
           ),
           details: FilePreviewDetails(
             title: 'Bill preview',
@@ -311,6 +294,12 @@ class _BillsListPageState extends State<BillsListPage>
           context: context,
           bill: bill,
           shopRepository: _shopRepository,
+        ),
+        printPageFormat: printPageFormat,
+        rebuildPdfForPrint: (format) => _pdfService.buildPdfBytesForPageFormat(
+          billData: printData,
+          shopDetails: shop,
+          pageFormat: format,
         ),
         details: FilePreviewDetails(
           title: 'Bill preview',
@@ -641,10 +630,28 @@ class _BillsListPageState extends State<BillsListPage>
   }
 
   void _calculateFilteredStats() {
-    _filteredSales = _filteredBills.fold(
-      0.0,
-      (total, bill) => total + bill.finalAmount,
-    );
+    // Sales after returns: a return never changes the invoice amount itself.
+    _filteredSales = _filteredBills.fold(0.0, (total, bill) {
+      final ratio = SaleReturnMath.chargeRatio(
+        totalAmount: bill.totalAmount,
+        finalAmount: bill.finalAmount,
+      );
+      final returned = bill.items.fold<double>(
+        0.0,
+        (s, item) =>
+            s +
+            SaleReturnMath.returnedValue(
+              sellingPrice: item.sellingPrice,
+              returnedQuantity: item.returnedQuantity,
+              chargeRatio: ratio,
+            ),
+      );
+      return total +
+          SaleReturnMath.netSales(
+            finalAmount: bill.finalAmount,
+            returnedValue: returned,
+          );
+    });
     _filteredProfit = _filteredBills
         .where((b) => !b.returnStatus)
         .fold(
@@ -2745,7 +2752,10 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
       final printData = _createPrintData();
 
       debugPrint('[BillDetailsDialog] Fetching shop details...');
-      final shop = await _shopRepository.getShopDetails().timeout(
+      // Force refresh so shop QR / UPI from Shop Details are never stale.
+      final shop = await _shopRepository
+          .getShopDetails(forceRefresh: true)
+          .timeout(
         const Duration(seconds: 10),
         onTimeout: () {
           debugPrint(
@@ -2754,9 +2764,15 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
           return Shop.empty;
         },
       );
-      debugPrint('[BillDetailsDialog] Got shop: ${shop.shopName}');
+      debugPrint(
+        '[BillDetailsDialog] Got shop: ${shop.shopName}, '
+        'qr=${shop.qrCodeBase64?.isNotEmpty == true}, '
+        'upi=${shop.upiId?.isNotEmpty == true}',
+      );
 
       debugPrint('[BillDetailsDialog] Generating PDF file...');
+      final printPageFormat =
+          await _pdfService.resolvePrintPageFormat(printData);
       if (kIsWeb) {
         final bytes = await _pdfService
             .buildPdfBytes(billData: printData, shopDetails: shop)
@@ -2778,6 +2794,12 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
             context: context,
             bill: _bill,
             shopRepository: _shopRepository,
+          ),
+          printPageFormat: printPageFormat,
+          rebuildPdfForPrint: (format) => _pdfService.buildPdfBytesForPageFormat(
+            billData: printData,
+            shopDetails: shop,
+            pageFormat: format,
           ),
           details: FilePreviewDetails(
             title: 'Bill preview',
@@ -2839,6 +2861,12 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
           context: context,
           bill: _bill,
           shopRepository: _shopRepository,
+        ),
+        printPageFormat: printPageFormat,
+        rebuildPdfForPrint: (format) => _pdfService.buildPdfBytesForPageFormat(
+          billData: printData,
+          shopDetails: shop,
+          pageFormat: format,
         ),
         details: FilePreviewDetails(
           title: 'Bill preview',

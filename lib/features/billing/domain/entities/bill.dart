@@ -245,28 +245,31 @@ class Bill {
   // Factory constructor to create from BillEntity (for offline-first)
   factory Bill.fromBillEntity(BillEntity entity) {
     // Convert embedded bill items to domain BillItem
-    final billItems = entity.items
-        .map(
-          (item) => BillItem(
-            id: item.itemId ?? '',
-            billId: entity.serverId ?? entity.id.toString(),
-            productId: item.productId ?? '',
-            productName: item.productName ?? '',
-            purchasePrice: item.purchasePrice,
-            sellingPrice: item.sellingPrice,
-            quantity: item.quantity,
-            subtotal: item.subtotal,
-            returnedQuantity: item.returnedQuantity,
-            hsnCode: item.hsnCode,
-            cgstPercent: item.cgstPercent,
-            sgstPercent: item.sgstPercent,
-            unit: item.unit,
-            sellUnit: item.sellUnit,
-            unitsPerPack: item.unitsPerPack,
-            employeeToken: item.employeeToken,
-          ),
-        )
-        .toList();
+    final billItems = entity.items.asMap().entries.map((entry) {
+      final index = entry.key;
+      final item = entry.value;
+      final stableId = (item.itemId != null && item.itemId!.isNotEmpty)
+          ? item.itemId!
+          : 'line_${entity.id}_$index';
+      return BillItem(
+        id: stableId,
+        billId: entity.serverId ?? entity.id.toString(),
+        productId: item.productId ?? '',
+        productName: item.productName ?? '',
+        purchasePrice: item.purchasePrice,
+        sellingPrice: item.sellingPrice,
+        quantity: item.quantity,
+        subtotal: item.subtotal,
+        returnedQuantity: item.returnedQuantity,
+        hsnCode: item.hsnCode,
+        cgstPercent: item.cgstPercent,
+        sgstPercent: item.sgstPercent,
+        unit: item.unit,
+        sellUnit: item.sellUnit,
+        unitsPerPack: item.unitsPerPack,
+        employeeToken: item.employeeToken,
+      );
+    }).toList();
 
     // Convert BillPaymentStatus to PaymentStatus
     PaymentStatus paymentStatus;

@@ -29,6 +29,7 @@ class CustomerOfflineController extends ChangeNotifier {
     String? address,
     String? email,
     String? gstin,
+    DateTime? birthDate,
     double currentPendingAmount = 0.0,
     double totalPurchases = 0.0,
   }) async {
@@ -40,7 +41,8 @@ class CustomerOfflineController extends ChangeNotifier {
       address: address,
       email: email,
       gstin: gstin,
-      // Pending comes from ledger; opening balance is written as an adjustment below.
+      birthDate: birthDate,
+      // Pending comes from ledger; opening balance is written as a ledger row below.
       currentPendingAmount: 0,
       totalPurchases: totalPurchases,
       isSynced: false, // Needs to be synced
@@ -162,7 +164,8 @@ class CustomerOfflineController extends ChangeNotifier {
   Future<List<CustomerEntity>> getDeletedCustomers() async {
     return (await _db.loadCustomers())
         .where(
-          (customer) => customer.isDeleted == true && customer.isSynced == false,
+          (customer) =>
+              customer.isDeleted == true && customer.isSynced == false,
         )
         .toList();
   }
@@ -178,6 +181,8 @@ class CustomerOfflineController extends ChangeNotifier {
     String? email,
     String? gstin,
     bool updateGstin = false,
+    DateTime? birthDate,
+    bool clearBirthDate = false,
     double? currentPendingAmount,
     double? totalPurchases,
   }) async {
@@ -190,6 +195,8 @@ class CustomerOfflineController extends ChangeNotifier {
       address: address,
       email: email,
       gstin: updateGstin ? gstin : null,
+      birthDate: birthDate,
+      clearBirthDate: clearBirthDate,
       currentPendingAmount: currentPendingAmount,
       totalPurchases: totalPurchases,
       isSynced: false, // Mark as needing sync

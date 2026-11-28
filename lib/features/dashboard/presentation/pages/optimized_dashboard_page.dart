@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/live_sync_service.dart';
 import 'package:intl/intl.dart';
 import '../../../customer/presentation/pages/enhanced_customer_page.dart';
 import '../../../customer/presentation/widgets/customer_filter_widget.dart';
@@ -254,6 +255,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           return;
         }
         setState(() => _selectedIndex = index);
+        _refreshTabData(index);
       });
     }
 
@@ -1681,6 +1683,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     Expanded(
                       child: _buildGlassyStatRow(
                         title: _localizations.topProducts,
+                        subtitle: _localizations.bestSellers,
                         count: _topProductsTotal,
                         icon: Icons.star_rounded,
                         gradientColors: const [
@@ -1699,6 +1702,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     Expanded(
                       child: _buildGlassyStatRow(
                         title: _localizations.pendingPayments,
+                        subtitle: _localizations.awaitingPayment,
                         count: _pendingPaymentsTotal,
                         icon: Icons.pending_actions_rounded,
                         gradientColors: const [
@@ -1721,6 +1725,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     Expanded(
                       child: _buildGlassyStatRow(
                         title: _localizations.lowStockItems,
+                        subtitle: _localizations.belowReorderLevel,
                         count: _lowStockTotal,
                         icon: Icons.shopping_cart_rounded,
                         gradientColors: const [
@@ -1739,6 +1744,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     Expanded(
                       child: _buildGlassyStatRow(
                         title: _localizations.upcomingEvents,
+                        subtitle: _localizations.comingUp,
                         count: _upcomingEventsTotal,
                         icon: Icons.event_rounded,
                         gradientColors: const [
@@ -1758,6 +1764,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               ] else ...[
                 _buildGlassyStatRow(
                   title: _localizations.topProducts,
+                  subtitle: _localizations.bestSellers,
                   count: _topProductsTotal,
                   icon: Icons.star_rounded,
                   gradientColors: const [AppTheme.orange300, AppTheme.orange],
@@ -1771,6 +1778,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 const SizedBox(height: 10),
                 _buildGlassyStatRow(
                   title: _localizations.pendingPayments,
+                  subtitle: _localizations.awaitingPayment,
                   count: _pendingPaymentsTotal,
                   icon: Icons.pending_actions_rounded,
                   gradientColors: const [AppTheme.error, AppTheme.red600],
@@ -1784,6 +1792,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 const SizedBox(height: 10),
                 _buildGlassyStatRow(
                   title: _localizations.lowStockItems,
+                  subtitle: _localizations.belowReorderLevel,
                   count: _lowStockTotal,
                   icon: Icons.shopping_cart_rounded,
                   gradientColors: const [AppTheme.teal400, AppTheme.teal600],
@@ -1797,6 +1806,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 const SizedBox(height: 10),
                 _buildGlassyStatRow(
                   title: _localizations.upcomingEvents,
+                  subtitle: _localizations.comingUp,
                   count: _upcomingEventsTotal,
                   icon: Icons.event_rounded,
                   gradientColors: const [AppTheme.cyan, AppTheme.cyan700],
@@ -2163,6 +2173,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       children: [
         _buildGlassyStatRow(
           title: _localizations.topProducts,
+          subtitle: _localizations.bestSellers,
           count: _topProductsTotal,
           icon: Icons.star_rounded,
           gradientColors: const [AppTheme.orange300, AppTheme.orange],
@@ -2176,6 +2187,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         const SizedBox(height: 10),
         _buildGlassyStatRow(
           title: _localizations.pendingPayments,
+          subtitle: _localizations.awaitingPayment,
           count: _pendingPaymentsTotal,
           icon: Icons.pending_actions_rounded,
           gradientColors: const [AppTheme.error, AppTheme.red600],
@@ -2189,6 +2201,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         const SizedBox(height: 10),
         _buildGlassyStatRow(
           title: _localizations.lowStockItems,
+          subtitle: _localizations.belowReorderLevel,
           count: _lowStockTotal,
           icon: Icons.shopping_cart_rounded,
           gradientColors: const [AppTheme.teal400, AppTheme.teal600],
@@ -2338,7 +2351,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     final cards = [
       _buildWebMetricCard(
         title: _localizations.totalSales,
-        amount: _formatWebAmount(data.totalSales),
+        // Sales after returns (a return never changes the invoice itself).
+        amount: _formatWebAmount(data.netSales),
         subtitle:
             '${data.totalBillsCount} ${_localizations.bills.toLowerCase()} · ${data.totalItemsSold} ${_localizations.items.toLowerCase()}',
         icon: Icons.show_chart_rounded,
@@ -3166,7 +3180,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
     final salesCard = _buildGradientMetricCard(
       title: _localizations.totalSales,
-      amount: _formatAmount(data.totalSales),
+      // Sales after returns (a return never changes the invoice itself).
+      amount: _formatAmount(data.netSales),
       subtitle:
           '${_localizations.bills}: ${data.totalBillsCount} • ${_localizations.items}: ${data.totalItemsSold}',
       gradient: metricGradient(0, const [AppTheme.paletteFF667EEA, AppTheme.paletteFF764BA2]),
@@ -3756,7 +3771,54 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     }
     if (DesktopCanvas.isDesktopPlatform) WebShell.popToRoot();
     setState(() => _selectedIndex = index);
+    _refreshTabData(index);
   }
+
+  // Which synced collections each tab shows. Switching to a tab pulls the
+  // latest changes (e.g. made on the web or another device) for just those.
+  static const Map<int, Set<String>> _tabEntities = {
+    WebShell.dashboard: {
+      'bills',
+      'customers',
+      'customer_transactions',
+      'products',
+      'purchases',
+      'purchaseBatches',
+      'eventOrders',
+      'expenses',
+    },
+    WebShell.customers: {'customers', 'customer_transactions', 'eventOrders'},
+    WebShell.billing: {'products', 'customers', 'purchaseBatches'},
+    WebShell.availability: {'products', 'purchaseBatches'},
+    WebShell.purchase: {
+      'purchases',
+      'purchaseBatches',
+      'products',
+      'suppliers',
+      'companies',
+    },
+    WebShell.invoices: {'bills', 'customers'},
+    WebShell.products: {'products', 'purchaseBatches'},
+    WebShell.suppliers: {'suppliers'},
+    WebShell.companies: {'companies'},
+    WebShell.purchaseReturn: {
+      'purchases',
+      'purchaseBatches',
+      'suppliers',
+      'products',
+    },
+    WebShell.events: {'eventOrders', 'customers'},
+    WebShell.quotations: {'customers', 'products'},
+    WebShell.barcode: {'products'},
+    WebShell.expenses: {'expenses'},
+  };
+
+  void _refreshTabData(int index) {
+    final entities = _tabEntities[index];
+    if (entities == null) return;
+    unawaited(LiveSyncService.instance.refreshNow(entities));
+  }
+
 
   // ============ QUICK INSIGHT CARDS ============
 
@@ -3857,32 +3919,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     );
   }
 
-  Widget _insightCountBadge(int count, Color accent) {
-    final label = count.toString();
-    final wide = label.length > 1;
-    return Container(
-      height: 28,
-      width: wide ? null : 28,
-      constraints: const BoxConstraints(minWidth: 28),
-      padding: EdgeInsets.symmetric(horizontal: wide ? 6 : 0),
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: accent,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
-          color: AppTheme.white,
-          fontFamily: 'Literata',
-          height: 1,
-        ),
-      ),
-    );
-  }
-
   Widget _insightValuePill(String label, Color accent) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -3903,55 +3939,115 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     );
   }
 
+  // Quick Insight row: same raised white card as the view cards (Stock &
+  // Payments). Colour is kept only on the icon tile and the count badge.
   Widget _buildGlassyStatRow({
     required String title,
+    required String subtitle,
     required int count,
     required IconData icon,
     required List<Color> gradientColors,
     required VoidCallback onTap,
   }) {
-    final tone = _insightTone(gradientColors);
     final isDark = AppColors.isDark(context);
-    return Material(
-      color: AppTheme.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: _insightGlassCard(
-          tone: tone,
-          shadow: [
-            BoxShadow(
-              color: AppTheme.black.withValues(alpha: isDark ? 0.4 : 0.08),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+    final tones = isDark
+        ? AppColors.darkMetricGradient(gradientColors.hashCode)
+        : gradientColors;
+
+    return _raisedGlass(
+      radius: 22,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(22),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Row(
               children: [
-                _insightIconTile(
-                  accent: tone.accent,
-                  child: Icon(icon, color: AppTheme.white, size: 20),
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: tones,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: AppTheme.white, size: 22),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryText(context),
+                          fontFamily: 'Literata',
+                          height: 1.15,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.mutedText(context),
+                          fontFamily: 'Literata',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  width: 34,
+                  height: 34,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: tones,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
                   child: Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: tone.title,
+                    count.toString(),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.white,
                       fontFamily: 'Literata',
                     ),
                   ),
                 ),
-                _insightCountBadge(count, tone.accent),
-                const SizedBox(width: 4),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: isDark ? AppTheme.white54 : AppTheme.grey600,
-                  size: 22,
+                const SizedBox(width: 8),
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isDark
+                        ? AppTheme.white.withValues(alpha: 0.08)
+                        : AppTheme.white.withValues(alpha: 0.85),
+                    border: Border.all(
+                      color: isDark
+                          ? AppTheme.white.withValues(alpha: 0.16)
+                          : AppColors.border(context),
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.secondaryText(context),
+                    size: 20,
+                  ),
                 ),
               ],
             ),

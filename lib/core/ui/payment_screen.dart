@@ -1,18 +1,26 @@
 import 'dart:ui';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../config/subscription_products.dart';
 import '../localization/app_localizations.dart';
+import '../services/cashfree_payment_service.dart';
 import '../services/language_service.dart';
 import '../services/play_billing_service.dart';
 import '../services/subscription_service.dart';
+import '../ui/desktop_canvas.dart';
 import '../../features/dashboard/presentation/pages/optimized_dashboard_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-// Google Play Billing payment screen for yearly subscription (₹3999).
+/// Yearly subscription checkout.
+///
+/// - Android → Google Play Billing
+/// - Web / iOS → Cashfree
+/// - macOS / Windows desktop → support-assisted activation (store SDKs unavailable)
 class PaymentScreen extends StatefulWidget {
   const PaymentScreen({super.key});
 
@@ -32,13 +40,25 @@ class _PaymentScreenState extends State<PaymentScreen>
   bool _loadingProduct = true;
   String? _statusMessage;
   String? _productError;
-  String _priceLabel = SubscriptionProducts.fallbackPriceLabel;
+  SubscriptionPricing _pricing = SubscriptionPricing.defaults;
 
   final PlayBillingService _playBilling = PlayBillingService();
+  final CashfreePaymentService _cashfree = CashfreePaymentService();
   final SubscriptionService _subscriptionService = SubscriptionService();
 
   AppLocalizations get _localizations =>
       AppLocalizations.of(LanguageService.instance.currentLanguage);
+
+  /// Google Play only works on Android devices.
+  bool get _usePlayBilling =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+  /// Cashfree PG SDK supports Web / iOS (Android stays on Play Billing).
+  bool get _useCashfree =>
+      kIsWeb || (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS);
+
+  bool get _isDesktopCheckout =>
+      DesktopCanvas.isDesktopPlatform && !_usePlayBilling && !_useCashfree;
 
   @override
   void initState() {
@@ -59,7 +79,32 @@ class _PaymentScreenState extends State<PaymentScreen>
         );
 
     _animController.forward();
-    _loadStoreProduct();
+    _bootstrapCheckout();
+  }
+
+  Future<void> _bootstrapCheckout() async {
+    final pricing = await _subscriptionService.fetchPricing();
+    if (!mounted) return;
+    setState(() => _pricing = pricing);
+
+    if (_isDesktopCheckout) {
+      setState(() {
+        _loadingProduct = false;
+        _productError = null;
+      });
+      return;
+    }
+
+    if (_usePlayBilling) {
+      await _loadStoreProduct();
+      return;
+    }
+
+    // Cashfree / other: amount comes from backend (already loaded above).
+    if (!mounted) return;
+    setState(() {
+      _loadingProduct = false;
+    });
   }
 
   Future<void> _loadStoreProduct() async {
@@ -71,7 +116,6 @@ class _PaymentScreenState extends State<PaymentScreen>
       await _playBilling.initialize();
       if (!mounted) return;
       setState(() {
-        _priceLabel = _playBilling.displayPrice;
         _loadingProduct = false;
       });
     } catch (e) {
@@ -79,7 +123,6 @@ class _PaymentScreenState extends State<PaymentScreen>
       setState(() {
         _loadingProduct = false;
         _productError = e.toString();
-        _priceLabel = SubscriptionProducts.fallbackPriceLabel;
       });
     }
   }
@@ -96,12 +139,82 @@ class _PaymentScreenState extends State<PaymentScreen>
     setState(() {
       _isPaying = true;
       _statusMessage = _localizations.preparingSecurePayment;
+      _productError = null;
     });
 
     try {
+      // Retry product load if bootstrap failed earlier (button used to be dead).
+      if (!_playBilling.hasProduct || _productError != null) {
+        setState(() => _statusMessage = _localizations.preparingSecurePayment);
+        await _playBilling.initialize(forceReload: true);
+      }
+
       final result = await _playBilling.purchaseYearlySubscription();
       if (!mounted) return;
-      await _handleBillingResult(result);
+      await _handlePlayResult(result);
+    } catch (e) {
+      if (!mounted) return;
+      final message = e.toString().replaceFirst('StateError: ', '');
+      GlassyToast.show(
+        context,
+        message.isNotEmpty ? message : _localizations.paymentFailedTryAgain,
+        isError: true,
+      );
+      setState(() {
+        _statusMessage = null;
+        _isPaying = false;
+        _productError = message;
+      });
+    }
+  }
+
+  Future<void> _startCashfreePurchase() async {
+    if (_isPaying) return;
+
+    setState(() {
+      _isPaying = true;
+      _statusMessage = _localizations.preparingSecurePayment;
+    });
+
+    try {
+      final result = await _cashfree.payForSubscription();
+      if (!mounted) return;
+
+      if (result.success) {
+        setState(() => _statusMessage = _localizations.activatingSubscription);
+        final active = await _subscriptionService.waitUntilActive(
+          timeout: const Duration(seconds: 12),
+        );
+        if (!mounted) return;
+        if (active) {
+          GlassyToast.show(context, _localizations.subscriptionActivatedSuccess);
+          Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const OptimizedDashboardPage()),
+            (_) => false,
+          );
+          return;
+        }
+        GlassyToast.show(context, _localizations.paymentReceivedActivatingSoon);
+        setState(() {
+          _statusMessage = _localizations.paymentReceivedActivatingSoon;
+          _isPaying = false;
+        });
+        return;
+      }
+
+      if (result.status != 'CANCELED') {
+        GlassyToast.show(
+          context,
+          result.message.isNotEmpty
+              ? result.message
+              : _localizations.paymentFailedTryAgain,
+          isError: true,
+        );
+      }
+      setState(() {
+        _statusMessage = null;
+        _isPaying = false;
+      });
     } catch (e) {
       if (!mounted) return;
       GlassyToast.show(
@@ -117,7 +230,7 @@ class _PaymentScreenState extends State<PaymentScreen>
   }
 
   Future<void> _restorePurchases() async {
-    if (_isPaying) return;
+    if (_isPaying || !_usePlayBilling) return;
 
     setState(() {
       _isPaying = true;
@@ -127,7 +240,7 @@ class _PaymentScreenState extends State<PaymentScreen>
     try {
       final result = await _playBilling.restorePurchases();
       if (!mounted) return;
-      await _handleBillingResult(result);
+      await _handlePlayResult(result);
     } catch (e) {
       if (!mounted) return;
       GlassyToast.show(
@@ -142,7 +255,7 @@ class _PaymentScreenState extends State<PaymentScreen>
     }
   }
 
-  Future<void> _handleBillingResult(PlayBillingResult result) async {
+  Future<void> _handlePlayResult(PlayBillingResult result) async {
     if (result.success) {
       setState(() => _statusMessage = _localizations.activatingSubscription);
 
@@ -207,11 +320,58 @@ class _PaymentScreenState extends State<PaymentScreen>
     });
   }
 
+  Future<void> _checkSubscriptionStatus() async {
+    if (_isPaying) return;
+    setState(() {
+      _isPaying = true;
+      _statusMessage = _localizations.activatingSubscription;
+    });
+
+    final active = await _subscriptionService.isSubscriptionValid();
+    if (!mounted) return;
+
+    if (active) {
+      GlassyToast.show(context, _localizations.subscriptionActivatedSuccess);
+      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const OptimizedDashboardPage()),
+        (_) => false,
+      );
+      return;
+    }
+
+    GlassyToast.show(
+      context,
+      'Subscription not active yet. Call support after payment.',
+      isError: true,
+    );
+    setState(() {
+      _statusMessage = null;
+      _isPaying = false;
+    });
+  }
+
   Future<void> _callSupport() async {
     final Uri phoneUrl = Uri.parse('tel:$contactNumber');
     if (await canLaunchUrl(phoneUrl)) {
       await launchUrl(phoneUrl);
+      return;
     }
+    // Desktop often has no dialer — copy number instead.
+    await Clipboard.setData(const ClipboardData(text: contactNumber));
+    if (!mounted) return;
+    GlassyToast.show(context, _localizations.phoneNumberCopied);
+  }
+
+  Future<void> _openWhatsApp() async {
+    final uri = Uri.parse(
+      'https://wa.me/91$contactNumber?text=${Uri.encodeComponent('Hi, I want to activate C-Billing yearly subscription (${_pricing.priceLabel}) on desktop.')}',
+    );
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      return;
+    }
+    if (!mounted) return;
+    GlassyToast.show(context, _localizations.couldNotOpenWhatsApp, isError: true);
   }
 
   @override
@@ -240,7 +400,12 @@ class _PaymentScreenState extends State<PaymentScreen>
                             const SizedBox(height: 20),
                             _buildAmountSection(),
                             const SizedBox(height: 28),
-                            _buildPlayBillingCard(),
+                            if (_isDesktopCheckout)
+                              _buildDesktopCheckoutCard()
+                            else if (_useCashfree)
+                              _buildCashfreeCard()
+                            else
+                              _buildPlayBillingCard(),
                             const SizedBox(height: 24),
                             _buildInstructions(),
                             const SizedBox(height: 28),
@@ -316,9 +481,25 @@ class _PaymentScreenState extends State<PaymentScreen>
                     ),
                   ),
                 )
-              else
+              else ...[
+                if (_pricing.showOffer && !_usePlayBilling) ...[
+                  Text(
+                    _pricing.originalPriceLabel,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.accentSoft(context, 0.45),
+                      fontFamily: 'Literata',
+                      decoration: TextDecoration.lineThrough,
+                      decorationColor: AppColors.accentSoft(context, 0.45),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                ],
                 Text(
-                  _priceLabel,
+                  _usePlayBilling
+                      ? _playBilling.displayPrice
+                      : _pricing.priceLabel,
                   style: TextStyle(
                     fontSize: 42,
                     fontWeight: FontWeight.w700,
@@ -327,6 +508,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                     height: 1,
                   ),
                 ),
+              ],
               const SizedBox(height: 6),
               Container(
                 padding: const EdgeInsets.symmetric(
@@ -351,6 +533,157 @@ class _PaymentScreenState extends State<PaymentScreen>
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopCheckoutCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accentSoft(context, 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: AppColors.accentSoft(context, 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.desktop_windows_outlined,
+              size: 34,
+              color: AppColors.accent(context),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Desktop subscription',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.accentSoft(context, 0.85),
+              fontFamily: 'Literata',
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Google Play Billing works on Android only. On Mac/Windows, activate your yearly plan via support.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.accentSoft(context, 0.55),
+              fontFamily: 'Literata',
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 14),
+          SelectableText(
+            contactNumber,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppColors.accent(context),
+              fontFamily: 'Literata',
+            ),
+          ),
+          if (_statusMessage != null) ...[
+            const SizedBox(height: 18),
+            Text(
+              _statusMessage!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.accent(context),
+                fontFamily: 'Literata',
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCashfreeCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accentSoft(context, 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: AppColors.accentSoft(context, 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.account_balance_wallet_outlined,
+              size: 34,
+              color: AppColors.accent(context),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _localizations.payViaCashfree,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.accentSoft(context, 0.85),
+              fontFamily: 'Literata',
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _localizations.cashfreePaymentModesHint,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.accentSoft(context, 0.55),
+              fontFamily: 'Literata',
+              height: 1.4,
+            ),
+          ),
+          if (_statusMessage != null) ...[
+            const SizedBox(height: 18),
+            Text(
+              _statusMessage!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.accent(context),
+                fontFamily: 'Literata',
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -413,7 +746,7 @@ class _PaymentScreenState extends State<PaymentScreen>
             Text(
               _localizations.playProductNotReady,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12,
                 color: AppTheme.red700,
                 fontFamily: 'Literata',
@@ -457,6 +790,12 @@ class _PaymentScreenState extends State<PaymentScreen>
   }
 
   Widget _buildInstructions() {
+    final text = _isDesktopCheckout
+        ? 'Call or WhatsApp support to pay ${_pricing.priceLabel} for 1 year. Share your registered login after payment — access unlocks once support activates your account.'
+        : _useCashfree
+            ? _localizations.cashfreePaymentInstructions
+            : _localizations.googlePlayPaymentInstructions;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -500,7 +839,7 @@ class _PaymentScreenState extends State<PaymentScreen>
           ),
           const SizedBox(height: 14),
           Text(
-            _localizations.googlePlayPaymentInstructions,
+            text,
             style: TextStyle(
               fontSize: 13,
               color: AppColors.accentSoft(context, 0.8),
@@ -508,71 +847,85 @@ class _PaymentScreenState extends State<PaymentScreen>
               height: 1.4,
             ),
           ),
+          if (_isDesktopCheckout) ...[
+            const SizedBox(height: 10),
+            Text(
+              _localizations.subscriptionActivatedWithin24Hours,
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.accentSoft(context, 0.7),
+                fontFamily: 'Literata',
+                height: 1.35,
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildActionButtons() {
-    final canPay = !_isPaying && !_loadingProduct && _productError == null;
-
-    return Column(
-      children: [
-        SizedBox(
-          width: double.infinity,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.action(context).withValues(alpha: 0.95),
-                      AppTheme.green800.withValues(alpha: 0.88),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.accentSoft(context, 0.25),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
+  Widget _buildPrimaryButton({
+    required String label,
+    required VoidCallback? onTap,
+    IconData icon = Icons.payment,
+    bool enabled = true,
+  }) {
+    final isEnabled = enabled && onTap != null && !_isPaying;
+    return Opacity(
+      opacity: isEnabled || _isPaying ? 1 : 0.55,
+      child: SizedBox(
+        width: double.infinity,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.action(context).withValues(alpha: 0.95),
+                    AppTheme.green800.withValues(alpha: 0.88),
                   ],
                 ),
-                child: Material(
-                  color: AppTheme.transparent,
-                  child: InkWell(
-                    onTap: canPay ? _startPlayPurchase : null,
-                    borderRadius: BorderRadius.circular(14),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          if (_isPaying)
-                            const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppTheme.white,
-                              ),
-                            )
-                          else
-                            const Icon(
-                              Icons.payment,
-                              size: 22,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.accentSoft(context, 0.25),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: AppTheme.transparent,
+                child: InkWell(
+                  onTap: _isPaying ? null : onTap,
+                  borderRadius: BorderRadius.circular(14),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (_isPaying)
+                          const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
                               color: AppTheme.white,
                             ),
-                          const SizedBox(width: 10),
-                          Text(
+                          )
+                        else
+                          Icon(icon, size: 22, color: AppTheme.white),
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: Text(
                             _isPaying
                                 ? _localizations.processingPayment
-                                : _localizations.payWithGooglePlay,
+                                : label,
+                            textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: AppTheme.white,
                               fontSize: 16,
@@ -580,8 +933,8 @@ class _PaymentScreenState extends State<PaymentScreen>
                               fontFamily: 'Literata',
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -589,99 +942,147 @@ class _PaymentScreenState extends State<PaymentScreen>
             ),
           ),
         ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppTheme.white.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: AppColors.accentSoft(context, 0.3),
-                width: 1.5,
-              ),
-            ),
-            child: Material(
-              color: AppTheme.transparent,
-              child: InkWell(
-                onTap: _isPaying ? null : _restorePurchases,
-                borderRadius: BorderRadius.circular(14),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.restore,
-                        size: 20,
-                        color: AppColors.accentSoft(context, 0.8),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _localizations.restorePurchases,
-                        style: TextStyle(
-                          color: AppColors.accentSoft(context, 0.9),
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Literata',
-                        ),
-                      ),
-                    ],
+      ),
+    );
+  }
+
+  Widget _buildSecondaryButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback? onTap,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.white.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: AppColors.accentSoft(context, 0.3),
+            width: 1.5,
+          ),
+        ),
+        child: Material(
+          color: AppTheme.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(14),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    icon,
+                    size: 20,
+                    color: AppColors.accentSoft(context, 0.8),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: AppColors.accentSoft(context, 0.9),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
         ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppTheme.white.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: AppColors.accentSoft(context, 0.3),
-                width: 1.5,
-              ),
-            ),
-            child: Material(
-              color: AppTheme.transparent,
-              child: InkWell(
-                onTap: _callSupport,
-                borderRadius: BorderRadius.circular(14),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.call_outlined,
-                        size: 20,
-                        color: AppColors.accentSoft(context, 0.8),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _localizations.callSupport,
-                        style: TextStyle(
-                          color: AppColors.accentSoft(context, 0.9),
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Literata',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+      ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    if (_isDesktopCheckout) {
+      return Column(
+        children: [
+          _buildPrimaryButton(
+            label: _localizations.callSupport,
+            icon: Icons.call_outlined,
+            onTap: _isPaying ? null : _callSupport,
+          ),
+          const SizedBox(height: 12),
+          _buildSecondaryButton(
+            label: _localizations.shareOnWhatsApp,
+            icon: Icons.chat_outlined,
+            onTap: _isPaying ? null : _openWhatsApp,
+          ),
+          const SizedBox(height: 12),
+          _buildSecondaryButton(
+            label: "I've paid — Check status",
+            icon: Icons.verified_outlined,
+            onTap: _isPaying ? null : _checkSubscriptionStatus,
+          ),
+        ],
+      );
+    }
+
+    if (_useCashfree) {
+      return Column(
+        children: [
+          _buildPrimaryButton(
+            label: _localizations.paySecurely,
+            onTap: _isPaying ? null : _startCashfreePurchase,
+          ),
+          const SizedBox(height: 12),
+          _buildSecondaryButton(
+            label: _localizations.callSupport,
+            icon: Icons.call_outlined,
+            onTap: _callSupport,
+          ),
+        ],
+      );
+    }
+
+    // Keep Pay tappable even after a product load error so the user can retry.
+    final canPay = !_isPaying && !_loadingProduct;
+    return Column(
+      children: [
+        _buildPrimaryButton(
+          label: _localizations.payWithGooglePlay,
+          onTap: canPay ? _startPlayPurchase : null,
+          enabled: canPay,
+        ),
+        if (_productError != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _localizations.playProductNotReady,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppTheme.red700,
+              fontFamily: 'Literata',
+              height: 1.35,
             ),
           ),
+        ],
+        const SizedBox(height: 12),
+        _buildSecondaryButton(
+          label: _localizations.restorePurchases,
+          icon: Icons.restore,
+          onTap: _isPaying ? null : _restorePurchases,
+        ),
+        const SizedBox(height: 12),
+        _buildSecondaryButton(
+          label: _localizations.callSupport,
+          icon: Icons.call_outlined,
+          onTap: _callSupport,
         ),
       ],
     );
   }
 
   Widget _buildBottomBranding() {
+    final brand = _isDesktopCheckout
+        ? 'Desktop activation via Chaturbhuj Solutions support'
+        : _useCashfree
+            ? _localizations.securePaymentPoweredByCashfree
+            : _localizations.securePaymentPoweredByGooglePlay;
+
     return Column(
       children: [
         Container(
@@ -707,12 +1108,15 @@ class _PaymentScreenState extends State<PaymentScreen>
               color: AppColors.accentSoft(context, 0.4),
             ),
             const SizedBox(width: 6),
-            Text(
-              _localizations.securePaymentPoweredByGooglePlay,
-              style: TextStyle(
-                fontSize: 11,
-                color: AppColors.accentSoft(context, 0.4),
-                fontFamily: 'Literata',
+            Flexible(
+              child: Text(
+                brand,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppColors.accentSoft(context, 0.4),
+                  fontFamily: 'Literata',
+                ),
               ),
             ),
           ],

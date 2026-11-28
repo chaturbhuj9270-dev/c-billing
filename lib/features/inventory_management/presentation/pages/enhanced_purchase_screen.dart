@@ -1,3 +1,4 @@
+import 'package:c_billing/core/services/live_refresh_mixin.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -60,7 +61,10 @@ class EnhancedPurchaseScreen extends StatefulWidget {
 }
 
 class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, LiveRefreshMixin<EnhancedPurchaseScreen> {
+  @override
+  Set<String> get liveRefreshEntities => const {'purchases', 'purchaseBatches'};
+
   late AppLocalizations _localizations;
   late AnimationController _animController;
   late Animation<Offset> _offsetAnimation;
@@ -180,7 +184,10 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       if (mounted) {
         setState(() {
           _purchases = batches
-            ..sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate));
+            ..sort((a, b) {
+              final c = b.purchaseDate.compareTo(a.purchaseDate);
+              return c != 0 ? c : b.createdAt.compareTo(a.createdAt);
+            });
           _isLoading = false;
         });
       }
@@ -204,7 +211,10 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
         .map(
           (batches) =>
               batches.toList()
-                ..sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate)),
+                ..sort((a, b) {
+              final c = b.purchaseDate.compareTo(a.purchaseDate);
+              return c != 0 ? c : b.createdAt.compareTo(a.createdAt);
+            }),
         )
         .listen(
           (purchases) {
@@ -286,16 +296,22 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => _PurchaseDetailsSheet(
-        purchase: purchase,
-        onEdit: () {
-          Navigator.pop(context);
-          _showEditPurchaseDialog(purchase);
-        },
-        onDelete: () async {
-          Navigator.pop(context);
-          _confirmDeletePurchase(purchase);
-        },
+      builder: (context) => GlassDraggableSheet(
+        initialChildSize: 0.65,
+        minChildSize: 0.4,
+        maxChildSize: 0.92,
+        builder: (_, controller) => _PurchaseDetailsSheet(
+          purchase: purchase,
+          scrollController: controller,
+          onEdit: () {
+            Navigator.pop(context);
+            _showEditPurchaseDialog(purchase);
+          },
+          onDelete: () async {
+            Navigator.pop(context);
+            _confirmDeletePurchase(purchase);
+          },
+        ),
       ),
     );
   }
@@ -305,76 +321,52 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     showAppBottomSheet(
       context: context,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => ClipRRect(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.card(context),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(20),
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const GlassSheetHandle(),
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              purchase.productName,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: AppColors.accent(context),
               ),
-            ),
-            child: SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(top: 12),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppTheme.grey300,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text(
-                      purchase.productName,
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        color: AppColors.accent(context),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const Divider(height: 1),
-                  _buildContextMenuItem(
-                    icon: Icons.visibility_rounded,
-                    label: _localizations.viewDetails,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showPurchaseDetails(purchase);
-                    },
-                  ),
-                  _buildContextMenuItem(
-                    icon: Icons.edit_rounded,
-                    label: _localizations.edit,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showEditPurchaseDialog(purchase);
-                    },
-                  ),
-                  _buildContextMenuItem(
-                    icon: Icons.delete_outline_rounded,
-                    label: _localizations.delete,
-                    isDestructive: true,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _confirmDeletePurchase(purchase);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-        ),
+          const Divider(height: 1),
+          _buildContextMenuItem(
+            icon: Icons.visibility_rounded,
+            label: _localizations.viewDetails,
+            onTap: () {
+              Navigator.pop(context);
+              _showPurchaseDetails(purchase);
+            },
+          ),
+          _buildContextMenuItem(
+            icon: Icons.edit_rounded,
+            label: _localizations.edit,
+            onTap: () {
+              Navigator.pop(context);
+              _showEditPurchaseDialog(purchase);
+            },
+          ),
+          _buildContextMenuItem(
+            icon: Icons.delete_outline_rounded,
+            label: _localizations.delete,
+            isDestructive: true,
+            onTap: () {
+              Navigator.pop(context);
+              _confirmDeletePurchase(purchase);
+            },
+          ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }
@@ -1734,11 +1726,13 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 // Purchase details bottom sheet
 class _PurchaseDetailsSheet extends StatefulWidget {
   final PurchaseBatchEntity purchase;
+  final ScrollController? scrollController;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
   const _PurchaseDetailsSheet({
     required this.purchase,
+    this.scrollController,
     this.onEdit,
     this.onDelete,
   });
@@ -1774,33 +1768,14 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
     final timeFormat = DateFormat('hh:mm a');
     final customColumns = ProductSettingsService.instance.activeCustomColumns;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.card(context),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: SafeArea(
-            child: SingleChildScrollView(
+    return SingleChildScrollView(
+              controller: widget.scrollController,
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Handle
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppTheme.grey300,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 20),
+                  const GlassSheetHandle(),
+                  SizedBox(height: 12),
 
                   // Header
                   Row(
@@ -2033,10 +2008,6 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
                   ),
                 ],
               ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 

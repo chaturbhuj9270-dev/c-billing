@@ -92,6 +92,28 @@ class $CompanyRecordsTable extends CompanyRecords
     requiredDuringInsert: false,
     defaultValue: const Constant(''),
   );
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+    'email',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _contactPersonMeta = const VerificationMeta(
+    'contactPerson',
+  );
+  @override
+  late final GeneratedColumn<String> contactPerson = GeneratedColumn<String>(
+    'contact_person',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
   static const VerificationMeta _isActiveMeta = const VerificationMeta(
     'isActive',
   );
@@ -149,6 +171,8 @@ class $CompanyRecordsTable extends CompanyRecords
     gstCode,
     contact,
     address,
+    email,
+    contactPerson,
     isActive,
     syncStatus,
     updatedAt,
@@ -211,6 +235,21 @@ class $CompanyRecordsTable extends CompanyRecords
       context.handle(
         _addressMeta,
         address.isAcceptableOrUnknown(data['address']!, _addressMeta),
+      );
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+        _emailMeta,
+        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
+    }
+    if (data.containsKey('contact_person')) {
+      context.handle(
+        _contactPersonMeta,
+        contactPerson.isAcceptableOrUnknown(
+          data['contact_person']!,
+          _contactPersonMeta,
+        ),
       );
     }
     if (data.containsKey('is_active')) {
@@ -280,6 +319,14 @@ class $CompanyRecordsTable extends CompanyRecords
         DriftSqlType.string,
         data['${effectivePrefix}address'],
       )!,
+      email: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}email'],
+      )!,
+      contactPerson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}contact_person'],
+      )!,
       isActive: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_active'],
@@ -313,6 +360,8 @@ class CompanyRecord extends DataClass implements Insertable<CompanyRecord> {
   final String gstCode;
   final String contact;
   final String address;
+  final String email;
+  final String contactPerson;
   final bool isActive;
   final int syncStatus;
   final DateTime updatedAt;
@@ -325,6 +374,8 @@ class CompanyRecord extends DataClass implements Insertable<CompanyRecord> {
     required this.gstCode,
     required this.contact,
     required this.address,
+    required this.email,
+    required this.contactPerson,
     required this.isActive,
     required this.syncStatus,
     required this.updatedAt,
@@ -342,6 +393,8 @@ class CompanyRecord extends DataClass implements Insertable<CompanyRecord> {
     map['gst_code'] = Variable<String>(gstCode);
     map['contact'] = Variable<String>(contact);
     map['address'] = Variable<String>(address);
+    map['email'] = Variable<String>(email);
+    map['contact_person'] = Variable<String>(contactPerson);
     map['is_active'] = Variable<bool>(isActive);
     map['sync_status'] = Variable<int>(syncStatus);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -360,6 +413,8 @@ class CompanyRecord extends DataClass implements Insertable<CompanyRecord> {
       gstCode: Value(gstCode),
       contact: Value(contact),
       address: Value(address),
+      email: Value(email),
+      contactPerson: Value(contactPerson),
       isActive: Value(isActive),
       syncStatus: Value(syncStatus),
       updatedAt: Value(updatedAt),
@@ -380,6 +435,8 @@ class CompanyRecord extends DataClass implements Insertable<CompanyRecord> {
       gstCode: serializer.fromJson<String>(json['gstCode']),
       contact: serializer.fromJson<String>(json['contact']),
       address: serializer.fromJson<String>(json['address']),
+      email: serializer.fromJson<String>(json['email']),
+      contactPerson: serializer.fromJson<String>(json['contactPerson']),
       isActive: serializer.fromJson<bool>(json['isActive']),
       syncStatus: serializer.fromJson<int>(json['syncStatus']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -397,6 +454,8 @@ class CompanyRecord extends DataClass implements Insertable<CompanyRecord> {
       'gstCode': serializer.toJson<String>(gstCode),
       'contact': serializer.toJson<String>(contact),
       'address': serializer.toJson<String>(address),
+      'email': serializer.toJson<String>(email),
+      'contactPerson': serializer.toJson<String>(contactPerson),
       'isActive': serializer.toJson<bool>(isActive),
       'syncStatus': serializer.toJson<int>(syncStatus),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -412,6 +471,8 @@ class CompanyRecord extends DataClass implements Insertable<CompanyRecord> {
     String? gstCode,
     String? contact,
     String? address,
+    String? email,
+    String? contactPerson,
     bool? isActive,
     int? syncStatus,
     DateTime? updatedAt,
@@ -424,6 +485,8 @@ class CompanyRecord extends DataClass implements Insertable<CompanyRecord> {
     gstCode: gstCode ?? this.gstCode,
     contact: contact ?? this.contact,
     address: address ?? this.address,
+    email: email ?? this.email,
+    contactPerson: contactPerson ?? this.contactPerson,
     isActive: isActive ?? this.isActive,
     syncStatus: syncStatus ?? this.syncStatus,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -442,6 +505,10 @@ class CompanyRecord extends DataClass implements Insertable<CompanyRecord> {
       gstCode: data.gstCode.present ? data.gstCode.value : this.gstCode,
       contact: data.contact.present ? data.contact.value : this.contact,
       address: data.address.present ? data.address.value : this.address,
+      email: data.email.present ? data.email.value : this.email,
+      contactPerson: data.contactPerson.present
+          ? data.contactPerson.value
+          : this.contactPerson,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
       syncStatus: data.syncStatus.present
           ? data.syncStatus.value
@@ -461,6 +528,8 @@ class CompanyRecord extends DataClass implements Insertable<CompanyRecord> {
           ..write('gstCode: $gstCode, ')
           ..write('contact: $contact, ')
           ..write('address: $address, ')
+          ..write('email: $email, ')
+          ..write('contactPerson: $contactPerson, ')
           ..write('isActive: $isActive, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('updatedAt: $updatedAt, ')
@@ -478,6 +547,8 @@ class CompanyRecord extends DataClass implements Insertable<CompanyRecord> {
     gstCode,
     contact,
     address,
+    email,
+    contactPerson,
     isActive,
     syncStatus,
     updatedAt,
@@ -494,6 +565,8 @@ class CompanyRecord extends DataClass implements Insertable<CompanyRecord> {
           other.gstCode == this.gstCode &&
           other.contact == this.contact &&
           other.address == this.address &&
+          other.email == this.email &&
+          other.contactPerson == this.contactPerson &&
           other.isActive == this.isActive &&
           other.syncStatus == this.syncStatus &&
           other.updatedAt == this.updatedAt &&
@@ -508,6 +581,8 @@ class CompanyRecordsCompanion extends UpdateCompanion<CompanyRecord> {
   final Value<String> gstCode;
   final Value<String> contact;
   final Value<String> address;
+  final Value<String> email;
+  final Value<String> contactPerson;
   final Value<bool> isActive;
   final Value<int> syncStatus;
   final Value<DateTime> updatedAt;
@@ -520,6 +595,8 @@ class CompanyRecordsCompanion extends UpdateCompanion<CompanyRecord> {
     this.gstCode = const Value.absent(),
     this.contact = const Value.absent(),
     this.address = const Value.absent(),
+    this.email = const Value.absent(),
+    this.contactPerson = const Value.absent(),
     this.isActive = const Value.absent(),
     this.syncStatus = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -533,6 +610,8 @@ class CompanyRecordsCompanion extends UpdateCompanion<CompanyRecord> {
     this.gstCode = const Value.absent(),
     this.contact = const Value.absent(),
     this.address = const Value.absent(),
+    this.email = const Value.absent(),
+    this.contactPerson = const Value.absent(),
     this.isActive = const Value.absent(),
     required int syncStatus,
     required DateTime updatedAt,
@@ -549,6 +628,8 @@ class CompanyRecordsCompanion extends UpdateCompanion<CompanyRecord> {
     Expression<String>? gstCode,
     Expression<String>? contact,
     Expression<String>? address,
+    Expression<String>? email,
+    Expression<String>? contactPerson,
     Expression<bool>? isActive,
     Expression<int>? syncStatus,
     Expression<DateTime>? updatedAt,
@@ -562,6 +643,8 @@ class CompanyRecordsCompanion extends UpdateCompanion<CompanyRecord> {
       if (gstCode != null) 'gst_code': gstCode,
       if (contact != null) 'contact': contact,
       if (address != null) 'address': address,
+      if (email != null) 'email': email,
+      if (contactPerson != null) 'contact_person': contactPerson,
       if (isActive != null) 'is_active': isActive,
       if (syncStatus != null) 'sync_status': syncStatus,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -577,6 +660,8 @@ class CompanyRecordsCompanion extends UpdateCompanion<CompanyRecord> {
     Value<String>? gstCode,
     Value<String>? contact,
     Value<String>? address,
+    Value<String>? email,
+    Value<String>? contactPerson,
     Value<bool>? isActive,
     Value<int>? syncStatus,
     Value<DateTime>? updatedAt,
@@ -590,6 +675,8 @@ class CompanyRecordsCompanion extends UpdateCompanion<CompanyRecord> {
       gstCode: gstCode ?? this.gstCode,
       contact: contact ?? this.contact,
       address: address ?? this.address,
+      email: email ?? this.email,
+      contactPerson: contactPerson ?? this.contactPerson,
       isActive: isActive ?? this.isActive,
       syncStatus: syncStatus ?? this.syncStatus,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -621,6 +708,12 @@ class CompanyRecordsCompanion extends UpdateCompanion<CompanyRecord> {
     if (address.present) {
       map['address'] = Variable<String>(address.value);
     }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (contactPerson.present) {
+      map['contact_person'] = Variable<String>(contactPerson.value);
+    }
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
     }
@@ -646,6 +739,8 @@ class CompanyRecordsCompanion extends UpdateCompanion<CompanyRecord> {
           ..write('gstCode: $gstCode, ')
           ..write('contact: $contact, ')
           ..write('address: $address, ')
+          ..write('email: $email, ')
+          ..write('contactPerson: $contactPerson, ')
           ..write('isActive: $isActive, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('updatedAt: $updatedAt, ')
@@ -727,6 +822,17 @@ class $CustomerRecordsTable extends CustomerRecords
   @override
   late final GeneratedColumn<String> gstin = GeneratedColumn<String>(
     'gstin',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _birthDateMeta = const VerificationMeta(
+    'birthDate',
+  );
+  @override
+  late final GeneratedColumn<String> birthDate = GeneratedColumn<String>(
+    'birth_date',
     aliasedName,
     true,
     type: DriftSqlType.string,
@@ -817,6 +923,7 @@ class $CustomerRecordsTable extends CustomerRecords
     address,
     email,
     gstin,
+    birthDate,
     currentPendingAmount,
     totalPurchases,
     isSynced,
@@ -877,6 +984,12 @@ class $CustomerRecordsTable extends CustomerRecords
       context.handle(
         _gstinMeta,
         gstin.isAcceptableOrUnknown(data['gstin']!, _gstinMeta),
+      );
+    }
+    if (data.containsKey('birth_date')) {
+      context.handle(
+        _birthDateMeta,
+        birthDate.isAcceptableOrUnknown(data['birth_date']!, _birthDateMeta),
       );
     }
     if (data.containsKey('current_pending_amount')) {
@@ -962,6 +1075,10 @@ class $CustomerRecordsTable extends CustomerRecords
         DriftSqlType.string,
         data['${effectivePrefix}gstin'],
       ),
+      birthDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}birth_date'],
+      ),
       currentPendingAmount: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}current_pending_amount'],
@@ -1003,6 +1120,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
   final String? address;
   final String? email;
   final String? gstin;
+  final String? birthDate;
   final double currentPendingAmount;
   final double totalPurchases;
   final bool isSynced;
@@ -1017,6 +1135,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
     this.address,
     this.email,
     this.gstin,
+    this.birthDate,
     required this.currentPendingAmount,
     required this.totalPurchases,
     required this.isSynced,
@@ -1041,6 +1160,9 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
     }
     if (!nullToAbsent || gstin != null) {
       map['gstin'] = Variable<String>(gstin);
+    }
+    if (!nullToAbsent || birthDate != null) {
+      map['birth_date'] = Variable<String>(birthDate);
     }
     map['current_pending_amount'] = Variable<double>(currentPendingAmount);
     map['total_purchases'] = Variable<double>(totalPurchases);
@@ -1068,6 +1190,9 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
       gstin: gstin == null && nullToAbsent
           ? const Value.absent()
           : Value(gstin),
+      birthDate: birthDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(birthDate),
       currentPendingAmount: Value(currentPendingAmount),
       totalPurchases: Value(totalPurchases),
       isSynced: Value(isSynced),
@@ -1090,6 +1215,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
       address: serializer.fromJson<String?>(json['address']),
       email: serializer.fromJson<String?>(json['email']),
       gstin: serializer.fromJson<String?>(json['gstin']),
+      birthDate: serializer.fromJson<String?>(json['birthDate']),
       currentPendingAmount: serializer.fromJson<double>(
         json['currentPendingAmount'],
       ),
@@ -1111,6 +1237,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
       'address': serializer.toJson<String?>(address),
       'email': serializer.toJson<String?>(email),
       'gstin': serializer.toJson<String?>(gstin),
+      'birthDate': serializer.toJson<String?>(birthDate),
       'currentPendingAmount': serializer.toJson<double>(currentPendingAmount),
       'totalPurchases': serializer.toJson<double>(totalPurchases),
       'isSynced': serializer.toJson<bool>(isSynced),
@@ -1128,6 +1255,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
     Value<String?> address = const Value.absent(),
     Value<String?> email = const Value.absent(),
     Value<String?> gstin = const Value.absent(),
+    Value<String?> birthDate = const Value.absent(),
     double? currentPendingAmount,
     double? totalPurchases,
     bool? isSynced,
@@ -1142,6 +1270,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
     address: address.present ? address.value : this.address,
     email: email.present ? email.value : this.email,
     gstin: gstin.present ? gstin.value : this.gstin,
+    birthDate: birthDate.present ? birthDate.value : this.birthDate,
     currentPendingAmount: currentPendingAmount ?? this.currentPendingAmount,
     totalPurchases: totalPurchases ?? this.totalPurchases,
     isSynced: isSynced ?? this.isSynced,
@@ -1158,6 +1287,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
       address: data.address.present ? data.address.value : this.address,
       email: data.email.present ? data.email.value : this.email,
       gstin: data.gstin.present ? data.gstin.value : this.gstin,
+      birthDate: data.birthDate.present ? data.birthDate.value : this.birthDate,
       currentPendingAmount: data.currentPendingAmount.present
           ? data.currentPendingAmount.value
           : this.currentPendingAmount,
@@ -1181,6 +1311,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
           ..write('address: $address, ')
           ..write('email: $email, ')
           ..write('gstin: $gstin, ')
+          ..write('birthDate: $birthDate, ')
           ..write('currentPendingAmount: $currentPendingAmount, ')
           ..write('totalPurchases: $totalPurchases, ')
           ..write('isSynced: $isSynced, ')
@@ -1200,6 +1331,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
     address,
     email,
     gstin,
+    birthDate,
     currentPendingAmount,
     totalPurchases,
     isSynced,
@@ -1218,6 +1350,7 @@ class CustomerRecord extends DataClass implements Insertable<CustomerRecord> {
           other.address == this.address &&
           other.email == this.email &&
           other.gstin == this.gstin &&
+          other.birthDate == this.birthDate &&
           other.currentPendingAmount == this.currentPendingAmount &&
           other.totalPurchases == this.totalPurchases &&
           other.isSynced == this.isSynced &&
@@ -1234,6 +1367,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
   final Value<String?> address;
   final Value<String?> email;
   final Value<String?> gstin;
+  final Value<String?> birthDate;
   final Value<double> currentPendingAmount;
   final Value<double> totalPurchases;
   final Value<bool> isSynced;
@@ -1248,6 +1382,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
     this.address = const Value.absent(),
     this.email = const Value.absent(),
     this.gstin = const Value.absent(),
+    this.birthDate = const Value.absent(),
     this.currentPendingAmount = const Value.absent(),
     this.totalPurchases = const Value.absent(),
     this.isSynced = const Value.absent(),
@@ -1263,6 +1398,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
     this.address = const Value.absent(),
     this.email = const Value.absent(),
     this.gstin = const Value.absent(),
+    this.birthDate = const Value.absent(),
     this.currentPendingAmount = const Value.absent(),
     this.totalPurchases = const Value.absent(),
     this.isSynced = const Value.absent(),
@@ -1281,6 +1417,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
     Expression<String>? address,
     Expression<String>? email,
     Expression<String>? gstin,
+    Expression<String>? birthDate,
     Expression<double>? currentPendingAmount,
     Expression<double>? totalPurchases,
     Expression<bool>? isSynced,
@@ -1296,6 +1433,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
       if (address != null) 'address': address,
       if (email != null) 'email': email,
       if (gstin != null) 'gstin': gstin,
+      if (birthDate != null) 'birth_date': birthDate,
       if (currentPendingAmount != null)
         'current_pending_amount': currentPendingAmount,
       if (totalPurchases != null) 'total_purchases': totalPurchases,
@@ -1314,6 +1452,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
     Value<String?>? address,
     Value<String?>? email,
     Value<String?>? gstin,
+    Value<String?>? birthDate,
     Value<double>? currentPendingAmount,
     Value<double>? totalPurchases,
     Value<bool>? isSynced,
@@ -1329,6 +1468,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
       address: address ?? this.address,
       email: email ?? this.email,
       gstin: gstin ?? this.gstin,
+      birthDate: birthDate ?? this.birthDate,
       currentPendingAmount: currentPendingAmount ?? this.currentPendingAmount,
       totalPurchases: totalPurchases ?? this.totalPurchases,
       isSynced: isSynced ?? this.isSynced,
@@ -1361,6 +1501,9 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
     }
     if (gstin.present) {
       map['gstin'] = Variable<String>(gstin.value);
+    }
+    if (birthDate.present) {
+      map['birth_date'] = Variable<String>(birthDate.value);
     }
     if (currentPendingAmount.present) {
       map['current_pending_amount'] = Variable<double>(
@@ -1395,6 +1538,7 @@ class CustomerRecordsCompanion extends UpdateCompanion<CustomerRecord> {
           ..write('address: $address, ')
           ..write('email: $email, ')
           ..write('gstin: $gstin, ')
+          ..write('birthDate: $birthDate, ')
           ..write('currentPendingAmount: $currentPendingAmount, ')
           ..write('totalPurchases: $totalPurchases, ')
           ..write('isSynced: $isSynced, ')
@@ -1506,6 +1650,28 @@ class $SupplierRecordsTable extends SupplierRecords
     requiredDuringInsert: false,
     defaultValue: const Constant(''),
   );
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+    'email',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _gstNumberMeta = const VerificationMeta(
+    'gstNumber',
+  );
+  @override
+  late final GeneratedColumn<String> gstNumber = GeneratedColumn<String>(
+    'gst_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
   static const VerificationMeta _isActiveMeta = const VerificationMeta(
     'isActive',
   );
@@ -1564,6 +1730,8 @@ class $SupplierRecordsTable extends SupplierRecords
     supplierCode,
     contact,
     address,
+    email,
+    gstNumber,
     isActive,
     syncStatus,
     updatedAt,
@@ -1631,6 +1799,18 @@ class $SupplierRecordsTable extends SupplierRecords
       context.handle(
         _addressMeta,
         address.isAcceptableOrUnknown(data['address']!, _addressMeta),
+      );
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+        _emailMeta,
+        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
+    }
+    if (data.containsKey('gst_number')) {
+      context.handle(
+        _gstNumberMeta,
+        gstNumber.isAcceptableOrUnknown(data['gst_number']!, _gstNumberMeta),
       );
     }
     if (data.containsKey('is_active')) {
@@ -1704,6 +1884,14 @@ class $SupplierRecordsTable extends SupplierRecords
         DriftSqlType.string,
         data['${effectivePrefix}address'],
       )!,
+      email: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}email'],
+      )!,
+      gstNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}gst_number'],
+      )!,
       isActive: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_active'],
@@ -1738,6 +1926,8 @@ class SupplierRecord extends DataClass implements Insertable<SupplierRecord> {
   final String supplierCode;
   final String contact;
   final String address;
+  final String email;
+  final String gstNumber;
   final bool isActive;
   final int syncStatus;
   final DateTime updatedAt;
@@ -1751,6 +1941,8 @@ class SupplierRecord extends DataClass implements Insertable<SupplierRecord> {
     required this.supplierCode,
     required this.contact,
     required this.address,
+    required this.email,
+    required this.gstNumber,
     required this.isActive,
     required this.syncStatus,
     required this.updatedAt,
@@ -1769,6 +1961,8 @@ class SupplierRecord extends DataClass implements Insertable<SupplierRecord> {
     map['supplier_code'] = Variable<String>(supplierCode);
     map['contact'] = Variable<String>(contact);
     map['address'] = Variable<String>(address);
+    map['email'] = Variable<String>(email);
+    map['gst_number'] = Variable<String>(gstNumber);
     map['is_active'] = Variable<bool>(isActive);
     map['sync_status'] = Variable<int>(syncStatus);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -1788,6 +1982,8 @@ class SupplierRecord extends DataClass implements Insertable<SupplierRecord> {
       supplierCode: Value(supplierCode),
       contact: Value(contact),
       address: Value(address),
+      email: Value(email),
+      gstNumber: Value(gstNumber),
       isActive: Value(isActive),
       syncStatus: Value(syncStatus),
       updatedAt: Value(updatedAt),
@@ -1809,6 +2005,8 @@ class SupplierRecord extends DataClass implements Insertable<SupplierRecord> {
       supplierCode: serializer.fromJson<String>(json['supplierCode']),
       contact: serializer.fromJson<String>(json['contact']),
       address: serializer.fromJson<String>(json['address']),
+      email: serializer.fromJson<String>(json['email']),
+      gstNumber: serializer.fromJson<String>(json['gstNumber']),
       isActive: serializer.fromJson<bool>(json['isActive']),
       syncStatus: serializer.fromJson<int>(json['syncStatus']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -1827,6 +2025,8 @@ class SupplierRecord extends DataClass implements Insertable<SupplierRecord> {
       'supplierCode': serializer.toJson<String>(supplierCode),
       'contact': serializer.toJson<String>(contact),
       'address': serializer.toJson<String>(address),
+      'email': serializer.toJson<String>(email),
+      'gstNumber': serializer.toJson<String>(gstNumber),
       'isActive': serializer.toJson<bool>(isActive),
       'syncStatus': serializer.toJson<int>(syncStatus),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -1843,6 +2043,8 @@ class SupplierRecord extends DataClass implements Insertable<SupplierRecord> {
     String? supplierCode,
     String? contact,
     String? address,
+    String? email,
+    String? gstNumber,
     bool? isActive,
     int? syncStatus,
     DateTime? updatedAt,
@@ -1856,6 +2058,8 @@ class SupplierRecord extends DataClass implements Insertable<SupplierRecord> {
     supplierCode: supplierCode ?? this.supplierCode,
     contact: contact ?? this.contact,
     address: address ?? this.address,
+    email: email ?? this.email,
+    gstNumber: gstNumber ?? this.gstNumber,
     isActive: isActive ?? this.isActive,
     syncStatus: syncStatus ?? this.syncStatus,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -1875,6 +2079,8 @@ class SupplierRecord extends DataClass implements Insertable<SupplierRecord> {
           : this.supplierCode,
       contact: data.contact.present ? data.contact.value : this.contact,
       address: data.address.present ? data.address.value : this.address,
+      email: data.email.present ? data.email.value : this.email,
+      gstNumber: data.gstNumber.present ? data.gstNumber.value : this.gstNumber,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
       syncStatus: data.syncStatus.present
           ? data.syncStatus.value
@@ -1895,6 +2101,8 @@ class SupplierRecord extends DataClass implements Insertable<SupplierRecord> {
           ..write('supplierCode: $supplierCode, ')
           ..write('contact: $contact, ')
           ..write('address: $address, ')
+          ..write('email: $email, ')
+          ..write('gstNumber: $gstNumber, ')
           ..write('isActive: $isActive, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('updatedAt: $updatedAt, ')
@@ -1913,6 +2121,8 @@ class SupplierRecord extends DataClass implements Insertable<SupplierRecord> {
     supplierCode,
     contact,
     address,
+    email,
+    gstNumber,
     isActive,
     syncStatus,
     updatedAt,
@@ -1930,6 +2140,8 @@ class SupplierRecord extends DataClass implements Insertable<SupplierRecord> {
           other.supplierCode == this.supplierCode &&
           other.contact == this.contact &&
           other.address == this.address &&
+          other.email == this.email &&
+          other.gstNumber == this.gstNumber &&
           other.isActive == this.isActive &&
           other.syncStatus == this.syncStatus &&
           other.updatedAt == this.updatedAt &&
@@ -1945,6 +2157,8 @@ class SupplierRecordsCompanion extends UpdateCompanion<SupplierRecord> {
   final Value<String> supplierCode;
   final Value<String> contact;
   final Value<String> address;
+  final Value<String> email;
+  final Value<String> gstNumber;
   final Value<bool> isActive;
   final Value<int> syncStatus;
   final Value<DateTime> updatedAt;
@@ -1958,6 +2172,8 @@ class SupplierRecordsCompanion extends UpdateCompanion<SupplierRecord> {
     this.supplierCode = const Value.absent(),
     this.contact = const Value.absent(),
     this.address = const Value.absent(),
+    this.email = const Value.absent(),
+    this.gstNumber = const Value.absent(),
     this.isActive = const Value.absent(),
     this.syncStatus = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -1972,6 +2188,8 @@ class SupplierRecordsCompanion extends UpdateCompanion<SupplierRecord> {
     this.supplierCode = const Value.absent(),
     required String contact,
     this.address = const Value.absent(),
+    this.email = const Value.absent(),
+    this.gstNumber = const Value.absent(),
     this.isActive = const Value.absent(),
     required int syncStatus,
     required DateTime updatedAt,
@@ -1990,6 +2208,8 @@ class SupplierRecordsCompanion extends UpdateCompanion<SupplierRecord> {
     Expression<String>? supplierCode,
     Expression<String>? contact,
     Expression<String>? address,
+    Expression<String>? email,
+    Expression<String>? gstNumber,
     Expression<bool>? isActive,
     Expression<int>? syncStatus,
     Expression<DateTime>? updatedAt,
@@ -2004,6 +2224,8 @@ class SupplierRecordsCompanion extends UpdateCompanion<SupplierRecord> {
       if (supplierCode != null) 'supplier_code': supplierCode,
       if (contact != null) 'contact': contact,
       if (address != null) 'address': address,
+      if (email != null) 'email': email,
+      if (gstNumber != null) 'gst_number': gstNumber,
       if (isActive != null) 'is_active': isActive,
       if (syncStatus != null) 'sync_status': syncStatus,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -2020,6 +2242,8 @@ class SupplierRecordsCompanion extends UpdateCompanion<SupplierRecord> {
     Value<String>? supplierCode,
     Value<String>? contact,
     Value<String>? address,
+    Value<String>? email,
+    Value<String>? gstNumber,
     Value<bool>? isActive,
     Value<int>? syncStatus,
     Value<DateTime>? updatedAt,
@@ -2034,6 +2258,8 @@ class SupplierRecordsCompanion extends UpdateCompanion<SupplierRecord> {
       supplierCode: supplierCode ?? this.supplierCode,
       contact: contact ?? this.contact,
       address: address ?? this.address,
+      email: email ?? this.email,
+      gstNumber: gstNumber ?? this.gstNumber,
       isActive: isActive ?? this.isActive,
       syncStatus: syncStatus ?? this.syncStatus,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -2068,6 +2294,12 @@ class SupplierRecordsCompanion extends UpdateCompanion<SupplierRecord> {
     if (address.present) {
       map['address'] = Variable<String>(address.value);
     }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (gstNumber.present) {
+      map['gst_number'] = Variable<String>(gstNumber.value);
+    }
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
     }
@@ -2094,6 +2326,8 @@ class SupplierRecordsCompanion extends UpdateCompanion<SupplierRecord> {
           ..write('supplierCode: $supplierCode, ')
           ..write('contact: $contact, ')
           ..write('address: $address, ')
+          ..write('email: $email, ')
+          ..write('gstNumber: $gstNumber, ')
           ..write('isActive: $isActive, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('updatedAt: $updatedAt, ')
@@ -16817,6 +17051,8 @@ typedef $$CompanyRecordsTableCreateCompanionBuilder =
       Value<String> gstCode,
       Value<String> contact,
       Value<String> address,
+      Value<String> email,
+      Value<String> contactPerson,
       Value<bool> isActive,
       required int syncStatus,
       required DateTime updatedAt,
@@ -16831,6 +17067,8 @@ typedef $$CompanyRecordsTableUpdateCompanionBuilder =
       Value<String> gstCode,
       Value<String> contact,
       Value<String> address,
+      Value<String> email,
+      Value<String> contactPerson,
       Value<bool> isActive,
       Value<int> syncStatus,
       Value<DateTime> updatedAt,
@@ -16878,6 +17116,16 @@ class $$CompanyRecordsTableFilterComposer
 
   ColumnFilters<String> get address => $composableBuilder(
     column: $table.address,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get contactPerson => $composableBuilder(
+    column: $table.contactPerson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -16946,6 +17194,16 @@ class $$CompanyRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get contactPerson => $composableBuilder(
+    column: $table.contactPerson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isActive => $composableBuilder(
     column: $table.isActive,
     builder: (column) => ColumnOrderings(column),
@@ -17000,6 +17258,14 @@ class $$CompanyRecordsTableAnnotationComposer
 
   GeneratedColumn<String> get address =>
       $composableBuilder(column: $table.address, builder: (column) => column);
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<String> get contactPerson => $composableBuilder(
+    column: $table.contactPerson,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<bool> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
@@ -17056,6 +17322,8 @@ class $$CompanyRecordsTableTableManager
                 Value<String> gstCode = const Value.absent(),
                 Value<String> contact = const Value.absent(),
                 Value<String> address = const Value.absent(),
+                Value<String> email = const Value.absent(),
+                Value<String> contactPerson = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<int> syncStatus = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -17068,6 +17336,8 @@ class $$CompanyRecordsTableTableManager
                 gstCode: gstCode,
                 contact: contact,
                 address: address,
+                email: email,
+                contactPerson: contactPerson,
                 isActive: isActive,
                 syncStatus: syncStatus,
                 updatedAt: updatedAt,
@@ -17082,6 +17352,8 @@ class $$CompanyRecordsTableTableManager
                 Value<String> gstCode = const Value.absent(),
                 Value<String> contact = const Value.absent(),
                 Value<String> address = const Value.absent(),
+                Value<String> email = const Value.absent(),
+                Value<String> contactPerson = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 required int syncStatus,
                 required DateTime updatedAt,
@@ -17094,6 +17366,8 @@ class $$CompanyRecordsTableTableManager
                 gstCode: gstCode,
                 contact: contact,
                 address: address,
+                email: email,
+                contactPerson: contactPerson,
                 isActive: isActive,
                 syncStatus: syncStatus,
                 updatedAt: updatedAt,
@@ -17133,6 +17407,7 @@ typedef $$CustomerRecordsTableCreateCompanionBuilder =
       Value<String?> address,
       Value<String?> email,
       Value<String?> gstin,
+      Value<String?> birthDate,
       Value<double> currentPendingAmount,
       Value<double> totalPurchases,
       Value<bool> isSynced,
@@ -17149,6 +17424,7 @@ typedef $$CustomerRecordsTableUpdateCompanionBuilder =
       Value<String?> address,
       Value<String?> email,
       Value<String?> gstin,
+      Value<String?> birthDate,
       Value<double> currentPendingAmount,
       Value<double> totalPurchases,
       Value<bool> isSynced,
@@ -17198,6 +17474,11 @@ class $$CustomerRecordsTableFilterComposer
 
   ColumnFilters<String> get gstin => $composableBuilder(
     column: $table.gstin,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get birthDate => $composableBuilder(
+    column: $table.birthDate,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -17276,6 +17557,11 @@ class $$CustomerRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get birthDate => $composableBuilder(
+    column: $table.birthDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get currentPendingAmount => $composableBuilder(
     column: $table.currentPendingAmount,
     builder: (column) => ColumnOrderings(column),
@@ -17336,6 +17622,9 @@ class $$CustomerRecordsTableAnnotationComposer
 
   GeneratedColumn<String> get gstin =>
       $composableBuilder(column: $table.gstin, builder: (column) => column);
+
+  GeneratedColumn<String> get birthDate =>
+      $composableBuilder(column: $table.birthDate, builder: (column) => column);
 
   GeneratedColumn<double> get currentPendingAmount => $composableBuilder(
     column: $table.currentPendingAmount,
@@ -17404,6 +17693,7 @@ class $$CustomerRecordsTableTableManager
                 Value<String?> address = const Value.absent(),
                 Value<String?> email = const Value.absent(),
                 Value<String?> gstin = const Value.absent(),
+                Value<String?> birthDate = const Value.absent(),
                 Value<double> currentPendingAmount = const Value.absent(),
                 Value<double> totalPurchases = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
@@ -17418,6 +17708,7 @@ class $$CustomerRecordsTableTableManager
                 address: address,
                 email: email,
                 gstin: gstin,
+                birthDate: birthDate,
                 currentPendingAmount: currentPendingAmount,
                 totalPurchases: totalPurchases,
                 isSynced: isSynced,
@@ -17434,6 +17725,7 @@ class $$CustomerRecordsTableTableManager
                 Value<String?> address = const Value.absent(),
                 Value<String?> email = const Value.absent(),
                 Value<String?> gstin = const Value.absent(),
+                Value<String?> birthDate = const Value.absent(),
                 Value<double> currentPendingAmount = const Value.absent(),
                 Value<double> totalPurchases = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
@@ -17448,6 +17740,7 @@ class $$CustomerRecordsTableTableManager
                 address: address,
                 email: email,
                 gstin: gstin,
+                birthDate: birthDate,
                 currentPendingAmount: currentPendingAmount,
                 totalPurchases: totalPurchases,
                 isSynced: isSynced,
@@ -17490,6 +17783,8 @@ typedef $$SupplierRecordsTableCreateCompanionBuilder =
       Value<String> supplierCode,
       required String contact,
       Value<String> address,
+      Value<String> email,
+      Value<String> gstNumber,
       Value<bool> isActive,
       required int syncStatus,
       required DateTime updatedAt,
@@ -17505,6 +17800,8 @@ typedef $$SupplierRecordsTableUpdateCompanionBuilder =
       Value<String> supplierCode,
       Value<String> contact,
       Value<String> address,
+      Value<String> email,
+      Value<String> gstNumber,
       Value<bool> isActive,
       Value<int> syncStatus,
       Value<DateTime> updatedAt,
@@ -17557,6 +17854,16 @@ class $$SupplierRecordsTableFilterComposer
 
   ColumnFilters<String> get address => $composableBuilder(
     column: $table.address,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get gstNumber => $composableBuilder(
+    column: $table.gstNumber,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -17630,6 +17937,16 @@ class $$SupplierRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get gstNumber => $composableBuilder(
+    column: $table.gstNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isActive => $composableBuilder(
     column: $table.isActive,
     builder: (column) => ColumnOrderings(column),
@@ -17687,6 +18004,12 @@ class $$SupplierRecordsTableAnnotationComposer
 
   GeneratedColumn<String> get address =>
       $composableBuilder(column: $table.address, builder: (column) => column);
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<String> get gstNumber =>
+      $composableBuilder(column: $table.gstNumber, builder: (column) => column);
 
   GeneratedColumn<bool> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
@@ -17748,6 +18071,8 @@ class $$SupplierRecordsTableTableManager
                 Value<String> supplierCode = const Value.absent(),
                 Value<String> contact = const Value.absent(),
                 Value<String> address = const Value.absent(),
+                Value<String> email = const Value.absent(),
+                Value<String> gstNumber = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<int> syncStatus = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -17761,6 +18086,8 @@ class $$SupplierRecordsTableTableManager
                 supplierCode: supplierCode,
                 contact: contact,
                 address: address,
+                email: email,
+                gstNumber: gstNumber,
                 isActive: isActive,
                 syncStatus: syncStatus,
                 updatedAt: updatedAt,
@@ -17776,6 +18103,8 @@ class $$SupplierRecordsTableTableManager
                 Value<String> supplierCode = const Value.absent(),
                 required String contact,
                 Value<String> address = const Value.absent(),
+                Value<String> email = const Value.absent(),
+                Value<String> gstNumber = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 required int syncStatus,
                 required DateTime updatedAt,
@@ -17789,6 +18118,8 @@ class $$SupplierRecordsTableTableManager
                 supplierCode: supplierCode,
                 contact: contact,
                 address: address,
+                email: email,
+                gstNumber: gstNumber,
                 isActive: isActive,
                 syncStatus: syncStatus,
                 updatedAt: updatedAt,

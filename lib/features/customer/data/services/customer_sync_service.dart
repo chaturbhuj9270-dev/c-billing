@@ -87,6 +87,10 @@ class CustomerSyncService extends ChangeNotifier {
     debugPrint('[CustomerSync] Initializing...');
 
     // Listen for connectivity changes
+    // initialize() can run more than once (login, splash, pages): never stack
+    // duplicate listeners/timers.
+    _connectivitySubscription?.cancel();
+    _periodicSyncTimer?.cancel();
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen((
       result,
     ) {
@@ -101,10 +105,8 @@ class CustomerSyncService extends ChangeNotifier {
       }
     });
 
-    // Set up periodic sync (every 3 minutes when online)
-    _periodicSyncTimer = Timer.periodic(const Duration(minutes: 3), (_) {
-      _checkAndSync();
-    });
+    // No background polling: LiveSyncService pushes right after local saves and
+    // visible screens refresh on a short interval (see LiveRefreshMixin).
 
     // Initial sync (skipped when SyncBootstrap will forceFullRefresh)
     if (runInitialSync) {

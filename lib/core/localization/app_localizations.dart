@@ -224,6 +224,17 @@ class AppLocalizations {
     }
   }
 
+  String get lastYear {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.lastYear;
+      case 'Marathi':
+        return MarathiLocalization.lastYear;
+      default:
+        return EnglishLocalization.lastYear;
+    }
+  }
+
   String get allTime {
     switch (languageCode) {
       case 'Hindi':
@@ -421,6 +432,50 @@ class AppLocalizations {
         return MarathiLocalization.lowStockItems;
       default:
         return EnglishLocalization.lowStockItems;
+    }
+  }
+
+  String get bestSellers {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.bestSellers;
+      case 'Marathi':
+        return MarathiLocalization.bestSellers;
+      default:
+        return EnglishLocalization.bestSellers;
+    }
+  }
+
+  String get awaitingPayment {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.awaitingPayment;
+      case 'Marathi':
+        return MarathiLocalization.awaitingPayment;
+      default:
+        return EnglishLocalization.awaitingPayment;
+    }
+  }
+
+  String get belowReorderLevel {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.belowReorderLevel;
+      case 'Marathi':
+        return MarathiLocalization.belowReorderLevel;
+      default:
+        return EnglishLocalization.belowReorderLevel;
+    }
+  }
+
+  String get comingUp {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.comingUp;
+      case 'Marathi':
+        return MarathiLocalization.comingUp;
+      default:
+        return EnglishLocalization.comingUp;
     }
   }
 
@@ -3344,6 +3399,17 @@ class AppLocalizations {
     }
   }
 
+  String get offerFirst100Users {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.offerFirst100Users;
+      case 'Marathi':
+        return MarathiLocalization.offerFirst100Users;
+      default:
+        return EnglishLocalization.offerFirst100Users;
+    }
+  }
+
   String get justPerMonth {
     switch (languageCode) {
       case 'Hindi':
@@ -3355,6 +3421,17 @@ class AppLocalizations {
     }
   }
 
+  String justPerMonthAmount(String amount) {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.justPerMonthAmount(amount);
+      case 'Marathi':
+        return MarathiLocalization.justPerMonthAmount(amount);
+      default:
+        return EnglishLocalization.justPerMonthAmount(amount);
+    }
+  }
+
   String get whatsIncluded {
     switch (languageCode) {
       case 'Hindi':
@@ -3363,6 +3440,39 @@ class AppLocalizations {
         return MarathiLocalization.whatsIncluded;
       default:
         return EnglishLocalization.whatsIncluded;
+    }
+  }
+
+  String get everythingIncludedSubtitle {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.everythingIncludedSubtitle;
+      case 'Marathi':
+        return MarathiLocalization.everythingIncludedSubtitle;
+      default:
+        return EnglishLocalization.everythingIncludedSubtitle;
+    }
+  }
+
+  String get renewToKeepBilling {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.renewToKeepBilling;
+      case 'Marathi':
+        return MarathiLocalization.renewToKeepBilling;
+      default:
+        return EnglishLocalization.renewToKeepBilling;
+    }
+  }
+
+  String get subscriptionEndedRenewBody {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.subscriptionEndedRenewBody;
+      case 'Marathi':
+        return MarathiLocalization.subscriptionEndedRenewBody;
+      default:
+        return EnglishLocalization.subscriptionEndedRenewBody;
     }
   }
 
@@ -3440,6 +3550,17 @@ class AppLocalizations {
         return MarathiLocalization.subscribeNow;
       default:
         return EnglishLocalization.subscribeNow;
+    }
+  }
+
+  String get renewNow {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.renewNow;
+      case 'Marathi':
+        return MarathiLocalization.renewNow;
+      default:
+        return EnglishLocalization.renewNow;
     }
   }
 
@@ -3605,6 +3726,50 @@ class AppLocalizations {
         return MarathiLocalization.couldNotOpenWhatsApp;
       default:
         return EnglishLocalization.couldNotOpenWhatsApp;
+    }
+  }
+
+  String get payViaCashfree {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.payViaCashfree;
+      case 'Marathi':
+        return MarathiLocalization.payViaCashfree;
+      default:
+        return EnglishLocalization.payViaCashfree;
+    }
+  }
+
+  String get cashfreePaymentModesHint {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.cashfreePaymentModesHint;
+      case 'Marathi':
+        return MarathiLocalization.cashfreePaymentModesHint;
+      default:
+        return EnglishLocalization.cashfreePaymentModesHint;
+    }
+  }
+
+  String get cashfreePaymentInstructions {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.cashfreePaymentInstructions;
+      case 'Marathi':
+        return MarathiLocalization.cashfreePaymentInstructions;
+      default:
+        return EnglishLocalization.cashfreePaymentInstructions;
+    }
+  }
+
+  String get securePaymentPoweredByCashfree {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.securePaymentPoweredByCashfree;
+      case 'Marathi':
+        return MarathiLocalization.securePaymentPoweredByCashfree;
+      default:
+        return EnglishLocalization.securePaymentPoweredByCashfree;
     }
   }
 
@@ -10374,6 +10539,332 @@ class AppLocalizations {
         return MarathiLocalization.discountPercentLabel;
       default:
         return EnglishLocalization.discountPercentLabel;
+    }
+  }
+
+  String get customerPendingReport {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerPendingReport;
+      case 'Marathi':
+        return MarathiLocalization.customerPendingReport;
+      default:
+        return EnglishLocalization.customerPendingReport;
+    }
+  }
+
+  String get customerReportFailed {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportFailed;
+      case 'Marathi':
+        return MarathiLocalization.customerReportFailed;
+      default:
+        return EnglishLocalization.customerReportFailed;
+    }
+  }
+
+  String get whatsAppNotInstalled {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.whatsAppNotInstalled;
+      case 'Marathi':
+        return MarathiLocalization.whatsAppNotInstalled;
+      default:
+        return EnglishLocalization.whatsAppNotInstalled;
+    }
+  }
+
+  String get customerReportAttachHint {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportAttachHint;
+      case 'Marathi':
+        return MarathiLocalization.customerReportAttachHint;
+      default:
+        return EnglishLocalization.customerReportAttachHint;
+    }
+  }
+
+  String customerPendingWhatsAppMessage(
+    String name,
+    String shop,
+    String amount,
+    String date,
+  ) {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerPendingWhatsAppMessage(
+          name,
+          shop,
+          amount,
+          date,
+        );
+      case 'Marathi':
+        return MarathiLocalization.customerPendingWhatsAppMessage(
+          name,
+          shop,
+          amount,
+          date,
+        );
+      default:
+        return EnglishLocalization.customerPendingWhatsAppMessage(
+          name,
+          shop,
+          amount,
+          date,
+        );
+    }
+  }
+
+  String get customerReportSendPdfTitle {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportSendPdfTitle;
+      case 'Marathi':
+        return MarathiLocalization.customerReportSendPdfTitle;
+      default:
+        return EnglishLocalization.customerReportSendPdfTitle;
+    }
+  }
+
+  String get customerReportSendPdfBody {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportSendPdfBody;
+      case 'Marathi':
+        return MarathiLocalization.customerReportSendPdfBody;
+      default:
+        return EnglishLocalization.customerReportSendPdfBody;
+    }
+  }
+
+  String get customerReportSendPdf {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportSendPdf;
+      case 'Marathi':
+        return MarathiLocalization.customerReportSendPdf;
+      default:
+        return EnglishLocalization.customerReportSendPdf;
+    }
+  }
+
+  String get customerReportSendMessageTitle {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportSendMessageTitle;
+      case 'Marathi':
+        return MarathiLocalization.customerReportSendMessageTitle;
+      default:
+        return EnglishLocalization.customerReportSendMessageTitle;
+    }
+  }
+  String get customerReportSendMessageBody {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportSendMessageBody;
+      case 'Marathi':
+        return MarathiLocalization.customerReportSendMessageBody;
+      default:
+        return EnglishLocalization.customerReportSendMessageBody;
+    }
+  }
+  String get customerReportSendMessage {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportSendMessage;
+      case 'Marathi':
+        return MarathiLocalization.customerReportSendMessage;
+      default:
+        return EnglishLocalization.customerReportSendMessage;
+    }
+  }
+
+  String get customerBirthDate {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerBirthDate;
+      case 'Marathi':
+        return MarathiLocalization.customerBirthDate;
+      default:
+        return EnglishLocalization.customerBirthDate;
+    }
+  }
+
+  String get customerInvalidEmail {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerInvalidEmail;
+      case 'Marathi':
+        return MarathiLocalization.customerInvalidEmail;
+      default:
+        return EnglishLocalization.customerInvalidEmail;
+    }
+  }
+
+  String get customerBasicDetails {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerBasicDetails;
+      case 'Marathi':
+        return MarathiLocalization.customerBasicDetails;
+      default:
+        return EnglishLocalization.customerBasicDetails;
+    }
+  }
+
+  String get customerContactDetails {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerContactDetails;
+      case 'Marathi':
+        return MarathiLocalization.customerContactDetails;
+      default:
+        return EnglishLocalization.customerContactDetails;
+    }
+  }
+
+  String get customerBirthdayToday {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerBirthdayToday;
+      case 'Marathi':
+        return MarathiLocalization.customerBirthdayToday;
+      default:
+        return EnglishLocalization.customerBirthdayToday;
+    }
+  }
+
+  String get contactPerson {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.contactPerson;
+      case 'Marathi':
+        return MarathiLocalization.contactPerson;
+      default:
+        return EnglishLocalization.contactPerson;
+    }
+  }
+
+  String get invalidEmailAddress {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.invalidEmailAddress;
+      case 'Marathi':
+        return MarathiLocalization.invalidEmailAddress;
+      default:
+        return EnglishLocalization.invalidEmailAddress;
+    }
+  }
+
+  String get invalidGstNumber {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.invalidGstNumber;
+      case 'Marathi':
+        return MarathiLocalization.invalidGstNumber;
+      default:
+        return EnglishLocalization.invalidGstNumber;
+    }
+  }
+
+  String get sectionBasicDetails {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.sectionBasicDetails;
+      case 'Marathi':
+        return MarathiLocalization.sectionBasicDetails;
+      default:
+        return EnglishLocalization.sectionBasicDetails;
+    }
+  }
+
+  String get sectionContactDetails {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.sectionContactDetails;
+      case 'Marathi':
+        return MarathiLocalization.sectionContactDetails;
+      default:
+        return EnglishLocalization.sectionContactDetails;
+    }
+  }
+
+  String get sectionBusinessDetails {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.sectionBusinessDetails;
+      case 'Marathi':
+        return MarathiLocalization.sectionBusinessDetails;
+      default:
+        return EnglishLocalization.sectionBusinessDetails;
+    }
+  }
+
+  String get sectionStockAndUnit {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.sectionStockAndUnit;
+      case 'Marathi':
+        return MarathiLocalization.sectionStockAndUnit;
+      default:
+        return EnglishLocalization.sectionStockAndUnit;
+    }
+  }
+
+  String get sectionTaxDetails {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.sectionTaxDetails;
+      case 'Marathi':
+        return MarathiLocalization.sectionTaxDetails;
+      default:
+        return EnglishLocalization.sectionTaxDetails;
+    }
+  }
+
+  String get minStockLevelHint {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.minStockLevelHint;
+      case 'Marathi':
+        return MarathiLocalization.minStockLevelHint;
+      default:
+        return EnglishLocalization.minStockLevelHint;
+    }
+  }
+
+  String get customerReportOpeningMessage {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportOpeningMessage;
+      case 'Marathi':
+        return MarathiLocalization.customerReportOpeningMessage;
+      default:
+        return EnglishLocalization.customerReportOpeningMessage;
+    }
+  }
+
+  String get customerReportOpeningPdf {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportOpeningPdf;
+      case 'Marathi':
+        return MarathiLocalization.customerReportOpeningPdf;
+      default:
+        return EnglishLocalization.customerReportOpeningPdf;
+    }
+  }
+
+  String get customerReportSendPdfHint {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customerReportSendPdfHint;
+      case 'Marathi':
+        return MarathiLocalization.customerReportSendPdfHint;
+      default:
+        return EnglishLocalization.customerReportSendPdfHint;
     }
   }
 }

@@ -93,6 +93,10 @@ class BillSyncService extends ChangeNotifier {
     debugPrint('[BillSync] Initializing...');
 
     // Listen for connectivity changes
+    // initialize() can run more than once (login, splash, pages): never stack
+    // duplicate listeners/timers.
+    _connectivitySubscription?.cancel();
+    _periodicSyncTimer?.cancel();
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen((
       results,
     ) {
@@ -102,10 +106,8 @@ class BillSyncService extends ChangeNotifier {
       }
     });
 
-    // Start periodic sync (every 3 minutes)
-    _periodicSyncTimer = Timer.periodic(const Duration(minutes: 3), (_) {
-      _checkAndSync();
-    });
+    // No background polling: LiveSyncService pushes right after local saves and
+    // visible screens refresh on a short interval (see LiveRefreshMixin).
 
     // Initial sync (skipped when SyncBootstrap will forceFullRefresh)
     if (runInitialSync) {
@@ -120,18 +122,6 @@ class BillSyncService extends ChangeNotifier {
     _lastError = null;
     _isSyncing = false;
     _status = BillSyncServiceStatus.idle;
-  }
-
-  // Check conditions and sync if appropriate
-  Future<void> _checkAndSync() async {
-    try {
-      final results = await _connectivity.checkConnectivity();
-      if (_isConnected(results) && _apiService.isAuthenticated) {
-        await syncNow();
-      }
-    } catch (e) {
-      debugPrint('[BillSync] Check and sync failed: $e');
-    }
   }
 
   // Initial sync logic - downloads all bills if local DB is empty

@@ -1,3 +1,4 @@
+import 'package:c_billing/core/services/live_refresh_mixin.dart';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart' show PdfPageFormat;
 
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/language_service.dart';
@@ -21,7 +23,6 @@ import '../../../../common_widgets/file_preview_page.dart';
 import 'event_order_screen.dart';
 import 'event_order_settings_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
-import 'package:c_billing/core/ui/sync_status_icon.dart';
 import 'package:c_billing/common_widgets/range_calendar_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
@@ -65,7 +66,10 @@ class EventOrderListPage extends StatefulWidget {
 }
 
 class _EventOrderListPageState extends State<EventOrderListPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, LiveRefreshMixin<EventOrderListPage> {
+  @override
+  Set<String> get liveRefreshEntities => const {'eventOrders'};
+
   final _searchController = TextEditingController();
   final _pdfService = EventOrderPdfService();
   String _searchQuery = '';
@@ -410,20 +414,14 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           );
         }
 
-        return Container(
-          margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.card(context),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.border(context)),
-          ),
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
                 for (var i = 0; i < cards.length; i++) ...[
-                  if (i > 0) const SizedBox(width: 10),
+                  if (i > 0) const SizedBox(width: 8),
                   cards[i],
                 ],
               ],
@@ -511,182 +509,142 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   }
 
   Widget _buildSearchAndFilters() {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        widget.isEmbedded ? 24 : 16,
-        8,
-        widget.isEmbedded ? 24 : 16,
-        12,
-      ),
+    final hPad = widget.isEmbedded ? 24.0 : 16.0;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(hPad, 4, hPad, 8),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Search bar
-          BlocBuilder<EventOrderCubit, EventOrderState>(
-              builder: (context, state) {
-                return TextField(
-                  controller: _searchController,
-                  onChanged: (value) {
-                    setState(() => _searchQuery = value);
-                    context.read<EventOrderCubit>().loadEventOrders(
-                      filterType: _selectedType,
-                      filterStatus: _selectedStatus,
-                      searchQuery: value,
-                    );
-                  },
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 14,
-                    color: AppColors.primaryText(context),
-                  ),
-                  decoration: InputDecoration(
-                    hintText: AppLocalizations.of(
-                      LanguageService.instance.currentLanguage,
-                    ).searchEventsOrOrders,
-                    hintStyle: TextStyle(
-                      color: AppColors.mutedText(context),
-                      fontFamily: 'Literata',
-                    ),
-                    prefixIcon: Container(
-                      padding: const EdgeInsets.all(12),
-                      child: Icon(
-                        Icons.search_rounded,
-                        color: _searchQuery.isNotEmpty
-                            ? _primaryColor
-                            : AppColors.mutedText(context),
-                      ),
-                    ),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: Container(
-                              padding: EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: AppColors.border(context),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.close,
-                                size: 16,
-                                color: AppColors.mutedText(context),
-                              ),
-                            ),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = '');
-                              context.read<EventOrderCubit>().loadEventOrders(
-                                filterType: _selectedType,
-                                filterStatus: _selectedStatus,
-                              );
-                            },
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: AppColors.inputFill(context),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: AppColors.border(context)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: _primaryColor,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          const SizedBox(height: 12),
-          // Date filter chips
-          _buildDateFilterChips(),
-          const SizedBox(height: 12),
-          // Active filters row
           BlocBuilder<EventOrderCubit, EventOrderState>(
             builder: (context, state) {
-              final allOrders = state is EventOrderLoaded
-                  ? state.orders
-                  : <EventOrder>[];
-              final filteredOrders = _filterOrdersByDate(allOrders);
-              final itemCount = filteredOrders.length;
+              final allOrders =
+                  state is EventOrderLoaded ? state.orders : <EventOrder>[];
+              final itemCount = _filterOrdersByDate(allOrders).length;
               return Row(
                 children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (value) {
+                        setState(() => _searchQuery = value);
+                        context.read<EventOrderCubit>().loadEventOrders(
+                          filterType: _selectedType,
+                          filterStatus: _selectedStatus,
+                          searchQuery: value,
+                        );
+                      },
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 14,
+                        color: AppColors.primaryText(context),
+                      ),
+                      decoration: InputDecoration(
+                        hintText: AppLocalizations.of(
+                          LanguageService.instance.currentLanguage,
+                        ).searchEventsOrOrders,
+                        hintStyle: TextStyle(
+                          color: AppColors.mutedText(context),
+                          fontFamily: 'Literata',
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search_rounded,
+                          color: _searchQuery.isNotEmpty
+                              ? _primaryColor
+                              : AppColors.mutedText(context),
+                        ),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                tooltip: 'Clear',
+                                icon: Icon(
+                                  Icons.close_rounded,
+                                  size: 18,
+                                  color: AppColors.mutedText(context),
+                                ),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _searchQuery = '');
+                                  context
+                                      .read<EventOrderCubit>()
+                                      .loadEventOrders(
+                                        filterType: _selectedType,
+                                        filterStatus: _selectedStatus,
+                                      );
+                                },
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: AppColors.inputFill(context),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(
+                            color: AppColors.border(context),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(
+                            color: _primaryColor,
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
-                      vertical: 6,
+                      vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      color: _primaryColor.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.list_alt_rounded,
-                          size: 14,
-                          color: _primaryColor,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '$itemCount orders',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'Literata',
-                            color: _primaryColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Spacer(),
-                  if (_selectedStatus != null)
-                    GestureDetector(
-                      onTap: () => _onStatusFilterChanged(context, null),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.chipFill(context),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.filter_alt_off_rounded,
-                              size: 14,
-                              color: AppTheme.grey600,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Clear status',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                fontFamily: 'Literata',
-                                color: AppTheme.grey600,
-                              ),
-                            ),
-                          ],
-                        ),
+                      color: _primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: _primaryColor.withValues(alpha: 0.2),
                       ),
                     ),
+                    child: Text(
+                      '$itemCount',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        fontFamily: 'Literata',
+                        color: _primaryColor,
+                      ),
+                    ),
+                  ),
                 ],
               );
             },
           ),
+          const SizedBox(height: 10),
+          _buildDateFilterChips(),
+          if (_selectedStatus != null) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => _onStatusFilterChanged(context, null),
+                icon: const Icon(Icons.filter_alt_off_rounded, size: 16),
+                label: const Text(
+                  'Clear status',
+                  style: TextStyle(fontFamily: 'Literata', fontSize: 12),
+                ),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.secondaryText(context),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -865,9 +823,19 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     final isEvent = order.orderType == OrderType.event;
     final typeColor = isEvent ? _eventColor : _salesColor;
     final statusInfo = _getStatusInfo(order.status);
+    final dueColor =
+        order.remainingAmount > 0 ? AppTheme.orange : AppTheme.green;
+    final isBusy = _processingOrderId == order.id;
+    final metaParts = <String>[
+      DateFormat('dd MMM yyyy').format(order.eventDate),
+      if (isEvent && order.subEvents.isNotEmpty)
+        '${order.subEvents.length} sub-events',
+      if (order.items.isNotEmpty) '${order.items.length} items',
+      if (order.customerContact.isNotEmpty) order.customerContact,
+    ];
 
     return Container(
-      margin: EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: AppColors.card(context),
         borderRadius: BorderRadius.circular(18),
@@ -890,165 +858,115 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           onTap: () => _navigateToEdit(context, order),
           borderRadius: BorderRadius.circular(18),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(14, 14, 10, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header row
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Type icon
                     Container(
-                      width: 52,
-                      height: 52,
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [typeColor, typeColor.withValues(alpha: 0.7)],
-                        ),
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: typeColor.withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
+                        color: typeColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
                         isEvent
                             ? Icons.celebration_rounded
                             : Icons.shopping_bag_rounded,
-                        color: AppTheme.white,
-                        size: 24,
+                        color: typeColor,
+                        size: 22,
                       ),
                     ),
-                    const SizedBox(width: 14),
-                    // Title and customer
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             order.orderName,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'Literata',
-                              color: AppTheme.ink,
+                              color: AppColors.primaryText(context),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.person_outline_rounded,
-                                size: 14,
-                                color: AppTheme.grey,
-                              ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  order.customerName,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontFamily: 'Literata',
-                                    color: AppTheme.grey600,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
+                          const SizedBox(height: 3),
+                          Text(
+                            order.customerName,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontFamily: 'Literata',
+                              color: AppColors.secondaryText(context),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
                     ),
-                    // Status badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusInfo['color'].withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            statusInfo['icon'],
-                            size: 14,
-                            color: statusInfo['color'],
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
+                          decoration: BoxDecoration(
+                            color: (statusInfo['color'] as Color)
+                                .withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
                             order.status.displayName,
                             style: TextStyle(
                               fontSize: 11,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
                               fontFamily: 'Literata',
-                              color: statusInfo['color'],
+                              color: statusInfo['color'] as Color,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                // Info badges row
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    SyncStatusIcon(
-                      isSynced: order.isSynced,
-                      size: 16,
-                      padded: false,
-                    ),
-                    _buildInfoBadge(
-                      Icons.calendar_today_rounded,
-                      DateFormat('dd MMM yyyy').format(order.eventDate),
-                      AppTheme.grey600,
-                    ),
-                    if (isEvent && order.subEvents.isNotEmpty)
-                      _buildInfoBadge(
-                        Icons.event_note_rounded,
-                        '${order.subEvents.length} sub-events',
-                        typeColor,
-                      ),
-                    if (order.items.isNotEmpty)
-                      _buildInfoBadge(
-                        Icons.shopping_bag_rounded,
-                        '${order.items.length} products',
-                        isEvent ? AppTheme.green : typeColor,
-                      ),
-                    if (order.customerContact.isNotEmpty)
-                      _buildInfoBadge(
-                        Icons.phone_rounded,
-                        order.customerContact,
-                        AppTheme.grey600,
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                // Amount summary row
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        _primaryColor.withValues(alpha: 0.06),
-                        _primaryColor.withValues(alpha: 0.02),
+                        ),
+                        const SizedBox(height: 6),
+                        Icon(
+                          order.isSynced
+                              ? Icons.cloud_done_rounded
+                              : Icons.cloud_upload_rounded,
+                          size: 16,
+                          color: order.isSynced
+                              ? AppTheme.green700
+                              : AppTheme.orange700,
+                        ),
                       ],
                     ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  metaParts.join('  ·  '),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontFamily: 'Literata',
+                    color: AppColors.mutedText(context),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.chipFill(context),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -1057,13 +975,13 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                         child: _buildAmountColumn(
                           'Total',
                           order.totalAmount,
-                          AppTheme.ink,
+                          AppColors.primaryText(context),
                         ),
                       ),
                       Container(
                         width: 1,
-                        height: 36,
-                        color: AppTheme.grey.withValues(alpha: 0.15),
+                        height: 32,
+                        color: AppColors.border(context),
                       ),
                       Expanded(
                         child: _buildAmountColumn(
@@ -1074,59 +992,53 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                       ),
                       Container(
                         width: 1,
-                        height: 36,
-                        color: AppTheme.grey.withValues(alpha: 0.15),
+                        height: 32,
+                        color: AppColors.border(context),
                       ),
                       Expanded(
                         child: _buildAmountColumn(
                           'Due',
                           order.remainingAmount,
-                          order.remainingAmount > 0
-                              ? AppTheme.orange
-                              : AppTheme.green,
+                          dueColor,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 14),
-                // Action buttons row
+                const SizedBox(height: 8),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    _buildActionButton(
-                      context,
+                    _buildIconAction(
                       icon: Icons.receipt_long_rounded,
-                      label: 'Invoice',
+                      tooltip: 'Invoice',
                       color: AppTheme.teal,
-                      isLoading: _processingOrderId == order.id,
+                      isLoading: isBusy,
                       onTap: () => _showInvoicePreview(context, order),
                     ),
-                    const SizedBox(width: 8),
-                    _buildActionButton(
-                      context,
+                    _buildIconAction(
                       icon: Icons.share_rounded,
-                      label: 'Share',
+                      tooltip: 'Share',
                       color: _primaryColor,
-                      isLoading: _processingOrderId == order.id,
+                      isLoading: isBusy,
                       onTap: () => _shareOrder(context, order),
                     ),
-                    const SizedBox(width: 8),
-                    _buildActionButton(
-                      context,
+                    _buildIconAction(
                       icon: Icons.print_rounded,
-                      label: 'Print',
+                      tooltip: 'Print',
                       color: AppTheme.orange,
-                      isLoading: _processingOrderId == order.id,
+                      isLoading: isBusy,
                       onTap: () => _printOrder(context, order),
                     ),
-                    const SizedBox(width: 8),
-                    _buildActionButton(
-                      context,
+                    const Spacer(),
+                    _buildIconAction(
                       icon: Icons.delete_outline_rounded,
-                      label: 'Delete',
+                      tooltip: 'Delete',
                       color: AppTheme.red,
                       onTap: () => _confirmDelete(context, order),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.mutedText(context),
                     ),
                   ],
                 ),
@@ -1138,76 +1050,24 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     );
   }
 
-  Widget _buildActionButton(
-    BuildContext context, {
+  Widget _buildIconAction({
     required IconData icon,
-    required String label,
+    required String tooltip,
     required Color color,
     required VoidCallback onTap,
     bool isLoading = false,
   }) {
-    return Material(
-      color: color.withValues(alpha: 0.1),
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: isLoading ? null : onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (isLoading)
-                SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: color,
-                  ),
-                )
-              else
-                Icon(icon, size: 14, color: color),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Literata',
-                  color: color,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoBadge(IconData icon, String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 6),
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'Literata',
-              color: color,
-            ),
-          ),
-        ],
-      ),
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: isLoading ? null : onTap,
+      visualDensity: VisualDensity.compact,
+      icon: isLoading
+          ? SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2, color: color),
+            )
+          : Icon(icon, size: 20, color: color),
     );
   }
 
@@ -1363,41 +1223,34 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       onTap: () => _onDateFilterChanged(filter),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected ? _primaryColor : AppColors.card(context),
-          borderRadius: BorderRadius.circular(20),
+          color: isSelected
+              ? _primaryColor
+              : AppColors.chipFill(context),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isSelected
                 ? _primaryColor
                 : AppColors.border(context),
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: _primaryColor.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              size: 14,
+              size: 13,
               color: isSelected
                   ? AppTheme.white
                   : AppColors.secondaryText(context),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 5),
             Text(
               label,
               style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 fontFamily: 'Literata',
                 color: isSelected
                     ? AppTheme.white
@@ -1715,6 +1568,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       }
 
       debugPrint('[EventOrderList] Generating PDF...');
+      final posFormat = await _pdfService.isPosFormat();
       debugPrint(
         '[EventOrderList] Order details - name: ${order.orderName}, type: ${order.orderType}, items: ${order.items.length}, subEvents: ${order.subEvents.length}',
       );
@@ -1756,6 +1610,14 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               fileType: FilePreviewType.pdf,
               subtitle: DateFormat('dd MMM yyyy').format(order.eventDate),
               customerPhone: order.customerContact,
+              printPageFormat: posFormat ? PdfPageFormat.roll80 : null,
+              rebuildPdfForPrint: posFormat
+                  ? (format) => _pdfService.buildPosPdfBytes(
+                      order: order,
+                      shopDetails: shop,
+                      pageFormat: format,
+                    )
+                  : null,
         );
         return;
       }
@@ -1795,6 +1657,14 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             fileType: FilePreviewType.pdf,
             subtitle: DateFormat('dd MMM yyyy').format(order.eventDate),
             customerPhone: order.customerContact,
+            printPageFormat: posFormat ? PdfPageFormat.roll80 : null,
+            rebuildPdfForPrint: posFormat
+                ? (format) => _pdfService.buildPosPdfBytes(
+                    order: order,
+                    shopDetails: shop,
+                    pageFormat: format,
+                  )
+                : null,
       );
       debugPrint('[EventOrderList] PDF preview closed');
     } catch (e, stack) {
@@ -1983,27 +1853,10 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
-      builder: (ctx) => Container(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.card(context),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
+      builder: (ctx) => Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle bar
-            const SizedBox(height: 12),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppTheme.grey300,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+            const GlassSheetHandle(),
             // Header
             Padding(
               padding: const EdgeInsets.all(20),
@@ -2173,7 +2026,6 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               ),
             ),
           ],
-        ),
       ),
     );
   }

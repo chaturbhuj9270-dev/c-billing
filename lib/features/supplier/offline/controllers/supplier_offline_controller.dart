@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import 'package:flutter/foundation.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/local_store.dart';
@@ -44,6 +45,8 @@ class SupplierOfflineController extends ChangeNotifier {
     required String supplierCode,
     required String contact,
     String address = '',
+    String email = '',
+    String gstNumber = '',
     bool isActive = true,
   }) async {
     debugPrint(
@@ -63,6 +66,8 @@ class SupplierOfflineController extends ChangeNotifier {
       supplierCode: supplierCode,
       contact: contact,
       address: address,
+      email: email,
+      gstNumber: gstNumber,
       isActive: isActive,
       syncStatus: SupplierSyncStatus.newRecord, // Mark as NEW for sync
     );
@@ -149,6 +154,8 @@ class SupplierOfflineController extends ChangeNotifier {
     String? supplierCode,
     String? contact,
     String? address,
+    String? email,
+    String? gstNumber,
     bool? isActive,
   }) async {
     final existing = await getSupplierById(id);
@@ -189,6 +196,8 @@ class SupplierOfflineController extends ChangeNotifier {
       supplierCode: supplierCode,
       contact: contact,
       address: address,
+      email: email,
+      gstNumber: gstNumber,
       isActive: isActive,
       syncStatus: newSyncStatus,
       updatedAt: DateTime.now(),
@@ -345,9 +354,11 @@ class SupplierOfflineController extends ChangeNotifier {
         if (existing != null) {
           // Only update if not locally modified AND server is newer
           if (existing.syncStatus == SupplierSyncStatus.synced) {
-            final serverUpdatedAt = DateTime.tryParse(
-              supplierData['updatedAt']?.toString() ?? '',
-            );
+            // updatedAt may be a Firestore Timestamp or an ISO string.
+            final rawUpdatedAt = supplierData['updatedAt'];
+            final serverUpdatedAt = rawUpdatedAt is Timestamp
+                ? rawUpdatedAt.toDate()
+                : DateTime.tryParse(rawUpdatedAt?.toString() ?? '');
             if (serverUpdatedAt != null &&
                 serverUpdatedAt.isAfter(existing.updatedAt)) {
               final updated = SupplierEntity.fromServer(supplierData);

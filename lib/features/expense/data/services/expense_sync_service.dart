@@ -105,6 +105,10 @@ class ExpenseSyncService extends ChangeNotifier {
     debugPrint('[ExpenseSync] Initializing...');
 
     // Listen for connectivity changes
+    // initialize() can run more than once (login, splash, pages): never stack
+    // duplicate listeners/timers.
+    _connectivitySubscription?.cancel();
+    _periodicSyncTimer?.cancel();
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen((
       results,
     ) {
@@ -114,10 +118,8 @@ class ExpenseSyncService extends ChangeNotifier {
       }
     });
 
-    // Start periodic sync (every 5 minutes)
-    _periodicSyncTimer = Timer.periodic(const Duration(minutes: 5), (_) {
-      syncNow();
-    });
+    // No background polling: LiveSyncService pushes right after local saves and
+    // visible screens refresh on a short interval (see LiveRefreshMixin).
 
     // Initial sync (skipped when SyncBootstrap will forceFullSync)
     if (runInitialSync) {
@@ -258,22 +260,34 @@ class ExpenseSyncService extends ChangeNotifier {
             .get();
 
         for (final doc in serverExpenses.docs) {
-          final data = doc.data() as Map<String, dynamic>;
-          data['id'] = doc.id;
+          try {
+            final data = doc.data() as Map<String, dynamic>;
+            data['id'] = doc.id;
 
-          // Check if we already have this expense
-          final existing = await _offlineController.getExpenseByServerId(
-            doc.id,
-          );
-
-          if (existing == null) {
-            // New expense from server
-            final expense = ExpenseEntity.fromJson(data);
-            await _offlineController.importFromServer(expense);
-            downloaded++;
-            debugPrint(
-              '[ExpenseSync] Downloaded expense from server: ${doc.id}',
+            // Check if we already have this expense
+            final existing = await _offlineController.getExpenseByServerId(
+              doc.id,
             );
+
+            if (existing == null) {
+              // New expense from server
+              final expense = ExpenseEntity.fromJson(data);
+              await _offlineController.importFromServer(expense);
+              downloaded++;
+              debugPrint(
+                '[ExpenseSync] Downloaded expense from server: ${doc.id}',
+              );
+            } else if (existing.syncStatus == ExpenseSyncStatus.synced) {
+              // Edited on another device: apply when the server copy is newer.
+              // Local unsynced edits always win (they are pushed above).
+              final remote = ExpenseEntity.fromJson(data);
+              if (remote.updatedAt.isAfter(existing.updatedAt)) {
+                await _offlineController.importFromServer(remote);
+                downloaded++;
+              }
+            }
+          } catch (e) {
+            debugPrint('[ExpenseSync] Skipping bad expense ${doc.id}: $e');
           }
         }
       } catch (e) {

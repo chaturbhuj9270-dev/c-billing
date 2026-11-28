@@ -25,6 +25,7 @@ class EnglishLocalization {
   static const String thisWeek = 'This Week';
   static const String thisMonth = 'This Month';
   static const String thisYear = 'This Year';
+  static const String lastYear = 'Last Year';
   static const String allTime = 'All Time';
   static const String customRange = 'Custom Range';
 
@@ -47,6 +48,10 @@ class EnglishLocalization {
   static const String pendingPayments = 'Pending Payments';
   static const String lastDues = 'Last Dues';
   static const String lowStockItems = 'Low Stock Items';
+  static const String bestSellers = 'Best sellers';
+  static const String awaitingPayment = 'Awaiting payment';
+  static const String belowReorderLevel = 'Below reorder level';
+  static const String comingUp = 'Coming up';
 
   // Navigation
   static const String home = 'Home';
@@ -374,23 +379,33 @@ class EnglishLocalization {
 
   // Subscription Screen
   static const String premiumFinancialSolutions = 'PREMIUM FINANCIAL SOLUTIONS';
-  static const String subscriptionExpired = 'Subscription Expired';
+  static const String subscriptionExpired = 'Subscription expired.';
   static const String premiumPlan = 'PREMIUM PLAN';
-  static const String perYear = 'per year';
+  static const String perYear = '/ year';
   static const String hurryUpFirstUsers =
       'Hurry up! This offer is for first 100 users only';
-  static const String justPerMonth = 'Just ₹333/month';
-  static const String whatsIncluded = 'What\'s Included';
-  static const String unlimitedBillGeneration = 'Unlimited Bill Generation';
+  static const String offerFirst100Users =
+      'Limited period offer — first 100 users only.';
+  static const String justPerMonth = 'Just ₹333 per month.';
+  static String justPerMonthAmount(String amount) => 'Just ₹$amount per month.';
+  static const String whatsIncluded = 'What\'s included.';
+  static const String everythingIncludedSubtitle =
+      'Everything you use today, with no limits.';
+  static const String renewToKeepBilling =
+      'Renew to keep your business billing.';
+  static const String subscriptionEndedRenewBody =
+      'Your subscription has ended. Renew the Premium plan to keep creating bills, tracking stock, and running reports.';
+  static const String unlimitedBillGeneration = 'Unlimited bill generation';
   static const String completeInventoryManagement =
-      'Complete Inventory Management';
-  static const String customerSupplierTracking = 'Customer & Supplier Tracking';
-  static const String advancedReportsAnalytics = 'Advanced Reports & Analytics';
-  static const String posPrinterSupport = 'POS Printer Support';
+      'Complete inventory management';
+  static const String customerSupplierTracking = 'Customer & supplier tracking';
+  static const String advancedReportsAnalytics = 'Advanced reports & analytics';
+  static const String posPrinterSupport = 'POS printer support';
   static const String cloudBackupPrioritySupport =
-      'Cloud Backup & Priority Support';
+      'Cloud backup & priority support';
   static const String subscribeNow = 'Subscribe Now';
-  static const String needHelpContactUs = 'Need help? Contact us';
+  static const String renewNow = 'Renew now';
+  static const String needHelpContactUs = 'Need help? Contact support.';
   static const String poweredBy = 'Powered by ';
   static const String chaturbhujSolutions = 'CHATURBHUJ SOLUTIONS';
 
@@ -409,6 +424,13 @@ class EnglishLocalization {
   static const String callSupport = 'Call Support';
   static const String securePayment = 'Secure Payment';
   static const String couldNotOpenWhatsApp = 'Could not open WhatsApp';
+  static const String payViaCashfree = 'Pay Securely with Cashfree';
+  static const String cashfreePaymentModesHint =
+      'UPI, Cards, Net Banking & Wallets supported';
+  static const String cashfreePaymentInstructions =
+      'Tap Pay Securely to open Cashfree checkout. Your subscription activates automatically after successful payment.';
+  static const String securePaymentPoweredByCashfree =
+      'Secure payment powered by Cashfree';
   static const String paySecurely = 'Pay Securely';
   static const String processingPayment = 'Processing...';
   static const String preparingSecurePayment = 'Preparing secure payment...';
@@ -699,7 +721,7 @@ class EnglishLocalization {
   // ═══════════════════════════════════════════════════ Auth Pages (Login/Signup/Change Password) ═══════════════════════════════════════════════════
   static const String welcomeBackLogin = 'Welcome Back';
   static const String signInToAccount = 'Sign in to your account';
-  static const String backboneOfBusiness = 'Power your business';
+  static const String backboneOfBusiness = 'Power your Business';
   static const String enterEmailPhone = 'Enter email/phone and password';
   static const String password = 'Password';
   static const String forgotPasswordQuestion = 'Forgot password?';
@@ -1162,4 +1184,50 @@ class EnglishLocalization {
   static const String subtotalColonLabel = 'Subtotal:';
   static const String finalAmountColonLabel = 'Final Amount:';
   static const String discountPercentLabel = 'Discount';
+
+  // ── Customer pending report / WhatsApp ──
+  static const String customerPendingReport = 'Pending report';
+  static const String customerReportFailed = 'Could not create the report';
+  static const String whatsAppNotInstalled = 'WhatsApp is not installed';
+  static const String customerReportAttachHint =
+      'Report saved. Attach it in the WhatsApp chat.';
+  static String customerPendingWhatsAppMessage(
+    String name,
+    String shop,
+    String amount,
+    String date,
+  ) =>
+      'Dear Customer, a gentle reminder that your pending payment of ₹$amount '
+      'with $shop is still outstanding. '
+      'Kindly clear the amount at your earliest convenience.\n\n'
+      'If already paid, please ignore this message.\n\n'
+      'Thank you for your support and business!';
+  static const String customerReportSendPdfTitle = 'Send the PDF report';
+  static const String customerReportSendPdfBody =
+      'Send the message in WhatsApp first, then come back and tap "Send PDF" to put the report in the same chat.';
+  static const String customerReportSendPdf = 'Send PDF';
+  static const String customerReportSendMessageTitle = 'Now send the message';
+  static const String customerReportSendMessageBody =
+      'The PDF is in the chat. Tap "Send message" to add the reminder message to the same chat.';
+  static const String customerReportSendMessage = 'Send message';
+  static const String customerBirthDate = 'Birth date';
+  static const String customerInvalidEmail = 'Enter a valid email address';
+  static const String customerBasicDetails = 'Basic details';
+  static const String customerContactDetails = 'Contact details';
+  static const String customerBirthdayToday = 'Birthday today';
+  static const String contactPerson = 'Contact Person';
+  static const String invalidEmailAddress = 'Enter a valid email address';
+  static const String invalidGstNumber = 'Enter a valid 15-character GST number';
+  static const String sectionBasicDetails = 'Basic details';
+  static const String sectionContactDetails = 'Contact details';
+  static const String sectionBusinessDetails = 'Business details';
+  static const String sectionStockAndUnit = 'Stock & unit';
+  static const String sectionTaxDetails = 'Tax (GST)';
+  static const String minStockLevelHint = 'Low-stock alert when stock reaches this level';
+  static const String customerReportOpeningMessage =
+      'Opening the message in the same chat...';
+  static const String customerReportOpeningPdf =
+      'Opening the PDF in the same chat...';
+  static const String customerReportSendPdfHint =
+      'Message sent? Tap the WhatsApp icon again to send the PDF report to the same chat.';
 }

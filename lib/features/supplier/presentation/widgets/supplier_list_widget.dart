@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:c_billing/common_widgets/master_data_form.dart';
 import '../../../../core/services/communication_service.dart';
 import 'supplier_filter_widget.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
@@ -49,12 +50,16 @@ class SupplierListWidget extends StatelessWidget {
         final lastName = (s['lastName'] ?? '').toString().toLowerCase();
         final contact = (s['contact'] ?? '').toString().toLowerCase();
         final supplierCode = (s['supplierCode'] ?? '').toString().toLowerCase();
+        final email = (s['email'] ?? '').toString().toLowerCase();
+        final gstNumber = (s['gstNumber'] ?? '').toString().toLowerCase();
         final fullName = '$firstName $lastName';
         return firstName.contains(query) ||
             lastName.contains(query) ||
             fullName.contains(query) ||
             contact.contains(query) ||
-            supplierCode.contains(query);
+            supplierCode.contains(query) ||
+            email.contains(query) ||
+            gstNumber.contains(query);
       }).toList();
     }
 
@@ -85,7 +90,13 @@ class SupplierListWidget extends StatelessWidget {
           result = aCode.compareTo(bCode);
           break;
       }
-      return sortAscending ? result : -result;
+      if (result != 0) return sortAscending ? result : -result;
+      // Stable tie-break by name so the order never jumps around
+      return '${a['firstName'] ?? ''} ${a['lastName'] ?? ''}'
+          .toLowerCase()
+          .compareTo(
+            '${b['firstName'] ?? ''} ${b['lastName'] ?? ''}'.toLowerCase(),
+          );
     });
 
     return filtered;
@@ -254,6 +265,8 @@ class _SupplierCard extends StatelessWidget {
     final firstName = (supplier['firstName'] ?? '').toString();
     final contact = (supplier['contact'] ?? '').toString();
     final address = (supplier['address'] ?? '').toString();
+    final email = (supplier['email'] ?? '').toString().trim();
+    final gstNumber = (supplier['gstNumber'] ?? '').toString().trim();
     final supplierCode = (supplier['supplierCode'] ?? '').toString();
     final isActive = supplier['isActive'] as bool? ?? true;
     final isSynced = supplier['isSynced'] as bool? ?? true;
@@ -436,6 +449,18 @@ class _SupplierCard extends StatelessWidget {
                     ),
                 ],
               ),
+              if (email.isNotEmpty || gstNumber.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                if (email.isNotEmpty)
+                  CardInfoLine(icon: Icons.email_outlined, text: email),
+                if (email.isNotEmpty && gstNumber.isNotEmpty)
+                  const SizedBox(height: 4),
+                if (gstNumber.isNotEmpty)
+                  CardInfoLine(
+                    icon: Icons.receipt_long_outlined,
+                    text: 'GST $gstNumber',
+                  ),
+              ],
               // Address row (if exists)
               if (address.isNotEmpty) ...[
                 const SizedBox(height: 10),

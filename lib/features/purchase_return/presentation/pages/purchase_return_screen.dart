@@ -659,42 +659,29 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
   }
 
   Widget _buildSupplierPickerSheet() {
-    return StatefulBuilder(
-      builder: (ctx, setSheetState) {
-        final q = _supplierSearchCtrl.text.toLowerCase().trim();
-        final filtered = q.isEmpty
-            ? _suppliers
-            : _suppliers
-                  .where(
-                    (s) =>
-                        (s['name'] as String).toLowerCase().contains(q) ||
-                        (s['contact'] as String).toLowerCase().contains(q),
-                  )
-                  .toList();
+    return GlassDraggableSheet(
+      initialChildSize: 0.6,
+      minChildSize: 0.4,
+      maxChildSize: 0.9,
+      builder: (_, controller) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          final q = _supplierSearchCtrl.text.toLowerCase().trim();
+          final filtered = q.isEmpty
+              ? _suppliers
+              : _suppliers
+                    .where(
+                      (s) =>
+                          (s['name'] as String).toLowerCase().contains(q) ||
+                          (s['contact'] as String).toLowerCase().contains(q),
+                    )
+                    .toList();
 
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.7,
-          decoration: BoxDecoration(
-            color: AppColors.card(context),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
+          return Column(
             children: [
-              // Handle
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppTheme.grey300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
+              const GlassSheetHandle(),
               // Title + search
               Padding(
-                padding: EdgeInsets.all(16),
+                padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -743,22 +730,35 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
               // List
               Expanded(
                 child: _isLoadingSuppliers
-                    ? Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.accent(context),
-                        ),
+                    ? ListView(
+                        controller: controller,
+                        children: [
+                          const SizedBox(height: 48),
+                          Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.accent(context),
+                            ),
+                          ),
+                        ],
                       )
                     : filtered.isEmpty
-                    ? Center(
-                        child: Text(
-                          _localizations.noSuppliersFound,
-                          style: TextStyle(
-                            color: AppTheme.grey,
-                            fontFamily: 'Literata',
+                    ? ListView(
+                        controller: controller,
+                        children: [
+                          const SizedBox(height: 48),
+                          Center(
+                            child: Text(
+                              _localizations.noSuppliersFound,
+                              style: TextStyle(
+                                color: AppTheme.grey,
+                                fontFamily: 'Literata',
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       )
                     : ListView.separated(
+                        controller: controller,
                         itemCount: filtered.length,
                         separatorBuilder: (_, _) =>
                             Divider(height: 1, color: AppColors.border(context)),
@@ -818,9 +818,9 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                       ),
               ),
             ],
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -1245,31 +1245,15 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
-      builder: (_) => Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.card(context),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+      builder: (_) => GlassDraggableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, controller) => Column(
           children: [
-            // Handle
+            const GlassSheetHandle(),
             Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.grey300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: Row(
                 children: [
                   Expanded(
@@ -1304,9 +1288,9 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
               ),
             ),
             const Divider(height: 1),
-            Flexible(
+            Expanded(
               child: ListView.separated(
-                shrinkWrap: true,
+                controller: controller,
                 padding: const EdgeInsets.all(16),
                 itemCount: batches.length,
                 separatorBuilder: (_, _) => SizedBox(height: 10),

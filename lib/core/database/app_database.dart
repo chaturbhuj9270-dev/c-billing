@@ -16,6 +16,8 @@ class CompanyRecords extends Table {
   TextColumn get gstCode => text().withDefault(const Constant(''))();
   TextColumn get contact => text().withDefault(const Constant(''))();
   TextColumn get address => text().withDefault(const Constant(''))();
+  TextColumn get email => text().withDefault(const Constant(''))();
+  TextColumn get contactPerson => text().withDefault(const Constant(''))();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
   IntColumn get syncStatus => integer()();
   DateTimeColumn get updatedAt => dateTime()();
@@ -34,6 +36,8 @@ class CustomerRecords extends Table {
   TextColumn get address => text().nullable()();
   TextColumn get email => text().nullable()();
   TextColumn get gstin => text().nullable()();
+  // Date only, stored as 'yyyy-MM-dd' (no timezone shifts).
+  TextColumn get birthDate => text().nullable()();
   RealColumn get currentPendingAmount =>
       real().withDefault(const Constant(0))();
   RealColumn get totalPurchases => real().withDefault(const Constant(0))();
@@ -56,6 +60,8 @@ class SupplierRecords extends Table {
   TextColumn get supplierCode => text().withDefault(const Constant(''))();
   TextColumn get contact => text()();
   TextColumn get address => text().withDefault(const Constant(''))();
+  TextColumn get email => text().withDefault(const Constant(''))();
+  TextColumn get gstNumber => text().withDefault(const Constant(''))();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
   IntColumn get syncStatus => integer()();
   DateTimeColumn get updatedAt => dateTime()();
@@ -438,8 +444,29 @@ class EmployeeRecords extends Table {
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? openAppDatabase());
 
+  // v15: REAL qty affinity + derived-balance repair. Never alterTable bills /
+  // purchases here — those tables carry extra GST/payment columns not in this
+  // schema; alterTable would drop shop data.
+  // v16: customers.birth_date (nullable TEXT) added with a plain ADD COLUMN.
+  // v17: suppliers.email / gst_number and companies.email / contact_person
+  // (plain guarded ADD COLUMN, default '').
+  // v18: employees table + GST / pack / payment-mode columns (guarded sweep in
+  // _addMissingColumns, never a table copy for customers/suppliers/companies).
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 18;
+
+  /// Adds [column] to [table] only when it is missing (idempotent, keeps data).
+  Future<void> _addColumnIfMissing(
+    String table,
+    String column,
+    String type,
+  ) async {
+    final cols = await customSelect('PRAGMA table_info($table)').get();
+    final exists = cols.any((row) => row.read<String>('name') == column);
+    if (!exists) {
+      await customStatement('ALTER TABLE $table ADD COLUMN $column $type');
+    }
+  }
 
   Future<bool> _hasTable(String table) async {
     final rows = await customSelect(
@@ -454,7 +481,8 @@ class AppDatabase extends _$AppDatabase {
     return rows.any((row) => row.read<String>('name') == column);
   }
 
-  Future<void> _addColumnIfMissing(
+  /// Drift-typed variant of [_addColumnIfMissing] (uses the column's schema).
+  Future<void> _addTableColumnIfMissing(
     Migrator m,
     TableInfo table,
     GeneratedColumn column,
@@ -465,188 +493,211 @@ class AppDatabase extends _$AppDatabase {
     await m.addColumn(table, column);
   }
 
-  Future<void> _addPurchaseGstColumns(Migrator m) async {
-    await _addColumnIfMissing(
-      m,
-      purchaseRecords,
-      purchaseRecords.isGstApplied,
-    );
-    await _addColumnIfMissing(
-      m,
-      purchaseRecords,
-      purchaseRecords.isTaxInclusive,
-    );
-    await _addColumnIfMissing(
-      m,
-      purchaseRecords,
-      purchaseRecords.isInterstate,
-    );
-    await _addColumnIfMissing(
-      m,
-      purchaseRecords,
-      purchaseRecords.taxableValue,
-    );
-    await _addColumnIfMissing(m, purchaseRecords, purchaseRecords.cgstPercent);
-    await _addColumnIfMissing(m, purchaseRecords, purchaseRecords.sgstPercent);
-    await _addColumnIfMissing(m, purchaseRecords, purchaseRecords.igstPercent);
-    await _addColumnIfMissing(
-      m,
-      purchaseRecords,
-      purchaseRecords.otherTaxPercent,
-    );
-    await _addColumnIfMissing(
-      m,
-      purchaseRecords,
-      purchaseRecords.otherTaxName,
-    );
-    await _addColumnIfMissing(m, purchaseRecords, purchaseRecords.cgstAmount);
-    await _addColumnIfMissing(m, purchaseRecords, purchaseRecords.sgstAmount);
-    await _addColumnIfMissing(m, purchaseRecords, purchaseRecords.igstAmount);
-    await _addColumnIfMissing(
-      m,
-      purchaseRecords,
-      purchaseRecords.otherTaxAmount,
-    );
-    await _addColumnIfMissing(
-      m,
-      purchaseRecords,
-      purchaseRecords.totalTaxAmount,
-    );
-    await _addColumnIfMissing(m, purchaseRecords, purchaseRecords.hsnCode);
-    await _addColumnIfMissing(
-      m,
-      purchaseRecords,
-      purchaseRecords.supplierGstin,
-    );
+  Future<void> _ensureTables(Migrator m) async {
+    for (final table in allTables) {
+      if (!await _hasTable(table.actualTableName)) {
+        await m.createTable(table);
+      }
+    }
+  }
+
+  /// Adds every schema column missing on disk. Devices may come from either
+  /// the employee/GST line (v13) or the ledger/profile line (v14-v17), so
+  /// version numbers alone cannot tell which columns exist. Every non-key
+  /// column is nullable or has a default, so ADD COLUMN keeps existing rows.
+  Future<void> _addMissingColumns(Migrator m) async {
+    for (final table in allTables) {
+      for (final column in table.$columns) {
+        try {
+          await _addTableColumnIfMissing(m, table, column);
+        } catch (e, st) {
+          // Never abort opening the DB — a missing optional column must not
+          // make shop data unreadable.
+          assert(() {
+            // ignore: avoid_print
+            print(
+              '[AppDatabase] ${table.actualTableName}.${column.name} '
+              'failed: $e\n$st',
+            );
+            return true;
+          }());
+        }
+      }
+    }
   }
 
   @override
-  MigrationStrategy get migration => MigrationStrategy(
-    onCreate: (m) async => m.createAll(),
-    onUpgrade: (m, from, to) async {
-      if (from < 2) {
-        if (!await _hasTable(employeeRecords.actualTableName)) {
-          await m.createTable(employeeRecords);
+  MigrationStrategy get migration {
+    return MigrationStrategy(
+      onCreate: (Migrator m) async {
+        await m.createAll();
+      },
+      onUpgrade: (Migrator m, int from, int to) async {
+        // Idempotent: create any tables missing on this branch without
+        // wiping existing shop data when switching branches / versions.
+        await _ensureTables(m);
+        if (from < 17) {
+          for (final spec in const [
+            ['suppliers', 'email'],
+            ['suppliers', 'gst_number'],
+            ['companies', 'email'],
+            ['companies', 'contact_person'],
+          ]) {
+            try {
+              await _addColumnIfMissing(
+                spec[0],
+                spec[1],
+                "TEXT NOT NULL DEFAULT ''",
+              );
+            } catch (e, st) {
+              // Never abort opening the DB — these columns are optional data.
+              assert(() {
+                // ignore: avoid_print
+                print('[AppDatabase] ${spec[0]}.${spec[1]} failed: $e\n$st');
+                return true;
+              }());
+            }
+          }
         }
-      }
-      // createTable above uses the current schema (already includes later
-      // columns). Skip any addColumn that already exists so re-upgrades
-      // and partial upgrades do not fail with "duplicate column name".
-      if (from < 3) {
-        await _addColumnIfMissing(
-          m,
-          employeeRecords,
-          employeeRecords.tokenNumber,
+        if (from < 16) {
+          try {
+            await _addColumnIfMissing('customers', 'birth_date', 'TEXT');
+          } catch (e, st) {
+            // Never abort opening the DB — the column is optional data.
+            assert(() {
+              // ignore: avoid_print
+              print('[AppDatabase] birth_date column failed: $e\n$st');
+              return true;
+            }());
+          }
+        }
+        // v18: employees + GST / pack / payment-mode columns from the
+        // employee line merged with the ledger line. Must run before any
+        // table copy below so the copy never selects a missing column.
+        if (from < 18) {
+          await _addMissingColumns(m);
+        }
+        if (from < 12) {
+          // Recreate tables so INTEGER qty columns become REAL (fractional
+          // kg/ml). Existing ints cast cleanly to REAL. All columns exist by
+          // now (added above), so Drift's copy step cannot hit a missing one.
+          // ignore: experimental_member_use
+          await m.alterTable(TableMigration(productRecords));
+          // ignore: experimental_member_use
+          await m.alterTable(TableMigration(purchaseBatchRecords));
+          // ignore: experimental_member_use
+          await m.alterTable(TableMigration(stockLedgerRecords));
+          // ignore: experimental_member_use
+          await m.alterTable(TableMigration(billRecords));
+        }
+        if (from < 15) {
+          try {
+            await repairDerivedBalances();
+          } catch (e, st) {
+            // Never abort opening the DB — shop data stays readable even if
+            // derived stock/ledger repair fails on an older device file.
+            assert(() {
+              // ignore: avoid_print
+              print('[AppDatabase] repairDerivedBalances failed: $e\n$st');
+              return true;
+            }());
+          }
+        }
+      },
+    );
+  }
+
+  /// Rebuilds derived stock + customer running balances from source tables.
+  /// Does not delete shop data and does not rewrite bill GST columns.
+  Future<void> repairDerivedBalances() async {
+    await transaction(() async {
+      // 1) Relink orphan batches whose product_id no longer matches a product.
+      await customStatement('''
+        UPDATE purchase_batches
+        SET product_id = (
+          SELECT COALESCE(p.server_id, 'local_' || p.id)
+          FROM products p
+          WHERE LOWER(TRIM(p.name)) = LOWER(TRIM(purchase_batches.product_name))
+          LIMIT 1
+        )
+        WHERE product_id IS NOT NULL
+          AND product_id != ''
+          AND NOT EXISTS (
+            SELECT 1 FROM products p
+            WHERE p.server_id = purchase_batches.product_id
+               OR CAST(p.id AS TEXT) = purchase_batches.product_id
+               OR ('local_' || p.id) = purchase_batches.product_id
+          )
+          AND EXISTS (
+            SELECT 1 FROM products p
+            WHERE LOWER(TRIM(p.name)) = LOWER(TRIM(purchase_batches.product_name))
+          )
+      ''');
+
+      // 2) Product stock = sum of unconsumed batch remaining qty.
+      await customStatement('''
+        UPDATE products
+        SET current_stock = COALESCE((
+          SELECT SUM(b.quantity_remaining)
+          FROM purchase_batches b
+          WHERE b.is_consumed = 0
+            AND (
+              b.product_id = products.server_id
+              OR b.product_id = CAST(products.id AS TEXT)
+              OR b.product_id = ('local_' || products.id)
+            )
+        ), 0)
+      ''');
+
+      // 3) Rebuild customer ledger running balances from txn history.
+      final customers = await customSelect(
+        'SELECT id, server_id FROM customers WHERE is_deleted = 0',
+      ).get();
+
+      for (final customer in customers) {
+        final localId = customer.read<int>('id');
+        final serverId = customer.read<String?>('server_id');
+        final ids = <String>{
+          '$localId',
+          'local_$localId',
+          if (serverId != null && serverId.isNotEmpty) serverId,
+        };
+
+        final placeholders = List.filled(ids.length, '?').join(',');
+        final txns = await customSelect(
+          '''
+          SELECT id, transaction_type, amount
+          FROM customer_transactions
+          WHERE customer_id IN ($placeholders)
+            AND sync_status != 2
+          ORDER BY transaction_date ASC, id ASC
+          ''',
+          variables: ids.map(Variable.withString).toList(),
+        ).get();
+
+        var running = 0.0;
+        for (final txn in txns) {
+          final type = txn.read<int>('transaction_type');
+          final amount = txn.read<double>('amount');
+          // 0 payment, 1 billCreated, 2 billReturn, 3 adjustment
+          if (type == 0 || type == 2) {
+            running -= amount;
+          } else {
+            running += amount;
+          }
+          await customStatement(
+            'UPDATE customer_transactions SET balance_after = ? WHERE id = ?',
+            [running, txn.read<int>('id')],
+          );
+        }
+
+        await customStatement(
+          'UPDATE customers SET current_pending_amount = ? WHERE id = ?',
+          [running, localId],
         );
-        await _addColumnIfMissing(
-          m,
-          employeeRecords,
-          employeeRecords.counterAccess,
-        );
       }
-      if (from < 4) {
-        await _addColumnIfMissing(m, employeeRecords, employeeRecords.points);
-      }
-      if (from < 5) {
-        await _addColumnIfMissing(
-          m,
-          employeeRecords,
-          employeeRecords.dateOfBirth,
-        );
-        await _addColumnIfMissing(m, employeeRecords, employeeRecords.address);
-        await _addColumnIfMissing(m, employeeRecords, employeeRecords.pinCode);
-        await _addColumnIfMissing(
-          m,
-          employeeRecords,
-          employeeRecords.govIdNumber,
-        );
-        await _addColumnIfMissing(
-          m,
-          employeeRecords,
-          employeeRecords.govIdType,
-        );
-        await _addColumnIfMissing(m, employeeRecords, employeeRecords.salary);
-        await _addColumnIfMissing(
-          m,
-          employeeRecords,
-          employeeRecords.dateOfJoining,
-        );
-      }
-      if (from < 6) {
-        await _addColumnIfMissing(
-          m,
-          billRecords,
-          billRecords.extraChargesJson,
-        );
-      }
-      if (from < 7) {
-        await _addColumnIfMissing(m, billRecords, billRecords.paymentMode);
-      }
-      if (from < 8) {
-        await _addColumnIfMissing(
-          m,
-          purchaseBatchRecords,
-          purchaseBatchRecords.batchNumber,
-        );
-        await _addColumnIfMissing(m, productRecords, productRecords.size);
-        await _addColumnIfMissing(m, productRecords, productRecords.color);
-        await _addColumnIfMissing(m, productRecords, productRecords.mrp);
-        await _addColumnIfMissing(
-          m,
-          productRecords,
-          productRecords.composition,
-        );
-        await _addColumnIfMissing(
-          m,
-          productRecords,
-          productRecords.drugSchedule,
-        );
-      }
-      if (from < 9) {
-        await _addColumnIfMissing(m, customerRecords, customerRecords.gstin);
-        await _addColumnIfMissing(m, billRecords, billRecords.igstPercent);
-        await _addColumnIfMissing(m, billRecords, billRecords.igstAmount);
-        await _addColumnIfMissing(m, billRecords, billRecords.customerGstin);
-        await _addColumnIfMissing(m, billRecords, billRecords.placeOfSupply);
-        await _addColumnIfMissing(m, billRecords, billRecords.isInterstate);
-      }
-      if (from < 10) {
-        await _addColumnIfMissing(m, productRecords, productRecords.packUnit);
-        await _addColumnIfMissing(
-          m,
-          productRecords,
-          productRecords.unitsPerPack,
-        );
-      }
-      if (from < 11) {
-        await _addColumnIfMissing(
-          m,
-          productRecords,
-          productRecords.packSalesPrice,
-        );
-      }
-      if (from < 12) {
-        // Recreate tables so INTEGER qty columns become REAL (fractional kg/ml).
-        // Existing ints cast cleanly to REAL.
-        // Do NOT alterTable(purchaseRecords) here — older DBs lack GST columns and
-        // Drift's copy step would SELECT is_gst_applied from the old table and
-        // pause the isolate with SqliteException(1): no such column.
-        // ignore: experimental_member_use
-        await m.alterTable(TableMigration(productRecords));
-        // ignore: experimental_member_use
-        await m.alterTable(TableMigration(purchaseBatchRecords));
-        // ignore: experimental_member_use
-        await m.alterTable(TableMigration(stockLedgerRecords));
-        // ignore: experimental_member_use
-        await m.alterTable(TableMigration(billRecords));
-      }
-      // Purchase GST columns: always add with ALTER TABLE ADD COLUMN (safe on
-      // existing rows). Covers upgrades from <12 and any partial v12 state.
-      if (from < 13) {
-        await _addPurchaseGstColumns(m);
-      }
-    },
-  );
+    });
+  }
 
   Future<void> clearAll() async {
     await transaction(() async {

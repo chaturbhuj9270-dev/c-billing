@@ -49,15 +49,14 @@ class CustomerSummaryWidget extends StatelessWidget {
       }).toList();
     }
 
-    if (dateFilter != CustomerDateFilter.all) {
-      filtered = filtered.where((c) {
-        return customerMatchesDateFilter(
-          createdAt: parseCustomerCreatedAt(c),
-          filter: dateFilter,
-          customStart: customStartDate,
-          customEnd: customEndDate,
-        );
-      }).toList();
+    final range = customerDateFilterRange(
+      dateFilter,
+      customStart: customStartDate,
+      customEnd: customEndDate,
+    );
+    if (range != null) {
+      filtered =
+          filtered.where((c) => customerCreatedInRange(c, range)).toList();
     }
 
     return filtered;

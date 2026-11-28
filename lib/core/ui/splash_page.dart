@@ -22,7 +22,6 @@ import '../localization/app_localizations.dart';
 import 'subscription_screen.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/app_logo_mark.dart';
-import 'package:c_billing/common_widgets/twinkling_slogan.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/access/access_control_service.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
@@ -56,6 +55,10 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   late AppLocalizations _localizations;
   final SubscriptionService _subscriptionService = SubscriptionService();
   bool _showUnlockButton = false;
+
+  /// True while biometric sheet is open or app is opening after success.
+  bool _isUnlocking = false;
+  bool _didAutoPromptBiometric = false;
 
   /// Index of the step currently running (0..3). Steps below are done.
   int _activeStep = 0;
@@ -476,9 +479,9 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       debugPrint('[DEBUG] Biometric lock enabled: $isLockEnabled');
 
       if (isLockEnabled && mounted) {
-        setState(() {
-          _showUnlockButton = true;
-        });
+        setState(() => _showUnlockButton = true);
+        // Auto-prompt biometric so unlock is one gesture, not tap + scan.
+        _autoPromptBiometricOnce();
       } else {
         _navigateToDashboard();
       }
@@ -488,13 +491,24 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       if (!mounted) return;
       if (canUse) {
         setState(() => _showUnlockButton = true);
+        _autoPromptBiometricOnce();
       } else {
         _navigateToDashboard();
       }
     }
   }
 
+  void _autoPromptBiometricOnce() {
+    if (_didAutoPromptBiometric) return;
+    _didAutoPromptBiometric = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _isUnlocking) return;
+      _showUnlockBiometric();
+    });
+  }
+
   Future<void> _signInWithPasswordInstead() async {
+    if (_isUnlocking) return;
     try {
       await FirebaseAuth.instance.signOut();
     } catch (e) {
@@ -504,20 +518,26 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   }
 
   Future<void> _showFingerprintDialog(String userId) async {
+    if (_isUnlocking) return;
+    if (mounted) setState(() => _isUnlocking = true);
+
     try {
       final biometricService = BiometricService.instance;
 
       final isAuthenticated = await biometricService.authenticate(
         reason: 'Verify your identity to continue',
         useErrorDialogs: true,
+        stickyAuth: true,
       );
 
       if (isAuthenticated && mounted) {
         debugPrint('[DEBUG] Fingerprint authentication successful');
-        _navigateToDashboard();
+        // Keep loader visible until landing page replaces splash.
+        await _navigateToDashboard();
       } else {
         debugPrint('[DEBUG] Fingerprint authentication cancelled/failed');
         if (mounted) {
+          setState(() => _isUnlocking = false);
           GlassyToast.show(
             context,
             'Authentication cancelled. Tap "Unlock Now" to try again.',
@@ -527,6 +547,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     } catch (e) {
       debugPrint('[ERROR] Error during fingerprint authentication: $e');
       if (mounted) {
+        setState(() => _isUnlocking = false);
         GlassyToast.show(
           context,
           'Authentication error: ${e.toString()}',
@@ -564,8 +585,12 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       unawaited(_setLoadState(step: 3, progress: 0.98));
       // Prefer local entitlement; only wait briefly when offline says no.
       // Never treat a slow network as "expired" when cache/Auth trial is valid.
-      final isSubscriptionValid =
-          await _subscriptionService.isSubscriptionValidQuick();
+      final isSubscriptionValid = await _subscriptionService
+          .isSubscriptionValidQuick()
+          .timeout(
+            const Duration(seconds: 8),
+            onTimeout: () => _subscriptionService.isWithinLastKnownWindow(),
+          );
 
       if (!isSubscriptionValid) {
         debugPrint(
@@ -615,6 +640,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   }
 
   void _showUnlockBiometric() {
+    if (_isUnlocking) return;
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
       debugPrint('[DEBUG] Unlock Now tapped, showing fingerprint dialog');
@@ -880,19 +906,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                     opacity: _taglineFade,
                     child: SizedBox(
                       width: double.infinity,
-                      child: TwinklingSlogan(
-                        text: tagline,
-                        textAlign: TextAlign.center,
-                        glowColor: themeColor,
-                        style: TextStyle(
-                          color: muted,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Literata',
-                          letterSpacing: 1.6,
-                          height: 1.45,
-                        ),
-                      ),
+                      child: _buildPinkTagline(tagline),
                     ),
                   ),
                   const Spacer(flex: 2),
@@ -928,7 +942,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                                 ),
                               ),
                               child: Text(
-                                'PREMIUM FINANCIAL SOLUTIONS',
+                                'PREMIUM BUSINESS SOLUTIONS',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: muted,
@@ -1003,6 +1017,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   }
 
   Widget _buildUnlockButton(Color themeColor) {
+    final unlocking = _isUnlocking;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Column(
@@ -1014,42 +1029,66 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
               color: themeColor,
               borderRadius: BorderRadius.circular(26),
               child: InkWell(
-                onTap: _showUnlockBiometric,
+                onTap: unlocking ? null : _showUnlockBiometric,
                 borderRadius: BorderRadius.circular(26),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.fingerprint,
-                      color: AppTheme.white,
-                      size: 22,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _localizations.unlockNow,
-                      style: const TextStyle(
-                        color: AppTheme.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'Literata',
+                    if (unlocking) ...[
+                      const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.4,
+                          color: AppTheme.white,
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 10),
+                      Text(
+                        _localizations.loadingData,
+                        style: const TextStyle(
+                          color: AppTheme.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Literata',
+                        ),
+                      ),
+                    ] else ...[
+                      const Icon(
+                        Icons.fingerprint,
+                        color: AppTheme.white,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _localizations.unlockNow,
+                        style: const TextStyle(
+                          color: AppTheme.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Literata',
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ),
           ),
-          TextButton(
-            onPressed: _signInWithPasswordInstead,
-            child: Text(
-              _localizations.signIn,
-              style: TextStyle(
-                fontFamily: 'Literata',
-                fontWeight: FontWeight.w700,
-                color: themeColor,
+          if (!unlocking)
+            TextButton(
+              onPressed: _signInWithPasswordInstead,
+              child: Text(
+                _localizations.signIn,
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w700,
+                  color: themeColor,
+                ),
               ),
-            ),
-          ),
+            )
+          else
+            const SizedBox(height: 48),
         ],
       ),
     );
@@ -1173,17 +1212,11 @@ class _DesktopBrandLockup extends StatelessWidget {
             const SizedBox(height: 8),
             FadeTransition(
               opacity: taglineFade,
-              child: TwinklingSlogan(
-                text: tagline,
-                glowColor: accent,
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: muted,
-                  letterSpacing: 1.7,
-                  height: 1,
-                ),
+              child: _buildPinkTagline(
+                tagline,
+                textAlign: TextAlign.start,
+                fontSize: 12,
+                height: 1,
               ),
             ),
             const SizedBox(height: 14),
@@ -1237,4 +1270,25 @@ class _CompactSplashRingsPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _CompactSplashRingsPainter oldDelegate) =>
       oldDelegate.color != color || oldDelegate.progress != progress;
+}
+
+// Tagline in solid pink (#DD95D5), flat with no shadow or 3D effect.
+Widget _buildPinkTagline(
+  String text, {
+  TextAlign textAlign = TextAlign.center,
+  double fontSize = 14,
+  double height = 1.45,
+}) {
+  return Text(
+    text,
+    textAlign: textAlign,
+    style: TextStyle(
+      color: const Color(0xFFDD95D5),
+      fontSize: fontSize,
+      fontWeight: FontWeight.w800,
+      fontFamily: 'Literata',
+      letterSpacing: 1.8,
+      height: height,
+    ),
+  );
 }

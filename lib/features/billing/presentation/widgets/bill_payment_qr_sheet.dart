@@ -24,42 +24,12 @@ import 'package:c_billing/features/customer/offline/controllers/customer_transac
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
 import 'package:c_billing/features/shop/domain/entities/shop.dart';
 
-/// Builds a UPI pay URI with a fixed amount so UPI apps autofill (and usually lock) it.
-String buildUpiPaymentUri({
-  required String upiId,
-  required String payeeName,
-  required double amount,
-  String? note,
-  String? transactionRef,
-}) {
-  final pa = upiId.trim();
-  final pn = _upiQueryValue(
-    payeeName.trim().isEmpty ? 'Merchant' : payeeName.trim(),
-  );
-  final am = amount.toStringAsFixed(2);
-  final buffer = StringBuffer('upi://pay?pa=$pa&pn=$pn&am=$am&cu=INR');
-
-  final trimmedNote = note?.trim();
-  if (trimmedNote != null && trimmedNote.isNotEmpty) {
-    buffer.write('&tn=${_upiQueryValue(trimmedNote)}');
-  }
-
-  final tr = transactionRef?.trim();
-  if (tr != null && tr.isNotEmpty) {
-    buffer.write('&tr=${_upiQueryValue(tr)}');
-  }
-
-  return buffer.toString();
-}
-
-String _upiQueryValue(String value) {
-  return Uri.encodeQueryComponent(value).replaceAll('+', '%20');
-}
-
 /// Amount the customer should pay for this bill (net of returns).
 double billAmountToPay(Bill bill) {
-  final returned = bill.totalReturnedAmount;
-  return (bill.finalAmount - returned).clamp(0.0, double.infinity);
+  return billPrintAmountToPay(
+    grandTotal: bill.finalAmount,
+    returnedAmount: bill.totalReturnedAmount,
+  );
 }
 
 /// Shows a dynamic UPI payment QR with bill amount embedded (`am=`).
@@ -98,7 +68,7 @@ Future<void> showBillPaymentQrSheet({
   GlassyToast.dismiss();
 
   final upiId = shop.upiId?.trim() ?? '';
-  if (upiId.isEmpty || !_looksLikeUpiId(upiId)) {
+  if (upiId.isEmpty || !looksLikeUpiId(upiId)) {
     GlassyToast.show(
       context,
       localizations.addUpiIdInShopDetails,
@@ -107,9 +77,10 @@ Future<void> showBillPaymentQrSheet({
     return;
   }
 
-  final payeeName = (shop.accountHolderName?.trim().isNotEmpty ?? false)
-      ? shop.accountHolderName!.trim()
-      : (shop.shopName.trim().isNotEmpty ? shop.shopName.trim() : 'Merchant');
+  final payeeName = upiPayeeName(
+    accountHolderName: shop.accountHolderName,
+    shopName: shop.shopName,
+  );
 
   final upiData = buildUpiPaymentUri(
     upiId: upiId,
@@ -165,9 +136,11 @@ Future<void> _openPaymentReceiptPreview({
       totalDueAmount: bill.pendingAmount > 0 ? bill.pendingAmount : null,
     );
     final shop = await shopRepository.getShopDetails();
+    final pdfService = PdfBillService();
+    final printPageFormat = await pdfService.resolvePrintPageFormat(printData);
 
     if (kIsWeb) {
-      final bytes = await PdfBillService().buildPdfBytes(
+      final bytes = await pdfService.buildPdfBytes(
         billData: printData,
         shopDetails: shop,
       );
@@ -180,6 +153,12 @@ Future<void> _openPaymentReceiptPreview({
         fileType: FilePreviewType.pdf,
         subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
         customerPhone: bill.customerContact,
+        printPageFormat: printPageFormat,
+        rebuildPdfForPrint: (format) => pdfService.buildPdfBytesForPageFormat(
+          billData: printData,
+          shopDetails: shop,
+          pageFormat: format,
+        ),
         details: FilePreviewDetails(
           title: localizations.paymentReceipt,
           documentNo: bill.billNumber,
@@ -194,7 +173,7 @@ Future<void> _openPaymentReceiptPreview({
       return;
     }
 
-    final file = await PdfBillService().savePdfToFile(
+    final file = await pdfService.savePdfToFile(
       billData: printData,
       shopDetails: shop,
     );
@@ -207,6 +186,12 @@ Future<void> _openPaymentReceiptPreview({
       fileType: FilePreviewType.pdf,
       subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
       customerPhone: bill.customerContact,
+      printPageFormat: printPageFormat,
+      rebuildPdfForPrint: (format) => pdfService.buildPdfBytesForPageFormat(
+        billData: printData,
+        shopDetails: shop,
+        pageFormat: format,
+      ),
       details: FilePreviewDetails(
         title: localizations.paymentReceipt,
         documentNo: bill.billNumber,
@@ -229,10 +214,6 @@ Future<void> _openPaymentReceiptPreview({
       );
     }
   }
-}
-
-bool _looksLikeUpiId(String value) {
-  return RegExp(r'^[\w.\-]{2,}@[\w.\-]{2,}$').hasMatch(value);
 }
 
 class _BillPaymentQrSheet extends StatefulWidget {

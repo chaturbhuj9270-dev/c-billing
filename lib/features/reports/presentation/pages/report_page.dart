@@ -1421,28 +1421,26 @@ class _ReportPageState extends State<ReportPage>
   }
 
   Widget _buildProductPickerSheet() {
-    return StatefulBuilder(
-      builder: (ctx, setSheetState) {
-        final q = _productSearchCtrl.text.toLowerCase().trim();
-        final filtered = q.isEmpty
-            ? _products
-            : _products
-                  .where(
-                    (p) =>
-                        p.name.toLowerCase().contains(q) ||
-                        p.companyName.toLowerCase().contains(q),
-                  )
-                  .toList();
+    return GlassDraggableSheet(
+      initialChildSize: 0.6,
+      minChildSize: 0.4,
+      maxChildSize: 0.9,
+      builder: (_, controller) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          final q = _productSearchCtrl.text.toLowerCase().trim();
+          final filtered = q.isEmpty
+              ? _products
+              : _products
+                    .where(
+                      (p) =>
+                          p.name.toLowerCase().contains(q) ||
+                          p.companyName.toLowerCase().contains(q),
+                    )
+                    .toList();
 
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.65,
-          decoration: BoxDecoration(
-            color: AppColors.card(context),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
+          return Column(
             children: [
-              _buildSheetHandle(),
+              const GlassSheetHandle(),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                 child: Column(
@@ -1502,27 +1500,34 @@ class _ReportPageState extends State<ReportPage>
               const Divider(height: 1),
               Expanded(
                 child: filtered.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.inventory_2_outlined,
-                              size: 40,
-                              color: AppTheme.grey300,
+                    ? ListView(
+                        controller: controller,
+                        children: [
+                          const SizedBox(height: 48),
+                          Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.inventory_2_outlined,
+                                  size: 40,
+                                  color: AppTheme.grey300,
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'No products found',
+                                  style: TextStyle(
+                                    color: AppTheme.grey,
+                                    fontFamily: 'Literata',
+                                  ),
+                                ),
+                              ],
                             ),
-                            SizedBox(height: 8),
-                            Text(
-                              'No products found',
-                              style: TextStyle(
-                                color: AppTheme.grey,
-                                fontFamily: 'Literata',
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       )
                     : ListView.separated(
+                        controller: controller,
                         itemCount: filtered.length,
                         separatorBuilder: (_, _) =>
                             Divider(height: 1, color: AppColors.chipFill(context)),
@@ -1584,9 +1589,9 @@ class _ReportPageState extends State<ReportPage>
                       ),
               ),
             ],
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -1602,17 +1607,15 @@ class _ReportPageState extends State<ReportPage>
   }
 
   Widget _buildSupplierPickerSheet() {
-    return StatefulBuilder(
-      builder: (ctx, setSheetState) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.55,
-          decoration: BoxDecoration(
-            color: AppColors.card(context),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
+    return GlassDraggableSheet(
+      initialChildSize: 0.55,
+      minChildSize: 0.4,
+      maxChildSize: 0.9,
+      builder: (_, controller) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return Column(
             children: [
-              _buildSheetHandle(),
+              const GlassSheetHandle(),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                 child: Row(
@@ -1650,31 +1653,46 @@ class _ReportPageState extends State<ReportPage>
               const Divider(height: 1),
               Expanded(
                 child: _isLoadingDropdowns
-                    ? Center(
-                        child: CircularProgressIndicator(color: AppColors.action(context)),
+                    ? ListView(
+                        controller: controller,
+                        children: [
+                          const SizedBox(height: 48),
+                          Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.action(context),
+                            ),
+                          ),
+                        ],
                       )
                     : _suppliers.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.local_shipping_outlined,
-                              size: 40,
-                              color: AppTheme.grey300,
+                    ? ListView(
+                        controller: controller,
+                        children: [
+                          const SizedBox(height: 48),
+                          Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.local_shipping_outlined,
+                                  size: 40,
+                                  color: AppTheme.grey300,
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'No suppliers found',
+                                  style: TextStyle(
+                                    color: AppTheme.grey,
+                                    fontFamily: 'Literata',
+                                  ),
+                                ),
+                              ],
                             ),
-                            SizedBox(height: 8),
-                            Text(
-                              'No suppliers found',
-                              style: TextStyle(
-                                color: AppTheme.grey,
-                                fontFamily: 'Literata',
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       )
                     : ListView.separated(
+                        controller: controller,
                         itemCount: _suppliers.length,
                         separatorBuilder: (_, _) =>
                             Divider(height: 1, color: AppColors.chipFill(context)),
@@ -1734,27 +1752,13 @@ class _ReportPageState extends State<ReportPage>
                       ),
               ),
             ],
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
   // ─── SHARED WIDGETS ───
-
-  Widget _buildSheetHandle() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 12, bottom: 4),
-      child: Container(
-        width: 40,
-        height: 4,
-        decoration: BoxDecoration(
-          color: AppTheme.grey300,
-          borderRadius: BorderRadius.circular(2),
-        ),
-      ),
-    );
-  }
 
   Widget _buildSearchField(
     TextEditingController ctrl,

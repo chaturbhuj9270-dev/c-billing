@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import 'package:flutter/foundation.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/local_store.dart';
@@ -189,6 +190,9 @@ class BillOfflineController extends ChangeNotifier {
       return keys;
     }
   }
+  // Bills with a balance due for any of these customer ids (one SQL query).
+  Future<List<BillEntity>> getOpenBillsByCustomerIds(Set<String> customerIds) =>
+      _db.loadOpenBillsForCustomers(customerIds);
 
   // Get bills by date range
   Future<List<BillEntity>> getBillsByDateRange(
@@ -222,15 +226,34 @@ class BillOfflineController extends ChangeNotifier {
     return bills;
   }
 
-  // Search bills by customer name or contact
+  // Search bills by customer name, contact, local id, server id, or bill number
   Future<List<BillEntity>> searchBills(String query) async {
     if (query.isEmpty) return getAllBills();
 
-    final needle = query.toLowerCase();
+    final needle = query.toLowerCase().trim();
+    final needleDigits = needle.replaceAll(RegExp(r'[^0-9a-z]'), '');
     final bills = (await _db.loadBills()).where((bill) {
       if (bill.syncStatus == BillSyncStatus.deleted) return false;
-      return (bill.customerName?.toLowerCase().contains(needle) ?? false) ||
-          (bill.customerContact?.toLowerCase().contains(needle) ?? false);
+
+      final localId = bill.id.toString();
+      final serverId = (bill.serverId ?? '').toLowerCase();
+      final name = (bill.customerName ?? '').toLowerCase();
+      final contact = (bill.customerContact ?? '').toLowerCase();
+      final dateStr = bill.billDate
+          .toIso8601String()
+          .substring(0, 10)
+          .replaceAll('-', '');
+      final billNumber =
+          'bill-$dateStr-${(bill.serverId ?? localId).toLowerCase()}';
+      final shortId = (bill.serverId ?? localId).toLowerCase();
+
+      return name.contains(needle) ||
+          contact.contains(needle) ||
+          localId == needle ||
+          serverId.contains(needle) ||
+          shortId.contains(needleDigits) ||
+          billNumber.contains(needle) ||
+          'local_$localId' == needle;
     }).toList();
     bills.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return bills;
@@ -465,9 +488,11 @@ class BillOfflineController extends ChangeNotifier {
         if (existing != null) {
           // Only update if not locally modified AND server is newer
           if (existing.syncStatus == BillSyncStatus.synced) {
-            final serverUpdatedAt = DateTime.tryParse(
-              billData['updatedAt']?.toString() ?? '',
-            );
+            // updatedAt may be a Firestore Timestamp or an ISO string.
+            final rawUpdatedAt = billData['updatedAt'];
+            final serverUpdatedAt = rawUpdatedAt is Timestamp
+                ? rawUpdatedAt.toDate()
+                : DateTime.tryParse(rawUpdatedAt?.toString() ?? '');
             if (serverUpdatedAt != null &&
                 serverUpdatedAt.isAfter(existing.updatedAt)) {
               final updated = BillEntity.fromServer(billData);

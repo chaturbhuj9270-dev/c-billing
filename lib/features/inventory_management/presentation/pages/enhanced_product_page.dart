@@ -1,9 +1,10 @@
+import '../../../../core/services/live_refresh_mixin.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../../../core/services/pack_unit_conversion.dart';
@@ -29,6 +30,7 @@ import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/ui/sync_status_icon.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/app_pill_button.dart';
+import 'package:c_billing/common_widgets/master_data_form.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
@@ -49,7 +51,10 @@ class EnhancedProductPage extends StatefulWidget {
 }
 
 class _EnhancedProductPageState extends State<EnhancedProductPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, LiveRefreshMixin<EnhancedProductPage> {
+  @override
+  Set<String> get liveRefreshEntities => const {'products', 'purchaseBatches'};
+
   // Animation
   late AnimationController _animController;
   late Animation<Offset> _offsetAnimation;
@@ -59,8 +64,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
   bool _isLoading = true;
   List<ProductEntity> _products = [];
   String _searchQuery = '';
-  ProductSortField _sortField = ProductSortField.name;
-  bool _sortAscending = true;
+  // Newest products first by default so a newly added product is always on top
+  ProductSortField _sortField = ProductSortField.createdDate;
+  bool _sortAscending = false;
   String? _selectedCategory;
   bool _isNavigatingAway = false;
   int _unsyncedCount = 0;
@@ -73,7 +79,6 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
   // local stream for real-time updates
   StreamSubscription<List<ProductEntity>>? _productStreamSub;
   // Firestore stream for cross-device real-time sync
-  StreamSubscription<QuerySnapshot>? _firestoreStreamSub;
   // Batch stream for grouped view
   StreamSubscription<List<PurchaseBatchEntity>>? _batchStreamSub;
   // Cross-page refresh subscriptions
@@ -84,13 +89,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
   // Services
   final _auth = FirebaseAuth.instance;
-  late final FirebaseFirestore _firestore;
   late AppLocalizations _localizations;
 
   @override
   void initState() {
     super.initState();
-    _firestore = FirebaseFirestore.instance;
     _localizations = AppLocalizations.of(
       LanguageService.instance.currentLanguage,
     );
@@ -115,7 +118,6 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     _setupLocalStream();
     _loadLocalProducts();
     _setupBatchStream();
-    _setupFirestoreStream();
     _setupCrossPageRefresh();
 
     // Start animation after frame
@@ -130,7 +132,6 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     _isNavigatingAway = true;
     _animController.dispose();
     _productStreamSub?.cancel();
-    _firestoreStreamSub?.cancel();
     _batchStreamSub?.cancel();
     _purchaseChangeSubscription?.cancel();
     _productChangeSubscription?.cancel();
@@ -286,42 +287,6 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
   // ━━━ DATA: Firebase Stream for cross-device sync ━━━
 
-  void _setupFirestoreStream() {
-    final currentUser = _auth.currentUser;
-    if (currentUser == null) return;
-
-    _firestoreStreamSub = _firestore
-        .collection('users')
-        .doc(currentUser.uid)
-        .collection('products')
-        .snapshots()
-        .listen(
-          (snapshot) async {
-            if (!mounted || _isNavigatingAway) return;
-
-            debugPrint(
-              '[EnhancedProduct] Firestore stream: ${snapshot.docs.length} docs',
-            );
-
-            final serverProducts = snapshot.docs.map((doc) {
-              final data = doc.data();
-              return <String, dynamic>{...data, 'id': doc.id};
-            }).toList();
-
-            // Import to the local database - the local stream listener auto-updates the UI
-            await ProductOfflineController.instance.importFromServer(
-              serverProducts,
-            );
-
-            // Trigger sync for any local-only changes
-            ProductSyncService.instance.syncNow();
-          },
-          onError: (e) {
-            debugPrint('[EnhancedProduct] Firestore stream error: $e');
-          },
-        );
-  }
-
   // ━━━ CATEGORY HELPERS ━━━
 
   List<String> get _allCategories {
@@ -405,7 +370,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       setState(() => _searchQuery = value);
                     },
                     onSortFieldChanged: (field) {
-                      setState(() => _sortField = field);
+                      setState(() {
+                        _sortField = field;
+                        // Date defaults to newest first, others to A-Z / low-high
+                        _sortAscending = field != ProductSortField.createdDate;
+                      });
                     },
                     onSortDirectionToggle: () {
                       setState(() => _sortAscending = !_sortAscending);
@@ -417,6 +386,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     sortByNameLabel: _localizations.name,
                     sortByStockLabel: _localizations.stock,
                     sortByPriceLabel: _localizations.price,
+                    sortByDateLabel: _localizations.sortByDate,
                   ),
                   const SizedBox(height: 16),
 
@@ -631,6 +601,18 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       }).toList();
     }
 
+    // Newest created date of any product with this name (used for the Date sort)
+    final createdByName = <String, DateTime>{};
+    for (final p in _products) {
+      final key = p.name.toLowerCase();
+      final existing = createdByName[key];
+      if (existing == null || p.createdAt.isAfter(existing)) {
+        createdByName[key] = p.createdAt;
+      }
+    }
+    DateTime newestCreated(String name) =>
+        createdByName[name.toLowerCase()] ?? DateTime(2000);
+
     // Apply sort
     filteredGroups.sort((a, b) {
       int result;
@@ -651,8 +633,14 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             b.productName.toLowerCase(),
           );
           break;
+        case ProductSortField.createdDate:
+          result = newestCreated(a.productName).compareTo(
+            newestCreated(b.productName),
+          );
+          break;
       }
-      return _sortAscending ? result : -result;
+      if (result != 0) return _sortAscending ? result : -result;
+      return a.productName.toLowerCase().compareTo(b.productName.toLowerCase());
     });
 
     if (filteredGroups.isEmpty) {
@@ -1524,6 +1512,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     final cgstController = TextEditingController();
     final sgstController = TextEditingController();
     final hsnController = TextEditingController();
+    final minStockController = TextEditingController();
+    final descriptionController = TextEditingController();
     final sizeController = TextEditingController();
     final colorController = TextEditingController();
     final mrpController = TextEditingController();
@@ -1678,6 +1668,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        FormSectionTitle(_localizations.sectionBasicDetails),
                         _buildTextField(
                           controller: nameController,
                           label: _localizations.productName,
@@ -1725,17 +1716,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           label: _localizations.category,
                           icon: Icons.category_outlined,
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Garment / Medical details',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                            color: AppColors.accent(context),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 20),
+                        const FormSectionTitle('Garment / Medical details'),
                         Row(
                           children: [
                             Expanded(
@@ -1775,7 +1757,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           label: 'Drug schedule (H / H1 / X)',
                           icon: Icons.medication_outlined,
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 20),
+                        FormSectionTitle(_localizations.pricing),
                         _buildProductPackPricingSection(
                           setDialogState: setDialogState,
                           selectedBaseUnit: selectedBaseUnit,
@@ -1819,6 +1802,18 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           showInitialStock: true,
                         ),
                         const SizedBox(height: 12),
+                        _buildTextField(
+                          controller: minStockController,
+                          label: _localizations.minStockLevel,
+                          icon: Icons.notifications_active_outlined,
+                          keyboardType: TextInputType.number,
+                          helperText: _localizations.minStockLevelHint,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        FormSectionTitle(_localizations.sectionTaxDetails),
                         _buildApplyGstToggle(
                           applyGst: applyGst,
                           onChanged: (value) =>
@@ -1854,6 +1849,15 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                             maxLength: 8,
                           ),
                         ],
+                        const SizedBox(height: 20),
+                        FormSectionTitle(_localizations.description),
+                        _buildTextField(
+                          controller: descriptionController,
+                          label:
+                              '${_localizations.description} (${_localizations.optional})',
+                          icon: Icons.notes_rounded,
+                          maxLines: 3,
+                        ),
                         // Custom fields
                         if (customColumns.isNotEmpty) ...[
                           SizedBox(height: 16),
@@ -1900,6 +1904,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       cgstController: cgstController,
                       sgstController: sgstController,
                       hsnController: hsnController,
+                      minStockController: minStockController,
+                      descriptionController: descriptionController,
                       sizeController: sizeController,
                       colorController: colorController,
                       mrpController: mrpController,
@@ -2052,6 +2058,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     required TextEditingController cgstController,
     required TextEditingController sgstController,
     required TextEditingController hsnController,
+    required TextEditingController minStockController,
+    required TextEditingController descriptionController,
     required TextEditingController sizeController,
     required TextEditingController colorController,
     required TextEditingController mrpController,
@@ -2146,6 +2154,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
           ? PackUnitConversion.toBaseQuantity(enteredStock, unitsPerPackVal)
           : enteredStock;
       // purchasePrice / salesPrice are always per base unit (like purchase page).
+      final descriptionVal = descriptionController.text.trim();
+      final minStockVal = int.tryParse(minStockController.text.trim());
       final newProduct = await ProductOfflineController.instance.addProduct(
         name: name,
         companyName: selectedCompany?['companyName'] ?? '',
@@ -2153,6 +2163,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         purchasePrice: purchasePrice,
         salesPrice: salesPrice,
         currentStock: initialStock,
+        description: descriptionVal.isEmpty ? null : descriptionVal,
+        minStockLevel: minStockVal,
         cgstPercent: cgstVal,
         sgstPercent: sgstVal,
         hsnCode: hsnVal.isNotEmpty ? hsnVal : null,
@@ -2209,6 +2221,12 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       text: product.sgstPercent.toString(),
     );
     final hsnController = TextEditingController(text: product.hsnCode ?? '');
+    final minStockController = TextEditingController(
+      text: product.minStockLevel?.toString() ?? '',
+    );
+    final descriptionController = TextEditingController(
+      text: product.description ?? '',
+    );
     final sizeController = TextEditingController(text: product.size ?? '');
     final colorController = TextEditingController(text: product.color ?? '');
     final mrpController = TextEditingController(
@@ -2362,6 +2380,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        FormSectionTitle(_localizations.sectionBasicDetails),
                         _buildTextField(
                           controller: nameController,
                           label: _localizations.productName,
@@ -2379,17 +2398,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           label: _localizations.category,
                           icon: Icons.category_outlined,
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Garment / Medical details',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                            color: AppColors.accent(context),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 20),
+                        const FormSectionTitle('Garment / Medical details'),
                         Row(
                           children: [
                             Expanded(
@@ -2429,7 +2439,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           label: 'Drug schedule (H / H1 / X)',
                           icon: Icons.medication_outlined,
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 20),
+                        FormSectionTitle(_localizations.pricing),
                         _buildProductPackPricingSection(
                           setDialogState: setDialogState,
                           selectedBaseUnit: selectedBaseUnit,
@@ -2472,6 +2483,18 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           showInitialStock: false,
                         ),
                         const SizedBox(height: 12),
+                        _buildTextField(
+                          controller: minStockController,
+                          label: _localizations.minStockLevel,
+                          icon: Icons.notifications_active_outlined,
+                          keyboardType: TextInputType.number,
+                          helperText: _localizations.minStockLevelHint,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        FormSectionTitle(_localizations.sectionTaxDetails),
                         _buildApplyGstToggle(
                           applyGst: applyGst,
                           onChanged: (value) =>
@@ -2550,6 +2573,15 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                             ],
                           ),
                         ),
+                        const SizedBox(height: 20),
+                        FormSectionTitle(_localizations.description),
+                        _buildTextField(
+                          controller: descriptionController,
+                          label:
+                              '${_localizations.description} (${_localizations.optional})',
+                          icon: Icons.notes_rounded,
+                          maxLines: 3,
+                        ),
                         // Custom fields
                         if (customColumns.isNotEmpty) ...[
                           SizedBox(height: 16),
@@ -2597,6 +2629,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       cgstController: cgstController,
                       sgstController: sgstController,
                       hsnController: hsnController,
+                      minStockController: minStockController,
+                      descriptionController: descriptionController,
                       sizeController: sizeController,
                       colorController: colorController,
                       mrpController: mrpController,
@@ -2645,6 +2679,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     required TextEditingController cgstController,
     required TextEditingController sgstController,
     required TextEditingController hsnController,
+    required TextEditingController minStockController,
+    required TextEditingController descriptionController,
     required TextEditingController sizeController,
     required TextEditingController colorController,
     required TextEditingController mrpController,
@@ -2731,6 +2767,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         );
         return;
       }
+      final descriptionVal = descriptionController.text.trim();
+      final minStockVal = int.tryParse(minStockController.text.trim());
       await ProductOfflineController.instance.updateProduct(
         id: product.id,
         name: name,
@@ -2756,6 +2794,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             ? packSalesParsed
             : null,
         updateVariantFields: true,
+        description: descriptionVal.isEmpty ? null : descriptionVal,
+        clearDescription: descriptionVal.isEmpty,
+        minStockLevel: minStockVal,
+        clearMinStockLevel: minStockVal == null,
       );
 
       DashboardRefreshService.instance.notifyDataChanged(
@@ -3059,14 +3101,21 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     String? prefix,
     int? maxLength,
     ValueChanged<String>? onChanged,
+    int maxLines = 1,
+    String? helperText,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
       maxLength: maxLength,
       onChanged: onChanged,
+      maxLines: maxLines,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: label,
+        helperText: helperText,
+        helperMaxLines: 2,
         prefixText: prefix,
         prefixIcon: icon != null
             ? Icon(icon, color: AppColors.accent(context), size: 20)

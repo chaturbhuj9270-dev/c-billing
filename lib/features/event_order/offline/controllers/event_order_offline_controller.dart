@@ -204,6 +204,10 @@ class EventOrderOfflineController extends ChangeNotifier {
       return keys;
     }
   }
+  // Event orders with a balance due for any of these customer ids (one query).
+  Future<List<EventOrderEntity>> getOpenEventOrdersByCustomerIds(
+    Set<String> customerIds,
+  ) => _db.loadOpenEventOrdersForCustomers(customerIds);
 
   // Get event orders by status
   Future<List<EventOrderEntity>> getEventOrdersByStatus(

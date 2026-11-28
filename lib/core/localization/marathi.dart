@@ -1,7 +1,7 @@
 class MarathiLocalization {
   // App General
   static const String appName = 'सी-बिलिंग';
-  static const String tagline = 'तुमच्या व्यवसायाची ऊर्जा';
+  static const String tagline = 'तुमच्या व्यवसायाला बळ द्या 💪';
 
   // Dashboard
   static const String dashboard = 'डॅशबोर्ड';
@@ -25,6 +25,7 @@ class MarathiLocalization {
   static const String thisWeek = 'या आठवड्यात';
   static const String thisMonth = 'या महिन्यात';
   static const String thisYear = 'या वर्षी';
+  static const String lastYear = 'मागील वर्ष';
   static const String allTime = 'सर्व काळ';
   static const String customRange = 'कस्टम रेंज';
 
@@ -47,6 +48,10 @@ class MarathiLocalization {
   static const String pendingPayments = 'प्रलंबित देयके';
   static const String lastDues = 'शेवटची थकबाकी';
   static const String lowStockItems = 'कमी स्टॉक वस्तू';
+  static const String bestSellers = 'सर्वाधिक विक्री';
+  static const String awaitingPayment = 'देयकाची वाट';
+  static const String belowReorderLevel = 'पुनर्ऑर्डर पातळीपेक्षा कमी';
+  static const String comingUp = 'येणारे';
 
   // Navigation
   static const String home = 'मुख्यपृष्ठ';
@@ -376,13 +381,23 @@ class MarathiLocalization {
 
   // Subscription Screen
   static const String premiumFinancialSolutions = 'प्रीमियम वित्तीय उपाय';
-  static const String subscriptionExpired = 'सदस्यता समाप्त';
+  static const String subscriptionExpired = 'सदस्यता संपली.';
   static const String premiumPlan = 'प्रीमियम योजना';
-  static const String perYear = 'प्रति वर्ष';
+  static const String perYear = '/ वर्ष';
   static const String hurryUpFirstUsers =
       'घाई करा! ही ऑफर फक्त पहिल्या 100 वापरकर्त्यांसाठी आहे';
-  static const String justPerMonth = 'फक्त ₹333/महिना';
-  static const String whatsIncluded = 'काय समाविष्ट आहे';
+  static const String offerFirst100Users =
+      'मर्यादित कालावधी ऑफर — फक्त पहिल्या 100 वापरकर्त्यांसाठी.';
+  static const String justPerMonth = 'फक्त ₹333 प्रति महिना.';
+  static String justPerMonthAmount(String amount) =>
+      'फक्त ₹$amount प्रति महिना.';
+  static const String whatsIncluded = 'काय समाविष्ट आहे.';
+  static const String everythingIncludedSubtitle =
+      'आज तुम्ही वापरता ते सर्व, कोणत्याही मर्यादेशिवाय.';
+  static const String renewToKeepBilling =
+      'तुमचे बिझनेस बिलिंग सुरू ठेवण्यासाठी नूतनीकरण करा.';
+  static const String subscriptionEndedRenewBody =
+      'तुमची सदस्यता संपली आहे. बिल तयार करणे, स्टॉक ट्रॅक करणे आणि अहवाल चालवणे सुरू ठेवण्यासाठी प्रीमियम योजना नूतनीकरण करा.';
   static const String unlimitedBillGeneration = 'अमर्यादित बिल निर्मिती';
   static const String completeInventoryManagement =
       'संपूर्ण इन्व्हेंटरी व्यवस्थापन';
@@ -393,7 +408,8 @@ class MarathiLocalization {
   static const String cloudBackupPrioritySupport =
       'क्लाउड बॅकअप आणि प्राधान्य समर्थन';
   static const String subscribeNow = 'आता सदस्यता घ्या';
-  static const String needHelpContactUs = 'मदत हवी आहे? आमच्याशी संपर्क साधा';
+  static const String renewNow = 'आता नूतनीकरण करा';
+  static const String needHelpContactUs = 'मदत हवी आहे? सपोर्टशी संपर्क साधा.';
   static const String poweredBy = 'द्वारे समर्थित ';
   static const String chaturbhujSolutions = 'चतुर्भुज सोल्यूशन्स';
 
@@ -412,9 +428,17 @@ class MarathiLocalization {
   static const String callSupport = 'सपोर्ट कॉल करा';
   static const String securePayment = 'सुरक्षित पेमेंट';
   static const String couldNotOpenWhatsApp = 'व्हॉट्सअॅप उघडता आला नाही';
+  static const String payViaCashfree = 'कॅशफ्रीने सुरक्षित पेमेंट करा';
+  static const String cashfreePaymentModesHint =
+      'UPI, कार्ड, नेट बँकिंग आणि वॉलेट समर्थित';
+  static const String cashfreePaymentInstructions =
+      'कॅशफ्री चेकआउट उघडण्यासाठी सुरक्षित पेमेंट वर टॅप करा. यशस्वी पेमेंटनंतर तुमची सदस्यता आपोआप सक्रिय होईल.';
+  static const String securePaymentPoweredByCashfree =
+      'कॅशफ्रीद्वारे सुरक्षित पेमेंट';
   static const String paySecurely = 'सुरक्षित पेमेंट करा';
   static const String processingPayment = 'प्रक्रिया सुरू...';
-  static const String preparingSecurePayment = 'सुरक्षित पेमेंट तयार होत आहे...';
+  static const String preparingSecurePayment =
+      'सुरक्षित पेमेंट तयार होत आहे...';
   static const String activatingSubscription = 'सदस्यता सक्रिय होत आहे...';
   static const String subscriptionActivatedSuccess =
       'सदस्यता सक्रिय! C-Billing मध्ये स्वागत आहे.';
@@ -632,7 +656,8 @@ class MarathiLocalization {
       'दुकानाचा QR स्कॅन करा आणि वर दिसलेली रक्कम भरा';
   static const String addUpiIdInShopDetails =
       'रक्कम असलेला QR तयार करण्यासाठी दुकान तपशील (बँक तपशील) मध्ये तुमचा UPI ID जोडा';
-  static const String noAmountToCollect = 'या बिलासाठी वसूल करण्याची रक्कम नाही';
+  static const String noAmountToCollect =
+      'या बिलासाठी वसूल करण्याची रक्कम नाही';
   static const String failedToGenerateQr = 'QR तयार करण्यात अयशस्वी';
   static const String upiIdCopied = 'UPI ID कॉपी झाली';
   static const String paymentReceived = 'पेमेंट प्राप्त';
@@ -704,7 +729,7 @@ class MarathiLocalization {
   // ═══════════════════════════════════════════════════ Auth Pages (Login/Signup/Change Password) ═══════════════════════════════════════════════════
   static const String welcomeBackLogin = 'परत स्वागत आहे';
   static const String signInToAccount = 'तुमच्या खात्यात साइन इन करा';
-  static const String backboneOfBusiness = 'तुमच्या व्यवसायाची ऊर्जा';
+  static const String backboneOfBusiness = 'तुमच्या व्यवसायाला बळ द्या';
   static const String enterEmailPhone = 'ईमेल/फोन आणि पासवर्ड प्रविष्ट करा';
   static const String password = 'पासवर्ड';
   static const String forgotPasswordQuestion = 'पासवर्ड विसरलात?';
@@ -1167,4 +1192,49 @@ class MarathiLocalization {
   static const String subtotalColonLabel = 'उप-एकूण:';
   static const String finalAmountColonLabel = 'अंतिम रक्कम:';
   static const String discountPercentLabel = 'सूट';
+
+  // ── Customer pending report / WhatsApp ──
+  static const String customerPendingReport = 'थकबाकी अहवाल';
+  static const String customerReportFailed = 'अहवाल तयार करता आला नाही';
+  static const String whatsAppNotInstalled = 'WhatsApp इन्स्टॉल केलेले नाही';
+  static const String customerReportAttachHint =
+      'अहवाल सेव्ह झाला. तो WhatsApp चॅटमध्ये जोडा.';
+  static String customerPendingWhatsAppMessage(
+    String name,
+    String shop,
+    String amount,
+    String date,
+  ) =>
+      'प्रिय ग्राहक, $shop कडे असलेली आपली ₹$amount ची थकबाकी अजूनही बाकी आहे. '
+      'कृपया ती लवकरात लवकर भरावी.\n\n'
+      'आधीच भरली असल्यास कृपया हा संदेश दुर्लक्षित करावा.\n\n'
+      'आपल्या सहकार्याबद्दल आणि व्यवसायाबद्दल धन्यवाद!';
+  static const String customerReportSendPdfTitle = 'PDF अहवाल पाठवा';
+  static const String customerReportSendPdfBody =
+      'आधी WhatsApp मध्ये संदेश पाठवा, मग परत येऊन "PDF पाठवा" दाबा म्हणजे अहवाल त्याच चॅटमध्ये जाईल.';
+  static const String customerReportSendPdf = 'PDF पाठवा';
+  static const String customerReportSendMessageTitle = 'आता संदेश पाठवा';
+  static const String customerReportSendMessageBody =
+      'PDF चॅटमध्ये गेला आहे. त्याच चॅटमध्ये स्मरणसंदेश जोडण्यासाठी "संदेश पाठवा" दाबा.';
+  static const String customerReportSendMessage = 'संदेश पाठवा';
+  static const String customerBirthDate = 'जन्मतारीख';
+  static const String customerInvalidEmail = 'वैध ईमेल पत्ता प्रविष्ट करा';
+  static const String customerBasicDetails = 'मूलभूत माहिती';
+  static const String customerContactDetails = 'संपर्क माहिती';
+  static const String customerBirthdayToday = 'आज वाढदिवस आहे';
+  static const String contactPerson = 'संपर्क व्यक्ती';
+  static const String invalidEmailAddress = 'वैध ईमेल पत्ता प्रविष्ट करा';
+  static const String invalidGstNumber = 'वैध 15 अक्षरी जीएसटी क्रमांक प्रविष्ट करा';
+  static const String sectionBasicDetails = 'मूलभूत माहिती';
+  static const String sectionContactDetails = 'संपर्क माहिती';
+  static const String sectionBusinessDetails = 'व्यवसाय माहिती';
+  static const String sectionStockAndUnit = 'स्टॉक आणि एकक';
+  static const String sectionTaxDetails = 'कर (जीएसटी)';
+  static const String minStockLevelHint = 'स्टॉक या पातळीवर आल्यावर कमी-स्टॉक सूचना';
+  static const String customerReportOpeningMessage =
+      'त्याच चॅटमध्ये संदेश उघडत आहे...';
+  static const String customerReportOpeningPdf =
+      'त्याच चॅटमध्ये PDF उघडत आहे...';
+  static const String customerReportSendPdfHint =
+      'संदेश पाठवला? त्याच चॅटमध्ये PDF अहवाल पाठवण्यासाठी WhatsApp आयकॉन पुन्हा दाबा.';
 }

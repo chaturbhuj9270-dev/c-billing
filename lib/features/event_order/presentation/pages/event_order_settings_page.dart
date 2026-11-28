@@ -5,7 +5,9 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/language_service.dart';
 import '../../domain/entities/event_order.dart';
 import 'event_order_custom_columns_page.dart';
+import '../../data/services/event_order_format_settings.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
@@ -32,6 +34,8 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
 
   bool _showEventMode = true;
   bool _isLoading = true;
+  // Invoice / print format: 'pos' (thermal receipt) or 'normal' (A4 invoice)
+  String _invoiceFormat = EventOrderFormatSettings.defaultFormat;
 
   @override
   void initState() {
@@ -43,8 +47,10 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedMode = prefs.getBool(_prefsKey);
+      final savedFormat = await EventOrderFormatSettings.getFormatType();
 
       setState(() {
+        _invoiceFormat = savedFormat;
         // If we have a saved preference, use it Otherwise, infer from current type
         if (savedMode != null) {
           _showEventMode = savedMode;
@@ -67,6 +73,24 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
       await prefs.setBool(_prefsKey, value);
     } catch (e) {
       debugPrint('[EventOrderSettings] Error saving settings: $e');
+    }
+  }
+
+  Future<void> _onFormatChanged(String value) async {
+    if (value == _invoiceFormat) return;
+    setState(() => _invoiceFormat = value);
+    try {
+      await EventOrderFormatSettings.setFormatType(value);
+      if (mounted) {
+        GlassyToast.show(
+          context,
+          AppLocalizations.of(
+            LanguageService.instance.currentLanguage,
+          ).settingsSaved,
+        );
+      }
+    } catch (e) {
+      debugPrint('[EventOrderSettings] Error saving invoice format: $e');
     }
   }
 
@@ -300,6 +324,9 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                     ),
                   ),
                   const SizedBox(height: 24),
+                  // Invoice format (POS printer / normal bill)
+                  _buildInvoiceFormatSection(),
+                  const SizedBox(height: 24),
                   // Custom Columns Section
                   Padding(
                     padding: const EdgeInsets.only(left: 4, bottom: 12),
@@ -395,6 +422,118 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInvoiceFormatSection() {
+    final l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 12),
+          child: Text(
+            l10n.billType,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.grey600,
+            ),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.card(context),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.black.withValues(alpha: 0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildFormatOption(
+                  title: l10n.posPrinter,
+                  subtitle: l10n.thermalReceipt,
+                  icon: Icons.print_rounded,
+                  value: 'pos',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildFormatOption(
+                  title: l10n.normalBill,
+                  subtitle: l10n.pdfFormat,
+                  icon: Icons.picture_as_pdf_rounded,
+                  value: 'normal',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFormatOption({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required String value,
+  }) {
+    final isSelected = _invoiceFormat == value;
+    return GestureDetector(
+      onTap: () => _onFormatChanged(value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? _primaryColor.withValues(alpha: 0.08)
+              : AppColors.scaffold(context),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? _primaryColor : AppTheme.grey300,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? _primaryColor : AppTheme.grey,
+              size: 28,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                color: isSelected ? _primaryColor : AppTheme.grey800,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 11,
+                color: AppTheme.grey600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

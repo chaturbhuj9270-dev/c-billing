@@ -23,7 +23,6 @@ dependencies:
   firebase_auth: ^5.1.4
   cloud_firestore: ^5.2.1
   firebase_storage: ^12.1.0
-  firebase_crashlytics: ^4.3.5
   shared_preferences: ^2.2.2
   image_picker: ^0.8.8
   intl: ^0.19.0
@@ -58,9 +57,14 @@ dependencies:
   mobile_scanner: ^7.1.3
   # Signature Pad
   signature: ^5.4.1
+  # Cashfree for Web / iOS subscriptions (Android uses Play Billing only).
+  flutter_cashfree_pg_sdk: 2.4.0+52
   cloud_functions: ^5.6.2
   in_app_purchase: ^3.3.1
   in_app_purchase_android: ^0.5.0
+  firebase_crashlytics: ^4.3.10
+  # 4.11.x needs archive.decodeLazy which isn't in archive 4.0.9 (pulled by pdf).
+  image: 4.8.0
 
 dev_dependencies:
   flutter_test:

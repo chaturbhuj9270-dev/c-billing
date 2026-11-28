@@ -6,12 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:c_billing/core/services/customer_transaction_service.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/features/billing/data/repositories/firebase_bill_repository.dart';
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_item.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_extra_charge.dart';
+import 'package:c_billing/features/billing/domain/entities/bill_service_charge.dart';
 import 'package:c_billing/features/inventory_management/domain/entities/product.dart';
 import 'package:c_billing/features/billing/data/datasources/bill_cache_datasource.dart';
 import 'package:c_billing/core/printing/printing.dart';
@@ -19,7 +19,6 @@ import 'package:c_billing/core/gst/gst_utils.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
 import 'package:c_billing/features/shop/domain/entities/shop.dart';
 import 'package:c_billing/features/customer/data/repositories/customer_repository.dart';
-import 'package:c_billing/features/customer/data/repositories/customer_transaction_repository.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/features/billing/presentation/pages/bill_settings_page.dart';
@@ -27,6 +26,8 @@ import 'package:c_billing/features/billing/presentation/pages/bill_report_settin
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
 import 'package:c_billing/features/billing/data/services/bill_sync_service.dart';
+import 'package:c_billing/features/customer/data/services/customer_sync_service.dart';
+import 'package:c_billing/features/customer/data/services/customer_transaction_sync_service.dart';
 import 'package:c_billing/features/product/offline/controllers/product_offline_controller.dart';
 import 'package:c_billing/features/product/offline/entities/product_entity.dart';
 import 'package:c_billing/features/product/data/services/product_sync_service.dart';
@@ -63,7 +64,6 @@ import 'package:c_billing/features/billing/presentation/widgets/billing_add_item
 import 'package:c_billing/features/billing/presentation/widgets/billing_line_item_widgets.dart';
 import 'package:c_billing/features/billing/presentation/widgets/bill_items_desktop_table.dart';
 import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
-import 'package:c_billing/features/customer/offline/entities/customer_transaction_entity.dart';
 import 'package:c_billing/features/customer/domain/entities/customer_transaction.dart';
 import 'package:c_billing/features/billing/offline/held_bill_store.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
@@ -83,7 +83,6 @@ class BillingPage extends StatefulWidget {
 }
 
 class _BillingPageState extends State<BillingPage> {
-  late CustomerTransactionService _customerTransactionService;
   late FirebaseFirestore _firestore;
   late ShopRepository _shopRepository;
   late FirebaseCustomerRepository _customerRepository;
@@ -108,6 +107,8 @@ class _BillingPageState extends State<BillingPage> {
   final _receivedAmountController = TextEditingController();
 
   final List<BillItem> _billItems = [];
+  /// Other service charges (description + amount) — not inventory items.
+  final List<BillServiceCharge> _serviceCharges = [];
   List<Product> _products = [];
   List<Product> _allProducts =
       []; // All products including zero-stock (for code lookup)
@@ -126,6 +127,8 @@ class _BillingPageState extends State<BillingPage> {
 
   // Payment state
   double _receivedAmount = 0.0;
+  // True while the typed received amount was above the bill total (it is capped)
+  bool _receivedExceedsTotal = false;
   bool _isFullPayment = true;
   PaymentMode _billPaymentMode = PaymentMode.cash;
 
@@ -285,16 +288,8 @@ class _BillingPageState extends State<BillingPage> {
     // Listen for language changes
     LanguageService.instance.addListener(_onLanguageChanged);
 
-    // Initialize customer repository
+    // Initialize customer repository (used for contact lookup)
     _customerRepository = FirebaseCustomerRepository(firestore: _firestore);
-    final customerTransactionRepository = FirebaseCustomerTransactionRepository(
-      firestore: _firestore,
-    );
-    _customerTransactionService = CustomerTransactionService(
-      firestore: _firestore,
-      customerRepository: _customerRepository,
-      transactionRepository: customerTransactionRepository,
-    );
 
     // Listen for customer phone number changes
     _customerContactController.addListener(_onPhoneNumberChanged);
@@ -1475,6 +1470,9 @@ class _BillingPageState extends State<BillingPage> {
   double get _totalQuantity =>
       _billItems.fold(0.0, (total, item) => total + item.quantity);
 
+  double get _serviceChargesTotal =>
+      _serviceCharges.fold(0.0, (total, c) => total + c.amount);
+
   double get _discountAmount {
     if (_isPercentageDiscount) {
       return (_totalAmount * _discountValue / 100);
@@ -1504,6 +1502,8 @@ class _BillingPageState extends State<BillingPage> {
     }
     // Extra charges (labour / service) always add on top
     amount += _extraChargesTotal;
+    // Flat other service charges (not taxed via GST settings).
+    amount += _serviceChargesTotal;
     // Round to nearest rupee (standard billing; ceil was overcharging)
     return amount.roundToDouble();
   }
@@ -1625,7 +1625,11 @@ class _BillingPageState extends State<BillingPage> {
 
     try {
       // Credit / partial bills must hit a real customer ledger row.
-      final actualPaidAmount = _isFullPayment ? _finalAmount : _receivedAmount;
+      // Never record more received than the bill total (the total can change
+      // after the amount was typed, e.g. items removed or discount added).
+      final actualPaidAmount = _isFullPayment
+          ? _finalAmount
+          : _receivedAmount.clamp(0.0, _finalAmount).toDouble();
       final calculatedPendingAmount = _finalAmount - actualPaidAmount;
       if (calculatedPendingAmount > 0.009 && _selectedCustomer == null) {
         final linked = await _ensureCustomerForCreditBill();
@@ -1716,6 +1720,7 @@ class _BillingPageState extends State<BillingPage> {
                 (_taxBreakdown != null && _gstMode != GstMode.noGst),
             extraCharges: _validExtraCharges,
             paymentMode: _billPaymentMode.value,
+            serviceCharges: List<BillServiceCharge>.from(_serviceCharges),
           );
 
       if (!integrationResult.success) {
@@ -1745,21 +1750,23 @@ class _BillingPageState extends State<BillingPage> {
           final chargeSummary = _validExtraCharges.isEmpty
               ? ''
               : '; Extra: ${_validExtraCharges.map((c) => '${c.label} ₹${c.amount.toStringAsFixed(0)}').join(', ')}';
-          final billTx = await txCtrl.addBillTransaction(
+          final serviceSummary = _serviceCharges.isEmpty
+              ? ''
+              : ' (incl. ${_serviceCharges.length} service charge${_serviceCharges.length == 1 ? '' : 's'})';
+          await txCtrl.addBillTransaction(
             customerId: customerId,
             customerName: customerName,
             amount: _finalAmount,
             billId: billId,
-            description: 'Bill #$billId$chargeSummary',
+            description: 'Bill #$billId$serviceSummary$chargeSummary',
           );
           debugPrint(
             '[Billing] Bill transaction recorded offline: $_finalAmount',
           );
 
           // 3b. Record payment received during billing (if any) - Offline
-          CustomerTransactionEntity? paymentTx;
           if (actualPaidAmount > 0) {
-            paymentTx = await txCtrl.addPaymentTransaction(
+            await txCtrl.addPaymentTransaction(
               customerId: customerId,
               customerName: customerName,
               amount: actualPaidAmount,
@@ -1773,62 +1780,12 @@ class _BillingPageState extends State<BillingPage> {
             );
           }
 
-          // 3c. Sync to Firebase — stamp local rows with server IDs to avoid duplicate sync creates.
-          final firebaseCustomerId =
-              (_selectedCustomer!['serverId'] as String?) ??
-              (customerId.startsWith('local_') ? null : customerId);
-          if (firebaseCustomerId != null && firebaseCustomerId.isNotEmpty) {
-            final billRecordResult = await _customerTransactionService
-                .recordBillGenerated(
-                  customerId: firebaseCustomerId,
-                  billId: billId,
-                  billNumber: billId,
-                  billAmount: _finalAmount,
-                );
-
-            if (billRecordResult.success &&
-                billRecordResult.transactionId != null) {
-              await txCtrl.markSyncedWithServerId(
-                billTx.id,
-                billRecordResult.transactionId!,
-              );
-              debugPrint(
-                '[Billing] Firebase: Bill recorded with amount: $_finalAmount',
-              );
-
-              if (actualPaidAmount > 0 && paymentTx != null) {
-                final paymentResult = await _customerTransactionService
-                    .receivePayment(
-                      customerId: firebaseCustomerId,
-                      amount: actualPaidAmount,
-                      paymentMode: _billPaymentMode,
-                      billId: billId,
-                      billNumber: billId,
-                      notes:
-                          'Payment during billing - ${_isFullPayment ? _localizations.full : _localizations.partial} (${_billPaymentMode.displayName})',
-                    );
-
-                if (paymentResult.success &&
-                    paymentResult.transactionId != null) {
-                  await txCtrl.markSyncedWithServerId(
-                    paymentTx.id,
-                    paymentResult.transactionId!,
-                  );
-                  debugPrint(
-                    '[Billing] Firebase: Payment recorded: $actualPaidAmount',
-                  );
-                } else {
-                  debugPrint(
-                    '[Billing] Firebase: Payment failed: ${paymentResult.errorMessage}',
-                  );
-                }
-              }
-            } else {
-              debugPrint(
-                '[Billing] Firebase: Bill record failed: ${billRecordResult.errorMessage}',
-              );
-            }
-          }
+          // The ledger entries above are the single source of truth. They (and
+          // the customer's updated balance) are pushed to Firestore by the sync
+          // services. Writing them to Firestore here as well duplicated every
+          // bill/payment and double-counted the customer's pending amount.
+          unawaited(CustomerTransactionSyncService.instance.syncNow());
+          unawaited(CustomerSyncService.instance.syncNow());
         } catch (e) {
           debugPrint('[Billing] Transaction entry error (non-blocking): $e');
         }
@@ -1917,6 +1874,7 @@ class _BillingPageState extends State<BillingPage> {
     _disposeExtraChargeDrafts();
     setState(() {
       _billItems.clear();
+      _serviceCharges.clear();
       _customerNameController.clear();
       _customerContactController.clear();
       _notesController.clear();
@@ -1928,6 +1886,7 @@ class _BillingPageState extends State<BillingPage> {
       _selectedCustomer = null;
       _autoFoundCustomerName = null;
       _receivedAmount = 0.0;
+      _receivedExceedsTotal = false;
       _isFullPayment = true;
       _billPaymentMode = PaymentMode.cash;
       _showAddCustomerPrompt = false;
@@ -2405,16 +2364,25 @@ class _BillingPageState extends State<BillingPage> {
       );
 
       debugPrint('[BillingPage] Getting shop details...');
-      final shop = await _shopRepository.getShopDetails().timeout(
+      // Force refresh so shop QR / UPI from Shop Details are never stale.
+      final shop = await _shopRepository
+          .getShopDetails(forceRefresh: true)
+          .timeout(
         const Duration(seconds: 10),
         onTimeout: () {
           debugPrint('[BillingPage] Shop details timeout, using empty shop');
           return Shop.empty;
         },
       );
-      debugPrint('[BillingPage] Shop: ${shop.shopName}');
+      debugPrint(
+        '[BillingPage] Shop: ${shop.shopName}, '
+        'qr=${shop.qrCodeBase64?.isNotEmpty == true}, '
+        'upi=${shop.upiId?.isNotEmpty == true}',
+      );
 
       debugPrint('[BillingPage] Generating PDF file...');
+      final printPageFormat =
+          await _pdfService.resolvePrintPageFormat(printData);
       if (kIsWeb) {
         final bytes = await _pdfService
             .buildPdfBytes(billData: printData, shopDetails: shop)
@@ -2436,6 +2404,12 @@ class _BillingPageState extends State<BillingPage> {
             context: context,
             bill: bill,
             shopRepository: _shopRepository,
+          ),
+          printPageFormat: printPageFormat,
+          rebuildPdfForPrint: (format) => _pdfService.buildPdfBytesForPageFormat(
+            billData: printData,
+            shopDetails: shop,
+            pageFormat: format,
           ),
           details: FilePreviewDetails(
             title: 'Bill preview',
@@ -2495,6 +2469,12 @@ class _BillingPageState extends State<BillingPage> {
           context: context,
           bill: bill,
           shopRepository: _shopRepository,
+        ),
+        printPageFormat: printPageFormat,
+        rebuildPdfForPrint: (format) => _pdfService.buildPdfBytesForPageFormat(
+          billData: printData,
+          shopDetails: shop,
+          pageFormat: format,
         ),
         details: FilePreviewDetails(
           title: 'Bill preview',
@@ -2856,6 +2836,11 @@ class _BillingPageState extends State<BillingPage> {
             for (final charge in _validExtraCharges)
               line(charge.label, '₹${charge.amount.toStringAsFixed(2)}'),
           ],
+          for (final charge in _serviceCharges)
+            line(
+              charge.description,
+              '₹${charge.amount.toStringAsFixed(2)}',
+            ),
           if (roundOff.abs() >= 0.01)
             line('Round off', '₹${roundOff.toStringAsFixed(2)}'),
           Divider(height: 20, color: AppColors.border(context)),
@@ -3029,11 +3014,158 @@ class _BillingPageState extends State<BillingPage> {
       if (_billItems.isNotEmpty) _buildBillItemsSection(),
       if (_billItems.isNotEmpty && _showExtraChargesOnBill)
         _buildExtraChargesSection(compact: false),
+      if (_billItems.isNotEmpty) _buildServiceChargesSection(),
       if (_billItems.isNotEmpty) _buildDiscountSection(),
       if (_billItems.isNotEmpty && _showGstOnBill) _buildGstModeSection(),
       if (_billItems.isNotEmpty) _buildPaymentSection(),
       if (_billItems.isNotEmpty) const SizedBox(height: 16),
     ];
+  }
+
+  Future<void> _openAddServiceChargePage() async {
+    final result = await showAppPage<_ServiceChargeDraft>(
+      context,
+      const _AddServiceChargePage(),
+    );
+
+    if (result == null || !mounted) return;
+    if (result.description.isEmpty || result.amount <= 0) return;
+
+    setState(() {
+      _serviceCharges.add(
+        BillServiceCharge(
+          id: 'svc_${DateTime.now().millisecondsSinceEpoch}',
+          description: result.description,
+          amount: result.amount,
+        ),
+      );
+      if (_isFullPayment) {
+        _receivedAmount = _finalAmount;
+        _receivedAmountController.text = _finalAmount.toStringAsFixed(2);
+      }
+    });
+  }
+
+  Widget _buildServiceChargesSection() {
+    final dark = AppColors.isDark(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: dark
+              ? AppTheme.darkCard.withValues(alpha: 0.9)
+              : AppTheme.white.withValues(alpha: 0.92),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border(context)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.handyman_outlined,
+                  size: 18,
+                  color: AppColors.action(context),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Other Service Charges',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primaryText(context),
+                    ),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: _openAddServiceChargePage,
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Add'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.action(context),
+                  ),
+                ),
+              ],
+            ),
+            if (_serviceCharges.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4, bottom: 2),
+                child: Text(
+                  'Optional — labour, delivery, installation, etc.',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 12,
+                    color: AppColors.secondaryText(context),
+                  ),
+                ),
+              )
+            else ...[
+              const SizedBox(height: 8),
+              for (var i = 0; i < _serviceCharges.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _serviceCharges[i].description,
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primaryText(context),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '₹${_serviceCharges[i].amount.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.accent(context),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Remove',
+                        onPressed: () {
+                          setState(() {
+                            _serviceCharges.removeAt(i);
+                            if (_isFullPayment) {
+                              _receivedAmount = _finalAmount;
+                              _receivedAmountController.text =
+                                  _finalAmount.toStringAsFixed(2);
+                            }
+                          });
+                        },
+                        icon: const Icon(Icons.close, size: 18),
+                        color: AppTheme.red,
+                      ),
+                    ],
+                  ),
+                ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  'Services total  ₹${_serviceChargesTotal.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.secondaryText(context),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildBillComposer() {
@@ -6010,9 +6142,10 @@ class _BillingPageState extends State<BillingPage> {
                     _buildQuickDiscountChip('20%', 20, true),
                   ],
                 ),
-                // Nested summary (mobile layout only - desktop already has Bill summary)
-                if (showNestedSummary &&
-                    (_discountAmount > 0 || _taxBreakdown != null)) ...[
+                // Summary
+                if (_discountAmount > 0 ||
+                    _taxBreakdown != null ||
+                    _serviceCharges.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   _buildBillSummaryCard(),
                 ],
@@ -6046,6 +6179,16 @@ class _BillingPageState extends State<BillingPage> {
               '-₹${_discountAmount.toStringAsFixed(2)}',
               valueColor: AppColors.action(context),
             ),
+          ],
+          if (_serviceCharges.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            for (final charge in _serviceCharges) ...[
+              _buildSummaryRow(
+                charge.description,
+                '₹${charge.amount.toStringAsFixed(2)}',
+              ),
+              const SizedBox(height: 6),
+            ],
           ],
           // GST breakdown
           if (_taxBreakdown != null) ...[
@@ -6607,6 +6750,8 @@ class _BillingPageState extends State<BillingPage> {
                             setState(() {
                               _isFullPayment = false;
                               _receivedAmount = 0.0;
+                              _receivedExceedsTotal = false;
+      _receivedExceedsTotal = false;
                               _receivedAmountController.clear();
                             });
                             // Prompt user to select customer if not already selected
@@ -6706,6 +6851,9 @@ class _BillingPageState extends State<BillingPage> {
                                     fontFamily: 'Literata',
                                     color: AppTheme.grey400,
                                   ),
+                                  errorText: _receivedExceedsTotal
+                                      ? 'Cannot exceed ₹${_finalAmount.toStringAsFixed(0)}'
+                                      : null,
                                   border: InputBorder.none,
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 10,
@@ -6714,7 +6862,23 @@ class _BillingPageState extends State<BillingPage> {
                                 ),
                                 onChanged: (value) {
                                   final parsed = double.tryParse(value) ?? 0.0;
+                                  final exceeds = parsed > _finalAmount;
+                                  if (exceeds) {
+                                    // Received can never be more than the bill
+                                    // total: reset the field to the total.
+                                    final capped = _finalAmount.toStringAsFixed(
+                                      2,
+                                    );
+                                    _receivedAmountController.value =
+                                        TextEditingValue(
+                                          text: capped,
+                                          selection: TextSelection.collapsed(
+                                            offset: capped.length,
+                                          ),
+                                        );
+                                  }
                                   setState(() {
+                                    _receivedExceedsTotal = exceeds;
                                     // Cap received amount at final amount
                                     _receivedAmount = parsed.clamp(
                                       0.0,
@@ -6975,6 +7139,7 @@ class _BillingPageState extends State<BillingPage> {
       onTap: () {
         setState(() {
           _receivedAmount = amount;
+          _receivedExceedsTotal = false;
           _receivedAmountController.text = amount.toStringAsFixed(2);
           if (amount >= _finalAmount) {
             _isFullPayment = true;
@@ -8382,3 +8547,141 @@ class _ExtraChargeDraft {
   }
 }
 
+class _ServiceChargeDraft {
+  final String description;
+  final double amount;
+
+  const _ServiceChargeDraft({
+    required this.description,
+    required this.amount,
+  });
+}
+
+class _AddServiceChargePage extends StatefulWidget {
+  const _AddServiceChargePage();
+
+  @override
+  State<_AddServiceChargePage> createState() => _AddServiceChargePageState();
+}
+
+class _AddServiceChargePageState extends State<_AddServiceChargePage> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _descController;
+  late final TextEditingController _amountController;
+
+  @override
+  void initState() {
+    super.initState();
+    _descController = TextEditingController();
+    _amountController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _descController.dispose();
+    _amountController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_formKey.currentState?.validate() != true) return;
+    final description = _descController.text.trim();
+    final amount = double.tryParse(_amountController.text.trim()) ?? 0;
+    Navigator.of(context).pop(
+      _ServiceChargeDraft(description: description, amount: amount),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.scaffold(context),
+      body: Column(
+        children: [
+          AppTopBar(
+            title: 'Other Service Charges',
+            subtitle: 'Add to bill & ledger',
+            onBack: () => Navigator.of(context).pop(),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Add a service description and its charge. It will appear on the bill and customer ledger.',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 14,
+                        height: 1.4,
+                        color: AppColors.secondaryText(context),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: _descController,
+                      textCapitalization: TextCapitalization.sentences,
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        labelText: 'Service Description',
+                        hintText: 'e.g. Labour, Delivery, Installation',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) {
+                          return 'Enter service description';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _amountController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
+                      ],
+                      decoration: InputDecoration(
+                        labelText: 'Charges (₹)',
+                        prefixText: '₹ ',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      validator: (v) {
+                        final amount = double.tryParse(v?.trim() ?? '');
+                        if (amount == null || amount <= 0) {
+                          return 'Enter a valid amount';
+                        }
+                        return null;
+                      },
+                      onFieldSubmitted: (_) => _submit(),
+                    ),
+                    const SizedBox(height: 28),
+                    FilledButton(
+                      onPressed: _submit,
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Add Charge'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

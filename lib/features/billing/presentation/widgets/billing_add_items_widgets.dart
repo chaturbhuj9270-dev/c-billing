@@ -932,135 +932,137 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final side = DesktopCanvas.isDesktopPlatform;
+    // GlassDraggableSheet keeps a dimmed strip of the billing page visible
+    // above the drawer (instead of an opaque full-screen cover).
     return GlassDraggableSheet(
-      initialChildSize: 0.68,
-      maxChildSize: 0.92,
+      initialChildSize: 0.7,
       minChildSize: 0.42,
+      maxChildSize: 0.9,
       builder: (_, controller) => Column(
-          children: [
-            if (!side) const GlassSheetHandle() else const SizedBox(height: 8),
-            // Header
-            Padding(
-              padding: EdgeInsets.fromLTRB(20, side ? 16 : 20, side ? 52 : 20, 12),
-              child: Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.isDark(context)
-                          ? AppTheme.headerDarkStart
-                          : AppColors.action(context).withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Icon(
-                      Icons.add_shopping_cart,
-                      color: AppColors.action(context),
-                      size: 22,
-                    ),
+        children: [
+          if (!side) const GlassSheetHandle() else const SizedBox(height: 4),
+          // Header
+          Padding(
+            padding: EdgeInsets.fromLTRB(20, side ? 8 : 4, side ? 52 : 20, 12),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.isDark(context)
+                        ? AppTheme.headerDarkStart
+                        : AppColors.action(context).withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.localizations.addItems,
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primaryText(context),
-                          ),
-                        ),
-                        Text(
-                          widget.localizations.tapToAddItems,
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontSize: 12,
-                            color: AppColors.mutedText(context),
-                          ),
-                        ),
-                      ],
-                    ),
+                  child: Icon(
+                    Icons.add_shopping_cart,
+                    color: AppColors.action(context),
+                    size: 22,
                   ),
-                  if (_totalItems > 0 && !side)
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.action(context),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '$_totalItems ${widget.localizations.items.toLowerCase()}',
-                        style: const TextStyle(
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.localizations.addItems,
+                        style: TextStyle(
                           fontFamily: 'Literata',
-                          fontSize: 13,
-                          color: AppTheme.white,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryText(context),
                         ),
                       ),
+                      Text(
+                        widget.localizations.tapToAddItems,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 12,
+                          color: AppColors.mutedText(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (_totalItems > 0 && !side)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
                     ),
-                ],
+                    decoration: BoxDecoration(
+                      color: AppColors.action(context),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '$_totalItems ${widget.localizations.items.toLowerCase()}',
+                      style: const TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 13,
+                        color: AppTheme.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          // Search bar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: TextField(
+              controller: _searchController,
+              onChanged: _filterProducts,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 14,
+                color: AppColors.primaryText(context),
+              ),
+              decoration: InputDecoration(
+                hintText: widget.localizations.searchProducts,
+                hintStyle: TextStyle(color: AppColors.mutedText(context)),
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: AppColors.mutedText(context),
+                ),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 20),
+                        onPressed: () {
+                          _searchController.clear();
+                          _filterProducts('');
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: AppColors.scaffold(context),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                disabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
-            // Search bar
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: TextField(
-                controller: _searchController,
-                onChanged: _filterProducts,
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  fontSize: 14,
-                  color: AppColors.primaryText(context),
-                ),
-                decoration: InputDecoration(
-                  hintText: widget.localizations.searchProducts,
-                  hintStyle: TextStyle(color: AppColors.mutedText(context)),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: AppColors.mutedText(context),
-                  ),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(Icons.clear, size: 20),
-                          onPressed: () {
-                            _searchController.clear();
-                            _filterProducts('');
-                          },
-                        )
-                      : null,
-                  filled: true,
-                  fillColor: AppColors.scaffold(context),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  disabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Grouped products list (Step 1)
-            Expanded(
+          ),
+          const SizedBox(height: 12),
+          // Grouped products list (Step 1)
+          Expanded(
               child: _filteredGroups.isEmpty
                   ? Center(
                       child: Column(
@@ -1346,24 +1348,24 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                       },
                     ),
             ),
-            DrawerBottomBar(
-              leading: Text(
-                '$_totalItems ${widget.localizations.items.toLowerCase()}',
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  fontSize: 13,
-                  color: AppColors.mutedText(context),
-                ),
-              ),
-              action: AppPillButton(
-                label: _totalItems > 0
-                    ? 'Add $_totalItems'
-                    : widget.localizations.done,
-                icon: Icons.check_rounded,
-                onPressed: () => Navigator.pop(context),
+          DrawerBottomBar(
+            leading: Text(
+              '$_totalItems ${widget.localizations.items.toLowerCase()}',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 13,
+                color: AppColors.mutedText(context),
               ),
             ),
-          ],
+            action: AppPillButton(
+              label: _totalItems > 0
+                  ? 'Add $_totalItems'
+                  : widget.localizations.done,
+              icon: Icons.check_rounded,
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1994,15 +1996,15 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
         : null;
 
     return GlassDraggableSheet(
-      initialChildSize: 0.58,
-      maxChildSize: 0.88,
+      initialChildSize: 0.62,
       minChildSize: 0.4,
+      maxChildSize: 0.88,
       builder: (_, controller) => Column(
-          children: [
-            const GlassSheetHandle(),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Row(
+        children: [
+          const GlassSheetHandle(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Row(
                 children: [
                   _iconWell(
                     Icon(

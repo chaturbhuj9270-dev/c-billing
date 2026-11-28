@@ -12,6 +12,10 @@ import 'package:c_billing/common_widgets/app_top_bar.dart';
 import 'package:c_billing/common_widgets/web_pdf_view.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
+import 'package:c_billing/core/services/communication_service.dart';
+import 'package:c_billing/core/services/whatsapp_share_service.dart';
+import 'package:c_billing/core/services/language_service.dart';
+import 'package:c_billing/core/localization/app_localizations.dart';
 
 // Optional side-panel fields for the desktop report preview.
 class FilePreviewDetails {
@@ -49,7 +53,17 @@ class FilePreviewPage extends StatefulWidget {
   // Optional customer phone number for direct WhatsApp sharing
   final String? customerPhone;
 
-  // Optional payment QR action (shown after generating a bill).
+  // Optional message sent together with the document. When set (together with
+  // [customerPhone]) the WhatsApp button opens that customer's chat with the
+  // document and this message already attached, so only Send is left to tap.
+  final String? whatsAppMessage;
+
+  /// Optional fixed render resolution for PDF pages. Null keeps the adaptive
+  /// default (up to 300 dpi). Lower values use far less memory, which keeps the
+  /// app alive while the user is away in WhatsApp.
+  final double? renderDpi;
+
+  // Optional payment QR action (UPI amount QR for bill collection).
   final VoidCallback? onViewPaymentQr;
 
   // Desktop and web show this preview in a centered dialog. Phone uses a full page.
@@ -61,6 +75,13 @@ class FilePreviewPage extends StatefulWidget {
   // Right-side summary used by the desktop split preview.
   final FilePreviewDetails? details;
 
+  /// Preferred paper size for the system print dialog (e.g. roll80 for POS).
+  final PdfPageFormat? printPageFormat;
+
+  /// When set, print rebuilds the PDF for the paper size chosen in the dialog
+  /// (so A4 expands the receipt instead of leaving empty side margins).
+  final Future<Uint8List> Function(PdfPageFormat format)? rebuildPdfForPrint;
+
   const FilePreviewPage({
     super.key,
     this.file,
@@ -70,11 +91,18 @@ class FilePreviewPage extends StatefulWidget {
     this.subtitle,
     this.onClose,
     this.customerPhone,
+    this.whatsAppMessage,
+    this.renderDpi,
     this.onViewPaymentQr,
     this.presentedAsDialog = false,
     this.fitPage = false,
     this.details,
-  }) : assert(file != null || bytes != null, 'Provide a file or document bytes');
+    this.printPageFormat,
+    this.rebuildPdfForPrint,
+  }) : assert(
+         file != null || bytes != null,
+         'Provide a file or document bytes',
+       );
 
   // Opens print/report preview. Web, Windows, and Mac always use a centered popup. Phone pushes a full page.
   static Future<void> open(
@@ -86,9 +114,13 @@ class FilePreviewPage extends StatefulWidget {
     String? subtitle,
     VoidCallback? onClose,
     String? customerPhone,
+    String? whatsAppMessage,
+    double? renderDpi,
     VoidCallback? onViewPaymentQr,
     bool centered = true,
     FilePreviewDetails? details,
+    PdfPageFormat? printPageFormat,
+    Future<Uint8List> Function(PdfPageFormat format)? rebuildPdfForPrint,
   }) {
     final desktop = DesktopCanvas.isDesktopPlatform;
     final page = FilePreviewPage(
@@ -99,15 +131,19 @@ class FilePreviewPage extends StatefulWidget {
       subtitle: subtitle,
       onClose: onClose,
       customerPhone: customerPhone,
+      whatsAppMessage: whatsAppMessage,
+      renderDpi: renderDpi,
       onViewPaymentQr: onViewPaymentQr,
       presentedAsDialog: desktop,
       fitPage: centered || desktop,
       details: details,
+      printPageFormat: printPageFormat,
+      rebuildPdfForPrint: rebuildPdfForPrint,
     );
     if (!desktop) {
-      return Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => page),
-      );
+      return Navigator.of(
+        context,
+      ).push(MaterialPageRoute<void>(builder: (_) => page));
     }
 
     return _showCenteredDialog(context, page);
@@ -150,7 +186,8 @@ class FilePreviewPage extends StatefulWidget {
   State<FilePreviewPage> createState() => _FilePreviewPageState();
 }
 
-class _FilePreviewPageState extends State<FilePreviewPage> {
+class _FilePreviewPageState extends State<FilePreviewPage>
+    with WidgetsBindingObserver {
   bool _isLoading = true;
   bool _isSharing = false;
   bool _isSharingWhatsApp = false;
@@ -171,6 +208,9 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   static const double _minZoom = 0.5;
   static const double _maxZoom = 3.0;
   static const double _zoomStep = 0.25;
+  // Always-light paper canvas so bill/PDF ink stays readable in dark theme.
+  static const Color _pdfCanvasColor = AppTheme.lightScaffold;
+  static const Color _pdfPaperColor = AppTheme.white;
   final TransformationController _transformationController =
       TransformationController();
 
@@ -182,6 +222,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _pdfScrollController.addListener(_onPdfScroll);
     // Load after the first frame — PDF raster uses MediaQuery, which is not
     // safe to depend on during initState (causes "Unable to load preview").
@@ -203,6 +244,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pdfScrollController.removeListener(_onPdfScroll);
     _transformationController.dispose();
     _pdfScrollController.dispose();
@@ -383,7 +425,8 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       // Prefer MediaQuery when available; fall back so rendering never crashes.
       final screenWidth =
           MediaQuery.maybeOf(context)?.size.width ?? 1024.0;
-      final dpi = (screenWidth * 1.5).clamp(150.0, 300.0);
+      final dpi =
+          widget.renderDpi ?? (screenWidth * 1.5).clamp(150.0, 300.0);
 
       // Collect all pages first to know total count
       final pages = <Uint8List>[];
@@ -487,8 +530,12 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   }
 
   String _downloadName(String extension) {
-    final base = widget.fileName.trim().isEmpty ? 'report' : widget.fileName.trim();
-    return base.toLowerCase().endsWith('.$extension') ? base : '$base.$extension';
+    final base = widget.fileName.trim().isEmpty
+        ? 'report'
+        : widget.fileName.trim();
+    return base.toLowerCase().endsWith('.$extension')
+        ? base
+        : '$base.$extension';
   }
 
   Future<void> _shareBytes() async {
@@ -497,10 +544,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       throw Exception('Document is not ready');
     }
     if (widget.fileType == FilePreviewType.pdf) {
-      await Printing.sharePdf(
-        bytes: data,
-        filename: _downloadName('pdf'),
-      );
+      await Printing.sharePdf(bytes: data, filename: _downloadName('pdf'));
       return;
     }
     downloadWebBytes(data, _downloadName('csv'), 'text/csv');
@@ -538,6 +582,14 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     final customerPhone = widget.customerPhone;
 
     try {
+      final message = widget.whatsAppMessage;
+      if (message != null &&
+          message.isNotEmpty &&
+          customerPhone != null &&
+          customerPhone.isNotEmpty) {
+        await _sendToCustomerChat(customerPhone, message);
+        return;
+      }
       if (widget.file == null) {
         await _shareBytes();
         return;
@@ -572,6 +624,134 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     }
   }
 
+  // Second step (optional): the typed message. The PDF already carries the
+  // message inside it, so nothing is lost if the user never comes back.
+  static const Duration _messageStepWindow = Duration(minutes: 15);
+  String? _messagePendingPhone;
+  String? _messagePendingText;
+  DateTime? _messagePendingAt;
+  bool _leftForWhatsApp = false;
+
+  bool _hasPendingMessage(String phone) =>
+      _messagePendingPhone == phone &&
+      _messagePendingText != null &&
+      _messagePendingAt != null &&
+      DateTime.now().difference(_messagePendingAt!) < _messageStepWindow;
+
+  // When the user is back from the PDF step, the chat is opened again with the
+  // message typed in (no dialog). Tapping the WhatsApp button does it by hand.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_messagePendingPhone == null) return;
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _leftForWhatsApp = true;
+    } else if (state == AppLifecycleState.resumed && _leftForWhatsApp) {
+      _leftForWhatsApp = false;
+      final phone = _messagePendingPhone!;
+      if (!_hasPendingMessage(phone)) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        // Only when this preview is the screen the user is looking at.
+        if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
+        GlassyToast.show(
+          context,
+          AppLocalizations.of(
+            LanguageService.instance.currentLanguage,
+          ).customerReportOpeningMessage,
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 700));
+        if (!mounted || !_hasPendingMessage(phone)) return;
+        await _sendPendingMessage(phone);
+      });
+      WidgetsBinding.instance.scheduleFrame();
+    }
+  }
+
+  // Sends the report to the customer's own WhatsApp chat.
+  //
+  // WhatsApp ignores the caption of a PDF shared from another app, so the
+  // message is printed inside the PDF as well. On Android:
+  //   1. tap WhatsApp: the customer's chat opens with the PDF attached (share
+  //      intent aimed at their number) - press Send;
+  //   2. when the user returns, the chat opens again with the message typed in
+  //      (also on tapping WhatsApp again) - press Send.
+  // iPhone: share sheet with the PDF and message. Web / desktop: save the PDF
+  // and open the chat with the message.
+  Future<void> _sendToCustomerChat(String phone, String message) async {
+    final file = widget.file;
+    if (file != null && await file.exists()) {
+      if (WhatsAppShareService.supportsDirectChat) {
+        if (_hasPendingMessage(phone)) {
+          await _sendPendingMessage(phone);
+          return;
+        }
+        final opened = await WhatsAppShareService.sendFileToChat(
+          phone: phone,
+          filePath: file.path,
+          message: '',
+        );
+        if (opened) {
+          await WhatsAppShareService.markChatReady(phone);
+          _messagePendingPhone = phone;
+          _messagePendingText = message;
+          _messagePendingAt = DateTime.now();
+          _leftForWhatsApp = false;
+          return;
+        }
+      }
+
+      final mobile =
+          !kIsWeb &&
+          (defaultTargetPlatform == TargetPlatform.android ||
+              defaultTargetPlatform == TargetPlatform.iOS);
+      if (mobile) {
+        await Share.shareXFiles(
+          [XFile(file.path)],
+          subject: widget.fileName,
+          text: message,
+        );
+        return;
+      }
+    }
+
+    // Web / desktop: save the PDF, then open the chat with the message text.
+    final data =
+        _pdfBytes ??
+        widget.bytes ??
+        (file != null && await file.exists() ? await file.readAsBytes() : null);
+    if (data != null) {
+      await Printing.sharePdf(bytes: data, filename: _downloadName('pdf'));
+    }
+    await CommunicationService.instance.openWhatsApp(
+      phone,
+      message: message,
+      context: mounted ? context : null,
+    );
+    if (mounted) {
+      GlassyToast.show(
+        context,
+        AppLocalizations.of(
+          LanguageService.instance.currentLanguage,
+        ).customerReportAttachHint,
+      );
+    }
+  }
+
+  // Opens the customer's chat with the reminder message typed in.
+  Future<void> _sendPendingMessage(String phone) async {
+    final text = _messagePendingText;
+    _messagePendingPhone = null;
+    _messagePendingText = null;
+    _messagePendingAt = null;
+    if (text == null || text.isEmpty) return;
+    await CommunicationService.instance.openWhatsApp(
+      phone,
+      message: text,
+      context: mounted ? context : null,
+    );
+  }
+
   Future<void> _handlePrint() async {
     if (_isPrinting) return;
 
@@ -591,6 +771,18 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       if (!kIsWeb && DesktopCanvas.isDesktopPlatform) {
         final message = await _printPdfOnDesktop(bytes);
         if (mounted) _showSnackBar(message);
+      } else if (widget.fileType == FilePreviewType.pdf) {
+        await Printing.layoutPdf(
+          onLayout: (format) async {
+            final rebuild = widget.rebuildPdfForPrint;
+            if (rebuild != null) {
+              return rebuild(format);
+            }
+            return bytes;
+          },
+          name: widget.fileName,
+          format: widget.printPageFormat ?? PdfPageFormat.standard,
+        );
       } else {
         await Printing.layoutPdf(
           onLayout: (_) async => bytes,
@@ -675,12 +867,17 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               pw.SizedBox(height: 6),
               pw.Text(
                 widget.subtitle ?? DateTime.now().toString().split('.').first,
-                style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
+                style: const pw.TextStyle(
+                  fontSize: 12,
+                  color: PdfColors.grey700,
+                ),
               ),
               pw.SizedBox(height: 16),
               pw.TableHelper.fromTextArray(
                 headers: data.first,
-                data: data.length > 1 ? data.sublist(1) : const <List<String>>[],
+                data: data.length > 1
+                    ? data.sublist(1)
+                    : const <List<String>>[],
                 headerStyle: pw.TextStyle(
                   color: PdfColors.white,
                   fontWeight: pw.FontWeight.bold,
@@ -876,22 +1073,19 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          flex: _isPreviewExpanded ? 1 : 7,
-          child: _buildPreviewPane(),
-        ),
+        Expanded(flex: _isPreviewExpanded ? 1 : 7, child: _buildPreviewPane()),
         if (!_isPreviewExpanded)
-          SizedBox(
-            width: 304,
-            child: _buildDetailsPane(),
-          ),
+          SizedBox(width: 304, child: _buildDetailsPane()),
       ],
     );
   }
 
   Widget _buildPreviewPane() {
+    final canvasColor = widget.fileType == FilePreviewType.pdf
+        ? _pdfCanvasColor
+        : AppColors.chipFill(context);
     return ColoredBox(
-      color: AppColors.chipFill(context),
+      color: canvasColor,
       child: Column(
         children: [
           _buildPreviewToolbar(),
@@ -966,7 +1160,8 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             _isPreviewExpanded
                 ? Icons.fullscreen_exit_rounded
                 : Icons.fullscreen_rounded,
-            onTap: () => setState(() => _isPreviewExpanded = !_isPreviewExpanded),
+            onTap: () =>
+                setState(() => _isPreviewExpanded = !_isPreviewExpanded),
           ),
         ],
       ),
@@ -1397,11 +1592,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                 color: AppTheme.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Icon(
-                Icons.error_outline,
-                color: AppTheme.red,
-                size: 48,
-              ),
+              child: Icon(Icons.error_outline, color: AppTheme.red, size: 48),
             ),
             SizedBox(height: 20),
             Text(
@@ -1548,8 +1739,10 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       },
     );
 
+    // Keep the document canvas light in both themes so dark PDF ink stays readable
+    // (same look as light theme). Chrome around the preview can still follow theme.
     if (!showToolbar) {
-      return ColoredBox(color: AppColors.chipFill(context), child: pages);
+      return ColoredBox(color: _pdfCanvasColor, child: pages);
     }
 
     return Column(
@@ -1564,7 +1757,10 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.accentSoft(context, 0.1),
                   borderRadius: BorderRadius.circular(16),
@@ -1594,7 +1790,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
           ),
         ),
         Expanded(
-          child: ColoredBox(color: AppColors.chipFill(context), child: pages),
+          child: ColoredBox(color: _pdfCanvasColor, child: pages),
         ),
       ],
     );
@@ -1716,6 +1912,37 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   }
 
   Widget _buildPdfPage(Uint8List pageBytes, int pageNumber) {
+    Widget paperImage({required BoxFit fit, double? width, double? height}) {
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          color: _pdfPaperColor,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.black.withValues(alpha: 0.12),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: ColoredBox(
+            color: _pdfPaperColor,
+            child: Image.memory(
+              pageBytes,
+              fit: fit,
+              width: width,
+              height: height,
+              gaplessPlayback: true,
+              errorBuilder: (context, error, stackTrace) =>
+                  _pdfPageError(pageNumber),
+            ),
+          ),
+        ),
+      );
+    }
+
     if (widget.fitPage) {
       final hideFooter = widget.presentedAsDialog;
       return Padding(
@@ -1728,13 +1955,10 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                   return Center(
                     child: Transform.scale(
                       scale: widget.presentedAsDialog ? _zoomLevel : 1.0,
-                      child: Image.memory(
-                        pageBytes,
+                      child: paperImage(
                         fit: BoxFit.contain,
                         width: constraints.maxWidth,
                         height: constraints.maxHeight,
-                        errorBuilder: (context, error, stackTrace) =>
-                            _pdfPageError(pageNumber),
                       ),
                     ),
                   );
@@ -1745,10 +1969,10 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               const SizedBox(height: 8),
               Text(
                 'Page $pageNumber of $_totalPages',
-                style: TextStyle(
+                style: const TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 11,
-                  color: AppColors.mutedText(context),
+                  color: AppTheme.grey700,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -1759,75 +1983,30 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     }
 
     return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Column(
-          children: [
-            // Page image
-            Image.memory(
-              pageBytes,
-              fit: BoxFit.fitWidth,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  height: 200,
-                  color: AppColors.chipFill(context),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.broken_image_outlined,
-                          size: 32,
-                          color: AppTheme.grey400,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Failed to load page $pageNumber',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontSize: 12,
-                            color: AppTheme.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        children: [
+          paperImage(fit: BoxFit.fitWidth),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            decoration: const BoxDecoration(
+              color: AppTheme.grey100,
+              border: Border(top: BorderSide(color: AppTheme.grey200)),
             ),
-            // Page number footer
-            Container(
-              padding: EdgeInsets.symmetric(vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.scaffold(context),
-                border: Border(top: BorderSide(color: AppTheme.grey200)),
-              ),
-              child: Center(
-                child: Text(
-                  'Page $pageNumber of $_totalPages',
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 11,
-                    color: AppTheme.grey,
-                    fontWeight: FontWeight.w500,
-                  ),
+            child: Center(
+              child: Text(
+                'Page $pageNumber of $_totalPages',
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 11,
+                  color: AppTheme.grey700,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1959,10 +2138,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                   ),
                   // Sheet indicator
                   Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: AppColors.card(context),
                       borderRadius: BorderRadius.circular(4),

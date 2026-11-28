@@ -414,9 +414,25 @@ class FifoInventoryService {
         throw Exception('Return quantity must be greater than 0');
       }
 
-      // Try to add back to the original batch
-      if (localBatchId != null) {
-        await _batchController.addToBatch(localBatchId, quantity);
+      // Restore qty onto a real batch so stock value / FIFO stay correct.
+      // Prefer the original batch; otherwise LIFO onto the newest product batch.
+      var restoredBatchId = localBatchId;
+      if (restoredBatchId != null) {
+        await _batchController.addToBatch(restoredBatchId, quantity);
+      } else {
+        final batches = await _batchController.getBatchesByProductId(
+          productId,
+          onlyWithStock: false,
+        );
+        if (batches.isNotEmpty) {
+          batches.sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate));
+          restoredBatchId = batches.first.id;
+          await _batchController.addToBatch(restoredBatchId, quantity);
+        } else {
+          debugPrint(
+            '[FifoService] No batch found to restore return qty for $productId',
+          );
+        }
       }
 
       // Get updated balance
@@ -430,7 +446,7 @@ class FifoInventoryService {
         companyName: companyName,
         modelName: modelName,
         batchId: batchId,
-        localBatchId: localBatchId,
+        localBatchId: restoredBatchId,
         returnReferenceId: returnReferenceId,
         quantity: quantity,
         costPrice: costPrice,

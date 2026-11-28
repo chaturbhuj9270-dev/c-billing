@@ -9,7 +9,6 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../../core/services/barcode_service.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
-import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 
 // A beautiful bottom sheet for scanning barcodes for fast billing Features: - Camera preview with scan overlay - Flash toggle - Continuous scanning mode - Visual feedback on succe...
 class BarcodeScannerSheet extends StatefulWidget {
@@ -29,7 +28,10 @@ class BarcodeScannerSheet extends StatefulWidget {
     this.onClose,
   });
 
-  // Show scanner UI. On desktop/web uses USB barcode-reader (keyboard wedge) mode; on mobile opens the camera scanner.
+  // Show scanner UI. On desktop/web uses USB barcode-reader (keyboard wedge)
+  // mode; on mobile opens the camera scanner in a plain modal sheet (not
+  // GlassSheetCard) so the camera PlatformView is not covered by
+  // BackdropFilter, which breaks MobileScanner preview.
   static Future<void> show(
     BuildContext context, {
     required Function(Map<String, dynamic> productData) onProductScanned,
@@ -42,14 +44,17 @@ class BarcodeScannerSheet extends StatefulWidget {
         onProductRemoved: onProductRemoved,
       );
     }
-    return showAppBottomSheet(
+    return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => BarcodeScannerSheet(
+      barrierColor: AppTheme.black.withValues(alpha: 0.55),
+      enableDrag: false,
+      useSafeArea: false,
+      builder: (sheetContext) => BarcodeScannerSheet(
         onProductScanned: onProductScanned,
         onProductRemoved: onProductRemoved,
-        onClose: () => Navigator.of(context).pop(),
+        onClose: () => Navigator.of(sheetContext).pop(),
       ),
     );
   }

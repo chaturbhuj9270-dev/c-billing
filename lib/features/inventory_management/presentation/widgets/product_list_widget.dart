@@ -85,8 +85,13 @@ class ProductListWidget extends StatelessWidget {
         case ProductSortField.category:
           result = a.category.toLowerCase().compareTo(b.category.toLowerCase());
           break;
+        case ProductSortField.createdDate:
+          result = a.createdAt.compareTo(b.createdAt);
+          break;
       }
-      return sortAscending ? result : -result;
+      if (result != 0) return sortAscending ? result : -result;
+      // Stable tie-break by name so the order never jumps around
+      return a.name.toLowerCase().compareTo(b.name.toLowerCase());
     });
 
     return filtered;

@@ -111,13 +111,12 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
   @override
   Widget build(BuildContext context) {
     return GlassDraggableSheet(
-      initialChildSize: 0.55,
-      minChildSize: 0.38,
+      initialChildSize: 0.68,
+      minChildSize: 0.4,
       maxChildSize: 0.9,
       builder: (context, scrollController) {
         return Column(
           children: [
-            const GlassSheetHandle(),
             _buildHeader(),
             _buildPaperSizeSelector(),
             Expanded(child: _buildDeviceList(scrollController)),
@@ -128,30 +127,11 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Column(
         children: [
-          // Drag handle
-          Container(
-            width: 40,
-            height: 4,
-            margin: EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              color: AppTheme.grey300,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
+          const GlassSheetHandle(),
           Row(
             children: [
               Container(

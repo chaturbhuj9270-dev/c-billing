@@ -1,4 +1,8 @@
-// Google Play / App Store product configuration for C-Billing yearly plan. Create a matching **subscription** in Play Console: Monetize → Products → Subscriptions → product ID mus...
+import '../services/subscription_service.dart';
+
+// Google Play / App Store product configuration for C-Billing yearly plan.
+// Create a matching **subscription** in Play Console: Monetize → Products →
+// Subscriptions → product ID must match [yearlyProductId].
 class SubscriptionProducts {
   SubscriptionProducts._();
 
@@ -9,5 +13,7 @@ class SubscriptionProducts {
   static const String androidPackageName = 'com.cbilling.app';
 
   // Display price fallback when store product is not loaded yet
-  static const String fallbackPriceLabel = '₹3,999';
+  // (backend pricing from SubscriptionService; defaults until fetch completes).
+  static String get fallbackPriceLabel =>
+      SubscriptionService().pricing.priceLabel;
 }

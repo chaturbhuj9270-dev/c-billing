@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../billing/offline/controllers/bill_offline_controller.dart';
 import '../../../billing/offline/entities/bill_entity.dart';
+import '../../../billing/domain/sale_return_math.dart';
 
 /// Time window for the Sales Analysis chart.
 enum SalesChartPeriod { week, month, year }
@@ -36,6 +37,9 @@ class _DayMetrics {
 }
 
 /// Builds time-series points from local bills for the selected metric + period.
+///
+/// Profit math matches [DashboardLocalDataSource._getSalesDataForPeriod]:
+/// `netRevenue = netSoldQty * sellingPrice * bill.itemChargeRatio`.
 class SalesChartAggregator {
   SalesChartAggregator._();
 
@@ -69,28 +73,33 @@ class SalesChartAggregator {
   }
 
   static void _accumulateBill(_DayMetrics day, BillEntity bill) {
-    day.sales += bill.finalAmount;
     day.orders += 1;
-
+    // Item charge ratio (discount/tax, excludes labour/service extras) —
+    // same as dashboard KPIs and the return refund.
     final chargeRatio = bill.itemChargeRatio;
-    var hasReturn = false;
+    var returnedValue = 0.0;
+
     for (final item in bill.items) {
       final qty = item.quantity;
       final returned = item.returnedQuantity;
       final net = qty - returned;
       day.quantity += qty;
       day.returnOrders += returned;
-      if (returned > 0) hasReturn = true;
+      returnedValue += SaleReturnMath.returnedValue(
+        sellingPrice: item.sellingPrice,
+        returnedQuantity: returned,
+        chargeRatio: chargeRatio,
+      );
 
       final netRevenue = net * item.sellingPrice * chargeRatio;
       final netCost = net * item.purchasePrice;
       day.profit += netRevenue - netCost;
     }
-    // "Return Order" tracks bills that include at least one return,
-    // falling back to returned qty already stored above for the series.
-    if (hasReturn) {
-      // Keep returnOrders as returned quantity sum (more readable on chart).
-    }
+    // Sales after returns, consistent with the dashboard cards.
+    day.sales += SaleReturnMath.netSales(
+      finalAmount: bill.finalAmount,
+      returnedValue: returnedValue,
+    );
   }
 
   static (DateTime, DateTime) _rangeFor(SalesChartPeriod period, DateTime now) {
@@ -164,7 +173,6 @@ class SalesChartAggregator {
     Map<DateTime, _DayMetrics> byDay,
     SalesChartMetric metric,
   ) {
-    // Monthly buckets — easy to read for a full year.
     final fmt = DateFormat('MMM');
     return List.generate(now.month, (i) {
       final month = i + 1;
@@ -187,12 +195,10 @@ class SalesChartAggregator {
 class SalesAnalysisChart extends StatefulWidget {
   const SalesAnalysisChart({
     super.key,
-    this.title = 'Sales Analysis',
     this.reloadToken,
     this.compact = false,
   });
 
-  final String title;
   final Object? reloadToken;
   final bool compact;
 
@@ -209,7 +215,6 @@ class _SalesAnalysisChartState extends State<SalesAnalysisChart>
   int? _selectedIndex;
   late final AnimationController _anim;
 
-  // Soft periwinkle / teal line matching the reference look, tinted by brand.
   static const _lineBlue = Color(0xFF7B8CDE);
   static const _fillTop = Color(0xFFB8C4F0);
 
@@ -311,6 +316,15 @@ class _SalesAnalysisChartState extends State<SalesAnalysisChart>
         SalesChartMetric.returnOrder => 'Returns',
       };
 
+  /// Chart heading follows the selected metric tab (Sales / Profit / …).
+  String get _chartTitle => switch (_metric) {
+        SalesChartMetric.sales => 'Sales Analysis',
+        SalesChartMetric.profit => 'Profit Analysis',
+        SalesChartMetric.order => 'Order Analysis',
+        SalesChartMetric.quantity => 'Quantity Analysis',
+        SalesChartMetric.returnOrder => 'Return Order Analysis',
+      };
+
   String get _periodCaption {
     final now = DateTime.now();
     return switch (_period) {
@@ -356,7 +370,7 @@ class _SalesAnalysisChartState extends State<SalesAnalysisChart>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.title,
+                      _chartTitle,
                       style: TextStyle(
                         color: AppColors.primaryText(context),
                         fontSize: widget.compact ? 15 : 16,
@@ -431,10 +445,7 @@ class _SalesAnalysisChartState extends State<SalesAnalysisChart>
                                 onTapDown: (details) {
                                   final idx = _hitIndex(
                                     details.localPosition,
-                                    Size(
-                                      constraints.maxWidth,
-                                      chartHeight,
-                                    ),
+                                    Size(constraints.maxWidth, chartHeight),
                                     _points.length,
                                   );
                                   setState(() => _selectedIndex = idx);
@@ -442,10 +453,7 @@ class _SalesAnalysisChartState extends State<SalesAnalysisChart>
                                 onPanUpdate: (details) {
                                   final idx = _hitIndex(
                                     details.localPosition,
-                                    Size(
-                                      constraints.maxWidth,
-                                      chartHeight,
-                                    ),
+                                    Size(constraints.maxWidth, chartHeight),
                                     _points.length,
                                   );
                                   if (idx != _selectedIndex) {
@@ -464,8 +472,7 @@ class _SalesAnalysisChartState extends State<SalesAnalysisChart>
                                     lineColor: lineColor,
                                     fillColor: fillColor,
                                     gridColor: AppColors.border(context),
-                                    labelColor:
-                                        AppColors.mutedText(context),
+                                    labelColor: AppColors.mutedText(context),
                                     selectedIndex: _selectedIndex,
                                     formatAxis: (v) =>
                                         _formatValue(v, axis: true),
@@ -487,14 +494,10 @@ class _SalesAnalysisChartState extends State<SalesAnalysisChart>
     if (count <= 1) return count == 1 ? 0 : null;
     const leftPad = 44.0;
     const rightPad = 10.0;
-    const topPad = 12.0;
-    const bottomPad = 28.0;
     final chartW = size.width - leftPad - rightPad;
-    final chartH = size.height - topPad - bottomPad;
-    if (chartW <= 0 || chartH <= 0) return null;
+    if (chartW <= 0) return null;
     final x = (local.dx - leftPad).clamp(0.0, chartW);
-    final idx = ((x / chartW) * (count - 1)).round().clamp(0, count - 1);
-    return idx;
+    return ((x / chartW) * (count - 1)).round().clamp(0, count - 1);
   }
 }
 
@@ -572,9 +575,7 @@ class _MetricChip extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: selected
-                  ? activeColor
-                  : AppColors.border(context),
+              color: selected ? activeColor : AppColors.border(context),
             ),
           ),
           child: Text(
@@ -794,7 +795,6 @@ class _AreaChartPainter extends CustomPainter {
     final maxY = _niceMax(rawMax <= 0 ? 1 : rawMax);
     const gridCount = 7;
 
-    // Dashed horizontal grid + Y labels.
     final gridPaint = Paint()
       ..color = gridColor.withValues(alpha: 0.7)
       ..strokeWidth = 1
@@ -826,7 +826,6 @@ class _AreaChartPainter extends CustomPainter {
       );
     }
 
-    // Build animated point positions.
     final n = points.length;
     final coords = <Offset>[];
     for (var i = 0; i < n; i++) {
@@ -844,28 +843,31 @@ class _AreaChartPainter extends CustomPainter {
       ..lineTo(coords.first.dx, chart.bottom)
       ..close();
 
-    final fillPaint = Paint()
-      ..shader = ui.Gradient.linear(
-        Offset(chart.left, chart.top),
-        Offset(chart.left, chart.bottom),
-        [
-          fillColor.withValues(alpha: 0.45),
-          fillColor.withValues(alpha: 0.05),
-        ],
-      )
-      ..style = PaintingStyle.fill;
-    canvas.drawPath(fillPath, fillPaint);
+    canvas.drawPath(
+      fillPath,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(chart.left, chart.top),
+          Offset(chart.left, chart.bottom),
+          [
+            fillColor.withValues(alpha: 0.45),
+            fillColor.withValues(alpha: 0.05),
+          ],
+        )
+        ..style = PaintingStyle.fill,
+    );
 
-    final linePaint = Paint()
-      ..color = lineColor
-      ..strokeWidth = 2.2
-      ..style = PaintingStyle.stroke
-      ..strokeJoin = StrokeJoin.round
-      ..strokeCap = StrokeCap.round
-      ..isAntiAlias = true;
-    canvas.drawPath(linePath, linePaint);
+    canvas.drawPath(
+      linePath,
+      Paint()
+        ..color = lineColor
+        ..strokeWidth = 2.2
+        ..style = PaintingStyle.stroke
+        ..strokeJoin = StrokeJoin.round
+        ..strokeCap = StrokeCap.round
+        ..isAntiAlias = true,
+    );
 
-    // Selection marker.
     if (selectedIndex != null &&
         selectedIndex! >= 0 &&
         selectedIndex! < coords.length) {
@@ -881,12 +883,15 @@ class _AreaChartPainter extends CustomPainter {
       canvas.drawCircle(c, 4, Paint()..color = lineColor);
     }
 
-    // X-axis labels (sparse for readability).
     final labelIndexes = _xLabelIndexes(n, period);
     for (final i in labelIndexes) {
       final p = points[i];
       final x = coords[i].dx;
-      final text = _xLabel(p, period);
+      final text = switch (period) {
+        SalesChartPeriod.week => DateFormat('E').format(p.date),
+        SalesChartPeriod.month => DateFormat('d MMM').format(p.date),
+        SalesChartPeriod.year => DateFormat('MMM').format(p.date),
+      };
       labelTp.text = TextSpan(
         text: text,
         style: TextStyle(
@@ -900,19 +905,12 @@ class _AreaChartPainter extends CustomPainter {
       labelTp.paint(
         canvas,
         Offset(
-          (x - labelTp.width / 2).clamp(chart.left, chart.right - labelTp.width),
+          (x - labelTp.width / 2)
+              .clamp(chart.left, chart.right - labelTp.width),
           chart.bottom + 8,
         ),
       );
     }
-  }
-
-  String _xLabel(SalesChartPoint p, SalesChartPeriod period) {
-    return switch (period) {
-      SalesChartPeriod.week => DateFormat('E').format(p.date),
-      SalesChartPeriod.month => DateFormat('d MMM').format(p.date),
-      SalesChartPeriod.year => DateFormat('MMM').format(p.date),
-    };
   }
 
   List<int> _xLabelIndexes(int n, SalesChartPeriod period) {
@@ -922,9 +920,7 @@ class _AreaChartPainter extends CustomPainter {
       SalesChartPeriod.month => 6,
       SalesChartPeriod.year => math.min(n, 6),
     };
-    if (n <= maxLabels) {
-      return List.generate(n, (i) => i);
-    }
+    if (n <= maxLabels) return List.generate(n, (i) => i);
     final indexes = <int>{0, n - 1};
     for (var i = 1; i < maxLabels - 1; i++) {
       indexes.add(((n - 1) * i / (maxLabels - 1)).round());
@@ -942,7 +938,6 @@ class _AreaChartPainter extends CustomPainter {
       return path;
     }
 
-    // Catmull-Rom → cubic Bezier for a calm, readable curve.
     for (var i = 0; i < pts.length - 1; i++) {
       final p0 = pts[i == 0 ? i : i - 1];
       final p1 = pts[i];

@@ -90,10 +90,14 @@ class QuotationPrintService {
       }
 
       final printData = createPrintData(quotation);
-      final shop = await _shopRepository.getShopDetails().timeout(
+      final shop = await _shopRepository
+          .getShopDetails(forceRefresh: true)
+          .timeout(
         const Duration(seconds: 10),
         onTimeout: () => Shop.empty,
       );
+      final printPageFormat =
+          await _pdfService.resolvePrintPageFormat(printData);
 
       if (kIsWeb) {
         final bytes = await _pdfService
@@ -113,6 +117,12 @@ class QuotationPrintService {
           fileType: FilePreviewType.pdf,
           subtitle: DateFormat('dd MMM yyyy').format(quotation.referenceDate),
           customerPhone: quotation.customerContact,
+          printPageFormat: printPageFormat,
+          rebuildPdfForPrint: (format) => _pdfService.buildPdfBytesForPageFormat(
+            billData: printData,
+            shopDetails: shop,
+            pageFormat: format,
+          ),
           details: FilePreviewDetails(
             title: 'Quotation preview',
             documentNo: quotation.quotationNumber,
@@ -152,6 +162,12 @@ class QuotationPrintService {
         fileType: FilePreviewType.pdf,
         subtitle: DateFormat('dd MMM yyyy').format(quotation.referenceDate),
         customerPhone: quotation.customerContact,
+        printPageFormat: printPageFormat,
+        rebuildPdfForPrint: (format) => _pdfService.buildPdfBytesForPageFormat(
+          billData: printData,
+          shopDetails: shop,
+          pageFormat: format,
+        ),
         details: FilePreviewDetails(
           title: 'Quotation preview',
           documentNo: quotation.quotationNumber,

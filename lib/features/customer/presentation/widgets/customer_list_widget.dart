@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../../core/services/communication_service.dart';
 import 'customer_filter_widget.dart';
+import '../../domain/customer_birthday.dart';
+import '../../offline/entities/customer_entity.dart' show birthDateFromValue;
+import 'package:c_billing/core/ui/app_scroll_behavior.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
-import 'package:c_billing/core/ui/sync_status_icon.dart';
-import 'package:c_billing/core/ui/app_scroll_behavior.dart';
 
 // Enhanced list widget for displaying customers Features: Shimmer loading, Enhanced cards, Empty states
 class CustomerListWidget extends StatelessWidget {
@@ -22,12 +22,19 @@ class CustomerListWidget extends StatelessWidget {
   final void Function(Map<String, dynamic>)? onCustomerLongPress;
   final void Function(Map<String, dynamic>)? onFinanceTap;
   final void Function(Map<String, dynamic>)? onTransactionsTap;
+  final void Function(Map<String, dynamic>)? onCollectTap;
+
+  // Opens the pending-amount report (shown for customers with a pending amount).
+  final void Function(Map<String, dynamic>)? onReportTap;
+  final String reportTooltip;
 
   // Labels
   final String emptyTitle;
   final String emptySubtitle;
   final String noResultsTitle;
   final String noResultsSubtitle;
+  final String pendingLabel;
+  final String birthdayTodayLabel;
 
   const CustomerListWidget({
     super.key,
@@ -44,10 +51,15 @@ class CustomerListWidget extends StatelessWidget {
     this.onCustomerLongPress,
     this.onFinanceTap,
     this.onTransactionsTap,
+    this.onCollectTap,
+    this.onReportTap,
+    this.reportTooltip = 'Pending report',
     this.emptyTitle = 'No customers yet',
     this.emptySubtitle = 'Add your first customer to get started',
     this.noResultsTitle = 'No results found',
     this.noResultsSubtitle = 'Try a different search term',
+    this.pendingLabel = 'pending',
+    this.birthdayTodayLabel = 'Birthday today',
   });
 
   List<Map<String, dynamic>> get _filteredAndSortedCustomers {
@@ -68,23 +80,22 @@ class CustomerListWidget extends StatelessWidget {
       }).toList();
     }
 
-    // Filter by customer creation date
-    if (dateFilter != CustomerDateFilter.all) {
-      filtered = filtered.where((c) {
-        return customerMatchesDateFilter(
-          createdAt: parseCustomerCreatedAt(c),
-          filter: dateFilter,
-          customStart: customStartDate,
-          customEnd: customEndDate,
-        );
-      }).toList();
+    // Created-date range (only when the user applied one)
+    final dateRange = customerDateFilterRange(
+      dateFilter,
+      customStart: customStartDate,
+      customEnd: customEndDate,
+    );
+    if (dateRange != null) {
+      filtered = filtered
+          .where((c) => customerCreatedInRange(c, dateRange))
+          .toList();
     }
 
     // When pending amount filter is active, show only customers with pending balance
     if (sortField == CustomerSortField.pendingAmount) {
       filtered = filtered.where((c) {
-        final pending =
-            (c['currentPendingAmount'] as num?)?.toDouble() ?? 0.0;
+        final pending = (c['currentPendingAmount'] as num?)?.toDouble() ?? 0.0;
         return pending != 0.0;
       }).toList();
     }
@@ -101,8 +112,8 @@ class CustomerListWidget extends StatelessWidget {
           result = aName.compareTo(bName);
           break;
         case CustomerSortField.createdDate:
-          final aDate = parseCustomerCreatedAt(a) ?? DateTime(2000);
-          final bDate = parseCustomerCreatedAt(b) ?? DateTime(2000);
+          final aDate = customerCreatedAt(a) ?? DateTime(2000);
+          final bDate = customerCreatedAt(b) ?? DateTime(2000);
           result = aDate.compareTo(bDate);
           break;
         case CustomerSortField.pendingAmount:
@@ -113,7 +124,13 @@ class CustomerListWidget extends StatelessWidget {
           result = aPending.compareTo(bPending);
           break;
       }
-      return sortAscending ? result : -result;
+      if (result != 0) return sortAscending ? result : -result;
+      // Stable tie-break by name so the order never jumps around
+      return '${a['firstName'] ?? ''} ${a['lastName'] ?? ''}'
+          .toLowerCase()
+          .compareTo(
+            '${b['firstName'] ?? ''} ${b['lastName'] ?? ''}'.toLowerCase(),
+          );
     });
 
     return filtered;
@@ -223,6 +240,17 @@ class CustomerListWidget extends StatelessWidget {
               onTransactionsTap: onTransactionsTap != null
                   ? () => onTransactionsTap!(filtered[index])
                   : null,
+              onCollectTap: onCollectTap != null
+                  ? () => onCollectTap!(filtered[index])
+                  : (onTransactionsTap != null
+                        ? () => onTransactionsTap!(filtered[index])
+                        : null),
+              onReportTap: onReportTap != null
+                  ? () => onReportTap!(filtered[index])
+                  : null,
+              reportTooltip: reportTooltip,
+              pendingLabel: pendingLabel,
+              birthdayTodayLabel: birthdayTodayLabel,
             ),
           );
         },
@@ -275,7 +303,7 @@ class CustomerListWidget extends StatelessWidget {
               color: AppColors.accent(context),
               onRefresh: onRefresh,
               child: ListView.separated(
-                physics: AppScrollPhysics.alwaysScrollable(),
+                physics: const AlwaysScrollableScrollPhysics(),
                 itemCount: filtered.length,
                 separatorBuilder: (_, _) =>
                     Divider(height: 1, color: AppColors.border(context)),
@@ -312,7 +340,7 @@ class CustomerListWidget extends StatelessWidget {
     final contact = (customer['contact'] ?? '').toString();
     final address = (customer['address'] ?? '').toString();
     final pending = (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0;
-    final hasPending = pending.round() != 0;
+    final hasPending = pending > 0;
     final synced = customer['isSynced'] == true;
     final cell = TextStyle(
       fontFamily: 'Literata',
@@ -348,7 +376,7 @@ class CustomerListWidget extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      fullName.isEmpty ? '-' : fullName,
+                      fullName.isEmpty ? '—' : fullName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -364,12 +392,12 @@ class CustomerListWidget extends StatelessWidget {
             ),
             Expanded(
               flex: 2,
-              child: Text(contact.isEmpty ? '-' : contact, style: cell),
+              child: Text(contact.isEmpty ? '—' : contact, style: cell),
             ),
             Expanded(
               flex: 2,
               child: Text(
-                address.isEmpty || address == 'N/A' ? '-' : address,
+                address.isEmpty || address == 'N/A' ? '—' : address,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: cell,
@@ -380,7 +408,10 @@ class CustomerListWidget extends StatelessWidget {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: hasPending
                         ? AppTheme.toneRose.withValues(alpha: 0.12)
@@ -407,10 +438,28 @@ class CustomerListWidget extends StatelessWidget {
               flex: 2,
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: SyncStatusIcon(
-                  isSynced: synced,
-                  size: 18,
-                  padded: false,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: synced
+                        ? AppColors.accentSoft(context, 0.14)
+                        : AppTheme.toneAmber.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    synced ? 'Synced' : pendingLabel,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: synced
+                          ? AppColors.action(context)
+                          : AppTheme.toneAmber,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -422,6 +471,16 @@ class CustomerListWidget extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    if (hasPending &&
+                        (onCollectTap != null ||
+                            onTransactionsTap != null)) ...[
+                      _desktopCollectButton(
+                        context,
+                        onTap: () =>
+                            (onCollectTap ?? onTransactionsTap)!(customer),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
                     if (contact.isNotEmpty)
                       CommunicationActionIcons(
                         phoneNumber: contact,
@@ -429,11 +488,32 @@ class CustomerListWidget extends StatelessWidget {
                         containerSize: 30,
                         spacing: 6,
                       ),
+                    if (hasPending && onReportTap != null) ...[
+                      const SizedBox(width: 6),
+                      Tooltip(
+                        message: reportTooltip,
+                        child: _roundAction(
+                          context,
+                          icon: Icons.picture_as_pdf_rounded,
+                          color: AppTheme.toneRose,
+                          onTap: () => onReportTap!(customer),
+                        ),
+                      ),
+                    ],
+                    if (onFinanceTap != null) ...[
+                      const SizedBox(width: 6),
+                      _roundAction(
+                        context,
+                        icon: Icons.account_balance_wallet_outlined,
+                        color: AppColors.action(context),
+                        onTap: () => onFinanceTap!(customer),
+                      ),
+                    ],
                     if (onTransactionsTap != null) ...[
                       const SizedBox(width: 6),
                       _roundAction(
                         context,
-                        icon: Icons.history_rounded,
+                        icon: Icons.swap_horiz_rounded,
                         color: AppTheme.toneAmber,
                         onTap: () => onTransactionsTap!(customer),
                       ),
@@ -465,6 +545,44 @@ class CustomerListWidget extends StatelessWidget {
           shape: BoxShape.circle,
         ),
         child: Icon(icon, size: 15, color: color),
+      ),
+    );
+  }
+
+  Widget _desktopCollectButton(
+    BuildContext context, {
+    required VoidCallback onTap,
+  }) {
+    final accent = AppColors.action(context);
+    return Material(
+      color: accent,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.currency_rupee_rounded,
+                size: 14,
+                color: AppTheme.white,
+              ),
+              SizedBox(width: 2),
+              Text(
+                'Collect',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  color: AppTheme.white,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -534,13 +652,18 @@ class CustomerListWidget extends StatelessWidget {
   }
 }
 
-// Enhanced customer card widget — matches light/dark mockup.
+// Enhanced customer card widget
 class _CustomerCard extends StatelessWidget {
   final Map<String, dynamic> customer;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
   final VoidCallback? onFinanceTap;
   final VoidCallback? onTransactionsTap;
+  final VoidCallback? onCollectTap;
+  final VoidCallback? onReportTap;
+  final String reportTooltip;
+  final String pendingLabel;
+  final String birthdayTodayLabel;
 
   const _CustomerCard({
     required this.customer,
@@ -548,16 +671,18 @@ class _CustomerCard extends StatelessWidget {
     this.onLongPress,
     this.onFinanceTap,
     this.onTransactionsTap,
+    this.onCollectTap,
+    this.onReportTap,
+    this.reportTooltip = 'Pending report',
+    this.pendingLabel = 'pending',
+    this.birthdayTodayLabel = 'Birthday today',
   });
 
   String _formatPending(double amount) {
-    final whole = amount.round().abs().toString();
-    final buf = StringBuffer(amount < 0 ? '-' : '');
-    for (var i = 0; i < whole.length; i++) {
-      if (i > 0 && (whole.length - i) % 3 == 0) buf.write(',');
-      buf.write(whole[i]);
+    if (amount == amount.roundToDouble()) {
+      return amount.toStringAsFixed(0);
     }
-    return buf.toString();
+    return amount.toStringAsFixed(2);
   }
 
   @override
@@ -566,15 +691,21 @@ class _CustomerCard extends StatelessWidget {
         '${customer['firstName'] ?? ''} ${customer['lastName'] ?? ''}'.trim();
     final contact = (customer['contact'] ?? '').toString();
     final address = (customer['address'] ?? '').toString();
+    final email = (customer['email'] ?? '').toString().trim();
+    final birthdayToday = isBirthdayOn(
+      birthDateFromValue(customer['birthDate']),
+      DateTime.now(),
+    );
     final pendingAmount =
         (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0.0;
     final isSynced = customer['isSynced'] as bool? ?? true;
-    final hasPending = pendingAmount.round() != 0;
-
-    final accent = AppColors.action(context);
-    final isDark = AppColors.isDark(context);
+    // The pending panel below already shows the amount prominently, so the
+    // header does not repeat it.
+    final showsPendingPanel = pendingAmount > 0 && onCollectTap != null;
     final initial = fullName.isNotEmpty ? fullName[0].toUpperCase() : '?';
-    final comm = CommunicationService.instance;
+
+    final accent = Theme.of(context).primaryColor;
+    final isDark = AppColors.isDark(context);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -584,9 +715,9 @@ class _CustomerCard extends StatelessWidget {
         border: Border.all(color: AppColors.border(context)),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.black.withValues(alpha: isDark ? 0.2 : 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
+            color: AppTheme.black.withValues(alpha: isDark ? 0.18 : 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -594,171 +725,246 @@ class _CustomerCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         child: Material(
           color: AppTheme.transparent,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header only opens details — actions stay independent.
-                InkWell(
-                  onTap: onTap,
-                  onLongPress: onLongPress,
-                  borderRadius: BorderRadius.circular(12),
-                  splashColor: accent.withValues(alpha: 0.08),
-                  highlightColor: accent.withValues(alpha: 0.04),
-                  child: Column(
+          child: InkWell(
+            onTap: onTap,
+            onLongPress: onLongPress,
+            splashColor: accent.withValues(alpha: 0.08),
+            highlightColor: accent.withValues(alpha: 0.04),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 46,
-                            height: 46,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: accent.withValues(
-                                alpha: isDark ? 0.2 : 0.12,
-                              ),
-                              borderRadius: BorderRadius.circular(14),
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: accent.withValues(alpha: isDark ? 0.18 : 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Text(
+                            initial,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontWeight: FontWeight.w800,
+                              fontSize: 18,
+                              color: accent,
                             ),
-                            child: Text(
-                              initial,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              fullName.isNotEmpty ? fullName : '—',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                                color: AppColors.primaryText(context),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.phone_outlined,
+                                  size: 13,
+                                  color: AppColors.mutedText(context),
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    contact.isNotEmpty ? contact : '—',
+                                    style: TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontSize: 12,
+                                      color: AppColors.mutedText(context),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (pendingAmount.round() != 0 && !showsPendingPanel)
+                            Text(
+                              '₹${pendingAmount.toStringAsFixed(0)}',
                               style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w800,
-                                fontSize: 18,
-                                color: accent,
+                                fontSize: 16,
+                                color: AppTheme.toneRose,
                               ),
+                            )
+                          else
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              size: 22,
+                              color: AppColors.mutedText(context),
+                            ),
+                          const SizedBox(height: 4),
+                          Text(
+                            isSynced ? 'Synced' : pendingLabel,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: isSynced
+                                  ? (isDark
+                                        ? AppColors.action(context)
+                                        : AppTheme.primaryLight)
+                                  : AppTheme.toneAmber,
                             ),
                           ),
-                          const SizedBox(width: 12),
+                        ],
+                      ),
+                    ],
+                  ),
+                  if (email.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.email_outlined,
+                          size: 14,
+                          color: AppColors.mutedText(context),
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            email,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 12,
+                              color: AppColors.mutedText(context),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (birthdayToday) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.toneAmber.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.cake_outlined,
+                            size: 14,
+                            color: AppTheme.toneAmber,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            birthdayTodayLabel,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.toneAmber,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (address.isNotEmpty && address != 'N/A') ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 14,
+                          color: AppColors.mutedText(context),
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            address,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 12,
+                              color: AppColors.mutedText(context),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (pendingAmount > 0 && onCollectTap != null) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+                      decoration: BoxDecoration(
+                        color: AppTheme.toneRose.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: AppTheme.toneRose.withValues(alpha: 0.22),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  fullName.isNotEmpty ? fullName : '-',
+                                  'Pending amount',
                                   style: TextStyle(
                                     fontFamily: 'Literata',
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 16,
-                                    color: AppColors.primaryText(context),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppTheme.toneRose.withValues(
+                                      alpha: 0.9,
+                                    ),
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.phone_outlined,
-                                      size: 13,
-                                      color: AppColors.mutedText(context),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: Text(
-                                        contact.isNotEmpty ? contact : '-',
-                                        style: TextStyle(
-                                          fontFamily: 'Literata',
-                                          fontSize: 12,
-                                          color: AppColors.mutedText(context),
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
+                                const SizedBox(height: 2),
+                                Text(
+                                  '₹${_formatPending(pendingAmount)}',
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppTheme.toneRose,
+                                    height: 1.1,
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-                          _syncBadge(
-                            context,
-                            isSynced: isSynced,
-                            accent: accent,
-                          ),
-                        ],
-                      ),
-                      if (address.isNotEmpty && address != 'N/A') ...[
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.location_on_outlined,
-                              size: 14,
-                              color: AppColors.mutedText(context),
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                address,
-                                style: TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontSize: 12,
-                                  color: AppColors.mutedText(context),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                if (hasPending) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
-                    decoration: BoxDecoration(
-                      color: AppTheme.toneRose.withValues(
-                        alpha: isDark ? 0.16 : 0.1,
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: AppTheme.toneRose.withValues(alpha: 0.22),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Pending amount',
-                                style: TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppTheme.toneRose.withValues(
-                                    alpha: 0.9,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '₹${_formatPending(pendingAmount)}',
-                                style: const TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.toneRose,
-                                  height: 1.1,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (onTransactionsTap != null)
                           Material(
                             color: AppTheme.transparent,
                             child: InkWell(
-                              onTap: onTransactionsTap,
+                              onTap: onCollectTap,
                               borderRadius: BorderRadius.circular(12),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
@@ -799,184 +1005,97 @@ class _CustomerCard extends StatelessWidget {
                               ),
                             ),
                           ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (contact.isNotEmpty ||
+                      onFinanceTap != null ||
+                      onTransactionsTap != null ||
+                      (pendingAmount > 0 && onReportTap != null)) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        if (pendingAmount > 0 && onReportTap != null) ...[
+                          Tooltip(
+                            message: reportTooltip,
+                            child: GestureDetector(
+                              onTap: onReportTap,
+                              child: Container(
+                                width: 34,
+                                height: 34,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.toneRose.withValues(
+                                    alpha: 0.12,
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.picture_as_pdf_rounded,
+                                  size: 16,
+                                  color: AppTheme.toneRose,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        if (onTransactionsTap != null)
+                          GestureDetector(
+                            onTap: onTransactionsTap,
+                            child: Container(
+                              width: 34,
+                              height: 34,
+                              decoration: BoxDecoration(
+                                color: AppTheme.toneAmber.withValues(
+                                  alpha: 0.16,
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(
+                                Icons.swap_horiz_rounded,
+                                size: 16,
+                                color: AppTheme.toneAmber,
+                              ),
+                            ),
+                          ),
+                        if (onTransactionsTap != null &&
+                            (onFinanceTap != null || contact.isNotEmpty))
+                          const SizedBox(width: 8),
+                        if (onFinanceTap != null)
+                          GestureDetector(
+                            onTap: onFinanceTap,
+                            child: Container(
+                              width: 34,
+                              height: 34,
+                              decoration: BoxDecoration(
+                                color: accent.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                Icons.account_balance_wallet_rounded,
+                                size: 16,
+                                color: accent,
+                              ),
+                            ),
+                          ),
+                        if (onFinanceTap != null && contact.isNotEmpty)
+                          const SizedBox(width: 8),
+                        if (contact.isNotEmpty)
+                          CommunicationActionIcons(
+                            phoneNumber: contact,
+                            iconSize: 16,
+                            containerSize: 34,
+                            spacing: 8,
+                          ),
                       ],
                     ),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    if (onTransactionsTap != null)
-                      Expanded(
-                        child: _actionTile(
-                          context,
-                          icon: Icons.history_rounded,
-                          label: 'History',
-                          color: AppTheme.toneAmber,
-                          onTap: onTransactionsTap!,
-                        ),
-                      ),
-                    if (contact.isNotEmpty) ...[
-                      Expanded(
-                        child: _actionTile(
-                          context,
-                          icon: Icons.call_rounded,
-                          label: 'Call',
-                          color: AppTheme.green800,
-                          onTap: () =>
-                              comm.makeCall(contact, context: context),
-                        ),
-                      ),
-                      Expanded(
-                        child: _actionTile(
-                          context,
-                          icon: Icons.message_rounded,
-                          label: 'SMS',
-                          color: AppTheme.blue700,
-                          onTap: () =>
-                              comm.sendSms(contact, context: context),
-                        ),
-                      ),
-                      Expanded(
-                        child: _whatsAppTile(
-                          context,
-                          onTap: () =>
-                              comm.openWhatsApp(contact, context: context),
-                        ),
-                      ),
-                    ],
                   ],
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _syncBadge(
-    BuildContext context, {
-    required bool isSynced,
-    required Color accent,
-  }) {
-    final color = isSynced ? accent : AppTheme.toneAmber;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(
-          alpha: AppColors.isDark(context) ? 0.18 : 0.12,
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            isSynced ? Icons.cloud_done_rounded : Icons.cloud_upload_rounded,
-            size: 12,
-            color: color,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            isSynced ? 'Synced' : 'Pending',
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _actionTile(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    final isDark = AppColors.isDark(context);
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: isDark ? 0.2 : 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: color, size: 18),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: 'Literata',
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: AppColors.secondaryText(context),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _whatsAppTile(
-    BuildContext context, {
-    required VoidCallback onTap,
-  }) {
-    const color = AppTheme.paletteFF25D366;
-    final isDark = AppColors.isDark(context);
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: isDark ? 0.2 : 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const FaIcon(
-                FontAwesomeIcons.whatsapp,
-                color: color,
-                size: 16,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'WhatsApp',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: 'Literata',
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: AppColors.secondaryText(context),
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -1088,7 +1207,11 @@ class _ShimmerCardState extends State<_ShimmerCard>
           gradient: LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
-            colors: [AppColors.border(context), AppColors.chipFill(context), AppColors.border(context)],
+            colors: [
+              AppColors.border(context),
+              AppColors.chipFill(context),
+              AppColors.border(context),
+            ],
             stops: [
               (_animation.value - 0.3).clamp(0.0, 1.0),
               _animation.value.clamp(0.0, 1.0),

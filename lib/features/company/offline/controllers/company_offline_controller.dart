@@ -43,6 +43,8 @@ class CompanyOfflineController extends ChangeNotifier {
     String gstCode = '',
     String contact = '',
     String address = '',
+    String email = '',
+    String contactPerson = '',
   }) async {
     if (companyCode.isNotEmpty) {
       final codeTaken = await isCompanyCodeTaken(companyCode);
@@ -57,6 +59,8 @@ class CompanyOfflineController extends ChangeNotifier {
       gstCode: gstCode,
       contact: contact,
       address: address,
+      email: email,
+      contactPerson: contactPerson,
       syncStatus: CompanySyncStatus.newRecord,
     );
 
@@ -129,6 +133,8 @@ class CompanyOfflineController extends ChangeNotifier {
     String? gstCode,
     String? contact,
     String? address,
+    String? email,
+    String? contactPerson,
     bool? isActive,
   }) async {
     final existing = await getCompanyById(id);
@@ -164,6 +170,8 @@ class CompanyOfflineController extends ChangeNotifier {
       gstCode: gstCode,
       contact: contact,
       address: address,
+      email: email,
+      contactPerson: contactPerson,
       isActive: isActive,
       syncStatus: newSyncStatus,
       updatedAt: DateTime.now(),

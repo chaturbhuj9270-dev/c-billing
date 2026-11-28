@@ -1,6 +1,10 @@
+import '../../../../core/services/live_refresh_mixin.dart';
 import 'dart:async';
+import 'dart:io' show Directory, File;
 import 'dart:ui';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/services/language_service.dart';
@@ -10,6 +14,9 @@ import '../../data/datasources/customer_cache_datasource.dart';
 import '../../offline/controllers/customer_offline_controller.dart';
 import '../../offline/entities/customer_entity.dart';
 import '../../data/services/customer_sync_service.dart';
+import '../../data/services/customer_pending_report_service.dart';
+import '../../../shop/data/repositories/shop_repository.dart';
+import '../../../shop/domain/entities/shop.dart';
 import '../../../event_order/offline/controllers/event_order_offline_controller.dart';
 import '../../../event_order/offline/entities/event_order_entity.dart';
 import '../../../event_order/domain/entities/event_order.dart';
@@ -17,15 +24,17 @@ import '../widgets/customer_summary_widget.dart';
 import '../widgets/customer_filter_widget.dart';
 import '../widgets/customer_list_widget.dart';
 import 'customer_details_page.dart';
+import 'customer_finance_page.dart';
 import 'customer_transactions_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
-import 'package:c_billing/core/ui/sync_status_icon.dart';
 import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/common_widgets/file_preview_page.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
 import 'package:c_billing/common_widgets/app_pill_button.dart';
 import 'package:c_billing/common_widgets/glass_icon_fab.dart';
 import 'package:c_billing/core/ui/desktop_canvas.dart';
+import 'package:c_billing/common_widgets/master_data_form.dart' show isValidGstin;
 
 // Lets the desktop shell header open the add-customer sheet.
 class CustomerScreenActions {
@@ -56,7 +65,15 @@ class EnhancedCustomerPage extends StatefulWidget {
 }
 
 class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
-    with SingleTickerProviderStateMixin {
+    with
+        SingleTickerProviderStateMixin,
+        LiveRefreshMixin<EnhancedCustomerPage> {
+  @override
+  Set<String> get liveRefreshEntities => const {
+    'customers',
+    'customer_transactions',
+  };
+
   // Animation
   late AnimationController _animController;
   late Animation<Offset> _offsetAnimation;
@@ -64,11 +81,14 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
   // Form controllers
   final _firstNameController = TextEditingController();
-  final _middleNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _contactController = TextEditingController();
+  final _emailController = TextEditingController();
   final _addressController = TextEditingController();
   final _gstinController = TextEditingController();
+  // Optional birth date (date only). A notifier so the sheet field updates
+  // without rebuilding the whole page.
+  final ValueNotifier<DateTime?> _birthDate = ValueNotifier<DateTime?>(null);
   final _formKey = GlobalKey<FormState>();
 
   // State
@@ -80,11 +100,12 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   // Raw customer entities from the local database stream (used to recompute _customers)
   List<CustomerEntity> _customerEntities = [];
   String _searchQuery = '';
-  late CustomerSortField _sortField;
-  late bool _sortAscending;
   CustomerDateFilter _dateFilter = CustomerDateFilter.all;
   DateTime? _customStartDate;
   DateTime? _customEndDate;
+  // Newest customers first by default so a newly added customer is always on top
+  late CustomerSortField _sortField;
+  late bool _sortAscending;
   bool _isNavigatingAway = false;
 
   // local stream for real-time updates
@@ -94,7 +115,6 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   // Cached event pending amounts per customer (customerId -> total remaining)
   Map<String, double> _eventPendingByCustomer = {};
   // Firestore stream for cross-device real-time sync
-  StreamSubscription<QuerySnapshot>? _firestoreStreamSub;
 
   // Services
   final _auth = FirebaseAuth.instance;
@@ -125,8 +145,10 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       end: 1.0,
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
-    _sortField = widget.initialSortField ?? CustomerSortField.name;
-    _sortAscending = widget.initialSortAscending;
+    _sortField = widget.initialSortField ?? CustomerSortField.createdDate;
+    _sortAscending = widget.initialSortField == null
+        ? false
+        : widget.initialSortAscending;
     CustomerScreenActions.add = _showAddCustomerSheet;
     CustomerScreenActions.applySort = _applyExternalSort;
     _checkUserAuthentication();
@@ -134,7 +156,6 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     _setupEventOrderStream();
     _loadLocalCustomers();
     _fetchFromFirebase();
-    _setupFirestoreStream();
 
     // Start animation after frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -162,11 +183,11 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     _animController.dispose();
     _customerStreamSub?.cancel();
     _eventOrderStreamSub?.cancel();
-    _firestoreStreamSub?.cancel();
     _firstNameController.dispose();
-    _middleNameController.dispose();
     _lastNameController.dispose();
     _contactController.dispose();
+    _emailController.dispose();
+    _birthDate.dispose();
     _addressController.dispose();
     _gstinController.dispose();
     LanguageService.instance.removeListener(_onLanguageChanged);
@@ -279,6 +300,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       'contact': entity.mobile,
       'address': entity.address ?? '',
       'email': entity.email ?? '',
+      'birthDate': entity.birthDate,
       'gstin': entity.gstin ?? '',
       'isActive': true,
       'isSynced': entity.isSynced,
@@ -333,6 +355,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
               'address': data['address'] ?? '',
               'email': data['email'] ?? '',
               'gstin': data['gstin'] ?? data['gst'] ?? '',
+              'birthDate': data['birthDate'],
               'currentPendingAmount':
                   data['currentPendingAmount'] ?? data['pendingBalance'] ?? 0,
               'totalPurchases':
@@ -347,7 +370,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
           })
           .toList();
 
-      // Import into the local database - the stream listener auto-updates the UI
+      // Import into the local database — the stream listener auto-updates the UI
       await CustomerOfflineController.instance.importFromServer(serverList);
 
       // Trigger background sync for any local-only records
@@ -371,104 +394,29 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     }
   }
 
-  // Setup real-time Firestore stream for cross-device synchronization
-  void _setupFirestoreStream() {
-    final currentUser = _auth.currentUser;
-    if (currentUser == null) return;
-
-    _firestoreStreamSub = _firestore
-        .collection('users')
-        .doc(currentUser.uid)
-        .collection('customers')
-        .snapshots()
-        .listen(
-          (snapshot) async {
-            if (!mounted || _isNavigatingAway) return;
-
-            debugPrint(
-              '[EnhancedCustomer] Firestore stream: ${snapshot.docs.length} docs (${snapshot.docChanges.length} changes)',
-            );
-
-            final serverList = snapshot.docs
-                .where((doc) {
-                  final data = doc.data();
-                  return data['isActive'] != false;
-                })
-                .map((doc) {
-                  final data = doc.data();
-                  final firstName = (data['firstName'] ?? '').toString();
-                  final middleName = (data['middleName'] ?? '').toString();
-                  final lastName = (data['lastName'] ?? '').toString();
-                  final fullName = [
-                    firstName,
-                    middleName,
-                    lastName,
-                  ].where((s) => s.isNotEmpty).join(' ');
-
-                  return <String, dynamic>{
-                    'id': doc.id,
-                    'name': fullName,
-                    'mobile': data['contact'] ?? '',
-                    'address': data['address'] ?? '',
-                    'email': data['email'] ?? '',
-                    'currentPendingAmount':
-                        data['currentPendingAmount'] ??
-                        data['pendingBalance'] ??
-                        0,
-                    'totalPurchases':
-                        data['totalPurchaseAmount'] ??
-                        data['totalPurchases'] ??
-                        0,
-                    'updatedAt': data['updatedAt'] is Timestamp
-                        ? (data['updatedAt'] as Timestamp)
-                              .toDate()
-                              .toIso8601String()
-                        : data['updatedAt']?.toString() ?? '',
-                    'createdAt': data['createdAt'] is Timestamp
-                        ? (data['createdAt'] as Timestamp)
-                              .toDate()
-                              .toIso8601String()
-                        : data['createdAt']?.toString() ?? '',
-                  };
-                })
-                .toList();
-
-            // Import into the local database - the stream listener auto-updates the UI
-            await CustomerOfflineController.instance.importFromServer(
-              serverList,
-            );
-
-            // Cache for next time
-            if (_customers.isNotEmpty && mounted) {
-              _cacheDataSource.saveCustomers(_customers);
-            }
-          },
-          onError: (e) {
-            debugPrint('[ERROR] Firestore customer stream error: $e');
-          },
-        );
-  }
-
   // ━━━ FORM HELPERS ━━━
 
   void _clearForm() {
     _firstNameController.clear();
-    _middleNameController.clear();
     _lastNameController.clear();
     _contactController.clear();
-    _addressController.clear();
+    _emailController.clear();
+    _birthDate.value = null;
     _gstinController.clear();
+    _addressController.clear();
     _editingCustomerId = null;
     _isEditing = false;
   }
 
   void _editCustomer(Map<String, dynamic> customer) {
     _firstNameController.text = customer['firstName'] ?? '';
-    _middleNameController.text = customer['middleName'] ?? '';
     _lastNameController.text = customer['lastName'] ?? '';
     _contactController.text = customer['contact'] ?? '';
+    _emailController.text = (customer['email'] ?? '').toString();
+    _birthDate.value = birthDateFromValue(customer['birthDate']);
+    _gstinController.text = (customer['gstin'] ?? customer['gst'] ?? '')
+        .toString();
     _addressController.text = customer['address'] ?? '';
-    _gstinController.text = customer['gstin'] ?? customer['gst'] ?? '';
     _editingCustomerId = customer['id'];
     _isEditing = true;
   }
@@ -481,14 +429,14 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
     try {
       final firstName = _firstNameController.text.trim();
-      final middleName = _middleNameController.text.trim();
       final lastName = _lastNameController.text.trim();
       final fullName = [
         firstName,
-        middleName,
         lastName,
       ].where((s) => s.isNotEmpty).join(' ');
       final contact = _contactController.text.trim();
+      final email = _emailController.text.trim();
+      final birthDate = _birthDate.value;
       final address = _addressController.text.trim();
       final gstinRaw = _gstinController.text.trim().toUpperCase();
       final gstin = gstinRaw.isEmpty ? null : gstinRaw;
@@ -505,6 +453,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
             name: fullName,
             mobile: contact,
             address: address,
+            email: email,
+            birthDate: birthDate,
+            clearBirthDate: birthDate == null,
             gstin: gstin,
             updateGstin: true,
           );
@@ -519,10 +470,11 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                 .doc(_editingCustomerId)
                 .update({
                   'firstName': firstName,
-                  'middleName': middleName,
                   'lastName': lastName,
                   'contact': contact,
                   'address': address,
+                  'email': email,
+                  'birthDate': birthDateToText(birthDate),
                   'gstin': gstin,
                   'updatedAt': FieldValue.serverTimestamp(),
                 });
@@ -547,6 +499,8 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
           name: fullName,
           mobile: contact,
           address: address,
+          email: email.isEmpty ? null : email,
+          birthDate: birthDate,
           gstin: gstin,
         );
         DashboardRefreshService.instance.notifyDataChanged(
@@ -608,7 +562,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                 decoration: BoxDecoration(
                   color: AppTheme.red.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.red.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: AppTheme.red.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -780,8 +736,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton:
-          widget.isEmbedded && DesktopCanvas.isDesktopPlatform
+      floatingActionButton: widget.isEmbedded && DesktopCanvas.isDesktopPlatform
           ? null
           : GlassIconFab(
               tooltip: _localizations.addCustomer,
@@ -827,18 +782,27 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                           searchQuery: _searchQuery,
                           sortField: _sortField,
                           sortAscending: _sortAscending,
-                          dateFilter: _dateFilter,
-                          customStartDate: _customStartDate,
-                          customEndDate: _customEndDate,
                           onSearchChanged: (query) {
                             setState(() => _searchQuery = query);
                           },
                           onSortFieldChanged: (field) {
-                            setState(() => _sortField = field);
+                            setState(() {
+                              _sortField = field;
+                              // Date defaults to newest first, others to A-Z / low-high
+                              _sortAscending =
+                                  field != CustomerSortField.createdDate;
+                            });
                           },
                           onSortDirectionToggle: () {
                             setState(() => _sortAscending = !_sortAscending);
                           },
+                          searchHint: _localizations.searchCustomers,
+                          sortByNameLabel: _localizations.sortByName,
+                          sortByDateLabel: _localizations.sortByDate,
+                          sortByPendingLabel: _localizations.pendingAmount,
+                          dateFilter: _dateFilter,
+                          customStartDate: _customStartDate,
+                          customEndDate: _customEndDate,
                           onDateFilterChanged: (filter) {
                             setState(() => _dateFilter = filter);
                           },
@@ -853,17 +817,15 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                                 end.year,
                                 end.month,
                                 end.day,
-                                23,
-                                59,
-                                59,
                               );
                               _dateFilter = CustomerDateFilter.custom;
                             });
                           },
-                          searchHint: _localizations.searchCustomers,
-                          sortByNameLabel: _localizations.sortByName,
-                          sortByDateLabel: _localizations.sortByDate,
-                          sortByPendingLabel: _localizations.pendingAmount,
+                          dateAllLabel: _localizations.all,
+                          dateThisMonthLabel: _localizations.thisMonth,
+                          dateThisYearLabel: _localizations.thisYear,
+                          dateLastYearLabel: _localizations.lastYear,
+                          dateCustomLabel: _localizations.custom,
                         ),
 
                         const SizedBox(height: 16),
@@ -882,12 +844,20 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                             onRefresh: _fetchFromFirebase,
                             onCustomerTap: _showCustomerDetails,
                             onCustomerLongPress: _showCustomerContextMenu,
+                            onFinanceTap: _openCustomerFinance,
                             onTransactionsTap: _openCustomerTransactions,
+                            onCollectTap: _openCollectPayment,
+                            onReportTap: _openPendingReport,
+                            reportTooltip: _localizations.customerPendingReport,
                             emptyTitle: _localizations.noCustomersYet,
                             emptySubtitle: _localizations.createFirstCustomer,
                             noResultsTitle: _localizations.noResultsFound,
                             noResultsSubtitle:
                                 _localizations.tryDifferentSearch,
+                            pendingLabel: _localizations.syncPending
+                                .toLowerCase(),
+                            birthdayTodayLabel:
+                                _localizations.customerBirthdayToday,
                           ),
                         ),
                       ],
@@ -906,14 +876,54 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
   Widget _buildHeader() {
     return AppTopBar(
-      title: _localizations.customers,
-      subtitle: _localizations.manageCustomers,
+      title: _localizations.manageCustomers,
+      subtitle:
+          '${_customers.length} ${_localizations.customers.toLowerCase()}',
     );
   }
 
-  // ━━━ CUSTOMER HISTORY PAGE ━━━
+  // ━━━ CUSTOMER FINANCE/HISTORY PAGE ━━━
 
-  void _openCustomerTransactions(Map<String, dynamic> customer) {
+  void _openCustomerFinance(Map<String, dynamic> customer) {
+    // Get the explicit serverId if available
+    final serverId = customer['serverId'] as String?;
+    // Get the local integer local id
+    final localId = customer['localId']?.toString() ?? '';
+
+    // Use serverId if available, otherwise use local ID
+    final customerId = (serverId != null && serverId.isNotEmpty)
+        ? serverId
+        : localId;
+
+    debugPrint(
+      '[CustomerFinance] Opening finance page - serverId: $serverId, localId: $localId, using customerId: $customerId',
+    );
+
+    final firstName = customer['firstName'] as String? ?? '';
+    final lastName = customer['lastName'] as String? ?? '';
+    final fullName = '$firstName $lastName'.trim();
+    final contact = customer['contact'] as String? ?? '';
+    final pendingAmount =
+        (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0.0;
+
+    showAppPage(
+      context,
+      CustomerFinancePage(
+        customerId: customerId,
+        customerLocalId: localId,
+        customerName: fullName.isNotEmpty ? fullName : 'Customer',
+        customerContact: contact,
+        currentPendingAmount: pendingAmount,
+      ),
+    );
+  }
+
+  // ━━━ CUSTOMER TRANSACTIONS PAGE ━━━
+
+  void _openCustomerTransactions(
+    Map<String, dynamic> customer, {
+    bool autoOpenReceivePayment = false,
+  }) {
     // Get the explicit serverId if available
     final serverId = customer['serverId'] as String?;
     // Get the local integer local id
@@ -943,8 +953,121 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
         customerName: fullName.isNotEmpty ? fullName : 'Customer',
         customerContact: contact,
         currentPendingAmount: pendingAmount,
+        autoOpenReceivePayment: autoOpenReceivePayment,
       ),
     );
+  }
+
+  /// Desktop/mobile Collect — opens ledger and receive-payment sheet.
+  void _openCollectPayment(Map<String, dynamic> customer) {
+    final pending = (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0;
+    if (pending <= 0) {
+      if (mounted) {
+        GlassyToast.show(context, 'No pending amount to collect');
+      }
+      return;
+    }
+    _openCustomerTransactions(customer, autoOpenReceivePayment: true);
+  }
+
+  bool _isGeneratingReport = false;
+
+  /// Builds the customer's pending-amount statement (PDF) and opens the
+  /// preview. Its WhatsApp button opens that customer's chat with the PDF and a
+  /// ready message attached. Read-only: never touches the ledger.
+  Future<void> _openPendingReport(Map<String, dynamic> customer) async {
+    if (_isGeneratingReport) return;
+    _isGeneratingReport = true;
+
+    BuildContext? dialogContext;
+    var dialogOpen = true;
+    void closeDialog() {
+      if (dialogOpen) {
+        dialogOpen = false;
+        final ctx = dialogContext;
+        if (ctx != null && ctx.mounted) Navigator.of(ctx).pop();
+      }
+    }
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        dialogContext = ctx;
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
+
+    try {
+      final service = CustomerPendingReportService.instance;
+      final shopFuture = ShopRepository()
+          .getShopDetails()
+          .timeout(const Duration(seconds: 5), onTimeout: () => Shop.empty)
+          .catchError((Object _) => Shop.empty);
+      final report = await service
+          .load(customer)
+          .timeout(const Duration(seconds: 30));
+      final shop = await shopFuture;
+
+      // The reminder text is also printed inside the PDF, so the single PDF
+      // attachment carries the message even if WhatsApp drops a caption.
+      final shopName = shop.shopName.trim().isNotEmpty
+          ? shop.shopName.trim()
+          : (shop.ownerName ?? '').trim();
+      final message = _localizations.customerPendingWhatsAppMessage(
+        report.customerName,
+        shopName,
+        CustomerPendingReportService.formatAmountGrouped(report.totalPending),
+        CustomerPendingReportService.formatDate(report.generatedAt),
+      );
+
+      final bytes = await service
+          .buildPdf(report, shop, message: message)
+          .timeout(const Duration(seconds: 30));
+      final safeName = report.customerName
+          .replaceAll(RegExp(r'[^\w\s]'), '')
+          .trim()
+          .replaceAll(RegExp(r'\s+'), '_');
+      final fileName =
+          'Pending_Report_${safeName.isEmpty ? 'Customer' : safeName}.pdf';
+
+      File? file;
+      if (!kIsWeb) {
+        final dir = await Directory.systemTemp.createTemp('pending_report_');
+        file = File('${dir.path}/$fileName');
+        await file.writeAsBytes(bytes);
+      }
+
+      closeDialog();
+      if (!mounted) return;
+      await FilePreviewPage.open(
+        context,
+        file: file,
+        bytes: kIsWeb ? bytes : null,
+        fileName: 'Pending Report - ${report.customerName}',
+        fileType: FilePreviewType.pdf,
+        subtitle:
+            'Pending ₹${CustomerPendingReportService.formatAmount(report.totalPending)}',
+        customerPhone: report.phone.isEmpty ? null : report.phone,
+        whatsAppMessage: report.phone.isEmpty ? null : message,
+        // Light render: a 300 dpi A4 bitmap is ~35 MB and gets the app killed
+        // while WhatsApp is open (black screen / restart on return).
+        renderDpi: 130,
+      );
+    } catch (e) {
+      debugPrint('[EnhancedCustomer] Pending report failed: $e');
+      closeDialog();
+      if (mounted) {
+        GlassyToast.show(
+          context,
+          _localizations.customerReportFailed,
+          isError: true,
+        );
+      }
+    } finally {
+      closeDialog();
+      _isGeneratingReport = false;
+    }
   }
 
   // ━━━ CUSTOMER DETAILS BOTTOM SHEET ━━━
@@ -954,21 +1077,31 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => _CustomerDetailsSheet(
-        customer: customer,
-        localizations: _localizations,
-        onViewDetails: () {
-          Navigator.pop(context);
-          _navigateToCustomerDetails(customer);
-        },
-        onEdit: () {
-          Navigator.pop(context);
-          _showEditCustomerSheet(customer);
-        },
-        onDelete: () {
-          Navigator.pop(context);
-          _deleteCustomer(customer);
-        },
+      builder: (context) => GlassDraggableSheet(
+        initialChildSize: 0.65,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, controller) => _CustomerDetailsSheet(
+          customer: customer,
+          localizations: _localizations,
+          scrollController: controller,
+          onViewDetails: () {
+            Navigator.pop(context);
+            _navigateToCustomerDetails(customer);
+          },
+          onCollect: () {
+            Navigator.pop(context);
+            _openCollectPayment(customer);
+          },
+          onEdit: () {
+            Navigator.pop(context);
+            _showEditCustomerSheet(customer);
+          },
+          onDelete: () {
+            Navigator.pop(context);
+            _deleteCustomer(customer);
+          },
+        ),
       ),
     );
   }
@@ -979,85 +1112,70 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     showAppBottomSheet(
       context: context,
       backgroundColor: AppTheme.transparent,
-      builder: (context) => ClipRRect(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.card(context),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(20),
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const GlassSheetHandle(),
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              '${customer['firstName'] ?? ''} ${customer['lastName'] ?? ''}'
+                  .trim(),
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: AppColors.accent(context),
               ),
-            ),
-            child: SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(top: 12),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppTheme.grey300,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text(
-                      '${customer['firstName'] ?? ''} ${customer['lastName'] ?? ''}'
-                          .trim(),
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        color: AppColors.accent(context),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const Divider(height: 1),
-                  _buildContextMenuItem(
-                    icon: Icons.visibility_rounded,
-                    label: _localizations.viewDetails,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showCustomerDetails(customer);
-                    },
-                  ),
-                  _buildContextMenuItem(
-                    icon: Icons.account_balance_wallet_rounded,
-                    label: _localizations.viewBalance,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _navigateToCustomerDetails(customer);
-                    },
-                  ),
-                  _buildContextMenuItem(
-                    icon: Icons.edit_rounded,
-                    label: _localizations.edit,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showEditCustomerSheet(customer);
-                    },
-                  ),
-                  _buildContextMenuItem(
-                    icon: Icons.delete_outline_rounded,
-                    label: _localizations.delete,
-                    isDestructive: true,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _deleteCustomer(customer);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-        ),
+          const Divider(height: 1),
+          _buildContextMenuItem(
+            icon: Icons.visibility_rounded,
+            label: _localizations.viewDetails,
+            onTap: () {
+              Navigator.pop(context);
+              _showCustomerDetails(customer);
+            },
+          ),
+          _buildContextMenuItem(
+            icon: Icons.account_balance_wallet_rounded,
+            label: _localizations.viewBalance,
+            onTap: () {
+              Navigator.pop(context);
+              _navigateToCustomerDetails(customer);
+            },
+          ),
+          if (((customer['currentPendingAmount'] as num?)?.toDouble() ?? 0) > 0)
+            _buildContextMenuItem(
+              icon: Icons.currency_rupee_rounded,
+              label: 'Collect',
+              onTap: () {
+                Navigator.pop(context);
+                _openCollectPayment(customer);
+              },
+            ),
+          _buildContextMenuItem(
+            icon: Icons.edit_rounded,
+            label: _localizations.edit,
+            onTap: () {
+              Navigator.pop(context);
+              _showEditCustomerSheet(customer);
+            },
+          ),
+          _buildContextMenuItem(
+            icon: Icons.delete_outline_rounded,
+            label: _localizations.delete,
+            isDestructive: true,
+            onTap: () {
+              Navigator.pop(context);
+              _deleteCustomer(customer);
+            },
+          ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }
@@ -1119,10 +1237,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
   Widget _buildFormSheet() {
     final action = DrawerBottomBar(
+      plain: true,
       action: AppPillButton(
-        label: _isEditing
-            ? _localizations.update
-            : _localizations.addCustomer,
+        label: _isEditing ? _localizations.update : _localizations.addCustomer,
         icon: Icons.check_rounded,
         loading: _isSaving,
         expanded: !_isEditing,
@@ -1132,152 +1249,249 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     return dockDrawerAction(
       context: context,
       action: action,
-      phoneDecoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       body: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!DesktopCanvas.isDesktopPlatform) const GlassSheetHandle(),
+            if (!DesktopCanvas.isDesktopPlatform) const SizedBox(height: 8),
+            // Title
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _isEditing
+                      ? _localizations.editCustomer
+                      : _localizations.addNewCustomer,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.accent(context),
+                    fontFamily: 'Literata',
+                  ),
+                ),
+                if (!DesktopCanvas.isDesktopPlatform)
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () {
+                      _clearForm();
+                      Navigator.pop(context);
+                    },
+                  ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            _buildFormSectionTitle(_localizations.customerBasicDetails),
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (!DesktopCanvas.isDesktopPlatform)
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppTheme.grey300,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
+                Expanded(
+                  child: _buildField(
+                    label: _localizations.firstName,
+                    controller: _firstNameController,
+                    isRequired: true,
                   ),
-                if (!DesktopCanvas.isDesktopPlatform) const SizedBox(height: 16),
-                // Title
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _isEditing
-                          ? _localizations.editCustomer
-                          : _localizations.addNewCustomer,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.accent(context),
-                        fontFamily: 'Literata',
-                      ),
-                    ),
-                    if (!DesktopCanvas.isDesktopPlatform)
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () {
-                          _clearForm();
-                          Navigator.pop(context);
-                        },
-                      ),
-                  ],
                 ),
-                const SizedBox(height: 20),
-                _buildField(
-                  label: _localizations.firstName,
-                  controller: _firstNameController,
-                  icon: Icons.person_outline,
-                  isRequired: true,
-                ),
-                const SizedBox(height: 14),
-                _buildField(
-                  label: _localizations.middleName,
-                  controller: _middleNameController,
-                  icon: Icons.person_outline,
-                ),
-                const SizedBox(height: 14),
-                _buildField(
-                  label: _localizations.lastName,
-                  controller: _lastNameController,
-                  icon: Icons.person_outline,
-                  isRequired: true,
-                ),
-                const SizedBox(height: 14),
-                _buildField(
-                  label: _localizations.contactNumber,
-                  controller: _contactController,
-                  icon: Icons.phone_outlined,
-                  keyboardType: TextInputType.phone,
-                  isRequired: true,
-                  maxLength: 10,
-                ),
-                const SizedBox(height: 14),
-                _buildField(
-                  label: _localizations.address,
-                  controller: _addressController,
-                  icon: Icons.location_on_outlined,
-                  maxLines: 3,
-                  isRequired: true,
-                ),
-                const SizedBox(height: 14),
-                _buildField(
-                  label: 'GSTIN (optional)',
-                  controller: _gstinController,
-                  icon: Icons.receipt_long_outlined,
-                  maxLength: 15,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildField(
+                    label: _localizations.lastName,
+                    controller: _lastNameController,
+                    isRequired: true,
+                  ),
                 ),
               ],
             ),
-          ),
+            const SizedBox(height: 14),
+            _buildField(
+              label: _localizations.contactNumber,
+              controller: _contactController,
+              icon: Icons.phone_outlined,
+              keyboardType: TextInputType.phone,
+              isRequired: true,
+              maxLength: 10,
+            ),
+            const SizedBox(height: 20),
+            _buildFormSectionTitle(_localizations.customerContactDetails),
+            _buildField(
+              label: _localizations.emailAddress,
+              controller: _emailController,
+              icon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
+              isOptional: true,
+              extraValidator: (text) =>
+                  text.isEmpty ||
+                      RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(text)
+                  ? null
+                  : _localizations.customerInvalidEmail,
+            ),
+            const SizedBox(height: 14),
+            _BirthDateField(
+              value: _birthDate,
+              pickerHelp: _localizations.customerBirthDate,
+              decoration: _fieldDecoration(
+                '${_localizations.customerBirthDate} (${_localizations.optional})',
+                Icons.cake_outlined,
+              ),
+            ),
+            const SizedBox(height: 14),
+            _buildField(
+              label: _localizations.gstNumber,
+              controller: _gstinController,
+              icon: Icons.receipt_long_outlined,
+              maxLength: 15,
+              isOptional: true,
+              extraValidator: (text) =>
+                  text.isEmpty || isValidGstin(text.toUpperCase())
+                  ? null
+                  : _localizations.invalidGstNumber,
+            ),
+            const SizedBox(height: 20),
+            _buildFormSectionTitle(_localizations.address),
+            _buildField(
+              label: _localizations.address,
+              controller: _addressController,
+              icon: Icons.location_on_outlined,
+              maxLines: 2,
+              isOptional: true,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFormSectionTitle(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Text(
+        text.toUpperCase(),
+        style: TextStyle(
+          fontFamily: 'Literata',
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+          color: AppColors.mutedText(context),
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _fieldDecoration(String labelText, IconData? icon) {
+    return InputDecoration(
+      labelText: labelText,
+      labelStyle: TextStyle(color: AppTheme.grey600, fontFamily: 'Literata'),
+      prefixIcon: icon == null ? null : Icon(icon, color: AppTheme.grey600),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppTheme.grey300),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppTheme.grey300),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppColors.accent(context), width: 2),
+      ),
+      filled: true,
+      fillColor: AppColors.scaffold(context),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
     );
   }
 
   Widget _buildField({
     required String label,
     required TextEditingController controller,
-    required IconData icon,
+    IconData? icon,
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
     int? maxLength,
     bool isRequired = false,
+    bool isOptional = false,
+    String? Function(String text)? extraValidator,
   }) {
+    final labelText = isRequired
+        ? '$label *'
+        : (isOptional ? '$label (${_localizations.optional})' : label);
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
       maxLength: maxLength,
       style: TextStyle(fontFamily: 'Literata', fontSize: 14),
-      decoration: InputDecoration(
-        labelText: isRequired ? '$label *' : label,
-        labelStyle: TextStyle(color: AppTheme.grey600, fontFamily: 'Literata'),
-        prefixIcon: Icon(icon, color: AppTheme.grey600),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppTheme.grey300),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppTheme.grey300),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.accent(context), width: 2),
-        ),
-        filled: true,
-        fillColor: AppColors.scaffold(context),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 12,
-        ),
-      ),
-      validator: isRequired
-          ? (value) {
-              if (value == null || value.trim().isEmpty) {
-                return '$label ${_localizations.isRequired}';
-              }
-              if (label == _localizations.contactNumber && value.length != 10) {
-                return _localizations.contactMustBe10Digits;
-              }
-              return null;
-            }
-          : null,
+      decoration: _fieldDecoration(labelText, icon),
+      validator: (value) {
+        final text = value?.trim() ?? '';
+        if (isRequired) {
+          if (text.isEmpty) {
+            return '$label ${_localizations.isRequired}';
+          }
+          if (label == _localizations.contactNumber && value!.length != 10) {
+            return _localizations.contactMustBe10Digits;
+          }
+        }
+        return extraValidator?.call(text);
+      },
+    );
+  }
+}
+
+/// Read-only birth date field that opens a date picker; tap the clear icon to
+/// remove the date. Optional: an empty value is saved as "no birth date".
+class _BirthDateField extends StatelessWidget {
+  final ValueNotifier<DateTime?> value;
+  final String pickerHelp;
+  final InputDecoration decoration;
+
+  const _BirthDateField({
+    required this.value,
+    required this.pickerHelp,
+    required this.decoration,
+  });
+
+  Future<void> _pick(BuildContext context) async {
+    final now = DateTime.now();
+    final current = value.value;
+    final initial = (current != null && !current.isAfter(now))
+        ? current
+        : DateTime(now.year - 25, now.month, now.day);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(1900),
+      lastDate: now,
+      helpText: pickerHelp,
+    );
+    if (picked != null) {
+      value.value = DateTime(picked.year, picked.month, picked.day);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<DateTime?>(
+      valueListenable: value,
+      builder: (context, date, _) {
+        final text = date == null ? '' : DateFormat('dd MMM yyyy').format(date);
+        return TextFormField(
+          key: ValueKey(text),
+          initialValue: text,
+          readOnly: true,
+          onTap: () => _pick(context),
+          style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+          decoration: decoration.copyWith(
+            suffixIcon: date == null
+                ? const Icon(Icons.calendar_today_outlined, size: 18)
+                : IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 18),
+                    onPressed: () => value.value = null,
+                  ),
+          ),
+        );
+      },
     );
   }
 }
@@ -1287,14 +1501,18 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 class _CustomerDetailsSheet extends StatelessWidget {
   final Map<String, dynamic> customer;
   final AppLocalizations localizations;
+  final ScrollController scrollController;
   final VoidCallback onViewDetails;
+  final VoidCallback? onCollect;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _CustomerDetailsSheet({
     required this.customer,
     required this.localizations,
+    required this.scrollController,
     required this.onViewDetails,
+    this.onCollect,
     required this.onEdit,
     required this.onDelete,
   });
@@ -1306,6 +1524,8 @@ class _CustomerDetailsSheet extends StatelessWidget {
     final firstName = (customer['firstName'] ?? '').toString();
     final contact = (customer['contact'] ?? '').toString();
     final address = (customer['address'] ?? '').toString();
+    final email = (customer['email'] ?? '').toString().trim();
+    final birthDate = birthDateFromValue(customer['birthDate']);
     final pendingAmount =
         (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0.0;
     final isSynced = customer['isSynced'] as bool? ?? true;
@@ -1313,39 +1533,20 @@ class _CustomerDetailsSheet extends StatelessWidget {
     final accentColor = AppColors.action(context);
     final initials = firstName.isNotEmpty ? firstName[0].toUpperCase() : 'C';
 
-    return ClipRRect(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.7,
-          ),
-          decoration: BoxDecoration(
-            color: AppColors.card(context),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
+    return Column(
+      children: [
+        const GlassSheetHandle(),
+        Expanded(
           child: SingleChildScrollView(
+            controller: scrollController,
             child: SafeArea(
+              top: false,
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Handle
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: AppTheme.grey300,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
                     // Header with avatar
                     Row(
                       children: [
@@ -1391,7 +1592,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      fullName.isNotEmpty ? fullName : '-',
+                                      fullName.isNotEmpty ? fullName : '—',
                                       style: TextStyle(
                                         fontFamily: 'Literata',
                                         fontWeight: FontWeight.w700,
@@ -1400,10 +1601,46 @@ class _CustomerDetailsSheet extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                  SyncStatusIcon(
-                                    isSynced: isSynced,
-                                    size: 16,
-                                    padded: false,
+                                  // Sync status badge - always show
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isSynced
+                                          ? AppTheme.green50
+                                          : AppTheme.orange50,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          isSynced
+                                              ? Icons.cloud_done_rounded
+                                              : Icons.cloud_upload_rounded,
+                                          size: 12,
+                                          color: isSynced
+                                              ? AppTheme.green700
+                                              : AppTheme.orange700,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          isSynced
+                                              ? localizations.synced
+                                              : localizations.syncPending,
+                                          style: TextStyle(
+                                            fontFamily: 'Literata',
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: isSynced
+                                                ? AppTheme.green700
+                                                : AppTheme.orange700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
@@ -1489,6 +1726,28 @@ class _CustomerDetailsSheet extends StatelessWidget {
                         ),
                       ),
 
+                    // Email
+                    if (email.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      _buildDetailRow(
+                        context: context,
+                        icon: Icons.email_outlined,
+                        label: localizations.emailAddress,
+                        value: email,
+                      ),
+                    ],
+
+                    // Birth date
+                    if (birthDate != null) ...[
+                      const SizedBox(height: 16),
+                      _buildDetailRow(
+                        context: context,
+                        icon: Icons.cake_outlined,
+                        label: localizations.customerBirthDate,
+                        value: DateFormat('dd MMM yyyy').format(birthDate),
+                      ),
+                    ],
+
                     // Address
                     if (address.isNotEmpty && address != 'N/A') ...[
                       const SizedBox(height: 16),
@@ -1504,7 +1763,20 @@ class _CustomerDetailsSheet extends StatelessWidget {
                     const Divider(),
                     const SizedBox(height: 16),
 
-                    // Action buttons
+                    // Action buttons — Collect only when there is dues to receive.
+                    if (pendingAmount > 0 && onCollect != null) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: _buildActionButton(
+                          context: context,
+                          icon: Icons.currency_rupee_rounded,
+                          label: 'Collect',
+                          onTap: onCollect!,
+                          isPrimary: true,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                     Row(
                       children: [
                         Expanded(
@@ -1513,7 +1785,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
                             icon: Icons.visibility_rounded,
                             label: localizations.viewBalance,
                             onTap: onViewDetails,
-                            isPrimary: true,
+                            isPrimary: pendingAmount <= 0 || onCollect == null,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -1540,7 +1812,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 

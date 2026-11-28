@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../../../../core/database/local_store.dart';
 import '../../../../core/services/local_database.dart';
 import '../../../billing/offline/controllers/bill_offline_controller.dart';
+import '../../../billing/domain/sale_return_math.dart';
 import '../../../customer/offline/controllers/customer_offline_controller.dart';
 import '../../../customer/offline/entities/customer_transaction_entity.dart';
 import '../../../inventory_management/offline/controllers/purchase_offline_controller.dart';
@@ -255,7 +256,12 @@ class DashboardLocalDataSource {
         totalReturnedItems += returnedQty
             .round(); // Round for dashboard display
 
-        final returnAmount = returnedQty * sellingPrice * chargeRatio;
+        // Return amount = returnedQty × sellingPrice × (1 - discountRatio) This accounts for the proportional discount that was applied at sale
+        final returnAmount = SaleReturnMath.returnedValue(
+          sellingPrice: sellingPrice,
+          returnedQuantity: returnedQty,
+          chargeRatio: chargeRatio,
+        );
         totalReturns += returnAmount;
 
         final netRevenue = netSoldQty * sellingPrice * chargeRatio;

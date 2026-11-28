@@ -79,12 +79,15 @@ service cloud.firestore {
       return !('subscriptionDate' in data) || data.subscriptionDate == null;
     }
 
-    // Prefer server-written expiresAt fields; fall back to start+duration.
+    // Shop/business data access window. Prefer server-written expiresAt
+    // fields; fall back to start+duration. An explicit `active` status
+    // (incl. console grants before date backfill) also opens the window.
     function hasActiveSubscription(userId) {
       let data = get(/databases/$(database)/documents/users/$(userId)).data;
       let paidByExpiry = data.subscriptionExpiresAt is timestamp
         && request.time < data.subscriptionExpiresAt;
-      let paidActive = paidByExpiry
+      let paidActive = data.subscriptionStatus == 'active'
+        || paidByExpiry
         || (data.subscriptionDate is timestamp
           && request.time < data.subscriptionDate + duration.value(365, 'd'));
       let trialByExpiry = isUnpaid(data)
@@ -103,6 +106,12 @@ service cloud.firestore {
         && !(data.createdAt is timestamp)
         && !(data.trialExpiresAt is timestamp);
       return paidActive || trialByExpiry || trialByField || trialByCreated || trialByStatus;
+    }
+
+    // Public app config (pricing). Clients may read; only Admin SDK may write.
+    match /app_config/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
     }
 
     // Employee profile docs: owner create/update via Admin SDK preferred;
@@ -213,8 +222,10 @@ service cloud.firestore {
       match /expenses/{document=**} {
         allow read, write: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
       }
+      // Owner can always read (page load / bills); writes need a valid window.
       match /shop_details/{document=**} {
-        allow read: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
+        allow read: if isOwner(userId)
+          || (isEmployeeOf(userId) && hasActiveSubscription(userId));
         allow write: if isOwner(userId) && hasActiveSubscription(userId);
       }
       match /settings/{document=**} {
@@ -222,6 +233,11 @@ service cloud.firestore {
         allow write: if isOwner(userId) && hasActiveSubscription(userId);
       }
       match /product_settings/{document=**} {
+        allow read: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
+        allow write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+      // Event-order custom columns.
+      match /event_order_settings/{document=**} {
         allow read: if isOwnerOrMember(userId) && hasActiveSubscription(userId);
         allow write: if isOwner(userId) && hasActiveSubscription(userId);
       }

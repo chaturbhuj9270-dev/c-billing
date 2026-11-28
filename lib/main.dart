@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'core/config/app_store_config.dart';
 import 'core/di/injection.dart' as di;
@@ -20,9 +20,12 @@ import 'core/services/bill_report_settings_service.dart';
 import 'core/services/stock_report_settings_service.dart';
 import 'core/services/local_database.dart';
 import 'core/services/error_logging_service.dart';
+import 'core/services/crashlytics_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/ui/app_scroll_behavior.dart';
 import 'core/services/sync_bootstrap.dart';
+import 'core/services/live_sync_service.dart';
+import 'core/services/sync_query_helper.dart';
 import 'firebase_options.dart';
 
 Future<void>? _firebaseReady;
@@ -53,25 +56,9 @@ Future<void> _initFirebase() async {
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
-    ).timeout(const Duration(seconds: 8));
-
-    // Crash reporting for Play production builds (keeps local ErrorLogging too).
-    if (!kIsWeb) {
-      final previousFlutterOnError = FlutterError.onError;
-      FlutterError.onError = (details) {
-        previousFlutterOnError?.call(details);
-        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
-      };
-      final previousPlatformOnError = PlatformDispatcher.instance.onError;
-      PlatformDispatcher.instance.onError = (error, stack) {
-        previousPlatformOnError?.call(error, stack);
-        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-        return true;
-      };
-      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
-        !kDebugMode,
-      );
-    }
+    ).timeout(const Duration(seconds: 15));
+    // Crashlytics after Firebase core — no-ops on web/desktop unsupported targets.
+    await CrashlyticsService.instance.initialize();
   } catch (e) {
     debugPrint('Firebase init error: $e');
   }
@@ -146,7 +133,15 @@ Future<void> _safeInit(Future<void> Function() init, String name) async {
 // Initialize sync services. Call ONLY after user is authenticated
 // and AccessControlService.loadForCurrentUser() has completed.
 void initializeSyncServices() {
+  // Must come first: marks the start of this user's session so incremental
+  // pull cursors from a previous account/session are never reused.
+  SyncQueryHelper.beginSession(FirebaseAuth.instance.currentUser?.uid);
+
   SyncBootstrap.initializeServices();
+
+  // Real-time push/pull between devices and the web (free: Firestore
+  // listeners + local DB change events drive the services above).
+  LiveSyncService.instance.start();
 }
 
 // Full server → local pull right after login / session restore.

@@ -47,6 +47,12 @@ class CompanyEntity {
   // Address
   String address;
 
+  // email (optional)
+  String email;
+
+  // contactPerson (optional)
+  String contactPerson;
+
   // Whether company is active
   bool isActive;
 
@@ -66,6 +72,8 @@ class CompanyEntity {
     this.gstCode = '',
     this.contact = '',
     this.address = '',
+    this.email = '',
+    this.contactPerson = '',
     this.isActive = true,
     this.syncStatus = CompanySyncStatus.newRecord,
     required this.updatedAt,
@@ -80,6 +88,8 @@ class CompanyEntity {
     String gstCode = '',
     String contact = '',
     String address = '',
+    String email = '',
+    String contactPerson = '',
     bool isActive = true,
     CompanySyncStatus syncStatus = CompanySyncStatus.newRecord,
   }) {
@@ -91,6 +101,8 @@ class CompanyEntity {
       gstCode: gstCode,
       contact: contact,
       address: address,
+      email: email,
+      contactPerson: contactPerson,
       isActive: isActive,
       syncStatus: syncStatus,
       updatedAt: now,
@@ -108,6 +120,8 @@ class CompanyEntity {
       gstCode: data['gstCode'] as String? ?? '',
       contact: data['contact'] as String? ?? '',
       address: data['address'] as String? ?? '',
+      email: data['email'] as String? ?? '',
+      contactPerson: data['contactPerson'] as String? ?? '',
       isActive: data['isActive'] as bool? ?? true,
       syncStatus: CompanySyncStatus.synced,
       updatedAt: _parseDateTime(data['updatedAt']) ?? now,
@@ -124,6 +138,8 @@ class CompanyEntity {
       'gstCode': gstCode,
       'contact': contact,
       'address': address,
+      'email': email,
+      'contactPerson': contactPerson,
       'isActive': isActive,
       'updatedAt': updatedAt.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
@@ -140,6 +156,8 @@ class CompanyEntity {
       'gstCode': gstCode,
       'contact': contact,
       'address': address,
+      'email': email,
+      'contactPerson': contactPerson,
       'isActive': isActive,
       'syncStatus': syncStatus.name,
       'isSynced': syncStatus == CompanySyncStatus.synced,
@@ -157,6 +175,8 @@ class CompanyEntity {
     String? gstCode,
     String? contact,
     String? address,
+    String? email,
+    String? contactPerson,
     bool? isActive,
     CompanySyncStatus? syncStatus,
     DateTime? updatedAt,
@@ -169,6 +189,8 @@ class CompanyEntity {
       gstCode: gstCode ?? this.gstCode,
       contact: contact ?? this.contact,
       address: address ?? this.address,
+      email: email ?? this.email,
+      contactPerson: contactPerson ?? this.contactPerson,
       isActive: isActive ?? this.isActive,
       syncStatus: syncStatus ?? this.syncStatus,
       updatedAt: updatedAt ?? DateTime.now(),

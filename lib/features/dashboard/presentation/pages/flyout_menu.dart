@@ -239,26 +239,30 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   }
 
   Future<void> _loadBiometricStatus() async {
+    final biometricService = BiometricService.instance;
+    var canUse = false;
+    var isEnabled = false;
+
     try {
-      final biometricService = BiometricService.instance;
-      final canUse = await biometricService.canUseBiometrics();
-      final isEnabled = await biometricService.isBiometricLockEnabled();
-      if (mounted) {
-        setState(() {
-          _canUseBiometrics = canUse;
-          _biometricLockEnabled = isEnabled;
-        });
-      }
+      canUse = await biometricService.canUseBiometrics();
     } catch (e) {
-      debugPrint('[ERROR] Failed to load biometric status: $e');
-      // Default to not showing biometric option if there's an error
-      if (mounted) {
-        setState(() {
-          _canUseBiometrics = false;
-          _biometricLockEnabled = false;
-        });
-      }
+      debugPrint('[ERROR] Failed to check biometric availability: $e');
+      canUse = false;
     }
+
+    // Don't hide the toggle if only the preference read fails.
+    try {
+      isEnabled = await biometricService.isBiometricLockEnabled();
+    } catch (e) {
+      debugPrint('[ERROR] Failed to read biometric lock preference: $e');
+      isEnabled = false;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _canUseBiometrics = canUse;
+      _biometricLockEnabled = isEnabled;
+    });
   }
 
   Future<void> _loadTwoStepStatus() async {
@@ -271,19 +275,44 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _toggleBiometricLock(bool enabled) async {
+  /// Returns true when the preference was persisted successfully.
+  Future<bool> _toggleBiometricLock(bool enabled) async {
     final biometricService = BiometricService.instance;
-    await biometricService.setBiometricLockEnabled(enabled);
-    if (mounted) {
-      setState(() {
-        _biometricLockEnabled = enabled;
-      });
-      GlassyToast.show(
-        context,
-        enabled
-            ? _localizations.biometricEnabled
-            : _localizations.biometricDisabled,
-      );
+    try {
+      final ok = await biometricService.setBiometricLockEnabled(enabled);
+      if (!mounted) return ok;
+
+      if (ok) {
+        setState(() => _biometricLockEnabled = enabled);
+        GlassyToast.show(
+          context,
+          enabled
+              ? _localizations.biometricEnabled
+              : _localizations.biometricDisabled,
+        );
+      } else {
+        // Keep switch in sync with the real stored value.
+        setState(() => _biometricLockEnabled = !enabled);
+        GlassyToast.show(
+          context,
+          enabled
+              ? _localizations.biometricsNotAvailable
+              : 'Could not disable biometric lock',
+          isError: true,
+        );
+      }
+      return ok;
+    } catch (e) {
+      debugPrint('[ERROR] Biometric lock toggle failed: $e');
+      if (mounted) {
+        setState(() => _biometricLockEnabled = !enabled);
+        GlassyToast.show(
+          context,
+          '${_localizations.biometricsNotAvailable}: $e',
+          isError: true,
+        );
+      }
+      return false;
     }
   }
 
@@ -1613,7 +1642,7 @@ class _LanguageDialog extends StatelessWidget {
 class _SettingsDialog extends StatefulWidget {
   final bool biometricLockEnabled;
   final bool canUseBiometrics;
-  final Function(bool) onBiometricToggle;
+  final Future<bool> Function(bool) onBiometricToggle;
 
   const _SettingsDialog({
     required this.biometricLockEnabled,
@@ -1760,11 +1789,14 @@ class _SettingsDialogState extends State<_SettingsDialog> {
                           Switch(
                             value: _biometricEnabled,
                             onChanged: widget.canUseBiometrics
-                                ? (value) {
+                                ? (value) async {
+                                    final ok =
+                                        await widget.onBiometricToggle(value);
+                                    if (!mounted) return;
                                     setState(() {
-                                      _biometricEnabled = value;
+                                      // Keep switch aligned with persisted result.
+                                      _biometricEnabled = ok ? value : !value;
                                     });
-                                    widget.onBiometricToggle(value);
                                   }
                                 : null,
                             activeThumbColor: AppTheme.white,
