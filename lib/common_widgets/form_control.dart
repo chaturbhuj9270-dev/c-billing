@@ -10,7 +10,7 @@ class FormControl extends StatelessWidget {
   final TextInputType? keyboardType;
 
   const FormControl({
-    Key? key,
+    super.key,
     required this.label,
     this.hintText,
     this.obscureText = false,
@@ -18,7 +18,7 @@ class FormControl extends StatelessWidget {
     this.prefix,
     this.suffix,
     this.keyboardType,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -41,8 +41,13 @@ class FormControl extends StatelessWidget {
               borderSide: BorderSide.none,
             ),
             filled: true,
-            fillColor: theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surfaceVariant,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            fillColor:
+                theme.inputDecorationTheme.fillColor ??
+                theme.colorScheme.surfaceContainerHighest,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
         ),
       ],

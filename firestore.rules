@@ -1,0 +1,146 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Clients must not self-activate subscription fields.
+    // Cloud Functions (Admin SDK) bypass these rules after Cashfree PAID.
+    function subscriptionFieldsUnchanged() {
+      return !request.resource.data
+        .diff(resource.data)
+        .affectedKeys()
+        .hasAny([
+          'subscriptionDate',
+          'lastSubscriptionUpdate',
+          'lastSubscriptionOrderId',
+          'subscriptionStatus',
+          'subscriptionProvider'
+        ]);
+    }
+
+    function creatingInactiveSubscription() {
+      return (!('subscriptionDate' in request.resource.data)
+          || request.resource.data.subscriptionDate == null)
+        && (!('subscriptionStatus' in request.resource.data)
+          || request.resource.data.subscriptionStatus == 'inactive');
+    }
+
+    // Shop/business data access window.
+    // - Explicit `active` status (incl. console grants before date backfill)
+    // - Or subscriptionDate within 365 days (trial + paid)
+    function hasActiveSubscription(userId) {
+      let data = get(/databases/$(database)/documents/users/$(userId)).data;
+      return data.subscriptionStatus == 'active'
+        || (data.subscriptionDate is timestamp
+          && request.time < data.subscriptionDate + duration.value(365, 'd'));
+    }
+
+    // Public app config (pricing). Clients may read; only Admin SDK may write.
+    match /app_config/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && creatingInactiveSubscription();
+      allow update: if isOwner(userId) && subscriptionFieldsUnchanged();
+      allow delete: if isOwner(userId);
+
+      match /subscription_payments/{paymentId} {
+        allow read: if isOwner(userId);
+        allow write: if false; // Admin SDK / Cloud Functions only
+      }
+
+      match /customers/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /suppliers/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /companies/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /products/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /stock/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /purchases/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /bills/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /invoices/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      // Collections the app syncs between devices / web. They were missing
+      // here, so the catch-all deny below silently blocked their sync
+      // (permission-denied), leaving other devices with stale data.
+      match /customer_transactions/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /eventOrders/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /expenses/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /purchaseBatches/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /purchaseReturns/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /stockLedger/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      // Per-user app settings (bill / purchase / stock report columns, product
+      // and event-order custom columns).
+      match /settings/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /product_settings/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /event_order_settings/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      // Shop profile used by mobile + web (users/{uid}/shop_details/main).
+      // Owner can always read (page load / bills); writes need a valid window.
+      match /shop_details/{document=**} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+
+      match /profile/{document=**} {
+        allow read, write: if isOwner(userId) && hasActiveSubscription(userId);
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

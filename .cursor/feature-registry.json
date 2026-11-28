@@ -1,0 +1,1008 @@
+{
+  "version": 2,
+  "about": "Living map of what the app must keep doing. scripts/feature_guard.py verifies every anchor still exists and every forbidden pattern is still absent. Update this file in the same change that adds, moves or intentionally changes a feature.",
+  "features": [
+    {
+      "id": "customer-ledger",
+      "name": "Customer ledger, pending amount and receive payment",
+      "files": [
+        "lib/features/customer/",
+        "lib/core/services/customer_transaction_service.dart"
+      ],
+      "invariants": [
+        "Ledger rows and the customer's pending amount are written ONLY through CustomerTransactionOfflineController (addBillTransaction / addPaymentTransaction / addReturnTransaction). Never also write the same event straight to Firestore (CustomerTransactionService.receivePayment / recordBillGenerated): that duplicated rows and doubled the balance.",
+        "Receive Payment is hidden when pending <= 0 and the amount can never exceed pending (button gate, sheet validator, save guard).",
+        "Every 'Bill Created' ledger row shows Bill Total / Received / Pending taken from the bill itself.",
+        "The duplicate-entry repair only matches rows with the legacy wording AND a same-amount original within 3 minutes."
+      ],
+      "anchors": [
+        {
+          "file": "lib/features/customer/offline/controllers/customer_transaction_offline_controller.dart",
+          "contains": "findDuplicateBillingEntries"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/customer_transactions_page.dart",
+          "contains": "_canReceivePayment"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/customer_transactions_page.dart",
+          "contains": "_BillAmountsStrip"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/customer_transactions_page.dart",
+          "contains": "_removeDuplicateEntries"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/customer_transactions_page.dart",
+          "contains": "Cannot exceed pending"
+        }
+      ],
+      "forbidden": [
+        {
+          "file": "lib/features/customer/presentation/pages/customer_transactions_page.dart",
+          "contains": ".receivePayment(",
+          "why": "double-writes the ledger"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/customer_details_page.dart",
+          "contains": "transactionService.receivePayment(",
+          "why": "double-writes the ledger"
+        }
+      ],
+      "tests": [
+        "test/regression/ledger_duplicates_test.dart"
+      ]
+    },
+    {
+      "id": "billing-checkout",
+      "name": "Billing: create bill, received amount, service charges",
+      "files": [
+        "lib/features/billing/",
+        "lib/core/services/inventory_integration_service.dart"
+      ],
+      "invariants": [
+        "Received amount can never exceed the bill total (field resets to total with an error, and save clamps again).",
+        "A bill is saved locally first (InventoryIntegrationService.processBill does FIFO stock + ledger-safe bill) and then synced; the customer ledger is written once, locally.",
+        "Other service charges are added on a full screen whose widget owns and disposes its own TextEditingControllers (a popup closure disposing them crashed the app).",
+        "Returns reduce the bill's pending/paid and post a return ledger entry."
+      ],
+      "anchors": [
+        {
+          "file": "lib/features/billing/presentation/pages/billing_page.dart",
+          "contains": "_receivedExceedsTotal"
+        },
+        {
+          "file": "lib/features/billing/presentation/pages/billing_page.dart",
+          "contains": "_AddServiceChargePage"
+        },
+        {
+          "file": "lib/features/billing/presentation/pages/billing_page.dart",
+          "contains": "InventoryIntegrationService.instance"
+        },
+        {
+          "file": "lib/features/billing/presentation/pages/billing_page.dart",
+          "contains": "addBillTransaction"
+        },
+        {
+          "file": "lib/core/services/inventory_integration_service.dart",
+          "contains": "addReturnTransaction"
+        }
+      ],
+      "forbidden": [
+        {
+          "file": "lib/features/billing/presentation/pages/billing_page.dart",
+          "contains": "recordBillGenerated(",
+          "why": "double-writes the ledger"
+        }
+      ],
+      "tests": []
+    },
+    {
+      "id": "realtime-sync",
+      "name": "Cross-device sync (Firestore <-> local database), low Firestore cost",
+      "files": [
+        "lib/core/services/live_sync_service.dart",
+        "lib/core/services/live_refresh_mixin.dart",
+        "lib/core/services/sync_query_helper.dart",
+        "lib/features/dashboard/presentation/pages/optimized_dashboard_page.dart",
+        "lib/main.dart",
+        "firestore.rules"
+      ],
+      "invariants": [
+        "main.dart initializeSyncServices(): SyncQueryHelper.beginSession first, all sync services initialize, LiveSyncService.start last.",
+        "Every incremental pull goes through SyncQueryHelper.fetchChanged (queries both Timestamp and ISO-string typed fields).",
+        "A newly synced collection needs ALL of: a firestore.rules match block, a sync service, an entry in LiveSyncService, and a registry entry here.",
+        "importFromServer must never overwrite rows that have unsynced local changes.",
+        "Sync services' initialize() cancels its previous timer/connectivity subscription before creating new ones and runs one initial sync.",
+        "NO background polling and NO Firestore listeners (every read is billed): sync services have no Timer.periodic, LiveSyncService has no snapshots() listeners, list pages must not open full-collection .snapshots() streams.",
+        "Push is immediate: a local Drift write triggers that entity's syncNow() after ~0.5s; failures retry after 2s, 5s, 15s and then every 30 seconds while anything is still pending.",
+        "Pull while a screen is open: screens that show synced data use LiveRefreshMixin (liveRefreshEntities) so LiveSyncService.watchScreen refreshes those entities every ~45s (foreground only) and when the screen opens. A new synced screen must add the mixin.",
+        "Switching a dashboard / web-shell tab pulls the latest data for that tab's collections (OptimizedDashboard _refreshTabData -> LiveSyncService.refreshNow, rate limited per collection). A new tab must be added to _tabEntities.",
+        "On resume / reconnect everything is re-synced and deletions made on other devices are reconciled (count() check)."
+      ],
+      "anchors": [
+        {
+          "file": "lib/main.dart",
+          "contains": "SyncQueryHelper.beginSession"
+        },
+        {
+          "file": "lib/main.dart",
+          "contains": "LiveSyncService.instance.start()"
+        },
+        {
+          "file": "lib/main.dart",
+          "contains": "ExpenseSyncService.instance.initialize()"
+        },
+        {
+          "file": "lib/core/services/live_sync_service.dart",
+          "contains": "class LiveSyncService"
+        },
+        {
+          "file": "lib/core/services/live_sync_service.dart",
+          "contains": "watchScreen"
+        },
+        {
+          "file": "lib/core/services/live_sync_service.dart",
+          "contains": "_attachLocalWatcher"
+        },
+        {
+          "file": "lib/core/services/live_refresh_mixin.dart",
+          "contains": "mixin LiveRefreshMixin"
+        },
+        {
+          "file": "lib/core/services/live_sync_service.dart",
+          "contains": "refreshNow"
+        },
+        {
+          "file": "lib/features/dashboard/presentation/pages/optimized_dashboard_page.dart",
+          "contains": "_refreshTabData"
+        },
+        {
+          "file": "lib/features/dashboard/presentation/pages/optimized_dashboard_page.dart",
+          "contains": "_tabEntities"
+        },
+        {
+          "file": "lib/core/services/sync_query_helper.dart",
+          "contains": "fetchChanged"
+        },
+        {
+          "file": "lib/features/customer/data/services/customer_api_service.dart",
+          "contains": "SyncQueryHelper.fetchChanged"
+        },
+        {
+          "file": "lib/features/billing/data/services/bill_api_service.dart",
+          "contains": "SyncQueryHelper.fetchChanged"
+        },
+        {
+          "file": "lib/features/inventory_management/offline/controllers/purchase_batch_offline_controller.dart",
+          "contains": "skipped++"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart",
+          "contains": "LiveRefreshMixin<EnhancedCustomerPage>"
+        },
+        {
+          "file": "lib/features/supplier/presentation/pages/enhanced_supplier_page.dart",
+          "contains": "LiveRefreshMixin<EnhancedSupplierPage>"
+        },
+        {
+          "file": "lib/features/company/presentation/pages/enhanced_company_page.dart",
+          "contains": "LiveRefreshMixin<EnhancedCompanyPage>"
+        },
+        {
+          "file": "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart",
+          "contains": "LiveRefreshMixin<EnhancedProductPage>"
+        },
+        {
+          "file": "lib/features/billing/presentation/pages/bills_list_page.dart",
+          "contains": "LiveRefreshMixin<BillsListPage>"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/customer_transactions_page.dart",
+          "contains": "LiveRefreshMixin<CustomerTransactionsPage>"
+        },
+        {
+          "file": "lib/features/event_order/presentation/pages/event_order_list_page.dart",
+          "contains": "LiveRefreshMixin<EventOrderListPage>"
+        },
+        {
+          "file": "lib/features/expense/presentation/pages/expenses_page.dart",
+          "contains": "LiveRefreshMixin<ExpensesPage>"
+        },
+        {
+          "file": "lib/features/inventory_management/presentation/pages/enhanced_purchase_screen.dart",
+          "contains": "LiveRefreshMixin<EnhancedPurchaseScreen>"
+        }
+      ],
+      "forbidden": [
+        {
+          "file": "lib/core/services/live_sync_service.dart",
+          "contains": ".snapshots()",
+          "why": "Firestore listeners cost reads; use watchScreen refresh"
+        },
+        {
+          "file": "lib/features/customer/data/services/customer_sync_service.dart",
+          "contains": "Timer.periodic",
+          "why": "no background polling"
+        },
+        {
+          "file": "lib/features/customer/data/services/customer_transaction_sync_service.dart",
+          "contains": "Timer.periodic",
+          "why": "no background polling"
+        },
+        {
+          "file": "lib/features/billing/data/services/bill_sync_service.dart",
+          "contains": "Timer.periodic",
+          "why": "no background polling"
+        },
+        {
+          "file": "lib/features/supplier/data/services/supplier_sync_service.dart",
+          "contains": "Timer.periodic",
+          "why": "no background polling"
+        },
+        {
+          "file": "lib/features/company/data/services/company_sync_service.dart",
+          "contains": "Timer.periodic",
+          "why": "no background polling"
+        },
+        {
+          "file": "lib/features/product/data/services/product_sync_service.dart",
+          "contains": "Timer.periodic",
+          "why": "no background polling"
+        },
+        {
+          "file": "lib/features/expense/data/services/expense_sync_service.dart",
+          "contains": "Timer.periodic",
+          "why": "no background polling"
+        },
+        {
+          "file": "lib/features/event_order/data/services/event_order_sync_service.dart",
+          "contains": "Timer.periodic",
+          "why": "no background polling"
+        },
+        {
+          "file": "lib/features/inventory_management/data/services/purchase_sync_service.dart",
+          "contains": "Timer.periodic",
+          "why": "no background polling"
+        },
+        {
+          "file": "lib/features/inventory_management/data/services/purchase_batch_sync_service.dart",
+          "contains": "Timer.periodic",
+          "why": "no background polling"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart",
+          "contains": ".snapshots()",
+          "why": "full-collection listener re-reads every document"
+        },
+        {
+          "file": "lib/features/supplier/presentation/pages/enhanced_supplier_page.dart",
+          "contains": ".snapshots()",
+          "why": "full-collection listener re-reads every document"
+        },
+        {
+          "file": "lib/features/company/presentation/pages/enhanced_company_page.dart",
+          "contains": ".snapshots()",
+          "why": "full-collection listener re-reads every document"
+        },
+        {
+          "file": "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart",
+          "contains": ".snapshots()",
+          "why": "full-collection listener re-reads every document"
+        },
+        {
+          "file": "lib/features/billing/presentation/pages/bills_list_page.dart",
+          "contains": ".snapshots()",
+          "why": "full-collection listener re-reads every document"
+        }
+      ],
+      "tests": [
+        "test/regression/sync_query_helper_test.dart"
+      ]
+    },
+    {
+      "id": "firestore-rules",
+      "name": "Firestore security rules for every synced collection",
+      "files": [
+        "firestore.rules"
+      ],
+      "invariants": [
+        "Each per-user collection the app reads or writes has a match block with owner + active-subscription access. Missing block = silent permission-denied and data that never syncs.",
+        "After editing rules the user must deploy them: firebase deploy --only firestore:rules."
+      ],
+      "anchors": [
+        {
+          "file": "firestore.rules",
+          "contains": "match /customers/"
+        },
+        {
+          "file": "firestore.rules",
+          "contains": "match /customer_transactions/"
+        },
+        {
+          "file": "firestore.rules",
+          "contains": "match /bills/"
+        },
+        {
+          "file": "firestore.rules",
+          "contains": "match /eventOrders/"
+        },
+        {
+          "file": "firestore.rules",
+          "contains": "match /expenses/"
+        },
+        {
+          "file": "firestore.rules",
+          "contains": "match /purchaseBatches/"
+        },
+        {
+          "file": "firestore.rules",
+          "contains": "match /purchaseReturns/"
+        },
+        {
+          "file": "firestore.rules",
+          "contains": "match /stockLedger/"
+        },
+        {
+          "file": "firestore.rules",
+          "contains": "match /event_order_settings/"
+        }
+      ],
+      "forbidden": [],
+      "tests": []
+    },
+    {
+      "id": "list-ordering",
+      "name": "Newest-first default ordering of lists",
+      "files": [
+        "lib/features/customer/presentation/",
+        "lib/features/supplier/presentation/",
+        "lib/features/company/presentation/",
+        "lib/features/inventory_management/presentation/",
+        "lib/features/expense/offline/controllers/expense_offline_controller.dart"
+      ],
+      "invariants": [
+        "Customers, suppliers, companies and products default to Date (created) descending so a new record is on top; other sort chips still work and reset direction sensibly.",
+        "Equal sort keys fall back to name so the order is stable.",
+        "Expenses: newest expense date first, then most recently created."
+      ],
+      "anchors": [
+        {
+          "file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart",
+          "contains": "CustomerSortField _sortField = CustomerSortField.createdDate"
+        },
+        {
+          "file": "lib/features/supplier/presentation/pages/enhanced_supplier_page.dart",
+          "contains": "SupplierSortField _sortField = SupplierSortField.createdDate"
+        },
+        {
+          "file": "lib/features/company/presentation/pages/enhanced_company_page.dart",
+          "contains": "CompanySortField _sortField = CompanySortField.createdDate"
+        },
+        {
+          "file": "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart",
+          "contains": "ProductSortField _sortField = ProductSortField.createdDate"
+        },
+        {
+          "file": "lib/features/expense/offline/controllers/expense_offline_controller.dart",
+          "contains": "_newestFirst"
+        }
+      ],
+      "forbidden": [],
+      "tests": []
+    },
+    {
+      "id": "print-formats",
+      "name": "Bill / quotation print formats (POS thermal vs Normal A4)",
+      "files": [
+        "lib/core/printing/",
+        "lib/features/billing/presentation/pages/bill_settings_page.dart",
+        "lib/features/quotation/"
+      ],
+      "invariants": [
+        "PdfBillService.resolvePdfFormat order: formatOverride, then quotation_type for quotations, then bill_type. Default 'pos'.",
+        "Plain bills and quotations must print exactly as before; new document kinds opt in through PrintBillData fields (formatOverride, documentTitle, numberLabelText, qrAmountOverride) instead of editing bill-only branches.",
+        "The payment QR amount for non-bill documents is qrAmountOverride (e.g. balance due)."
+      ],
+      "anchors": [
+        {
+          "file": "lib/core/printing/services/pdf_bill_service.dart",
+          "contains": "resolvePdfFormat"
+        },
+        {
+          "file": "lib/core/printing/services/pdf_bill_service.dart",
+          "contains": "formatOverride"
+        },
+        {
+          "file": "lib/core/printing/models/print_bill_data.dart",
+          "contains": "qrAmountOverride"
+        },
+        {
+          "file": "lib/features/billing/presentation/pages/bill_settings_page.dart",
+          "contains": "_billType == 'normal'"
+        },
+        {
+          "file": "lib/features/quotation/data/services/quotation_format_settings.dart",
+          "contains": "keyQuotationType"
+        }
+      ],
+      "forbidden": [],
+      "tests": [
+        "test/regression/print_bill_data_test.dart"
+      ]
+    },
+    {
+      "id": "event-order-invoice",
+      "name": "Event / sales order invoice with POS or Normal format",
+      "files": [
+        "lib/features/event_order/data/services/",
+        "lib/features/event_order/presentation/pages/event_order_settings_page.dart",
+        "lib/features/event_order/presentation/pages/event_order_list_page.dart"
+      ],
+      "invariants": [
+        "Default format is 'normal' (the original A4 invoice) so existing users see no change until they pick POS.",
+        "POS maps the order onto PrintBillData (event charges, sub-events, items, discount, GST, advance paid, balance due) and renders with the billing POS receipt.",
+        "Totals in POS must equal the A4 invoice: event charges + sub-event charges + sum(item.total); balance = total - advance.",
+        "All share / print / preview entry points go through EventOrderPdfService.generateEventOrderPdf so they honour the setting."
+      ],
+      "anchors": [
+        {
+          "file": "lib/features/event_order/data/services/event_order_format_settings.dart",
+          "contains": "event_order_type"
+        },
+        {
+          "file": "lib/features/event_order/data/services/event_order_pdf_service.dart",
+          "contains": "createPrintData"
+        },
+        {
+          "file": "lib/features/event_order/data/services/event_order_pdf_service.dart",
+          "contains": "generateA4EventOrderPdf"
+        },
+        {
+          "file": "lib/features/event_order/presentation/pages/event_order_settings_page.dart",
+          "contains": "_buildInvoiceFormatSection"
+        },
+        {
+          "file": "lib/features/event_order/presentation/pages/event_order_list_page.dart",
+          "contains": "buildPosPdfBytes"
+        }
+      ],
+      "forbidden": [],
+      "tests": [
+        "test/regression/event_order_print_test.dart"
+      ]
+    },
+    {
+      "id": "customer-pending-report",
+      "name": "Customer pending-amount report + send to the customer's WhatsApp chat",
+      "files": [
+        "lib/features/customer/data/services/customer_pending_report_service.dart",
+        "lib/core/services/whatsapp_share_service.dart",
+        "lib/common_widgets/file_preview_page.dart",
+        "lib/core/services/communication_service.dart",
+        "android/app/src/main/kotlin/com/example/c_billing/MainActivity.kt",
+        "android/app/src/main/AndroidManifest.xml",
+        "android/app/src/main/res/xml/billing_file_paths.xml",
+        "lib/core/database/local_store.dart"
+      ],
+      "invariants": [
+        "The report is READ-ONLY: it reads bills / event orders and takes the total from the customer card's ledger value. It never writes ledger entries or changes balances (no CustomerTransactionOfflineController in the report service).",
+        "The statement always adds up to the customer's pending total: open bills + open events + an 'Opening balance / adjustments' row for any difference.",
+        "The report icon only shows for customers with pending > 0; generating it must not change the existing Collect / Finance / Transactions / call / SMS / WhatsApp icons.",
+        "FilePreviewPage's existing WhatsApp/Share behaviour is unchanged unless whatsAppMessage is passed. WhatsApp (2.26) ignores the caption of a PDF shared from another app, so the reminder message is PRINTED INSIDE the PDF (buildPdf(message:)) and the single PDF attachment carries both. On Android: (1) tapping WhatsApp opens the customer's chat with the PDF attached (native share intent, jid + shortcut id, c_billing/whatsapp channel); (2) when the user returns to the preview within 15 minutes (or taps WhatsApp again) the chat opens via wa.me with the message typed in. Step 2 is optional because the PDF already contains the message. Do NOT launch the PDF share and the wa.me link together (startActivities): WhatsApp reorders them and shows its contact picker. Never block the user with a dialog on return. If WhatsApp cannot be opened the share sheet gets the PDF + message; web/desktop save the PDF and open wa.me with the message.",
+        "The Android FileProvider (billing_fileprovider) and the WhatsApp <queries> entries must stay, otherwise the direct chat silently falls back to the share sheet.",
+        "The report preview renders PDF pages at a low fixed dpi (renderDpi: 130). A 300 dpi A4 bitmap is ~35 MB and gets the app killed (black screen / restart) while the user is in WhatsApp. Other previews keep the adaptive default.",
+        "User text lives in all three localization files (customerPendingReport, customerReportFailed, customerPendingWhatsAppMessage, ...).",
+        "The report reads only this customer's open bills / events with one SQL query each (loadOpenBillsForCustomers / loadOpenEventOrdersForCustomers). The local database runs on the UI isolate, so loading every bill with its items per customer id made generation slow and time out.",
+        "MainActivity.shareableUri copies files outside the FileProvider folders into cache first. Dart's temp folder is the app's code_cache, which the provider cannot share; without the copy the direct chat share silently failed and the generic share sheet (Gmail/WhatsApp/...) appeared.",
+        "Hindi/Marathi message text inside the PDF is drawn with Flutter's text engine and embedded as an image: the pdf library cannot shape Devanagari (letters would be garbled) and its built-in fonts have no Rupee sign (English uses 'Rs.')."
+      ],
+      "anchors": [
+        {
+          "file": "lib/features/customer/data/services/customer_pending_report_service.dart",
+          "contains": "otherAmount"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart",
+          "contains": "_openPendingReport"
+        },
+        {
+          "file": "lib/features/customer/presentation/widgets/customer_list_widget.dart",
+          "contains": "onReportTap"
+        },
+        {
+          "file": "lib/common_widgets/file_preview_page.dart",
+          "contains": "_sendToCustomerChat"
+        },
+        {
+          "file": "lib/core/services/whatsapp_share_service.dart",
+          "contains": "isChatReady"
+        },
+        {
+          "file": "lib/core/services/whatsapp_share_service.dart",
+          "contains": "c_billing/whatsapp"
+        },
+        {
+          "file": "android/app/src/main/kotlin/com/example/c_billing/MainActivity.kt",
+          "contains": "@s.whatsapp.net"
+        },
+        {
+          "file": "android/app/src/main/AndroidManifest.xml",
+          "contains": "billing_fileprovider"
+        },
+        {
+          "file": "android/app/src/main/AndroidManifest.xml",
+          "contains": "com.whatsapp"
+        },
+        {
+          "file": "lib/core/localization/english.dart",
+          "contains": "customerPendingWhatsAppMessage"
+        },
+        {
+          "file": "lib/core/localization/hindi.dart",
+          "contains": "customerPendingWhatsAppMessage"
+        },
+        {
+          "file": "lib/core/localization/marathi.dart",
+          "contains": "customerPendingWhatsAppMessage"
+        },
+        {
+          "file": "lib/core/database/local_store.dart",
+          "contains": "loadOpenBillsForCustomers"
+        },
+        {
+          "file": "lib/core/database/local_store.dart",
+          "contains": "loadOpenEventOrdersForCustomers"
+        },
+        {
+          "file": "lib/features/customer/data/services/customer_pending_report_service.dart",
+          "contains": "getOpenBillsByCustomerIds"
+        },
+        {
+          "file": "android/app/src/main/kotlin/com/example/c_billing/MainActivity.kt",
+          "contains": "EXTRA_SHORTCUT_ID"
+        },
+        {
+          "file": "android/app/src/main/kotlin/com/example/c_billing/MainActivity.kt",
+          "contains": "EXTRA_STREAM"
+        },
+        {
+          "file": "lib/core/localization/hindi.dart",
+          "contains": "customerReportSendMessageTitle"
+        },
+        {
+          "file": "lib/core/localization/marathi.dart",
+          "contains": "customerReportSendMessageTitle"
+        },
+        {
+          "file": "lib/core/localization/english.dart",
+          "contains": "customerReportSendMessageTitle"
+        },
+        {
+          "file": "android/app/src/main/kotlin/com/example/c_billing/MainActivity.kt",
+          "contains": "ClipData.Item(message"
+        },
+        {
+          "file": "android/app/src/main/kotlin/com/example/c_billing/MainActivity.kt",
+          "contains": "shareableUri"
+        },
+        {
+          "file": "lib/core/localization/english.dart",
+          "contains": "customerReportSendPdfHint"
+        },
+        {
+          "file": "lib/core/localization/hindi.dart",
+          "contains": "customerReportSendPdfHint"
+        },
+        {
+          "file": "lib/core/localization/marathi.dart",
+          "contains": "customerReportSendPdfHint"
+        },
+        {
+          "file": "lib/core/localization/english.dart",
+          "contains": "customerReportOpeningPdf"
+        },
+        {
+          "file": "lib/common_widgets/file_preview_page.dart",
+          "contains": "_sendPendingMessage"
+        },
+        {
+          "file": "lib/features/customer/data/services/customer_pending_report_service.dart",
+          "contains": "_renderTextPng"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart",
+          "contains": "buildPdf(report, shop, message: message)"
+        },
+        {
+          "file": "lib/core/localization/english.dart",
+          "contains": "customerReportOpeningMessage"
+        }
+      ],
+      "forbidden": [
+        {
+          "file": "lib/features/customer/data/services/customer_pending_report_service.dart",
+          "contains": "CustomerTransactionOfflineController",
+          "why": "report must never write the ledger"
+        },
+        {
+          "file": "lib/features/customer/data/services/customer_pending_report_service.dart",
+          "contains": "CustomerOfflineController",
+          "why": "report must never change customer balances"
+        },
+        {
+          "file": "lib/features/customer/data/services/customer_pending_report_service.dart",
+          "contains": "getBillsByCustomerId(",
+          "why": "full bills table scan per id made the report slow / time out"
+        },
+        {
+          "file": "lib/features/customer/data/services/customer_pending_report_service.dart",
+          "contains": "getEventOrdersByCustomerId(",
+          "why": "full event table scan per id made the report slow / time out"
+        },
+        {
+          "file": "android/app/src/main/kotlin/com/example/c_billing/MainActivity.kt",
+          "contains": "ClipData.newRawUri",
+          "why": "ClipData without the text makes WhatsApp drop the PDF caption (message missing)"
+        },
+        {
+          "file": "lib/common_widgets/file_preview_page.dart",
+          "contains": "chatFirst: true",
+          "why": "launching the PDF share and the wa.me link together made WhatsApp show its contact picker"
+        }
+      ],
+      "tests": [
+        "test/regression/customer_pending_report_test.dart",
+        "test/regression/pending_report_queries_test.dart"
+      ]
+    },
+    {
+      "id": "quotation",
+      "name": "Quotations (create, list, print)",
+      "files": [
+        "lib/features/quotation/"
+      ],
+      "invariants": [
+        "Quotation printing keeps isQuotation labels and uses quotation_type for POS/Normal."
+      ],
+      "anchors": [
+        {
+          "file": "lib/features/quotation/data/services/quotation_print_service.dart",
+          "contains": "isQuotation: true"
+        }
+      ],
+      "forbidden": [],
+      "tests": []
+    },
+    {
+      "id": "customer-date-filter",
+      "name": "Customer created-date range filter",
+      "files": [
+        "lib/features/customer/presentation/widgets/customer_filter_widget.dart",
+        "lib/features/customer/presentation/widgets/customer_list_widget.dart",
+        "lib/features/customer/presentation/widgets/customer_summary_widget.dart",
+        "lib/features/customer/presentation/pages/enhanced_customer_page.dart"
+      ],
+      "invariants": [
+        "The date filter is optional: with no range selected the customer list, summary cards, search and sort chips behave exactly as before (newest first by default).",
+        "The range is on the customer's creation date (createdAt), whole days, inclusive of both ends. Customers without a creation date are hidden only while a range is applied.",
+        "The list and the summary cards use the same customerCreatedInRange helper so the counts always match the list.",
+        "The filter is local-only (no Firestore query or listener) and works together with search and the sort chips.",
+        "Labels reuse selectDateRange / clear from the localization files (all three languages)."
+      ],
+      "anchors": [
+        {
+          "file": "lib/features/customer/presentation/widgets/customer_filter_widget.dart",
+          "contains": "customerCreatedInRange"
+        },
+        {
+          "file": "lib/features/customer/presentation/widgets/customer_list_widget.dart",
+          "contains": "customerCreatedInRange"
+        },
+        {
+          "file": "lib/features/customer/presentation/widgets/customer_summary_widget.dart",
+          "contains": "customerCreatedInRange"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart",
+          "contains": "_createdRange"
+        }
+      ],
+      "forbidden": [],
+      "tests": [
+        "test/regression/customer_date_filter_test.dart"
+      ]
+    },
+    {
+      "id": "sales-after-returns",
+      "name": "Sales figures after returns (dashboard, chart, invoices header)",
+      "files": [
+        "lib/features/billing/domain/sale_return_math.dart",
+        "lib/features/dashboard/data/repositories/dashboard_offline_repository.dart",
+        "lib/features/dashboard/data/datasources/dashboard_local_datasource.dart",
+        "lib/features/dashboard/presentation/pages/optimized_dashboard_page.dart",
+        "lib/features/dashboard/presentation/widgets/sales_analysis_chart.dart",
+        "lib/features/billing/presentation/pages/bills_list_page.dart"
+      ],
+      "invariants": [
+        "A sale return never changes Bill.finalAmount; it raises returnedQuantity on the items. Every 'sales' figure (dashboard Total Sales card, Sales Analysis chart, Invoices header total) must therefore subtract the returned value, so Sales drops after a return.",
+        "The returned value uses SaleReturnMath (finalAmount / totalAmount ratio) - the SAME ratio InventoryIntegrationService.processReturn uses for the customer ledger refund - so dashboard, invoices and customer ledger agree, also for bills with exclusive tax / charges.",
+        "Dashboard Returns, Net Sales and profit cards keep their meaning; profit still uses the discount-only ratio.",
+        "Reporting only: these files never write the customer ledger or bills (ledger stays in CustomerTransactionOfflineController)."
+      ],
+      "anchors": [
+        {
+          "file": "lib/features/billing/domain/sale_return_math.dart",
+          "contains": "class SaleReturnMath"
+        },
+        {
+          "file": "lib/features/dashboard/data/repositories/dashboard_offline_repository.dart",
+          "contains": "SaleReturnMath.returnedValue"
+        },
+        {
+          "file": "lib/features/dashboard/data/datasources/dashboard_local_datasource.dart",
+          "contains": "SaleReturnMath.returnedValue"
+        },
+        {
+          "file": "lib/features/dashboard/presentation/pages/optimized_dashboard_page.dart",
+          "contains": "_formatAmount(data.netSales)"
+        },
+        {
+          "file": "lib/features/dashboard/presentation/widgets/sales_analysis_chart.dart",
+          "contains": "SaleReturnMath.netSales"
+        },
+        {
+          "file": "lib/features/billing/presentation/pages/bills_list_page.dart",
+          "contains": "SaleReturnMath.netSales"
+        }
+      ],
+      "forbidden": [
+        {
+          "file": "lib/features/dashboard/presentation/pages/optimized_dashboard_page.dart",
+          "contains": "_formatAmount(data.totalSales)",
+          "why": "gross sales ignore returns; the Sales card must show sales after returns"
+        }
+      ],
+      "tests": [
+        "test/regression/sale_return_math_test.dart"
+      ]
+    },
+    {
+      "id": "splash-branding",
+      "name": "Splash screen branding (tagline, business badge, contact line)",
+      "files": [
+        "lib/core/ui/splash_page.dart",
+        "web/index.html",
+        "lib/core/localization/english.dart",
+        "lib/core/localization/hindi.dart",
+        "lib/core/localization/marathi.dart"
+      ],
+      "invariants": [
+        "The splash tagline is 'Power your Business' (all three languages) in flat solid pink #DD95D5 (_buildPinkTagline) with no shadow or 3D effect. It is display-only and must not change layout of the logo, title or footer.",
+        "The splash footer shows 'PREMIUM BUSINESS SOLUTIONS' and only the phone number (no location text).",
+        "The splash animations (logo, name, tagline fade) and the auto-navigation after startup are unchanged."
+      ],
+      "anchors": [
+        {
+          "file": "lib/core/ui/splash_page.dart",
+          "contains": "_buildPinkTagline"
+        },
+        {
+          "file": "lib/core/ui/splash_page.dart",
+          "contains": "PREMIUM BUSINESS SOLUTIONS"
+        },
+        {
+          "file": "lib/core/localization/english.dart",
+          "contains": "POWER YOUR BUSINESS"
+        },
+        {
+          "file": "lib/core/ui/splash_page.dart",
+          "contains": "Color(0xFFDD95D5)"
+        }
+      ],
+      "forbidden": [
+        {
+          "file": "lib/core/ui/splash_page.dart",
+          "contains": "'Newasa'",
+          "why": "location text was removed from the splash by request"
+        },
+        {
+          "file": "lib/core/ui/splash_page.dart",
+          "contains": "Transform.translate",
+          "why": "the tagline is flat; the 3D extrusion was removed by request"
+        }
+      ],
+      "tests": []
+    },
+    {
+      "id": "subscription-access",
+      "name": "Subscription / trial access gate (splash, login, dashboard entry)",
+      "files": [
+        "lib/core/services/subscription_service.dart",
+        "lib/core/ui/splash_page.dart",
+        "lib/features/authentication/presentation/pages/login.dart"
+      ],
+      "invariants": [
+        "A user with a paid or trial window that has not ended must NOT see the 'Subscription expired' screen because of a slow, failed or timed-out Firestore read.",
+        "isSubscriptionValid reads the server first, then the local cache; if neither answers it falls back to isWithinLastKnownWindow (the expiry this device last confirmed). Only a definitive answer (no user doc, or no valid trial/subscription, or window ended) locks the app.",
+        "The splash/login timeouts never deny access on their own: they use isWithinLastKnownWindow.",
+        "A missing signed-in user is only treated as logged out after Firebase Auth has restored its state (_resolveUserId)."
+      ],
+      "anchors": [
+        {
+          "file": "lib/core/services/subscription_service.dart",
+          "contains": "isWithinLastKnownWindow"
+        },
+        {
+          "file": "lib/core/services/subscription_service.dart",
+          "contains": "Source.cache"
+        },
+        {
+          "file": "lib/core/ui/splash_page.dart",
+          "contains": "onTimeout: () => _subscriptionService.isWithinLastKnownWindow()"
+        }
+      ],
+      "forbidden": [
+        {
+          "file": "lib/core/ui/splash_page.dart",
+          "contains": "onTimeout: () => false",
+          "why": "a timeout must not show the subscription screen to a valid user"
+        }
+      ],
+      "tests": []
+    },
+    {
+      "id": "dashboard-quick-insights",
+      "name": "Dashboard Quick Insights rows use the view-card style",
+      "files": [
+        "lib/features/dashboard/presentation/pages/optimized_dashboard_page.dart"
+      ],
+      "invariants": [
+        "Quick Insights rows (Top Products, Pending Payments, Low Stock Items, Upcoming Events) use the same raised white card as the view cards (_raisedGlass, like Stock & Payments). Only the icon tile and count badge carry colour.",
+        "Each row keeps its count, subtitle, chevron and tap action (_showQuickInsightDetail) on desktop (2x2) and mobile (stacked)."
+      ],
+      "anchors": [
+        {
+          "file": "lib/features/dashboard/presentation/pages/optimized_dashboard_page.dart",
+          "contains": "Quick Insight row: same raised white card"
+        }
+      ],
+      "forbidden": [],
+      "tests": []
+    },
+    {
+      "id": "customer-profile-fields",
+      "name": "Customer profile form (email, birth date) and card layout",
+      "files": [
+        "lib/features/customer/presentation/pages/enhanced_customer_page.dart",
+        "lib/features/customer/presentation/widgets/customer_list_widget.dart",
+        "lib/features/customer/offline/entities/customer_entity.dart",
+        "lib/features/customer/offline/controllers/customer_offline_controller.dart",
+        "lib/features/customer/domain/customer_birthday.dart",
+        "lib/core/database/app_database.dart",
+        "lib/core/database/entity_mappers.dart"
+      ],
+      "invariants": [
+        "Email and birth date are OPTIONAL. Only first name, last name and a 10-digit mobile are required; address is optional.",
+        "The form never writes currentPendingAmount / totalPurchases: add and edit go through CustomerOfflineController.addCustomer/updateCustomer and ledger changes stay in CustomerTransactionOfflineController.",
+        "Birth date is stored as date-only text 'yyyy-MM-dd' (customers.birth_date, DB v16) and synced as 'birthDate'; no timezone conversion.",
+        "The v16 migration is a guarded plain ADD COLUMN (_addColumnIfMissing). Never alterTable / recreate the customers table.",
+        "copyWith keeps existing values; a birth date can only be removed with clearBirthDate: true.",
+        "Existing middle names are kept (name string); the form no longer has a middle name field.",
+        "The card hides the header pending amount when the pending panel is shown, so the amount appears once."
+      ],
+      "anchors": [
+        {
+          "file": "lib/core/database/app_database.dart",
+          "contains": "_addColumnIfMissing('customers', 'birth_date', 'TEXT')"
+        },
+        {
+          "file": "lib/features/customer/offline/entities/customer_entity.dart",
+          "contains": "birthDateToText"
+        },
+        {
+          "file": "lib/features/customer/offline/entities/customer_entity.dart",
+          "contains": "clearBirthDate"
+        },
+        {
+          "file": "lib/core/database/entity_mappers.dart",
+          "contains": "birthDateFromValue(row.birthDate)"
+        },
+        {
+          "file": "lib/features/customer/presentation/pages/enhanced_customer_page.dart",
+          "contains": "_BirthDateField"
+        },
+        {
+          "file": "lib/features/customer/presentation/widgets/customer_list_widget.dart",
+          "contains": "isBirthdayOn"
+        }
+      ],
+      "forbidden": [
+        {
+          "file": "lib/core/database/app_database.dart",
+          "contains": "alterTable(customerRecords",
+          "why": "Recreating the customers table risks wiping customer balances; use a guarded ADD COLUMN."
+        }
+      ],
+      "tests": [
+        "test/regression/customer_profile_fields_test.dart"
+      ]
+    },
+    {
+      "id": "master-data-profiles",
+      "name": "Supplier / company / product forms (email, GST, contact person, unit, min stock)",
+      "files": [
+        "lib/features/supplier/presentation/pages/enhanced_supplier_page.dart",
+        "lib/features/company/presentation/pages/enhanced_company_page.dart",
+        "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart",
+        "lib/features/supplier/offline/entities/supplier_entity.dart",
+        "lib/features/company/offline/entities/company_entity.dart",
+        "lib/features/product/offline/entities/product_entity.dart",
+        "lib/common_widgets/master_data_form.dart",
+        "lib/core/database/app_database.dart"
+      ],
+      "invariants": [
+        "Supplier email / GST number and company email / contact person are OPTIONAL; required fields are unchanged (supplier: first name, last name, 10-digit mobile, code when editing; company: name; product: name).",
+        "Existing middle names are kept: the supplier form has no middle name field and never overwrites it.",
+        "DB v17 only adds guarded plain columns (suppliers.email/gst_number, companies.email/contact_person, default ''). Never alterTable these tables.",
+        "The product form never writes currentStock on edit; stock changes only via purchases, sales, returns and adjustments. Prices, GST and HSN rules are unchanged.",
+        "Product unit / description / minStockLevel are cleared only with clearUnit / clearDescription / clearMinStockLevel; a null argument keeps the stored value.",
+        "Supplier/company/product codes, duplicate checks and sync status transitions are untouched; new fields travel in toSyncPayload / fromServer."
+      ],
+      "anchors": [
+        {
+          "file": "lib/core/database/app_database.dart",
+          "contains": "'gst_number'"
+        },
+        {
+          "file": "lib/core/database/app_database.dart",
+          "contains": "'contact_person'"
+        },
+        {
+          "file": "lib/features/supplier/offline/entities/supplier_entity.dart",
+          "contains": "gstNumber"
+        },
+        {
+          "file": "lib/features/company/offline/entities/company_entity.dart",
+          "contains": "contactPerson"
+        },
+        {
+          "file": "lib/features/product/offline/entities/product_entity.dart",
+          "contains": "clearMinStockLevel"
+        },
+        {
+          "file": "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart",
+          "contains": "clearMinStockLevel"
+        },
+        {
+          "file": "lib/features/supplier/presentation/pages/enhanced_supplier_page.dart",
+          "contains": "isValidGstin"
+        },
+        {
+          "file": "lib/features/company/presentation/pages/enhanced_company_page.dart",
+          "contains": "_contactPersonController"
+        }
+      ],
+      "forbidden": [
+        {
+          "file": "lib/features/inventory_management/presentation/pages/enhanced_product_page.dart",
+          "contains": "currentStock: int.tryParse(",
+          "why": "the edit form must not write stock; it comes from purchases/sales/adjustments"
+        },
+        {
+          "file": "lib/core/database/app_database.dart",
+          "contains": "alterTable(supplierRecords",
+          "why": "recreating suppliers risks data loss; use a guarded ADD COLUMN"
+        },
+        {
+          "file": "lib/core/database/app_database.dart",
+          "contains": "alterTable(companyRecords",
+          "why": "recreating companies risks data loss; use a guarded ADD COLUMN"
+        }
+      ],
+      "tests": [
+        "test/regression/master_data_profile_test.dart"
+      ]
+    }
+  ]
+}

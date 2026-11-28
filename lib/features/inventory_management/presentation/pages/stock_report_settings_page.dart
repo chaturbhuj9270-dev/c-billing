@@ -1,0 +1,372 @@
+import 'package:flutter/material.dart';
+import 'package:c_billing/core/services/stock_report_settings_service.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
+
+// Page for managing which columns appear in stock reports
+class StockReportSettingsPage extends StatefulWidget {
+  const StockReportSettingsPage({super.key});
+
+  @override
+  State<StockReportSettingsPage> createState() =>
+      _StockReportSettingsPageState();
+}
+
+class _StockReportSettingsPageState extends State<StockReportSettingsPage> {
+  late List<StockReportColumn> _columns;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadColumns();
+  }
+
+  Future<void> _loadColumns() async {
+    await StockReportSettingsService.instance.init();
+    await StockReportSettingsService.instance.refreshCustomColumns();
+    setState(() {
+      _columns = List.from(StockReportSettingsService.instance.columns);
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _toggleColumn(String columnId, bool isVisible) async {
+    await StockReportSettingsService.instance.setColumnVisibility(
+      columnId,
+      isVisible,
+    );
+    setState(() {
+      final index = _columns.indexWhere((c) => c.id == columnId);
+      if (index != -1) {
+        _columns[index] = _columns[index].copyWith(isVisible: isVisible);
+      }
+    });
+  }
+
+  Future<void> _resetToDefaults() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Reset to Defaults',
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w700,
+            color: AppColors.accent(context),
+          ),
+        ),
+        content: const Text(
+          'This will reset all column visibility settings to their default values. Continue?',
+          style: TextStyle(fontFamily: 'Literata'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(fontFamily: 'Literata', color: AppTheme.grey),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.action(context),
+            ),
+            child: const Text(
+              'Reset',
+              style: TextStyle(fontFamily: 'Literata', color: AppTheme.white),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await StockReportSettingsService.instance.resetToDefaults();
+      await _loadColumns();
+      if (mounted) {
+        GlassyToast.show(context, 'Settings reset to defaults');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.scaffold(context),
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: _isLoading
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.accent(context),
+                      ),
+                    )
+                  : _buildColumnsList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return AppTopBar(
+      title: 'Stock Report Settings',
+      subtitle: 'Choose columns to show in stock report',
+      actions: [
+        AppTopBar.action(
+          icon: Icons.restart_alt_rounded,
+          onTap: _resetToDefaults,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildColumnsList() {
+    // Separate default and custom columns
+    final defaultColumns = _columns.where((c) => c.isDefault).toList();
+    final customColumns = _columns.where((c) => !c.isDefault).toList();
+
+    // Count visible columns
+    final visibleCount = _columns.where((c) => c.isVisible).length;
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(horizontal: 20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Summary card
+          Container(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.accentSoft(context, 0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent(context),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.view_column_rounded,
+                    color: AppTheme.white,
+                    size: 24,
+                  ),
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$visibleCount of ${_columns.length} columns visible',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: AppColors.accent(context),
+                        ),
+                      ),
+                      Text(
+                        'Toggle columns to show/hide in stock report',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w400,
+                          fontSize: 12,
+                          color: AppTheme.grey600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Default columns section
+          _buildSectionTitle('Default Columns', Icons.table_chart_rounded),
+          const SizedBox(height: 12),
+          ...defaultColumns.map((column) => _buildColumnTile(column)),
+
+          // Custom columns section
+          if (customColumns.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            _buildSectionTitle('Custom Columns', Icons.tune_rounded),
+            const SizedBox(height: 12),
+            ...customColumns.map((column) => _buildColumnTile(column)),
+          ],
+
+          // Empty state for custom columns
+          if (customColumns.isEmpty) ...[
+            SizedBox(height: 24),
+            _buildSectionTitle('Custom Columns', Icons.tune_rounded),
+            SizedBox(height: 12),
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.card(context),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.border(context)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    color: AppTheme.grey400,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'No custom columns defined. Add custom columns from Product Settings to include them in reports.',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 13,
+                        color: AppTheme.grey600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          SizedBox(height: 40),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: AppColors.accent(context)),
+        SizedBox(width: 8),
+        Text(
+          title,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+            color: AppColors.accent(context),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildColumnTile(StockReportColumn column) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: column.isVisible
+              ? AppColors.action(context).withValues(alpha: 0.3)
+              : AppColors.border(context),
+          width: column.isVisible ? 1.5 : 1,
+        ),
+        boxShadow: column.isVisible
+            ? [
+                BoxShadow(
+                  color: AppColors.accentSoft(context, 0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
+      ),
+      child: ListTile(
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: column.isVisible
+                ? AppColors.action(context).withValues(alpha: 0.1)
+                : AppColors.chipFill(context),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            _getColumnIcon(column.id),
+            color: column.isVisible
+                ? AppColors.action(context)
+                : AppTheme.grey400,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          column.name,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            color: column.isVisible ? AppTheme.black87 : AppTheme.grey600,
+          ),
+        ),
+        subtitle: Text(
+          column.isDefault ? 'Default column' : 'Custom column',
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 11,
+            color: AppTheme.grey,
+          ),
+        ),
+        trailing: Switch(
+          value: column.isVisible,
+          onChanged: (value) => _toggleColumn(column.id, value),
+          activeThumbColor: AppColors.action(context),
+          activeTrackColor: AppColors.action(context).withValues(alpha: 0.3),
+        ),
+      ),
+    );
+  }
+
+  IconData _getColumnIcon(String columnId) {
+    switch (columnId) {
+      case 'sr_no':
+        return Icons.format_list_numbered_rounded;
+      case 'product_name':
+        return Icons.inventory_2_rounded;
+      case 'category':
+        return Icons.category_rounded;
+      case 'company':
+        return Icons.business_rounded;
+      case 'hsn_code':
+        return Icons.tag_rounded;
+      case 'purchase_price':
+        return Icons.currency_rupee_rounded;
+      case 'selling_price':
+        return Icons.sell_rounded;
+      case 'stock':
+        return Icons.warehouse_rounded;
+      case 'stock_value':
+        return Icons.attach_money_rounded;
+      case 'status':
+        return Icons.check_circle_outline_rounded;
+      case 'order_qty':
+        return Icons.shopping_cart_rounded;
+      case 'supplier':
+        return Icons.local_shipping_rounded;
+      case 'cgst':
+        return Icons.percent_rounded;
+      case 'sgst':
+        return Icons.percent_rounded;
+      default:
+        // Custom columns
+        return Icons.tune_rounded;
+    }
+  }
+}

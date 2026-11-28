@@ -1,0 +1,4348 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:c_billing/core/services/language_service.dart';
+import 'package:c_billing/core/services/dashboard_refresh_service.dart';
+import 'package:c_billing/core/services/purchase_settings_service.dart';
+import 'package:c_billing/core/services/product_settings_service.dart';
+import 'package:c_billing/core/localization/app_localizations.dart';
+import '../../data/datasources/purchase_cache_datasource.dart';
+import '../../domain/entities/product.dart';
+import '../../data/services/purchase_sync_service.dart';
+import '../../data/services/purchase_batch_sync_service.dart';
+import '../../../product/offline/controllers/product_offline_controller.dart';
+import '../../../product/data/services/product_sync_service.dart';
+import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
+import '../../../supplier/offline/entities/supplier_entity.dart';
+import '../../../supplier/data/services/supplier_sync_service.dart';
+import '../../../company/offline/controllers/company_offline_controller.dart';
+import '../../../company/offline/entities/company_entity.dart';
+import '../../../company/data/services/company_sync_service.dart';
+import '../../../product/offline/entities/product_entity.dart';
+import '../../../../core/services/inventory_integration_service.dart';
+import 'purchase_settings_page.dart';
+import 'invoice_scanner_page.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/common_widgets/app_top_bar.dart';
+import 'package:c_billing/common_widgets/app_pill_button.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/glass_bottom_sheet.dart';
+import 'package:c_billing/core/ui/desktop_canvas.dart';
+
+class PurchasePage extends StatefulWidget {
+  final bool isEmbedded;
+
+  const PurchasePage({super.key, this.isEmbedded = false});
+
+  @override
+  State<PurchasePage> createState() => _PurchasePageState();
+}
+
+class _PurchasePageState extends State<PurchasePage>
+    with SingleTickerProviderStateMixin {
+  late FirebaseFirestore _firestore;
+  late AnimationController _animController;
+  late Animation<Offset> _offsetAnimation;
+  late Animation<double> _opacityAnimation;
+  late AppLocalizations _localizations;
+  final _cacheDataSource = PurchaseCacheDataSource();
+
+  // Real-time local stream subscriptions
+  StreamSubscription<List<ProductEntity>>? _productStreamSubscription;
+  StreamSubscription<List<SupplierEntity>>? _supplierStreamSubscription;
+  StreamSubscription<List<CompanyEntity>>? _companyStreamSubscription;
+
+  Product? _selectedProduct;
+  Map<String, dynamic>? _selectedSupplier;
+  Map<String, dynamic>? _selectedCompany;
+  DateTime? _productionDate;
+  DateTime? _expiryDate;
+  String? _selectedUnit;
+  int? _selectedWarranty;
+
+  final _quantityController = TextEditingController();
+  final _priceController = TextEditingController();
+  final _salesPriceController = TextEditingController();
+  final _notesController = TextEditingController();
+  final _productSearchController = TextEditingController();
+  final _supplierSearchController = TextEditingController();
+  final _companySearchController = TextEditingController();
+  final _productionDateController = TextEditingController();
+  final _expiryDateController = TextEditingController();
+
+  // For adding new supplier/company
+  final _newSupplierFirstNameController = TextEditingController();
+  final _newSupplierLastNameController = TextEditingController();
+  final _newSupplierContactController = TextEditingController();
+  final _newSupplierAddressController = TextEditingController();
+
+  final _newCompanyNameController = TextEditingController();
+  final _newCompanyContactController = TextEditingController();
+  final _newCompanyAddressController = TextEditingController();
+  final _newCompanyGstCodeController = TextEditingController();
+
+  bool _isLoading = false;
+  List<Product> _products = [];
+  List<Product> _filteredProducts = [];
+  List<Map<String, dynamic>> _suppliers = [];
+  List<Map<String, dynamic>> _filteredSuppliers = [];
+  List<Map<String, dynamic>> _companies = [];
+  List<Map<String, dynamic>> _filteredCompanies = [];
+
+  // Scroll tracking for bottom button
+  final ScrollController _scrollController = ScrollController();
+  bool _hasScrolledToBottom = false;
+
+  /// Optional dates / company / warranty / notes — collapsed by default so
+  /// shopkeepers can record a purchase in a few taps.
+  bool _moreDetailsExpanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _firestore = FirebaseFirestore.instance;
+    _localizations = AppLocalizations.of(
+      LanguageService.instance.currentLanguage,
+    );
+
+    // Listen for language changes
+    LanguageService.instance.addListener(_onLanguageChanged);
+
+    // Listen for purchase settings changes
+    PurchaseSettingsService.instance.addListener(_onPurchaseSettingsChanged);
+
+    // Initialize selected unit with default
+    _selectedUnit = PurchaseSettingsService.instance.defaultUnit;
+
+    // Initialize selected warranty with default
+    _selectedWarranty = PurchaseSettingsService.instance.defaultWarranty;
+
+    // Initialize animations
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _offsetAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.08),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
+    _opacityAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeIn));
+    Future.delayed(
+      const Duration(milliseconds: 150),
+      () => _animController.forward(),
+    );
+
+    // Setup real-time local streams for instant UI updates
+    _setupProductStream();
+    _setupSupplierStream();
+    _setupCompanyStream();
+
+    // Setup scroll listener to track when user scrolls to bottom
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.hasClients) {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.offset;
+      // Consider "scrolled to bottom" when within 50 pixels of the end
+      final isAtBottom = currentScroll >= maxScroll - 50;
+      if (isAtBottom != _hasScrolledToBottom) {
+        setState(() {
+          _hasScrolledToBottom = isAtBottom;
+        });
+      }
+    }
+  }
+
+  void _onLanguageChanged() {
+    if (mounted) {
+      setState(() {
+        _localizations = AppLocalizations.of(
+          LanguageService.instance.currentLanguage,
+        );
+      });
+    }
+  }
+
+  void _onPurchaseSettingsChanged() {
+    if (mounted) {
+      setState(() {
+        // Always update to the new default unit when settings change This ensures immediate effect when user changes default unit in settings
+        _selectedUnit = PurchaseSettingsService.instance.defaultUnit;
+
+        // Always update to the new default warranty when settings change
+        _selectedWarranty = PurchaseSettingsService.instance.defaultWarranty;
+      });
+    }
+  }
+
+  // Setup real-time product stream from the local database
+  void _setupProductStream() {
+    _productStreamSubscription = ProductOfflineController.instance
+        .watchAllProducts()
+        .listen((entities) {
+          if (!mounted) return;
+          final products = entities
+              .map(
+                (entity) => Product(
+                  id: entity.serverId ?? entity.id.toString(),
+                  indexNo: entity.indexNo,
+                  name: entity.name,
+                  companyName: entity.companyName,
+                  category: entity.category,
+                  purchasePrice: entity.purchasePrice,
+                  salesPrice: entity.salesPrice,
+                  currentStock: entity.currentStock,
+                  createdAt: entity.createdAt,
+                  updatedAt: entity.updatedAt,
+                  defaultSupplierId: entity.defaultSupplierId,
+                  defaultSupplierName: entity.defaultSupplierName,
+                ),
+              )
+              .toList();
+          setState(() {
+            _products = products;
+            _filteredProducts = products;
+          });
+          _cacheDataSource.saveProducts(products);
+          debugPrint('[Purchase] Product stream: ${products.length} products');
+        }, onError: (e) => debugPrint('[ERROR] Product stream error: $e'));
+  }
+
+  // Setup real-time supplier stream from the local database
+  void _setupSupplierStream() {
+    _supplierStreamSubscription = SupplierOfflineController.instance
+        .watchAllSuppliers()
+        .listen((entities) {
+          if (!mounted) return;
+          final suppliers = entities
+              .map(
+                (entity) => <String, dynamic>{
+                  'id': entity.serverId ?? entity.id.toString(),
+                  'firstName': entity.firstName,
+                  'lastName': entity.lastName,
+                  'fullName': '${entity.firstName} ${entity.lastName}'.trim(),
+                },
+              )
+              .toList();
+          setState(() {
+            _suppliers = suppliers;
+            _filteredSuppliers = suppliers;
+          });
+          _cacheDataSource.saveSuppliers(suppliers);
+          debugPrint('[Purchase] Supplier stream: ${suppliers.length} suppliers');
+        }, onError: (e) => debugPrint('[ERROR] Supplier stream error: $e'));
+  }
+
+  // Setup real-time company stream from the local database
+  void _setupCompanyStream() {
+    _companyStreamSubscription = CompanyOfflineController.instance
+        .watchAllCompanies()
+        .listen((entities) {
+          if (!mounted) return;
+          final companies = entities
+              .map(
+                (entity) => <String, dynamic>{
+                  'id': entity.serverId ?? entity.id.toString(),
+                  'companyName': entity.companyName,
+                },
+              )
+              .toList();
+          setState(() {
+            _companies = companies;
+            _filteredCompanies = companies;
+          });
+          _cacheDataSource.saveCompanies(companies);
+          debugPrint('[Purchase] Company stream: ${companies.length} companies');
+        }, onError: (e) => debugPrint('[ERROR] Company stream error: $e'));
+  }
+
+  Future<void> _addNewProduct() async {
+    final nameController = TextEditingController();
+    final purchasePriceController = TextEditingController();
+    final salesPriceController = TextEditingController();
+    final cgstController = TextEditingController();
+    final sgstController = TextEditingController();
+    final hsnController = TextEditingController();
+    var applyGst = false;
+    Map<String, dynamic>? sheetSelectedCompany;
+    Map<String, dynamic>? sheetSelectedSupplier;
+
+    // Sync CGST and SGST values
+    bool isSyncingGst = false;
+    cgstController.addListener(() {
+      if (!isSyncingGst && cgstController.text != sgstController.text) {
+        isSyncingGst = true;
+        sgstController.text = cgstController.text;
+        isSyncingGst = false;
+      }
+    });
+    sgstController.addListener(() {
+      if (!isSyncingGst && sgstController.text != cgstController.text) {
+        isSyncingGst = true;
+        cgstController.text = sgstController.text;
+        isSyncingGst = false;
+      }
+    });
+
+    // Custom fields controllers and values
+    final customColumns = ProductSettingsService.instance.activeCustomColumns;
+    final Map<String, TextEditingController> customTextControllers = {};
+    final Map<String, dynamic> customFieldValues = {};
+
+    // Initialize controllers for custom fields
+    for (final column in customColumns) {
+      if (column.type == CustomColumnType.text ||
+          column.type == CustomColumnType.number ||
+          column.type == CustomColumnType.decimal) {
+        customTextControllers[column.id] = TextEditingController(
+          text: column.defaultValue ?? '',
+        );
+      } else if (column.type == CustomColumnType.boolean) {
+        customFieldValues[column.id] = column.defaultValue == 'true';
+      } else if (column.type == CustomColumnType.dropdown) {
+        customFieldValues[column.id] =
+            column.defaultValue ??
+            ((column.dropdownOptions?.isNotEmpty ?? false)
+                ? column.dropdownOptions!.first
+                : '');
+      } else if (column.type == CustomColumnType.date) {
+        customFieldValues[column.id] = column.defaultValue;
+      }
+    }
+
+    showAppBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.transparent,
+      builder: (sheetContext) => GlassDraggableSheet(
+        initialChildSize: 0.75,
+        minChildSize: 0.4,
+        maxChildSize: 0.92,
+        builder: (_, controller) => StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            final isDark = AppColors.isDark(sheetContext);
+            final headerGreen = isDark
+                ? AppTheme.headerDarkStart
+                : AppColors.action(sheetContext);
+            final cardBg =
+                isDark ? AppColors.card(sheetContext) : AppTheme.white;
+
+            return Column(
+              children: [
+                // Branded green header replaces GlassSheetHandle
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(18, 14, 12, 18),
+                  decoration: BoxDecoration(
+                    color: headerGreen,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(28),
+                    ),
+                  ),
+                  child: SafeArea(
+                    bottom: false,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppTheme.white.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.inventory_2_rounded,
+                            color: AppTheme.white,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _localizations.addNewProduct,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Literata',
+                                  color: AppTheme.white,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _localizations.createNewProductRecord,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontFamily: 'Literata',
+                                  color: AppTheme.white.withValues(alpha: 0.78),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(sheetContext),
+                          icon: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: AppTheme.white.withValues(alpha: 0.16),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.close_rounded,
+                              size: 18,
+                              color: AppTheme.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    controller: controller,
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                    child: Column(
+                      children: [
+                        _buildAddProductCard(
+                          background: cardBg,
+                          title: 'BASIC DETAILS',
+                          children: [
+                            _buildAddProductTextField(
+                              controller: nameController,
+                              label: _localizations.productName,
+                              hint: _localizations.enterProductName,
+                              icon: Icons.inventory_2_outlined,
+                              isRequired: true,
+                              onChanged: (_) => setSheetState(() {}),
+                            ),
+                            const SizedBox(height: 14),
+                            _buildAddProductPickerRow(
+                              label: _localizations.company,
+                              value: sheetSelectedCompany?['companyName']
+                                  ?.toString(),
+                              placeholder: _localizations.selectCompany,
+                              icon: Icons.apartment_outlined,
+                              onSelect: () async {
+                                final company =
+                                    await _showInlineCompanyPicker(sheetContext);
+                                if (company != null) {
+                                  setSheetState(
+                                    () => sheetSelectedCompany = company,
+                                  );
+                                }
+                              },
+                              onAdd: () {
+                                _showAddCompanyDialog();
+                                setSheetState(() {});
+                              },
+                            ),
+                            const SizedBox(height: 14),
+                            _buildAddProductPickerRow(
+                              label: _localizations.supplier,
+                              value: sheetSelectedSupplier?['fullName']
+                                  ?.toString(),
+                              placeholder: _localizations.selectSupplier,
+                              icon: Icons.person_outline_rounded,
+                              onSelect: () async {
+                                final supplier =
+                                    await _showInlineSupplierPicker(
+                                  sheetContext,
+                                );
+                                if (supplier != null) {
+                                  setSheetState(
+                                    () => sheetSelectedSupplier = supplier,
+                                  );
+                                }
+                              },
+                              onAdd: () {
+                                _showAddSupplierDialog();
+                                setSheetState(() {});
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        _buildAddProductCard(
+                          background: cardBg,
+                          title: _localizations.pricing.toUpperCase(),
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildAddProductPriceField(
+                                    controller: purchasePriceController,
+                                    label: _localizations.purchasePrice,
+                                    onChanged: (_) => setSheetState(() {}),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildAddProductPriceField(
+                                    controller: salesPriceController,
+                                    label: _localizations.salesPrice,
+                                    onChanged: (_) => setSheetState(() {}),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color: cardBg,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: AppColors.border(sheetContext),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _localizations.applyGst,
+                                      style: TextStyle(
+                                        fontFamily: 'Literata',
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primaryText(
+                                          sheetContext,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      _localizations.applyGstHint,
+                                      style: TextStyle(
+                                        fontFamily: 'Literata',
+                                        fontSize: 12,
+                                        color: AppColors.mutedText(
+                                          sheetContext,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Switch.adaptive(
+                                value: applyGst,
+                                activeTrackColor: AppColors.action(
+                                  sheetContext,
+                                ),
+                                activeThumbColor: AppTheme.white,
+                                onChanged: (value) =>
+                                    setSheetState(() => applyGst = value),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (applyGst) ...[
+                          const SizedBox(height: 14),
+                          _buildAddProductCard(
+                            background: cardBg,
+                            title: 'GST',
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildAddProductTextField(
+                                      controller: cgstController,
+                                      label: 'CGST %',
+                                      hint: '0',
+                                      icon: Icons.percent,
+                                      keyboardType: TextInputType.number,
+                                      onChanged: (_) => setSheetState(() {}),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildAddProductTextField(
+                                      controller: sgstController,
+                                      label: 'SGST %',
+                                      hint: '0',
+                                      icon: Icons.percent,
+                                      keyboardType: TextInputType.number,
+                                      onChanged: (_) => setSheetState(() {}),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              _buildAddProductTextField(
+                                controller: hsnController,
+                                label: _localizations.hsnCode,
+                                hint: 'e.g. 30049099',
+                                icon: Icons.tag,
+                                keyboardType: TextInputType.number,
+                                maxLength: 8,
+                                onChanged: (_) => setSheetState(() {}),
+                              ),
+                            ],
+                          ),
+                        ],
+                        if (customColumns.isNotEmpty) ...[
+                          const SizedBox(height: 14),
+                          _buildAddProductCard(
+                            background: cardBg,
+                            title: 'CUSTOM FIELDS',
+                            children: [
+                              for (final column in customColumns)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _buildCustomFieldWidgetForPurchase(
+                                    column,
+                                    customTextControllers[column.id],
+                                    customFieldValues,
+                                    setSheetState,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(color: AppColors.border(sheetContext)),
+                    ),
+                  ),
+                  child: SafeArea(
+                    top: false,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(sheetContext),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.action(sheetContext),
+                              side: BorderSide(
+                                color: AppColors.action(sheetContext)
+                                    .withValues(alpha: 0.45),
+                              ),
+                              backgroundColor: cardBg,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: Text(
+                              _localizations.cancel,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'Literata',
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            onPressed: nameController.text.trim().isEmpty
+                                ? null
+                                : () => _saveNewProduct(
+                                      sheetContext,
+                                      nameController,
+                                      purchasePriceController,
+                                      salesPriceController,
+                                      cgstController,
+                                      sgstController,
+                                      hsnController,
+                                      applyGst,
+                                      sheetSelectedCompany,
+                                      sheetSelectedSupplier,
+                                      customColumns,
+                                      customTextControllers,
+                                      customFieldValues,
+                                    ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: isDark
+                                  ? AppColors.action(sheetContext)
+                                  : const Color(0xFFD8F0E3),
+                              foregroundColor: isDark
+                                  ? AppTheme.white
+                                  : AppColors.action(sheetContext),
+                              disabledBackgroundColor: AppTheme.grey300,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.add_rounded, size: 20),
+                                const SizedBox(width: 6),
+                                Text(
+                                  _localizations.addProduct,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontFamily: 'Literata',
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddProductCard({
+    required Color background,
+    required String title,
+    required List<Widget> children,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border(context)),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(
+              alpha: AppColors.isDark(context) ? 0.25 : 0.04,
+            ),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+              fontFamily: 'Literata',
+              color: AppColors.action(context),
+            ),
+          ),
+          const SizedBox(height: 14),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddProductTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    bool isRequired = false,
+    TextInputType keyboardType = TextInputType.text,
+    int? maxLength,
+    Function(String)? onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.secondaryText(context),
+                fontFamily: 'Literata',
+              ),
+            ),
+            if (isRequired)
+              const Text(' *', style: TextStyle(color: AppTheme.red)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          maxLength: maxLength,
+          onChanged: onChanged,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w500,
+            color: AppColors.primaryText(context),
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            counterText: '',
+            hintStyle: TextStyle(
+              color: AppColors.mutedText(context),
+              fontFamily: 'Literata',
+            ),
+            prefixIcon: Icon(icon, color: AppColors.action(context), size: 20),
+            filled: true,
+            fillColor: AppColors.inputFill(context),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: AppColors.border(context)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: AppColors.border(context)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: AppColors.action(context),
+                width: 1.5,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 14,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAddProductPriceField({
+    required TextEditingController controller,
+    required String label,
+    Function(String)? onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.secondaryText(context),
+            fontFamily: 'Literata',
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          onChanged: onChanged,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w600,
+            color: AppColors.primaryText(context),
+          ),
+          decoration: InputDecoration(
+            hintText: '0.00',
+            hintStyle: TextStyle(color: AppColors.mutedText(context)),
+            prefixText: '₹ ',
+            prefixStyle: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: AppColors.secondaryText(context),
+            ),
+            filled: true,
+            fillColor: AppColors.inputFill(context),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: AppColors.border(context)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: AppColors.border(context)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: AppColors.action(context),
+                width: 1.5,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 14,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAddProductPickerRow({
+    required String label,
+    required String? value,
+    required String placeholder,
+    required IconData icon,
+    required VoidCallback onSelect,
+    required VoidCallback onAdd,
+  }) {
+    final hasValue = value != null && value.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.secondaryText(context),
+            fontFamily: 'Literata',
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: Material(
+                color: AppColors.inputFill(context),
+                borderRadius: BorderRadius.circular(14),
+                child: InkWell(
+                  onTap: onSelect,
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 13,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.border(context)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(icon, size: 18, color: AppColors.action(context)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            hasValue ? value : placeholder,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: hasValue
+                                  ? AppColors.primaryText(context)
+                                  : AppColors.mutedText(context),
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          Icons.expand_more_rounded,
+                          color: AppColors.mutedText(context),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Material(
+              color: AppColors.isDark(context)
+                  ? AppColors.card(context)
+                  : const Color(0xFFE8F6EE),
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                onTap: onAdd,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.action(context).withValues(alpha: 0.45),
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.add_rounded,
+                    color: AppColors.action(context),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // Save new product from bottom sheet
+  Future<void> _saveNewProduct(
+    BuildContext sheetContext,
+    TextEditingController nameController,
+    TextEditingController purchasePriceController,
+    TextEditingController salesPriceController,
+    TextEditingController cgstController,
+    TextEditingController sgstController,
+    TextEditingController hsnController,
+    bool applyGst,
+    Map<String, dynamic>? selectedCompany,
+    Map<String, dynamic>? selectedSupplier,
+    List<CustomColumn> customColumns,
+    Map<String, TextEditingController> customTextControllers,
+    Map<String, dynamic> customFieldValues,
+  ) async {
+    try {
+      // Validate HSN: required if CGST or SGST > 0
+      final cgstVal = applyGst
+          ? (double.tryParse(cgstController.text) ?? 0.0)
+          : 0.0;
+      final sgstVal = applyGst
+          ? (double.tryParse(sgstController.text) ?? 0.0)
+          : 0.0;
+      final hsnVal = applyGst ? hsnController.text.trim() : '';
+      if ((cgstVal > 0 || sgstVal > 0) && hsnVal.isEmpty) {
+        GlassyToast.show(
+          sheetContext,
+          _localizations.hsnCodeRequired,
+          isError: true,
+        );
+        return;
+      }
+
+      // Collect custom field values
+      final Map<String, dynamic> finalCustomFields = {};
+      for (final column in customColumns) {
+        String? value;
+        if (column.type == CustomColumnType.text ||
+            column.type == CustomColumnType.number ||
+            column.type == CustomColumnType.decimal) {
+          value = customTextControllers[column.id]?.text.trim();
+        } else if (column.type == CustomColumnType.boolean) {
+          value = (customFieldValues[column.id] ?? false).toString();
+        } else if (column.type == CustomColumnType.dropdown ||
+            column.type == CustomColumnType.date) {
+          value = customFieldValues[column.id]?.toString();
+        }
+        if (value != null && value.isNotEmpty) {
+          finalCustomFields[column.id] = value;
+        }
+      }
+
+      // Convert to JSON string
+      String? customFieldsJson;
+      if (finalCustomFields.isNotEmpty) {
+        customFieldsJson = jsonEncode(finalCustomFields);
+      }
+
+      // Use offline controller for consistent offline-first behavior
+      final productOfflineController = ProductOfflineController.instance;
+
+      // This will throw if duplicate exists
+      final newProduct = await productOfflineController.addProduct(
+        name: nameController.text.trim(),
+        companyName: selectedCompany?['companyName'] ?? '',
+        category: '', // No category required
+        purchasePrice: double.tryParse(purchasePriceController.text) ?? 0.0,
+        salesPrice: double.tryParse(salesPriceController.text) ?? 0.0,
+        currentStock: 0,
+        defaultSupplierId: selectedSupplier?['id'],
+        defaultSupplierName: selectedSupplier?['fullName'],
+        cgstPercent: cgstVal,
+        sgstPercent: sgstVal,
+        hsnCode: hsnVal.isNotEmpty ? hsnVal : null,
+        customFieldsJson: customFieldsJson,
+      );
+
+      // Notify other screens about the product change
+      DashboardRefreshService.instance.notifyDataChanged(
+        DataChangeType.product,
+      );
+
+      // Trigger background sync if online
+      ProductSyncService.instance.syncNow();
+
+      if (mounted) {
+        if (sheetContext.mounted) {
+          Navigator.pop(sheetContext);
+        }
+        // Stream auto-updates products, just wait a tick for UI
+        await Future.delayed(const Duration(milliseconds: 100));
+        // Select the newly added product (last one in list)
+        if (_products.isNotEmpty) {
+          setState(() {
+            _selectedProduct = _products.last;
+            _priceController.text = _selectedProduct!.purchasePrice.toString();
+            _salesPriceController.text = _selectedProduct!.salesPrice
+                .toString();
+            // Auto-populate company and supplier from the newly created product
+            if (selectedCompany != null) {
+              _selectedCompany = selectedCompany;
+            }
+            if (selectedSupplier != null) {
+              _selectedSupplier = selectedSupplier;
+            }
+          });
+        }
+        if (mounted) {
+          GlassyToast.show(context, '#${newProduct.indexNo}');
+        }
+      }
+    } catch (e) {
+      if (mounted && sheetContext.mounted) {
+        GlassyToast.show(
+          sheetContext,
+          '${_localizations.error}: $e',
+          isError: true,
+        );
+      }
+    }
+  }
+
+  // Build a custom field widget based on column type (for purchase page)
+  Widget _buildCustomFieldWidgetForPurchase(
+    CustomColumn column,
+    TextEditingController? textController,
+    Map<String, dynamic> fieldValues,
+    StateSetter setDialogState,
+  ) {
+    final primaryColor = AppColors.action(context);
+
+    switch (column.type) {
+      case CustomColumnType.text:
+        return TextField(
+          controller: textController,
+          decoration: InputDecoration(
+            labelText: column.name + (column.isRequired ? ' *' : ''),
+            hintText:
+                column.placeholder ?? 'Enter ${column.name.toLowerCase()}',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: primaryColor, width: 2),
+            ),
+            prefixIcon: const Icon(Icons.text_fields_rounded, size: 20),
+          ),
+        );
+
+      case CustomColumnType.number:
+        return TextField(
+          controller: textController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText: column.name + (column.isRequired ? ' *' : ''),
+            hintText:
+                column.placeholder ?? 'Enter ${column.name.toLowerCase()}',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: primaryColor, width: 2),
+            ),
+            prefixIcon: const Icon(Icons.numbers_rounded, size: 20),
+          ),
+        );
+
+      case CustomColumnType.decimal:
+        return TextField(
+          controller: textController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: column.name + (column.isRequired ? ' *' : ''),
+            hintText:
+                column.placeholder ?? 'Enter ${column.name.toLowerCase()}',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: primaryColor, width: 2),
+            ),
+            prefixIcon: const Icon(Icons.percent_rounded, size: 20),
+          ),
+        );
+
+      case CustomColumnType.date:
+        final currentValue = fieldValues[column.id] as String?;
+        DateTime? selectedDate;
+        if (currentValue != null && currentValue.isNotEmpty) {
+          try {
+            selectedDate = DateTime.parse(currentValue);
+          } catch (_) {}
+        }
+        return InkWell(
+          onTap: () async {
+            final date = await showDatePicker(
+              context: context,
+              initialDate: selectedDate ?? DateTime.now(),
+              firstDate: DateTime(2000),
+              lastDate: DateTime(2100),
+              builder: (context, child) {
+                return Theme(
+                  data: Theme.of(context).copyWith(
+                    colorScheme: ColorScheme.light(primary: primaryColor),
+                  ),
+                  child: child!,
+                );
+              },
+            );
+            if (date != null) {
+              setDialogState(() {
+                fieldValues[column.id] = date
+                    .toIso8601String()
+                    .split('T')
+                    .first;
+              });
+            }
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: currentValue != null ? primaryColor : AppTheme.grey400,
+                width: currentValue != null ? 2 : 1,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.calendar_today_rounded,
+                  color: currentValue != null ? primaryColor : AppTheme.grey,
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    currentValue ??
+                        column.placeholder ??
+                        'Select ${column.name.toLowerCase()}',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      color: currentValue != null
+                          ? AppTheme.black87
+                          : AppTheme.grey600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                Text(
+                  column.name + (column.isRequired ? ' *' : ''),
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    color: AppTheme.grey,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+
+      case CustomColumnType.dropdown:
+        final currentValue = fieldValues[column.id] as String?;
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: currentValue != null && currentValue.isNotEmpty
+                  ? primaryColor
+                  : AppTheme.grey400,
+              width: currentValue != null && currentValue.isNotEmpty ? 2 : 1,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: currentValue,
+              hint: Text(
+                column.placeholder ?? 'Select ${column.name.toLowerCase()}',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  color: AppTheme.grey600,
+                  fontSize: 14,
+                ),
+              ),
+              isExpanded: true,
+              icon: Icon(Icons.arrow_drop_down, color: AppTheme.grey600),
+              items: (column.dropdownOptions ?? []).map((option) {
+                return DropdownMenuItem<String>(
+                  value: option,
+                  child: Text(
+                    option,
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 14,
+                    ),
+                  ),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setDialogState(() {
+                  fieldValues[column.id] = value;
+                });
+              },
+            ),
+          ),
+        );
+
+      case CustomColumnType.boolean:
+        final currentValue = fieldValues[column.id] as bool? ?? false;
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: currentValue ? primaryColor : AppTheme.grey400,
+              width: currentValue ? 2 : 1,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.toggle_on_rounded,
+                color: currentValue ? primaryColor : AppTheme.grey,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  column.name + (column.isRequired ? ' *' : ''),
+                  style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+                ),
+              ),
+              Switch(
+                value: currentValue,
+                activeThumbColor: primaryColor,
+                onChanged: (value) {
+                  setDialogState(() {
+                    fieldValues[column.id] = value;
+                  });
+                },
+              ),
+            ],
+          ),
+        );
+    }
+  }
+
+  // Inline company picker for use inside dialogs
+  Future<Map<String, dynamic>?> _showInlineCompanyPicker(
+    BuildContext parentContext,
+  ) async {
+    return await showDialog<Map<String, dynamic>>(
+      context: parentContext,
+      builder: (context) {
+        var filtered = _companies.toList();
+        return StatefulBuilder(
+          builder: (context, setPickerState) => AlertDialog(
+            backgroundColor: AppColors.card(context),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Text(
+              _localizations.selectCompany,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                color: AppColors.accent(context),
+                fontSize: 16,
+              ),
+            ),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 300,
+              child: Column(
+                children: [
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: _localizations.searchByCompany,
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      isDense: true,
+                    ),
+                    onChanged: (q) {
+                      setPickerState(() {
+                        filtered = _companies
+                            .where(
+                              (c) => (c['companyName'] as String? ?? '')
+                                  .toLowerCase()
+                                  .contains(q.toLowerCase()),
+                            )
+                            .toList();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: filtered.isEmpty
+                        ? Center(
+                            child: Text(
+                              _localizations.noCompaniesFound,
+                              style: TextStyle(
+                                color: AppTheme.grey,
+                                fontFamily: 'Literata',
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: filtered.length,
+                            itemBuilder: (context, index) {
+                              final company = filtered[index];
+                              return ListTile(
+                                dense: true,
+                                leading: Icon(
+                                  Icons.business,
+                                  color: AppColors.accent(context),
+                                  size: 20,
+                                ),
+                                title: Text(
+                                  company['companyName'] ?? '',
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                onTap: () => Navigator.pop(context, company),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Inline supplier picker for use inside dialogs
+  Future<Map<String, dynamic>?> _showInlineSupplierPicker(
+    BuildContext parentContext,
+  ) async {
+    return await showDialog<Map<String, dynamic>>(
+      context: parentContext,
+      builder: (context) {
+        var filtered = _suppliers.toList();
+        return StatefulBuilder(
+          builder: (context, setPickerState) => AlertDialog(
+            backgroundColor: AppColors.card(context),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Text(
+              _localizations.selectSupplier,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                color: AppColors.accent(context),
+                fontSize: 16,
+              ),
+            ),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 300,
+              child: Column(
+                children: [
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: _localizations.searchBySupplier,
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      isDense: true,
+                    ),
+                    onChanged: (q) {
+                      setPickerState(() {
+                        filtered = _suppliers
+                            .where(
+                              (s) => (s['fullName'] as String? ?? '')
+                                  .toLowerCase()
+                                  .contains(q.toLowerCase()),
+                            )
+                            .toList();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: filtered.isEmpty
+                        ? Center(
+                            child: Text(
+                              _localizations.noSuppliersFound,
+                              style: TextStyle(
+                                color: AppTheme.grey,
+                                fontFamily: 'Literata',
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: filtered.length,
+                            itemBuilder: (context, index) {
+                              final supplier = filtered[index];
+                              return ListTile(
+                                dense: true,
+                                leading: Icon(
+                                  Icons.person,
+                                  color: AppColors.accent(context),
+                                  size: 20,
+                                ),
+                                title: Text(
+                                  supplier['fullName'] ?? '',
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                onTap: () => Navigator.pop(context, supplier),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _filterProducts(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredProducts = _products;
+      } else {
+        _filteredProducts = _products
+            .where(
+              (product) =>
+                  product.name.toLowerCase().contains(query.toLowerCase()) ||
+                  product.companyName.toLowerCase().contains(
+                    query.toLowerCase(),
+                  ) ||
+                  product.category.toLowerCase().contains(query.toLowerCase()),
+            )
+            .toList();
+      }
+    });
+  }
+
+  void _filterSuppliers(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredSuppliers = _suppliers;
+      } else {
+        _filteredSuppliers = _suppliers
+            .where(
+              (supplier) =>
+                  supplier['fullName'].toLowerCase().contains(
+                    query.toLowerCase(),
+                  ) ||
+                  supplier['firstName'].toLowerCase().contains(
+                    query.toLowerCase(),
+                  ) ||
+                  supplier['lastName'].toLowerCase().contains(
+                    query.toLowerCase(),
+                  ),
+            )
+            .toList();
+      }
+    });
+  }
+
+  void _filterCompanies(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredCompanies = _companies;
+      } else {
+        _filteredCompanies = _companies
+            .where(
+              (company) => company['companyName'].toLowerCase().contains(
+                query.toLowerCase(),
+              ),
+            )
+            .toList();
+      }
+    });
+  }
+
+  void _showProductSelectionBottomSheet() {
+    _productSearchController.clear();
+    _filteredProducts = _products;
+
+    showAppBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.transparent,
+      builder: (context) => GlassDraggableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, controller) => StatefulBuilder(
+          builder: (context, setModalState) => Column(
+            children: [
+              const GlassSheetHandle(),
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.action(context),
+                            AppColors.action(context).withValues(alpha: 0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.inventory_2_rounded,
+                        color: AppTheme.white,
+                        size: 22,
+                      ),
+                    ),
+                    SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _localizations.selectProduct,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Literata',
+                              color: AppColors.accent(context),
+                            ),
+                          ),
+                          Text(
+                            '${_products.length} products available',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.grey,
+                              fontFamily: 'Literata',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Container(
+                        padding: EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppColors.chipFill(context),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.close,
+                          size: 20,
+                          color: AppTheme.grey600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Search bar
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.chipFill(context),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: TextField(
+                    controller: _productSearchController,
+                    decoration: InputDecoration(
+                      hintText: _localizations.searchByProduct,
+                      hintStyle: TextStyle(
+                        color: AppTheme.grey400,
+                        fontFamily: 'Literata',
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        color: AppTheme.grey400,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                    ),
+                    onChanged: (query) {
+                      _filterProducts(query);
+                      setModalState(() {});
+                    },
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              // Divider
+              Container(height: 1, color: AppColors.border(context)),
+              // Product list
+              Expanded(
+                child: _filteredProducts.isEmpty
+                    ? ListView(
+                        controller: controller,
+                        children: [
+                          const SizedBox(height: 64),
+                          Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.inventory_2_outlined,
+                                  size: 64,
+                                  color: AppTheme.grey300,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  _productSearchController.text.isEmpty
+                                      ? _localizations.noProductsAvailable
+                                      : _localizations.noProductsFound,
+                                  style: TextStyle(
+                                    color: AppTheme.grey,
+                                    fontSize: 15,
+                                    fontFamily: 'Literata',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      )
+                    : ListView.separated(
+                        controller: controller,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        itemCount: _filteredProducts.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final product = _filteredProducts[index];
+                          final isSelected = _selectedProduct?.id == product.id;
+                          return Material(
+                            color: AppTheme.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _selectedProduct = product;
+                                  _priceController.text = product.purchasePrice
+                                      .toString();
+                                  _salesPriceController.text = product
+                                      .salesPrice
+                                      .toString();
+
+                                  // Auto-populate company from product
+                                  if (product.companyName.isNotEmpty) {
+                                    final matchingCompany = _companies
+                                        .firstWhere(
+                                          (c) =>
+                                              (c['companyName'] as String?)
+                                                  ?.toLowerCase() ==
+                                              product.companyName.toLowerCase(),
+                                          orElse: () => <String, dynamic>{},
+                                        );
+                                    if (matchingCompany.isNotEmpty) {
+                                      _selectedCompany = matchingCompany;
+                                    }
+                                  }
+
+                                  // Auto-populate supplier from product's default supplier
+                                  if (product.defaultSupplierId != null &&
+                                      product.defaultSupplierId!.isNotEmpty) {
+                                    final matchingSupplier = _suppliers
+                                        .firstWhere(
+                                          (s) =>
+                                              s['id'] ==
+                                              product.defaultSupplierId,
+                                          orElse: () => <String, dynamic>{},
+                                        );
+                                    if (matchingSupplier.isNotEmpty) {
+                                      _selectedSupplier = matchingSupplier;
+                                    }
+                                  }
+                                });
+                                Navigator.pop(context);
+                              },
+                              borderRadius: BorderRadius.circular(14),
+                              child: Container(
+                                padding: EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppColors.action(context).withValues(alpha: 0.08)
+                                      : AppColors.scaffold(context),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AppColors.action(context)
+                                        : AppColors.border(context),
+                                    width: isSelected ? 1.5 : 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 48,
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.action(context).withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Icon(
+                                        Icons.inventory_2_rounded,
+                                        color: AppColors.accent(context),
+                                        size: 22,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            product.name,
+                                            style: TextStyle(
+                                              fontFamily: 'Literata',
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 15,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            children: [
+                                              if (product
+                                                  .companyName
+                                                  .isNotEmpty)
+                                                Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 2,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color: AppTheme.blue
+                                                        .withValues(alpha: 0.1),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          6,
+                                                        ),
+                                                  ),
+                                                  child: Text(
+                                                    product.companyName,
+                                                    style: const TextStyle(
+                                                      fontSize: 11,
+                                                      color: AppTheme.blue,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ),
+                                              if (product
+                                                  .companyName
+                                                  .isNotEmpty)
+                                                const SizedBox(width: 8),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 2,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      product.currentStock > 0
+                                                      ? AppTheme.green.withValues(
+                                                          alpha: 0.1,
+                                                        )
+                                                      : AppTheme.red.withValues(
+                                                          alpha: 0.1,
+                                                        ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
+                                                ),
+                                                child: Text(
+                                                  '${_localizations.stock}: ${product.currentStock}',
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    color:
+                                                        product.currentStock > 0
+                                                        ? AppTheme.green700
+                                                        : AppTheme.red700,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          '₹${product.purchasePrice}',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.accent(context),
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        Text(
+                                          _localizations.perUnit,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: AppTheme.grey400,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    if (isSelected) ...[
+                                      SizedBox(width: 8),
+                                      Icon(
+                                        Icons.check_circle,
+                                        color: AppColors.accent(context),
+                                        size: 22,
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showSupplierSelectionBottomSheet() {
+    _supplierSearchController.clear();
+    _filteredSuppliers = _suppliers;
+
+    showAppBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.transparent,
+      builder: (context) => GlassDraggableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, controller) => StatefulBuilder(
+          builder: (context, setModalState) => Column(
+            children: [
+              const GlassSheetHandle(),
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppTheme.headerDarkStart,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.person_rounded,
+                        color: AppTheme.white,
+                        size: 22,
+                      ),
+                    ),
+                    SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _localizations.selectSupplier,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Literata',
+                              color: AppColors.accent(context),
+                            ),
+                          ),
+                          Text(
+                            '${_suppliers.length} suppliers available',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.grey,
+                              fontFamily: 'Literata',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Container(
+                        padding: EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppColors.chipFill(context),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.close,
+                          size: 20,
+                          color: AppTheme.grey600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Search bar
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.chipFill(context),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: TextField(
+                    controller: _supplierSearchController,
+                    decoration: InputDecoration(
+                      hintText: _localizations.searchBySupplier,
+                      hintStyle: TextStyle(
+                        color: AppTheme.grey400,
+                        fontFamily: 'Literata',
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        color: AppTheme.grey400,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                    ),
+                    onChanged: (query) {
+                      _filterSuppliers(query);
+                      setModalState(() {});
+                    },
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              // Divider
+              Container(height: 1, color: AppColors.border(context)),
+              // Supplier list
+              Expanded(
+                child: _filteredSuppliers.isEmpty
+                    ? ListView(
+                        controller: controller,
+                        children: [
+                          const SizedBox(height: 64),
+                          Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.person_off_outlined,
+                                  size: 64,
+                                  color: AppTheme.grey300,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  _supplierSearchController.text.isEmpty
+                                      ? _localizations.noSuppliersAvailable
+                                      : _localizations.noSuppliersFound,
+                                  style: TextStyle(
+                                    color: AppTheme.grey,
+                                    fontSize: 15,
+                                    fontFamily: 'Literata',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      )
+                    : ListView.separated(
+                        controller: controller,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        itemCount: _filteredSuppliers.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final supplier = _filteredSuppliers[index];
+                          final isSelected =
+                              _selectedSupplier?['id'] == supplier['id'];
+                          return Material(
+                            color: AppTheme.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _selectedSupplier = supplier;
+                                });
+                                Navigator.pop(context);
+                              },
+                              borderRadius: BorderRadius.circular(14),
+                              child: Container(
+                                padding: EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppColors.action(context).withValues(alpha: 0.08)
+                                      : AppColors.scaffold(context),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AppColors.action(context)
+                                        : AppColors.border(context),
+                                    width: isSelected ? 1.5 : 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 48,
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.action(context).withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          (supplier['fullName'] as String)
+                                                  .isNotEmpty
+                                              ? (supplier['fullName'] as String)
+                                                    .substring(0, 1)
+                                                    .toUpperCase()
+                                              : 'S',
+                                          style: TextStyle(
+                                            color: AppColors.action(context),
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 20,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Text(
+                                        supplier['fullName'],
+                                        style: const TextStyle(
+                                          fontFamily: 'Literata',
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                    ),
+                                    if (isSelected)
+                                      Icon(
+                                        Icons.check_circle,
+                                        color: AppColors.action(context),
+                                        size: 22,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCompanySelectionBottomSheet() {
+    _companySearchController.clear();
+    _filteredCompanies = _companies;
+
+    showAppBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.transparent,
+      builder: (context) => GlassDraggableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, controller) => StatefulBuilder(
+          builder: (context, setModalState) => Column(
+            children: [
+              const GlassSheetHandle(),
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppTheme.paletteFF7B68EE,
+                            AppTheme.paletteFF7B68EE.withValues(alpha: 0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.business_rounded,
+                        color: AppTheme.white,
+                        size: 22,
+                      ),
+                    ),
+                    SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _localizations.selectCompany,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Literata',
+                              color: AppColors.accent(context),
+                            ),
+                          ),
+                          Text(
+                            '${_companies.length} companies available',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.grey,
+                              fontFamily: 'Literata',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Container(
+                        padding: EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppColors.chipFill(context),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.close,
+                          size: 20,
+                          color: AppTheme.grey600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Search bar
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.chipFill(context),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: TextField(
+                    controller: _companySearchController,
+                    decoration: InputDecoration(
+                      hintText: _localizations.searchByCompany,
+                      hintStyle: TextStyle(
+                        color: AppTheme.grey400,
+                        fontFamily: 'Literata',
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        color: AppTheme.grey400,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                    ),
+                    onChanged: (query) {
+                      _filterCompanies(query);
+                      setModalState(() {});
+                    },
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              // Divider
+              Container(height: 1, color: AppColors.border(context)),
+              // Company list
+              Expanded(
+                child: _filteredCompanies.isEmpty
+                    ? ListView(
+                        controller: controller,
+                        children: [
+                          const SizedBox(height: 64),
+                          Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.business_outlined,
+                                  size: 64,
+                                  color: AppTheme.grey300,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  _companySearchController.text.isEmpty
+                                      ? _localizations.noCompaniesAvailable
+                                      : _localizations.noCompaniesFound,
+                                  style: TextStyle(
+                                    color: AppTheme.grey,
+                                    fontSize: 15,
+                                    fontFamily: 'Literata',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      )
+                    : ListView.separated(
+                        controller: controller,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        itemCount: _filteredCompanies.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final company = _filteredCompanies[index];
+                          final isSelected =
+                              _selectedCompany?['id'] == company['id'];
+                          return Material(
+                            color: AppTheme.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _selectedCompany = company;
+                                });
+                                Navigator.pop(context);
+                              },
+                              borderRadius: BorderRadius.circular(14),
+                              child: Container(
+                                padding: EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppTheme.paletteFF7B68EE.withValues(alpha: 0.08)
+                                      : AppColors.scaffold(context),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AppTheme.paletteFF7B68EE
+                                        : AppColors.border(context),
+                                    width: isSelected ? 1.5 : 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 48,
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.paletteFF7B68EE.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          (company['companyName'] as String)
+                                                  .isNotEmpty
+                                              ? (company['companyName']
+                                                        as String)
+                                                    .substring(0, 1)
+                                                    .toUpperCase()
+                                              : 'C',
+                                          style: const TextStyle(
+                                            color: AppTheme.paletteFF7B68EE,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 20,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Text(
+                                        company['companyName'],
+                                        style: const TextStyle(
+                                          fontFamily: 'Literata',
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                    ),
+                                    if (isSelected)
+                                      const Icon(
+                                        Icons.check_circle,
+                                        color: AppTheme.paletteFF7B68EE,
+                                        size: 22,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _calculateTotal() {
+    // Total is calculated and displayed in the UI
+    setState(() {});
+  }
+
+  Future<void> _processPurchase() async {
+    if (_selectedProduct == null) {
+      GlassyToast.show(context, _localizations.pleaseSelectProduct);
+      return;
+    }
+
+    if (_selectedSupplier == null) {
+      GlassyToast.show(context, _localizations.pleaseSelectSupplier);
+      return;
+    }
+
+    // Company is optional - no validation required
+
+    // Validate expiry date is after production date only if both are provided
+    if (_productionDate != null &&
+        _expiryDate != null &&
+        _expiryDate!.isBefore(_productionDate!)) {
+      GlassyToast.show(context, _localizations.expiryDateAfterProduction);
+      return;
+    }
+
+    final quantity = int.tryParse(_quantityController.text);
+    final price = double.tryParse(_priceController.text);
+    final salesPrice = double.tryParse(_salesPriceController.text);
+
+    if (quantity == null || quantity <= 0) {
+      GlassyToast.show(context, _localizations.pleaseEnterValidQuantity);
+      return;
+    }
+
+    if (price == null || price < 0) {
+      GlassyToast.show(context, _localizations.pleaseEnterValidPurchasePrice);
+      return;
+    }
+
+    if (salesPrice == null || salesPrice < 0) {
+      GlassyToast.show(context, _localizations.pleaseEnterValidSalesPrice);
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Use InventoryIntegrationService for unified processing: Creates PurchaseEntity + PurchaseBatch (FIFO) + StockLedger + updates Product stock/prices
+      final integrationResult = await InventoryIntegrationService.instance
+          .processPurchase(
+            productId: _selectedProduct!.id,
+            productName: _selectedProduct!.name,
+            supplierId: _selectedSupplier!['id'],
+            supplierName: _selectedSupplier!['fullName'],
+            companyId: _selectedCompany?['id'],
+            companyName: _selectedCompany?['companyName'],
+            quantity: quantity,
+            unit: _selectedUnit ?? PurchaseSettingsService.instance.defaultUnit,
+            purchasePrice: price,
+            salesPrice: salesPrice,
+            productionDate: _productionDate,
+            expiryDate: _expiryDate,
+            warrantyMonths: _selectedWarranty ?? 0,
+            notes: _notesController.text.isNotEmpty
+                ? _notesController.text
+                : null,
+          );
+
+      if (!integrationResult.success) {
+        throw Exception(
+          integrationResult.errorMessage ??
+              _localizations.purchaseProcessingFailed,
+        );
+      }
+
+      debugPrint(
+        '[DEBUG] Purchase fully processed: PurchaseEntity + PurchaseBatch + StockLedger + Product stock updated',
+      );
+
+      // Also update Firestore if online and product is synced
+      final currentUser = FirebaseAuth.instance.currentUser;
+      final productId = _selectedProduct!.id;
+      final newStock = _selectedProduct!.currentStock + quantity;
+      final isValidServerId =
+          productId.isNotEmpty &&
+          !productId.startsWith('local_') &&
+          productId.length >= 10;
+
+      if (currentUser != null && isValidServerId) {
+        try {
+          // Only update purchasePrice; keep salesPrice from product creation
+          final updateData = <String, dynamic>{
+            'purchasePrice': price,
+            'currentStock': newStock,
+            'updatedAt': DateTime.now().toIso8601String(),
+          };
+
+          await _firestore
+              .collection('users')
+              .doc(currentUser.uid)
+              .collection('products')
+              .doc(productId)
+              .update(updateData)
+              .timeout(const Duration(seconds: 1));
+          debugPrint('[DEBUG] Updated product in Firestore');
+        } catch (e) {
+          debugPrint('[DEBUG] Failed to update Firestore (will sync later): $e');
+        }
+      }
+
+      // Trigger background sync for both PurchaseEntity and PurchaseBatchEntity
+      PurchaseSyncService.instance.syncNow();
+      PurchaseBatchSyncService.instance.syncNow();
+
+      if (mounted) {
+        GlassyToast.show(context, _localizations.purchaseRecorded);
+
+        // Notify dashboard to refresh (purchase affects product stock)
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.purchase,
+        );
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.product,
+        );
+
+        // Reset form
+        setState(() {
+          _selectedProduct = null;
+          _selectedSupplier = null;
+          _selectedCompany = null;
+          _productionDate = null;
+          _expiryDate = null;
+          _selectedUnit = PurchaseSettingsService.instance.defaultUnit;
+          _selectedWarranty = PurchaseSettingsService.instance.defaultWarranty;
+          _quantityController.clear();
+          _priceController.clear();
+          _salesPriceController.clear();
+          _notesController.clear();
+          _productionDateController.clear();
+          _expiryDateController.clear();
+        });
+
+        // Reload products to show updated stock — stream auto-handles this
+      }
+    } catch (e) {
+      debugPrint('[ERROR] Failed to process purchase: $e');
+      if (mounted) {
+        GlassyToast.show(context, '${_localizations.error}: $e');
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _productStreamSubscription?.cancel();
+    _supplierStreamSubscription?.cancel();
+    _companyStreamSubscription?.cancel();
+    LanguageService.instance.removeListener(_onLanguageChanged);
+    PurchaseSettingsService.instance.removeListener(_onPurchaseSettingsChanged);
+    _animController.dispose();
+    _quantityController.dispose();
+    _priceController.dispose();
+    _salesPriceController.dispose();
+    _notesController.dispose();
+    _productSearchController.dispose();
+    _supplierSearchController.dispose();
+    _companySearchController.dispose();
+    _newSupplierFirstNameController.dispose();
+    _newSupplierLastNameController.dispose();
+    _newSupplierContactController.dispose();
+    _newSupplierAddressController.dispose();
+    _newCompanyNameController.dispose();
+    _newCompanyContactController.dispose();
+    _newCompanyAddressController.dispose();
+    _newCompanyGstCodeController.dispose();
+    _productionDateController.dispose();
+    _expiryDateController.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _showAddSupplierDialog() {
+    _newSupplierFirstNameController.clear();
+    _newSupplierLastNameController.clear();
+    _newSupplierContactController.clear();
+    _newSupplierAddressController.clear();
+
+    showAppBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) => SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 8,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const GlassSheetHandle(),
+                const SizedBox(height: 8),
+                // Header
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppTheme.headerDarkStart,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.person_add_rounded,
+                        color: AppTheme.white,
+                        size: 22,
+                      ),
+                    ),
+                      SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _localizations.addNewSupplier,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'Literata',
+                                color: AppColors.accent(context),
+                              ),
+                            ),
+                            Text(
+                              _localizations.createNewSupplierRecord,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppTheme.grey,
+                                fontFamily: 'Literata',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: Container(
+                          padding: EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: AppColors.chipFill(context),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.close,
+                            size: 20,
+                            color: AppTheme.grey600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  // Form fields
+                  _buildBottomSheetTextField(
+                    controller: _newSupplierFirstNameController,
+                    label: _localizations.firstName,
+                    hint: _localizations.enterFirstName,
+                    icon: Icons.person_outline,
+                    isRequired: true,
+                    onChanged: (_) => setSheetState(() {}),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildBottomSheetTextField(
+                    controller: _newSupplierLastNameController,
+                    label: _localizations.lastName,
+                    hint: _localizations.enterLastName,
+                    icon: Icons.person_outline,
+                    isRequired: true,
+                    onChanged: (_) => setSheetState(() {}),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildBottomSheetTextField(
+                    controller: _newSupplierContactController,
+                    label: _localizations.contactNumber,
+                    hint: _localizations.enterTenDigitNumber,
+                    icon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                    maxLength: 10,
+                    onChanged: (_) => setSheetState(() {}),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildBottomSheetTextField(
+                    controller: _newSupplierAddressController,
+                    label: _localizations.address,
+                    hint: _localizations.enterAddress,
+                    icon: Icons.location_on_outlined,
+                    maxLines: 3,
+                    onChanged: (_) => setSheetState(() {}),
+                  ),
+                  const SizedBox(height: 24),
+                  // Action buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppTheme.grey700,
+                            side: BorderSide(color: AppTheme.grey300),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            _localizations.cancel,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Literata',
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed:
+                              (_newSupplierFirstNameController.text
+                                      .trim()
+                                      .isEmpty ||
+                                  _newSupplierLastNameController.text
+                                      .trim()
+                                      .isEmpty)
+                              ? null
+                              : () => _saveNewSupplier(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.action(context),
+                            foregroundColor: AppTheme.white,
+                            disabledBackgroundColor: AppTheme.grey300,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.add_rounded, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                _localizations.addSupplier,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Literata',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+    );
+  }
+
+  // Reusable text field widget for bottom sheets
+  Widget _buildBottomSheetTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    bool isRequired = false,
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+    int? maxLength,
+    Function(String)? onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.accent(context),
+                fontFamily: 'Literata',
+              ),
+            ),
+            if (isRequired)
+              const Text(' *', style: TextStyle(color: AppTheme.red)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          maxLength: maxLength,
+          onChanged: onChanged,
+          style: TextStyle(fontFamily: 'Literata'),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: AppTheme.grey400,
+              fontFamily: 'Literata',
+            ),
+            prefixIcon: Icon(icon, color: AppTheme.grey600),
+            counterText: '',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppTheme.grey300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppTheme.grey300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.accent(context), width: 2),
+            ),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
+            filled: true,
+            fillColor: AppColors.scaffold(context),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _saveNewSupplier(BuildContext dialogContext) async {
+    final firstName = _newSupplierFirstNameController.text.trim();
+    final lastName = _newSupplierLastNameController.text.trim();
+    final contact = _newSupplierContactController.text.trim();
+
+    if (firstName.isEmpty || lastName.isEmpty) {
+      if (dialogContext.mounted) {
+        GlassyToast.show(
+          dialogContext,
+          _localizations.firstLastNameRequired,
+          isError: true,
+        );
+      }
+      return;
+    }
+
+    // Capture values before closing sheet
+    final address = _newSupplierAddressController.text.trim();
+
+    // Close bottom sheet first before any async work
+    Navigator.of(dialogContext).pop();
+
+    try {
+      await SupplierOfflineController.instance.addSupplier(
+        firstName: firstName,
+        lastName: lastName,
+        supplierCode: '', // Optional - leave empty
+        contact: contact,
+        address: address,
+      );
+
+      // Show success toast
+      if (mounted) {
+        GlassyToast.show(context, _localizations.supplierAddedSuccessfully);
+      }
+
+      // Sync to server in background (don't block UI)
+      SupplierSyncService.instance.syncNow();
+
+      // Notify dashboard to refresh
+      DashboardRefreshService.instance.notifyDataChanged(
+        DataChangeType.supplier,
+      );
+    } catch (e) {
+      if (mounted) {
+        GlassyToast.show(
+          context,
+          '${_localizations.errorAddingSupplier}: $e',
+          isError: true,
+        );
+      }
+    }
+  }
+
+  void _showAddCompanyDialog() {
+    _newCompanyNameController.clear();
+    _newCompanyContactController.clear();
+    _newCompanyAddressController.clear();
+    _newCompanyGstCodeController.clear();
+
+    showAppBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) => SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 8,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const GlassSheetHandle(),
+                const SizedBox(height: 8),
+                // Header
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppTheme.paletteFF7B68EE,
+                            AppTheme.paletteFF7B68EE.withValues(alpha: 0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.business_rounded,
+                        color: AppTheme.white,
+                        size: 22,
+                      ),
+                    ),
+                    SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _localizations.addNewCompany,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Literata',
+                              color: AppColors.accent(context),
+                            ),
+                          ),
+                          Text(
+                            _localizations.createNewCompanyRecord,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.grey,
+                              fontFamily: 'Literata',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Container(
+                        padding: EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppColors.chipFill(context),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.close,
+                          size: 20,
+                          color: AppTheme.grey600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                // Form fields
+                _buildBottomSheetTextField(
+                  controller: _newCompanyNameController,
+                    label: _localizations.companyName,
+                    hint: _localizations.enterCompanyName,
+                    icon: Icons.business_outlined,
+                    isRequired: true,
+                    onChanged: (_) => setSheetState(() {}),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildBottomSheetTextField(
+                    controller: _newCompanyContactController,
+                    label: _localizations.contactNumber,
+                    hint: _localizations.enterTenDigitNumber,
+                    icon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                    maxLength: 10,
+                    onChanged: (_) => setSheetState(() {}),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildBottomSheetTextField(
+                    controller: _newCompanyGstCodeController,
+                    label: 'GST Code',
+                    hint: 'Enter GST code',
+                    icon: Icons.receipt_long_outlined,
+                    onChanged: (_) => setSheetState(() {}),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildBottomSheetTextField(
+                    controller: _newCompanyAddressController,
+                    label: _localizations.address,
+                    hint: _localizations.enterAddress,
+                    icon: Icons.location_on_outlined,
+                    maxLines: 3,
+                    onChanged: (_) => setSheetState(() {}),
+                  ),
+                  const SizedBox(height: 24),
+                  // Action buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppTheme.grey700,
+                            side: BorderSide(color: AppTheme.grey300),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            _localizations.cancel,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Literata',
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed:
+                              _newCompanyNameController.text.trim().isEmpty
+                              ? null
+                              : () => _saveNewCompany(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.action(context),
+                            foregroundColor: AppTheme.white,
+                            disabledBackgroundColor: AppTheme.grey300,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.add_rounded, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                _localizations.addCompany,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Literata',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+    );
+  }
+
+  Future<void> _saveNewCompany(BuildContext dialogContext) async {
+    final companyName = _newCompanyNameController.text.trim();
+
+    if (companyName.isEmpty) {
+      if (dialogContext.mounted) {
+        GlassyToast.show(
+          dialogContext,
+          _localizations.companyNameIsRequired,
+          isError: true,
+        );
+      }
+      return;
+    }
+
+    // Capture values before async gap
+    final gstCode = _newCompanyGstCodeController.text.trim();
+    final contact = _newCompanyContactController.text.trim();
+    final address = _newCompanyAddressController.text.trim();
+
+    // Close bottom sheet first before any async work
+    Navigator.of(dialogContext).pop();
+
+    try {
+      await CompanyOfflineController.instance.addCompany(
+        companyName: companyName,
+        gstCode: gstCode,
+        contact: contact,
+        address: address,
+      );
+
+      // Show success toast
+      if (mounted) {
+        GlassyToast.show(context, _localizations.companyAddedSuccessfully);
+      }
+
+      // Sync to server in background (don't block UI)
+      CompanySyncService.instance.syncNow();
+
+      // Notify dashboard to refresh
+      DashboardRefreshService.instance.notifyDataChanged(
+        DataChangeType.company,
+      );
+    } catch (e) {
+      if (mounted) {
+        GlassyToast.show(context, 'Error adding company: $e', isError: true);
+      }
+    }
+  }
+
+  double get _purchaseLineTotal {
+    final quantity = int.tryParse(_quantityController.text) ?? 0;
+    final price = double.tryParse(_priceController.text) ?? 0;
+    return quantity * price;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final wide = DesktopCanvas.wide(context);
+    return Scaffold(
+      backgroundColor: AppColors.scaffold(context),
+      body: SafeArea(
+        top: false,
+        bottom: !DesktopCanvas.isDesktopPlatform,
+        child: Column(
+          children: [
+            Expanded(
+              child: CustomScrollView(
+                controller: _scrollController,
+                slivers: [
+                  if (!widget.isEmbedded)
+                    SliverPersistentHeader(
+                      pinned: true,
+                      delegate: _StickyHeaderDelegate(
+                        child: _buildHeader(),
+                        height: DesktopCanvas.isDesktopPlatform
+                            ? 56
+                            : MediaQuery.paddingOf(context).top + 74,
+                      ),
+                    ),
+                  SliverToBoxAdapter(
+                    child: SlideTransition(
+                      position: _offsetAnimation,
+                      child: FadeTransition(
+                        opacity: _opacityAnimation,
+                        child: Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            wide ? 24 : 16,
+                            8,
+                            wide ? 24 : 16,
+                            20,
+                          ),
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: wide ? 1100 : double.infinity,
+                              ),
+                              child: wide
+                                  ? _buildDesktopPurchaseForm()
+                                  : _buildMobilePurchaseForm(),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            _buildStickyBottomButton(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobilePurchaseForm() {
+    return Column(
+      children: [
+        _buildProductHeroCard(),
+        const SizedBox(height: 14),
+        _buildStockEntryCard(),
+        const SizedBox(height: 14),
+        _buildSupplierCard(),
+        const SizedBox(height: 14),
+        _buildMoreDetailsSection(),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+
+  Widget _buildDesktopPurchaseForm() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 11,
+          child: Column(
+            children: [
+              _buildProductHeroCard(),
+              const SizedBox(height: 14),
+              _buildStockEntryCard(),
+            ],
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          flex: 9,
+          child: Column(
+            children: [
+              _buildSupplierCard(),
+              const SizedBox(height: 14),
+              _buildMoreDetailsSection(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Sticky CTA with live purchase total — always visible while recording.
+  Widget _buildStickyBottomButton() {
+    final total = _purchaseLineTotal;
+    final qty = int.tryParse(_quantityController.text) ?? 0;
+    final price = double.tryParse(_priceController.text) ?? 0;
+    final isDark = AppColors.isDark(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.scaffold(context),
+        border: Border(
+          top: BorderSide(color: AppColors.border(context)),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.black.withValues(alpha: isDark ? 0.35 : 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _localizations.totalAmount,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontFamily: 'Literata',
+                      color: AppColors.mutedText(context),
+                    ),
+                  ),
+                  Text(
+                    '₹${total.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      fontFamily: 'Literata',
+                      color: AppColors.primaryText(context),
+                    ),
+                  ),
+                  if (qty > 0 && price > 0)
+                    Text(
+                      '$qty × ₹${price.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontFamily: 'Literata',
+                        color: AppColors.mutedText(context),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 3,
+              child: AppPillButton(
+                label: _localizations.recordPurchase,
+                icon: Icons.check_circle_rounded,
+                expanded: true,
+                loading: _isLoading,
+                onPressed: _isLoading ? null : _processPurchase,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return AppTopBar(
+      title: _localizations.addPurchase,
+      subtitle: _localizations.recordNewInventoryPurchase,
+      actions: [
+        AppTopBar.action(
+          icon: Icons.qr_code_scanner_rounded,
+          onTap: () async {
+            final result = await showAppPage(
+              context,
+              const InvoiceScannerPage(),
+            );
+            if (result == true && mounted) {
+              setState(() {});
+            }
+          },
+        ),
+        AppTopBar.action(
+          icon: Icons.settings_rounded,
+          onTap: () => showAppPage(
+            context,
+            const PurchaseSettingsPage(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  BoxDecoration _formCardDecoration() {
+    final isDark = AppColors.isDark(context);
+    return BoxDecoration(
+      color: isDark ? AppColors.card(context) : AppTheme.white,
+      borderRadius: BorderRadius.circular(24),
+      border: Border.all(
+        color: isDark ? AppTheme.darkBorder : AppTheme.grey200,
+      ),
+    );
+  }
+
+  Widget _sectionHeading(IconData icon, String title) {
+    final isDark = AppColors.isDark(context);
+    return Row(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppColors.action(context).withValues(alpha: isDark ? 0.22 : 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: AppColors.action(context), size: 18),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'Literata',
+            color: AppColors.primaryText(context),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Step 1 — pick what you bought (largest action on the screen).
+  Widget _buildProductHeroCard() {
+    final selected = _selectedProduct != null;
+    final isDark = AppColors.isDark(context);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _formCardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeading(
+            Icons.inventory_2_rounded,
+            _localizations.productText,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Tap to choose from stock, or add a new item',
+            style: TextStyle(
+              fontSize: 12,
+              fontFamily: 'Literata',
+              color: AppColors.mutedText(context),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Material(
+            color: selected
+                ? AppColors.action(context).withValues(alpha: isDark ? 0.18 : 0.08)
+                : (isDark ? AppColors.inputFill(context) : AppTheme.grey100),
+            borderRadius: BorderRadius.circular(18),
+            child: InkWell(
+              onTap: _showProductSelectionBottomSheet,
+              borderRadius: BorderRadius.circular(18),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 16, 10, 16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.action(context).withValues(
+                          alpha: isDark ? 0.28 : 0.12,
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(
+                        selected
+                            ? Icons.check_rounded
+                            : Icons.inventory_2_outlined,
+                        color: AppColors.action(context),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: selected
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _selectedProduct!.name,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    fontFamily: 'Literata',
+                                    color: AppColors.primaryText(context),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'In stock: ${_selectedProduct!.currentStock}'
+                                  '${_selectedProduct!.companyName.isNotEmpty ? ' • ${_selectedProduct!.companyName}' : ''}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontFamily: 'Literata',
+                                    color: AppColors.mutedText(context),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Text(
+                              'Select product',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Literata',
+                                color: AppColors.mutedText(context),
+                              ),
+                            ),
+                    ),
+                    IconButton(
+                      tooltip: 'Add product',
+                      onPressed: _addNewProduct,
+                      icon: Icon(
+                        Icons.add_circle_outline_rounded,
+                        color: AppColors.action(context),
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.mutedText(context),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Step 2 — quantity + unit + prices (the money block users care about).
+  Widget _buildStockEntryCard() {
+    final quantity = int.tryParse(_quantityController.text) ?? 0;
+    final price = double.tryParse(_priceController.text) ?? 0;
+    final total = quantity * price;
+    const quickQty = [1, 5, 10, 20, 50];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _formCardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeading(
+            Icons.shopping_bag_rounded,
+            _localizations.purchase,
+          ),
+          const SizedBox(height: 14),
+          _buildTextField(
+            controller: _quantityController,
+            label: _localizations.purchaseQuantity,
+            hint: _localizations.enterQuantity,
+            icon: Icons.shopping_cart_rounded,
+            keyboardType: TextInputType.number,
+            onChanged: (_) => _calculateTotal(),
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (final q in quickQty)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text('$q'),
+                      selected: quantity == q,
+                      onSelected: (_) {
+                        setState(() {
+                          _quantityController.text = '$q';
+                        });
+                      },
+                      selectedColor: AppColors.action(context),
+                      labelStyle: TextStyle(
+                        fontFamily: 'Literata',
+                        fontWeight: FontWeight.w600,
+                        color: quantity == q
+                            ? AppTheme.white
+                            : AppColors.primaryText(context),
+                      ),
+                      backgroundColor: AppColors.inputFill(context),
+                      side: BorderSide(color: AppColors.border(context)),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          _buildChipSelector(
+            label: _localizations.measurementUnit,
+            options: PurchaseSettingsService.instance.availableUnits,
+            selectedValue: _selectedUnit,
+            onSelected: (unit) => setState(() => _selectedUnit = unit),
+            color: AppColors.accent(context),
+            icon: Icons.straighten_rounded,
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildPriceField(
+                  controller: _priceController,
+                  label: _localizations.purchasePrice,
+                  hint: '0.00',
+                  onChanged: (_) => _calculateTotal(),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildPriceField(
+                  controller: _salesPriceController,
+                  label: _localizations.salesPrice,
+                  hint: '0.00',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.action(context).withValues(
+                alpha: AppColors.isDark(context) ? 0.18 : 0.08,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: AppColors.action(context).withValues(alpha: 0.22),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.payments_rounded,
+                  size: 18,
+                  color: AppColors.action(context),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    quantity > 0
+                        ? '$quantity × ₹${price.toStringAsFixed(2)}'
+                        : _localizations.totalAmount,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontFamily: 'Literata',
+                      color: AppColors.secondaryText(context),
+                    ),
+                  ),
+                ),
+                Text(
+                  '₹${total.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Literata',
+                    color: AppColors.primaryText(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Step 3 — supplier (drives ledger linkage).
+  Widget _buildSupplierCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _formCardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeading(
+            Icons.local_shipping_rounded,
+            _localizations.supplier,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Required for supplier ledger & stock batches',
+            style: TextStyle(
+              fontSize: 12,
+              fontFamily: 'Literata',
+              color: AppColors.mutedText(context),
+            ),
+          ),
+          const SizedBox(height: 14),
+          _buildPickerRow(
+            label: _localizations.supplier,
+            placeholder: 'Select supplier',
+            value: _selectedSupplier?['fullName']?.toString(),
+            icon: Icons.person_outline_rounded,
+            onSelect: _showSupplierSelectionBottomSheet,
+            onAdd: _showAddSupplierDialog,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Optional extras — company, dates, warranty, notes.
+  Widget _buildMoreDetailsSection() {
+    final showDates =
+        PurchaseSettingsService.instance.showManufacturingDate ||
+        PurchaseSettingsService.instance.showExpiryDate;
+
+    return Container(
+      decoration: _formCardDecoration(),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () => setState(
+              () => _moreDetailsExpanded = !_moreDetailsExpanded,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _sectionHeading(
+                      Icons.tune_rounded,
+                      'More details',
+                    ),
+                  ),
+                  Text(
+                    '(${_localizations.optional})',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontFamily: 'Literata',
+                      color: AppColors.mutedText(context),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    _moreDetailsExpanded
+                        ? Icons.expand_less_rounded
+                        : Icons.expand_more_rounded,
+                    color: AppColors.mutedText(context),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_moreDetailsExpanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildPickerRow(
+                    label: _localizations.company,
+                    placeholder: 'Select company',
+                    value: _selectedCompany?['companyName']?.toString(),
+                    icon: Icons.badge_outlined,
+                    onSelect: _showCompanySelectionBottomSheet,
+                    onAdd: _showAddCompanyDialog,
+                  ),
+                  if (showDates) ...[
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        if (PurchaseSettingsService
+                            .instance.showManufacturingDate)
+                          Expanded(
+                            child: _buildDateField(
+                              label: _localizations.mfgDate,
+                              value: _productionDate,
+                              onTap: () => _selectDate(isProduction: true),
+                            ),
+                          ),
+                        if (PurchaseSettingsService
+                                .instance.showManufacturingDate &&
+                            PurchaseSettingsService.instance.showExpiryDate)
+                          const SizedBox(width: 12),
+                        if (PurchaseSettingsService.instance.showExpiryDate)
+                          Expanded(
+                            child: _buildDateField(
+                              label: _localizations.expiryDate,
+                              value: _expiryDate,
+                              onTap: () => _selectDate(isProduction: false),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                  if (PurchaseSettingsService.instance.showWarranty) ...[
+                    const SizedBox(height: 14),
+                    _buildChipSelector<int>(
+                      label: _localizations.warrantyPeriod,
+                      options: PurchaseSettingsService.instance.warrantyOptions,
+                      selectedValue: _selectedWarranty,
+                      onSelected: (warranty) =>
+                          setState(() => _selectedWarranty = warranty),
+                      color: AppTheme.purple,
+                      icon: Icons.verified_user_rounded,
+                      labelBuilder: (value) => PurchaseSettingsService.instance
+                          .getWarrantyLabel(value),
+                    ),
+                  ],
+                  const SizedBox(height: 14),
+                  Text(
+                    _localizations.notes,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Literata',
+                      color: AppColors.secondaryText(context),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _notesController,
+                    maxLines: 3,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      color: AppColors.primaryText(context),
+                    ),
+                    decoration: InputDecoration(
+                      hintText: _localizations.addNotesAboutPurchase,
+                      hintStyle: TextStyle(
+                        color: AppColors.mutedText(context),
+                        fontFamily: 'Literata',
+                      ),
+                      filled: true,
+                      fillColor: AppColors.inputFill(context),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                          color: AppColors.border(context),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                          color: AppColors.action(context),
+                          width: 1.4,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.all(14),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPickerRow({
+    required String label,
+    required String placeholder,
+    String? value,
+    String? subtitle,
+    required IconData icon,
+    required VoidCallback onSelect,
+    required VoidCallback onAdd,
+  }) {
+    final isDark = AppColors.isDark(context);
+    final hasValue = value != null && value.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Literata',
+            color: AppColors.secondaryText(context),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: Material(
+                color: isDark ? AppColors.inputFill(context) : AppTheme.grey100,
+                borderRadius: BorderRadius.circular(16),
+                child: InkWell(
+                  onTap: onSelect,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 13,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(icon, size: 18, color: AppColors.mutedText(context)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                hasValue ? value : placeholder,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: hasValue
+                                      ? AppColors.primaryText(context)
+                                      : AppColors.mutedText(context),
+                                ),
+                              ),
+                              if (subtitle != null)
+                                Text(
+                                  subtitle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 11,
+                                    color: AppColors.mutedText(context),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          size: 20,
+                          color: AppColors.mutedText(context),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Material(
+              color: isDark ? AppColors.card(context) : AppTheme.white,
+              shape: CircleBorder(
+                side: BorderSide(
+                  color: AppColors.action(context).withValues(alpha: 0.85),
+                  width: 1.4,
+                ),
+              ),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: onAdd,
+                child: SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: Icon(Icons.add, color: AppColors.action(context), size: 22),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // Date field widget
+  Widget _buildDateField({
+    required String label,
+    DateTime? value,
+    required VoidCallback onTap,
+  }) {
+    final hasValue = value != null;
+    final dateStr = hasValue
+        ? '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}'
+        : _localizations.selectText;
+
+    final isDark = AppColors.isDark(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Literata',
+            color: AppColors.secondaryText(context),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Material(
+          color: isDark ? AppTheme.darkScaffold : AppTheme.grey100,
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today_outlined,
+                    size: 16,
+                    color: AppColors.mutedText(context),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      dateStr,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Literata',
+                        color: hasValue
+                            ? AppColors.primaryText(context)
+                            : AppColors.mutedText(context),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Date picker helper
+  Future<void> _selectDate({required bool isProduction}) async {
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: isProduction
+          ? (_productionDate ?? DateTime.now())
+          : (_expiryDate ?? DateTime.now().add(const Duration(days: 30))),
+      firstDate: isProduction ? DateTime(2000) : DateTime.now(),
+      lastDate: isProduction ? DateTime.now() : DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppColors.action(context),
+              onPrimary: AppTheme.white,
+              surface: AppColors.card(context),
+              onSurface: AppTheme.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (selectedDate != null) {
+      setState(() {
+        if (isProduction) {
+          _productionDate = selectedDate;
+          _productionDateController.text =
+              '${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}';
+        } else {
+          _expiryDate = selectedDate;
+          _expiryDateController.text =
+              '${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}';
+        }
+      });
+    }
+  }
+
+  // Text field widget
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    Function(String)? onChanged,
+  }) {
+    final isDark = AppColors.isDark(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Literata',
+            color: AppColors.secondaryText(context),
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          onChanged: onChanged,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
+            color: AppColors.primaryText(context),
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: AppColors.mutedText(context),
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w500,
+            ),
+            prefixIcon: Icon(icon, color: AppColors.mutedText(context), size: 18),
+            filled: true,
+            fillColor: isDark ? AppTheme.darkScaffold : AppTheme.grey100,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: AppColors.action(context), width: 1.4),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Chip selector widget
+  Widget _buildChipSelector<T>({
+    required String label,
+    required List<T> options,
+    required T? selectedValue,
+    required Function(T) onSelected,
+    required Color color,
+    required IconData icon,
+    String Function(T)? labelBuilder,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Literata',
+            color: AppColors.secondaryText(context),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: options.map((option) {
+              final isSelected = selectedValue == option;
+              final displayLabel = labelBuilder != null
+                  ? labelBuilder(option)
+                  : option.toString();
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () => onSelected(option),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.action(context)
+                          : (AppColors.isDark(context)
+                                ? AppTheme.darkScaffold
+                                : AppTheme.grey100),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isSelected ? Icons.check_rounded : icon,
+                          size: 16,
+                          color: isSelected
+                              ? AppTheme.white
+                              : AppColors.mutedText(context),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          displayLabel,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Literata',
+                            color: isSelected
+                                ? AppTheme.white
+                                : AppColors.primaryText(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Price field widget
+  Widget _buildPriceField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    Function(String)? onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Literata',
+            color: AppColors.secondaryText(context),
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          onChanged: onChanged,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+            color: AppColors.primaryText(context),
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: AppColors.mutedText(context)),
+            prefixText: '₹ ',
+            prefixStyle: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: AppColors.secondaryText(context),
+              fontSize: 15,
+            ),
+            filled: true,
+            fillColor: AppColors.inputFill(context),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: AppColors.border(context)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: AppColors.action(context),
+                width: 1.5,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+}
+
+// Sticky header delegate for pinned sections
+class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  final double height;
+
+  _StickyHeaderDelegate({required this.child, this.height = 90});
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return SizedBox(
+      height: height,
+      width: double.infinity,
+      child: child,
+    );
+  }
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  double get minExtent => height;
+
+  @override
+  bool shouldRebuild(covariant _StickyHeaderDelegate oldDelegate) {
+    return child != oldDelegate.child || height != oldDelegate.height;
+  }
+}
